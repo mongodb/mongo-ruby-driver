@@ -40,9 +40,9 @@ describe 'Client-Side Encryption' do
       end
 
       it 'does not spawn' do
-        lambda do
+        expect do
           client['coll'].insert_one(encrypted: 'test')
-        end.should raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:#{Regexp.quote(mongocryptd_port.to_s)} UNKNOWN/)
+        end.to raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:#{Regexp.quote(mongocryptd_port.to_s)} UNKNOWN/)
       end
     end
 
@@ -69,12 +69,12 @@ describe 'Client-Side Encryption' do
       end
 
       it 'does not spawn' do
-        lambda do
+        expect do
           client['coll'].insert_one(encrypted: 'test')
-        end.should_not raise_error
-        lambda do
+        end.not_to raise_error
+        expect do
           mongocryptd_client.database.command(hello: 1)
-        end.should raise_error(Mongo::Error::NoServerAvailable)
+        end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
   end

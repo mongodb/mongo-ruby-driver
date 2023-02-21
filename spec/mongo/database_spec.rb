@@ -114,17 +114,17 @@ describe Mongo::Database do
         end
 
         it 'is not transfered to the collection' do
-          client.options[:server_api].should == {'version' => '1'}
-          collection.options[:server_api].should be nil
+          expect(client.options[:server_api]).to eq({'version' => '1'})
+          expect(collection.options[:server_api]).to be nil
         end
       end
     end
 
     context 'when providing :server_api option' do
       it 'is rejected' do
-        lambda do
+        expect do
           database['foo', server_api: {version: '1'}]
-        end.should raise_error(ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level')
+        end.to raise_error(ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level')
       end
     end
   end
@@ -281,9 +281,9 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        collection_names.length.should == 120
-        collection_names.should include('coll-0')
-        collection_names.should include('coll-119')
+        expect(collection_names.length).to eq(120)
+        expect(collection_names).to include('coll-0')
+        expect(collection_names).to include('coll-119')
       end
     end
 
@@ -494,9 +494,9 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        collections.length.should == 120
-        collection_names.should include('coll-0')
-        collection_names.should include('coll-119')
+        expect(collections.length).to eq(120)
+        expect(collection_names).to include('coll-0')
+        expect(collection_names).to include('coll-119')
       end
     end
 
@@ -695,9 +695,9 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        collections.length.should == 120
-        collection_names.should include('coll-0')
-        collection_names.should include('coll-119')
+        expect(collections.length).to eq(120)
+        expect(collection_names).to include('coll-0')
+        expect(collection_names).to include('coll-119')
       end
     end
 
@@ -949,9 +949,9 @@ describe Mongo::Database do
       min_server_fcv '4.7'
 
       it 'passes server api parameters' do
-        lambda do
+        expect do
           database.command(ping: 1, apiVersion: 'does-not-exist')
-        end.should raise_error(
+        end.to raise_error(
           an_instance_of(Mongo::Error::OperationFailure).and having_attributes(code: 322))
       end
     end
@@ -961,9 +961,9 @@ describe Mongo::Database do
       min_server_fcv '4.7'
 
       it 'reports server api conflict' do
-        lambda do
+        expect do
           database.command(ping: 1, apiVersion: 'does-not-exist')
-        end.should raise_error(Mongo::Error::ServerApiConflict)
+        end.to raise_error(Mongo::Error::ServerApiConflict)
       end
     end
   end

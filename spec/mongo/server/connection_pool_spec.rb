@@ -635,7 +635,7 @@ describe Mongo::Server::ConnectionPool do
 
           let(:connection_global_id) do
             pool.with_connection do |connection|
-              connection.global_id.should_not be nil
+              expect(connection.global_id).not_to be nil
               connection.global_id
             end
           end
@@ -665,7 +665,7 @@ describe Mongo::Server::ConnectionPool do
             }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
             elapsed_time = Mongo::Utils.monotonic_time - start_time
 
-            elapsed_time.should > 1
+            expect(elapsed_time).to be > 1
           end
         end
       end

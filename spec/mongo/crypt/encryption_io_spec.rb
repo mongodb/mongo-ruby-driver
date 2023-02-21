@@ -23,9 +23,9 @@ describe Mongo::Crypt::EncryptionIO do
       end
 
       it 'fails with an exception' do
-        lambda do
+        expect do
           subject.send(:spawn_mongocryptd)
-        end.should raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_path/)
+        end.to raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_path/)
       end
     end
 
@@ -37,9 +37,9 @@ describe Mongo::Crypt::EncryptionIO do
       end
 
       it 'fails with an exception' do
-        lambda do
+        expect do
           subject.send(:spawn_mongocryptd)
-        end.should raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_args/)
+        end.to raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_args/)
       end
     end
 
@@ -52,9 +52,9 @@ describe Mongo::Crypt::EncryptionIO do
       end
 
       it 'fails with an exception' do
-        lambda do
+        expect do
           subject.send(:spawn_mongocryptd)
-        end.should raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_args/)
+        end.to raise_error(ArgumentError, /Cannot spawn mongocryptd process when no.*mongocryptd_spawn_args/)
       end
     end
 
@@ -132,9 +132,9 @@ describe Mongo::Crypt::EncryptionIO do
 
       it 'does not spawn' do
         expect(subject).not_to receive(:spawn_mongocryptd)
-        lambda do
+        expect do
           subject.mark_command({})
-        end.should raise_error(Mongo::Error::NoServerAvailable, /test message/)
+        end.to raise_error(Mongo::Error::NoServerAvailable, /test message/)
       end
     end
   end

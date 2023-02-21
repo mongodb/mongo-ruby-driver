@@ -271,9 +271,9 @@ describe Mongo::URI do
 
     shared_examples 'raises an error when client is created' do
       it 'raises an error when client is created' do
-        lambda do
+        expect do
           client
-        end.should raise_error(ArgumentError, /Invalid :connect option value/)
+        end.to raise_error(ArgumentError, /Invalid :connect option value/)
       end
     end
 
@@ -387,7 +387,7 @@ describe Mongo::URI do
       it_behaves_like 'parses successfully'
 
       it 'is omitted' do
-        uri.uri_options.should_not have_key(:read)
+        expect(uri.uri_options).not_to have_key(:read)
       end
     end
   end

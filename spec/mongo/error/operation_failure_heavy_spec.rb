@@ -47,7 +47,7 @@ describe Mongo::Error::OperationFailure do
         fail 'Expected an OperationFailure'
       end
 
-      exc.write_concern_error_document.should == {
+      expect(exc.write_concern_error_document).to eq({
         'code' => 100,
         'codeName' => 'UnsatisfiableWriteConcern',
         'errmsg' => 'Not enough data-bearing nodes',
@@ -58,7 +58,7 @@ describe Mongo::Error::OperationFailure do
             'provenance' => 'clientSupplied',
           },
         },
-      }
+      })
     end
   end
 

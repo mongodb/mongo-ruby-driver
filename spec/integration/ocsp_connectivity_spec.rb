@@ -17,9 +17,9 @@ describe 'OCSP connectivity' do
 
   if ENV['OCSP_CONNECTIVITY'] == 'fail'
     it 'fails to connect' do
-      lambda do
+      expect do
         client.command(ping: 1)
-      end.should raise_error(Mongo::Error::NoServerAvailable, /UNKNOWN/)
+      end.to raise_error(Mongo::Error::NoServerAvailable, /UNKNOWN/)
     end
   else
     it 'works' do

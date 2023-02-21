@@ -181,7 +181,7 @@ describe Mongo::Operation::Insert::OpMsg do
           end
 
           before do
-            session.implicit?.should be true
+            expect(session.implicit?).to be true
           end
 
           it 'creates the correct OP_MSG message' do
@@ -210,7 +210,7 @@ describe Mongo::Operation::Insert::OpMsg do
           let(:session) do
             Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
               allow(session).to receive(:session_id).and_return(42)
-              session.should be_implicit
+              expect(session).to be_implicit
             end
           end
 
@@ -269,7 +269,7 @@ describe Mongo::Operation::Insert::OpMsg do
           end
 
           before do
-            session.should_not be_implicit
+            expect(session).not_to be_implicit
           end
 
           let(:expected_global_args) do

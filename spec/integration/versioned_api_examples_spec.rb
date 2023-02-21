@@ -24,7 +24,7 @@ describe 'Versioned API examples' do
     # End Versioned API Example 1
 
     # Run a command to ensure the client works.
-    client['test'].find.to_a.should be_a(Array)
+    expect(client['test'].find.to_a).to be_a(Array)
     # Do not leak clients.
     client.close
   end
@@ -37,7 +37,7 @@ describe 'Versioned API examples' do
     # End Versioned API Example 2
 
     # Run a command to ensure the client works.
-    client['test'].find.to_a.should be_a(Array)
+    expect(client['test'].find.to_a).to be_a(Array)
     # Do not leak clients.
     client.close
   end
@@ -50,7 +50,7 @@ describe 'Versioned API examples' do
     # End Versioned API Example 3
 
     # Run a command to ensure the client works.
-    client['test'].find.to_a.should be_a(Array)
+    expect(client['test'].find.to_a).to be_a(Array)
     # Do not leak clients.
     client.close
   end
@@ -63,7 +63,7 @@ describe 'Versioned API examples' do
     # End Versioned API Example 4
 
     # Run a command to ensure the client works.
-    client['test'].find.to_a.should be_a(Array)
+    expect(client['test'].find.to_a).to be_a(Array)
     # Do not leak clients.
     client.close
   end

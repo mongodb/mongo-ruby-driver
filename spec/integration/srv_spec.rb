@@ -36,20 +36,20 @@ describe 'SRV lookup' do
 
     context 'DNS resolver not responding' do
       it 'fails to create client' do
-        lambda do
+        expect do
           client
-        end.should raise_error(Mongo::Error::NoSRVRecords, /The DNS query returned no SRV records for 'test-fake.test.build.10gen.cc'/)
+        end.to raise_error(Mongo::Error::NoSRVRecords, /The DNS query returned no SRV records for 'test-fake.test.build.10gen.cc'/)
       end
 
       it 'times out in connect_timeout' do
         start_time = Mongo::Utils.monotonic_time
 
-        lambda do
+        expect do
           client
-        end.should raise_error(Mongo::Error::NoSRVRecords)
+        end.to raise_error(Mongo::Error::NoSRVRecords)
 
         elapsed_time = Mongo::Utils.monotonic_time - start_time
-        elapsed_time.should > 4
+        expect(elapsed_time).to be > 4
         # The number of queries performed depends on local DNS search suffixes,
         # therefore we cannot reliably assert how long it would take for this
         # resolution to time out.

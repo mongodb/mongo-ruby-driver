@@ -276,7 +276,7 @@ describe Mongo::BulkWrite do
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                  end.to_not raise_error
                 end
               end
 
@@ -453,7 +453,7 @@ describe Mongo::BulkWrite do
                   it "doesn't raises an error" do
                     expect do
                       bulk_write.execute
-                    end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                    end.to_not raise_error
                   end
                 end
 
@@ -549,7 +549,7 @@ describe Mongo::BulkWrite do
                   it "doesn't raises an error" do
                     expect do
                       bulk_write.execute
-                    end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                    end.to_not raise_error
                   end
                 end
 
@@ -848,7 +848,7 @@ describe Mongo::BulkWrite do
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                  end.to_not raise_error
                 end
               end
 
@@ -1180,7 +1180,7 @@ describe Mongo::BulkWrite do
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                  end.to_not raise_error
                 end
               end
 

@@ -323,9 +323,9 @@ describe 'Client-Side Encryption' do
               }
               )
             rescue Mongo::Error::KmsError => exc
-              exc.message.should =~ /Error when connecting to KMS provider/
-              exc.message.should =~ /libmongocrypt error code/
-              exc.message.should_not =~ /CryptError/
+              expect(exc.message).to match(/Error when connecting to KMS provider/)
+              expect(exc.message).to match(/libmongocrypt error code/)
+              expect(exc.message).not_to match(/CryptError/)
             else
               fail 'Expected to raise KmsError'
             end

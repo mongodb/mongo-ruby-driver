@@ -28,23 +28,23 @@ describe 'Mongo::Collection#indexes / listIndexes prose tests' do
 
   it 'returns all index names' do
     %w(simple compound unique).each do |name|
-      index_list.detect do |spec|
+      expect(index_list.detect do |spec|
         spec['name'] = name
-      end.should be_a(Hash)
+      end).to be_a(Hash)
     end
   end
 
   it 'does not return duplicate or nonexistent index names' do
     # There are 4 total indexes: 3 that we explicitly defined + the
     # implicit index on _id.
-    index_list.length.should == 4
+    expect(index_list.length).to eq(4)
   end
 
   it 'returns the unique flag for unique index' do
     unique_index = index_list.detect do |spec|
       spec['name'] == 'unique'
     end
-    unique_index['unique'].should be true
+    expect(unique_index['unique']).to be true
   end
 
   it 'does not return the unique flag for non-unique index' do
@@ -52,7 +52,7 @@ describe 'Mongo::Collection#indexes / listIndexes prose tests' do
       index = index_list.detect do |spec|
         spec['name'] == name
       end
-      index['unique'].should be nil
+      expect(index['unique']).to be nil
     end
   end
 end

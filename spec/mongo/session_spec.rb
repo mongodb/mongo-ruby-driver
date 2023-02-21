@@ -362,7 +362,7 @@ describe Mongo::Session do
 
     it 'returns a session with session id' do
       session = authorized_client.start_session
-      session.session_id.should be_a(BSON::Document)
+      expect(session.session_id).to be_a(BSON::Document)
     end
   end
 end

@@ -15,13 +15,13 @@ describe Mongo::Socket::OcspVerifier do
         RSpec::Mocks.with_temporary_scope do
           expect_any_instance_of(Mongo::Socket::OcspVerifier).to receive(:do_verify).and_call_original
 
-          verifier.verify_with_cache.should be true
+          expect(verifier.verify_with_cache).to be true
         end
 
         RSpec::Mocks.with_temporary_scope do
           expect_any_instance_of(Mongo::Socket::OcspVerifier).not_to receive(:do_verify)
 
-          verifier.verify_with_cache.should be true
+          expect(verifier.verify_with_cache).to be true
         end
       end
     end
@@ -36,13 +36,13 @@ describe Mongo::Socket::OcspVerifier do
         RSpec::Mocks.with_temporary_scope do
           expect_any_instance_of(Mongo::Socket::OcspVerifier).to receive(:do_verify).and_call_original
 
-          verifier.verify.should be false
+          expect(verifier.verify).to be false
         end
 
         RSpec::Mocks.with_temporary_scope do
           expect_any_instance_of(Mongo::Socket::OcspVerifier).to receive(:do_verify).and_call_original
 
-          verifier.verify.should be false
+          expect(verifier.verify).to be false
         end
       end
     end
@@ -56,21 +56,21 @@ describe Mongo::Socket::OcspVerifier do
         RSpec::Mocks.with_temporary_scope do
           expect_any_instance_of(Mongo::Socket::OcspVerifier).to receive(:do_verify).and_call_original
 
-          lambda do
+          expect do
             verifier.verify
           # Redirect tests receive responses from port 8101,
           # tests without redirects receive responses from port 8100.
-          end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
+          end.to raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
         end
 
         RSpec::Mocks.with_temporary_scope do
           expect_any_instance_of(Mongo::Socket::OcspVerifier).not_to receive(:do_verify)
 
-          lambda do
+          expect do
             verifier.verify
           # Redirect tests receive responses from port 8101,
           # tests without redirects receive responses from port 8100.
-          end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
+          end.to raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
         end
       end
     end
@@ -85,13 +85,13 @@ describe Mongo::Socket::OcspVerifier do
         RSpec::Mocks.with_temporary_scope do
           expect_any_instance_of(Mongo::Socket::OcspVerifier).to receive(:do_verify).and_call_original
 
-          verifier.verify.should be false
+          expect(verifier.verify).to be false
         end
 
         RSpec::Mocks.with_temporary_scope do
           expect_any_instance_of(Mongo::Socket::OcspVerifier).to receive(:do_verify).and_call_original
 
-          verifier.verify.should be false
+          expect(verifier.verify).to be false
         end
       end
     end
@@ -102,13 +102,13 @@ describe Mongo::Socket::OcspVerifier do
       RSpec::Mocks.with_temporary_scope do
         expect_any_instance_of(Mongo::Socket::OcspVerifier).to receive(:do_verify).and_call_original
 
-        verifier.verify.should be false
+        expect(verifier.verify).to be false
       end
 
       RSpec::Mocks.with_temporary_scope do
         expect_any_instance_of(Mongo::Socket::OcspVerifier).to receive(:do_verify).and_call_original
 
-        verifier.verify.should be false
+        expect(verifier.verify).to be false
       end
     end
   end
@@ -153,9 +153,9 @@ describe Mongo::Socket::OcspVerifier do
         include_examples 'verifies'
 
         it 'does not wait for the timeout' do
-          lambda do
+          expect do
             verifier.verify
-          end.should take_shorter_than 3
+          end.to take_shorter_than 3
         end
       end
 
@@ -181,9 +181,9 @@ describe Mongo::Socket::OcspVerifier do
         include_examples 'does not verify'
 
         it 'does not wait for the timeout' do
-          lambda do
+          expect do
             verifier.verify
-          end.should take_shorter_than 3
+          end.to take_shorter_than 3
         end
       end
     end

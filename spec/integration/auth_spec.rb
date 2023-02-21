@@ -299,7 +299,7 @@ describe 'Auth' do
         begin
           connection.connect!
         rescue Mongo::Error::SocketError => exc
-          exc.service_id.should_not be nil
+          expect(exc.service_id).not_to be nil
         else
           fail 'Expected the SocketError to be raised'
         end

@@ -289,7 +289,7 @@ describe Mongo::URI::SRVProtocol do
         context 'without srvMaxHosts' do
           it 'returns an array with the parsed servers' do
             expect(uri.servers.length).to eq 2
-            uri.servers.should =~ hosts
+            expect(uri.servers).to match_array(hosts)
           end
 
           include_examples "roundtrips string"
@@ -309,7 +309,7 @@ describe Mongo::URI::SRVProtocol do
           let(:options) { '/?srvMaxHosts=3' }
           it 'returns an array with only one of the parsed servers' do
             expect(uri.servers.length).to eq 2
-            uri.servers.should =~ hosts
+            expect(uri.servers).to match_array(hosts)
           end
 
           include_examples "roundtrips string"
@@ -319,7 +319,7 @@ describe Mongo::URI::SRVProtocol do
           let(:options) { '/?srvMaxHosts=2' }
           it 'returns an array with only one of the parsed servers' do
             expect(uri.servers.length).to eq 2
-            uri.servers.should =~ hosts
+            expect(uri.servers).to match_array(hosts)
           end
 
           include_examples "roundtrips string"
@@ -329,7 +329,7 @@ describe Mongo::URI::SRVProtocol do
           let(:options) { '/?srvMaxHosts=0' }
           it 'returns an array with only one of the parsed servers' do
             expect(uri.servers.length).to eq 2
-            uri.servers.should =~ hosts
+            expect(uri.servers).to match_array(hosts)
           end
 
           include_examples "roundtrips string"
@@ -340,7 +340,7 @@ describe Mongo::URI::SRVProtocol do
           let(:options) { '/?srvServiceName=customname' }
 
           it 'returns an array with the parsed server' do
-            uri.servers.should =~ hosts
+            expect(uri.servers).to match_array(hosts)
           end
 
           include_examples "roundtrips string"

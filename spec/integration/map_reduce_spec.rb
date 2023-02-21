@@ -38,7 +38,7 @@ describe 'Map-reduce operations' do
       it 'is sent' do
         operation.to_a
 
-        event.command['$readPreference'].should == {'mode' => 'secondaryPreferred'}
+        expect(event.command['$readPreference']).to eq({'mode' => 'secondaryPreferred'})
       end
     end
 
@@ -51,7 +51,7 @@ describe 'Map-reduce operations' do
       it 'is sent' do
         operation.to_a
 
-        event.command['$readPreference'].should == {'mode' => 'secondaryPreferred'}
+        expect(event.command['$readPreference']).to eq({'mode' => 'secondaryPreferred'})
       end
     end
 
@@ -64,7 +64,7 @@ describe 'Map-reduce operations' do
       it 'is sent' do
         operation.to_a
 
-        event.command['$readPreference'].should == {'mode' => 'secondaryPreferred'}
+        expect(event.command['$readPreference']).to eq({'mode' => 'secondaryPreferred'})
       end
     end
   end
@@ -75,7 +75,7 @@ describe 'Map-reduce operations' do
     it 'is sent' do
       operation.to_a
 
-      event.command['lsid'].should_not be nil
+      expect(event.command['lsid']).not_to be nil
     end
   end
 end

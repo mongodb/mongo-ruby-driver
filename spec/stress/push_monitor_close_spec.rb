@@ -23,7 +23,7 @@ describe 'Push monitor close test' do
   end
 
   it 'does not warn/error on cleanup' do
-    Mongo::Logger.logger.should_not receive(:warn)
+    expect(Mongo::Logger.logger).not_to receive(:warn)
 
     threads = 10.times.map do
       Thread.new do

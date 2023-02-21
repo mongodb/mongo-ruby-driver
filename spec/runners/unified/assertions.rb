@@ -192,10 +192,10 @@ module Unified
       expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { $1.upcase }
       assert_eq(actual.class.name.sub(/.*::/, ''), expected_name, 'Event name does not match')
       if spec.use('hasServiceId')
-        actual.service_id.should_not be nil
+        expect(actual.service_id).not_to be nil
       end
       if spec.use('hasServerConnectionId')
-        actual.server_connection_id.should_not be nil
+        expect(actual.server_connection_id).not_to be nil
       end
       if db_name = spec.use('databaseName')
         assert_eq(actual.database_name, db_name, 'Database names differ')

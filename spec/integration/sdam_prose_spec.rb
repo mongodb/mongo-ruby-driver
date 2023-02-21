@@ -32,8 +32,8 @@ describe 'SDAM prose tests' do
 
       events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerHeartbeatSucceeded)
       events.each do |event|
-        event.round_trip_time.should be_a(Numeric)
-        event.round_trip_time.should > 0
+        expect(event.round_trip_time).to be_a(Numeric)
+        expect(event.round_trip_time).to be > 0
       end
 
       root_authorized_client.use('admin').database.command(

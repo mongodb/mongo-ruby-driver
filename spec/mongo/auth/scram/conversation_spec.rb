@@ -198,7 +198,7 @@ describe Mongo::Auth::Scram::Conversation do
         conversation.continue(continue_document, connection)
         conversation.process_continue_response(finalize_document)
         conversation.finalize(connection)
-        conversation.server_verified?.should be false
+        expect(conversation.server_verified?).to be false
       end
     end
   end

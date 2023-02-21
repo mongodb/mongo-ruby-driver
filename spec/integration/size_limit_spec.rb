@@ -26,9 +26,9 @@ describe 'BSON & command size limits' do
   it 'fails single write of oversized documents' do
     document = { key: 'a' * 17*1024*1024, _id: 'foo' }
 
-    lambda do
+    expect do
       authorized_collection.insert_one(document)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
   end
 
   # This test checks our bulk write splitting when documents are not close
@@ -42,7 +42,7 @@ describe 'BSON & command size limits' do
     end
 
     authorized_collection.insert_many(documents)
-    authorized_collection.count_documents.should == 8
+    expect(authorized_collection.count_documents).to eq(8)
   end
 
   # This test ensures that document which are too big definitely fail insertion.
@@ -52,10 +52,10 @@ describe 'BSON & command size limits' do
       documents << { key: 'a' * 17*1024*1024, _id: "in#{index}" }
     end
 
-    lambda do
+    expect do
       authorized_collection.insert_many(documents)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
-    authorized_collection.count_documents.should == 0
+    end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    expect(authorized_collection.count_documents).to eq(0)
   end
 
   it 'allows user-provided documents to be exactly 16MiB' do
@@ -72,36 +72,36 @@ describe 'BSON & command size limits' do
     document = { key: 'a' * (max_document_size - 27), _id: 'foo' }
     expect(document.to_bson.length).to eq(max_document_size+1)
 
-    lambda do
+    expect do
       authorized_collection.insert_one(document)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
   end
 
   it 'fails on the driver when an update larger than 16MiB is performed' do
     document = { "$set" => { key: 'a' * (max_document_size - 25) } }
     expect(document.to_bson.length).to eq(max_document_size+1)
 
-    lambda do
+    expect do
       authorized_collection.update_one({ _id: 'foo' }, document)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
   end
 
   it 'fails on the driver when an delete larger than 16MiB is performed' do
     document = { key: 'a' * (max_document_size - 14) }
     expect(document.to_bson.length).to eq(max_document_size+1)
 
-    lambda do
+    expect do
       authorized_collection.delete_one(document)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
   end
 
   it 'fails in the driver when a document larger than 16MiB+16KiB is inserted' do
     document = { key: 'a' * (max_document_size - 27 + 16*1024), _id: 'foo' }
     expect(document.to_bson.length).to eq(max_document_size+16*1024+1)
 
-    lambda do
+    expect do
       authorized_collection.insert_one(document)
-    end.should raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
+    end.to raise_error(Mongo::Error::MaxBSONSize, /The document exceeds maximum allowed BSON object size after serialization/)
   end
 
   it 'allows bulk writes of multiple documents of exactly 16 MiB each' do
@@ -113,6 +113,6 @@ describe 'BSON & command size limits' do
     end
 
     authorized_collection.insert_many(documents)
-    authorized_collection.count_documents.should == 3
+    expect(authorized_collection.count_documents).to eq(3)
   end
 end

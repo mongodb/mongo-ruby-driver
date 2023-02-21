@@ -31,13 +31,13 @@ describe 'AWS auth region tests' do
 
       if expected_region.is_a?(String)
         it 'derives expected region' do
-          request.region.should == expected_region
+          expect(request.region).to eq(expected_region)
         end
       else
         it 'fails with an error' do
-          lambda do
+          expect do
             request.region
-          end.should raise_error(expected_region)
+          end.to raise_error(expected_region)
         end
       end
     end

@@ -328,7 +328,7 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
                   test.expected_options,
                 )
-                actual.should == expected
+                expect(actual).to eq(expected)
               end
             end
 

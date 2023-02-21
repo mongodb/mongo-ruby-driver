@@ -22,9 +22,9 @@ describe Mongo::DistinguishingSemaphore do
     semaphore.signal
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should < 1
+    expect(Mongo::Utils.monotonic_time - start_time).to be < 1
 
-    result.should be true
+    expect(result).to be true
   end
 
   it 'waits until broadcast' do
@@ -41,9 +41,9 @@ describe Mongo::DistinguishingSemaphore do
     semaphore.broadcast
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should < 1
+    expect(Mongo::Utils.monotonic_time - start_time).to be < 1
 
-    result.should be true
+    expect(result).to be true
   end
 
   it 'times out' do
@@ -59,8 +59,8 @@ describe Mongo::DistinguishingSemaphore do
     start_time = Mongo::Utils.monotonic_time
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should > 1
+    expect(Mongo::Utils.monotonic_time - start_time).to be > 1
 
-    result.should be false
+    expect(result).to be false
   end
 end

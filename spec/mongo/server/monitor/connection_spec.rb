@@ -151,9 +151,9 @@ describe Mongo::Server::Monitor::Connection do
         connection
 
         expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
-        lambda do
+        expect do
           connection.connect!
-        end.should raise_error(SocketError, 'Test exception')
+        end.to raise_error(SocketError, 'Test exception')
       end
     end
   end

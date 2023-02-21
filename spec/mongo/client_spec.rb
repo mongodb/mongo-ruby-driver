@@ -560,7 +560,7 @@ describe Mongo::Client do
       end
 
       it 'is not transfered to the collection' do
-        database.options[:server_api].should be nil
+        expect(database.options[:server_api]).to be nil
       end
     end
 
@@ -1230,7 +1230,7 @@ describe Mongo::Client do
       end
 
       it 'indicates lack of monitoring' do
-        client.summary.should =~ /servers=.*UNKNOWN.*NO-MONITORING/
+        expect(client.summary).to match(/servers=.*UNKNOWN.*NO-MONITORING/)
       end
     end
 
@@ -1242,8 +1242,8 @@ describe Mongo::Client do
       end
 
       it 'does not indicate lack of monitoring' do
-        client.summary.should =~ /servers=.*(?:STANDALONE|PRIMARY|MONGOS)/
-        client.summary.should_not =~ /servers=.*(?:STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
+        expect(client.summary).to match(/servers=.*(?:STANDALONE|PRIMARY|MONGOS)/)
+        expect(client.summary).not_to match(/servers=.*(?:STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/)
       end
     end
 
@@ -1257,7 +1257,7 @@ describe Mongo::Client do
       end
 
       it 'does not indicate lack of monitoring' do
-        client.summary.should =~ /servers=.*(STANDALONE|PRIMARY|MONGOS|\bLB\b).*NO-MONITORING/
+        expect(client.summary).to match(/servers=.*(STANDALONE|PRIMARY|MONGOS|\bLB\b).*NO-MONITORING/)
       end
     end
   end

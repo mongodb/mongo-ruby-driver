@@ -79,13 +79,13 @@ describe Mongo::Auth::User::View do
       end
 
       it 'creates the user' do
-        view.info(username).should == []
+        expect(view.info(username)).to eq([])
 
-        lambda do
+        expect do
           response
-        end.should_not raise_error
+        end.not_to raise_error
 
-        view.info(username).first['user'].should == username
+        expect(view.info(username).first['user']).to eq(username)
       end
     end
 

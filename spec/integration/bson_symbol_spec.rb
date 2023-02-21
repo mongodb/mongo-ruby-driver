@@ -19,12 +19,12 @@ describe 'Symbol encoding to BSON' do
   end
 
   it 'encodes symbol to BSON symbol' do
-    serialized.should == expected
+    expect(serialized).to eq(expected)
   end
 
   it 'round-trips symbol values' do
     buffer = BSON::ByteBuffer.new(serialized)
-    Hash.from_bson(buffer).should == hash
+    expect(Hash.from_bson(buffer)).to eq(hash)
   end
 
   it 'round-trips symbol values using the same byte buffer' do
@@ -34,6 +34,6 @@ describe 'Symbol encoding to BSON' do
        'bson version 4.11.0. For more information, see https://jira.mongodb.org/browse/RUBY-2128'
     end
 
-    Hash.from_bson(hash.to_bson).should == hash
+    expect(Hash.from_bson(hash.to_bson)).to eq(hash)
   end
 end

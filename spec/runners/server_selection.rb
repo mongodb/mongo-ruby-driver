@@ -279,20 +279,20 @@ def define_server_selection_spec_tests(test_paths)
         if spec.server_available?
 
           it 'has non-empty suitable servers' do
-            spec.suitable_servers.should be_a(Array)
-            spec.suitable_servers.should_not be_empty
+            expect(spec.suitable_servers).to be_a(Array)
+            expect(spec.suitable_servers).not_to be_empty
           end
 
           if spec.in_latency_window.length == 1
 
             it 'selects the expected server' do
-              [server_selector.select_server(cluster)].should == in_latency_window
+              expect([server_selector.select_server(cluster)]).to eq(in_latency_window)
             end
 
           else
 
             it 'selects a server in the suitable list' do
-              in_latency_window.should include(server_selector.select_server(cluster))
+              expect(in_latency_window).to include(server_selector.select_server(cluster))
             end
 
             let(:expected_addresses) do
@@ -304,7 +304,7 @@ def define_server_selection_spec_tests(test_paths)
             end
 
             it 'identifies expected suitable servers' do
-              actual_addresses.should == expected_addresses
+              expect(actual_addresses).to eq(expected_addresses)
             end
 
           end
@@ -340,7 +340,7 @@ def define_server_selection_spec_tests(test_paths)
             end
 
             it 'identifies expected suitable servers' do
-              actual_addresses.should == expected_addresses
+              expect(actual_addresses).to eq(expected_addresses)
             end
           end
 

@@ -292,7 +292,7 @@ describe Mongo::Server::Monitor do
       let(:expected_message) { "MONGODB | Failed to handshake with #{address}: Mongo::Error::SocketError: test error" }
 
       before do
-        monitor.connection.should be nil
+        expect(monitor.connection).to be nil
       end
 
       it 'logs a warning' do
@@ -306,9 +306,9 @@ describe Mongo::Server::Monitor do
           messages << msg
         end
 
-        monitor.scan!.should be_unknown
+        expect(monitor.scan!).to be_unknown
 
-        messages.any? { |msg| msg.include?(expected_message) }.should be true
+        expect(messages.any? { |msg| msg.include?(expected_message) }).to be true
       end
 
       it 'adds server diagnostics' do

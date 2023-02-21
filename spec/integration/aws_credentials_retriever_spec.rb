@@ -22,12 +22,12 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
 
     shared_examples_for 'retrieves the credentials' do
       it 'retrieves' do
-        credentials.should be_a(Mongo::Auth::Aws::Credentials)
+        expect(credentials).to be_a(Mongo::Auth::Aws::Credentials)
 
         # When user is not given, credentials retrieved are always temporary.
-        retriever.credentials.access_key_id.should =~ /^ASIA/
-        retriever.credentials.secret_access_key.should =~ /./
-        retriever.credentials.session_token.should =~ /./
+        expect(retriever.credentials.access_key_id).to match(/^ASIA/)
+        expect(retriever.credentials.secret_access_key).to match(/./)
+        expect(retriever.credentials.session_token).to match(/./)
       end
 
       let(:request) do
@@ -68,9 +68,9 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
         end
 
         it 'raises an error' do
-          lambda do
+          expect do
             credentials
-          end.should raise_error(Mongo::Auth::Aws::CredentialsNotFound, /Could not locate AWS credentials/)
+          end.to raise_error(Mongo::Auth::Aws::CredentialsNotFound, /Could not locate AWS credentials/)
         end
       end
 

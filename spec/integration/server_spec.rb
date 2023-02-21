@@ -56,9 +56,9 @@ describe 'Server' do
 
         it 'is unusable' do
           # See also RUBY-3102.
-          lambda do
+          expect do
             view.send(:send_initial_query, server)
-          end.should raise_error(Mongo::Error::ServerNotUsable)
+          end.to raise_error(Mongo::Error::ServerNotUsable)
         end
       end
     end

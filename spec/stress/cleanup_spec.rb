@@ -45,10 +45,10 @@ describe 'Cleanup stress test' do
       # Allow a few to be leaked, run more iterations to ensure the leak
       # is not a real one.
       # Sometimes we end with fewer fds than we started with also...
-      end_resources[:open_file_count].should >= start_resources[:open_file_count] - 3
-      end_resources[:open_file_count].should <= start_resources[:open_file_count] + 3
+      expect(end_resources[:open_file_count]).to be >= start_resources[:open_file_count] - 3
+      expect(end_resources[:open_file_count]).to be <= start_resources[:open_file_count] + 3
 
-      end_resources[:running_thread_count].should == start_resources[:running_thread_count]
+      expect(end_resources[:running_thread_count]).to eq(start_resources[:running_thread_count])
     end
   end
 

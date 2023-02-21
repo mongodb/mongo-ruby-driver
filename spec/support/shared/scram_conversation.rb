@@ -21,7 +21,7 @@ shared_examples 'scram conversation' do
 
     shared_examples_for 'parses as expected' do
       it 'parses as expected' do
-        conversation.send(:parse_payload, payload).should == expected
+        expect(conversation.send(:parse_payload, payload)).to eq(expected)
       end
     end
 
@@ -65,9 +65,9 @@ shared_examples 'scram conversation' do
       let(:payload) { '=bar' }
 
       it 'raises an exception' do
-        lambda do
+        expect do
           conversation.send(:parse_payload, payload)
-        end.should raise_error(Mongo::Error::InvalidServerAuthResponse, /Payload malformed: missing key/)
+        end.to raise_error(Mongo::Error::InvalidServerAuthResponse, /Payload malformed: missing key/)
       end
     end
 

@@ -1224,7 +1224,7 @@ describe 'QueryCache' do
 
         partial_first_iteration
 
-        authorized_collection.find.to_a.length.should == 5
+        expect(authorized_collection.find.to_a.length).to eq(5)
       end
 
     end
@@ -1236,7 +1236,7 @@ describe 'QueryCache' do
           called = true
           break
         end
-        called.should be true
+        expect(called).to be true
       end
 
       include_examples 'retrieves full result set on second iteration'

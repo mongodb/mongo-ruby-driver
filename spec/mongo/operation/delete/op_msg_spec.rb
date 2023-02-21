@@ -166,7 +166,7 @@ describe Mongo::Operation::Delete::OpMsg do
           let(:session) do
             Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
               allow(session).to receive(:session_id).and_return(42)
-              session.should be_implicit
+              expect(session).to be_implicit
             end
           end
 
@@ -193,7 +193,7 @@ describe Mongo::Operation::Delete::OpMsg do
           let(:session) do
             Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
               allow(session).to receive(:session_id).and_return(42)
-              session.should be_implicit
+              expect(session).to be_implicit
             end
           end
 
@@ -242,7 +242,7 @@ describe Mongo::Operation::Delete::OpMsg do
           end
 
           before do
-            session.should_not be_implicit
+            expect(session).not_to be_implicit
           end
 
           let(:expected_global_args) do

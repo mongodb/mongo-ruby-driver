@@ -1024,7 +1024,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'returns 0' do
-        view.estimated_document_count.should == 0
+        expect(view.estimated_document_count).to eq(0)
       end
     end
 
@@ -1156,7 +1156,7 @@ describe Mongo::Collection::View::Readable do
           authorized_collection.count_documents({}, session: session)
 
           event = subscriber.single_command_started_event('aggregate')
-          event.command['lsid'].should == session_id
+          expect(event.command['lsid']).to eq(session_id)
         end
       end
     end
@@ -1942,7 +1942,7 @@ describe Mongo::Collection::View::Readable do
 
       it 'is sent to server' do
         new_view.to_a
-        event.command.slice('noCursorTimeout').should == {'noCursorTimeout' => true}
+        expect(event.command.slice('noCursorTimeout')).to eq({'noCursorTimeout' => true})
       end
     end
 

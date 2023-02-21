@@ -40,7 +40,7 @@ describe Mongo::Server::ConnectionCommon do
       end
 
       it 'includes loadBalanced: true' do
-        document['loadBalanced'].should be true
+        expect(document['loadBalanced']).to be true
       end
     end
   end

@@ -46,12 +46,12 @@ describe 'Transaction pinning' do
         session = client.start_session
         session.start_transaction
         client["tx_pin_t#{i}"].insert_one({test: 1}, session: session)
-        session.pinned_server.should be_a(Mongo::Server)
+        expect(session.pinned_server).to be_a(Mongo::Server)
         sessions << session
         connections << server.pool.check_out
       end
 
-      server.pool.size.should == 4
+      expect(server.pool.size).to eq(4)
 
       connections.each do |c|
         server.pool.check_in(c)
@@ -84,17 +84,17 @@ describe 'Transaction pinning' do
         session = client.start_session
         session.start_transaction
         client["tx_pin"].insert_one({test: 1}, session: session)
-        session.pinned_server.should be nil
-        session.pinned_connection_global_id.should_not be nil
+        expect(session.pinned_server).to be nil
+        expect(session.pinned_connection_global_id).not_to be nil
 
-        server.pool.size.should == 1
+        expect(server.pool.size).to eq(1)
         service_id = server.pool.instance_variable_get(:@available_connections).first.service_id
         server.pool.clear(service_id: service_id)
-        server.pool.size.should == 0
+        expect(server.pool.size).to eq(0)
 
-        lambda do
+        expect do
           client["tx_pin"].insert_one({test: 2}, session: session)
-        end.should raise_error(Mongo::Error::MissingConnection)
+        end.to raise_error(Mongo::Error::MissingConnection)
       end
     end
 
@@ -112,13 +112,13 @@ describe 'Transaction pinning' do
           session = client.start_session
           session.start_transaction
           client["tx_pin_t#{i}"].insert_one({test: 1}, session: session)
-          session.pinned_server.should be nil
-          session.pinned_connection_global_id.should_not be nil
+          expect(session.pinned_server).to be nil
+          expect(session.pinned_connection_global_id).not_to be nil
           sessions << session
           connections << server.pool.check_out
         end
 
-        server.pool.size.should == 4
+        expect(server.pool.size).to eq(4)
 
         connections.each do |c|
           server.pool.check_in(c)

@@ -133,20 +133,20 @@ describe Mongo::Server::Connection do
 
           let(:first_pending_connection) do
             double('pending connection 1').tap do |conn|
-              conn.should receive(:handshake_and_authenticate!).and_raise(exception)
+              expect(conn).to receive(:handshake_and_authenticate!).and_raise(exception)
             end
           end
 
           let(:second_pending_connection) do
             double('pending connection 2').tap do |conn|
-              conn.should receive(:handshake_and_authenticate!).and_raise(ConnectionSpecTestException)
+              expect(conn).to receive(:handshake_and_authenticate!).and_raise(ConnectionSpecTestException)
             end
           end
 
           it 'attempts to reconnect if asked to connect again' do
             RSpec::Mocks.with_temporary_scope do
-              Mongo::Server::PendingConnection.should receive(:new).ordered.and_return(first_pending_connection)
-              Mongo::Server::PendingConnection.should receive(:new).ordered.and_return(second_pending_connection)
+              expect(Mongo::Server::PendingConnection).to receive(:new).ordered.and_return(first_pending_connection)
+              expect(Mongo::Server::PendingConnection).to receive(:new).ordered.and_return(second_pending_connection)
 
               expect do
                 connection.connect!
@@ -164,7 +164,7 @@ describe Mongo::Server::Connection do
         it_behaves_like 'failing connection'
 
         it 'adds server diagnostics' do
-          error.message.should =~ /on #{connection.address}/
+          expect(error.message).to match(/on #{connection.address}/)
         end
       end
 
@@ -179,7 +179,7 @@ describe Mongo::Server::Connection do
 
           expect(error).not_to be nil
 
-          messages.any? { |msg| msg.include?(expected_message) }.should be true
+          expect(messages.any? { |msg| msg.include?(expected_message) }).to be true
         end
 
       end
@@ -195,7 +195,7 @@ describe Mongo::Server::Connection do
 
           expect(error).not_to be nil
 
-          messages.any? { |msg| msg =~ /on #{connection.address}/ }.should be true
+          expect(messages.any? { |msg| msg =~ /on #{connection.address}/ }).to be true
         end
 
       end
@@ -690,7 +690,7 @@ describe Mongo::Server::Connection do
           connection.dispatch([ msg0 ], context)
         }.to raise_error(Mongo::Error::UnexpectedResponse)
 
-        connection.should be_error
+        expect(connection).to be_error
       end
 
       it 'makes the connection no longer usable' do
@@ -791,7 +791,7 @@ describe Mongo::Server::Connection do
           require_topology :load_balanced
 
           it 'disconnects connection pool for service id' do
-            connection.global_id.should_not be nil
+            expect(connection.global_id).not_to be nil
 
             RSpec::Mocks.with_temporary_scope do
               expect(server.pool).to receive(:disconnect!).with(
@@ -1238,8 +1238,8 @@ describe Mongo::Server::Connection do
 
       it 'is set' do
         server.with_connection do |conn|
-          conn.service_id.should be nil
-          conn.generation.should be_a(Integer)
+          expect(conn.service_id).to be nil
+          expect(conn.generation).to be_a(Integer)
         end
       end
 
@@ -1252,8 +1252,8 @@ describe Mongo::Server::Connection do
 
         it 'starts from 1' do
           server.with_connection do |conn|
-            conn.service_id.should be nil
-            conn.generation.should == 1
+            expect(conn.service_id).to be nil
+            expect(conn.generation).to eq(1)
           end
         end
       end
@@ -1264,8 +1264,8 @@ describe Mongo::Server::Connection do
 
       it 'is set' do
         server.with_connection do |conn|
-          conn.service_id.should_not be nil
-          conn.generation.should be_a(Integer)
+          expect(conn.service_id).not_to be nil
+          expect(conn.generation).to be_a(Integer)
         end
       end
 
@@ -1274,8 +1274,8 @@ describe Mongo::Server::Connection do
 
         it 'starts from 1' do
           server.with_connection do |conn|
-            conn.service_id.should_not be nil
-            conn.generation.should == 1
+            expect(conn.service_id).not_to be nil
+            expect(conn.generation).to eq(1)
           end
         end
       end

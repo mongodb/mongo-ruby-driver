@@ -119,7 +119,7 @@ describe 'Client construction' do
       let(:response) { client.command(ismaster: 1).documents.first }
 
       it 'connects' do
-        response.fetch('arbiterOnly').should be true
+        expect(response.fetch('arbiterOnly')).to be true
       end
     end
   end
@@ -237,20 +237,20 @@ describe 'Client construction' do
           # the minimum was requested by application for its own needs.
           it 'uses min pool size 0 for key vault client' do
             key_vault_client = client.encrypter.key_vault_client
-            key_vault_client.options[:min_pool_size].should be 0
+            expect(key_vault_client.options[:min_pool_size]).to be 0
           end
         end
 
         context 'when top-level max pool size is not specified' do
           before do
-            client.options[:max_pool_size].should be nil
+            expect(client.options[:max_pool_size]).to be nil
           end
 
           include_examples 'limited connection pool'
 
           it 'uses unspecified max pool size for key vault client' do
             key_vault_client = client.encrypter.key_vault_client
-            key_vault_client.options[:max_pool_size].should be nil
+            expect(key_vault_client.options[:max_pool_size]).to be nil
           end
         end
 
@@ -266,7 +266,7 @@ describe 'Client construction' do
 
           it 'uses the same max pool size for key vault client' do
             key_vault_client = client.encrypter.key_vault_client
-            key_vault_client.options[:max_pool_size].should be 42
+            expect(key_vault_client.options[:max_pool_size]).to be 42
           end
         end
       end
@@ -280,7 +280,7 @@ describe 'Client construction' do
         end
 
         before do
-          client.options[:max_pool_size].should be 0
+          expect(client.options[:max_pool_size]).to be 0
         end
 
         include_examples 'creates a working key vault client'
@@ -341,13 +341,13 @@ describe 'Client construction' do
       end
 
       it 'creates the client successfully' do
-        client.should be_a(Mongo::Client)
+        expect(client).to be_a(Mongo::Client)
       end
 
       it 'fails all operations' do
-        lambda do
+        expect do
           client.command(ping: true)
-        end.should raise_error(Mongo::Error::BadLoadBalancerTarget)
+        end.to raise_error(Mongo::Error::BadLoadBalancerTarget)
       end
     end
   end
@@ -368,13 +368,13 @@ describe 'Client construction' do
       end
 
       it 'creates the client successfully' do
-        client.should be_a(Mongo::Client)
+        expect(client).to be_a(Mongo::Client)
       end
 
       it 'fails all operations' do
-        lambda do
+        expect do
           client.command(ping: true)
-        end.should raise_error(Mongo::Error::MissingServiceId)
+        end.to raise_error(Mongo::Error::MissingServiceId)
       end
     end
   end

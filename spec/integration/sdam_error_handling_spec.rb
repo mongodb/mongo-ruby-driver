@@ -243,7 +243,7 @@ describe 'SDAM error handling' do
             allow(socket).to receive(:getsockopt)
             allow(socket).to receive(:connect)
             allow(socket).to receive(:close)
-            socket.should receive(:write).and_raise(raw_error_cls, 'mocked failure')
+            expect(socket).to receive(:write).and_raise(raw_error_cls, 'mocked failure')
           end
         end
 
@@ -254,13 +254,13 @@ describe 'SDAM error handling' do
 
           RSpec::Mocks.with_temporary_scope do
 
-            Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
+            expect(Socket).to receive(:new).with(any_args).ordered.once.and_return(socket)
             allow(pool).to receive(:paused?).and_return(false)
-            lambda do
+            expect do
               client.command(ping: 1)
-            end.should raise_error(mapped_error_cls, /mocked failure/)
+            end.to raise_error(mapped_error_cls, /mocked failure/)
 
-            server.should be_unknown
+            expect(server).to be_unknown
           end
         end
 
@@ -270,12 +270,12 @@ describe 'SDAM error handling' do
 
           RSpec::Mocks.with_temporary_scope do
 
-            Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
-            Socket.should receive(:new).with(any_args).ordered.once.and_call_original
+            expect(Socket).to receive(:new).with(any_args).ordered.once.and_return(socket)
+            expect(Socket).to receive(:new).with(any_args).ordered.once.and_call_original
 
-            lambda do
+            expect do
               client.command(ping: 1)
-            end.should raise_error(mapped_error_cls, /mocked failure/)
+            end.to raise_error(mapped_error_cls, /mocked failure/)
 
             client.command(ping: 1)
           end
@@ -315,18 +315,18 @@ describe 'SDAM error handling' do
 
         #subscriber.clear_events!
         events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
-        events.should be_empty
+        expect(events).to be_empty
 
         RSpec::Mocks.with_temporary_scope do
           operation
 
           events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
-          events.should_not be_empty
+          expect(events).not_to be_empty
           event = events.detect do |event|
             event.new_description.address == server.address &&
             event.new_description.unknown?
           end
-          event.should_not be_nil
+          expect(event).not_to be_nil
         end
       end
     end
@@ -335,17 +335,17 @@ describe 'SDAM error handling' do
       it 'clears connection pool' do
         #subscriber.clear_events!
         events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
-        events.should be_empty
+        expect(events).to be_empty
 
         RSpec::Mocks.with_temporary_scope do
           operation
 
           events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
-          events.should_not be_empty
+          expect(events).not_to be_empty
           event = events.detect do |event|
             event.address == server.address
           end
-          event.should_not be_nil
+          expect(event).not_to be_nil
         end
       end
     end

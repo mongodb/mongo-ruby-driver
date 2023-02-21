@@ -617,17 +617,17 @@ describe Mongo::Cluster do
   describe '#validate_session_support!' do
     shared_examples 'supports sessions' do
       it 'supports sessions' do
-        lambda do
+        expect do
           cluster.validate_session_support!
-        end.should_not raise_error
+        end.not_to raise_error
       end
     end
 
     shared_examples 'does not support sessions' do
       it 'does not support sessions' do
-        lambda do
+        expect do
           cluster.validate_session_support!
-        end.should raise_error(Mongo::Error::SessionsNotSupported)
+        end.to raise_error(Mongo::Error::SessionsNotSupported)
       end
     end
 

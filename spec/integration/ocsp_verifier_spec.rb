@@ -14,7 +14,7 @@ describe Mongo::Socket::OcspVerifier do
       fails_on_jruby
 
       it 'verifies' do
-        verifier.verify.should be true
+        expect(verifier.verify).to be true
       end
     end
 
@@ -25,7 +25,7 @@ describe Mongo::Socket::OcspVerifier do
       # any validation.
       # https://github.com/jruby/jruby-openssl/issues/210
       it 'does not verify' do
-        verifier.verify.should be false
+        expect(verifier.verify).to be false
       end
     end
   end
@@ -35,19 +35,19 @@ describe Mongo::Socket::OcspVerifier do
       fails_on_jruby
 
       it 'raises an exception' do
-        lambda do
+        expect do
           verifier.verify
         # Redirect tests receive responses from port 8101,
         # tests without redirects receive responses from port 8100.
-        end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
+        end.to raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
       end
 
       it 'does not wait for the timeout' do
-        lambda do
-          lambda do
+        expect do
+          expect do
             verifier.verify
-          end.should raise_error(Mongo::Error::ServerCertificateRevoked)
-        end.should take_shorter_than 7
+          end.to raise_error(Mongo::Error::ServerCertificateRevoked)
+        end.to take_shorter_than 7
       end
     end
 
@@ -58,14 +58,14 @@ describe Mongo::Socket::OcspVerifier do
       # any validation.
       # https://github.com/jruby/jruby-openssl/issues/210
       it 'does not verify' do
-        verifier.verify.should be false
+        expect(verifier.verify).to be false
       end
     end
   end
 
   shared_examples 'does not verify' do
     it 'does not verify and does not raise an exception' do
-      verifier.verify.should be false
+      expect(verifier.verify).to be false
     end
   end
 
@@ -104,9 +104,9 @@ describe Mongo::Socket::OcspVerifier do
         it 'does not wait for the timeout' do
           # Loopback interface should be refusing connections, which will make
           # the operation complete quickly.
-          lambda do
+          expect do
             verifier.verify
-          end.should take_shorter_than 7
+          end.to take_shorter_than 7
         end
       end
 
@@ -127,9 +127,9 @@ describe Mongo::Socket::OcspVerifier do
             include_examples 'verifies'
 
             it 'does not wait for the timeout' do
-              lambda do
+              expect do
                 verifier.verify
-              end.should take_shorter_than 7
+              end.to take_shorter_than 7
             end
           end
 
@@ -155,9 +155,9 @@ describe Mongo::Socket::OcspVerifier do
             include_examples 'does not verify'
 
             it 'does not wait for the timeout' do
-              lambda do
+              expect do
                 verifier.verify
-              end.should take_shorter_than 7
+              end.to take_shorter_than 7
             end
           end
         end
@@ -203,9 +203,9 @@ describe Mongo::Socket::OcspVerifier do
         include_examples 'verifies'
 
         it 'does not wait for the timeout' do
-          lambda do
+          expect do
             verifier.verify
-          end.should take_shorter_than 7
+          end.to take_shorter_than 7
         end
       end
 
@@ -233,9 +233,9 @@ describe Mongo::Socket::OcspVerifier do
         include_examples 'does not verify'
 
         it 'does not wait for the timeout' do
-          lambda do
+          expect do
             verifier.verify
-          end.should take_shorter_than 7
+          end.to take_shorter_than 7
         end
       end
     end
@@ -346,13 +346,13 @@ describe Mongo::Socket::OcspVerifier do
     end
 
     before do
-      verifier.ocsp_uris.length.should > 0
-      URI.parse(verifier.ocsp_uris.first).path.should == ''
+      expect(verifier.ocsp_uris.length).to be > 0
+      expect(URI.parse(verifier.ocsp_uris.first).path).to eq('')
     end
 
     it 'verifies' do
       # TODO This test will fail if the certificate expires
-      verifier.verify.should be true
+      expect(verifier.verify).to be true
     end
   end
 end

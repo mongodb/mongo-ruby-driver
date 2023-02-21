@@ -32,7 +32,7 @@ describe 'Server selection' do
       end
 
       it 'selects the server' do
-        client['nonexistent'].count.should == 0
+        expect(client['nonexistent'].count).to eq(0)
       end
     end
   end

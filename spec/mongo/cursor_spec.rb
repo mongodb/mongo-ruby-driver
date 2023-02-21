@@ -104,9 +104,9 @@ describe Mongo::Cursor do
       end
 
       it 'raises ServerNotUsable' do
-        lambda do
+        expect do
           cursor
-        end.should raise_error(Mongo::Error::ServerNotUsable)
+        end.to raise_error(Mongo::Error::ServerNotUsable)
       end
     end
   end
@@ -555,7 +555,7 @@ describe Mongo::Cursor do
 
         it 'returns the session to the cluster session pool' do
           # Iterate fully and assert that there are 4 documents total
-          enum.to_a.length.should == 4
+          expect(enum.to_a.length).to eq(4)
           expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
           expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
         end

@@ -73,12 +73,12 @@ describe 'SDAM events' do
 
         started_events = subscriber.select_started_events(Mongo::Monitoring::Event::ServerHeartbeatStarted)
         # Expect about 8 events, maybe 9 or 7
-        started_events.length.should >= 6
-        started_events.length.should <= 10
+        expect(started_events.length).to be >= 6
+        expect(started_events.length).to be <= 10
 
         succeeded_events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerHeartbeatSucceeded)
-        started_events.length.should > 1
-        (succeeded_events.length..succeeded_events.length+1).should include(started_events.length)
+        expect(started_events.length).to be > 1
+        expect(succeeded_events.length..succeeded_events.length+1).to include(started_events.length)
       end
     end
 
@@ -112,26 +112,26 @@ describe 'SDAM events' do
         # We could have up to 16 events and should have no fewer than 8 events.
         # Whenever an awaited hello succeeds while the regular monitor is
         # waiting, the regular monitor's next scan is pushed forward.
-        started_events.length.should >= 6
-        started_events.length.should <= 18
-        (started_awaited = started_events.select(&:awaited?)).should_not be_empty
-        (started_regular = started_events.reject(&:awaited?)).should_not be_empty
+        expect(started_events.length).to be >= 6
+        expect(started_events.length).to be <= 18
+        expect(started_awaited = started_events.select(&:awaited?)).not_to be_empty
+        expect(started_regular = started_events.reject(&:awaited?)).not_to be_empty
 
         completed_events = subscriber.select_completed_events(
           Mongo::Monitoring::Event::ServerHeartbeatSucceeded,
           Mongo::Monitoring::Event::ServerHeartbeatFailed,
         )
-        completed_events.length.should >= 6
-        completed_events.length.should <= 18
-        (succeeded_awaited = completed_events.select(&:awaited?)).should_not be_empty
-        (succeeded_regular = completed_events.reject(&:awaited?)).should_not be_empty
+        expect(completed_events.length).to be >= 6
+        expect(completed_events.length).to be <= 18
+        expect(succeeded_awaited = completed_events.select(&:awaited?)).not_to be_empty
+        expect(succeeded_regular = completed_events.reject(&:awaited?)).not_to be_empty
 
         # There may be in-flight hellos that don't complete, both
         # regular and awaited.
-        started_awaited.length.should > 1
-        (succeeded_awaited.length..succeeded_awaited.length+1).should include(started_awaited.length)
-        started_regular.length.should > 1
-        (succeeded_regular.length..succeeded_regular.length+1).should include(started_regular.length)
+        expect(started_awaited.length).to be > 1
+        expect(succeeded_awaited.length..succeeded_awaited.length+1).to include(started_awaited.length)
+        expect(started_regular.length).to be > 1
+        expect(succeeded_regular.length..succeeded_regular.length+1).to include(started_regular.length)
       end
     end
   end
@@ -171,8 +171,8 @@ describe 'SDAM events' do
       # The first one from unknown to known,
       # The second one because server changes the fields it returns based on
       # driver server check payload (e.g. ismaster/isWritablePrimary).
-      events.length.should >= 1
-      events.length.should <= 2
+      expect(events.length).to be >= 1
+      expect(events.length).to be <= 2
     end
   end
 end

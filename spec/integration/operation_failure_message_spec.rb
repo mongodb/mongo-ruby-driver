@@ -22,8 +22,8 @@ describe 'OperationFailure message' do
             client.command(bogus_command: nil)
             fail('Should have raised')
           rescue Mongo::Error::OperationFailure => e
-            e.code_name.should == 'CommandNotFound'
-            e.message.should =~ %r,\A\[59:CommandNotFound\]: no such (?:command|cmd): '?bogus_command'?,
+            expect(e.code_name).to eq('CommandNotFound')
+            expect(e.message).to match(%r,\A\[59:CommandNotFound\]: no such (?:command|cmd): '?bogus_command'?,)
           end
         end
       end
@@ -36,8 +36,8 @@ describe 'OperationFailure message' do
             client.command(bogus_command: nil)
             fail('Should have raised')
           rescue Mongo::Error::OperationFailure => e
-            e.code_name.should be nil
-            e.message.should =~ %r,\A\[59\]: no such (?:command|cmd): '?bogus_command'?,
+            expect(e.code_name).to be nil
+            expect(e.message).to match(%r,\A\[59\]: no such (?:command|cmd): '?bogus_command'?,)
           end
         end
       end
@@ -53,8 +53,8 @@ describe 'OperationFailure message' do
           collection.insert_one(_id: 1)
           fail('Should have raised')
         rescue Mongo::Error::OperationFailure => e
-          e.code_name.should be nil
-          e.message.should =~ %r,\A\[11000\]: (?:insertDocument :: caused by :: 11000 )?E11000 duplicate key error (?:collection|index):,
+          expect(e.code_name).to be nil
+          expect(e.message).to match(%r,\A\[11000\]: (?:insertDocument :: caused by :: 11000 )?E11000 duplicate key error (?:collection|index):,)
         end
       end
     end
@@ -71,9 +71,9 @@ describe 'OperationFailure message' do
       min_server_fcv '3.4'
 
       it 'includes code and code name in the message' do
-        lambda do
+        expect do
           client.command(ping: 1)
-        end.should raise_error(Mongo::Auth::Unauthorized, /User bogus.*is not authorized.*\[18:AuthenticationFailed\]: Authentication failed/)
+        end.to raise_error(Mongo::Auth::Unauthorized, /User bogus.*is not authorized.*\[18:AuthenticationFailed\]: Authentication failed/)
       end
     end
 
@@ -81,9 +81,9 @@ describe 'OperationFailure message' do
       max_server_version '3.2'
 
       it 'includes code only in the message' do
-        lambda do
+        expect do
           client.command(ping: 1)
-        end.should raise_error(Mongo::Auth::Unauthorized, /User bogus.*is not authorized.*\[18\]: (?:Authentication|auth) failed/)
+        end.to raise_error(Mongo::Auth::Unauthorized, /User bogus.*is not authorized.*\[18\]: (?:Authentication|auth) failed/)
       end
     end
   end

@@ -1301,9 +1301,9 @@ describe Mongo::URI do
       let(:options) { "srvMaxHosts=#{srv_max_hosts}" }
 
       it 'raises an error' do
-        lambda do
+        expect do
           uri
-        end.should raise_error(Mongo::Error::InvalidURI)
+        end.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
@@ -1314,9 +1314,9 @@ describe Mongo::URI do
       let(:options) { "srvServiceName=#{srv_service_name}" }
 
       it 'raises an error' do
-        lambda do
+        expect do
           uri
-        end.should raise_error(Mongo::Error::InvalidURI)
+        end.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 

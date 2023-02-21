@@ -201,9 +201,9 @@ describe 'Connections' do
             expect(::Socket).to receive(:new).with(
               Socket::AF_INET, Socket::SOCK_STREAM, 0).and_return(socket)
 
-            lambda do
+            expect do
               connection.connect!
-            end.should raise_error(Mongo::Error::SocketError, /test error/)
+            end.to raise_error(Mongo::Error::SocketError, /test error/)
           end
         end
 
@@ -225,9 +225,9 @@ describe 'Connections' do
             RSpec::Mocks.with_temporary_scope do
               expect(OpenSSL::SSL::SSLSocket).to receive(:new).and_return(socket)
 
-              lambda do
+              expect do
                 connection.connect!
-              end.should raise_error(Mongo::Error::SocketError, /test error/)
+              end.to raise_error(Mongo::Error::SocketError, /test error/)
             end
           end
         end
@@ -298,8 +298,8 @@ describe 'Connections' do
           client['test'].insert_one(test: 1)
 
           server = client.cluster.servers.first
-          server.load_balancer?.should be true
-          server.features.server_wire_versions.max.should be 0
+          expect(server.load_balancer?).to be true
+          expect(server.features.server_wire_versions.max).to be 0
         end
       end
     end

@@ -37,11 +37,11 @@ describe Mongo::Server::RoundTripTimeAverager do
     context 'block raises' do
       it 'does not update average rtt' do
         expect(averager).not_to receive(:update_average_round_trip_time)
-        lambda do
+        expect do
           averager.measure do
             raise "Problem"
           end
-        end.should raise_error(/Problem/)
+        end.to raise_error(/Problem/)
       end
     end
   end

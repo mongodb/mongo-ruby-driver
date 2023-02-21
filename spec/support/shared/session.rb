@@ -136,7 +136,7 @@ shared_examples 'an explicit session with an unacknowledged write' do
     it 'does not add a session id to the operation' do
       subscriber.clear_events!
       operation
-      subscriber.non_auth_command_started_events.length.should == 1
+      expect(subscriber.non_auth_command_started_events.length).to eq(1)
       expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end
@@ -152,7 +152,7 @@ shared_examples 'an explicit session with an unacknowledged write' do
       expect(Mongo::Session).not_to receive(:new)
       subscriber.clear_events!
       operation
-      subscriber.non_auth_command_started_events.length.should == 1
+      expect(subscriber.non_auth_command_started_events.length).to eq(1)
       expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end
@@ -166,7 +166,7 @@ shared_examples 'an implicit session with an unacknowledged write' do
     it 'does not add a session id to the operation' do
       subscriber.clear_events!
       operation
-      subscriber.non_auth_command_started_events.length.should == 1
+      expect(subscriber.non_auth_command_started_events.length).to eq(1)
       expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end
@@ -177,7 +177,7 @@ shared_examples 'an implicit session with an unacknowledged write' do
     it 'does not add a session id to the operation' do
       subscriber.clear_events!
       operation
-      subscriber.non_auth_command_started_events.length.should == 1
+      expect(subscriber.non_auth_command_started_events.length).to eq(1)
       expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end

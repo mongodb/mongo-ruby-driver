@@ -173,7 +173,7 @@ describe Mongo::Operation::Update::OpMsg do
           let(:session) do
             Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
               allow(session).to receive(:session_id).and_return(42)
-              session.should be_implicit
+              expect(session).to be_implicit
             end
           end
 
@@ -199,7 +199,7 @@ describe Mongo::Operation::Update::OpMsg do
           let(:session) do
             Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
               allow(session).to receive(:session_id).and_return(42)
-              session.should be_implicit
+              expect(session).to be_implicit
             end
           end
 
@@ -248,7 +248,7 @@ describe Mongo::Operation::Update::OpMsg do
           end
 
           before do
-            session.should_not be_implicit
+            expect(session).not_to be_implicit
           end
 
           let(:expected_global_args) do

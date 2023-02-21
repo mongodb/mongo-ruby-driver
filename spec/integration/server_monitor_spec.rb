@@ -51,7 +51,7 @@ describe 'Server::Monitor' do
       sleep 2
 
       new_primary_address = client.cluster.next_primary.address
-      new_primary_address.should_not == starting_primary_address
+      expect(new_primary_address).not_to eq(starting_primary_address)
     end
   end
 end

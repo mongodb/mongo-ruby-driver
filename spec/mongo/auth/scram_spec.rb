@@ -94,9 +94,9 @@ describe Mongo::Auth::Scram do
         context 'if conversation has not verified server signature' do
           it 'raises an exception' do
             expect_any_instance_of(Mongo::Auth::ScramConversationBase).to receive(:server_verified?).and_return(false)
-            lambda do
+            expect do
               login
-            end.should raise_error(Mongo::Error::MissingScramServerSignature)
+            end.to raise_error(Mongo::Error::MissingScramServerSignature)
           end
         end
       end

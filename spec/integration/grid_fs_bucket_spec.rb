@@ -12,7 +12,7 @@ describe 'GridFS bucket integration' do
     let(:data) { "hello\u2210" }
 
     before do
-      data.length.should_not == data.bytesize
+      expect(data.length).not_to eq(data.bytesize)
     end
 
     shared_examples 'round-trips' do
@@ -26,8 +26,8 @@ describe 'GridFS bucket integration' do
           actual = stream.read
         end
 
-        actual.encoding.should == Encoding::BINARY
-        actual.should == data.b
+        expect(actual.encoding).to eq(Encoding::BINARY)
+        expect(actual).to eq(data.b)
       end
     end
 
@@ -41,7 +41,7 @@ describe 'GridFS bucket integration' do
 
     context 'in UTF-8 encoding' do
       let(:data_to_write) do
-        data.encoding.should == Encoding::UTF_8
+        expect(data.encoding).to eq(Encoding::UTF_8)
         data.freeze
       end
 

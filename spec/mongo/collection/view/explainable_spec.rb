@@ -31,7 +31,7 @@ describe Mongo::Collection::View::Explainable do
           require_topology :single, :replica_set
 
           it 'executes the explain' do
-            explain[:queryPlanner][:namespace].should == authorized_collection.namespace
+            expect(explain[:queryPlanner][:namespace]).to eq(authorized_collection.namespace)
           end
         end
 
@@ -42,7 +42,7 @@ describe Mongo::Collection::View::Explainable do
             max_server_version '3.0'
 
             it 'executes the explain' do
-              explain[:queryPlanner][:parsedQuery].should be_a(Hash)
+              expect(explain[:queryPlanner][:parsedQuery]).to be_a(Hash)
             end
           end
 
@@ -50,7 +50,7 @@ describe Mongo::Collection::View::Explainable do
             min_server_fcv '3.2'
 
             it 'executes the explain' do
-              explain[:queryPlanner][:mongosPlannerVersion].should == 1
+              expect(explain[:queryPlanner][:mongosPlannerVersion]).to eq(1)
             end
           end
         end
@@ -60,7 +60,7 @@ describe Mongo::Collection::View::Explainable do
         max_server_version '2.6'
 
         it 'executes the explain' do
-          explain[:cursor].should == 'BasicCursor'
+          expect(explain[:cursor]).to eq('BasicCursor')
         end
       end
     end
@@ -83,9 +83,9 @@ describe Mongo::Collection::View::Explainable do
         min_server_fcv '3.2'
 
         it 'triggers server error' do
-          lambda do
+          expect do
             explain
-          end.should raise_error(Mongo::Error::OperationFailure, /verbosity string must be|value .* for field .*verbosity.* is not a valid value/)
+          end.to raise_error(Mongo::Error::OperationFailure, /verbosity string must be|value .* for field .*verbosity.* is not a valid value/)
         end
       end
 

@@ -84,7 +84,7 @@ describe Mongo::Server::Connection do
         connection
         RSpec::Mocks.with_temporary_scope do
           pending_conn = nil
-          Mongo::Server::PendingConnection.should receive(:new).and_wrap_original do |m, *args|
+          expect(Mongo::Server::PendingConnection).to receive(:new).and_wrap_original do |m, *args|
             pending_conn = m.call(*args)
           end
           connection.connect!
@@ -106,7 +106,7 @@ describe Mongo::Server::Connection do
           expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
 
           pending_conn = nil
-          Mongo::Server::PendingConnection.should receive(:new).and_wrap_original do |m, *args|
+          expect(Mongo::Server::PendingConnection).to receive(:new).and_wrap_original do |m, *args|
             pending_conn = m.call(*args)
           end
           connection.connect!
@@ -126,7 +126,7 @@ describe Mongo::Server::Connection do
           expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
 
           pending_conn = nil
-          Mongo::Server::PendingConnection.should receive(:new).and_wrap_original do |m, *args|
+          expect(Mongo::Server::PendingConnection).to receive(:new).and_wrap_original do |m, *args|
             pending_conn = m.call(*args)
           end
           connection.connect!

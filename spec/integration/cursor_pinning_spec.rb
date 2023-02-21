@@ -28,23 +28,23 @@ describe 'Cursor pinning' do
     # new connections as needed.
 
     it 'creates new connections for iteration' do
-      server.pool.size.should == 0
+      expect(server.pool.size).to eq(0)
 
       # Use batch_size of 2 until RUBY-2727 is fixed.
       enum = collection.find({}, batch_size: 2).to_enum
       # Still zero because we haven't iterated
-      server.pool.size.should == 0
+      expect(server.pool.size).to eq(0)
 
       enum.next
       enum.next
-      server.pool.size.should == 1
+      expect(server.pool.size).to eq(1)
 
       # Grab the connection that was used
       server.with_connection do
         # This requires a new connection
         enum.next
 
-        server.pool.size.should == 2
+        expect(server.pool.size).to eq(2)
       end
     end
   end
@@ -58,23 +58,23 @@ describe 'Cursor pinning' do
     context 'when no connection is available' do
 
       it 'raises ConnectionCheckOutTimeout' do
-        server.pool.size.should == 0
+        expect(server.pool.size).to eq(0)
 
         enum = collection.find({}, batch_size: 1).to_enum
         # Still zero because we haven't iterated
-        server.pool.size.should == 0
+        expect(server.pool.size).to eq(0)
 
         enum.next
-        server.pool.size.should == 1
+        expect(server.pool.size).to eq(1)
 
         # Grab the connection that was used
         server.with_connection do
           # This requires a new connection, but we cannot make one.
-          lambda do
+          expect do
             enum.next
-          end.should raise_error(Mongo::Error::ConnectionCheckOutTimeout)
+          end.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
 
-          server.pool.size.should == 1
+          expect(server.pool.size).to eq(1)
         end
       end
     end
@@ -85,7 +85,7 @@ describe 'Cursor pinning' do
       let(:client) { authorized_client.with(max_pool_size: 4) }
 
       it 'uses the available connection' do
-        server.pool.size.should == 0
+        expect(server.pool.size).to eq(0)
 
         # Create 4 connections.
 
@@ -104,9 +104,9 @@ describe 'Cursor pinning' do
           connections << server.pool.check_out
         end
 
-        connection_ids.uniq.length.should be > 1
+        expect(connection_ids.uniq.length).to be > 1
 
-        server.pool.size.should == 4
+        expect(server.pool.size).to eq(4)
 
         connections.each do |c|
           server.pool.check_in(c)

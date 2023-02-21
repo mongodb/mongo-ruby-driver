@@ -118,7 +118,7 @@ describe 'Command monitoring' do
         expect(subscriber.started_events.length).to eq 0
         client['test-collection'].find(a: 1).first
         command_names = subscriber.started_events.map(&:command_name)
-        command_names.should == expected_command_names
+        expect(command_names).to eq(expected_command_names)
       end
     end
 

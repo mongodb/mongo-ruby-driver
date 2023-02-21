@@ -700,7 +700,7 @@ describe Mongo::Index::View do
 
       it 'warns of deprecation' do
         RSpec::Mocks.with_temporary_scope do
-          view.client.should receive(:log_warn).and_call_original
+          expect(view.client).to receive(:log_warn).and_call_original
 
           result
         end
@@ -827,7 +827,7 @@ describe Mongo::Index::View do
 
         it 'warns of deprecation' do
           RSpec::Mocks.with_temporary_scope do
-            view.client.should receive(:log_warn).and_call_original
+            expect(view.client).to receive(:log_warn).and_call_original
 
             result
           end

@@ -23,15 +23,15 @@ describe 'Mongo::Crypt::Binding' do
     fails_on_jruby
 
     it 'retries loading at the next reference' do
-      lambda do
+      expect do
         Mongo::Crypt::Binding
-      end.should raise_error(LoadError, /no path to libmongocrypt specified/)
+      end.to raise_error(LoadError, /no path to libmongocrypt specified/)
 
       # second load should also be attempted and should fail with the
       # LoadError exception
-      lambda do
+      expect do
         Mongo::Crypt::Binding
-      end.should raise_error(LoadError, /no path to libmongocrypt specified/)
+      end.to raise_error(LoadError, /no path to libmongocrypt specified/)
     end
   end
 end

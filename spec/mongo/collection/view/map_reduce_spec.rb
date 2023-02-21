@@ -66,7 +66,7 @@ describe Mongo::Collection::View::MapReduce do
 
   describe '#initialize' do
     it 'warns of deprecation' do
-      Mongo::Logger.logger.should receive(:warn).with('MONGODB | The map_reduce operation is deprecated, please use the aggregation pipeline instead')
+      expect(Mongo::Logger.logger).to receive(:warn).with('MONGODB | The map_reduce operation is deprecated, please use the aggregation pipeline instead')
 
       map_reduce
     end
@@ -899,7 +899,7 @@ describe Mongo::Collection::View::MapReduce do
         # For compatibility with released versions of Mongoid, this method
         # must return read preference under the :read key.
         it 'contains read preference' do
-          map_reduce_spec[:selector][:read].should == {'mode' => :secondary}
+          expect(map_reduce_spec[:selector][:read]).to eq({'mode' => :secondary})
         end
       end
     end

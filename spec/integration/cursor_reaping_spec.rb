@@ -63,7 +63,7 @@ describe 'Cursor reaping' do
           # Begin iteration, creating the cursor
           scope.each.first
 
-          scope.cursor.should_not be nil
+          expect(scope.cursor).not_to be nil
           cursor_ids << scope.cursor.id
         end
       end
@@ -89,7 +89,7 @@ describe 'Cursor reaping' do
       started_event = subscriber.started_events.detect do |event|
         event.command['killCursors']
       end
-      started_event.should_not be nil
+      expect(started_event).not_to be nil
 
       found_cursor_id = nil
       started_event = subscriber.started_events.detect do |event|
@@ -110,7 +110,7 @@ describe 'Cursor reaping' do
         p subscriber.started_events
       end
 
-      started_event.should_not be nil
+      expect(started_event).not_to be nil
 
       succeeded_event = subscriber.succeeded_events.detect do |event|
         event.command_name == 'killCursors' && event.request_id == started_event.request_id

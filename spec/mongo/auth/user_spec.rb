@@ -336,7 +336,7 @@ describe Mongo::Auth::User do
       end
 
       it 'is a hash with empty roles' do
-        user.spec.should == {roles: []}
+        expect(user.spec).to eq({roles: []})
       end
     end
   end

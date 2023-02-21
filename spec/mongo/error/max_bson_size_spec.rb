@@ -11,7 +11,7 @@ describe Mongo::Error::MaxBSONSize do
       end
 
       it 'is the predefined message' do
-        error.message.should == 'The document exceeds maximum allowed BSON size'
+        expect(error.message).to eq('The document exceeds maximum allowed BSON size')
       end
     end
 
@@ -21,7 +21,7 @@ describe Mongo::Error::MaxBSONSize do
       end
 
       it 'is the predefined message with the size added' do
-        error.message.should == 'The document exceeds maximum allowed BSON size. The maximum allowed size is 42'
+        expect(error.message).to eq('The document exceeds maximum allowed BSON size. The maximum allowed size is 42')
       end
     end
 
@@ -31,7 +31,7 @@ describe Mongo::Error::MaxBSONSize do
       end
 
       it 'is the provided message' do
-        error.message.should == 'hello world'
+        expect(error.message).to eq('hello world')
       end
     end
   end

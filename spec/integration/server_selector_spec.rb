@@ -78,7 +78,7 @@ describe 'Server selector' do
 
           it 'returns the load balancer' do
             expect(result).to be_a(Mongo::Server)
-            result.should be_load_balancer
+            expect(result).to be_load_balancer
           end
         end
       end

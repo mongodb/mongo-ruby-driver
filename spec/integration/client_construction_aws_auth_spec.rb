@@ -53,7 +53,7 @@ describe 'Client construction with AWS auth' do
 
         it 'uses the expected user' do
           puts "Authenticated as #{authenticated_user_name}"
-          authenticated_user_name.should =~ /^arn:aws:iam:/
+          expect(authenticated_user_name).to match(/^arn:aws:iam:/)
         end
       end
 
@@ -66,7 +66,7 @@ describe 'Client construction with AWS auth' do
 
         it 'uses the expected user' do
           puts "Authenticated as #{authenticated_user_name}"
-          authenticated_user_name.should =~ /^arn:aws:iam:/
+          expect(authenticated_user_name).to match(/^arn:aws:iam:/)
         end
       end
     end
@@ -92,7 +92,7 @@ describe 'Client construction with AWS auth' do
 
         it 'uses the expected user' do
           puts "Authenticated as #{authenticated_user_name}"
-          authenticated_user_name.should =~ /^arn:aws:sts:/
+          expect(authenticated_user_name).to match(/^arn:aws:sts:/)
         end
       end
 
@@ -105,7 +105,7 @@ describe 'Client construction with AWS auth' do
 
         it 'uses the expected user' do
           puts "Authenticated as #{authenticated_user_name}"
-          authenticated_user_name.should =~ /^arn:aws:sts:/
+          expect(authenticated_user_name).to match(/^arn:aws:sts:/)
         end
       end
     end
@@ -123,9 +123,9 @@ describe 'Client construction with AWS auth' do
         )
 
         it 'does not connect' do
-          lambda do
+          expect do
             client['foo'].insert_one(test: true)
-          end.should raise_error(Mongo::Auth::Aws::CredentialsNotFound, /Could not locate AWS credentials/)
+          end.to raise_error(Mongo::Auth::Aws::CredentialsNotFound, /Could not locate AWS credentials/)
         end
       end
 
@@ -145,8 +145,8 @@ describe 'Client construction with AWS auth' do
 
           it 'uses the expected user' do
             puts "Authenticated as #{authenticated_user_name}"
-            authenticated_user_name.should =~ /^arn:/
-            authenticated_user_name.should_not =~ /^arn:.*assumed-role/
+            expect(authenticated_user_name).to match(/^arn:/)
+            expect(authenticated_user_name).not_to match(/^arn:.*assumed-role/)
           end
         end
 
@@ -155,7 +155,7 @@ describe 'Client construction with AWS auth' do
 
           it 'uses the expected user' do
             puts "Authenticated as #{authenticated_user_name}"
-            authenticated_user_name.should =~ /^arn:.*assumed-role/
+            expect(authenticated_user_name).to match(/^arn:.*assumed-role/)
           end
         end
       end
@@ -167,7 +167,7 @@ describe 'Client construction with AWS auth' do
 
     before(:all) do
       # No explicit credentials are expected in the tested configurations
-      ENV['AWS_ACCESS_KEY_ID'].should be_nil
+      expect(ENV['AWS_ACCESS_KEY_ID']).to be_nil
     end
 
     it_behaves_like 'connects successfully'
@@ -177,7 +177,7 @@ describe 'Client construction with AWS auth' do
 
       it 'uses the expected user' do
         puts "Authenticated as #{authenticated_user_name}"
-        authenticated_user_name.should =~ /^arn:aws:sts:.*assumed-role.*instance_profile_role/
+        expect(authenticated_user_name).to match(/^arn:aws:sts:.*assumed-role.*instance_profile_role/)
       end
     end
 
@@ -186,7 +186,7 @@ describe 'Client construction with AWS auth' do
 
       it 'uses the expected user' do
         puts "Authenticated as #{authenticated_user_name}"
-        authenticated_user_name.should =~ /^arn:aws:sts:.*assumed-role.*ecstaskexecutionrole/i
+        expect(authenticated_user_name).to match(/^arn:aws:sts:.*assumed-role.*ecstaskexecutionrole/i)
       end
     end
 
@@ -195,7 +195,7 @@ describe 'Client construction with AWS auth' do
 
       it 'uses the expected user' do
         puts "Authenticated as #{authenticated_user_name}"
-        authenticated_user_name.should =~ /^arn:aws:sts:.*assumed-role.*webIdentityTestRole/i
+        expect(authenticated_user_name).to match(/^arn:aws:sts:.*assumed-role.*webIdentityTestRole/i)
       end
     end
   end

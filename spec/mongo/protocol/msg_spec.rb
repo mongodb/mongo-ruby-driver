@@ -559,9 +559,9 @@ describe Mongo::Protocol::Msg do
     context 'when the msg contains a document without first/nextBatch' do
 
       it 'raises NotImplementedError' do
-        lambda do
+        expect do
           message.number_returned
-        end.should raise_error(NotImplementedError, /number_returned is only defined for cursor replies/)
+        end.to raise_error(NotImplementedError, /number_returned is only defined for cursor replies/)
       end
     end
   end

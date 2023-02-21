@@ -288,9 +288,9 @@ describe Mongo::Socket::SSL do
         end
 
         it 'raises an error' do
-          lambda do
+          expect do
             socket
-          end.should raise_error(Mongo::Error::SocketError, /TLS handshake failed due to a hostname mismatch/)
+          end.to raise_error(Mongo::Error::SocketError, /TLS handshake failed due to a hostname mismatch/)
         end
       end
 
@@ -300,9 +300,9 @@ describe Mongo::Socket::SSL do
         end
 
         it 'does not raise an error' do
-          lambda do
+          expect do
             socket
-          end.should_not raise_error
+          end.not_to raise_error
         end
       end
     end

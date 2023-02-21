@@ -74,7 +74,7 @@ describe 'URI options' do
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
                   opts,
                 )
-                mapped.should == expected
+                expect(mapped).to eq(expected)
               end
             end
 

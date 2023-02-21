@@ -20,7 +20,7 @@ describe Mongo::Semaphore do
     semaphore.signal
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should < 1
+    expect(Mongo::Utils.monotonic_time - start_time).to be < 1
   end
 
   it 'waits until broadcast' do
@@ -35,7 +35,7 @@ describe Mongo::Semaphore do
     semaphore.broadcast
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should < 1
+    expect(Mongo::Utils.monotonic_time - start_time).to be < 1
   end
 
   it 'times out' do
@@ -49,6 +49,6 @@ describe Mongo::Semaphore do
     start_time = Mongo::Utils.monotonic_time
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should > 1
+    expect(Mongo::Utils.monotonic_time - start_time).to be > 1
   end
 end

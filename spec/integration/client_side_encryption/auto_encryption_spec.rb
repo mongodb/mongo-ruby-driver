@@ -204,15 +204,15 @@ describe 'Auto Encryption' do
       end
 
       it 'encrypts the command and decrypts the response' do
-        result.should_not be_nil
-        result['ssn'].should == ssn
+        expect(result).not_to be_nil
+        expect(result['ssn']).to eq(ssn)
       end
 
       context 'when bypass_auto_encryption=true' do
         include_context 'bypass auto encryption'
 
         it 'does not encrypt the command' do
-          result.should be_nil
+          expect(result).to be_nil
         end
 
         it 'does auto decrypt the response' do
@@ -220,8 +220,8 @@ describe 'Auto Encryption' do
             { '$match' => { 'ssn' => encrypted_ssn_binary } }
           ]).first
 
-          result.should_not be_nil
-          result['ssn'].should == ssn
+          expect(result).not_to be_nil
+          expect(result['ssn']).to eq(ssn)
         end
       end
     end
@@ -326,7 +326,7 @@ describe 'Auto Encryption' do
       let(:result) { encryption_client['users'].find(ssn: ssn).first }
 
       it 'encrypts the command and decrypts the response' do
-        result.should_not be_nil
+        expect(result).not_to be_nil
         expect(result['ssn']).to eq(ssn)
       end
 
@@ -495,7 +495,7 @@ describe 'Auto Encryption' do
         id = result.inserted_ids.first
 
         document = client['users'].find(_id: id).first
-        document.should_not be_nil
+        expect(document).not_to be_nil
         expect(document['ssn']).to eq(encrypted_ssn_binary)
       end
     end
@@ -561,7 +561,7 @@ describe 'Auto Encryption' do
         id = result.inserted_ids.first
 
         document = client['users'].find(_id: id).first
-        document.should_not be_nil
+        expect(document).not_to be_nil
         # Document was not encrypted
         expect(document['ssn']).to eq(ssn)
       end
@@ -581,7 +581,7 @@ describe 'Auto Encryption' do
           id = result.inserted_ids.first
 
           document = client['users'].find(_id: id).first
-          document.should_not be_nil
+          expect(document).not_to be_nil
           # Auto-encryption with key alt names only works with random encryption,
           # so it will not generate the same result on every test run.
           expect(document['ssn']).to be_ciphertext
@@ -597,7 +597,7 @@ describe 'Auto Encryption' do
           id = result.inserted_ids.first
 
           document = client['users'].find(_id: id).first
-          document.should_not be_nil
+          expect(document).not_to be_nil
           # Auto-encryption with key alt names only works with random encryption,
           # so it will not generate the same result on every test run.
           expect(document['ssn']).to be_ciphertext
@@ -612,7 +612,7 @@ describe 'Auto Encryption' do
             id = result.inserted_ids.first
 
             document = client['users'].find(_id: id).first
-            document.should_not be_nil
+            expect(document).not_to be_nil
             # Auto-encryption with key alt names only works with random encryption,
             # so it will not generate the same result on every test run.
             expect(document['ssn']).to be_ciphertext
@@ -628,7 +628,7 @@ describe 'Auto Encryption' do
             id = result.inserted_ids.first
 
             document = client['users'].find(_id: id).first
-            document.should_not be_nil
+            expect(document).not_to be_nil
             # Auto-encryption with key alt names only works with random encryption,
             # so it will not generate the same result on every test run.
             expect(document['ssn']).to be_ciphertext
@@ -645,7 +645,7 @@ describe 'Auto Encryption' do
           id = result.inserted_ids.first
 
           document = client['users'].find(_id: id).first
-          document.should_not be_nil
+          expect(document).not_to be_nil
           # Auto-encryption with key alt names only works with random encryption,
           # so it will not generate the same result on every test run.
           expect(document['ssn']).to be_a_kind_of(BSON::Binary)

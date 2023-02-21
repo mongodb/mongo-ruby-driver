@@ -7,8 +7,8 @@ shared_examples 'app metadata document' do
   end
 
   it 'includes Ruby driver identification' do
-    document[:client][:driver][:name].should == 'mongo-ruby-driver'
-    document[:client][:driver][:version].should == Mongo::VERSION
+    expect(document[:client][:driver][:name]).to eq('mongo-ruby-driver')
+    expect(document[:client][:driver][:version]).to eq(Mongo::VERSION)
   end
 
   context 'linux' do
@@ -19,15 +19,15 @@ shared_examples 'app metadata document' do
     end
 
     it 'includes operating system information' do
-      document[:client][:os][:type].should == 'linux'
+      expect(document[:client][:os][:type]).to eq('linux')
       if BSON::Environment.jruby? || RUBY_VERSION >= '3.0'
-        document[:client][:os][:name].should == 'linux'
+        expect(document[:client][:os][:name]).to eq('linux')
       else
         # Ruby 2.7.2 and earlier use linux-gnu.
         # Ruby 2.7.3 uses linux.
-        %w(linux linux-gnu).should include(document[:client][:os][:name])
+        expect(%w(linux linux-gnu)).to include(document[:client][:os][:name])
       end
-      document[:client][:os][:architecture].should == 'x86_64'
+      expect(document[:client][:os][:architecture]).to eq('x86_64')
     end
   end
 
@@ -39,13 +39,13 @@ shared_examples 'app metadata document' do
     end
 
     it 'includes operating system information' do
-      document[:client][:os][:type].should == 'darwin'
+      expect(document[:client][:os][:type]).to eq('darwin')
       if BSON::Environment.jruby?
-        document[:client][:os][:name].should == 'darwin'
+        expect(document[:client][:os][:name]).to eq('darwin')
       else
-        document[:client][:os][:name].should =~ /darwin\d+/
+        expect(document[:client][:os][:name]).to match(/darwin\d+/)
       end
-      document[:client][:os][:architecture].should == 'x86_64'
+      expect(document[:client][:os][:architecture]).to eq('x86_64')
     end
   end
 
@@ -53,7 +53,7 @@ shared_examples 'app metadata document' do
     require_mri
 
     it 'includes Ruby version' do
-      document[:client][:platform].should start_with("Ruby #{RUBY_VERSION}")
+      expect(document[:client][:platform]).to start_with("Ruby #{RUBY_VERSION}")
     end
 
     context 'when custom platform is specified' do
@@ -62,7 +62,7 @@ shared_examples 'app metadata document' do
       end
 
       it 'starts with custom platform' do
-        document[:client][:platform].should start_with("foowidgets, Ruby #{RUBY_VERSION}")
+        expect(document[:client][:platform]).to start_with("foowidgets, Ruby #{RUBY_VERSION}")
       end
     end
   end
@@ -71,7 +71,7 @@ shared_examples 'app metadata document' do
     require_jruby
 
     it 'includes JRuby and Ruby compatibility versions' do
-      document[:client][:platform].should start_with("JRuby #{JRUBY_VERSION}, like Ruby #{RUBY_VERSION}")
+      expect(document[:client][:platform]).to start_with("JRuby #{JRUBY_VERSION}, like Ruby #{RUBY_VERSION}")
     end
 
     context 'when custom platform is specified' do
@@ -80,7 +80,7 @@ shared_examples 'app metadata document' do
       end
 
       it 'starts with custom platform' do
-        document[:client][:platform].should start_with("foowidgets, JRuby #{JRUBY_VERSION}")
+        expect(document[:client][:platform]).to start_with("foowidgets, JRuby #{JRUBY_VERSION}")
       end
     end
   end
@@ -99,9 +99,9 @@ shared_examples 'app metadata document' do
         end
 
         it 'adds empty strings' do
-          document[:client][:driver][:name].should == 'mongo-ruby-driver|'
-          document[:client][:driver][:version].should == "#{Mongo::VERSION}|"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\z/
+          expect(document[:client][:driver][:name]).to eq('mongo-ruby-driver|')
+          expect(document[:client][:driver][:version]).to eq("#{Mongo::VERSION}|")
+          expect(document[:client][:platform]).to match(/\AJ?Ruby[^|]+\|\z/)
         end
       end
 
@@ -111,9 +111,9 @@ shared_examples 'app metadata document' do
         end
 
         it 'adds the fields' do
-          document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid'
-          document[:client][:driver][:version].should == "#{Mongo::VERSION}|"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\z/
+          expect(document[:client][:driver][:name]).to eq('mongo-ruby-driver|Mongoid')
+          expect(document[:client][:driver][:version]).to eq("#{Mongo::VERSION}|")
+          expect(document[:client][:platform]).to match(/\AJ?Ruby[^|]+\|\z/)
         end
       end
 
@@ -123,9 +123,9 @@ shared_examples 'app metadata document' do
         end
 
         it 'adds the fields' do
-          document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid'
-          document[:client][:driver][:version].should == "#{Mongo::VERSION}|7.1.2"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|OS9000\z/
+          expect(document[:client][:driver][:name]).to eq('mongo-ruby-driver|Mongoid')
+          expect(document[:client][:driver][:version]).to eq("#{Mongo::VERSION}|7.1.2")
+          expect(document[:client][:platform]).to match(/\AJ?Ruby[^|]+\|OS9000\z/)
         end
       end
     end
@@ -142,9 +142,9 @@ shared_examples 'app metadata document' do
         end
 
         it 'adds the fields' do
-          document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid|'
-          document[:client][:driver][:version].should == "#{Mongo::VERSION}|42|4.0"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\|OS9000\z/
+          expect(document[:client][:driver][:name]).to eq('mongo-ruby-driver|Mongoid|')
+          expect(document[:client][:driver][:version]).to eq("#{Mongo::VERSION}|42|4.0")
+          expect(document[:client][:platform]).to match(/\AJ?Ruby[^|]+\|\|OS9000\z/)
         end
       end
 
@@ -157,9 +157,9 @@ shared_examples 'app metadata document' do
         end
 
         it 'adds the fields' do
-          document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid|Rails'
-          document[:client][:driver][:version].should == "#{Mongo::VERSION}|7.1.2|6.0.3"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\|\z/
+          expect(document[:client][:driver][:name]).to eq('mongo-ruby-driver|Mongoid|Rails')
+          expect(document[:client][:driver][:version]).to eq("#{Mongo::VERSION}|7.1.2|6.0.3")
+          expect(document[:client][:platform]).to match(/\AJ?Ruby[^|]+\|\|\z/)
         end
       end
     end

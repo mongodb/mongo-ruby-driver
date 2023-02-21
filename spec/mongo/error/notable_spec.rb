@@ -16,19 +16,19 @@ describe Mongo::Error::Notable do
 
     describe '#message' do
       it 'is correct' do
-        exception.message.should == 'hello world'
+        expect(exception.message).to eq('hello world')
       end
     end
 
     describe '#to_s' do
       it 'is correct' do
-        exception.to_s.should == 'hello world'
+        expect(exception.to_s).to eq('hello world')
       end
     end
 
     describe '#inspect' do
       it 'is correct' do
-        exception.inspect.should == '#<Mongo::Error: hello world>'
+        expect(exception.inspect).to eq('#<Mongo::Error: hello world>')
       end
     end
   end
@@ -43,19 +43,19 @@ describe Mongo::Error::Notable do
 
     describe '#message' do
       it 'is correct' do
-        exception.message.should == 'hello world (brilliant, weird)'
+        expect(exception.message).to eq('hello world (brilliant, weird)')
       end
     end
 
     describe '#to_s' do
       it 'is correct' do
-        exception.to_s.should == 'hello world (brilliant, weird)'
+        expect(exception.to_s).to eq('hello world (brilliant, weird)')
       end
     end
 
     describe '#inspect' do
       it 'is correct' do
-        exception.inspect.should == '#<Mongo::Error: hello world (brilliant, weird)>'
+        expect(exception.inspect).to eq('#<Mongo::Error: hello world (brilliant, weird)>')
       end
     end
   end

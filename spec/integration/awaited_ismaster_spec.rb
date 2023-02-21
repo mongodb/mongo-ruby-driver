@@ -18,7 +18,7 @@ describe 'awaited hello' do
     resp = client.database.command(hello: 1)
     doc = resp.replies.first.documents.first
     tv = Mongo::TopologyVersion.new(doc['topologyVersion'])
-    tv.should be_a(BSON::Document)
+    expect(tv).to be_a(BSON::Document)
 
     elapsed_time = Benchmark.realtime do
       resp = client.database.command(hello: 1,
@@ -26,6 +26,6 @@ describe 'awaited hello' do
     end
     doc = resp.replies.first.documents.first
 
-    elapsed_time.should > 0.5
+    expect(elapsed_time).to be > 0.5
   end
 end

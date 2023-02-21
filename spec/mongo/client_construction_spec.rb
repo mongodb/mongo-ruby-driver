@@ -357,14 +357,14 @@ describe Mongo::Client do
           end
 
           it 'sets options to zeros' do
-            client.options[:socket_timeout].should == 0
-            client.options[:connect_timeout].should == 0
+            expect(client.options[:socket_timeout]).to eq(0)
+            expect(client.options[:connect_timeout]).to eq(0)
           end
 
           it 'connects and performs operations successfully' do
-            lambda do
+            expect do
               client.database.command(ping: 1)
-            end.should_not raise_error
+            end.not_to raise_error
           end
         end
 
@@ -375,9 +375,9 @@ describe Mongo::Client do
             end
 
             it 'fails client creation' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /#{option} must be a non-negative number/)
+              end.to raise_error(ArgumentError, /#{option} must be a non-negative number/)
             end
           end
 
@@ -387,9 +387,9 @@ describe Mongo::Client do
             end
 
             it 'fails client creation' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /#{option} must be a non-negative number/)
+              end.to raise_error(ArgumentError, /#{option} must be a non-negative number/)
             end
           end
         end
@@ -406,18 +406,18 @@ describe Mongo::Client do
           end
 
           it 'allows client creation' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
+            end.not_to raise_error
           end
 
           context 'non-lb' do
             require_topology :single, :replica_set, :sharded
 
             it 'fails server selection due to very small timeout' do
-              lambda do
+              expect do
                 client.database.command(ping: 1)
-              end.should raise_error(Mongo::Error::NoServerAvailable)
+              end.to raise_error(Mongo::Error::NoServerAvailable)
             end
           end
 
@@ -425,9 +425,9 @@ describe Mongo::Client do
             require_topology :load_balanced
 
             it 'fails the operation after successful server selection' do
-              lambda do
+              expect do
                 client.database.command(ping: 1)
-              end.should raise_error(Mongo::Error::SocketTimeoutError, /socket took over.*to connect/)
+              end.to raise_error(Mongo::Error::SocketTimeoutError, /socket took over.*to connect/)
             end
           end
         end
@@ -444,16 +444,16 @@ describe Mongo::Client do
           end
 
           it 'allows client creation' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
+            end.not_to raise_error
           end
 
           retry_test
           it 'fails operations due to very small timeout' do
-            lambda do
+            expect do
               client.database.command(ping: 1)
-            end.should raise_error(Mongo::Error::SocketTimeoutError)
+            end.to raise_error(Mongo::Error::SocketTimeoutError)
           end
         end
       end
@@ -1299,9 +1299,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /direct_connection=true cannot be used with multiple seeds/)
+            end.to raise_error(ArgumentError, /direct_connection=true cannot be used with multiple seeds/)
           end
         end
 
@@ -1311,8 +1311,8 @@ describe Mongo::Client do
           end
 
           it 'is accepted' do
-            client.options[:direct_connection].should be true
-            client.options[:connect].should be :direct
+            expect(client.options[:direct_connection]).to be true
+            expect(client.options[:connect]).to be :direct
           end
         end
 
@@ -1322,9 +1322,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=replica_set/)
+            end.to raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=replica_set/)
           end
         end
 
@@ -1334,9 +1334,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=sharded/)
+            end.to raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=sharded/)
           end
         end
 
@@ -1346,9 +1346,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=false and connect=direct/)
+            end.to raise_error(ArgumentError, /Conflicting client options: direct_connection=false and connect=direct/)
           end
         end
 
@@ -1358,8 +1358,8 @@ describe Mongo::Client do
           end
 
           it 'is accepted' do
-            client.options[:direct_connection].should be false
-            client.options[:connect].should be :replica_set
+            expect(client.options[:direct_connection]).to be false
+            expect(client.options[:connect]).to be :replica_set
           end
         end
 
@@ -1369,8 +1369,8 @@ describe Mongo::Client do
           end
 
           it 'is accepted' do
-            client.options[:direct_connection].should be false
-            client.options[:connect].should be :sharded
+            expect(client.options[:direct_connection]).to be false
+            expect(client.options[:connect]).to be :sharded
           end
         end
 
@@ -1381,9 +1381,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /load_balanced=true cannot be used with multiple seeds/)
+            end.to raise_error(ArgumentError, /load_balanced=true cannot be used with multiple seeds/)
           end
         end
 
@@ -1394,10 +1394,10 @@ describe Mongo::Client do
           end
 
           it 'is accepted' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
-            client.options[:load_balanced].should be false
+            end.not_to raise_error
+            expect(client.options[:load_balanced]).to be false
           end
         end
 
@@ -1408,9 +1408,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /direct_connection=true cannot be used with load_balanced=true/)
+            end.to raise_error(ArgumentError, /direct_connection=true cannot be used with load_balanced=true/)
           end
         end
 
@@ -1421,11 +1421,11 @@ describe Mongo::Client do
           end
 
           it 'is accepted' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
-            client.options[:load_balanced].should be true
-            client.options[:direct_connection].should be false
+            end.not_to raise_error
+            expect(client.options[:load_balanced]).to be true
+            expect(client.options[:direct_connection]).to be false
           end
         end
 
@@ -1436,11 +1436,11 @@ describe Mongo::Client do
           end
 
           it 'is accepted' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
-            client.options[:load_balanced].should be false
-            client.options[:direct_connection].should be true
+            end.not_to raise_error
+            expect(client.options[:load_balanced]).to be false
+            expect(client.options[:direct_connection]).to be true
           end
         end
 
@@ -1452,9 +1452,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /connect=#{v} cannot be used with load_balanced=true/)
+              end.to raise_error(ArgumentError, /connect=#{v} cannot be used with load_balanced=true/)
             end
           end
         end
@@ -1467,11 +1467,11 @@ describe Mongo::Client do
             end
 
             it 'is accepted' do
-              lambda do
+              expect do
                 client
-              end.should_not raise_error
-              client.options[:load_balanced].should be true
-              client.options[:connect].should eq v
+              end.not_to raise_error
+              expect(client.options[:load_balanced]).to be true
+              expect(client.options[:connect]).to eq v
             end
           end
         end
@@ -1484,11 +1484,11 @@ describe Mongo::Client do
             end
 
             it 'is accepted' do
-              lambda do
+              expect do
                 client
-              end.should_not raise_error
-              client.options[:load_balanced].should be true
-              client.options[:connect].should eq v
+              end.not_to raise_error
+              expect(client.options[:load_balanced]).to be true
+              expect(client.options[:connect]).to eq v
             end
           end
 
@@ -1499,9 +1499,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /connect=load_balanced cannot be used with replica_set option/)
+              end.to raise_error(ArgumentError, /connect=load_balanced cannot be used with replica_set option/)
             end
           end
 
@@ -1512,9 +1512,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=load_balanced/)
+              end.to raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=load_balanced/)
             end
           end
 
@@ -1525,9 +1525,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /connect=load_balanced cannot be used with multiple seeds/)
+              end.to raise_error(ArgumentError, /connect=load_balanced cannot be used with multiple seeds/)
             end
           end
         end
@@ -1540,9 +1540,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /connect=replica_set cannot be used with load_balanced=true/)
+              end.to raise_error(ArgumentError, /connect=replica_set cannot be used with load_balanced=true/)
             end
           end
 
@@ -1553,9 +1553,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /load_balanced=true cannot be used with replica_set option/)
+              end.to raise_error(ArgumentError, /load_balanced=true cannot be used with replica_set option/)
             end
           end
         end
@@ -1593,9 +1593,9 @@ describe Mongo::Client do
           end
 
           it 'is accepted and does not add the srv_max_hosts to uri_options' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
+            end.not_to raise_error
             expect(client.options).to_not have_key(:srv_max_hosts)
           end
         end
@@ -1607,9 +1607,9 @@ describe Mongo::Client do
           end
 
           it 'is accepted and does not add the srv_max_hosts to uri_options' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
+            end.not_to raise_error
             expect(client.options).to_not have_key(:srv_max_hosts)
           end
         end
@@ -1621,9 +1621,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /:srv_max_hosts cannot be used on non-SRV URI/)
+            end.to raise_error(ArgumentError, /:srv_max_hosts cannot be used on non-SRV URI/)
           end
         end
 
@@ -1634,9 +1634,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /:srv_service_name cannot be used on non-SRV URI/)
+            end.to raise_error(ArgumentError, /:srv_service_name cannot be used on non-SRV URI/)
           end
         end
       end
@@ -1662,9 +1662,9 @@ describe Mongo::Client do
           let(:options) { { srv_max_hosts: srv_max_hosts } }
 
           it 'is accepted and sets srv_max_hosts' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
+            end.not_to raise_error
             expect(client.options[:srv_max_hosts]).to eq(srv_max_hosts)
           end
         end
@@ -1674,9 +1674,9 @@ describe Mongo::Client do
           let(:options) { { srv_max_hosts: srv_max_hosts } }
 
           it 'is accepted sets srv_max_hosts' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
+            end.not_to raise_error
             expect(client.options[:srv_max_hosts]).to eq(srv_max_hosts)
           end
         end
@@ -1686,9 +1686,9 @@ describe Mongo::Client do
           let(:options) { { srv_service_name: srv_service_name } }
 
           it 'is accepted and sets srv_service_name' do
-            lambda do
+            expect do
               client
-            end.should_not raise_error
+            end.not_to raise_error
             expect(client.options[:srv_service_name]).to eq(srv_service_name)
           end
         end
@@ -1702,7 +1702,7 @@ describe Mongo::Client do
             end
 
             it 'is accepted' do
-              client.options[:bg_error_backtrace].should == valid_value
+              expect(client.options[:bg_error_backtrace]).to eq(valid_value)
             end
           end
         end
@@ -1713,9 +1713,9 @@ describe Mongo::Client do
           end
 
           it 'is rejected' do
-            lambda do
+            expect do
               client
-            end.should raise_error(ArgumentError, /:bg_error_backtrace option value must be true, false, nil or a positive integer/)
+            end.to raise_error(ArgumentError, /:bg_error_backtrace option value must be true, false, nil or a positive integer/)
           end
         end
 
@@ -1727,9 +1727,9 @@ describe Mongo::Client do
               end
 
               it 'is rejected' do
-                lambda do
+                expect do
                   client
-                end.should raise_error(ArgumentError, /:bg_error_backtrace option value must be true, false, nil or a positive integer/)
+                end.to raise_error(ArgumentError, /:bg_error_backtrace option value must be true, false, nil or a positive integer/)
               end
             end
           end
@@ -1893,7 +1893,7 @@ describe Mongo::Client do
             end
 
             it 'works' do
-              client.options[:wrapping_libraries].should == ['name' => 'Mongoid', 'version' => '7.1.2']
+              expect(client.options[:wrapping_libraries]).to eq(['name' => 'Mongoid', 'version' => '7.1.2'])
             end
           end
 
@@ -1903,7 +1903,7 @@ describe Mongo::Client do
             end
 
             it 'works' do
-              client.options[:wrapping_libraries].should == ['name' => 'Mongoid', 'version' => '7.1.2']
+              expect(client.options[:wrapping_libraries]).to eq(['name' => 'Mongoid', 'version' => '7.1.2'])
             end
           end
 
@@ -1913,7 +1913,7 @@ describe Mongo::Client do
             end
 
             it 'works' do
-              client.options[:wrapping_libraries].should == ['name' => 'Mongoid', 'version' => '7.1.2']
+              expect(client.options[:wrapping_libraries]).to eq(['name' => 'Mongoid', 'version' => '7.1.2'])
             end
           end
 
@@ -1926,10 +1926,10 @@ describe Mongo::Client do
             end
 
             it 'works' do
-              client.options[:wrapping_libraries].should == [
+              expect(client.options[:wrapping_libraries]).to eq([
                 {'name' => 'Mongoid', 'version' => '7.1.2'},
                 {'name' => 'Rails', 'version' => '4.0', 'platform' => 'Foobar'},
-              ]
+              ])
             end
           end
 
@@ -1939,7 +1939,7 @@ describe Mongo::Client do
             end
 
             it 'works' do
-              client.options[:wrapping_libraries].should == []
+              expect(client.options[:wrapping_libraries]).to eq([])
             end
           end
 
@@ -1949,7 +1949,7 @@ describe Mongo::Client do
             end
 
             it 'works' do
-              client.options[:wrapping_libraries].should be nil
+              expect(client.options[:wrapping_libraries]).to be nil
             end
           end
         end
@@ -1961,9 +1961,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /:wrapping_libraries must be an array of hashes/)
+              end.to raise_error(ArgumentError, /:wrapping_libraries must be an array of hashes/)
             end
           end
 
@@ -1973,9 +1973,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /:wrapping_libraries element has invalid keys/)
+              end.to raise_error(ArgumentError, /:wrapping_libraries element has invalid keys/)
             end
           end
 
@@ -1985,9 +1985,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, /:wrapping_libraries element value cannot include '|'/)
+              end.to raise_error(ArgumentError, /:wrapping_libraries element value cannot include '|'/)
             end
           end
         end
@@ -2000,7 +2000,7 @@ describe Mongo::Client do
           end
 
           it 'creates the client without the option' do
-            client.options.should_not have_key(:auth_mech_properties)
+            expect(client.options).not_to have_key(:auth_mech_properties)
           end
         end
       end
@@ -2017,11 +2017,11 @@ describe Mongo::Client do
             end
 
             it 'is accepted' do
-              client.options[:server_api].should == {
+              expect(client.options[:server_api]).to eq({
                 'version' => '1',
                 'strict' => true,
                 'deprecation_errors' => false,
-              }
+              })
             end
           end
 
@@ -2033,9 +2033,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, 'Unknown server API version: 42')
+              end.to raise_error(ArgumentError, 'Unknown server API version: 42')
             end
           end
 
@@ -2047,9 +2047,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, 'Unknown keys under :server_api: "vversion"')
+              end.to raise_error(ArgumentError, 'Unknown keys under :server_api: "vversion"')
             end
           end
 
@@ -2059,9 +2059,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 client
-              end.should raise_error(ArgumentError, ':server_api value must be a hash: 42')
+              end.to raise_error(ArgumentError, ':server_api value must be a hash: 42')
             end
           end
         end
@@ -2079,7 +2079,7 @@ describe Mongo::Client do
           end
 
           it 'constructs the client' do
-            client.should be_a(Mongo::Client)
+            expect(client).to be_a(Mongo::Client)
           end
 
           it 'does not discover servers' do
@@ -2089,9 +2089,9 @@ describe Mongo::Client do
           end
 
           it 'fails operations' do
-            lambda do
+            expect do
               client.command(ping: 1)
-            end.should raise_error(Mongo::Error::NoServerAvailable)
+            end.to raise_error(Mongo::Error::NoServerAvailable)
           end
         end
       end
@@ -2396,7 +2396,7 @@ describe Mongo::Client do
       end
 
       before do
-        client.options[:direct_connection].should be nil
+        expect(client.options[:direct_connection]).to be nil
       end
 
       let(:new_client) do
@@ -2410,7 +2410,7 @@ describe Mongo::Client do
         end
 
         it 'is accepted' do
-          new_client.options[:direct_connection].should be false
+          expect(new_client.options[:direct_connection]).to be false
         end
       end
 
@@ -2425,8 +2425,8 @@ describe Mongo::Client do
 
 
           it 'is accepted' do
-            new_client.options[:direct_connection].should be true
-            new_client.cluster.topology.should be_a(Mongo::Cluster::Topology::Single)
+            expect(new_client.options[:direct_connection]).to be true
+            expect(new_client.cluster.topology).to be_a(Mongo::Cluster::Topology::Single)
           end
         end
 
@@ -2434,9 +2434,9 @@ describe Mongo::Client do
           require_topology :replica_set, :sharded
 
           it 'is rejected' do
-            lambda do
+            expect do
               new_client
-            end.should raise_error(ArgumentError, /direct_connection=true cannot be used with topologies other than Single/)
+            end.to raise_error(ArgumentError, /direct_connection=true cannot be used with topologies other than Single/)
           end
 
           context 'when a new cluster is created' do
@@ -2446,9 +2446,9 @@ describe Mongo::Client do
             end
 
             it 'is rejected' do
-              lambda do
+              expect do
                 new_client
-              end.should raise_error(ArgumentError, /direct_connection=true cannot be used with topologies other than Single/)
+              end.to raise_error(ArgumentError, /direct_connection=true cannot be used with topologies other than Single/)
             end
           end
         end
@@ -2746,7 +2746,7 @@ describe Mongo::Client do
 
       let(:new_client) do
         client.with(app_name: 'foo').tap do |new_client|
-          new_client.cluster.should_not == client.cluster
+          expect(new_client.cluster).not_to eq(client.cluster)
         end
       end
 
@@ -2755,9 +2755,9 @@ describe Mongo::Client do
         events = subscriber.select_started_events(Mongo::Monitoring::Event::ServerHeartbeatStarted)
         if ClusterConfig.instance.topology == :load_balanced
           # No server monitoring in LB topology
-          events.length.should == 0
+          expect(events.length).to eq(0)
         else
-          events.length.should > 0
+          expect(events.length).to be > 0
         end
       end
 
@@ -2789,7 +2789,7 @@ describe Mongo::Client do
         end
 
         expect(subscriber.started_events.length).to eq 0
-        new_client.cluster.topology.class.should_not be Mongo::Cluster::Topology::Unknown
+        expect(new_client.cluster.topology.class).not_to be Mongo::Cluster::Topology::Unknown
       end
     end
 
@@ -2804,7 +2804,7 @@ describe Mongo::Client do
       end
 
       it 'changes :server_api' do
-        new_client.options[:server_api].should == {'version' => '1'}
+        expect(new_client.options[:server_api]).to eq({'version' => '1'})
       end
     end
 
@@ -2819,7 +2819,7 @@ describe Mongo::Client do
       end
 
       it 'clears :server_api' do
-        new_client.options[:server_api].should be nil
+        expect(new_client.options[:server_api]).to be nil
       end
     end
 

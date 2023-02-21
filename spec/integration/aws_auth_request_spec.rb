@@ -64,12 +64,12 @@ describe Mongo::Auth::Aws::Request do
     it 'is usable' do
       # This assertion intentionally does not use payload so that if it fails,
       # the entire response is printed for diagnostic purposes.
-      sts_response.body.should_not =~ /"Error"/
+      expect(sts_response.body).not_to match(/"Error"/)
 
-      sts_response.code.should == '200'
-      result['Arn'].should =~ /^arn:aws:(iam|sts)::/
-      result['Account'].should be_a(String)
-      result['UserId'].should =~ /^A/
+      expect(sts_response.code).to eq('200')
+      expect(result['Arn']).to match(/^arn:aws:(iam|sts)::/)
+      expect(result['Account']).to be_a(String)
+      expect(result['UserId']).to match(/^A/)
 
       puts "STS request successful with ARN #{result['Arn']}"
     end

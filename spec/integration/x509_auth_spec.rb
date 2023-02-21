@@ -29,7 +29,7 @@ describe 'X.509 auth integration tests' do
     end
 
     it 'does not authenticate' do
-      authenticated_user_info.should be nil
+      expect(authenticated_user_info).to be nil
     end
   end
 
@@ -42,7 +42,7 @@ describe 'X.509 auth integration tests' do
 
     shared_examples 'authenticates successfully' do
       it 'authenticates successfully' do
-        authenticated_user_name.should == common_name
+        expect(authenticated_user_name).to eq(common_name)
       end
 
       let(:commands) do
@@ -55,7 +55,7 @@ describe 'X.509 auth integration tests' do
         max_server_version '4.2'
 
         it 'uses the authenticate command to authenticate' do
-          commands.should == %w(authenticate connectionStatus)
+          expect(commands).to eq(%w(authenticate connectionStatus))
         end
       end
 
@@ -63,7 +63,7 @@ describe 'X.509 auth integration tests' do
         min_server_fcv '4.4'
 
         it 'uses speculative authentication in hello to authenticate' do
-          commands.should == %w(connectionStatus)
+          expect(commands).to eq(%w(connectionStatus))
         end
       end
     end
@@ -90,9 +90,9 @@ describe 'X.509 auth integration tests' do
       end
 
       it 'fails to authenticate' do
-        lambda do
+        expect do
           authenticated_user_name
-        end.should raise_error(Mongo::Auth::Unauthorized, /Client certificate.*is not authorized/)
+        end.to raise_error(Mongo::Auth::Unauthorized, /Client certificate.*is not authorized/)
       end
 
       # This test applies to both pre-4.4 and 4.4+.
@@ -101,11 +101,11 @@ describe 'X.509 auth integration tests' do
       # and we will try to authenticate as a separate command.
       it 'uses the authenticate command to authenticate' do
         client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-        lambda do
+        expect do
           authenticated_user_name
-        end.should raise_error(Mongo::Auth::Unauthorized, /Client certificate.*is not authorized/)
+        end.to raise_error(Mongo::Auth::Unauthorized, /Client certificate.*is not authorized/)
         commands = subscriber.started_events.map(&:command_name)
-        commands.should == %w(authenticate)
+        expect(commands).to eq(%w(authenticate))
       end
     end
   end

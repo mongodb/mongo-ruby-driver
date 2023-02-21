@@ -62,9 +62,9 @@ describe Mongo::Server::PushMonitor do
 
   describe '#do_work' do
     it 'works' do
-      lambda do
+      expect do
         push_monitor.do_work
-      end.should_not raise_error
+      end.not_to raise_error
     end
 
     context 'network error during check' do
@@ -72,9 +72,9 @@ describe Mongo::Server::PushMonitor do
         push_monitor
 
         expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
-        lambda do
+        expect do
           push_monitor.do_work
-        end.should_not raise_error
+        end.not_to raise_error
       end
 
       it 'stops the monitoring' do
@@ -83,11 +83,11 @@ describe Mongo::Server::PushMonitor do
         start = Mongo::Utils.monotonic_time
 
         expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
-        lambda do
+        expect do
           push_monitor.do_work
-        end.should_not raise_error
+        end.not_to raise_error
 
-        push_monitor.running?.should be false
+        expect(push_monitor.running?).to be false
       end
     end
   end
