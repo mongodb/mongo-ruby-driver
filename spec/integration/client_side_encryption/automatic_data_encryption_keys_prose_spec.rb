@@ -12,6 +12,10 @@ describe 'Client-Side Encryption' do
 
     include_context 'define shared FLE helpers'
 
+    let(:test_database_name) do
+      'automatic_data_encryption_keys'
+    end
+
     let(:key_vault_client) do
       ClientRegistry.instance.new_local_client(SpecConfig.instance.addresses)
     end
@@ -33,9 +37,13 @@ describe 'Client-Side Encryption' do
       )
     end
 
+    let(:database) do
+      authorized_client.use(test_database_name).database
+    end
+
     before(:each) do
       authorized_client.use(key_vault_db)[key_vault_coll].drop
-      authorized_client['testing1'].drop
+      authorized_client.use(test_database_name).database.drop
     end
 
     shared_examples 'creates data keys automatically' do
@@ -50,21 +58,21 @@ describe 'Client-Side Encryption' do
           }
         }
         client_encryption.create_encrypted_collection(
-          authorized_client.database,
+          database,
           'testing1',
           opts,
           kms_provider,
           master_key
         )
         expect do
-          authorized_client['testing1'].insert_one(ssn: '123-45-6789')
+          database['testing1'].insert_one(ssn: '123-45-6789')
         end.to raise_error(Mongo::Error::OperationFailure, /Document failed validation/)
       end
 
       it 'fails when missing encrypted field' do
         expect do
           client_encryption.create_encrypted_collection(
-            authorized_client.database,
+            database,
             'testing1',
             {},
             kms_provider,
@@ -85,7 +93,7 @@ describe 'Client-Side Encryption' do
         }
         expect do
           client_encryption.create_encrypted_collection(
-            authorized_client.database,
+            database,
             'testing1',
             opts,
             kms_provider,
@@ -105,7 +113,7 @@ describe 'Client-Side Encryption' do
           }
         }
         _, new_encrypted_fields = client_encryption.create_encrypted_collection(
-          authorized_client.database,
+          database,
           'testing1',
           opts,
           kms_provider,
@@ -118,7 +126,7 @@ describe 'Client-Side Encryption' do
           algorithm: 'Unindexed'
         )
         expect do
-          authorized_client['testing1'].insert_one(ssn: encrypted_payload)
+          database['testing1'].insert_one(ssn: encrypted_payload)
         end.not_to raise_error
       end
     end
