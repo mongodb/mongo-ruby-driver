@@ -20,6 +20,10 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
       Mongo::Auth::User.new(auth_mech: :aws)
     end
 
+    before do
+      Mongo::Auth::Aws::CredentialsCache.instance.clear
+    end
+
     shared_examples_for 'retrieves the credentials' do
       it 'retrieves' do
         credentials.should be_a(Mongo::Auth::Aws::Credentials)
