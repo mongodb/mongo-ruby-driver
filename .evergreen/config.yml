@@ -16,6 +16,7 @@ command_type: system
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
 exec_timeout_secs: 3600
 
+
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
 timeout:
   - command: shell.exec
@@ -37,6 +38,19 @@ functions:
 
           git submodule update --init --recursive
 
+  "fetch egos":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          set -e
+
+          # Python version:
+          #curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
+
+          # C version:
+          curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
+          gcc -O2 -g -oegos -lrt egos.c
 
   "create expansions":
     # Make an evergreen expansion file with dynamic values
@@ -368,7 +382,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           set -x
-          .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
 
   "run tests":
     - command: shell.exec
@@ -378,7 +392,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests.sh
 
   "run tests via docker":
     - command: shell.exec
@@ -388,7 +402,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests-docker.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests-docker.sh
 
   "run AWS auth tests":
     - command: shell.exec
@@ -398,7 +412,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests-aws-auth.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests-aws-auth.sh
 
   "run Kerberos unit tests":
     - command: shell.exec
@@ -408,7 +422,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests-kerberos-unit.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests-kerberos-unit.sh
 
   "run Kerberos integration tests":
     - command: shell.exec
@@ -418,7 +432,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-tests-kerberos-integration.sh
+          ./egos stdbuf -i0 -o0 -e0 .evergreen/run-tests-kerberos-integration.sh
 
   "run Atlas tests":
     - command: shell.exec
@@ -457,6 +471,7 @@ functions:
 
 pre:
   - func: "fetch source"
+  - func: "fetch egos"
   - func: "create expansions"
 
 post:
@@ -1541,7 +1556,7 @@ buildvariants:
 
   # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
   # TODO Add ruby-3.0: RUBY-2717
-  
+
   - matrix_name: ocsp-verifier - ruby-2.5
     matrix_spec:
       ocsp-verifier: true
@@ -1573,7 +1588,7 @@ buildvariants:
       docker-distro: debian10
     display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
     tasks: *1
-  
+
 
   - matrix_name: ocsp-must-staple
     matrix_spec:
