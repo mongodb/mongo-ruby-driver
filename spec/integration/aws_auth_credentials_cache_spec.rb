@@ -31,7 +31,7 @@ describe Mongo::Auth::Aws::CredentialsCache do
       described_class.instance.credentials.session_token,
       Time.now + 60
     )
-    client2 = new_new_client
+    client2 = new_client
     client2['test-collection'].find.to_a
     expect(described_class.instance.credentials).not_to be_expired
 
@@ -41,7 +41,7 @@ describe Mongo::Auth::Aws::CredentialsCache do
       described_class.instance.credentials.session_token,
       described_class.instance.credentials.expiration
     )
-    client3 = new_new_client
+    client3 = new_client
     expect { client3['test-collection'].find.to_a }.to raise_error(Mongo::Auth::Unauthorized)
     expect(described_class.instance.credentials).to be_nil
     expect { client3['test-collection'].find.to_a }.not_to raise_error

@@ -85,7 +85,7 @@ module Mongo
           end
 
           credentials = obtain_credentials_from_environment
-          return credentials if credentials_valid?(credentials, 'environment variables')
+          return credentials unless credentials.nil?
 
           @credentials_cache
             .fetch { obtain_credentials_from_endpoints }
@@ -104,9 +104,7 @@ module Mongo
             ENV['AWS_SECRET_ACCESS_KEY'],
             ENV['AWS_SESSION_TOKEN']
           )
-          if credentials && credentials_valid?(credentials, 'environment variables')
-            credentials
-          end
+          credentials if credentials && credentials_valid?(credentials, 'environment variables')
         end
 
         # Returns credentials from the AWS metadata endpoints.
