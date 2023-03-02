@@ -71,34 +71,52 @@ module Mongo
         #
         # @return [ Auth::Aws::Credentials ] A valid set of credentials.
         #
-        # @raise Auth::InvalidConfiguration if credentials could not be
-        #   retrieved for any reason, or if a source contains an invalid set
+        # @raise Auth::InvalidConfiguration if a source contains an invalid set
         #   of credentials.
+        # @raise Auth::Aws::CredentialsNotFound if credentials could not be
+        #   retrieved from any source.
         def credentials
-          if user
-            credentials = Credentials.new(
-              user.name,
-              user.password,
-              user.auth_mech_properties['aws_session_token']
-            )
-            return credentials if credentials_valid?(credentials, 'Mongo::Client URI or Ruby options')
-          end
-
-          credentials = obtain_credentials_from_environment
+          credentials = credentials_from_user(user)
           return credentials unless credentials.nil?
 
-          @credentials_cache
-            .fetch { obtain_credentials_from_endpoints }
-            .tap { |cr| raise Auth::Aws::CredentialsNotFound if cr.nil? }
+          credentials = credentials_from_environment
+          return credentials unless credentials.nil?
+
+          credentials = @credentials_cache.fetch { obtain_credentials_from_endpoints }
+          return credentials unless credentials.nil?
+
+          raise Auth::Aws::CredentialsNotFound
         end
 
         private
+
+        # Returns credentials from the user object.
+        #
+        # @param [ Auth::User | nil ] user The user object, if one was provided.
+        #
+        # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
+        #
+        # @raise Auth::InvalidConfiguration if a source contains an invalid set
+        #   of credentials.
+        def credentials_from_user(user)
+          return nil unless user
+
+          credentials = Credentials.new(
+            user.name,
+            user.password,
+            user.auth_mech_properties['aws_session_token']
+          )
+          return credentials if credentials_valid?(credentials, 'Mongo::Client URI or Ruby options')
+        end
 
         # Returns credentials from environment variables.
         #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed or the obtained credentials are invalid.
-        def obtain_credentials_from_environment
+        #
+        # @raise Auth::InvalidConfiguration if a source contains an invalid set
+        #   of credentials.
+        def credentials_from_environment
           credentials = Credentials.new(
             ENV['AWS_ACCESS_KEY_ID'],
             ENV['AWS_SECRET_ACCESS_KEY'],
@@ -111,6 +129,9 @@ module Mongo
         #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed or the obtained credentials are invalid.
+        #
+        # @raise Auth::InvalidConfiguration if a source contains an invalid set
+        #   of credentials.
         def obtain_credentials_from_endpoints
           if (credentials = web_identity_credentials) && credentials_valid?(credentials, 'Web identity token')
             credentials

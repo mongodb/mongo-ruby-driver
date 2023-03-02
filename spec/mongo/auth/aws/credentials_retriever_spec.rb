@@ -11,7 +11,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
 
       let(:subject) do
         described_class.new(credentials_cache: cache).tap do |retriever|
-          allow(retriever).to receive(:obtain_credentials_from_environment).and_return(nil)
+          allow(retriever).to receive(:credentials_from_environment).and_return(nil)
         end
       end
 
