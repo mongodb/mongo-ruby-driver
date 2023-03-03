@@ -86,6 +86,10 @@ class ClientRegistry
     @global_clients[name] = new_global_client(name)
   end
 
+  def new_authorized_client
+    new_global_client('authorized')
+  end
+
   def new_global_client(name)
     case name
     # Provides a basic scanned client to do a hello check.

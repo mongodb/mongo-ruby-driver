@@ -18,7 +18,6 @@
 module Mongo
   module Auth
     class Aws
-
       # Raised when trying to authorize with an invalid configuration
       #
       # @api private
@@ -51,15 +50,17 @@ module Mongo
       #
       # @api private
       class CredentialsRetriever
-
         # Timeout for metadata operations, in seconds.
         #
         # The auth spec suggests a 10 second timeout but this seems
         # excessively long given that the endpoint is essentially local.
         METADATA_TIMEOUT = 5
 
-        def initialize(user = nil)
+        # @param [ Auth::User | nil ] user The user object, if one was provided.
+        # @param [ Auth::Aws::CredentialsCache ] credentials_cache The credentials cache.
+        def initialize(user = nil, credentials_cache: CredentialsCache.instance)
           @user = user
+          @credentials_cache = credentials_cache
         end
 
         # @return [ Auth::User | nil ] The user object, if one was provided.
@@ -70,54 +71,76 @@ module Mongo
         #
         # @return [ Auth::Aws::Credentials ] A valid set of credentials.
         #
-        # @raise Auth::InvalidConfiguration if credentials could not be
-        #   retrieved for any reason, or if a source contains an invalid set
+        # @raise Auth::InvalidConfiguration if a source contains an invalid set
         #   of credentials.
+        # @raise Auth::Aws::CredentialsNotFound if credentials could not be
+        #   retrieved from any source.
         def credentials
-          if user
-            credentials = Credentials.new(
-              user.name,
-              user.password,
-              user.auth_mech_properties['aws_session_token'],
-            )
+          credentials = credentials_from_user(user)
+          return credentials unless credentials.nil?
 
-            if credentials_valid?(credentials, 'Mongo::Client URI or Ruby options')
-              return credentials
-            end
-          end
+          credentials = credentials_from_environment
+          return credentials unless credentials.nil?
 
-          credentials = Credentials.new(
-            ENV['AWS_ACCESS_KEY_ID'],
-            ENV['AWS_SECRET_ACCESS_KEY'],
-            ENV['AWS_SESSION_TOKEN'],
-          )
-
-          if credentials_valid?(credentials, 'environment variables')
-            return credentials
-          end
-
-          credentials = web_identity_credentials
-
-          if credentials && credentials_valid?(credentials, 'Web identity token')
-            return credentials
-          end
-
-          credentials = ecs_metadata_credentials
-
-          if credentials && credentials_valid?(credentials, 'ECS task metadata')
-            return credentials
-          end
-
-          credentials = ec2_metadata_credentials
-
-          if credentials && credentials_valid?(credentials, 'EC2 instance metadata')
-            return credentials
-          end
+          credentials = @credentials_cache.fetch { obtain_credentials_from_endpoints }
+          return credentials unless credentials.nil?
 
           raise Auth::Aws::CredentialsNotFound
         end
 
         private
+
+        # Returns credentials from the user object.
+        #
+        # @param [ Auth::User | nil ] user The user object, if one was provided.
+        #
+        # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
+        #
+        # @raise Auth::InvalidConfiguration if a source contains an invalid set
+        #   of credentials.
+        def credentials_from_user(user)
+          return nil unless user
+
+          credentials = Credentials.new(
+            user.name,
+            user.password,
+            user.auth_mech_properties['aws_session_token']
+          )
+          return credentials if credentials_valid?(credentials, 'Mongo::Client URI or Ruby options')
+        end
+
+        # Returns credentials from environment variables.
+        #
+        # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
+        #   if retrieval failed or the obtained credentials are invalid.
+        #
+        # @raise Auth::InvalidConfiguration if a source contains an invalid set
+        #   of credentials.
+        def credentials_from_environment
+          credentials = Credentials.new(
+            ENV['AWS_ACCESS_KEY_ID'],
+            ENV['AWS_SECRET_ACCESS_KEY'],
+            ENV['AWS_SESSION_TOKEN']
+          )
+          credentials if credentials && credentials_valid?(credentials, 'environment variables')
+        end
+
+        # Returns credentials from the AWS metadata endpoints.
+        #
+        # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
+        #   if retrieval failed or the obtained credentials are invalid.
+        #
+        # @raise Auth::InvalidConfiguration if a source contains an invalid set
+        #   of credentials.
+        def obtain_credentials_from_endpoints
+          if (credentials = web_identity_credentials) && credentials_valid?(credentials, 'Web identity token')
+            credentials
+          elsif (credentials = ecs_metadata_credentials) && credentials_valid?(credentials, 'ECS task metadata')
+            credentials
+          elsif (credentials = ec2_metadata_credentials) && credentials_valid?(credentials, 'EC2 instance metadata')
+            credentials
+          end
+        end
 
         # Returns credentials from the EC2 metadata endpoint. The credentials
         # could be empty, partial or invalid.
@@ -158,10 +181,11 @@ module Mongo
             payload['AccessKeyId'],
             payload['SecretAccessKey'],
             payload['Token'],
+            DateTime.parse(payload['Expiration']).to_time
           )
         # When trying to use the EC2 metadata endpoint on ECS:
         # Errno::EINVAL: Failed to open TCP connection to 169.254.169.254:80 (Invalid argument - connect(2) for "169.254.169.254" port 80)
-        rescue ::Timeout::Error, IOError, SystemCallError
+        rescue ::Timeout::Error, IOError, SystemCallError, TypeError
           return nil
         end
 
@@ -190,8 +214,9 @@ module Mongo
             payload['AccessKeyId'],
             payload['SecretAccessKey'],
             payload['Token'],
+            DateTime.parse(payload['Expiration']).to_time
           )
-        rescue ::Timeout::Error, IOError, SystemCallError
+        rescue ::Timeout::Error, IOError, SystemCallError, TypeError
           return nil
         end
 
@@ -284,8 +309,9 @@ module Mongo
             payload['AccessKeyId'],
             payload['SecretAccessKey'],
             payload['SessionToken'],
+            Time.at(payload['Expiration'])
           )
-        rescue JSON::ParserError
+        rescue JSON::ParserError, TypeError
           nil
         end
 

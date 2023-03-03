@@ -1,7 +1,6 @@
 # frozen_string_literal: true
-# encoding: utf-8
 
-# Copyright (C) 2020 MongoDB Inc.
+# Copyright (C) 2023-present MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,24 +16,22 @@
 
 module Mongo
   module Auth
-    class Aws < Base
-      MECHANISM = 'MONGODB-AWS'.freeze
-
-      # Log the user in on the current connection.
+    class Aws
+      # The AWS credential set.
       #
-      # @return [ BSON::Document ] The document of the authentication response.
-      def login
-        converse_2_step(connection, conversation)
-      rescue StandardError
-        CredentialsCache.instance.clear
-        raise
+      # @api private
+      Credentials = Struct.new(:access_key_id, :secret_access_key, :session_token, :expiration) do
+        # @return [ true | false ] Whether the credentials have expired.
+        def expired?
+          if expiration.nil?
+            false
+          else
+            # According to the spec, Credentials are considered
+            # valid if they are more than five minutes away from expiring.
+            Time.now.utc >= expiration - 300
+          end
+        end
       end
     end
   end
 end
-
-require 'mongo/auth/aws/conversation'
-require 'mongo/auth/aws/credentials'
-require 'mongo/auth/aws/credentials_cache'
-require 'mongo/auth/aws/credentials_retriever'
-require 'mongo/auth/aws/request'
