@@ -62,8 +62,8 @@ describe 'Cmap' do
             # Since we use a mock for the cluster, run_sdam_flow does not clear
             # the pool or mark the server unknown. Manually clear the pool and
             # mock the server as unknown.
-            allow(server).to receive(:unknown!).and_wrap_original do |m, *args|
-              m.call(*args)
+            allow(server).to receive(:unknown!).and_wrap_original do |m, *args, **kwargs|
+              m.call(*args, **kwargs)
               RSpec::Mocks.with_temporary_scope do
                 allow(server).to receive(:unknown?).and_return(true)
                 server.pool_internal&.clear(lazy: true)

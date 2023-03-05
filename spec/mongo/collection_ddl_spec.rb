@@ -517,10 +517,10 @@ describe Mongo::Collection do
       end
 
       it "the pipeline gets passed to the command" do
-        expect(Mongo::Operation::Create).to receive(:new).and_wrap_original do |m, *args|
-          expect(args.first.slice(:selector)[:selector]).to have_key(:pipeline)
-          expect(args.first.slice(:selector)[:selector]).to have_key(:viewOn)
-          m.call(*args)
+        expect(Mongo::Operation::Create).to receive(:new).and_wrap_original do |m, *args, **kwargs|
+          expect(kwargs[:selector]).to have_key(:pipeline)
+          expect(kwargs[:selector]).to have_key(:viewOn)
+          m.call(*args, **kwargs)
         end
         expect_any_instance_of(Mongo::Operation::Create).to receive(:execute)
         authorized_client[:specs].create(options)

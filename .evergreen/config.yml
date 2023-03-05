@@ -724,6 +724,10 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-3.2"
+        display_name: ruby-3.2
+        variables:
+          RVM_RUBY: "ruby-3.2"
       - id: "ruby-3.1"
         display_name: ruby-3.1
         variables:
@@ -1017,7 +1021,7 @@ buildvariants:
   - matrix_name: "mongo-latest"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-3.1"]
+      ruby: ["ruby-3.1", "ruby-3.2"]
       mongodb-version: ['latest']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
@@ -1028,7 +1032,7 @@ buildvariants:
   - matrix_name: "mongo-6.0"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-3.1"]
+      ruby: ["ruby-3.1", "ruby-3.2"]
       mongodb-version: ['6.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
@@ -1039,7 +1043,7 @@ buildvariants:
   - matrix_name: "mongo-5.3"
     matrix_spec:
       auth-and-ssl: noauth-and-nossl
-      ruby: ["ruby-3.1"]
+      ruby: ["ruby-3.1", "ruby-3.2"]
       mongodb-version: ['5.3']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
@@ -1094,7 +1098,7 @@ buildvariants:
   - matrix_name: "mongo-5.0"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-2.7", "ruby-3.1", "ruby-3.2"]
       mongodb-version: '5.0'
       topology: '*'
       os: ubuntu1804
@@ -1117,7 +1121,7 @@ buildvariants:
   - matrix_name: "mongo-5.0-api-version"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ["ruby-3.1"]
+      ruby: ["ruby-3.1", "ruby-3.2"]
       mongodb-version: '5.0'
       topology: standalone
       api-version-required: yes
@@ -1174,7 +1178,7 @@ buildvariants:
   - matrix_name: "lint-5.0"
     matrix_spec:
       lint: on
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-2.7", "ruby-3.1", "ruby-3.2"]
       mongodb-version: ["5.0"]
       topology: '*'
       os: ubuntu2004
@@ -1196,7 +1200,7 @@ buildvariants:
   - matrix_name: "solo"
     matrix_spec:
       solo: on
-      ruby: [ruby-3.1, ruby-3.0, ruby-2.7, ruby-2.6, ruby-2.5, jruby-9.2, jruby-9.3]
+      ruby: [ruby-2.5, ruby-2.6, ruby-2.7, ruby-3.0, ruby-3.1, ruby-3.2, jruby-9.2, jruby-9.3]
       mongodb-version: ["4.4"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1804
@@ -1310,7 +1314,7 @@ buildvariants:
   - matrix_name: "snappy-auth-3"
     matrix_spec:
       auth-and-ssl: "auth-and-ssl"
-      ruby: ["ruby-3.1"]
+      ruby: ["ruby-3.1", "ruby-3.2"]
       mongodb-version: "4.4"
       topology: "standalone"
       compressor: 'snappy'
@@ -1415,7 +1419,7 @@ buildvariants:
 
   - matrix_name: "bson"
     matrix_spec:
-      ruby: [ruby-3.1, ruby-2.7, jruby-9.2]
+      ruby: [ruby-2.7, ruby-3.1, ruby-3.2, jruby-9.2]
       mongodb-version: '4.4'
       topology: replica-set
       bson: "*"
@@ -1461,7 +1465,7 @@ buildvariants:
   - matrix_name: "fle-latest"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-3.1]
+      ruby: [ruby-3.1, ruby-3.2]
       topology: [replica-set, sharded-cluster]
       mongodb-version: ['latest']
       os: ubuntu2004
@@ -1473,7 +1477,7 @@ buildvariants:
   - matrix_name: "fle-6.0"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-3.1, ruby-3.0, ruby-2.7]
+      ruby: [ruby-2.7, ruby-3.0, ruby-3.1, ruby-3.2]
       topology: [replica-set, sharded-cluster]
       mongodb-version: ['6.0']
       os: ubuntu2004
@@ -1485,7 +1489,7 @@ buildvariants:
   - matrix_name: "fle-4.4"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: [ruby-3.1]
+      ruby: [ruby-3.1, ruby-3.2]
       topology: standalone
       mongodb-version: ['4.4']
       os: ubuntu1804
@@ -1546,7 +1550,7 @@ buildvariants:
   - matrix_name: aws-auth-temporary
     matrix_spec:
       auth-and-ssl: [aws-assume-role, aws-ec2, aws-ecs, aws-web-identity]
-      ruby: [ruby-3.1]
+      ruby: [ruby-3.1, ruby-3.2]
       topology: standalone
       mongodb-version: '4.4'
       os: ubuntu1804
@@ -1778,7 +1782,7 @@ buildvariants:
 
   - matrix_name: "atlas"
     matrix_spec:
-      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.2"]
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "ruby-3.2", "jruby-9.2"]
     display_name: "Atlas tests ${ruby}"
     run_on:
       - ubuntu1804-small
@@ -1788,8 +1792,8 @@ buildvariants:
   - matrix_name: "serverless"
     matrix_spec:
       # https://jira.mongodb.org/browse/RUBY-3217
-      # ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.3"]
-      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1"]
+      # ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "ruby-3.2", "jruby-9.3"]
+      ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "ruby-3.2"]
       fle: helper
     display_name: "Atlas serverless ${ruby} single mongos"
     run_on:

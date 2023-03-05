@@ -1564,14 +1564,14 @@ describe Mongo::Server::ConnectionPool do
     context 'when connect fails with socket related error once' do
       before do
         i = 0
-        expect(pool).to receive(:connect_connection).exactly(:twice).and_wrap_original{ |m, *args|
+        expect(pool).to receive(:connect_connection).exactly(:twice).and_wrap_original do |m, *args|
           i += 1
           if i == 1
             raise Mongo::Error::SocketError
           else
             m.call(*args)
           end
-        }
+        end
         expect(pool.size).to eq 0
       end
 

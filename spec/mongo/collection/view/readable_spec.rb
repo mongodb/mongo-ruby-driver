@@ -848,10 +848,9 @@ describe Mongo::Collection::View::Readable do
           config_override :broken_view_options, false
 
           it "sets the option correctly" do
-            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts.dig(*obj_path)).to eq(param)
-              m.call(*args)
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs.dig(*obj_path)).to eq(param)
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).count(options)
           end
@@ -861,10 +860,9 @@ describe Mongo::Collection::View::Readable do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
-            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts.dig(*obj_path)).to be_nil
-              m.call(*args)
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs.dig(*obj_path)).to be_nil
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).count(options)
           end
@@ -922,9 +920,9 @@ describe Mongo::Collection::View::Readable do
 
         with_config_values :broken_view_options, true, false do
           it "sets the option correctly" do
-            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              expect(args.first[opt]).to eq(param)
-              m.call(*args)
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs[opt]).to eq(param)
+              m.call(*args, **kwargs)
             end
             authorized_collection.find({}, session: param).count(options)
           end
@@ -935,10 +933,9 @@ describe Mongo::Collection::View::Readable do
 
         with_config_values :broken_view_options, true, false do
           it "gives options higher precedence" do
-            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(:selector)
-              expect(opts.dig(:selector, :limit)).to eq(2)
-              m.call(*args)
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs.dig(:selector, :limit)).to eq(2)
+              m.call(*args, **kwargs)
             end
             view.limit(1).count({ limit: 2 })
           end
@@ -1038,10 +1035,9 @@ describe Mongo::Collection::View::Readable do
           let(:param) { 5000 }
 
           it "doesn't set the option correctly" do
-            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts.dig(:selector, :maxTimeMS)).to be_nil
-              m.call(*args)
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs.dig(:selector, :maxTimeMS)).to be_nil
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).estimated_document_count(options)
           end
@@ -1053,10 +1049,9 @@ describe Mongo::Collection::View::Readable do
           let(:obj_path) { opt }
 
           it "doesn't set the option correctly" do
-            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts[opt]).to be_nil
-              m.call(*args)
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs[opt]).to be_nil
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).estimated_document_count(options)
           end
@@ -1071,10 +1066,9 @@ describe Mongo::Collection::View::Readable do
           let(:param) { 5000 }
 
           it "sets the option correctly" do
-            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts.dig(:selector, :maxTimeMS)).to eq(param)
-              m.call(*args)
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs.dig(:selector, :maxTimeMS)).to eq(param)
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).estimated_document_count(options)
           end
@@ -1086,10 +1080,9 @@ describe Mongo::Collection::View::Readable do
           let(:obj_path) { opt }
 
           it "sets the option correctly" do
-            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts[opt]).to eq(param)
-              m.call(*args)
+            expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs[opt]).to eq(param)
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).estimated_document_count(options)
           end
@@ -1105,9 +1098,9 @@ describe Mongo::Collection::View::Readable do
 
           with_config_values :broken_view_options, true, false do
             it "sets the option correctly" do
-              expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-                expect(args.first[opt]).to eq(param)
-                m.call(*args)
+              expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+                expect(kwargs[opt]).to eq(param)
+                m.call(*args, **kwargs)
               end
               authorized_collection.find({}, session: param).estimated_document_count(options)
             end
@@ -1118,10 +1111,9 @@ describe Mongo::Collection::View::Readable do
 
           with_config_values :broken_view_options, true, false do
             it "gives options higher precedence" do
-              expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-                opts = args.first.slice(:selector)
-                expect(opts.dig(:selector, :maxTimeMS)).to eq(2000)
-                m.call(*args)
+              expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+                expect(kwargs.dig(:selector, :maxTimeMS)).to eq(2000)
+                m.call(*args, **kwargs)
               end
               view.max_time_ms(1500).estimated_document_count({ max_time_ms: 2000 })
             end
@@ -1168,8 +1160,7 @@ describe Mongo::Collection::View::Readable do
 
           it "doesn't set the option correctly" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              opts = args[1]
-              expect(opts[opt]).to be_nil
+              expect(args[1][opt]).to be_nil
               m.call(*args)
             end
             view.send(opt, param).count_documents(options)
@@ -1181,8 +1172,7 @@ describe Mongo::Collection::View::Readable do
 
           it "sets the option correctly" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              opts = args[1]
-              expect(opts[opt]).to eq(param)
+              expect(args[1][opt]).to eq(param)
               m.call(*args)
             end
             view.send(opt, param).count_documents(options)
@@ -1217,7 +1207,7 @@ describe Mongo::Collection::View::Readable do
 
           it "sets the option correctly" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
+              pipeline = args.first
               expect(pipeline[1][:'$limit']).to eq(1)
               m.call(*args)
             end
@@ -1230,7 +1220,7 @@ describe Mongo::Collection::View::Readable do
 
           it "doesn't set the option correctly" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
+              pipeline = args.first
               expect(pipeline[1][:'$limit']).to be_nil
               m.call(*args)
             end
@@ -1245,7 +1235,7 @@ describe Mongo::Collection::View::Readable do
 
           it "doesn't set the option correctly" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
+              pipeline = args.first
               expect(pipeline[1][:'$skip']).to be_nil
               m.call(*args)
             end
@@ -1258,7 +1248,7 @@ describe Mongo::Collection::View::Readable do
 
           it "sets the option correctly" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
+              pipeline = args.first
               expect(pipeline[1][:'$skip']).to eq(1)
               m.call(*args)
             end
@@ -1303,7 +1293,7 @@ describe Mongo::Collection::View::Readable do
         with_config_values :broken_view_options, true, false do
           it "gives options higher precedence" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
+              pipeline = args.first
               expect(pipeline[1][:'$limit']).to eq(2)
               m.call(*args)
             end
@@ -1724,10 +1714,9 @@ describe Mongo::Collection::View::Readable do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
-            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts.dig(:selector, :maxTimeMS)).to be_nil
-              m.call(*args)
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs.dig(:selector, :maxTimeMS)).to be_nil
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).distinct(:name, options)
           end
@@ -1737,10 +1726,9 @@ describe Mongo::Collection::View::Readable do
           config_override :broken_view_options, false
 
           it "sets the option correctly" do
-            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts.dig(:selector, :maxTimeMS)).to eq(param)
-              m.call(*args)
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs.dig(:selector, :maxTimeMS)).to eq(param)
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).distinct(:name, options)
           end
@@ -1756,10 +1744,9 @@ describe Mongo::Collection::View::Readable do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
-            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts[opt]).to be_nil
-              m.call(*args)
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs[opt]).to be_nil
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).distinct(:name, options)
           end
@@ -1769,10 +1756,9 @@ describe Mongo::Collection::View::Readable do
           config_override :broken_view_options, false
 
           it "sets the option correctly" do
-            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
-              expect(opts[opt]).to eq(param)
-              m.call(*args)
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs[opt]).to eq(param)
+              m.call(*args, **kwargs)
             end
             view.send(opt, param).distinct(:name, options)
           end
@@ -1789,9 +1775,9 @@ describe Mongo::Collection::View::Readable do
 
         with_config_values :broken_view_options, true, false do
           it "sets the option correctly" do
-            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              expect(args.first[opt]).to eq(param)
-              m.call(*args)
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs[opt]).to eq(param)
+              m.call(*args, **kwargs)
             end
             authorized_collection.find({}, session: param).distinct(options)
           end
@@ -1802,10 +1788,9 @@ describe Mongo::Collection::View::Readable do
 
         with_config_values :broken_view_options, true, false do
           it "gives options higher precedence" do
-            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(:selector)
-              expect(opts.dig(:selector, :maxTimeMS)).to eq(2000)
-              m.call(*args)
+            expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args, **kwargs|
+              expect(kwargs.dig(:selector, :maxTimeMS)).to eq(2000)
+              m.call(*args, **kwargs)
             end
             view.max_time_ms(1500).distinct(:name, { max_time_ms: 2000 })
           end
