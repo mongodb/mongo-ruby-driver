@@ -311,7 +311,7 @@ describe Mongo::Address do
         RSpec::Mocks.with_temporary_scope do
           resolved_address = double('address')
           # This test's expectation
-          expect(resolved_address).to receive(:socket).with(0, connect_timeout: 10)
+          expect(resolved_address).to receive(:socket).with(0, { connect_timeout: 10 })
 
           expect(Mongo::Address::IPv4).to receive(:new).and_return(resolved_address)
 

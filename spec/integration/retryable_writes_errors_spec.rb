@@ -71,10 +71,10 @@ describe 'Retryable writes errors tests' do
       authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       authorized_client.use(:admin).command(failpoint1)
 
-      expect(authorized_collection.write_worker).to receive(:retry_write).once.and_wrap_original do |m, *args, &block|
+      expect(authorized_collection.write_worker).to receive(:retry_write).once.and_wrap_original do |m, *args, **kwargs, &block|
         expect(args.first.code).to eq(91)
         authorized_client.use(:admin).command(failpoint2)
-        m.call(*args, &block)
+        m.call(*args, **kwargs, &block)
       end
     end
 
