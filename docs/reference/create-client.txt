@@ -327,7 +327,41 @@ URI option:
   # Or using the URI syntax:
   Mongo::Client.new("mongodb://1.2.3.4:27017/mydb?loadBalanced=true&connect=load_balanced")
 
+MongoDB Atlas Connection
+------------------------
 
+To connect to a MongoDB deployment on Atlas, first create a ``Mongo::Client`` instance using your
+cluster's connection string and other client options.
+
+You can set the `Stable API <https://www.mongodb.com/docs/manual/reference/stable-api/>`_ version as
+a client option to avoid breaking changes when you upgrade to a new server version.
+
+The following code shows how you can specify the connection string and the Stable API client option
+when connecting to a MongoDB deployment and verify that the connection is successful:
+
+.. code-block:: ruby
+
+  require 'mongo'
+
+  # Replace the placeholders with your credentials
+  uri = "mongodb+srv://<username>:<password>@cluster0.sample.mongodb.net/?retryWrites=true&w=majority"
+
+  # Set the server_api field of the options object to Stable API version 1
+  options = server_api: { version: "1" }
+
+  # Create a new client and connect to the server
+  client = Mongo::Client.new(uri, options)
+
+  # Send a ping to confirm a successful connection
+  begin
+    admin_client = client.use('admin')
+    result = admin_client.database.command(ping: 1).documents.first
+    puts "Pinged your deployment. You successfully connected to MongoDB!"
+  rescue Mongo::Error::OperationFailure => ex
+    puts ex
+  ensure
+    client.close
+  end
 
 .. _srv-uri-notes:
 
