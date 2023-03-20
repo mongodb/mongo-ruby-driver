@@ -347,7 +347,7 @@ when connecting to a MongoDB deployment and verify that the connection is succes
   uri = "mongodb+srv://<username>:<password>@cluster0.sample.mongodb.net/?retryWrites=true&w=majority"
 
   # Set the server_api field of the options object to Stable API version 1
-  options = server_api: { version: "1" }
+  options = { server_api: { version: "1" } }
 
   # Create a new client and connect to the server
   client = Mongo::Client.new(uri, options)
