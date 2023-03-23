@@ -20,6 +20,7 @@ gem-private_key.pem
 nbproject
 tmp
 sandbox/*
+data/*
 .byebug_history
 gemfiles/*.gemfile.lock
 .env.private*
