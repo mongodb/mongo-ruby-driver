@@ -1519,18 +1519,18 @@ buildvariants:
       - name: "test-fle"
 
   # https://jira.mongodb.org/browse/RUBY-3217
-  #- matrix_name: "fle-jruby"
-  #  matrix_spec:
-  #    auth-and-ssl: "noauth-and-nossl"
-  #    ruby: [jruby-9.2, jruby-9.3]
-  #    topology: standalone
-  #    mongodb-version: ['5.0']
-  #    os: ubuntu1804
-  #    fle: helper
-  #    docker-distro: ubuntu1804
-  #  display_name: "FLE: ${mongodb-version} ${ruby}"
-  #  tasks:
-  #    - name: "test-fle-via-docker"
+  - matrix_name: "fle-jruby"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: [jruby-9.2, jruby-9.3]
+      topology: standalone
+      mongodb-version: ['5.0']
+      os: ubuntu1804
+      fle: helper
+      docker-distro: ubuntu1804
+    display_name: "FLE: ${mongodb-version} ${ruby}"
+    tasks:
+      - name: "test-fle-via-docker"
 
   - matrix_name: aws-auth-regular
     matrix_spec:
@@ -1556,7 +1556,7 @@ buildvariants:
 
   # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
   # TODO Add ruby-3.0: RUBY-2717
-
+  
   - matrix_name: ocsp-verifier - ruby-2.5
     matrix_spec:
       ocsp-verifier: true
@@ -1588,7 +1588,7 @@ buildvariants:
       docker-distro: debian10
     display_name: 'OCSP verifier: ${mongodb-version} ${ruby}'
     tasks: *1
-
+  
 
   - matrix_name: ocsp-must-staple
     matrix_spec:
