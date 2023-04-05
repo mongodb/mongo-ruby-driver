@@ -1,0 +1,17 @@
+.. _in-use-encryption:
+
+*****************
+In-Use Encryption
+*****************
+
+.. default-domain:: mongodb
+
+This section describes the different encryption methods in use by the Ruby
+driver for MongoDB.
+
+.. toctree::
+  :titlesonly:
+
+  /reference/in-use-encryption/queryable-encryption
+  /reference/in-use-encryption/client-side-encryption
+  

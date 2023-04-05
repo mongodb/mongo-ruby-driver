@@ -24,4 +24,4 @@ implements for inserting, updating and retrieving data from MongoDB.
   /reference/change-streams
   /reference/sessions
   /reference/transactions
-  /reference/client-side-encryption
+  /reference/in-use-encryption
