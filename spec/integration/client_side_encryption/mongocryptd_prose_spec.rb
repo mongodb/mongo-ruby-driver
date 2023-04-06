@@ -31,6 +31,8 @@ describe 'mongcryptd prose tests' do
   end
 
   before(:each) do
+    skip 'This test requires crypt shared library' unless SpecConfig.instance.crypt_shared_lib_path
+
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
 
@@ -77,8 +79,6 @@ describe 'mongcryptd prose tests' do
     end
 
     it 'does not try to connect to mongocryptd' do
-      skip 'This test requires crypt shared library' unless SpecConfig.instance.crypt_shared_lib_path
-
       encryption_client[:users].insert_one(ssn: ssn)
       expect(connect_attempt.done?).to eq(false)
     end
@@ -95,8 +95,6 @@ describe 'mongcryptd prose tests' do
     end
 
     it 'does not spawn mongocryptd' do
-      skip 'This test requires crypt shared library' unless SpecConfig.instance.crypt_shared_lib_path
-
       expect do
         encryption_client[:users].insert_one(ssn: ssn)
       end.not_to raise_error
