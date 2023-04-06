@@ -551,15 +551,18 @@ module Utils
     end
   end
 
+  BIN_FALSE = File.executable?("/bin/false") ? "/bin/false" : "false"
+  BIN_TRUE  = File.executable?("/bin/true") ? "/bin/true" : "true"
+
   module_function def wrap_forked_child
     begin
       yield
     rescue => e
       STDERR.puts "Failing process #{Process.pid} due to #{e.class}: #{e}"
-      exec('/bin/false')
+      exec(BIN_FALSE)
     else
       # Exec so that we do not close any clients etc. in the child.
-      exec('/bin/true')
+      exec(BIN_TRUE)
     end
   end
 
