@@ -489,7 +489,32 @@ EOT
   end
 
   def crypt_shared_lib_path
-    ENV['MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH']
+    if defined?(@crypt_shared_lib_path)
+      @crypt_shared_lib_path
+    else
+      ENV['MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH']
+    end
+  end
+
+  def without_crypt_shared_lib_path
+    is_defined = instance_variable_defined?(:@crypt_shared_lib_path)
+    saved, @crypt_shared_lib_path = @crypt_shared_lib_path, nil
+    yield
+  ensure
+    if is_defined
+      @crypt_shared_lib_path = saved
+    else
+      remove_instance_variable(:@crypt_shared_lib_path)
+    end
+  end
+
+  attr_accessor :crypt_shared_lib_required
+
+  def require_crypt_shared
+    saved, self.crypt_shared_lib_required = crypt_shared_lib_required, true
+    yield
+  ensure
+    self.crypt_shared_lib_required = saved
   end
 
   def auth?

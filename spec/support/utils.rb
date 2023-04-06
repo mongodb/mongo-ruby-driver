@@ -138,16 +138,8 @@ module Utils
     mapper = Mongo::URI::OptionsMapper.new
     spec_test_options.reduce({}) do |opts, (name, value)|
       if name == 'autoEncryptOpts'
-        opts.merge!(
-          auto_encryption_options: convert_auto_encryption_client_options(value)
-            .merge(
-              # Spawn mongocryptd on non-default port for sharded cluster tests
-              extra_options: {
-                mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
-                mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
-              }
-            )
-        )
+        auto_encryption_options = convert_auto_encryption_client_options(value)
+        opts.merge!(auto_encryption_options: auto_encryption_options)
       else
         mapper.add_uri_option(name, value.to_s, opts)
       end
@@ -206,9 +198,29 @@ module Utils
       auto_encrypt_opts[:encrypted_fields_map] = BSON::ExtJSON.parse_obj(opts['encryptedFieldsMap'])
     end
 
-    auto_encrypt_opts
+    auto_encrypt_opts.merge!(extra_options: convert_auto_encryption_extra_options(auto_encrypt_opts))
   end
   module_function :convert_auto_encryption_client_options
+
+  private def convert_auto_encryption_extra_options(opts)
+    # Spawn mongocryptd on non-default port for sharded cluster tests
+    extra_options = {
+      mongocryptd_spawn_args: [ "--port=#{SpecConfig.instance.mongocryptd_port}" ],
+      mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}"
+    }.merge(opts[:extra_options] || {})
+
+    # if bypass_query_analysis has been explicitly specified, then we ignore
+    # any requirement to use the shared library, as the two are not
+    # compatible.
+    if SpecConfig.instance.crypt_shared_lib_required && !opts[:bypass_query_analysis]
+      extra_options[:crypt_shared_lib_required] = SpecConfig.instance.crypt_shared_lib_required
+      extra_options[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
+      extra_options[:mongocryptd_uri] = "mongodb://localhost:27777"
+    end
+
+    extra_options
+  end
+  module_function :convert_auto_encryption_extra_options
 
   def order_hash(hash)
     Hash[hash.to_a.sort]
