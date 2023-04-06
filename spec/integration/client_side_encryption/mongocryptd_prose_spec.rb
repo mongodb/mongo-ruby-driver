@@ -30,6 +30,13 @@ describe 'mongcryptd prose tests' do
     )
   end
 
+  before(:each) do
+    key_vault_collection.drop
+    key_vault_collection.insert_one(data_key)
+
+    encryption_client['users'].drop
+  end
+
   context 'when shared library is loaded' do
     let(:extra_options) do
       {
