@@ -165,7 +165,7 @@ fi
 if test -n "$FLE"; then
   # Downloading crypt shared lib
   if [ -z "$MONGO_CRYPT_SHARED_DOWNLOAD_URL" ]; then
-    crypt_shared_version=$("${BINDIR}"/mongod --version | grep -oP 'db version v\K.*')
+    crypt_shared_version=${CRYPT_SHARED_VERSION:-$("${BINDIR}"/mongod --version | grep -oP 'db version v\K.*')}
     python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out $(pwd)/csfle_lib  --target $(host_distro) || true
     if test -f $(pwd)/csfle_lib/lib/mongo_crypt_v1.so
     then
