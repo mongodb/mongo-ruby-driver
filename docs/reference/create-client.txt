@@ -329,6 +329,13 @@ URI option:
 
 
 
+Connect to MongoDB Atlas from AWS Lambda
+----------------------------------------
+
+To learn how to connect to Atlas from AWS Lambda, see the
+`Manage Connections with AWS Lambda <https://www.mongodb.com/docs/atlas/manage-connections-aws-lambda/>`__
+documentation.
+
 .. _srv-uri-notes:
 
 SRV URI Notes
