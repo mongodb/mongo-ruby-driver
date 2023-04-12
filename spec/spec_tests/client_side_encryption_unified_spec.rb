@@ -12,5 +12,15 @@ describe 'Client side encryption spec tests - unified' do
   require_libmongocrypt
   require_enterprise
 
-  define_unified_spec_tests(base, CLIENT_SIDE_ENCRYPTION_UNIFIED_TESTS)
+  context 'with mongocryptd' do
+    SpecConfig.instance.without_crypt_shared_lib_path do
+      define_unified_spec_tests(base, CLIENT_SIDE_ENCRYPTION_UNIFIED_TESTS)
+    end
+  end
+
+  context 'with crypt_shared' do
+    SpecConfig.instance.require_crypt_shared do
+      define_unified_spec_tests(base, CLIENT_SIDE_ENCRYPTION_UNIFIED_TESTS)
+    end
+  end
 end

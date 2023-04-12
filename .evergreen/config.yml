@@ -106,6 +106,7 @@ functions:
             export COMPRESSOR=${COMPRESSOR}
             export RVM_RUBY="${RVM_RUBY}"
             export MONGODB_VERSION=${MONGODB_VERSION}
+            export CRYPT_SHARED_VERSION=${CRYPT_SHARED_VERSION}
             export FCV=${FCV}
             export MONGO_RUBY_DRIVER_LINT=${LINT}
             export RETRY_READS=${RETRY_READS}
@@ -616,18 +617,22 @@ axes:
         display_name: "5.3"
         variables:
           MONGODB_VERSION: "5.3"
+          CRYPT_SHARED_VERSION: "6.0.5"
       - id: "5.0"
         display_name: "5.0"
         variables:
           MONGODB_VERSION: "5.0"
+          CRYPT_SHARED_VERSION: "6.0.5"
       - id: "4.4"
         display_name: "4.4"
         variables:
           MONGODB_VERSION: "4.4"
+          CRYPT_SHARED_VERSION: "6.0.5"
       - id: "4.2"
         display_name: "4.2"
         variables:
           MONGODB_VERSION: "4.2"
+          CRYPT_SHARED_VERSION: "6.0.5"
       - id: "4.0"
         display_name: "4.0"
         variables:
