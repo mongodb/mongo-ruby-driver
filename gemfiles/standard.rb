@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 def standard_dependencies
   gem 'yard'
@@ -30,7 +30,10 @@ def standard_dependencies
     gem 'celluloid', platforms: :mri, require: false
 
     # for static analysis
-    gem 'rubocop', '~> 1.27.0'
+    gem 'rubocop', '~> 1.45.1'
+    gem 'rubocop-performance', '~> 1.16.0'
+    gem 'rubocop-rake', '~> 0.6.0'
+    gem 'rubocop-rspec', '~> 2.18.1'
 
     platform :mri do
       # Debugger for VSCode.

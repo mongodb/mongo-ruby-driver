@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# rubocop:todo all
+
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'mongo/version'

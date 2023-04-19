@@ -1,3 +1,4 @@
+# rubocop:todo all
 shared_context 'auth unit tests' do
   let(:generation_manager) do
     Mongo::Server::ConnectionPool::GenerationManager.new(server: server)

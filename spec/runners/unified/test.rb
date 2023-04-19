@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'runners/crud/requirement'
 require 'runners/unified/client_side_encryption_operations'

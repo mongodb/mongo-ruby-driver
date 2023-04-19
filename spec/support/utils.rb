@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 autoload :Base64, 'base64'
 autoload :JSON, 'json'

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rubocop:todo all
 
 require "mongo/config/options"
 require "mongo/config/validators/option"

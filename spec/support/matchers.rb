@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 RSpec::Matchers.define :be_int32 do |num|
   match do |actual|

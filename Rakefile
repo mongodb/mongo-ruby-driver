@@ -1,4 +1,5 @@
-# -*- mode: ruby -*-
+# frozen_string_literal: true
+# rubocop:todo all
 
 require 'bundler'
 require 'bundler/gem_tasks'
