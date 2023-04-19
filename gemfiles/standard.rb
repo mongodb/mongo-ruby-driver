@@ -66,11 +66,8 @@ def standard_dependencies
     gem 'ruby-prof', platforms: :mri
     gem 'erubi'
     gem 'tilt'
-    if RUBY_ENGINE == "java"
-      gem 'solargraph', '~> 0.48'
-    else
-      gem 'solargraph'
-    end
+    # solargraph depends on rbs, which won't build on jruby for some reason
+    gem 'solargraph', platforms: mri
   end
 
   if ENV['FLE'] == 'helper'
