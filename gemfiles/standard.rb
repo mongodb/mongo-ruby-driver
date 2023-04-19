@@ -31,7 +31,7 @@ def standard_dependencies
 
     # for static analysis -- ignore ruby < 2.6 because of rubocop
     # version incompatibilities
-    if RUBY_VERSION > "2.5.99"
+    if RUBY_VERSION > "2.5.99" && RUBY_ENGINE != "java"
       gem 'rubocop', '~> 1.45.1'
       gem 'rubocop-performance', '~> 1.16.0'
       gem 'rubocop-rake', '~> 0.6.0'
