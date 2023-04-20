@@ -67,7 +67,7 @@ def standard_dependencies
     gem 'erubi'
     gem 'tilt'
     # solargraph depends on rbs, which won't build on jruby for some reason
-    gem 'solargraph', platforms: mri
+    gem 'solargraph', platforms: :mri
   end
 
   if ENV['FLE'] == 'helper'
