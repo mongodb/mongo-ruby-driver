@@ -17,6 +17,7 @@ axes:
         display_name: "latest"
         variables:
           MONGODB_VERSION: "latest"
+          CRYPT_SHARED_VERSION: "latest"
       - id: "6.0"
         display_name: "6.0"
         variables:
@@ -198,7 +199,7 @@ axes:
   - id: docker-distro
     display_name: Docker Distro
     values:
-      <% %w(debian92 debian10 ubuntu1804).each do |distro| %>
+      <% %w(debian92 debian10 ubuntu1804 ubuntu2004).each do |distro| %>
         - id: <%= distro %>
           display_name: <%= distro %>
           variables:
