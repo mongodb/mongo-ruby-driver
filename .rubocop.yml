@@ -1,29 +1,49 @@
+require:
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-rspec
+
 AllCops:
   TargetRubyVersion: 2.5
-  NewCops: disable
-  Include:
-    - 'lib/**/*'
+  NewCops: enable
+  Exclude:
+    - 'spec/shared/**/*'
+    - 'vendor/**/*'
 
 Bundler:
-  Enabled: false
+  Enabled: true
 
 Gemspec:
-  Enabled: false
+  Enabled: true
 
 Layout:
-  Enabled: false
+  Enabled: true
 
 Lint:
-  Enabled: false
+  Enabled: true
 
 Metrics:
-  Enabled: false
+  Enabled: true
 
 Naming:
-  Enabled: false
+  Enabled: true
 
 Security:
   Enabled: true
 
 Style:
+  Enabled: true
+
+# --------------------------------------
+# Cops below this line set intentionally
+# --------------------------------------
+
+Bundler/OrderedGems:
   Enabled: false
+
+Gemspec/OrderedDependencies:
+  Enabled: false
+
+Style/Documentation:
+  Exclude:
+    - 'spec/**/*'

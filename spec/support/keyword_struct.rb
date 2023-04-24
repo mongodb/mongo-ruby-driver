@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Intermediate step between a Struct and an OpenStruct. Allows only designated
 # field names to be read or written but allows passing fields to constructor

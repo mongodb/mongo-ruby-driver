@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 shared_examples 'message with a header' do
   let(:collection_name) { 'test' }

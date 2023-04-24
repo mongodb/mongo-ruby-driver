@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Wire Protocol Base
 require 'mongo/protocol/serializers'

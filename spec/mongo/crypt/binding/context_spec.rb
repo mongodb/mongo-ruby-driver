@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 require_relative '../helpers/mongo_crypt_spec_helper'

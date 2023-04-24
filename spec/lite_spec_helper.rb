@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "shared", "lib"))
 
