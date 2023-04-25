@@ -26,6 +26,14 @@ else
     exit -1
 fi
 
+mkdir libmongocrypt
+cd libmongocrypt
+curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
+tar xf libmongocrypt-all.tar.gz
+# We assume that serverless tests are always use ubuntu2004
+export LIBMONGOCRYPT_PATH=`pwd`/ubuntu2004-64/nocrypto/lib/libmongocrypt.so
+cd -
+
 cd .evergreen/csfle
 . ./activate-kmstlsvenv.sh
 

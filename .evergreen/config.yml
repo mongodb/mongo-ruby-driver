@@ -1805,9 +1805,9 @@ buildvariants:
       # https://jira.mongodb.org/browse/RUBY-3217
       # ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.3"]
       ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1"]
-      fle: helper
+      fle: path
     display_name: "Atlas serverless ${ruby} single mongos"
     run_on:
-      - ubuntu1804-small
+      - ubuntu2004-small
     tasks:
        - name: test-serverless
