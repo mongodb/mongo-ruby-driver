@@ -609,6 +609,7 @@ axes:
         display_name: "latest"
         variables:
           MONGODB_VERSION: "latest"
+          CRYPT_SHARED_VERSION: "latest"
       - id: "6.0"
         display_name: "6.0"
         variables:
@@ -802,6 +803,10 @@ axes:
           display_name: ubuntu1804
           variables:
             DOCKER_DISTRO: ubuntu1804
+        - id: ubuntu2004
+          display_name: ubuntu2004
+          variables:
+            DOCKER_DISTRO: ubuntu2004
 
   - id: "compressor"
     display_name: Compressor
@@ -1471,9 +1476,10 @@ buildvariants:
       mongodb-version: ['latest']
       os: ubuntu2004
       fle: helper
+      docker-distro: ubuntu2004
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
-      - name: "test-fle"
+      - name: "test-fle-via-docker"
 
   - matrix_name: "fle-6.0"
     matrix_spec:
@@ -1483,9 +1489,10 @@ buildvariants:
       mongodb-version: ['6.0']
       os: ubuntu2004
       fle: helper
+      docker-distro: ubuntu2004
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
-      - name: "test-fle"
+      - name: "test-fle-via-docker"
 
   - matrix_name: "fle-4.4"
     matrix_spec:
@@ -1493,11 +1500,12 @@ buildvariants:
       ruby: [ruby-3.1]
       topology: standalone
       mongodb-version: ['4.4']
-      os: ubuntu1804
+      os: ubuntu2004
       fle: helper
+      docker-distro: ubuntu1804
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
-      - name: "test-fle"
+      - name: "test-fle-via-docker"
 
   - matrix_name: "fle-4.2"
     matrix_spec:
@@ -1505,11 +1513,12 @@ buildvariants:
       ruby: [ruby-2.5]
       topology: [standalone, replica-set, sharded-cluster]
       mongodb-version: ["4.2"]
-      os: ubuntu1804
+      os: ubuntu2004
       fle: helper
+      docker-distro: ubuntu1804
     display_name: "FLE: ${topology} ${mongodb-version} ${ruby}"
     tasks:
-      - name: "test-fle"
+      - name: "test-fle-via-docker"
 
   - matrix_name: "fle-4.0"
     matrix_spec:
@@ -1517,11 +1526,12 @@ buildvariants:
       ruby: [ruby-2.6]
       topology: standalone
       mongodb-version: ["4.0"]
-      os: ubuntu1804
+      os: ubuntu2004
       fle: path
+      docker-distro: ubuntu1804
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
-      - name: "test-fle"
+      - name: "test-fle-via-docker"
 
   # https://jira.mongodb.org/browse/RUBY-3217
   - matrix_name: "fle-jruby"
@@ -1530,9 +1540,9 @@ buildvariants:
       ruby: [jruby-9.2, jruby-9.3]
       topology: standalone
       mongodb-version: ['5.0']
-      os: ubuntu1804
+      os: ubuntu2004
       fle: helper
-      docker-distro: ubuntu1804
+      docker-distro: ubuntu2004
     display_name: "FLE: ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-fle-via-docker"
@@ -1795,9 +1805,9 @@ buildvariants:
       # https://jira.mongodb.org/browse/RUBY-3217
       # ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1", "jruby-9.3"]
       ruby: ["ruby-2.5", "ruby-2.6", "ruby-2.7", "ruby-3.0", "ruby-3.1"]
-      fle: helper
+      fle: path
     display_name: "Atlas serverless ${ruby} single mongos"
     run_on:
-      - ubuntu1804-small
+      - ubuntu2004-small
     tasks:
        - name: test-serverless
