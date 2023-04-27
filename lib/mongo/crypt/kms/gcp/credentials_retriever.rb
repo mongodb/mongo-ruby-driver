@@ -30,7 +30,7 @@ module Mongo
 
           DEFAULT_HOST = 'metadata.google.internal'
 
-          def self.get_access_token
+          def self.fetch_access_token
             host = ENV.fetch(METADATA_HOST_ENV) { DEFAULT_HOST }
             uri = URI("http://#{host}/computeMetadata/v1/instance/service-accounts/default/token")
             req = Net::HTTP::Get.new(uri)
