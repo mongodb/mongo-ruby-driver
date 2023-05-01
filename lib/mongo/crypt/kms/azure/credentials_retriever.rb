@@ -25,7 +25,7 @@ module Mongo
         # @api private
         class CredentialsRetriever
           # Environment variable name that may contain Azure metadata host.
-          METADATA_HOST_ENV = 'AZURE_METADATA_HOST'
+          METADATA_HOST_ENV = 'MONGO_RUBY_DRIVER_AZURE_METADATA_HOST'
 
           # Default host to obtain Azure metadata.
           DEFAULT_HOST = '169.254.169.254'

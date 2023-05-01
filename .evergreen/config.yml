@@ -231,6 +231,7 @@ functions:
           MONGO_RUBY_DRIVER_GCP_KEY_RING="${fle_gcp_key_ring}"
           MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
           MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
+          MONGO_RUBY_DRIVER_AZURE_METADATA_HOST="localhost:8080"
           EOT
 
   "export Kerberos credentials":
