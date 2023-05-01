@@ -551,6 +551,9 @@ task_groups:
         params:
           file: src/testazurekms-expansions.yml
     teardown_group:
+      - command: expansions.update
+        params:
+          file: src/testazurekms-expansions.yml
       - command: shell.exec
         params:
           shell: "bash"
