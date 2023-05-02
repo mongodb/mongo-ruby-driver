@@ -25,7 +25,6 @@ module Mongo
         #
         # @api private
         class CredentialsRetriever
-
           METADATA_HOST_ENV = 'GCE_METADATA_HOST'
 
           DEFAULT_HOST = 'metadata.google.internal'
@@ -47,6 +46,9 @@ module Mongo
           rescue JSON::ParserError, KeyError => e
             raise KMS::CredentialsNotFound,
               "GCE metadata response is invalid: '#{resp.body}'; #{e.class}: #{e.message}"
+            rescue ::Timeout::Error, IOError, SystemCallError, SocketError => e
+              raise KMS::CredentialsNotFound,
+                    "Could not receive GCP metadata response; #{e.class}: #{e.message}"
           end
         end
       end

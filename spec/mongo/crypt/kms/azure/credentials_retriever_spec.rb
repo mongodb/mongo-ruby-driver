@@ -11,6 +11,10 @@ describe Mongo::Crypt::KMS::Azure::CredentialsRetriever do
     skip 'These tests require fake azure server to be running' unless SpecConfig.instance.fle?
   end
 
+  let(:metadata_host) do
+    'localhost:8080'
+  end
+
   describe '.fetch_access_token' do
     context 'when response is valid' do
       let(:token) do
@@ -29,7 +33,9 @@ describe Mongo::Crypt::KMS::Azure::CredentialsRetriever do
     context 'when response contains empty json' do
       it 'raises error' do
         expect do
-          described_class.fetch_access_token('X-MongoDB-HTTP-TestParams' => 'case=empty-json')
+          described_class.fetch_access_token(
+            extra_headers: { 'X-MongoDB-HTTP-TestParams' => 'case=empty-json' }, metadata_host: metadata_host
+          )
         end.to raise_error(Mongo::Crypt::KMS::CredentialsNotFound)
       end
     end
@@ -37,7 +43,9 @@ describe Mongo::Crypt::KMS::Azure::CredentialsRetriever do
     context 'when response contains invalid json' do
       it 'raises error' do
         expect do
-          described_class.fetch_access_token('X-MongoDB-HTTP-TestParams' => 'case=bad-json')
+          described_class.fetch_access_token(
+            extra_headers: { 'X-MongoDB-HTTP-TestParams' => 'case=bad-json' }, metadata_host: metadata_host
+          )
         end.to raise_error(Mongo::Crypt::KMS::CredentialsNotFound)
       end
     end
@@ -45,7 +53,9 @@ describe Mongo::Crypt::KMS::Azure::CredentialsRetriever do
     context 'when metadata host responds with 500' do
       it 'raises error' do
         expect do
-          described_class.fetch_access_token('X-MongoDB-HTTP-TestParams' => 'case=500')
+          described_class.fetch_access_token(
+            extra_headers: { 'X-MongoDB-HTTP-TestParams' => 'case=500' }, metadata_host: metadata_host
+          )
         end.to raise_error(Mongo::Crypt::KMS::CredentialsNotFound)
       end
     end
@@ -53,7 +63,9 @@ describe Mongo::Crypt::KMS::Azure::CredentialsRetriever do
     context 'when metadata host responds with 404' do
       it 'raises error' do
         expect do
-          described_class.fetch_access_token('X-MongoDB-HTTP-TestParams' => 'case=404')
+          described_class.fetch_access_token(
+            extra_headers: { 'X-MongoDB-HTTP-TestParams' => 'case=404' }, metadata_host: metadata_host
+          )
         end.to raise_error(Mongo::Crypt::KMS::CredentialsNotFound)
       end
     end
@@ -61,7 +73,9 @@ describe Mongo::Crypt::KMS::Azure::CredentialsRetriever do
     context 'when metadata host is slow' do
       it 'raises error' do
         expect do
-          described_class.fetch_access_token('X-MongoDB-HTTP-TestParams' => 'case=slow')
+          described_class.fetch_access_token(
+            extra_headers: { 'X-MongoDB-HTTP-TestParams' => 'case=slow' }, metadata_host: metadata_host
+          )
         end.to raise_error(Mongo::Crypt::KMS::CredentialsNotFound)
       end
     end

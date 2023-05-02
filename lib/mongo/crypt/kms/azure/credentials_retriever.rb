@@ -24,9 +24,6 @@ module Mongo
         #
         # @api private
         class CredentialsRetriever
-          # Environment variable name that may contain Azure metadata host.
-          METADATA_HOST_ENV = 'MONGO_RUBY_DRIVER_AZURE_METADATA_HOST'
-
           # Default host to obtain Azure metadata.
           DEFAULT_HOST = '169.254.169.254'
 
@@ -34,12 +31,14 @@ module Mongo
           #
           # @param [Hash] extra_headers Extra headers to be passed to the
           #   request. This is used for testing.
+          # @param [String | nil] metadata_host Azure metadata host. This
+          #   is used for testing.
           #
           # @return [ KMS::Azure::AccessToken ] Azure access token.
           #
           # @raise [KMS::CredentialsNotFound] If credentials could not be found.
-          def self.fetch_access_token(extra_headers = {})
-            uri, req = prepare_request(extra_headers)
+          def self.fetch_access_token(extra_headers: {}, metadata_host: nil)
+            uri, req = prepare_request(extra_headers, metadata_host)
             parsed_response = fetch_response(uri, req)
             Azure::AccessToken.new(
               parsed_response.fetch('access_token'),
@@ -54,10 +53,12 @@ module Mongo
           #
           # @param [Hash] extra_headers Extra headers to be passed to the
           #   request. This is used for testing.
+          # @param [String | nil] metadata_host Azure metadata host. This
+          #   is used for testing.
           #
           # @return [Array<URI, Net::HTTP::Get>] URI and request object.
-          def self.prepare_request(extra_headers = {})
-            host = ENV.fetch(METADATA_HOST_ENV) { DEFAULT_HOST }
+          def self.prepare_request(extra_headers, metadata_host)
+            host = metadata_host || DEFAULT_HOST
             host = DEFAULT_HOST if host.empty?
             uri = URI("http://#{host}/metadata/identity/oauth2/token")
             uri.query = ::URI.encode_www_form(
@@ -108,7 +109,7 @@ module Mongo
                 http.request(req)
               end
             end
-          rescue ::Timeout::Error, IOError => e
+          rescue ::Timeout::Error, IOError, SystemCallError, SocketError => e
             raise KMS::CredentialsNotFound,
                   "Could not receive Azure metadata response; #{e.class}: #{e.message}"
           end
