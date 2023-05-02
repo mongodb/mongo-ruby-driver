@@ -1004,10 +1004,10 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.4"]
-      mongodb-version: ['latest', '7.0', '6.0']
+      mongodb-version: ['latest', '6.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ['rhel8', 'rhel8-arm', 'debian11', 'ubuntu2204', 'ubuntu2204-arm']
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1047,8 +1047,8 @@ buildvariants:
   - matrix_name: "single-lb"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ruby-3.2
-      mongodb-version: ['7.0', '6.0']
+      ruby: "ruby-3.2"
+      mongodb-version: "6.0"
       topology: load-balanced
       single-mongos: single-mongos
       os: rhel8
@@ -1059,7 +1059,7 @@ buildvariants:
   - matrix_name: "mongo-5.0-api-version"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ruby-3.2
+      ruby: "ruby-3.2"
       mongodb-version: '5.0'
       topology: standalone
       api-version-required: yes
@@ -1071,8 +1071,8 @@ buildvariants:
   - matrix_name: "single-mongos"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: ruby-3.2
-      mongodb-version: 6.0
+      ruby: "ruby-3.2"
+      mongodb-version: "6.0"
       topology: "sharded-cluster"
       single-mongos: single-mongos
       os: rhel8
@@ -1083,8 +1083,8 @@ buildvariants:
   - matrix_name: "no-retry-reads"
     matrix_spec:
       retry-reads: no-retry-reads
-      ruby: ruby-3.2
-      mongodb-version: 6.0
+      ruby: "ruby-3.2"
+      mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
@@ -1094,8 +1094,8 @@ buildvariants:
   - matrix_name: "no-retry-writes"
     matrix_spec:
       retry-writes: no-retry-writes
-      ruby: ruby-3.2
-      mongodb-version: 6.0
+      ruby: "ruby-3.2"
+      mongodb-version: "6.0"
       topology: [replica-set, sharded-cluster]
       os: rhel8
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
@@ -1116,8 +1116,8 @@ buildvariants:
   - matrix_name: "lint"
     matrix_spec:
       lint: on
-      ruby: ruby-3.2
-      mongodb-version: 6.0
+      ruby: "ruby-3.2"
+      mongodb-version: "6.0"
       topology: '*'
       os: rhel8
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
@@ -1127,8 +1127,8 @@ buildvariants:
   - matrix_name: "fork"
     matrix_spec:
       fork: on
-      ruby: ruby-3.2
-      mongodb-version: 6.0
+      ruby: "ruby-3.2"
+      mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: "${mongodb-version} ${topology} fork ${ruby}"
@@ -1139,7 +1139,7 @@ buildvariants:
     matrix_spec:
       solo: on
       ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.4", "jruby-9.3", "jruby-9.2"]
-      mongodb-version: 
+      mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
@@ -1160,7 +1160,7 @@ buildvariants:
   - matrix_name: "stress"
     matrix_spec:
       stress: on
-      ruby: ruby-3.2
+      ruby: "ruby-3.2"
       mongodb-version: ["6.0", "5.3"]
       topology: replica-set
       os: rhel8
@@ -1171,7 +1171,7 @@ buildvariants:
   - matrix_name: "x509-tests"
     matrix_spec:
       auth-and-ssl: "x509"
-      ruby: ruby-3.2
+      ruby: "ruby-3.2"
       mongodb-version: ["6.0", "5.3"]
       topology: standalone
       os: rhel8
@@ -1183,7 +1183,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "auth-and-ssl"
       ruby: jruby-9.4
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1194,7 +1194,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: jruby-9.4
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1205,7 +1205,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
       ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       topology: "replica-set"
       compressor: 'zlib'
       os: rhel8
@@ -1217,7 +1217,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
       ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       topology: "replica-set"
       compressor: 'snappy'
       os: rhel8
@@ -1229,7 +1229,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
       ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       topology: "replica-set"
       compressor: 'zstd'
       os: rhel8
@@ -1240,7 +1240,7 @@ buildvariants:
   - matrix_name: "activesupport"
     matrix_spec:
       ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       topology: replica-set
       as: as
       os: rhel8
@@ -1251,10 +1251,10 @@ buildvariants:
   - matrix_name: "bson"
     matrix_spec:
       ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       topology: replica-set
       bson: "*"
-      os: rhel80
+      os: rhel8
     display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
     tasks:
       - name: "test-mlaunch"
@@ -1269,8 +1269,8 @@ buildvariants:
 
   - matrix_name: "kerberos-unit"
     matrix_spec:
-      ruby: ruby-3.2
-      mongodb-version: 6.0
+      ruby: "ruby-3.2"
+      mongodb-version: "6.0"
       topology: standalone
       os: rhel8
       auth-and-ssl: kerberos
@@ -1286,18 +1286,18 @@ buildvariants:
       mongodb-version: [ 'latest', '6.0', '4.4', '4.2', '4.0' ]
       os: rhel8
       fle: helper
-    display_name: "FLE: ${mongodb-version} ${ruby}"
+    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-fle"
 
   - matrix_name: aws-auth-regular
     matrix_spec:
       auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs, aws-web-identity ]
-      ruby: ruby-3.2
+      ruby: "ruby-3.2"
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
-    display_name: "AWS auth regular: ${mongodb-version} ${ruby}"
+    display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"
 
@@ -1307,7 +1307,7 @@ buildvariants:
       # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
       ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
@@ -1320,7 +1320,7 @@ buildvariants:
       ocsp-delegate: on
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
@@ -1333,7 +1333,7 @@ buildvariants:
       ocsp-status: unknown
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
@@ -1349,7 +1349,7 @@ buildvariants:
       extra-uri-options: "none"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1363,7 +1363,7 @@ buildvariants:
       extra-uri-options: "none"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1377,7 +1377,7 @@ buildvariants:
       extra-uri-options: "none"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1391,7 +1391,7 @@ buildvariants:
       extra-uri-options: "tlsInsecure=true"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1405,7 +1405,7 @@ buildvariants:
       extra-uri-options: "tlsInsecure=true"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1419,7 +1419,7 @@ buildvariants:
       extra-uri-options: "tlsInsecure=true"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1433,7 +1433,7 @@ buildvariants:
       extra-uri-options: "tlsAllowInvalidCertificates=true"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1447,7 +1447,7 @@ buildvariants:
       extra-uri-options: "tlsAllowInvalidCertificates=true"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1461,7 +1461,7 @@ buildvariants:
       extra-uri-options: "tlsAllowInvalidCertificates=true"
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
@@ -1481,7 +1481,7 @@ buildvariants:
       ocsp-connectivity: pass
       ruby: jruby-9.4
       topology: standalone
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
       os: rhel8
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
@@ -1489,11 +1489,11 @@ buildvariants:
 
   - matrix_name: testgcpkms-variant
     matrix_spec:
-      ruby: ruby-3.2
+      ruby: "ruby-3.2"
       fle: helper
       topology: standalone
       os: rhel8
-      mongodb-version: 6.0
+      mongodb-version: "6.0"
     display_name: "GCP KMS"
     tasks:
       - name: testgcpkms_task_group

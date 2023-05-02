@@ -3,7 +3,7 @@
 
   # latest_ruby = the most recently released, stable version of Ruby
   #    (make sure this version is being built by 10gen/mongo-ruby-toolchain)
-  latest_ruby = "ruby-3.2"
+  latest_ruby = "ruby-3.2".inspect # so it gets quoted as a string
 
   # these are used for testing against a few recent ruby versions
   recent_rubies = %w( ruby-3.2 ruby-3.1 jruby-9.4 )
@@ -27,7 +27,7 @@
                      %w( jruby-9.4 jruby-9.3 jruby-9.2 )
 
   # The latest stable version of MongoDB
-  latest_stable_mdb = "6.0"
+  latest_stable_mdb = "6.0".inspect # so it gets quoted as a string
 
   # A few of the most recent MongoDB versions
   recent_mdb = %w( 6.0 5.3 )
@@ -38,10 +38,10 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= recent_rubies %>
-      mongodb-version: ['latest', '7.0', '6.0']
+      mongodb-version: ['latest', '6.0']
       topology: <%= topologies %>
       os: ['rhel8', 'rhel8-arm', 'debian11', 'ubuntu2204', 'ubuntu2204-arm']
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -82,7 +82,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
-      mongodb-version: ['7.0', '6.0']
+      mongodb-version: <%= latest_stable_mdb %>
       topology: load-balanced
       single-mongos: single-mongos
       os: rhel8
@@ -173,7 +173,7 @@ buildvariants:
     matrix_spec:
       solo: on
       ruby: <%= supported_rubies %>
-      mongodb-version: <% latest_stable_mdb %>
+      mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
       os: rhel8
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
@@ -288,7 +288,7 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: replica-set
       bson: "*"
-      os: rhel80
+      os: rhel8
     display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
     tasks:
       - name: "test-mlaunch"
@@ -320,7 +320,7 @@ buildvariants:
       mongodb-version: [ 'latest', '6.0', '4.4', '4.2', '4.0' ]
       os: rhel8
       fle: helper
-    display_name: "FLE: ${mongodb-version} ${ruby}"
+    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-fle"
 
@@ -331,7 +331,7 @@ buildvariants:
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
       os: rhel8
-    display_name: "AWS auth regular: ${mongodb-version} ${ruby}"
+    display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"
 
