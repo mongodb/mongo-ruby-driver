@@ -18,7 +18,7 @@ describe Mongo::Crypt::KMS::Azure::CredentialsRetriever do
   describe '.fetch_access_token' do
     context 'when response is valid' do
       let(:token) do
-        described_class.fetch_access_token
+        described_class.fetch_access_token(metadata_host: metadata_host)
       end
 
       it 'returns access token' do
