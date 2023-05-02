@@ -296,7 +296,7 @@ buildvariants:
   - matrix_name: "kerberos-integration"
     matrix_spec:
       ruby: <%= sample_rubies %>
-      os: [ ubuntu2204, rhel8 ]
+      os: rhel8
     display_name: "Kerberos integration ${os} ${ruby}"
     tasks:
       - name: "test-kerberos-integration"
