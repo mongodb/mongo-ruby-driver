@@ -47,3 +47,6 @@ Gemspec/OrderedDependencies:
 Style/Documentation:
   Exclude:
     - 'spec/**/*'
+
+Metrics/MethodLength:
+  Max: 20

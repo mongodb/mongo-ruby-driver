@@ -15,5 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/crypt/kms/azure/access_token'
 require 'mongo/crypt/kms/azure/credentials'
+require 'mongo/crypt/kms/azure/credentials_retriever'
 require 'mongo/crypt/kms/azure/master_document'

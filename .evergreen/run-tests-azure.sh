@@ -17,6 +17,6 @@ bundle_install
 echo "Running specs"
 export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH}
 bundle exec rake spec:prepare
-bundle exec rspec spec/integration/client_side_encryption/on_demand_gcp_credentials_spec.rb
+bundle exec rspec spec/integration/client_side_encryption/on_demand_azure_credentials_spec.rb
 
 exit ${test_status}
