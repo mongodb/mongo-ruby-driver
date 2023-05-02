@@ -75,7 +75,8 @@ bundle exec rspec \
     spec/spec_tests/retryable_writes_spec.rb \
     spec/spec_tests/transactions_spec.rb \
     spec/spec_tests/change_streams_unified_spec.rb \
-    spec/spec_tests/client_side_encryption_spec.rb \
+#   https://jira.mongodb.org/browse/RUBY-3249
+#   spec/spec_tests/client_side_encryption_spec.rb \
     spec/spec_tests/client_side_encryption_unified_spec.rb \
     spec/spec_tests/command_monitoring_unified_spec.rb \
     spec/spec_tests/crud_unified_spec.rb \
