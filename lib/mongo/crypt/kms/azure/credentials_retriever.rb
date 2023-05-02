@@ -104,7 +104,7 @@ module Mongo
           #
           # @raise [KMS::CredentialsNotFound] If cannot execute request.
           def self.do_request(uri, req)
-            ::Timeout.timeout(30) do
+            ::Timeout.timeout(10) do
               Net::HTTP.start(uri.hostname, uri.port, use_ssl: false) do |http|
                 http.request(req)
               end

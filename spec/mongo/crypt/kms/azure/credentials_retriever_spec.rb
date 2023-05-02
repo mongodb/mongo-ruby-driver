@@ -71,6 +71,9 @@ describe Mongo::Crypt::KMS::Azure::CredentialsRetriever do
     end
 
     context 'when metadata host is slow' do
+      # On JRuby Timeout.timeout does not work in this case.
+      fails_on_jruby
+
       it 'raises error' do
         expect do
           described_class.fetch_access_token(
