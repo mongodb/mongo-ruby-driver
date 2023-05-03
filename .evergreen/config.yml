@@ -789,7 +789,7 @@ axes:
         run_on: ubuntu2204-arm64-small
       - id: rhel8
         display_name: "RHEL 8"
-        run_on: rhel84-small
+        run_on: rhel80-small
       - id: rhel8-arm
         display_name: "RHEL 8 ARM64"
         run_on: rhel82-arm64-small
