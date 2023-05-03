@@ -34,20 +34,29 @@
 %>
 
 buildvariants:
-  - matrix_name: "mongo-recent"
+  - matrix_name: "auth/ssl"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+      ruby: <%= latest_ruby %>
+      mongodb-version: <%= latest_stable_mdb %>
+      topology: <%= topologies %>
+      os: rhel8
+    display_name: ${auth-and-ssl} ${topology}
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: "mongo-recent"
+    matrix_spec:
       ruby: <%= recent_rubies %>
       mongodb-version: ['latest', '6.0']
       topology: <%= topologies %>
-      os: ['rhel8', 'rhel8-arm', 'debian11', 'ubuntu2204', 'ubuntu2204-arm']
+      os: ['rhel8', 'rhel8-arm', 'debian11', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= sample_rubies %>
       mongodb-version: ['5.3', '5.0']
       topology: <%= topologies %>
@@ -58,7 +67,6 @@ buildvariants:
   
   - matrix_name: "mongo-4.x"
     matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= older_rubies %>
       mongodb-version: ['4.4', '4.2', '4.0']
       topology: <%= topologies %>
@@ -69,7 +77,6 @@ buildvariants:
   
   - matrix_name: "mongo-3.6"
     matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-2.5"
       mongodb-version: ['3.6']
       topology: <%= topologies %>
@@ -80,7 +87,6 @@ buildvariants:
 
   - matrix_name: "single-lb"
     matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: load-balanced
@@ -92,7 +98,6 @@ buildvariants:
 
   - matrix_name: "mongo-5.0-api-version"
     matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
       mongodb-version: '5.0'
       topology: standalone
@@ -104,7 +109,6 @@ buildvariants:
 
   - matrix_name: "single-mongos"
     matrix_spec:
-      auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: "sharded-cluster"
@@ -215,18 +219,7 @@ buildvariants:
 
   - matrix_name: "jruby-auth"
     matrix_spec:
-      auth-and-ssl: "auth-and-ssl"
-      ruby: <%= jrubies.first %>
-      mongodb-version: <%= latest_stable_mdb %>
-      topology: <%= topologies %>
-      os: rhel8
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "jruby-noauth"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
+      auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
       ruby: <%= jrubies.first %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>

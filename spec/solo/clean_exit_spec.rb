@@ -2,6 +2,7 @@
 # rubocop:todo all
 
 require 'mongo'
+require 'lite_spec_helper'
 
 describe 'Clean exit' do
   require_external_connectivity

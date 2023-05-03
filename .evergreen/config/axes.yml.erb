@@ -192,9 +192,6 @@ axes:
       - id: ubuntu2204
         display_name: "Ubuntu 22.04"
         run_on: ubuntu2204-small
-      - id: ubuntu2204-arm
-        display_name: "Ubuntu 22.04 ARM64"
-        run_on: ubuntu2204-arm64-small
       - id: rhel8
         display_name: "RHEL 8"
         run_on: rhel80-small
@@ -305,7 +302,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1604-small
+        run_on: rhel80-small
         variables:
           MMAPV1: 'true'
 
