@@ -372,7 +372,7 @@ EOT
 
   # Whether FLE tests should be enabled
   def fle?
-    ENV['FLE']
+    %w(1 true yes helper).include?(ENV['FLE']&.downcase)
   end
 
   # AWS IAM user access key id

@@ -200,6 +200,7 @@ if test -n "$FLE"; then
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/wrong-host.pem --port 8001 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
   python3 -u .evergreen/csfle/kms_kmip_server.py &
+  python3 -u .evergreen/csfle/fake_azure.py &
 
   # Obtain temporary AWS credentials
   PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
@@ -255,6 +256,7 @@ if test -n "$FLE"; then
    wait_for_kms_server 8001
    wait_for_kms_server 8002
    wait_for_kms_server 5698
+   wait_for_kms_server 8080
    echo "Waiting for mock KMS servers to start... done."
 fi
 
