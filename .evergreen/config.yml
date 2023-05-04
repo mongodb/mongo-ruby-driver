@@ -1285,7 +1285,12 @@ buildvariants:
       auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs, aws-web-identity ]
       ruby: "ruby-3.1"
       topology: standalone
-      mongodb-version: "6.0"
+      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
+      # the server for certain auth mechanisms. Once run-tests.sh is made smart
+      # enough to install mongosh, and then use either mongo or mongosh
+      # (depending on server version and what's available), we can bump this to
+      # the latest stable db version.
+      mongodb-version: "5.3"
       os: rhel8
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
