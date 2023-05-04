@@ -47,6 +47,21 @@ if test "$DOCKER_PRELOAD" != 1; then
   install_mlaunch_venv
 fi
 
+# Make sure cmake is installed (in case we need to install the libmongocrypt
+# helper)
+if test -n "$FLE"; then
+  if ! command -v cmake &> /dev/null; then
+    if ! command -v apt-get &> /dev/null; then
+      # no apt-get; assume RHEL
+      sudo yum -y install cmake libarchive
+    else
+      sudo apt-get install --yes cmake
+    fi
+  else
+    echo 'cmake is present'
+  fi
+fi
+
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
 
@@ -163,17 +178,6 @@ elif test "$AUTH" = kerberos; then
 fi
 
 if test -n "$FLE"; then
-  # Make sure cmake is installed (in case we need to install the libmongocrypt
-  # helper)
-  if ! command -v cmake &> /dev/null; then
-    if ! command -v apt-get &> /dev/null; then
-      # no apt-get; assume RHEL
-      sudo yum -y install cmake libarchive
-    else
-      sudo apt-get install --yes cmake
-    fi
-  fi
-
   # Downloading crypt shared lib
   if [ -z "$MONGO_CRYPT_SHARED_DOWNLOAD_URL" ]; then
     crypt_shared_version=${CRYPT_SHARED_VERSION:-$("${BINDIR}"/mongod --version | grep -oP 'db version v\K.*')}
