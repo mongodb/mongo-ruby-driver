@@ -62,12 +62,25 @@ buildvariants:
       ruby: <%= recent_rubies %>
       mongodb-version: ['latest', '6.0']
       topology: <%= topologies %>
-      os: ['rhel8', 'rhel8-arm', 'debian11', 'ubuntu2204']
+      os: ['rhel8', 'debian11', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "mongo-5.x"
+  # Only JRuby-9.4 is built for arm in the current toolchain, but 9.4 has other
+  # issues. Either we fix those issues, or we build 9.3 for arm in the toolchain,
+  # and hope it fixes the issues... Until then, we can only test MRI ruby on arm.
+  - matrix_name: "mongo-recent-arm"
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      mongodb-version: ['latest', '6.0']
+      topology: <%= topologies %>
+      os: 'rhel8-arm'
+    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+  
+    - matrix_name: "mongo-5.x"
     matrix_spec:
       ruby: <%= sample_rubies %>
       mongodb-version: ['5.3', '5.0']
