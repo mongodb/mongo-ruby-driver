@@ -1031,7 +1031,7 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
   
-    - matrix_name: "mongo-5.x"
+  - matrix_name: "mongo-5.x"
     matrix_spec:
       ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
       mongodb-version: ['5.3', '5.0']
