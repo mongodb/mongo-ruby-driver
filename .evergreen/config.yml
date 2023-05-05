@@ -1020,7 +1020,7 @@ buildvariants:
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.4"]
+      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
       mongodb-version: ['5.3', '5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1199,7 +1199,7 @@ buildvariants:
   - matrix_name: "zlib"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.4"]
+      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
       mongodb-version: "6.0"
       topology: "replica-set"
       compressor: 'zlib'
@@ -1211,7 +1211,7 @@ buildvariants:
   - matrix_name: "snappy"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.4"]
+      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
       mongodb-version: "6.0"
       topology: "replica-set"
       compressor: 'snappy'
@@ -1238,7 +1238,7 @@ buildvariants:
 
   - matrix_name: "activesupport"
     matrix_spec:
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.4"]
+      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
       mongodb-version: "6.0"
       topology: replica-set
       as: as
@@ -1249,7 +1249,7 @@ buildvariants:
 
   - matrix_name: "bson"
     matrix_spec:
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.4"]
+      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
       mongodb-version: "6.0"
       topology: replica-set
       bson: "*"
@@ -1260,7 +1260,7 @@ buildvariants:
 
   - matrix_name: "kerberos-integration"
     matrix_spec:
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.4"]
+      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
       os: rhel8
     display_name: "Kerberos integration ${os} ${ruby}"
     tasks:
@@ -1280,7 +1280,7 @@ buildvariants:
   - matrix_name: "fle"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.4"]
+      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
       topology: [replica-set, sharded-cluster]
       mongodb-version: [ 'latest', '6.0', '4.4', '4.2', '4.0' ]
       os: rhel8
