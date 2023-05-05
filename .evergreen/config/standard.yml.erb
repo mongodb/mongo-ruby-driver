@@ -59,7 +59,11 @@ buildvariants:
 
   - matrix_name: "mongo-recent"
     matrix_spec:
-      ruby: <%= recent_rubies %>
+      # toolchain does not build jruby-9.3 for debian/ubuntu right now, only
+      # jruby-9.4. Until that changes (or until 9.4 doesn't fail tests), we
+      # only run mong-recent against latest ruby. Once fixed, replace
+      # `latest_ruby` with `recent_rubies`.
+      ruby: <%= latest_ruby %>
       mongodb-version: ['latest', '6.0']
       topology: <%= topologies %>
       os: ['rhel8', 'debian11', 'ubuntu2204']
