@@ -72,6 +72,7 @@ cd `bundle info --path mongo_kerberos`
 saved_gemfile=$BUNDLE_GEMFILE
 unset BUNDLE_GEMFILE
 
+bundle install
 rake compile
 cd $curdir
 export BUNDLE_GEMFILE=$saved_gemfile
