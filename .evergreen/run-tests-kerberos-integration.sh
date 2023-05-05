@@ -61,6 +61,14 @@ configure_kerberos_ip_addr
 echo "Install dependencies"
 export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
 bundle_install
+
+# need to build the native extension, since it doesn't seem to build correctly
+# when installed via github.
+curdir=`pwd`
+cd `bundle info --path mongo_kerberos`
+rake compile
+cd $curdir
+
 bundle list
 
 export MONGO_RUBY_DRIVER_KERBEROS=1
