@@ -50,16 +50,7 @@ fi
 # Make sure cmake is installed (in case we need to install the libmongocrypt
 # helper)
 if test -n "$FLE"; then
-  if ! command -v cmake &> /dev/null; then
-    if ! command -v apt-get &> /dev/null; then
-      # no apt-get; assume RHEL
-      sudo yum -y install cmake libarchive
-    else
-      sudo apt-get install --yes cmake
-    fi
-  else
-    echo 'cmake is present'
-  fi
+  install_cmake
 fi
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
