@@ -66,8 +66,15 @@ bundle_install
 # when installed via github.
 curdir=`pwd`
 cd `bundle info --path mongo_kerberos`
+
+# unset the BUNDLE_GEMFILE variable so the mongo_kerberos rakefile doesn't
+# get confused by it...
+saved_gemfile=$BUNDLE_GEMFILE
+unset BUNDLE_GEMFILE
+
 rake compile
 cd $curdir
+export BUNDLE_GEMFILE=$saved_gemfile
 
 bundle list
 
