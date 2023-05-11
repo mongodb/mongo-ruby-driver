@@ -1010,11 +1010,7 @@ buildvariants:
 
   - matrix_name: "mongo-recent"
     matrix_spec:
-      # toolchain does not build jruby-9.3 for debian/ubuntu right now, only
-      # jruby-9.4. Until that changes (or until 9.4 doesn't fail tests), we
-      # only run mong-recent against latest ruby. Once fixed, replace
-      # `latest_ruby` with `recent_rubies`.
-      ruby: "ruby-3.1"
+      ruby: ["ruby-3.1", "jruby-9.3"]
       mongodb-version: ['latest', '6.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ['rhel8', 'debian11', 'ubuntu2204']
@@ -1034,7 +1030,7 @@ buildvariants:
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
-  
+
   - matrix_name: "mongo-5.x"
     matrix_spec:
       ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
@@ -1044,7 +1040,7 @@ buildvariants:
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
-  
+
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
@@ -1054,7 +1050,7 @@ buildvariants:
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
-  
+
   - matrix_name: "mongo-3.6"
     matrix_spec:
       ruby: "ruby-2.5"
