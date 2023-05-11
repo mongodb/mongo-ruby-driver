@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -19,7 +19,8 @@ require 'runners/transactions/operation'
 require 'runners/transactions/spec'
 require 'runners/transactions/test'
 
-def define_transactions_spec_tests(test_paths)
+def define_transactions_spec_tests(test_paths, expectations_bson_types: true)
+  config_override :validate_update_replace, true
 
   test_paths.each do |file|
 
@@ -29,7 +30,7 @@ def define_transactions_spec_tests(test_paths)
 
       define_spec_tests_with_requirements(spec) do |req|
 
-        spec.tests.each do |test|
+        spec.tests(expectations_bson_types: expectations_bson_types).each do |test|
 
           context(test.description) do
 

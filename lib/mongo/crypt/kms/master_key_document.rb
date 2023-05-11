@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -41,7 +41,7 @@ module Mongo
           if options.nil?
             raise ArgumentError.new('Key document options must not be nil')
           end
-          master_key = options[:master_key]
+          master_key = options.fetch(:master_key, {})
           @key_document = case kms_provider.to_s
             when 'aws' then KMS::AWS::MasterKeyDocument.new(master_key)
             when 'azure' then KMS::Azure::MasterKeyDocument.new(master_key)

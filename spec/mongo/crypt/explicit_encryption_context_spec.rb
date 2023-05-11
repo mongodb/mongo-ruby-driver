@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'mongo'
 require 'lite_spec_helper'
@@ -125,6 +125,83 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
           expect do
             context
           end.not_to raise_error
+        end
+      end
+
+      context 'with query_type' do
+        let(:key_alt_name) { nil }
+
+        it 'raises exception' do
+          expect do
+            described_class.new(
+              mongocrypt,
+              io,
+              value,
+              options.merge(query_type: "equality")
+            )
+          end.to raise_error(ArgumentError, /query_type is allowed only for "Indexed" or "RangePreview" algorithm/)
+        end
+      end
+
+      context 'with contention_factor' do
+        let(:key_alt_name) { nil }
+
+        it 'raises exception' do
+          expect do
+            described_class.new(
+              mongocrypt,
+              io,
+              value,
+              options.merge(contention_factor: 10)
+            )
+          end.to raise_error(ArgumentError, /contention_factor is allowed only for "Indexed" or "RangePreview" algorithm/)
+        end
+      end
+
+      context 'with Indexed algorithm' do
+        let(:algorithm) do
+          'Indexed'
+        end
+
+        let(:key_alt_name) do
+          nil
+        end
+
+        it 'initializes context' do
+          expect do
+            described_class.new(
+              mongocrypt,
+              io,
+              value,
+              options.merge(contention_factor: 0)
+            )
+          end.not_to raise_error
+        end
+
+        context 'with query_type' do
+          it 'initializes context' do
+            expect do
+              described_class.new(
+                mongocrypt,
+                io,
+                value,
+                options.merge(query_type: "equality", contention_factor: 0)
+              )
+            end.not_to raise_error
+          end
+        end
+
+        context 'with contention_factor' do
+          it 'initializes context' do
+            expect do
+              described_class.new(
+                mongocrypt,
+                io,
+                value,
+                options.merge(contention_factor: 10)
+              )
+            end.not_to raise_error
+          end
         end
       end
     end

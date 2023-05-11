@@ -12,16 +12,16 @@ implements for inserting, updating and retrieving data from MongoDB.
 .. toctree::
   :titlesonly:
 
-  crud-operations
-  bulk-operations
-  projection
-  aggregation
-  map-reduce
-  text-search
-  geospatial-search
-  query-cache
-  gridfs
-  change-streams
-  sessions
-  transactions
-  client-side-encryption
+  /reference/crud-operations
+  /reference/bulk-operations
+  /reference/projection
+  /reference/aggregation
+  /reference/map-reduce
+  /reference/text-search
+  /reference/geospatial-search
+  /reference/query-cache
+  /reference/gridfs
+  /reference/change-streams
+  /reference/sessions
+  /reference/transactions
+  /reference/in-use-encryption

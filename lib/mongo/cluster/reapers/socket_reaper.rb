@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -48,7 +48,7 @@ module Mongo
       # @since 2.5.0
       def execute
         @cluster.servers.each do |server|
-          server.pool.close_idle_sockets
+          server.pool_internal&.close_idle_sockets
         end
         true
       end

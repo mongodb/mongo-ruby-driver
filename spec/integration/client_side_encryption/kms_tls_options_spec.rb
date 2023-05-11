@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -56,7 +56,7 @@ describe 'Client-Side Encryption' do
               ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
@@ -107,7 +107,7 @@ describe 'Client-Side Encryption' do
               ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
@@ -150,7 +150,7 @@ describe 'Client-Side Encryption' do
               ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
@@ -193,7 +193,7 @@ describe 'Client-Side Encryption' do
               ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
             }
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end
@@ -216,7 +216,7 @@ describe 'Client-Side Encryption' do
                 master_key: master_key_template.merge({endpoint: "127.0.0.1:8002"})
               }
             )
-          end.to raise_error(Mongo::Error::KmsError, /(SocketError|ECONNRESET)/)
+          end.to raise_error(Mongo::Error::KmsError, /(certificate_required|SocketError|ECONNRESET)/)
         end
       end
 
@@ -286,20 +286,50 @@ describe 'Client-Side Encryption' do
                 master_key: master_key
              }
             )
-          end.to raise_error(Mongo::Error::KmsError, /(SocketError|ECONNRESET)/)
+          end.to raise_error(Mongo::Error::KmsError, /(certificate_required|SocketError|ECONNRESET)/)
         end
       end
 
       context 'with valid certificate' do
         it 'TLS handshake passes' do
-          expect do
-            client_encryption_with_tls.create_data_key(
-              kms_provider,
-              {
-                master_key: master_key
-             }
-            )
-          end.to raise_error(Mongo::Error::KmsError, /libmongocrypt error code/)
+          if should_raise_with_tls
+            expect do
+              client_encryption_with_tls.create_data_key(
+                kms_provider,
+                {
+                  master_key: master_key
+              }
+              )
+            end.to raise_error(Mongo::Error::KmsError, /libmongocrypt error code/)
+          else
+            expect do
+              client_encryption_with_tls.create_data_key(
+                kms_provider,
+                {
+                  master_key: master_key
+              }
+              )
+            end.not_to raise_error
+          end
+        end
+
+        it 'raises KmsError directly without wrapping CryptError' do
+          if should_raise_with_tls
+            begin
+              client_encryption_with_tls.create_data_key(
+                kms_provider,
+                {
+                  master_key: master_key
+              }
+              )
+            rescue Mongo::Error::KmsError => exc
+              exc.message.should =~ /Error when connecting to KMS provider/
+              exc.message.should =~ /libmongocrypt error code/
+              exc.message.should_not =~ /CryptError/
+            else
+              fail 'Expected to raise KmsError'
+            end
+          end
         end
       end
 
@@ -358,6 +388,10 @@ describe 'Client-Side Encryption' do
         }
       end
 
+      let(:should_raise_with_tls) do
+        true
+      end
+
       it_behaves_like 'it respect KMS TLS options'
     end
 
@@ -375,6 +409,10 @@ describe 'Client-Side Encryption' do
         }
       end
 
+      let(:should_raise_with_tls) do
+        true
+      end
+
       it_behaves_like 'it respect KMS TLS options'
     end
 
@@ -385,6 +423,10 @@ describe 'Client-Side Encryption' do
 
       let(:master_key) do
         {}
+      end
+
+      let(:should_raise_with_tls) do
+        false
       end
 
       it_behaves_like 'it respect KMS TLS options'

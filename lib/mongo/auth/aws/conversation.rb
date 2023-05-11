@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -64,10 +64,6 @@ module Mongo
         #
         # @return [ Integer ] The conversation id.
         attr_reader :conversation_id
-
-        def client_first_payload
-          {payload: client_first_message}
-        end
 
         def client_first_data
           {

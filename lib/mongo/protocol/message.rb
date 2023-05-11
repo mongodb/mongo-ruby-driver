@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -354,16 +354,16 @@ module Mongo
           if field[:multi]
             value.each do |item|
               if field[:type].respond_to?(:size_limited?)
-                field[:type].serialize(buffer, item, max_bson_size, validating_keys?)
+                field[:type].serialize(buffer, item, max_bson_size)
               else
-                field[:type].serialize(buffer, item, validating_keys?)
+                field[:type].serialize(buffer, item)
               end
             end
           else
             if field[:type].respond_to?(:size_limited?)
-              field[:type].serialize(buffer, value, max_bson_size, validating_keys?)
+              field[:type].serialize(buffer, value, max_bson_size)
             else
-              field[:type].serialize(buffer, value, validating_keys?)
+              field[:type].serialize(buffer, value)
             end
           end
         end
@@ -455,10 +455,6 @@ module Mongo
           field[:name],
           field[:type].deserialize(io, options)
         )
-      end
-
-      def validating_keys?
-        @options[:validating_keys] if @options
       end
     end
   end

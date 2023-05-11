@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'mongo'
 require 'lite_spec_helper'
@@ -33,7 +33,6 @@ describe Mongo::Crypt::KMS do
         %i(
           ssl_verify_certificate
           ssl_verify_hostname
-          ssl_verify_ocsp_endpoint
         ).each do |insecure_opt|
           expect {
             Mongo::Crypt::KMS::Validations.validate_tls_options(
@@ -46,13 +45,17 @@ describe Mongo::Crypt::KMS do
       end
 
       it 'allows valid options' do
-        options = {
-          aws: {
-            ssl: true,
-            ssl_cert_string: 'Content is not validated',
-
-          }
-        }
+        expect do
+          Mongo::Crypt::KMS::Validations.validate_tls_options(
+            {
+              aws: {
+                ssl: true,
+                ssl_cert_string: 'Content is not validated',
+                ssl_verify_ocsp_endpoint: false
+              }
+            }
+          )
+        end.not_to raise_error
       end
     end
   end

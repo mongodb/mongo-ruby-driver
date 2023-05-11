@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -133,6 +133,46 @@ describe 'SDAM events' do
         started_regular.length.should > 1
         (succeeded_regular.length..succeeded_regular.length+1).should include(started_regular.length)
       end
+    end
+  end
+
+  describe 'server description changed' do
+    require_topology :single
+
+    let(:sdam_proc) do
+      Proc.new do |client|
+        client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
+      end
+    end
+
+    let(:client) do
+      new_local_client(SpecConfig.instance.addresses,
+        # Heartbeat interval is bound by 500 ms
+        SpecConfig.instance.test_options.merge(client_options).merge(
+          heartbeat_frequency: 0.5,
+          sdam_proc: sdam_proc,
+        ),
+      )
+    end
+
+    let(:client_options) do
+      {}
+    end
+
+    it 'is not published when there are no changes in server state' do
+      client
+      sleep 6
+      client.close
+
+      events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
+
+      # In 6 seconds we should have about 10 or 12 heartbeats.
+      # We expect 1 or 2 description changes:
+      # The first one from unknown to known,
+      # The second one because server changes the fields it returns based on
+      # driver server check payload (e.g. ismaster/isWritablePrimary).
+      events.length.should >= 1
+      events.length.should <= 2
     end
   end
 end

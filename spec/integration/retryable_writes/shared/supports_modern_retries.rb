@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require_relative './performs_modern_retries'
 require_relative './performs_no_retries'

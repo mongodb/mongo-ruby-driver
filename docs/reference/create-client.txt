@@ -327,7 +327,48 @@ URI option:
   # Or using the URI syntax:
   Mongo::Client.new("mongodb://1.2.3.4:27017/mydb?loadBalanced=true&connect=load_balanced")
 
+MongoDB Atlas Connection
+------------------------
 
+To connect to a MongoDB deployment on Atlas, first create a ``Mongo::Client`` instance using your
+cluster's connection string and other client options.
+
+You can set the `Stable API <https://www.mongodb.com/docs/manual/reference/stable-api/>`_ version as
+a client option to avoid breaking changes when you upgrade to a new server version.
+
+The following code shows how you can specify the connection string and the Stable API client option
+when connecting to a MongoDB deployment and verify that the connection is successful:
+
+.. code-block:: ruby
+
+  require 'mongo'
+
+  # Replace the placeholders with your credentials
+  uri = "mongodb+srv://<username>:<password>@cluster0.sample.mongodb.net/?retryWrites=true&w=majority"
+
+  # Set the server_api field of the options object to Stable API version 1
+  options = { server_api: { version: "1" } }
+
+  # Create a new client and connect to the server
+  client = Mongo::Client.new(uri, options)
+
+  # Send a ping to confirm a successful connection
+  begin
+    admin_client = client.use('admin')
+    result = admin_client.database.command(ping: 1).documents.first
+    puts "Pinged your deployment. You successfully connected to MongoDB!"
+  rescue Mongo::Error::OperationFailure => ex
+    puts ex
+  ensure
+    client.close
+  end
+
+Connect to MongoDB Atlas from AWS Lambda
+----------------------------------------
+
+To learn how to connect to Atlas from AWS Lambda, see the
+`Manage Connections with AWS Lambda <https://www.mongodb.com/docs/atlas/manage-connections-aws-lambda/>`__
+documentation.
 
 .. _srv-uri-notes:
 
@@ -548,8 +589,9 @@ Ruby Options
 
    * - ``:max_pool_size``
      - The maximum size of the connection pool for each server.
+       Setting this option to zero removes the max size limit from the connection pool, permitting it to grow to any number of connections.
      - ``Integer``
-     - 5
+     - 20
 
    * - ``:max_read_retries``
      - The maximum number of read retries, when legacy read retries are used.
@@ -565,13 +607,8 @@ Ruby Options
 
    * - ``:min_pool_size``
      - The minimum number of connections in the connection pool for each
-       server. The driver does not create connections eagerly - a connection
-       is only created when a MongoDB operation is to be executed and there
-       are no available connections, and the total number of established
-       connections to the target server is below ``:max_pool_size``.
-       However, once connections to a particular server are created, up to
-       ``:min_pool_size`` connections will be kept in the connection pool
-       by the driver.
+       server. The driver will establish connections in the background until
+       the pool contains this many connections.
      - ``Integer``
      - 0
 
@@ -900,6 +937,7 @@ URI options are explained in detail in the :manual:`Connection URI reference
 </reference/connection-string/>`.
 
 .. note::
+
   Options that are set in **milliseconds** in the URI are
   represented as a ``float`` in Ruby and the units are **seconds**.
 
@@ -1030,11 +1068,11 @@ URI options are explained in detail in the :manual:`Connection URI reference
        invalid values (e.g. negative and non-numeric values), invalid values
        provided via this URI option are ignored with a warning.
 
-  * - srvMaxHosts=Integer
-    - ``:srv_max_hosts => Integer``
+   * - srvMaxHosts=Integer
+     - ``:srv_max_hosts => Integer``
 
-  * - srvServiceName=String
-    - ``:srv_service_name => String``
+   * - srvServiceName=String
+     - ``:srv_service_name => String``
 
    * - ssl=Boolean
      - ``:ssl => true|false``
@@ -1345,7 +1383,7 @@ It is also possible to remove hooks from ``Mongo.tls_context_hooks`` by storing
 a reference to the Procs somewhere else in the application, and then using
 ``Array#delete_if`` to remove the desired hooks.
 
-..warning ::
+.. warning::
 
   TLS context hooks are global and will affect every instance of ``Mongo::Client``.
   Any library that allows applications to enable these hooks should expose methods to
@@ -1510,7 +1548,8 @@ the pool and uses it for the operation. If there are no connections available
 and the size of the pool is less than the ``max_pool_size``, a new connection
 will be created. If all connections are in use and the pool has reached its
 maximum size, the thread waits for a connection to be returned to the pool by
-another thread.
+another thread. If ``max_pool_size`` is set to zero, there is no limit for the
+maximum number of connections in the pool.
 
 The number of seconds the thread will wait for a connection to become available
 is configurable. This setting, called ``wait_queue_timeout``, is defined in
@@ -2055,3 +2094,44 @@ driver in production:
   <https://devcenter.heroku.com/articles/request-timeout>`_ is 30 seconds and
   is not configurable; if deploying a Ruby application using MongoDB to Heroku,
   consider lowering server selection timeout to 20 or 15 seconds.
+
+
+.. _feature-flags:
+
+Feature Flags
+=============
+
+The following is a list of feature flags that the Mongo Ruby Driver provides:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 60
+
+   * - Flag
+     - Description
+   * - ``broken_view_aggregate``
+     - When this flag is off, an aggregation done on a view will be executed over
+       the documents included in that view, instead of all documents in the
+       collection. When this flag is on, the view fiter is ignored and the
+       aggregation is applied over all of the documents in the view's
+       collection. (default: true)
+   * - ``broken_view_options``
+     - When this flag is turned off, the view options will be correctly
+       propagated to the ``aggregate``, ``count``, ``count_documents``,
+       ``distinct``, and ``estimated_document_count`` mehods. When this flag is
+       switched on, the view options will be ignored in those methods.
+       (default: true)
+   * - ``validate_update_replace``
+     - Validates that there are no atomic operators (those that start with $)
+       in the root of a replacement document, and that there are only atomic
+       operators at the root of an update document. If this feature flag is on,
+       an error will be raised on an invalid update or replacement document,
+       if not, a warning will be output to the logs. (default: false)
+
+These feature flags can be set directly on the ``Mongo`` module or using
+the ``options`` method:
+
+.. code::
+
+  Mongo.validate_update_replace = true
+  Mongo.options = { validate_update_replace: true }

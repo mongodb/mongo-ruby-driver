@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -115,6 +115,11 @@ module Mongo
         #   dropped and recreated or newly renamed collections without missing any notifications.
         # @option options [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Boolean ] :show_expanded_events Enables the server to
+        #   send the 'expanded' list of change stream events. The list of additional
+        #   events included with this flag set are: createIndexes, dropIndexes,
+        #   modify, create, shardCollection, reshardCollection,
+        #   refineCollectionShardKey.
         #
         #   The server will report an error if `startAfter` and `resumeAfter` are both specified.
         #
@@ -159,7 +164,7 @@ module Mongo
             document = try_next
             yield document if document
           end
-        rescue StopIteration => e
+        rescue StopIteration
           return self
         end
 
@@ -233,7 +238,7 @@ module Mongo
           unless closed?
             begin
               @cursor.close
-            rescue Error::OperationFailure, Error::SocketError, Error::SocketTimeoutError
+            rescue Error::OperationFailure, Error::SocketError, Error::SocketTimeoutError, Error::MissingConnection
               # ignore
             end
             @cursor = nil
@@ -341,6 +346,10 @@ module Mongo
 
             if @options[:full_document_before_change]
               doc[:fullDocumentBeforeChange] = @options[:full_document_before_change]
+            end
+
+            if @options.key?(:show_expanded_events)
+              doc[:showExpandedEvents] = @options[:show_expanded_events]
             end
 
             if resuming?

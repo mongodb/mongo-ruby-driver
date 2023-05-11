@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -26,3 +26,4 @@ require 'mongo/monitoring/event/cmap/connection_ready'
 require 'mongo/monitoring/event/cmap/pool_cleared'
 require 'mongo/monitoring/event/cmap/pool_closed'
 require 'mongo/monitoring/event/cmap/pool_created'
+require 'mongo/monitoring/event/cmap/pool_ready'

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -32,7 +32,10 @@ module Mongo
 
         def selector(connection)
           # Collation is always supported on 3.6+ servers that would use OP_MSG.
-          spec[:selector].merge(collation: spec[:collation]).compact
+          spec[:selector].merge(
+            collation: spec[:collation],
+            comment: spec[:comment],
+          ).compact
         end
       end
     end

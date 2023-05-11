@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 module CommonShortcuts
   module ClassMethods
@@ -281,7 +281,7 @@ module CommonShortcuts
 
     def register_cluster(cluster)
       finalizer = lambda do |cluster|
-        cluster.disconnect!
+        cluster.close
       end
       LocalResourceRegistry.instance.register(cluster, finalizer)
     end
@@ -289,7 +289,7 @@ module CommonShortcuts
     def register_server(server)
       finalizer = lambda do |server|
         if server.connected?
-          server.disconnect!
+          server.close
         end
       end
       LocalResourceRegistry.instance.register(server, finalizer)
@@ -318,7 +318,17 @@ module CommonShortcuts
     def stop_monitoring(*clients)
       clients.each do |client|
         client.cluster.next_primary
-        client.cluster.disconnect!
+        client.cluster.close
+        # We have tests that stop monitoring to reduce the noise happening in
+        # background. These tests perform operations which requires the pools
+        # to function. See also RUBY-3102.
+        client.cluster.servers_list.each do |server|
+          if pool = server.pool
+            pool.instance_variable_set('@closed', false)
+            # Stop the populator so that we don't have leftover threads.
+            pool.instance_variable_get('@populator').stop!
+          end
+        end
       end
     end
 
@@ -391,6 +401,17 @@ module CommonShortcuts
         end
         raise
       end
+    end
+
+    # Make the server usable for operations after it was marked closed.
+    # Used for tests that e.g. mock network operations to avoid interference
+    # from server monitoring.
+    def reset_pool(server)
+      if pool = server.pool_internal
+        pool.close
+      end
+      server.remove_instance_variable('@pool')
+      server.pool.ready
     end
   end
 end

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -15,8 +15,8 @@ describe Mongo::Client do
     include_context 'with local kms_providers'
 
     before do
-      authorized_client.use(:admin)[:datakeys].drop
-      authorized_client.use(:admin)[:datakeys].insert_one(data_key)
+      authorized_client.use(:keyvault)[:datakeys].drop
+      authorized_client.use(:keyvault)[:datakeys].insert_one(data_key)
       authorized_client.use(:auto_encryption)[:users].drop
       authorized_client.use(:auto_encryption)[:users,
         {
@@ -51,6 +51,10 @@ describe Mongo::Client do
         # Detection of leaked background threads only, these tests do not
         # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
         clean_slate
+
+        before do
+          authorized_client.reconnect if authorized_client.closed?
+        end
 
         it 'raises an exception' do
           expect do

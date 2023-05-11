@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -71,6 +71,7 @@ module Mongo
         :weights => :weights,
         :collation => :collation,
         :comment => :comment,
+        :wildcard_projection => :wildcardProjection,
       }.freeze
 
       # Drop an index by its name.

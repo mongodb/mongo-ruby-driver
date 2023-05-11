@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# rubocop:todo all
+
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'mongo/version'
@@ -6,8 +9,8 @@ Gem::Specification.new do |s|
   s.name              = 'mongo'
   s.version           = Mongo::VERSION
   s.platform          = Gem::Platform::RUBY
-
-  s.authors           = ['Tyler Brock', 'Emily Stolfo', 'Durran Jordan']
+  s.authors           = ["The MongoDB Ruby Team"]
+  s.email             = "dbx-ruby@mongodb.com"
   s.homepage          = 'https://mongodb.com/docs/ruby-driver/'
   s.summary           = 'Ruby driver for MongoDB'
   s.description       = 'A Ruby driver for MongoDB'

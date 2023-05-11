@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -51,6 +51,9 @@ describe 'Client after reconnect' do
   end
 
   context 'with min_pool_size > 0' do
+    # This test causes live threads errors in jruby in other tests.
+    fails_on_jruby
+
     let(:client) { authorized_client.with(min_pool_size: 1) }
 
     it 'recreates connection pool populator thread' do
@@ -73,6 +76,7 @@ describe 'Client after reconnect' do
   end
 
   context 'SRV monitor thread' do
+    require_external_connectivity
 
     let(:uri) do
       "mongodb+srv://test1.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}"
@@ -140,6 +144,7 @@ describe 'Client after reconnect' do
     end
 
     context 'in unknown topology' do
+      require_external_connectivity
 
       # JRuby apparently does not implement non-blocking UDP I/O which is used
       # by RubyDNS:

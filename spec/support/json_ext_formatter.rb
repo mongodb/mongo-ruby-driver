@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 class JsonExtFormatter < RSpec::Core::Formatters::JsonFormatter
   RSpec::Core::Formatters.register self, :message,

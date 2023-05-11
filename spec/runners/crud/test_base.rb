@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 module Mongo
   module CRUD
@@ -22,7 +22,7 @@ module Mongo
 
       def clear_fail_point(client)
         if @fail_point_command
-          client.use(:admin).command(BSON::Document.new(@fail_point_command).merge(mode: "off"))
+          ClientRegistry.instance.global_client('root_authorized').use(:admin).command(BSON::Document.new(@fail_point_command).merge(mode: "off"))
         end
       end
 

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -12,7 +12,7 @@ describe 'Command' do
 
     let(:payload) do
       server.with_connection do |connection|
-        command.send(:final_operation, connection).send(:message, connection).payload.dup.tap do |payload|
+        command.send(:final_operation).send(:message, connection).payload.dup.tap do |payload|
           if payload['request_id'].is_a?(Integer)
             payload['request_id'] = 42
           end
@@ -138,28 +138,6 @@ describe 'Command' do
           {
             'command' => {
               '$db' => 'foo',
-              'find' => 'collection_name',
-            },
-            'command_name' => 'find',
-            'database_name' => 'foo',
-            'request_id' => 42,
-          }
-        end
-
-        it 'returns expected payload' do
-          expect(payload).to eq(expected_payload)
-        end
-      end
-
-      # Servers using legacy wire protocol message do not have $db in payload.
-      # $db is added to the payload later when the command monitoring event is
-      # published.
-      context 'pre-OP_MSG servers' do
-        max_server_version '3.4'
-
-        let(:expected_payload) do
-          {
-            'command' => {
               'find' => 'collection_name',
             },
             'command_name' => 'find',

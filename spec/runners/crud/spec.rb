@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 module Mongo
   module CRUD
@@ -20,6 +20,7 @@ module Mongo
         # Introduced with Client-Side Encryption tests
         @json_schema = BSON::ExtJSON.parse_obj(@spec['json_schema'])
         @key_vault_data = BSON::ExtJSON.parse_obj(@spec['key_vault_data'])
+        @encrypted_fields = BSON::ExtJSON.parse_obj(@spec['encrypted_fields'], mode: :bson)
 
         @requirements = if run_on = @spec['runOn']
           run_on.map do |spec|
@@ -45,6 +46,10 @@ module Mongo
       # @return [ Array<Hash> ] Data to insert into the key vault before
       #   running each test.
       attr_reader :key_vault_data
+
+      # @return [ Hash ]  An encryptedFields option that should be set on the
+      #   collection (using createCollection) before each test run.
+      attr_reader :encrypted_fields
 
       def collection_name
         # Older spec tests do not specify a collection name, thus

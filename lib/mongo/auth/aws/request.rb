@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -215,7 +215,6 @@ module Mongo
         # @return [ String ] The signature.
         def signature
           hashed_canonical_request = Digest::SHA256.hexdigest(canonical_request)
-          hashed_body = Digest::SHA256.new.update(STS_REQUEST_BODY).hexdigest
           string_to_sign = "AWS4-HMAC-SHA256\n" +
             "#{formatted_time}\n" +
             "#{scope}\n" +

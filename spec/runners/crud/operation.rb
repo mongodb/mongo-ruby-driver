@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -32,7 +32,7 @@ module Mongo
         @spec = IceNine.deep_freeze(spec)
         @name = spec['name']
         if spec['arguments']
-          @arguments = BSON::ExtJSON.parse_obj(spec['arguments'])
+          @arguments = BSON::ExtJSON.parse_obj(spec['arguments'], mode: :bson)
         else
           @arguments = {}
         end
@@ -274,7 +274,14 @@ module Mongo
 
       def create_collection(database, context)
         opts = transformed_options(context)
-        database[arguments.fetch('collection')].create(session: opts[:session])
+        database[arguments.fetch('collection')]
+          .create(
+            {
+              session: opts[:session],
+              encrypted_fields: opts[:encrypted_fields],
+              validator: opts[:validator],
+            }.compact
+          )
       end
 
       def rename(collection, context)
@@ -285,11 +292,13 @@ module Mongo
       end
 
       def drop(collection, context)
-        collection.drop
+        opts = transformed_options(context)
+        collection.drop(encrypted_fields: opts[:encrypted_fields])
       end
 
       def drop_collection(database, context)
-        database[arguments.fetch('collection')].drop
+        opts = transformed_options(context)
+        database[arguments.fetch('collection')].drop(encrypted_fields: opts[:encrypted_fields])
       end
 
       def create_index(collection, context)

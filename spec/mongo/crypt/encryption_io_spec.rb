@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'mongo'
 require 'spec_helper'
@@ -9,6 +9,7 @@ describe Mongo::Crypt::EncryptionIO do
     described_class.new(
       key_vault_namespace: 'foo.bar',
       key_vault_client: authorized_client,
+      metadata_client: authorized_client.with(auto_encryption_options: nil),
       mongocryptd_options: mongocryptd_options,
     )
   end
@@ -106,6 +107,7 @@ describe Mongo::Crypt::EncryptionIO do
         mongocryptd_client: mock_client,
         key_vault_namespace: 'foo.bar',
         key_vault_client: authorized_client,
+        metadata_client: authorized_client.with(auto_encryption_options: nil),
         mongocryptd_options: mongocryptd_options,
       )
     end

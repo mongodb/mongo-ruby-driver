@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -59,6 +59,7 @@ module Mongo
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
       operations = op_combiner.combine
+      validate_requests!
 
       client.send(:with_session, @options) do |session|
         context = Operation::Context.new(client: client, session: session)
@@ -114,7 +115,8 @@ module Mongo
     #   )
     #
     # @param [ Mongo::Collection ] collection The collection.
-    # @param [ Array<Hash, BSON::Document> ] requests The requests.
+    # @param [ Enumerable<Hash, BSON::Document> ] requests The requests,
+    #   cannot be empty.
     # @param [ Hash, BSON::Document ] options The options.
     #
     # @since 2.1.0
@@ -220,7 +222,7 @@ module Mongo
     def split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
       execute_operation(name, values.shift(values.size / 2), connection, context, operation_id, result_combiner, session, txn_num)
 
-      txn_num = session.next_txn_num if txn_num
+      txn_num = session.next_txn_num if txn_num && !session.in_transaction?
       execute_operation(name, values, connection, context, operation_id, result_combiner, session, txn_num)
     end
 
@@ -312,6 +314,64 @@ module Mongo
           true
         end
       end
+    end
+
+    # Perform the request document validation required by driver specifications.
+    # This method validates the first key of each update request document to be
+    # an operator (i.e. start with $) and the first key of each replacement
+    # document to not be an operator (i.e. not start with $). The request document
+    # may be invalid without this method flagging it as such (for example an
+    # update or replacement document containing some keys which are operators
+    # and some which are not), in which case the driver expects the server to
+    # fail the operation with an error.
+    #
+    # Raise an ArgumentError if requests is empty.
+    #
+    # @raise [ Error::InvalidUpdateDocument, Error::InvalidReplacementDocument,
+    #   ArgumentError ]
+    #   if the document is invalid.
+    def validate_requests!
+      requests_empty = true
+      @requests.each do |req|
+        requests_empty = false
+        if op = req.keys.first
+          if [:update_one, :update_many].include?(op)
+            if doc = maybe_first(req.dig(op, :update))
+              if key = doc.keys&.first
+                unless key.to_s.start_with?("$")
+                  if Mongo.validate_update_replace
+                    raise Error::InvalidUpdateDocument.new(key: key)
+                  else
+                    Error::InvalidUpdateDocument.warn(Logger.logger, key)
+                  end
+                end
+              end
+            end
+          elsif op == :replace_one
+            if key = req.dig(op, :replacement)&.keys&.first
+              if key.to_s.start_with?("$")
+                if Mongo.validate_update_replace
+                  raise Error::InvalidReplacementDocument.new(key: key)
+                else
+                  Error::InvalidReplacementDocument.warn(Logger.logger, key)
+                end
+              end
+            end
+          end
+        end
+      end.tap do
+        raise ArgumentError, "Bulk write requests cannot be empty" if requests_empty
+      end
+    end
+
+    # If the given object is an array return the first element, otherwise
+    # return the given object.
+    #
+    # @param [ Object ] obj The given object.
+    #
+    # @return [ Object ] The first element of the array or the given object.
+    def maybe_first(obj)
+      obj.is_a?(Array) ? obj.first : obj
     end
   end
 end

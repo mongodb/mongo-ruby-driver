@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -38,6 +38,8 @@ module Mongo
       #   defaults to nil.
       # @param [ Mongo::Client ] key_vault_client The client connected to the
       #   key vault collection.
+      # @param [ Mongo::Client | nil ] metadata_client The client to be used to
+      #   obtain collection metadata.
       # @param [ String ] key_vault_namespace The key vault namespace in the format
       #   db_name.collection_name.
       # @param [ Hash ] mongocryptd_options Options related to mongocryptd.
@@ -54,7 +56,7 @@ module Mongo
       #   options are not nil and are in the correct format.
       def initialize(
         client: nil, mongocryptd_client: nil, key_vault_namespace:,
-        key_vault_client:, mongocryptd_options: {}
+        key_vault_client:, metadata_client:, mongocryptd_options: {}
       )
         validate_key_vault_client!(key_vault_client)
         validate_key_vault_namespace!(key_vault_namespace)
@@ -63,6 +65,7 @@ module Mongo
         @mongocryptd_client = mongocryptd_client
         @key_vault_db_name, @key_vault_collection_name = key_vault_namespace.split('.')
         @key_vault_client = key_vault_client
+        @metadata_client = metadata_client
         @options = mongocryptd_options
       end
 
@@ -91,11 +94,11 @@ module Mongo
       #
       # @return [ Hash ] The collection information
       def collection_info(db_name, filter)
-        unless @client
-          raise ArgumentError, 'collection_info requires client to have been passed to the constructor, but it was not'
+        unless @metadata_client
+          raise ArgumentError, 'collection_info requires metadata_client to have been passed to the constructor, but it was not'
         end
 
-        @client.use(db_name).database.list_collections(filter: filter).first
+        @metadata_client.use(db_name).database.list_collections(filter: filter, deserialize_as_bson: true).first
       end
 
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings
@@ -153,6 +156,72 @@ module Mongo
             bytes_needed = kms_context.bytes_needed
           end
         end
+      end
+
+      # Adds a key_alt_name to the key_alt_names array of the key document
+      # in the key vault collection with the given id.
+      def add_key_alt_name(id, key_alt_name)
+        key_vault_collection.find_one_and_update(
+          { _id: id },
+          { '$addToSet' => { keyAltNames: key_alt_name } },
+        )
+      end
+
+      # Removes the key document with the given id
+      # from the key vault collection.
+      def delete_key(id)
+        key_vault_collection.delete_one(_id: id)
+      end
+
+      # Finds a single key document with the given id.
+      def get_key(id)
+        key_vault_collection.find(_id: id).first
+      end
+
+      # Returns a key document in the key vault collection with
+      # the given key_alt_name.
+      def get_key_by_alt_name(key_alt_name)
+        key_vault_collection.find(keyAltNames: key_alt_name).first
+      end
+
+      # Finds all documents in the key vault collection.
+      def get_keys
+        key_vault_collection.find
+      end
+
+      # Removes a key_alt_name from the key_alt_names array of the key document
+      # in the key vault collection with the given id.
+      def remove_key_alt_name(id, key_alt_name)
+        key_vault_collection.find_one_and_update(
+          { _id: id },
+          [
+            {
+              '$set' => {
+                keyAltNames: {
+                  '$cond' => [
+                    { '$eq' => [ '$keyAltNames', [ key_alt_name ] ] },
+                    '$$REMOVE',
+                    {
+                      '$filter' => {
+                        input: '$keyAltNames',
+                        cond: { '$ne' =>  [ '$$this', key_alt_name ] }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        )
+      end
+
+      # Apply given requests to the key vault collection using bulk write.
+      #
+      # @param [ Array<Hash> ] requests The bulk write requests.
+      #
+      # @return [ BulkWrite::Result ] The result of the operation.
+      def update_data_keys(updates)
+        key_vault_collection.bulk_write(updates)
       end
 
       private

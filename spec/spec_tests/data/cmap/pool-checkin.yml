@@ -1,7 +1,11 @@
 version: 1
 style: unit
 description: must have a method of allowing the driver to check in a connection
+# Remove the topology runOn requirement when cmap specs are adjusted for lbs
+runOn:
+  - topology: [ "single", "replicaset", "sharded" ]
 operations:
+  - name: ready
   - name: checkOut
     label: conn
   - name: checkIn
@@ -12,6 +16,7 @@ events:
     address: 42
 ignore:
   - ConnectionPoolCreated
+  - ConnectionPoolReady
   - ConnectionCreated
   - ConnectionReady
   - ConnectionClosed

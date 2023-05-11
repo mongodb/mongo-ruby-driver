@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -28,7 +28,8 @@ describe 'Client with auto encryption #reconnect' do
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },
-          database: 'auto_encryption'
+          database: 'auto_encryption',
+          populator_io: false
         }
       )
     )
@@ -133,7 +134,9 @@ describe 'Client with auto encryption #reconnect' do
 
     context 'after closing mongocryptd client and reconnecting' do
       before do
-        mongocryptd_client.close
+        # don't use the mongocryptd_client variable yet so that it will be computed
+        # after the client reconnects
+        client.encrypter.mongocryptd_client.close
         client.reconnect
       end
 
@@ -144,7 +147,9 @@ describe 'Client with auto encryption #reconnect' do
 
     context 'after killing mongocryptd client monitor thread and reconnecting' do
       before do
-        thread = mongocryptd_client.cluster.servers.first.monitor.instance_variable_get('@thread')
+        # don't use the mongocryptd_client variable yet so that it will be computed
+        # after the client reconnects
+        thread = client.encrypter.mongocryptd_client.cluster.servers.first.monitor.instance_variable_get('@thread')
         expect(thread).to be_alive
 
         thread.kill
@@ -223,7 +228,7 @@ describe 'Client with auto encryption #reconnect' do
     let(:key_vault_client_option) do
       new_local_client(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options
+        SpecConfig.instance.test_options.merge(populator_io: false)
       )
     end
 

@@ -4,8 +4,11 @@ set -e
 # IMPORTANT: Don't set trace (-x) to avoid secrets showing up in the logs.
 set +x
 
-. `dirname "$0"`/../spec/shared/shlib/distro.sh
-. `dirname "$0"`/../spec/shared/shlib/set_env.sh
+MRSS_ROOT=`dirname "$0"`/../spec/shared
+
+. $MRSS_ROOT/shlib/distro.sh
+. $MRSS_ROOT/shlib/set_env.sh
+. $MRSS_ROOT/shlib/config.sh
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-kerberos.sh
 . `dirname "$0"`/functions-config.sh
@@ -15,6 +18,7 @@ arch=`host_distro`
 show_local_instructions
 
 set_env_vars
+set_env_python
 set_env_ruby
 
 # Note that:

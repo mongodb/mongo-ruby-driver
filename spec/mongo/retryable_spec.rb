@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -46,7 +46,7 @@ class RetryableTestConsumer
   end
 
   def retry_write_allowed_as_configured?
-    retry_write_allowed?(session, write_concern)
+    write_worker.retry_write_allowed?(session, write_concern)
   end
 end
 
@@ -87,7 +87,9 @@ end
 class RetryableHost
   include Mongo::Retryable
 
-  public :retry_write_allowed?
+  def retry_write_allowed?(*args)
+    write_worker.retry_write_allowed?(*args)
+  end
 end
 
 describe Mongo::Retryable do

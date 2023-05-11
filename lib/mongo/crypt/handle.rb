@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -28,17 +28,40 @@ module Mongo
     # @api private
     class Handle
 
+      # @returns [ Crypt::KMS::Credentials ] Credentials for KMS providers.
+      attr_reader :kms_providers
+
       # Creates a new Handle object and initializes it with options
       #
       # @param [ Crypt::KMS::Credentials ] kms_providers Credentials for KMS providers.
-      # @param [ Hash ] options A hash of options
       #
-      # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
-      #   of the collection that stores auto encrypted documents.
       # @param [ Hash ] kms_tls_options TLS options to connect to KMS
       #   providers. Keys of the hash should be KSM provider names; values
       #   should be hashes of TLS connection options. The options are equivalent
       #   to TLS connection options of Mongo::Client.
+      #
+      # @param [ Hash ] options A hash of options.
+      # @option options [ Hash | nil ] :schema_map A hash representing the JSON schema
+      #   of the collection that stores auto encrypted documents. This option is
+      #   mutually exclusive with :schema_map_path.
+      # @option options [ String | nil ] :schema_map_path A path to a file contains the JSON schema
+      #   of the collection that stores auto encrypted documents. This option is
+      #   mutually exclusive with :schema_map.
+      # @option options [ Hash | nil ] :encrypted_fields_map maps a collection
+      #   namespace to an encryptedFields.
+      #   - Note: If a collection is present on both the encryptedFieldsMap
+      #     and schemaMap, an error will be raised.
+      # @option options [ Boolean | nil ] :bypass_query_analysis When true
+      #   disables automatic analysis of outgoing commands.
+      # @option options [ String | nil ] :crypt_shared_lib_path Path that should
+      #   be  the used to load the crypt shared library. Providing this option
+      #   overrides default crypt shared library load paths for libmongocrypt.
+      # @option options [ Boolean | nil ] :crypt_shared_lib_required Whether
+      #   crypt_shared library is required. If 'true', an error will be raised
+      #   if a crypt_shared library cannot be loaded by libmongocrypt.
+      # @option options [ Boolean | nil ] :explicit_encryption_only Whether this
+      #   handle is going to be used only for explicit encryption. If true,
+      #   libmongocrypt is instructed not to load crypt shared library.
       # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
       def initialize(kms_providers, kms_tls_options, options={})
@@ -49,18 +72,44 @@ module Mongo
           Binding.method(:mongocrypt_destroy)
         )
 
+        @kms_providers = kms_providers
         @kms_tls_options =  kms_tls_options
 
-        @schema_map = options[:schema_map]
-        set_schema_map if @schema_map
+        maybe_set_schema_map(options)
+
+        @encrypted_fields_map = options[:encrypted_fields_map]
+        set_encrypted_fields_map if @encrypted_fields_map
+
+        @bypass_query_analysis = options[:bypass_query_analysis]
+        set_bypass_query_analysis if @bypass_query_analysis
+
+        @crypt_shared_lib_path = options[:crypt_shared_lib_path]
+        @explicit_encryption_only = options[:explicit_encryption_only]
+        if @crypt_shared_lib_path
+          Binding.setopt_set_crypt_shared_lib_path_override(self, @crypt_shared_lib_path)
+        elsif !@bypass_query_analysis && !@explicit_encryption_only
+          Binding.setopt_append_crypt_shared_lib_search_path(self, "$SYSTEM")
+        end
 
         @logger = options[:logger]
         set_logger_callback if @logger
 
         set_crypto_hooks
 
-        Binding.setopt_kms_providers(self, kms_providers.to_document)
+        Binding.setopt_kms_providers(self, @kms_providers.to_document)
+
+        if @kms_providers.aws&.empty? || @kms_providers.gcp&.empty? || @kms_providers.azure&.empty?
+          Binding.setopt_use_need_kms_credentials_state(self)
+        end
+
         initialize_mongocrypt
+
+        @crypt_shared_lib_required = !!options[:crypt_shared_lib_required]
+        if @crypt_shared_lib_required && crypt_shared_lib_version == 0
+          raise Mongo::Error::CryptError.new(
+            "Crypt shared library is required, but cannot be loaded  according to libmongocrypt"
+          )
+        end
       end
 
       # Return the reference to the underlying @mongocrypt object
@@ -80,17 +129,60 @@ module Mongo
         @kms_tls_options.fetch(provider, {})
       end
 
+      def crypt_shared_lib_version
+        Binding.crypt_shared_lib_version(self)
+      end
+
+      def crypt_shared_lib_available?
+        crypt_shared_lib_version != 0
+      end
+
       private
 
       # Set the schema map option on the underlying mongocrypt_t object
-      def set_schema_map
-        unless @schema_map.is_a?(Hash)
+      def maybe_set_schema_map(options)
+        if !options[:schema_map] && !options[:schema_map_path]
+          @schema_map = nil
+        elsif options[:schema_map] && options[:schema_map_path]
           raise ArgumentError.new(
-            "#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil"
+            "Cannot set both schema_map and schema_map_path options."
+          )
+        elsif options[:schema_map]
+          unless options[:schema_map].is_a?(Hash)
+            raise ArgumentError.new(
+              "#{@schema_map} is an invalid schema_map; schema_map must be a Hash or nil."
+            )
+          end
+          @schema_map = options[:schema_map]
+          Binding.setopt_schema_map(self, @schema_map)
+        elsif options[:schema_map_path]
+          @schema_map = BSON::ExtJSON.parse(File.read(options[:schema_map_path]))
+          Binding.setopt_schema_map(self, @schema_map)
+        end
+      rescue Errno::ENOENT
+        raise ArgumentError.new(
+          "#{@schema_map_path} is an invalid path to a file contains schema_map."
+        )
+      end
+
+      def set_encrypted_fields_map
+        unless @encrypted_fields_map.is_a?(Hash)
+          raise ArgumentError.new(
+            "#{@encrypted_fields_map} is an invalid encrypted_fields_map: must be a Hash or nil"
           )
         end
 
-        Binding.setopt_schema_map(self, @schema_map)
+        Binding.setopt_encrypted_field_config_map(self, @encrypted_fields_map)
+      end
+
+      def set_bypass_query_analysis
+        unless [true, false].include?(@bypass_query_analysis)
+          raise ArgumentError.new(
+            "#{@bypass_query_analysis} is an invalid bypass_query_analysis value; must be a Boolean or nil"
+          )
+        end
+
+        Binding.setopt_bypass_query_analysis(self) if @bypass_query_analysis
       end
 
       # Send the logs from libmongocrypt to the Mongo::Logger
@@ -150,13 +242,13 @@ module Mongo
       # Perform AES encryption or decryption and write the output to the
       # provided mongocrypt_binary_t object.
       def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p,
-        response_length_p, status_p, decrypt: false)
+        response_length_p, status_p, decrypt: false, mode: :CBC)
         key = Binary.from_pointer(key_binary_p).to_s
         iv = Binary.from_pointer(iv_binary_p).to_s
         input = Binary.from_pointer(input_binary_p).to_s
 
         write_binary_string_and_set_status(output_binary_p, status_p) do
-          output = Hooks.aes(key, iv, input, decrypt: decrypt)
+          output = Hooks.aes(key, iv, input, decrypt: decrypt, mode: mode)
           response_length_p.write_int(output.bytesize)
 
           output
@@ -252,6 +344,39 @@ module Mongo
           @hmac_sha_512,
           @hmac_sha_256,
           @hmac_hash,
+        )
+
+        @aes_ctr_encrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+          output_binary_p, response_length_p, status_p|
+          do_aes(
+            key_binary_p,
+            iv_binary_p,
+            input_binary_p,
+            output_binary_p,
+            response_length_p,
+            status_p,
+            mode: :CTR,
+          )
+        end
+
+        @aes_ctr_decrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+          output_binary_p, response_length_p, status_p|
+          do_aes(
+            key_binary_p,
+            iv_binary_p,
+            input_binary_p,
+            output_binary_p,
+            response_length_p,
+            status_p,
+            decrypt: true,
+            mode: :CTR,
+          )
+        end
+
+        Binding.setopt_aes_256_ctr(
+          self,
+          @aes_ctr_encrypt,
+          @aes_ctr_decrypt,
         )
 
         @rsaes_pkcs_signature_cb = Proc.new do |_, key_binary_p, input_binary_p,

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -20,7 +20,7 @@ module Mongo
   # The URI class provides a way for users to parse the MongoDB uri as
   # defined in the connection string format spec.
   #
-  # http://docs.mongodb.org/manual/reference/connection-string/
+  # https://www.mongodb.com/docs/manual/reference/connection-string/
   #
   # @example Use the uri string to make a client connection.
   #   uri = Mongo::URI.new('mongodb://localhost:27017')
@@ -80,7 +80,7 @@ module Mongo
     # MongoDB URI (connection string) documentation url
     #
     # @since 2.0.0
-    HELP = 'http://docs.mongodb.org/manual/reference/connection-string/'.freeze
+    HELP = 'https://www.mongodb.com/docs/manual/reference/connection-string/'.freeze
 
     # Unsafe characters that must be urlencoded.
     #
@@ -235,7 +235,7 @@ module Mongo
         raise Error::InvalidURI.new(string, 'Cannot parse an empty URI.')
       end
 
-      scheme, _, remaining = string.partition(SCHEME_DELIM)
+      scheme, _, _ = string.partition(SCHEME_DELIM)
       case scheme
         when MONGODB_SCHEME
           URI.new(string, opts)
@@ -328,7 +328,44 @@ module Mongo
       @database ? @database : Database::ADMIN
     end
 
+    # Get the uri as a string.
+    #
+    # @example Get the uri as a string.
+    #   uri.to_s
+    #
+    # @return [ String ] The uri string.
+    def to_s
+      reconstruct_uri
+    end
+
     private
+
+    # Reconstruct the URI from its parts. Invalid options are dropped and options
+    # are converted to camelCase.
+    #
+    # @return [ String ] the uri.
+    def reconstruct_uri
+      servers = @servers.join(',')
+      options = options_mapper.ruby_to_string(@uri_options).map do |k, vs|
+        unless vs.nil?
+          if vs.is_a?(Array)
+            vs.map { |v| "#{k}=#{v}" }.join('&')
+          else
+            "#{k}=#{vs}"
+          end
+        end
+      end.compact.join('&')
+
+      uri = "#{scheme}#{SCHEME_DELIM}"
+      uri += @user.to_s if @user
+      uri += "#{AUTH_USER_PWD_DELIM}#{@password}" if @password
+      uri += "@" if @user || @password
+      uri += @query_hostname || servers
+      uri += "/" if @database || !options.empty?
+      uri += @database.to_s if @database
+      uri += "?#{options}" unless options.empty?
+      uri
+    end
 
     def scheme
       MONGODB_SCHEME
@@ -380,15 +417,6 @@ module Mongo
       end
     rescue Error::InvalidAddress => e
       raise_invalid_error!(e.message)
-    end
-
-    def extract_db_opts!(string)
-      db_opts, _, creds_hosts = string.reverse.partition(DATABASE_DELIM)
-      db_opts, creds_hosts = creds_hosts, db_opts if creds_hosts.empty?
-      if db_opts.empty? && creds_hosts.include?(URI_OPTS_DELIM)
-        raise_invalid_error!(INVALID_OPTS_DELIM)
-      end
-      [ creds_hosts, db_opts ].map { |s| s.reverse }
     end
 
     def options_mapper

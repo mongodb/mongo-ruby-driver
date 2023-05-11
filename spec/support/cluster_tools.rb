@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'singleton'
 
@@ -113,7 +113,7 @@ class ClusterTools
   # @param [ Mongo::Address ] address
   def step_up(address)
     client = direct_client(address)
-    start = Time.now
+    start = Mongo::Utils.monotonic_time
     loop do
       begin
         client.database.command(replSetStepUp: 1)
@@ -128,7 +128,7 @@ class ClusterTools
           raise
         end
 
-        if Time.now > start + 10
+        if Mongo::Utils.monotonic_time > start + 10
           raise e
         end
       end
@@ -145,7 +145,7 @@ class ClusterTools
   # - call step down on the existing primary
   # - call step up on the target in a loop until it becomes the primary
   def change_primary
-    start = Time.now
+    start = Mongo::Utils.monotonic_time
     existing_primary = admin_client.cluster.next_primary
     existing_primary_address = existing_primary.address
 
@@ -175,11 +175,11 @@ class ClusterTools
     persistently_step_up(target.address)
 
     new_primary = admin_client.cluster.next_primary
-    puts "#{Time.now} [CT] Primary changed to #{new_primary.address}. Time to change primaries: #{Time.now - start}"
+    puts "#{Time.now} [CT] Primary changed to #{new_primary.address}. Time to change primaries: #{Mongo::Utils.monotonic_time - start}"
   end
 
   def persistently_step_up(address)
-    start = Time.now
+    start = Mongo::Utils.monotonic_time
     loop do
       puts "#{Time.now} [CT] Asking #{address} to step up"
 
@@ -189,7 +189,7 @@ class ClusterTools
         break
       end
 
-      if Time.now - start > 10
+      if Mongo::Utils.monotonic_time - start > 10
         raise "Unable to get #{address} instated as primary after 10 seconds"
       end
     end
@@ -332,6 +332,11 @@ class ClusterTools
   end
 
   def direct_client(address, options = {})
+    connect = if SpecConfig.instance.connect_options[:connect] == :load_balanced
+      :load_balanced
+    else
+      :direct
+    end
     @direct_clients ||= {}
     cache_key = {address: address}.update(options)
     (
@@ -339,7 +344,7 @@ class ClusterTools
         [address.to_s],
         SpecConfig.instance.test_options.merge(
           SpecConfig.instance.auth_options).merge(
-          connect: :direct, server_selection_timeout: 10).merge(options))
+          connect: connect, server_selection_timeout: 10).merge(options))
     ).tap do |client|
       ClientRegistry.reconnect_client_if_perished(client)
     end

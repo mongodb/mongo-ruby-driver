@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -362,6 +362,42 @@ describe Mongo::Collection do
       expect(result.inserted_ids.size).to eq(2)
     end
 
+    context 'when an enumerable is used instead of an array' do
+
+      context 'when the enumerable is not empty' do
+
+        let(:source_data) do
+          [{ name: 'test1' }, { name: 'test2' }]
+        end
+
+        let(:result) do
+          authorized_collection.insert_many(source_data.lazy)
+        end
+
+        it 'should accepts them without raising an error' do
+          expect { result }.to_not raise_error
+          expect(result.inserted_count).to eq(source_data.size)
+        end
+      end
+
+      context 'when the enumerable is empty' do
+
+        let(:source_data) do
+          []
+        end
+
+        let(:result) do
+          authorized_collection.insert_many(source_data.lazy)
+        end
+
+        it 'should raise ArgumentError' do
+          expect do
+            result
+          end.to raise_error(ArgumentError, /Bulk write requests cannot be empty/)
+        end
+      end
+    end
+
     context 'when a session is provided' do
 
       let(:session) do
@@ -410,16 +446,22 @@ describe Mongo::Collection do
       it_behaves_like 'an implicit session with an unacknowledged write'
     end
 
-    context 'when a document contains invalid keys' do
+    context 'when a document contains dotted keys' do
 
       let(:docs) do
         [ { 'first.name' => 'test1' }, { name: 'test2' } ]
       end
 
-      it 'raises a BSON::String::IllegalKey exception' do
+      let(:view) { authorized_collection.find({}, { sort: { name: 1 } }) }
+
+      it 'inserts the documents correctly' do
         expect {
           authorized_collection.insert_many(docs)
-        }.to raise_exception(BSON::String::IllegalKey)
+        }.to_not raise_error
+
+        expect(view.count).to eq(2)
+        expect(view.first['first.name']).to eq('test1')
+        expect(view.to_a[1]['name']).to eq('test2')
       end
     end
 
@@ -714,16 +756,19 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the document contains invalid keys' do
+    context 'when the document contains dotted keys' do
 
       let(:doc) do
         { 'testing.test' => 'value' }
       end
 
-      it 'raises a BSON::String::IllegalKey exception' do
+      it 'inserts the document correctly' do
         expect {
           authorized_collection.insert_one(doc)
-        }.to raise_exception(BSON::String::IllegalKey)
+        }.to_not raise_error
+
+        expect(authorized_collection.count).to eq(1)
+        expect(authorized_collection.find.first['testing.test']).to eq('value')
       end
     end
 
@@ -2096,16 +2141,36 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the replace fails' do
+    context 'when the replace has an invalid key' do
 
-      let(:result) do
-        authorized_collection.replace_one(selector, { '$s' => 'test1' })
+      context "when validate_update_replace is true" do
+
+        config_override :validate_update_replace, true
+
+        let(:result) do
+          authorized_collection.replace_one(selector, { '$s' => 'test1' })
+        end
+
+        it 'raises an InvalidReplacementDocument error' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::InvalidReplacementDocument)
+        end
       end
 
-      it 'raises an OperationFailure' do
-        expect {
-          result
-        }.to raise_exception(Mongo::Error::OperationFailure)
+      context "when validate_update_replace is false" do
+
+        config_override :validate_update_replace, false
+
+        let(:result) do
+          authorized_collection.replace_one(selector, { '$set' => { 'test1' => 1 } })
+        end
+
+        it 'does not raise an error' do
+          expect {
+            result
+          }.to_not raise_exception
+        end
       end
     end
 
@@ -4381,6 +4446,26 @@ describe Mongo::Collection do
 
     it 'does not raise an exception' do
       expect(result).to be_nil
+    end
+  end
+
+  context "when creating collection with view_on and pipeline" do
+    before do
+      authorized_client["my_view"].drop
+      authorized_collection.insert_one({ bar: "here!" })
+      authorized_client["my_view",
+        view_on: authorized_collection.name,
+        pipeline: [ { :'$project' => { "baz": "$bar" } } ]
+      ].create
+    end
+
+    it "the view has a document" do
+      expect(authorized_client["my_view"].find.to_a.length).to eq(1)
+    end
+
+    it "applies the pipeline" do
+      expect(authorized_client["my_view"].find.first).to have_key("baz")
+      expect(authorized_client["my_view"].find.first["baz"]).to eq("here!")
     end
   end
 end

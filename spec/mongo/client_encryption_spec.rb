@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -148,16 +148,6 @@ describe Mongo::ClientEncryption do
         end
       end
 
-      context 'with empty options' do
-        let(:options) { {} }
-
-        it 'raises an exception' do
-          expect do
-            data_key_id
-          end.to raise_error(ArgumentError, /Key document options must contain a key named :master_key with a Hash value/)
-        end
-      end
-
       context 'with nil master key' do
         let(:options) { { master_key: nil } }
 
@@ -297,8 +287,6 @@ describe Mongo::ClientEncryption do
         end
 
         it 'raises an exception' do
-          # RUBY-2129: This error message could be more specific and inform the user
-          # that there is a problem with their KMS endpoint
           expect do
             data_key_id
           end.to raise_error(Mongo::Error::KmsError, /SocketError/)

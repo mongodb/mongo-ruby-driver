@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 def standard_dependencies
   gem 'yard'
@@ -29,6 +29,15 @@ def standard_dependencies
     gem 'yajl-ruby', platforms: :mri, require: false
     gem 'celluloid', platforms: :mri, require: false
 
+    # for static analysis -- ignore ruby < 2.6 because of rubocop
+    # version incompatibilities
+    if RUBY_VERSION > "2.5.99"
+      gem 'rubocop', '~> 1.45.1'
+      gem 'rubocop-performance', '~> 1.16.0'
+      gem 'rubocop-rake', '~> 0.6.0'
+      gem 'rubocop-rspec', '~> 2.18.1'
+    end
+
     platform :mri do
       # Debugger for VSCode.
       if !ENV['CI'] && !ENV['DOCKER'] && RUBY_VERSION < '3.0'
@@ -57,9 +66,11 @@ def standard_dependencies
     gem 'ruby-prof', platforms: :mri
     gem 'erubi'
     gem 'tilt'
+    # solargraph depends on rbs, which won't build on jruby for some reason
+    gem 'solargraph', platforms: :mri
   end
 
   if ENV['FLE'] == 'helper'
-    gem 'libmongocrypt-helper'
+    gem 'libmongocrypt-helper', '~> 1.7.0'
   end
 end

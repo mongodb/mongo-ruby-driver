@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 RSpec::Matchers.define :be_int32 do |num|
   match do |actual|
@@ -60,17 +60,17 @@ end
 
 RSpec::Matchers.define :take_longer_than do |min_expected_time|
   match do |proc|
-    start_time = Time.now
+    start_time = Mongo::Utils.monotonic_time
     proc.call
-    (Time.now - start_time).should > min_expected_time
+    (Mongo::Utils.monotonic_time - start_time).should > min_expected_time
   end
 end
 
 RSpec::Matchers.define :take_shorter_than do |min_expected_time|
   match do |proc|
-    start_time = Time.now
+    start_time = Mongo::Utils.monotonic_time
     proc.call
-    (Time.now - start_time).should < min_expected_time
+    (Mongo::Utils.monotonic_time - start_time).should < min_expected_time
   end
 end
 

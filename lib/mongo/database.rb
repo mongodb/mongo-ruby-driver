@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -73,7 +73,8 @@ module Mongo
                    :read_preference,
                    :server_selector,
                    :read_concern,
-                   :write_concern
+                   :write_concern,
+                   :encrypted_fields_map
 
     # @return [ Mongo::Server ] Get the primary server from the cluster.
     def_delegators :cluster,
@@ -225,7 +226,7 @@ module Mongo
       client.send(:with_session, opts) do |session|
         server = selector.select_server(cluster, nil, session)
         op = Operation::Command.new(
-          :selector => operation.dup,
+          :selector => operation,
           :db_name => name,
           :read => selector,
           :session => session
@@ -396,7 +397,7 @@ module Mongo
     #   cursor and this option is therefore not valid.
     # @option options [ Session ] :session The session to use.
     #
-    # @return [ Aggregation ] The aggregation object.
+    # @return [ Collection::View::Aggregation ] The aggregation object.
     #
     # @since 2.10.0
     def aggregate(pipeline, options = {})
@@ -455,6 +456,11 @@ module Mongo
     #   Only recognized by server versions 4.0+.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Boolean ] :show_expanded_events Enables the server to
+    #   send the 'expanded' list of change stream events. The list of additional
+    #   events included with this flag set are: createIndexes, dropIndexes,
+    #   modify, create, shardCollection, reshardCollection,
+    #   refineCollectionShardKey.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with a $changeStream
@@ -464,8 +470,11 @@ module Mongo
     #
     # @since 2.6.0
     def watch(pipeline = [], options = {})
+      view_options = options.dup
+      view_options[:await_data] = true if options[:max_await_time_ms]
+
       Mongo::Collection::View::ChangeStream.new(
-        Mongo::Collection::View.new(collection("#{COMMAND}.aggregate")),
+        Mongo::Collection::View.new(collection("#{COMMAND}.aggregate"), {}, view_options),
         pipeline,
         Mongo::Collection::View::ChangeStream::DATABASE,
         options)

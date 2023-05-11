@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -36,7 +36,7 @@ module Mongo
           ::Timeout.timeout(sec) do
             yield
           end
-        rescue ::Timeout::Error => e
+        rescue ::Timeout::Error
           raise klass, message
         end
       else

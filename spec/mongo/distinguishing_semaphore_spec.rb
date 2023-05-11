@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -18,11 +18,11 @@ describe Mongo::DistinguishingSemaphore do
     # Context switch to start the thread
     sleep 0.1
 
-    start_time = Time.now
+    start_time = Mongo::Utils.monotonic_time
     semaphore.signal
     consumer.join
 
-    (Time.now - start_time).should < 1
+    (Mongo::Utils.monotonic_time - start_time).should < 1
 
     result.should be true
   end
@@ -37,11 +37,11 @@ describe Mongo::DistinguishingSemaphore do
     # Context switch to start the thread
     sleep 0.1
 
-    start_time = Time.now
+    start_time = Mongo::Utils.monotonic_time
     semaphore.broadcast
     consumer.join
 
-    (Time.now - start_time).should < 1
+    (Mongo::Utils.monotonic_time - start_time).should < 1
 
     result.should be true
   end
@@ -56,10 +56,10 @@ describe Mongo::DistinguishingSemaphore do
     # Context switch to start the thread
     sleep 0.1
 
-    start_time = Time.now
+    start_time = Mongo::Utils.monotonic_time
     consumer.join
 
-    (Time.now - start_time).should > 1
+    (Mongo::Utils.monotonic_time - start_time).should > 1
 
     result.should be false
   end

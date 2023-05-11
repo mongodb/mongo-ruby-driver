@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'mongo'
 require 'base64'
@@ -23,7 +23,7 @@ describe Mongo::Crypt::DataKeyContext do
 
   let(:key_alt_names) { [] }
 
-  let(:context) { described_class.new(mongocrypt, io, key_document, key_alt_names) }
+  let(:context) { described_class.new(mongocrypt, io, key_document, key_alt_names, nil) }
 
   describe '#initialize' do
     shared_examples 'it properly sets key_alt_names' do

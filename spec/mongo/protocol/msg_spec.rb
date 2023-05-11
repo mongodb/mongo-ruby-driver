@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'support/shared/protocol'
@@ -390,6 +390,7 @@ describe Mongo::Protocol::Msg do
     end
 
     context 'when the validating_keys option is true with payload 1' do
+      max_bson_version '4.99.99'
 
       let(:sequences) do
         [ section ]
@@ -403,10 +404,8 @@ describe Mongo::Protocol::Msg do
         { validating_keys: true }
       end
 
-      it 'checks the sequence document keys' do
-        expect {
-          message.serialize
-        }.to raise_exception(BSON::String::IllegalKey)
+      it 'does not check the sequence document keys' do
+        expect(message.serialize).to be_a(BSON::ByteBuffer)
       end
     end
 

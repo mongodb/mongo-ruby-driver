@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -10,10 +10,12 @@ describe Mongo::Client do
 
   describe '.new' do
     context 'with scan: false' do
+      fails_on_jruby
+
       it 'does not perform i/o' do
         allow_any_instance_of(Mongo::Server::Monitor).to receive(:run!)
         expect_any_instance_of(Mongo::Server::Monitor).not_to receive(:scan!)
-        start_time = Time.now
+
         # return should be instant
         c = Timeout.timeout(1) do
           ClientRegistry.instance.new_local_client(['1.1.1.1'], scan: false)
@@ -285,9 +287,9 @@ describe Mongo::Client do
                 }
               end
 
-              it 'sets key_vault_client as a clone of self with no encryption options' do
+              it 'sets key_vault_client with no encryption options' do
                 key_vault_client = client.encrypter.key_vault_client
-                expect(key_vault_client).to eq(client)
+                expect(key_vault_client.options['auto_encryption_options']).to be_nil
               end
 
               it 'sets bypass_auto_encryption to false' do
@@ -844,6 +846,20 @@ describe Mongo::Client do
               expect(client.options[:max_pool_size]).to eq(options[:max_pool_size])
             end
           end
+
+          context 'when max_pool_size is zero (unlimited)' do
+            let(:options) do
+              {
+                  :min_pool_size => 10,
+                  :max_pool_size => 0
+              }
+            end
+
+            it 'sets the option' do
+              expect(client.options[:min_pool_size]).to eq(options[:min_pool_size])
+              expect(client.options[:max_pool_size]).to eq(options[:max_pool_size])
+            end
+          end
         end
 
         context 'when max_pool_size is not provided' do
@@ -852,7 +868,7 @@ describe Mongo::Client do
 
             let(:options) do
               {
-                  :min_pool_size => 10
+                  :min_pool_size => 30
               }
             end
 
@@ -887,6 +903,24 @@ describe Mongo::Client do
             it 'sets the option' do
               expect(client.options[:min_pool_size]).to eq(options[:min_pool_size])
             end
+          end
+        end
+      end
+
+      context 'when max_pool_size is provided' do
+        let(:client) do
+          new_local_client_nmio(['127.0.0.1:27017'], options)
+        end
+
+        context 'when max_pool_size is 0 (unlimited)' do
+          let(:options) do
+            {
+                :max_pool_size => 0
+            }
+          end
+
+          it 'sets the option' do
+            expect(client.options[:max_pool_size]).to eq(options[:max_pool_size])
           end
         end
       end
@@ -1081,6 +1115,17 @@ describe Mongo::Client do
                 expect(client.options[:max_pool_size]).to eq(10)
               end
             end
+
+            context 'when max_pool_size is 0 (unlimited)' do
+              let(:uri) do
+                'mongodb://127.0.0.1:27017/?minPoolSize=10&maxPoolSize=0'
+              end
+
+              it 'sets the option' do
+                expect(client.options[:min_pool_size]).to eq(10)
+                expect(client.options[:max_pool_size]).to eq(0)
+              end
+            end
           end
 
           context 'when max_pool_size is not provided' do
@@ -1088,7 +1133,7 @@ describe Mongo::Client do
             context 'when the min_pool_size is greater than the default max_pool_size' do
 
               let(:uri) do
-                'mongodb://127.0.0.1:27017/?minPoolSize=10'
+                'mongodb://127.0.0.1:27017/?minPoolSize=30'
               end
 
               it 'raises an Exception' do
@@ -1730,28 +1775,28 @@ describe Mongo::Client do
             expect do
               client = new_local_client_nmio(['127.0.0.1:27017'],
                 :read => {:mode => :bogus})
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>:bogus}: mode bogus is not one of recognized modes')
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read preference value: {"mode"=>:bogus}: mode bogus is not one of recognized modes')
           end
 
           it 'rejects bogus read preference as string' do
             expect do
               client = new_local_client_nmio(['127.0.0.1:27017'],
                 :read => {:mode => 'bogus'})
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>"bogus"}: mode bogus is not one of recognized modes')
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read preference value: {"mode"=>"bogus"}: mode bogus is not one of recognized modes')
           end
 
           it 'rejects read option specified as a string' do
             expect do
               client = new_local_client_nmio(['127.0.0.1:27017'],
                 :read => 'primary')
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
+            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read preference value: "primary": the read preference must be specified as a hash: { mode: "primary" }')
           end
 
           it 'rejects read option specified as a symbol' do
             expect do
               client = new_local_client_nmio(['127.0.0.1:27017'],
                 :read => :primary)
-            end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
+            end.to raise_error(Mongo::Error::InvalidReadOption, "Invalid read preference value: :primary: the read preference must be specified as a hash: { mode: :primary }")
           end
         end
       end
@@ -2067,6 +2112,53 @@ describe Mongo::Client do
 
         it 'is closed after block' do
           expect(block_client.cluster.connected?).to eq(false)
+        end
+
+        context 'with auto encryption options' do
+          require_libmongocrypt
+          min_server_fcv '4.2'
+          require_enterprise
+          clean_slate
+
+          include_context 'define shared FLE helpers'
+          include_context 'with local kms_providers'
+
+          let(:auto_encryption_options) do
+            {
+              key_vault_client: key_vault_client,
+              key_vault_namespace: key_vault_namespace,
+              kms_providers: kms_providers,
+              schema_map: schema_map,
+              extra_options: extra_options,
+            }
+          end
+
+          let(:key_vault_client) { new_local_client_nmio(SpecConfig.instance.addresses) }
+
+          let(:block_client) do
+            c = nil
+            Mongo::Client.new(
+              SpecConfig.instance.addresses,
+              SpecConfig.instance.test_options.merge(
+                auto_encryption_options: auto_encryption_options,
+                database: SpecConfig.instance.test_db
+              ),
+            ) do |client|
+              c = client
+            end
+            c
+          end
+
+          it 'closes all clients after block' do
+            expect(block_client.cluster.connected?).to eq(false)
+            [
+              block_client.encrypter.mongocryptd_client,
+              block_client.encrypter.key_vault_client,
+              block_client.encrypter.metadata_client
+            ].each do |crypt_client|
+              expect(crypt_client.cluster.connected?).to eq(false)
+            end
+          end
         end
       end
 
@@ -2610,7 +2702,7 @@ describe Mongo::Client do
         new_local_client(['127.0.0.1:27017'],
           database: SpecConfig.instance.test_db,
           server_selection_timeout: 0.5,
-          socket_timeout: 0.1, connect_timeout: 0.1)
+          socket_timeout: 0.1, connect_timeout: 0.1, populator_io: false)
       end
       let(:new_client) do
         client.with(app_name: 'client_construction_spec').tap do |new_client|

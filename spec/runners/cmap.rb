@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'runners/cmap/verifier'
 
@@ -17,9 +17,6 @@ module Mongo
 
       # @return [ Array<Operation> ] spec_ops The spec operations.
       attr_reader :spec_ops
-
-      # @return [ Array<Operation> ] processed_ops The processed operations.
-      attr_reader :processed_ops
 
       # @return [ Error | nil ] error The expected error.
       attr_reader :expected_error
@@ -43,44 +40,50 @@ module Mongo
         @test = ::Utils.load_spec_yaml_file(test_path)
 
         @description = @test['description']
-        @pool_options = ::Utils.snakeize_hash(process_options(@test['poolOptions']))
+        @pool_options = process_options(@test['poolOptions'])
         @spec_ops = @test['operations'].map { |o| Operation.new(self, o) }
-        @processed_ops = []
         @expected_error = @test['error']
         @expected_events = @test['events']
         @ignore_events = @test['ignore'] || []
+        @fail_point_command = @test['failPoint']
+        @threads = Set.new
 
-        preprocess
+        process_run_on
       end
 
-      def setup(server, subscriber)
-        @subscriber = subscriber
-        @pool = server.pool
+      attr_reader :pool
 
-        # let pool populate
-        ([0.1, 0.15, 0.15] + [0.2] * 20).each do |t|
-          if @pool.size >= @pool.min_size
-            break
-          end
-          sleep t
-        end
+      def setup(server, client, subscriber)
+        @subscriber = subscriber
+        @client = client
+        # The driver always creates pools for known servers.
+        # There is a test which creates and destroys a pool and it only expects
+        # those two events, not the ready event.
+        # This situation cannot happen in normal driver operation, but to
+        # support this test, create the pool manually here.
+        @pool = Mongo::Server::ConnectionPool.new(server, server.options)
+        server.instance_variable_set(:@pool, @pool)
+
+        configure_fail_point
       end
 
       def run
         state = {}
 
         {}.tap do |result|
-          processed_ops.each do |op|
+          spec_ops.each do |op|
             err = op.run(pool, state)
 
             if err
               result['error'] = err
               break
+            elsif op.name == 'start'
+              @threads << state[op.target]
             end
           end
 
           result['error'] ||= nil
-          result['events'] = subscriber.published_events.reduce([]) do |events, event|
+          result['events'] = subscriber.published_events.each_with_object([]) do |event, events|
             next events unless event.is_a?(Mongo::Monitoring::Event::Cmap::Base)
 
             event = case event
@@ -141,13 +144,54 @@ module Mongo
                       {
                         'type' => 'ConnectionPoolCleared',
                         'address' => event.address,
+                        'interruptInUseConnections' => event.options[:interrupt_in_use_connections]
                       }
+                    when Mongo::Monitoring::Event::Cmap::PoolReady
+                      {
+                        'type' => 'ConnectionPoolReady',
+                        'address' => event.address,
+                      }
+                    else
+                      raise "Unhandled event: #{event}"
                     end
 
-            events << event unless @ignore_events.include?(event['type'])
-            events
+            events << event unless @ignore_events.include?(event.fetch('type'))
           end
         end
+      ensure
+        disable_fail_points
+        kill_remaining_threads
+      end
+
+      def disable_fail_points
+        if @fail_point_command
+          @client.command(
+            configureFailPoint: @fail_point_command['configureFailPoint'],
+            mode: 'off'
+          )
+        end
+      end
+
+      def kill_remaining_threads
+        @threads.each(&:kill)
+      end
+
+      def satisfied?
+        cc = ClusterConfig.instance
+        ok = true
+        if @min_server_version
+          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(@min_server_version)
+        end
+        if @max_server_version
+          ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(@max_server_version)
+        end
+        if @topologies
+          ok &&= @topologies.include?(cc.topology)
+        end
+        if @oses
+          ok &&= @oses.any? { |os| SpecConfig.instance.send("#{os.to_s}?")}
+        end
+        ok
       end
 
       private
@@ -177,7 +221,7 @@ module Mongo
       # This method only handles options used by spec tests at the time when
       # this method was written. Other options are silently dropped.
       def process_options(options)
-        (options || {}).reduce({}) do |opts, kv|
+        (options || {}).each_with_object({}) do |kv, opts|
           case kv.first
           when 'maxIdleTimeMS'
             opts[:max_idle_time] = kv.last / 1000.0
@@ -189,33 +233,67 @@ module Mongo
             opts[:wait_queue_size] = kv.last
           when 'waitQueueTimeoutMS'
             opts[:wait_queue_timeout] = kv.last / 1000.0
+          when 'backgroundThreadIntervalMS'
+            # The populator busy loops, this option doesn't apply to our driver.
+          when 'maxConnecting'
+            opts[:max_connecting] = kv.last
+          when 'appName'
+            opts[:app_name] = kv.last
           else
             raise "Unknown option #{kv.first}"
           end
-
-          opts
         end
       end
 
-      # Places operations run by the non-main thread in the `thread_ops` field of the corresponding
-      # `start` operation.
-      def preprocess
-        until spec_ops.empty?
-          processed_ops << spec_ops.shift
+      def process_run_on
+        if run_on = @test['runOn']
+          @min_server_version = run_on.detect do |doc|
+            doc.keys.first == 'minServerVersion'
+          end&.values&.first
+          @max_server_version = run_on.detect do |doc|
+            doc.keys.first == 'maxServerVersion'
+          end&.values&.first
 
-          if processed_ops.last.name == "start"
-            spec_ops.delete_if do |op|
-              if op.thread == processed_ops.last.target
-                processed_ops.last.thread_ops << op
+          @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }
+            (topologies['topology'] || {}).map do |topology|
+              {
+                'replicaset' => :replica_set,
+                'single' => :single,
+                'sharded' => :sharded,
+                'sharded-replicaset' => :sharded,
+                'load-balanced' => :load_balanced,
+              }[topology].tap do |v|
+                unless v
+                  raise "Unknown topology #{topology}"
+                end
+              end
+            end
+          end
+
+          @oses = if oses = run_on.detect { |doc| doc.keys.first == 'requireOs' }
+            (oses['requireOs'] || {}).map do |os|
+              {
+                'macos' => :macos,
+                'linux' => :linux,
+                'windows' => :windows,
+              }[os].tap do |v|
+                unless v
+                  raise "Unknown os #{os}"
+                end
               end
             end
           end
         end
       end
+
+      def configure_fail_point
+        @client.database.command(@fail_point_command) if @fail_point_command
+      end
     end
 
     # Represents an operation in the spec. Operations are sequential.
     class Operation
+      include RSpec::Mocks::ExampleMethods
 
       # @return [ String ] command The name of the operation to run.
       attr_reader :name
@@ -227,14 +305,15 @@ module Mongo
       # @return [ String | nil ] target The name of the started thread.
       attr_reader :target
 
-      # @return [ Array<Operation> ] thread_ops The operations to run on the thread.
-      attr_reader :thread_ops
-
       # @return [ Integer | nil ] ms The number of milliseconds to sleep.
       attr_reader :ms
 
       # @return [ String | nil ] label The label for the returned connection.
       attr_reader :label
+
+      # @return [ true | false ] interrupt_in_use_connections Whether or not
+      #   all connections should be closed on pool clear.
+      attr_reader :interrupt_in_use_connections
 
       # @return [ String | nil ] The binding for the connection which should run the operation.
       attr_reader :connection
@@ -250,21 +329,24 @@ module Mongo
         @spec = spec
         @name = operation['name']
         @thread = operation['thread']
-        @thread_ops = []
         @target = operation['target']
         @ms = operation['ms']
         @label = operation['label']
         @connection = operation['connection']
         @event = operation['event']
         @count = operation['count']
+        @interrupt_in_use_connections = !!operation['interruptInUseConnections']
       end
 
       def run(pool, state, main_thread = true)
-        @pool = pool
+        return run_on_thread(state) if thread && main_thread
 
+        @pool = pool
         case name
         when 'start'
           run_start_op(state)
+        when 'ready'
+          run_ready_op(state)
         when 'wait'
           run_wait_op(state)
         when 'waitForThread'
@@ -306,10 +388,30 @@ module Mongo
       private
 
       def run_start_op(state)
-        state[target] = Thread.start do
-          Thread.current[:name] = @target
-          thread_ops.each { |op| op.run(pool, state, false) }
+        thread_context = ThreadContext.new
+        thread = Thread.start do
+          loop do
+            begin
+              op = thread_context.operations.pop(true)
+              op.run(pool, state, false)
+            rescue ThreadError
+              # Queue is empty
+            end
+            if thread_context.stop?
+              break
+            else
+              sleep 0.1
+            end
+          end
         end
+        class << thread
+          attr_accessor :context
+        end
+        thread.context = thread_context
+        state[target] = thread
+
+        # Allow the thread to begin running.
+        sleep 0.1
 
         # Since we expect exceptions to occur in some cases, we disable the printing of error
         # messages from the thread if the Ruby version supports it.
@@ -323,13 +425,19 @@ module Mongo
       end
 
       def run_wait_for_thread_op(state)
-        state[target].join
+        if thread = state[target]
+          thread.context.signal_stop
+          thread.join
+        else
+          raise "Expected thread for '#{thread}' but none exists."
+        end
+        nil
       end
 
       def run_wait_for_event_op(state)
         subscriber = @spec.subscriber
         looped = 0
-        deadline = Time.now + 3
+        deadline = Utils.monotonic_time + 3
         loop do
           actual_events = @spec.subscriber.published_events.select do |e|
             e.class.name.sub(/.*::/, '').sub(/^ConnectionPool/, 'Pool') == @event.sub(/^ConnectionPool/, 'Pool')
@@ -340,7 +448,7 @@ module Mongo
           if looped == 1
             puts("Waiting for #{@count} #{@event} events (have #{actual_events.length}): #{@spec.description}")
           end
-          if Time.now > deadline
+          if Utils.monotonic_time > deadline
             raise "Did not receive #{@count} #{@event} events in time (have #{actual_events.length}): #{@spec.description}"
           end
           looped += 1
@@ -362,12 +470,47 @@ module Mongo
       end
 
       def run_clear_op(state)
-        pool.clear(lazy: true)
+        RSpec::Mocks.with_temporary_scope do
+          allow(pool.server).to receive(:unknown?).and_return(true)
+
+          pool.clear(lazy: true, interrupt_in_use_connections: interrupt_in_use_connections)
+        end
       end
 
       def run_close_op(state)
         pool.close
       end
+
+      def run_ready_op(state)
+        pool.ready
+      end
+
+      def run_on_thread(state)
+        if thd = state[thread]
+          thd.context.operations << self
+          # Sleep to allow the other thread to execute the new command.
+          sleep 0.1
+        else
+          raise "Expected thread for '#{thread}' but none exists."
+        end
+        nil
+      end
+    end
+
+    class ThreadContext
+      def initialize
+        @operations = Queue.new
+      end
+
+      def stop?
+        !!@stop
+      end
+
+      def signal_stop
+        @stop = true
+      end
+
+      attr_reader :operations
     end
   end
 end

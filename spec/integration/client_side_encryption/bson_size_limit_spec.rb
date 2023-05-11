@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -33,7 +33,7 @@ describe 'Client-Side Encryption' do
             kms_providers: {
               local: { key: local_master_key },
             },
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },
@@ -52,7 +52,7 @@ describe 'Client-Side Encryption' do
         }
       ].create
 
-      key_vault_collection = client.use('admin')['datakeys', write_concern: { w: :majority }]
+      key_vault_collection = client.use('keyvault')['datakeys', write_concern: { w: :majority }]
 
       key_vault_collection.drop
       key_vault_collection.insert_one(

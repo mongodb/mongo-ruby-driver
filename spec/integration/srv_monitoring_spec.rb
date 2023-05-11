@@ -1,10 +1,11 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
 describe 'SRV Monitoring' do
   clean_slate_for_all
+  require_external_connectivity
 
   context 'with SRV lookups mocked at Resolver' do
     let(:srv_result) do
@@ -133,6 +134,7 @@ describe 'SRV Monitoring' do
             nameserver_port: [['127.0.0.1', 5300], ['127.0.0.1', 5300]],
           },
           logger: logger,
+          populator_io: false,
         ),
       )
     end

@@ -27,6 +27,7 @@ MRSS_ROOT=`dirname "$0"`/../spec/shared
 . $MRSS_ROOT/shlib/distro.sh
 . $MRSS_ROOT/shlib/set_env.sh
 . $MRSS_ROOT/shlib/server.sh
+. $MRSS_ROOT/shlib/config.sh
 . `dirname "$0"`/functions.sh
 . `dirname "$0"`/functions-aws.sh
 . `dirname "$0"`/functions-config.sh
@@ -37,31 +38,13 @@ show_local_instructions
 
 set_home
 set_env_vars
+set_env_python
 set_env_ruby
-
-if test "$DOCKER_PRELOAD" != 1; then
-  if test -n "$DOCKER"; then
-    # If we are running in Docker and not preloading, we need to fetch the
-    # Python binary.
-    curl -fL --retry 3 https://github.com/p-mongodb/deps/raw/main/"$arch"-python37.tar.xz | \
-      tar xfJ - -C /opt
-  fi
-  
-  if test -d /opt/python/3.7/bin; then
-    # Most Evergreen configurations.
-    export PATH=/opt/python/3.7/bin:$PATH
-  elif test -d /opt/python37/bin; then
-    # Configurations that use Docker in Evergreen - these don't preload.
-    export PATH=/opt/python37/bin:$PATH
-  fi
-  
-  python3 -V
-fi
 
 prepare_server $arch
 
 if test "$DOCKER_PRELOAD" != 1; then
-  install_mlaunch_virtualenv
+  install_mlaunch_venv
 fi
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
@@ -96,6 +79,11 @@ if test "$TOPOLOGY" = sharded-cluster; then
   else
     hosts=localhost:27017,localhost:27018
   fi
+elif test "$TOPOLOGY" = replica-set; then
+  # To set FCV we use mongo shell, it needs to be placed in replica set topology
+  # or it can try to send the commands to secondaries.
+  hosts=localhost:27017,localhost:27018
+  uri_options="$uri_options&replicaSet=test-rs"
 else
   hosts=localhost:27017
 fi
@@ -166,32 +154,59 @@ elif test "$AUTH" = aws-ecs; then
   fi
 
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+elif test "$AUTH" = aws-web-identity; then
+  clear_instance_profile
+
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi
 
 if test -n "$FLE"; then
+  # Downloading crypt shared lib
+  if [ -z "$MONGO_CRYPT_SHARED_DOWNLOAD_URL" ]; then
+    crypt_shared_version=${CRYPT_SHARED_VERSION:-$("${BINDIR}"/mongod --version | grep -oP 'db version v\K.*')}
+    python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out $(pwd)/csfle_lib  --target $(host_distro) || true
+    if test -f $(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+    then
+      export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+    else
+      echo 'Could not find crypt_shared library'
+    fi
+  else
+    echo "Downloading crypt_shared package from $MONGO_CRYPT_SHARED_DOWNLOAD_URL"
+    mkdir -p $(pwd)/csfle_lib
+    cd $(pwd)/csfle_lib
+    curl --retry 3 -fL $MONGO_CRYPT_SHARED_DOWNLOAD_URL | tar zxf -
+    export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/lib/mongo_crypt_v1.so
+    cd -
+  fi
+
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
   if test "$DOCKER_PRELOAD" != 1; then
     # We already have a virtualenv activated for mlaunch,
     # install kms dependencies into it.
     #. .evergreen/csfle/activate_venv.sh
-    
+
     # Adjusted package versions:
     # cryptography 3.4 requires rust, see
     # https://github.com/pyca/cryptography/issues/5771.
     #pip install boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
-    pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0
+    pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0 'sqlalchemy<2.0.0'
   fi
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 7999 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/expired.pem --port 8000 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/wrong-host.pem --port 8001 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
   python3 -u .evergreen/csfle/kms_kmip_server.py &
-  
+  python3 -u .evergreen/csfle/fake_azure.py &
+
+  # Obtain temporary AWS credentials
+  PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
+
   if test "$FLE" = helper; then
-    gem install libmongocrypt-helper --pre
+    echo "Using helper gem"
   elif test "$FLE" = path; then
     if false; then
       # We would ideally like to use the actual libmongocrypt binary here,
@@ -206,7 +221,7 @@ if test -n "$FLE"; then
     else
       # So, install the helper for the binary.
       gem install libmongocrypt-helper --pre
-      
+
       # https://stackoverflow.com/questions/19072070/how-to-find-where-gem-files-are-installed
       path=$(find `gem env |grep INSTALLATION |awk -F: '{print $2}'` -name libmongocrypt.so |head -1 || true)
       if test -z "$path"; then
@@ -215,10 +230,11 @@ if test -n "$FLE"; then
       fi
       cp $path .
       export LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt.so
-      
+
       gem uni libmongocrypt-helper
     fi
     test -f "$LIBMONGOCRYPT_PATH"
+    ldd "$LIBMONGOCRYPT_PATH"
   else
     echo "Unknown FLE value: $FLE" 1>&2
     exit 1
@@ -240,6 +256,7 @@ if test -n "$FLE"; then
    wait_for_kms_server 8001
    wait_for_kms_server 8002
    wait_for_kms_server 5698
+   wait_for_kms_server 8080
    echo "Waiting for mock KMS servers to start... done."
 fi
 

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -297,11 +297,6 @@ module Mongo
       # @return [ Features ] features The features for the server.
       def features
         @features
-      end
-
-      # @return [ nil | Object ] The service id, if any.
-      def service_id
-        config['serviceId']
       end
 
       # @return [ Float ] The moving average time the hello call took to complete.
@@ -844,6 +839,8 @@ module Mongo
         config['connectionId']
       end
 
+      # @return [ nil | Object ] The service id, if any.
+      #
       # @api experimental
       def service_id
         config['serviceId']

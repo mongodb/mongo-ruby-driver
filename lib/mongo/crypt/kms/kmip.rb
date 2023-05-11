@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -15,96 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Mongo
-  module Crypt
-    module KMS
-      module KMIP
-        # KMIP KMS Credentials object contains credentials for a
-        # remote KMIP KMS provider.
-        #
-        # @api private
-        class Credentials
-          include KMS::Validations
-
-          # @return [ String ] KMIP KMS endpoint with optional port.
-          attr_reader :endpoint
-
-          FORMAT_HINT = "KMIP KMS provider options must be in the format: " +
-                        "{ endpoint: 'ENDPOINT' }"
-
-          # Creates a KMIP KMS credentials object form a parameters hash.
-          #
-          # @param [ Hash ] opts A hash that contains credentials for
-          #   KMIP KMS provider.
-          # @option opts [ String ] :endpoint KMIP endpoint.
-          #
-          # @raise [ ArgumentError ] If required options are missing or incorrectly
-          #   formatted.
-          def initialize(opts)
-            @endpoint = validate_param(:endpoint, opts, FORMAT_HINT)
-          end
-
-          # Convert credentials object to a BSON document in libmongocrypt format.
-          #
-          # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
-          def to_document
-            BSON::Document.new({
-              endpoint: endpoint,
-            })
-          end
-        end
-
-        # KMIP KMS master key document object contains KMS master key parameters.
-        #
-        # @api private
-        class MasterKeyDocument
-          include KMS::Validations
-
-          # @return [ String | nil ] The KMIP Unique Identifier to a 96 byte
-          #   KMIP Secret Data managed object.
-          attr_reader :key_id
-
-          # @return [ String | nil ] KMIP KMS endpoint with optional port.
-          attr_reader :endpoint
-
-          FORMAT_HINT = "KMIP KMS key document must be in the format: " +
-                        "{ key_id: 'KEY-ID', endpoint: 'ENDPOINT' }"
-
-          # Creates a master key document object form a parameters hash.
-          #
-          # @param [ Hash ] opts A hash that contains master key options for
-          #   KMIP KMS provider
-          # @option opts [ String ] :key_id KMIP Unique Identifier to
-          #   a 96 byte KMIP Secret Data managed object, optional. If key_id
-          #   is omitted, the driver creates a random 96 byte identifier.
-          # @option opts [ String ] :endpoint KMIP endpoint, optional.
-          #
-          # @raise [ ArgumentError ] If required options are missing or incorrectly
-          #   formatted.
-          def initialize(opts)
-            @key_id = validate_param(
-              :key_id, opts, FORMAT_HINT, required: false
-            ) || SecureRandom.alphanumeric(96)
-            @endpoint = validate_param(
-              :endpoint, opts, FORMAT_HINT, required: false
-            )
-          end
-
-          # Convert master key document object to a BSON document in libmongocrypt format.
-          #
-          # @return [ BSON::Document ] KMIP KMS credentials in libmongocrypt format.
-          def to_document
-            BSON::Document.new({
-              provider: 'kmip',
-              keyId: key_id
-            }).tap do |bson|
-              unless endpoint.nil?
-                bson.update({ endpoint: endpoint })
-              end
-            end
-          end
-        end
-      end
-    end
-  end
-end
+require 'mongo/crypt/kms/kmip/credentials'
+require 'mongo/crypt/kms/kmip/master_document'

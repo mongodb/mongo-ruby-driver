@@ -7,6 +7,7 @@ set -ex
 . `dirname "$0"`/functions.sh
 
 set_env_vars
+set_env_python
 set_env_ruby
 
 bundle_install
@@ -20,7 +21,7 @@ do
   # ${!foo} syntax is bash specific:
   # https://stackoverflow.com/questions/14049057/bash-expand-variable-in-a-variable
   export ATLAS_URI="${!uri}"
-  
+
   if test -z "$ATLAS_URI"; then
     echo "The \$$uri environment variable was not set" 1>&2
     test_status=1

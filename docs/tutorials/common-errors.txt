@@ -91,8 +91,10 @@ This error was last reported on Ruby Driver version 2.5.1, so updating the drive
 can potentially solve this issue. A user has reported that they solved this issue
 as follows:
 
+.. blockquote::
+
   DNS servers on EC2 are generated in /etc/resolv.conf by default. Following
-  the answer `here <https://askubuntu.com/questions/157154/how-do-i-include-lines-in-resolv-conf-that-wont-get-lost-on-reboot?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa>`_
+  the `answer <https://askubuntu.com/questions/157154/how-do-i-include-lines-in-resolv-conf-that-wont-get-lost-on-reboot?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa>`_
   and setting the nameservers to Google NS I was able to fix this issue.
 
 You can find more information about this issue here:
@@ -109,12 +111,12 @@ Some users reported getting the following error:
   Mongo::Auth::Unauthorized: User ... is not authorized to access ...
 
 After upgrading to Ruby Driver version 2.5+, the driver was changed to use
-the scram authorization mechanism by default. This error might be happen if the
+the scram authorization mechanism by default. This error might happen if the
 authorization mechanism your user was created with does not match the
 authorization mechanism used by the driver. You can specify the preferred
 authorization mechanism using the ``auth_mech`` option in your ``mongoid.yml``
 file.
 
 See more on this issue here:
-`RUBY-1281 <https://jira.mongodb.org/browse/RUBY-1684>`_.
+`RUBY-1684 <https://jira.mongodb.org/browse/RUBY-1684>`_.
 

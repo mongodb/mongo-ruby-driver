@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 ## Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -118,10 +118,16 @@ module Mongo
       # information stored in this status
       #
       # Does nothing if self.ok? is true
-      def raise_crypt_error
+      #
+      # @param kms [ true | false ] Whether the operation was against the KMS.
+      #
+      # @note If kms parameter is false, the error may still have come from a
+      #   KMS. The kms parameter simply forces all errors to be treated as
+      #   KMS errors.
+      def raise_crypt_error(kms: false)
         return if ok?
 
-        if label == :error_kms
+        if kms || label == :error_kms
           error = Error::KmsError.new(message, code: code)
         else
           error = Error::CryptError.new(message, code: code)

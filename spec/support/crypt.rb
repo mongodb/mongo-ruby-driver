@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2009-2020 MongoDB Inc.
 #
@@ -16,15 +16,19 @@
 # limitations under the License.
 
 module Crypt
+  LOCAL_MASTER_KEY_B64 = 'Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3' +
+  'YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk'.freeze
+
+  LOCAL_MASTER_KEY = Base64.decode64(LOCAL_MASTER_KEY_B64)
+
   # For all FLE-related tests
   shared_context 'define shared FLE helpers' do
     # 96-byte binary string, base64-encoded local master key
     let(:local_master_key_b64) do
-      "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3" +
-        "YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk"
+      Crypt::LOCAL_MASTER_KEY_B64
     end
 
-    let(:local_master_key) { Base64.decode64(local_master_key_b64) }
+    let(:local_master_key) { Crypt::LOCAL_MASTER_KEY }
 
     # Data key id as a binary string
     let(:key_id) { data_key['_id'] }
@@ -77,7 +81,7 @@ module Crypt
     end
 
     # Key vault database and collection names
-    let(:key_vault_db) { 'admin' }
+    let(:key_vault_db) { 'keyvault' }
     let(:key_vault_coll) { 'datakeys' }
     let(:key_vault_namespace) { "#{key_vault_db}.#{key_vault_coll}" }
 
@@ -109,6 +113,23 @@ module Crypt
         ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
       }
     end
+
+    let(:encrypted_fields) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/encrypted_fields/encryptedFields.json'))
+    end
+
+    %w[DecimalNoPrecision DecimalPrecision Date DoubleNoPrecision DoublePrecision Int Long].each do |type|
+      let("range_encrypted_fields_#{type.downcase}".to_sym) do
+        BSON::ExtJSON.parse(
+          File.read("spec/support/crypt/encrypted_fields/range-encryptedFields-#{type}.json"),
+          mode: :bson
+        )
+      end
+    end
+
+    let(:key1_document) do
+      BSON::ExtJSON.parse(File.read('spec/support/crypt/keys/key1-document.json'))
+    end
   end
 
   # For tests that require local KMS to be configured
@@ -120,9 +141,14 @@ module Crypt
       BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_local.json'))
     end
 
-    let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local.json'))
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_local.json'
     end
+
+    let(:schema_map) do
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
+    end
+
     let(:data_key_options) { {} }
 
     let(:encrypted_ssn) do
@@ -134,8 +160,12 @@ module Crypt
   shared_context 'with local kms_providers and key alt names' do
     include_context 'with local kms_providers'
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_local_key_alt_names.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_local_key_alt_names.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
   end
 
@@ -166,8 +196,12 @@ module Crypt
       BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_aws.json'))
     end
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_aws.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
 
     let(:data_key_options) do
@@ -194,8 +228,12 @@ module Crypt
   shared_context 'with AWS kms_providers and key alt names' do
     include_context 'with AWS kms_providers'
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_aws_key_alt_names.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
   end
 
@@ -225,8 +263,12 @@ module Crypt
       BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_azure.json'))
     end
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_azure.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_azure.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
 
     let(:data_key_options) do
@@ -246,8 +288,12 @@ module Crypt
   shared_context 'with Azure kms_providers and key alt names' do
     include_context 'with Azure kms_providers'
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_azure_key_alt_names.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_azure_key_alt_names.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
   end
 
@@ -264,7 +310,7 @@ module Crypt
         'MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY, ' +
         'MONGO_RUBY_DRIVER_GCP_PROJECT_ID, MONGO_RUBY_DRIVER_GCP_LOCATION, ' +
         'MONGO_RUBY_DRIVER_GCP_KEY_RING, MONGO_RUBY_DRIVER_GCP_KEY_NAME ' +
-        'environment variables to be set information from Azure.'
+        'environment variables to be set information from GCP.'
 
         if SpecConfig.instance.fle?
           fail(reason)
@@ -281,8 +327,12 @@ module Crypt
       BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_gcp.json'))
     end
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_gcp.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_gcp.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
 
     let(:data_key_options) do
@@ -304,8 +354,12 @@ module Crypt
   shared_context 'with GCP kms_providers and key alt names' do
     include_context 'with GCP kms_providers'
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_gcp_key_alt_names.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_gcp_key_alt_names.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
   end
 
@@ -323,8 +377,12 @@ module Crypt
       BSON::ExtJSON.parse(File.read('spec/support/crypt/data_keys/key_document_kmip.json'))
     end
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_kmip.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_kmip.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
 
     let(:data_key_options) do
@@ -343,8 +401,12 @@ module Crypt
   shared_context 'with KMIP kms_providers and key alt names' do
     include_context 'with KMIP kms_providers'
 
+    let(:schema_map_file_path) do
+      'spec/support/crypt/schema_maps/schema_map_kmip_key_alt_names.json'
+    end
+
     let(:schema_map) do
-      BSON::ExtJSON.parse(File.read('spec/support/crypt/schema_maps/schema_map_kmip_key_alt_names.json'))
+      BSON::ExtJSON.parse(File.read(schema_map_file_path))
     end
   end
 end

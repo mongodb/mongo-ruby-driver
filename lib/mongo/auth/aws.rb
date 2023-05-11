@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -25,16 +25,16 @@ module Mongo
       # @return [ BSON::Document ] The document of the authentication response.
       def login
         converse_2_step(connection, conversation)
+      rescue StandardError
+        CredentialsCache.instance.clear
+        raise
       end
-
-      # The AWS credential set.
-      #
-      # @api private
-      Credentials = Struct.new(:access_key_id, :secret_access_key, :session_token)
     end
   end
 end
 
 require 'mongo/auth/aws/conversation'
+require 'mongo/auth/aws/credentials'
+require 'mongo/auth/aws/credentials_cache'
 require 'mongo/auth/aws/credentials_retriever'
 require 'mongo/auth/aws/request'

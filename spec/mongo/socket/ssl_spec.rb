@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -376,7 +376,7 @@ describe Mongo::Socket::SSL do
 
           let(:ssl_options) do
             super().merge(
-              :ssl_cert => COMMAND_MONITORING_TESTS.first,
+              :ssl_cert => CRUD_TESTS.first,
               :ssl_key => nil,
             )
           end
@@ -394,7 +394,7 @@ describe Mongo::Socket::SSL do
           let(:ssl_options) do
             super().merge(
               :ssl_cert => nil,
-              :ssl_key => COMMAND_MONITORING_TESTS.first,
+              :ssl_key => CRUD_TESTS.first,
             )
           end
 
@@ -412,7 +412,7 @@ describe Mongo::Socket::SSL do
 
           let(:ssl_options) do
             super().merge(
-              :ssl_cert => COMMAND_MONITORING_TESTS.first,
+              :ssl_cert => CRUD_TESTS.first,
               :ssl_key => nil,
             )
           end

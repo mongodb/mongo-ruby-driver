@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'support/aws_utils'
@@ -18,6 +18,10 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
   context 'when user is not given' do
     let(:user) do
       Mongo::Auth::User.new(auth_mech: :aws)
+    end
+
+    before do
+      Mongo::Auth::Aws::CredentialsCache.instance.clear
     end
 
     shared_examples_for 'retrieves the credentials' do
@@ -70,7 +74,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
         it 'raises an error' do
           lambda do
             credentials
-          end.should raise_error(Mongo::Auth::InvalidConfiguration, /Could not locate AWS credentials/)
+          end.should raise_error(Mongo::Auth::Aws::CredentialsNotFound, /Could not locate AWS credentials/)
         end
       end
 
@@ -101,6 +105,32 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
       end
 
       it_behaves_like 'retrieves the credentials'
+    end
+
+    context 'web identity' do
+      before(:all) do
+        unless ENV['AUTH'] == 'aws-web-identity'
+          skip "Set AUTH=aws-web-identity in environment to run Wed identity tests"
+        end
+      end
+
+      context 'with AWS_ROLE_SESSION_NAME' do
+        before do
+          stub_const('ENV', ENV.to_hash.merge('AWS_ROLE_SESSION_NAME' => 'mongo-ruby-driver-test-app'))
+        end
+
+        it_behaves_like 'retrieves the credentials'
+      end
+
+      context 'without AWS_ROLE_SESSION_NAME' do
+        before do
+          env = ENV.to_hash.dup
+          env.delete('AWS_ROLE_SESSION_NAME')
+          stub_const('ENV', env)
+        end
+
+        it_behaves_like 'retrieves the credentials'
+      end
     end
   end
 end

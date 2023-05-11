@@ -1,5 +1,5 @@
 runOn:
-  - maxServerVersion: "4.0"
+  - maxServerVersion: "4.0.99"
 database_name: &database_name "default"
 collection_name: &collection_name "default"
 
@@ -12,6 +12,8 @@ tests:
       autoEncryptOpts:
         kmsProviders:
           aws: {} # Credentials filled in from environment.
+        extraOptions:
+          mongocryptdBypassSpawn: true # mongocryptd probably won't be on the path
     operations:
       - name: insertOne
         arguments:

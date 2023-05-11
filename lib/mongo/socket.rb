@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -334,12 +334,36 @@ module Mongo
             raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
           end
         end
+        pipe = options[:pipe]
         if exc.is_a?(IO::WaitReadable)
-          select_args = [[@socket], nil, [@socket], select_timeout]
+          if pipe
+            select_args = [[@socket, pipe], nil, [@socket, pipe], select_timeout]
+          else
+            select_args = [[@socket], nil, [@socket], select_timeout]
+          end
         else
           select_args = [nil, [@socket], [@socket], select_timeout]
         end
+
         rv = Kernel.select(*select_args)
+        if Lint.enabled?
+          if pipe && rv&.include?(pipe)
+            # If the return value of select is the read end of the pipe, and
+            # an IOError is not raised, then that means the socket is still
+            # open. Select is interrupted be closing the write end of the
+            # pipe, which either returns the pipe if the socket is open, or
+            # raises an IOError if it isn't. Select is interrupted after all
+            # of the pending and checked out connections have been interrupted
+            # and closed, and this only happens once the pool is cleared with
+            # interrupt_in_use connections flag. This means that in order for
+            # the socket to still be open when the select is interrupted, and
+            # that socket is being read from, that means after clear was
+            # called, a connection from the previous generation was checked
+            # out of the pool, for reading on its socket. This should be impossible.
+            raise Mongo::LintError, "Select interrupted for live socket. This should be impossible."
+          end
+        end
+
         if BSON::Environment.jruby?
           # Ignore the return value of Kernel.select.
           # On JRuby, select appears to return nil prior to timeout expiration
@@ -414,11 +438,14 @@ module Mongo
 
     DEFAULT_TCP_KEEPIDLE = 120
 
+    DEFAULT_TCP_USER_TIMEOUT = 210
+
     def set_keepalive_opts(sock)
       sock.setsockopt(SOL_SOCKET, SO_KEEPALIVE, true)
       set_option(sock, :TCP_KEEPINTVL, DEFAULT_TCP_KEEPINTVL)
       set_option(sock, :TCP_KEEPCNT, DEFAULT_TCP_KEEPCNT)
       set_option(sock, :TCP_KEEPIDLE, DEFAULT_TCP_KEEPIDLE)
+      set_option(sock, :TCP_USER_TIMEOUT, DEFAULT_TCP_USER_TIMEOUT)
     rescue
       # JRuby 9.2.13.0 and lower do not define TCP_KEEPINTVL etc. constants.
       # JRuby 9.2.14.0 defines the constants but does not allow to get or

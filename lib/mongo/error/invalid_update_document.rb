@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -25,17 +25,37 @@ module Mongo
 
       # The error message.
       #
-      # @since 2.0.0
+      # @deprecated
       MESSAGE = 'Invalid update document provided'.freeze
+
+      # Construct the error message.
+      #
+      # @param [ String ] key The invalid key.
+      #
+      # @return [ String ] The error message.
+      #
+      # @api private
+      def self.message(key)
+        message = "Invalid update document provided. Updates documents must only "
+        message += "contain only atomic modifiers. The \"#{key}\" key is invalid."
+        message
+      end
+
+      # Send and cache the warning.
+      #
+      # @api private
+      def self.warn(logger, key)
+        @warned ||= begin
+          logger.warn(message(key))
+          true
+        end
+      end
 
       # Instantiate the new exception.
       #
-      # @example Instantiate the exception.
-      #   Mongo::Error::InvalidUpdateDocument.new
-      #
-      # @since 2.0.0
-      def initialize
-        super(MESSAGE)
+      # @param [ String ] :key The invalid key.
+      def initialize(key: nil)
+        super(self.class.message(key))
       end
     end
   end

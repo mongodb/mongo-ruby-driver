@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -17,6 +17,10 @@ describe 'Map-reduce operations' do
 
   before do
     collection.insert_one(test: 1)
+
+    # Ensure all mongoses are aware of the collection.
+    maybe_run_mongos_distincts(collection.database.name, collection.name)
+
     client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
   end
 

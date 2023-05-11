@@ -294,6 +294,9 @@ Please refer to the `Rails on Rack guide
 <https://guides.rubyonrails.org/rails_on_rack.html#configuring-middleware-stack>`_
 for more information about using Rack middleware in Rails applications.
 
+
+.. _query-cache-active-job-middleware:
+
 Active Job Middleware
 ---------------------
 

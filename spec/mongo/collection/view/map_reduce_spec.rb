@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -40,6 +40,10 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   let(:view) do
+    authorized_client.cluster.servers.map do |server|
+      server.pool.ready
+    end
+
     Mongo::Collection::View.new(authorized_collection, selector, view_options)
   end
 
@@ -593,6 +597,7 @@ describe Mongo::Collection::View::MapReduce do
       context 'when the server is not valid for writing' do
         clean_slate
         require_warning_clean
+        require_no_linting
 
         before do
           stop_monitoring(authorized_client)
@@ -615,6 +620,10 @@ describe Mongo::Collection::View::MapReduce do
           end
 
           let(:view) do
+            authorized_client.cluster.servers.map do |server|
+              server.pool.ready
+            end
+
             Mongo::Collection::View.new(collection, selector, view_options)
           end
 
@@ -674,6 +683,7 @@ describe Mongo::Collection::View::MapReduce do
       context 'when the server is a valid for writing' do
         clean_slate
         require_warning_clean
+        require_no_linting
 
         before do
           stop_monitoring(authorized_client)

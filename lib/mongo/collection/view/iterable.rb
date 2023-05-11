@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -170,6 +170,7 @@ module Mongo
             max_time_ms: options[:max_time_ms],
             max_value: options[:max_value],
             min_value: options[:min_value],
+            no_cursor_timeout: options[:no_cursor_timeout],
             return_key: options[:return_key],
             show_disk_loc: options[:show_disk_loc],
             comment: options[:comment],

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -12,7 +12,6 @@ require 'support/constraints'
 require 'support/authorization'
 require 'support/primary_socket'
 require 'support/cluster_tools'
-require 'rspec/retry'
 require 'support/monitoring_ext'
 
 RSpec.configure do |config|

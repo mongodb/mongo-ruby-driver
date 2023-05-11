@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 module Unified
 
@@ -23,9 +23,13 @@ module Unified
         if full_document_before_change = args.use('fullDocumentBeforeChange')
           opts[:full_document_before_change] = full_document_before_change
         end
+        if args.key?('showExpandedEvents')
+          opts[:show_expanded_events] = args.use!('showExpandedEvents')
+        end
         cs = object.watch(pipeline, **opts)
-        name = op.use!('saveResultAsEntity')
-        entities.set(:change_stream, name, cs)
+        if name = op.use('saveResultAsEntity')
+          entities.set(:change_stream, name, cs)
+        end
       end
     end
 
@@ -33,6 +37,16 @@ module Unified
       object_id = op.use!('object')
       object = entities.get(:change_stream, object_id)
       object.to_enum.next
+    end
+
+    def close(op)
+      object_id = op.use!('object')
+      # The Ruby driver unified spec runner does not currently implement
+      # find cursors as created by createFindCursor. This will be done
+      # as part of CSOT implementation. When this is done, the line(s) below
+      # should be changed to retrieve such cursor instances and close them.
+      object = entities.get(:csot_cursor, object_id)
+      object.close
     end
   end
 end

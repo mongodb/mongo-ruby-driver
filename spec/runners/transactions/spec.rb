@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -19,9 +19,9 @@ module Mongo
   module Transactions
 
     class Spec < Mongo::CRUD::Spec
-      def tests
+      def tests(expectations_bson_types: true)
         @tests.map do |test|
-          Mongo::Transactions::TransactionsTest.new(self, @data, test)
+          Mongo::Transactions::TransactionsTest.new(self, @data, test, expectations_bson_types: expectations_bson_types)
         end
       end
     end

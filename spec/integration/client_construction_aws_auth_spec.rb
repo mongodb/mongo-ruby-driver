@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -125,7 +125,7 @@ describe 'Client construction with AWS auth' do
         it 'does not connect' do
           lambda do
             client['foo'].insert_one(test: true)
-          end.should raise_error(Mongo::Auth::InvalidConfiguration, /Could not locate AWS credentials/)
+          end.should raise_error(Mongo::Auth::Aws::CredentialsNotFound, /Could not locate AWS credentials/)
         end
       end
 
@@ -163,7 +163,7 @@ describe 'Client construction with AWS auth' do
   end
 
   context 'credentials specified via instance/task metadata' do
-    require_auth 'aws-ec2', 'aws-ecs'
+    require_auth 'aws-ec2', 'aws-ecs', 'aws-web-identity'
 
     before(:all) do
       # No explicit credentials are expected in the tested configurations
@@ -187,6 +187,15 @@ describe 'Client construction with AWS auth' do
       it 'uses the expected user' do
         puts "Authenticated as #{authenticated_user_name}"
         authenticated_user_name.should =~ /^arn:aws:sts:.*assumed-role.*ecstaskexecutionrole/i
+      end
+    end
+
+    context 'when using web identity' do
+      require_auth 'aws-web-identity'
+
+      it 'uses the expected user' do
+        puts "Authenticated as #{authenticated_user_name}"
+        authenticated_user_name.should =~ /^arn:aws:sts:.*assumed-role.*webIdentityTestRole/i
       end
     end
   end

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/find/command'
 require 'mongo/operation/find/op_msg'
-require 'mongo/operation/find/legacy'
 require 'mongo/operation/find/result'
 require 'mongo/operation/find/builder'
 
@@ -31,7 +29,7 @@ module Mongo
     # @since 2.0.0
     class Find
       include Specifiable
-      include OpMsgOrFindCommand
+      include OpMsgExecutable
     end
   end
 end

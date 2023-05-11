@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "shared", "lib"))
 
@@ -10,8 +10,6 @@ SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/sdam/**/*.yml
 SDAM_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/sdam_monitoring/*.yml").sort
 SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/server_selection_rtt/*.yml").sort
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/crud/**/*.yml").sort
-CRUD2_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/crud_v2/**/*.yml").sort
-COMMAND_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/command_monitoring/**/*.yml").sort
 CONNECTION_STRING_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/connection_string/*.yml").sort
 URI_OPTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/uri_options/*.yml").sort
 GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/gridfs/*.yml").sort
@@ -34,7 +32,10 @@ else
   begin
     require 'byebug'
   rescue LoadError
-    require 'ruby-debug'
+    begin
+      require 'ruby-debug'
+    rescue LoadError
+    end
   end
 end
 
@@ -52,6 +53,8 @@ autoload :Benchmark, 'benchmark'
 autoload :IceNine, 'ice_nine'
 autoload :Timecop, 'timecop'
 autoload :ChildProcess, 'childprocess'
+
+require 'rspec/retry'
 
 if BSON::Environment.jruby?
   require 'concurrent-ruby'
@@ -80,6 +83,7 @@ require 'support/common_shortcuts'
 require 'support/client_registry'
 require 'support/client_registry_macros'
 require 'support/mongos_macros'
+require 'support/macros'
 require 'support/crypt'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
@@ -87,7 +91,7 @@ require 'support/background_thread_registry'
 require 'mrss/session_registry'
 require 'support/local_resource_registry'
 
-if SpecConfig.instance.mri?
+if SpecConfig.instance.mri? && !SpecConfig.instance.windows?
   require 'timeout_interrupt'
 else
   require 'timeout'
@@ -104,6 +108,7 @@ RSpec.configure do |config|
   config.extend(Mrss::LiteConstraints)
   config.include(ClientRegistryMacros)
   config.include(MongosMacros)
+  config.extend(Mongo::Macros)
 
   if SpecConfig.instance.ci?
     SdamFormatterIntegration.subscribe

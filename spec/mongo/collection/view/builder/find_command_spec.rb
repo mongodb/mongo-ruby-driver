@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # TODO convert, move or delete these tests as part of RUBY-2706.
 

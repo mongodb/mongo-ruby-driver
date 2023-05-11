@@ -1,0 +1,900 @@
+.. _client-side-encryption:
+
+**********************
+Client-Side Encryption
+**********************
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
+New in MongoDB 4.2, client-side encryption allows administrators and developers
+to encrypt specific fields in MongoDB documents before inserting them into the
+database.
+
+With client-side encryption, developers can encrypt fields client-side without
+any server-side configuration or directives. Client-side encryption supports
+workloads where applications must guarantee that unauthorized parties,
+including server administrators, cannot read the encrypted data.
+
+.. warning::
+
+  Enabling Client Side Encryption reduces the maximum write batch size and may
+  have a negative performance impact.
+
+Installation
+============
+
+Client-side encryption requires the installation of additional packages.
+
+libmongocrypt
+~~~~~~~~~~~~~
+
+Libmongocrypt is a C library used by the driver for client-side encryption.
+To use client-side encryption, you must install the libmongocrypt library
+on the machine running your Ruby program.
+
+The easiest way to install this library is to install `libmongocrypt-helper
+<https://rubygems.org/gems/libmongocrypt-helper>`_ as follows:
+
+.. code-block:: bash
+
+  gem install libmongocrypt-helper --pre
+
+The version number of libmongocrypt-helper is the version of included
+libmongocrypt followed by the release number, e.g. 1.3.2.r1.
+Because Ruby considers any letters in the version number to indicate a
+pre-release version, the ``--pre`` flag is needed.
+
+The driver will automatically load libmongocrypt-helper - no further
+configuration is needed.
+
+.. note::
+
+  libmongocrypt-helper currently only supports Linux operating systems.
+
+Alternatively you can download a pre-built binary distribution of libmongocrypt
+and manually place the required shared object on your computer, as follows:
+
+- Download a tarball of all libmongocrypt variations `here <https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz>`_.
+
+- Extract the file you downloaded. You will see a list of directories, each
+  corresponding to an operating system. Find the directory that matches your
+  operating system and open it.
+
+- Inside that folder, open the folder called "nocrypto." In either the
+  lib or lb64 folder, you will find the libmongocrypt.so or
+  libmongocrypt.dylib or libmongocrypt.dll file, depending on your OS.
+
+- Move that file to wherever you want to keep it on your machine. You may delete
+  the other files included in the tarball.
+
+To build the binary from source:
+
+- Follow the instructions in the README in the `libmongocrypt GitHub repo <https://github.com/mongodb/libmongocrypt>`_.
+
+Once you have the libmongocrypt binary on your machine, specify the path to the
+binary using the LIBMONGOCRYPT_PATH environment variable. It is recommended that
+you add this variable to your rc files. For example:
+
+.. code-block:: bash
+
+  export LIBMONGOCRYPT_PATH=/path/to/your/libmongocrypt.so
+
+.. note::
+
+  The binary referenced in this section can be a pre-release version of
+  libmongocrypt which is not recommended for production environments.
+
+Automatic Encryption Shared Library
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Automatic Encryption Shared Library is a dynamic library that enables your
+client application to perform automatic encryption. It is only required for
+automatic encryption, which is an enterprise-only feature.
+If you only intend to use explicit encryption, you may skip this step.
+The Automatic Encryption Shared Library provides the same functionality as
+mongocryptd (see below), but does not require you to spawn another process
+to perform automatic encryption.
+
+For installation instructions, see
+`the MongoDB manual <https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/shared-library/#download-the-automatic-encryption-shared-library>`_.
+
+When automatic encryption is enabled, libmongocrypt will look for the shared
+library in the system library path, or try to load the library from a particular
+place if ``:crypt_shared_lib_path`` option is provided when creating a client.
+If the library can be loaded, then the driver will not try to spawn mongocryptd daemon.
+The daemon will be still spawned if the shared library cannot be found.
+
+It is also possible to require using the shared library by passing
+``crypt_shared_lib_required: true`` option when creating a client. In this case,
+an error will be raised if the shared library cannot be loaded.
+
+.. note::
+  All ``Mongo::Client`` objects in the same process should use the same setting
+  ``:crypt_shared_lib_path``, as it is an error to load more that one crypt_shared dynamic library simultaneously in a single operating system process.
+
+mongocryptd
+~~~~~~~~~~~
+
+Mongocryptd is an alternative to the Automatic Encryption Shared Library.
+Mongocryptd is a daemon that tells the driver which fields to encrypt in a
+given operation. It is only required for automatic encryption, which is an
+enterprise-only feature. If you only intend to use explicit encryption, you may
+skip this step.
+
+Mongocryptd comes pre-packaged with enterprise builds of the MongoDB server
+(versions 4.2 and newer). For installation instructions, see the
+`MongoDB manual <https://mongodb.com/docs/manual/reference/security-client-side-encryption-appendix/#installation>`_.
+
+In order to configure mongocryptd (for example, which port it listens on or the
+path used to spawn the daemon), it is necessary to pass different options to the
+``Mongo::Client`` performing automatic encryption. See the :ref:`:extra_options <cse-extra-options>`
+section of this tutorial for more information.
+
+Automatic Encryption
+====================
+
+Automatic encryption is a feature that allows users to configure a
+``Mongo::Client`` instance to always encrypt specific document fields when
+performing database operations. Once the ``Mongo::Client`` is configured, it
+will automatically encrypt any field that requires encryption before writing
+it to the database, and it will automatically decrypt those fields when reading
+them.
+
+Client-side encryption implements envelope encryption, which is the practice of
+encrypting data with a data key, which is in turn encrypted using a master key.
+Thus, using client-side encryption with MongoDB involves three main steps:
+
+1. Create a master key
+2. Create a data key (and encrypt it using the master key)
+3. Encrypt data using the data key
+
+The example below demonstrates how to follow these steps with a local master key
+in order to perform automatic encryption.
+
+.. note::
+
+  Automatic encryption is an enterprise only feature that only applies to
+  operations on a collection. Automatic encryption is not supported for operations
+  on a database or view, and operations that are not bypassed will result in
+  error (see `Auto Encryption Allow-List <https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#libmongocrypt-auto-encryption-allow-list>`_
+  ). To bypass automatic encryption for all operations, set ``bypass_auto_encryption``
+  to true in ``auto_encryption_options``.
+
+.. note::
+
+  Automatic encryption requires the authenticated user to have the listCollections privilege action.
+
+.. note::
+
+  When using Automatic Encryption, and a ``Mongo::Client`` instance that is configured
+  with ``:auto_encryption_options`` has a limited connection pool size
+  (i.e a non-zero ``:max_pool_size``, which is the default setting), a separate
+  internal ``Mongo::Client`` instance is created if any of the following are true:
+
+  - ``auto_encryption_options[:key_vault_client]`` is not passed.
+  - ``auto_encryption_options[:bypass_automatic_encryption]`` is not passed or false.
+
+  If an internal ``Mongo::Client`` instance is created, it is configured with
+  the same options as the parent client except ``:min_pool_size`` is set to 0
+  and ``:auto_encryption_options`` is omitted.
+
+.. code-block:: ruby
+
+  require 'mongo'
+
+  #####################################
+  # Step 1: Create a local master key #
+  #####################################
+
+  # A local master key is a 96-byte binary blob.
+  local_master_key = SecureRandom.random_bytes(96)
+  # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..."
+
+  #############################
+  # Step 2: Create a data key #
+  #############################
+
+  kms_providers = {
+    local: {
+      key: local_master_key
+    }
+  }
+
+  # The key vault client is a Mongo::Client instance connected to the collection
+  # that will store your data keys.
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  # Use an instance of Mongo::ClientEncryption to create a new data key
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    key_vault_namespace: 'encryption.__keyVault',
+    kms_providers: kms_providers
+  )
+
+  data_key_id = client_encryption.create_data_key('local')
+  # => <BSON::Binary... type=ciphertext...>
+
+  #######################################################
+  # Step 3: Configure Mongo::Client for auto-encryption #
+  #######################################################
+
+  # Create a schema map, which tells the Mongo::Client which fields to encrypt
+  schema_map = {
+    'encryption_db.encryption_coll': {
+      properties: {
+        encrypted_field: {
+          encrypt: {
+            keyId: [data_key_id],
+            bsonType: "string",
+            algorithm: "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+          }
+        }
+      },
+      bsonType: "object"
+    }
+  }
+
+  # Configure the client for automatic encryption
+  client = Mongo::Client.new(
+    ['localhost:27017'],
+    auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      kms_providers: kms_providers,
+      schema_map: schema_map
+    },
+    database: 'encryption_db',
+  )
+
+  collection = client['encryption_coll']
+  collection.drop # Make sure there is no data in the collection
+
+  # The string "sensitive data" will be encrypted and stored in the database
+  # as ciphertext
+  collection.insert_one(encrypted_field: 'sensitive data')
+
+  # The data is decrypted before being returned to the user
+  collection.find(encrypted_field: 'sensitive data').first['encrypted_field']
+  # => "sensitive data"
+
+  # A client with no auto_encryption_options is unable to decrypt the data
+  client_no_encryption = Mongo::Client.new(
+    ['localhost:27017'],
+    database: 'encryption_db',
+  )
+  client_no_encryption['encryption_coll'].find.first['encrypted_field']
+  # => <BSON::Binary... type=ciphertext...>
+
+The example above demonstrates using automatic encryption with a local master key.
+For more information about using other key management services to create a
+master key and create data keys, see the following sections of this tutorial:
+
+- :ref:`Creating A Master Key <creating-a-master-key>`
+- :ref:`Creating A Data Key <creating-a-data-key>`
+
+Explicit Encryption
+===================
+
+Explicit encryption is a feature that allows users to encrypt and decrypt
+individual pieces of data such as strings, integers, or symbols. Explicit
+encryption is a community feature and does not require an enterprise build
+of the MongoDB server to use. To perform all explicit encryption and decryption
+operations, use an instance of the ClientEncryption class.
+
+Client-side encryption implements envelope encryption, which is the practice of
+encrypting data with a data key, which is in turn encrypted using a master key.
+Thus, using client-side encryption with MongoDB involves three main steps:
+
+1. Create a master key
+2. Create a data key (and encrypt it using the master key)
+3. Encrypt data using the data key
+
+The example below demonstrates how to follow these steps with a local master key
+in order to perform explicit encryption.
+
+.. code-block:: ruby
+
+  require 'mongo'
+
+  #####################################
+  # Step 1: Create a local master key #
+  #####################################
+
+  # A local master key is a 96-byte binary blob.
+  local_master_key = SecureRandom.random_bytes(96)
+  # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..."
+
+  #############################
+  # Step 2: Create a data key #
+  #############################
+
+  kms_providers = {
+    local: {
+      key: local_master_key
+    }
+  }
+
+  # The key vault client is a Mongo::Client instance connected to the collection
+  # that will store your data keys.
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  # Use an instance of Mongo::ClientEncryption to create a new data key
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    key_vault_namespace: 'encryption.__keyVault',
+    kms_providers: kms_providers
+  )
+
+  data_key_id = client_encryption.create_data_key('local')
+  # => <BSON::Binary... type=ciphertext...>
+
+  #####################################################
+  # Step 3: Encrypt a string with explicit encryption #
+  #####################################################
+
+  # The value to encrypt
+  value = 'sensitive data'
+
+  # Encrypt the value
+  encrypted_value = client_encryption.encrypt(
+    'sensitive data',
+    {
+      key_id: data_key_id,
+      algorithm: "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+    }
+  )
+
+  # Create the client you will use to read and write the data to MongoDB
+  client = Mongo::Client.new(
+    ['localhost:27017'],
+    database: 'encryption_db',
+  )
+  collection = client['encryption_coll']
+  collection.drop # Make sure there is no data in the collection
+
+  # Insert the encrypted value into the collection
+  collection.insert_one(encrypted_field: encrypted_value)
+
+  # Use the client to read the encrypted value from the database, then
+  # use the ClientEncryption object to decrypt it
+  find_result = collection.find(encrypted_field: encrypted_value).first['encrypted_field']
+  # => <BSON::Binary...> (the find result is encrypted)
+
+  unencrypted_result = client_encryption.decrypt(find_result)
+  # => "sensitive data"
+
+The example above demonstrates using explicit encryption with a local master key.
+For more information about using other key management services to create a
+master key and create data keys, see the following sections of this tutorial:
+
+- :ref:`Creating A Master Key <creating-a-master-key>`
+- :ref:`Creating A Data Key <creating-a-data-key>`
+
+.. _creating-a-master-key:
+
+Creating a Master Key
+=====================
+Both automatic encryption and explicit encryption require an encryption master key.
+This master key is used to encrypt data keys, which are in turn used to encrypt
+user data. The master key can be generated in one of two ways: by creating a
+local key, or by creating a key in a key management service. Currently
+Ruby driver supports AWS Key Management Service (KMS), Azure Key Vault, and
+Google Cloud Key Management (GCP KMS).
+
+.. _local-master-key:
+
+Local Master Key
+~~~~~~~~~~~~~~~~
+
+A local master key is a 96-byte binary string. It should be persisted
+on your machine as an environment variable or in a text file.
+
+.. warning::
+
+  Using a local master key is insecure and not recommended if you plan
+  to use client-side encryption in production.
+
+Run the following code to generate a local master key using Ruby:
+
+.. code-block:: ruby
+
+  local_master_key = SecureRandom.random_bytes(96)
+  # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..." (a binary blob)
+
+.. _remote-master-key:
+
+Remote Master Key
+~~~~~~~~~~~~~~~~~
+It is recommended that you use a remote Key Management Service to create and
+store your master key. To do so, follow steps of the
+`"Set up a Remote Master Key" <https://www.mongodb.com/docs/manual/core/csfle/tutorials/#set-up-a-remote-master-key>`_
+in the MongoDB Client-Side Encryption documentation.
+
+For more information about creating a master key, see the
+`Create a Master Key <https://www.mongodb.com/docs/manual/core/csfle/#a.-create-a-master-key>`_
+section of the MongoDB manual.
+
+.. _creating-a-data-key:
+
+Creating a Data Key
+===================
+
+Once you have created a master key, create a data key by calling the
+``#create_data_key`` method on an instance of the ``Mongo::ClientEncryption``
+class. This method generates a new data key and inserts it into the key vault
+collection, which is the MongoDB collection in which you choose to store your
+data keys. The ``#create_data_key`` method returns id of the newly-created
+data key in the form of a BSON::Binary object.
+
+Create a Data Key Using a Local Master Key
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have created a local master key, you may use it to generate a new data
+key with the following code snippet:
+
+.. warning::
+
+  Using a local master key is insecure and not recommended if you plan
+  to use client-side encryption in production.
+
+.. code-block:: ruby
+
+  # A Mongo::Client instance that will be used to connect to the key vault
+  # collection. Replace the server address with the address of the MongoDB
+  # server where you would like to store your key vault collection.
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    # Replace with the database and collection names for your key vault collection
+    key_vault_namespace: 'encryption.__keyVault',
+    kms_providers: {
+      local: {
+        key: local_master_key
+      }
+    }
+  )
+
+  data_key_id = client_encryption.create_data_key('local')
+  # => <BSON::Binary... type=ciphertext...>
+
+See the :ref:`Local Master Key <local-master-key>` section for more information
+about generating a new local master key.
+
+Create a Data Key Using a Remote Master Key
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have created an AWS KMS master key, note the access key ID and the secret access
+key of the IAM user that has permissions to use the key. Additionally, note
+the AWS region and the Amazon Resource Number (ARN) of your master key. You will
+use that information to generate a data key.
+
+If you have created an Azure master key, note the tenant id, the client id, and
+the client secret of the application that has permissions to use the key.
+Additionally, note the key name, key version (if any), and key vault endpoint
+for your master key. You will use that information to generate a data key.
+
+If you have created a GCP KMS master key, note the email and the private key,
+and the client secret of the application that has permissions to use the key.
+Additionally, note the project id, location, key ring, key name, and
+key version (if any) for your master key. You will use that information to
+generate a data key.
+
+Please note that GCP private key can be in different formats. Ruby driver
+supports DER encoded RSA private key as base64 encoded string. For MRI Ruby
+the driver additionally support PEM encoded RSA private key.
+
+If you have created a master key using a Key Management Interoperability
+Protocol (KMIP) compatible key management server, note the server host and port,
+and key id. You will use that information to generate a data key. You may also
+need certificate authority certificate(s), as well as  and your client
+certificate and private key to authenticate to KMIP server.
+
+.. code-block:: ruby
+
+  # A Mongo::Client instance that will be used to connect to the key vault
+  # collection. Replace the server address with the address of the MongoDB
+  # server where you would like to store your key vault collection.
+  key_vault_client = Mongo::Client.new(['localhost:27017'])
+
+  client_encryption = Mongo::ClientEncryption.new(
+    key_vault_client,
+    # Replace with the database and collection names for your key vault collection
+    key_vault_namespace: 'encryption.__keyVault',
+    kms_providers: {
+      aws: {
+        access_key_id: 'IAM-ACCESS-KEY-ID',
+        secret_access_key: 'IAM-SECRET-ACCESS-KEY'
+      },
+      azure: {
+        tenant_id: 'AZURE-TENANT-ID',
+        client_id: 'AZURE-CLIENT-ID',
+        client_secret: 'AZURE-CLIENT-SECRET'
+      },
+      gcp: {
+        email: 'GCP-EMAIL',
+        # :private_key value should be GCP private key as base64 encoded
+        # DER RSA private key, or PEM RSA private key, if you are using MRI Ruby.
+        private_key: 'GCP-PRIVATE-KEY',
+      },
+      kmip: {
+        # KMIP server endpoint may include port.
+        endpoint: 'KMIP-SERVER-HOST'
+      },
+      # TLS options to connect to KMIP server.
+      kms_tls_options: {
+        kmip: {
+          ssl_ca_cert: 'PATH-TO-CA-FILE',
+          ssl_cert: 'PATH-TO-CLIENT-CERT-FILE',
+          ssl_key: 'PATH-TO-CLIENT-KEY-FILE'
+        }
+      }
+    }
+  )
+
+  aws_data_key_id = client_encryption.create_data_key(
+    'aws',
+    {
+      master_key: {
+        region: 'REGION-OF-YOUR-MASTER-KEY',
+        key: 'ARN-OF-YOUR-MASTER-KEY'
+      }
+    }
+  )
+  # => <BSON::Binary... type=ciphertext...>
+
+  azure_data_key_id = client_encryption.create_data_key(
+    'azure',
+    {
+      master_key: {
+        key_vault_endpoint: 'AZURE-KEY-VAULT-ENDPOINT',
+        key_name: 'AZURE-KEY-NAME'
+      }
+    }
+  )
+  # => <BSON::Binary... type=ciphertext...>
+
+  gcp_data_key_id = client_encryption.create_data_key(
+    'gcp',
+    {
+      master_key: {
+        project_id: 'GCP-PROJECT-ID',
+        location: 'GCP-LOCATION',
+        key_ring: 'GCP-KEY-RING',
+        key_name: 'GCP-KEY-NAME',
+      }
+    }
+  )
+  # => <BSON::Binary... type=ciphertext...>
+
+See the :ref:`Remote Master Key <remote-master-key>` section of this tutorial
+for more information about generating a new remote master key and finding the
+information you need to create data keys.
+
+For more information about creating a data key, see the
+`Create a Data Encryption Key <https://www.mongodb.com/docs/manual/core/csfle/#b.-create-a-data-encryption-key>`_
+section of the MongoDB manual.
+
+For a list of possible KMS TLS options
+see :manual:`create client reference </reference/config-database/>`.
+``Mongo::ClientEncryption`` constructor accepts same ``ssl_`` options as
+``Mongo::Client``.
+
+Auto-Encryption Options
+=======================
+
+Automatic encryption can be configured on a ``Mongo::Client`` using the
+``auto_encryption_options`` option ``Hash``. This section provides an overview
+of the fields inside ``auto_encryption_options`` and explains how to choose their
+values.
+
+``:key_vault_client``
+~~~~~~~~~~~~~~~~~~~~~
+
+The key vault client is a ``Mongo::Client`` instance that will be used to connect
+to the MongoDB collection containing your encryption data keys. For example, if
+your key vault was hosted on a MongoDB instance at ``localhost:30000``:
+
+.. code-block:: ruby
+
+  key_vault_client = Mongo::Client.new(['localhost:30000'])
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      key_vault_client: key_vault_client,
+      # ... (Fill in other options here)
+    }
+  )
+
+If your data keys are stored in the same MongoDB instance that stores your encrypted
+data, you may leave this option blank, and the top-level client will be used
+to insert and fetch data keys.
+
+``:key_vault_namespace``
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The key vault namespace is a ``String`` in the format ``"database_name.collection_name"``,
+where ``database_name`` and ``collection_name`` are the name of the database and
+collection in which you would like to store your data keys. For example, if your data
+keys are stored in the ``encryption`` database in the ``__keyVault`` collection:
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      # ... (Fill in other options here)
+    }
+  )
+
+There is no default key vault namespace, and this option must be provided.
+
+``:kms_providers``
+~~~~~~~~~~~~~~~~~~
+
+A Hash that contains KMS provider names as keys, and provider options as values.
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      kms_providers: {
+        aws: {
+          access_key_id: 'IAM-ACCESS-KEY-ID',
+          secret_access_key: 'IAM-SECRET-ACCESS-KEY'
+        },
+        azure: {
+          tenant_id: 'AZURE-TENANT-ID',
+          client_id: 'AZURE-CLIENT-ID',
+          client_secret: 'AZURE-CLIENT-SECRET'
+        },
+        gcp: {
+          email: 'GCP-EMAIL',
+          # :private_key value should be GCP private key as base64 encoded
+          # DER RSA private key, or PEM RSA private key, if you are using MRI Ruby.
+          private_key: 'GCP-PRIVATE-KEY',
+        },
+        kmip: {
+          # KMIP server endpoint may include port.
+          endpoint: 'KMIP-SERVER-HOST'
+        },
+        # TLS options to connect to KMIP server.
+        kms_tls_options: {
+          kmip: {
+            ssl_ca_cert: 'PATH-TO-CA-FILE',
+            ssl_cert: 'PATH-TO-CLIENT-CERT-FILE',
+            ssl_key: 'PATH-TO-CLIENT-KEY-FILE'
+          }
+        }
+      }
+    }
+  )
+
+The client can retrieve AWS credentials from the environment or from EC2 or ECS
+metadata endpoints. To retrieve credentials automatically, specify an empty Hash
+as KMS provider options for AWS:
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017'],
+     auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      kms_providers: {
+        aws: {}
+      }
+    }
+  )
+
+See :ref:`"Automatically Retrieving Credentials" <auto-retrieve-aws-credentials>`
+for more detailed information about the credential retrieval.
+
+The client can retrieve GCP credentials from the Google Compute Engine
+metadata endpoints. To retrieve credentials automatically, specify an empty Hash
+as KMS provider options for GCP:
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017'],
+     auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      kms_providers: {
+        gcp: {}
+      }
+    }
+  )
+
+``:kms_tls_options``
+~~~~~~~~~~~~~~~~~~~~
+
+A Hash that contains KMP provider names as keys, and TLS options to connect to
+corresponding providers.
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      key_vault_namespace: 'encryption.__keyVault',
+      kms_providers: {
+        kmip: {
+          endpoint: 'KMIP-SERVER-HOST'
+        }
+      },
+      kms_tls_options: {
+        kmip: {
+          ssl_ca_cert: 'PATH-TO-CA-FILE',
+          ssl_cert: 'PATH-TO-CLIENT-CERT-FILE',
+          ssl_key: 'PATH-TO-CLIENT-KEY-FILE'
+        }
+      }
+    }
+  )
+
+
+``:schema_map``
+~~~~~~~~~~~~~~~
+
+A schema map is a Hash with information about which fields to automatically
+encrypt and decrypt.
+
+The code snippet at the top of this tutorial demonstrates creating a schema
+map using a Ruby ``Hash``. While this will work, schema maps can grow quite
+large and it could be unweildy to include them in your Ruby code. Instead, it is
+recommended that you store them in a separate JSON (JavaScript Object Notation)
+file.
+
+Before creating the JSON file, Base64-encode the UUID of the your data key.
+
+.. code-block:: ruby
+
+  Base64.encode64(data_key_id.data)
+  # => "sr6OTtQUwhPD..." (a base64-encoded string)
+
+Then, create a new JSON file containing your schema map in the format defined by
+the JSON Schema Draft 4 standard syntax. You can read more about formatting
+your schema map in the :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
+section of the MongoDB manual.
+
+.. code-block:: json
+
+  {
+    "encryption_db.encryption_coll": {
+      "properties": {
+        "encrypted_field": {
+          "encrypt": {
+            "keyId": [{
+              "$binary": {
+                "base64": "YOUR-BASE64-ENCODED-DATA-KEY-ID",
+                "subType": "04"
+              }
+            }],
+            "bsonType": "string",
+            "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+          }
+        }
+      },
+      "bsonType": "object"
+    }
+  }
+
+When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
+``BSON::ExtJSON`` module in the ``bson`` Ruby gem.
+
+.. code-block:: ruby
+
+  schema_map = BSON::ExtJSON.parse(File.read('/path/to/your/file.json'))
+  # => { 'encryption_db.encryption_coll' => { ... } }
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      schema_map: schema_map,
+      # ... (Fill in other options here)
+    }
+  )
+
+.. note::
+
+  It is also possible to supply a schema map as a validator on a MongoDB collection.
+  This is referred to as a "remote schema map," while providing the schema map as
+  an option on the ``Mongo::Client`` is called a "local schema map."
+
+  Supplying a local schema map provides more security than relying on JSON schemas
+  obtained from the server. It protects against a malicious server advertising
+  a false JSON schema, which could trick the client into sending unencrypted
+  data that should be encrypted.
+
+  See :manual:`Server-Side Field Level Encryption Enforcement</core/security-automatic-client-side-encryption/#server-side-field-level-encryption-enforcement>`
+  in the MongoDB manual for more information about using the schema map to
+  create a JSON schema validator on your collection.
+
+.. seealso::
+
+  `Specify Encrypted Fields Using JSON Schema <https://www.mongodb.com/docs/manual/core/csfle/#c-specify-encrypted-fields-using-json-schema>`_,
+  :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
+
+.. _schema-map-path:
+
+``:schema_map_path``
+~~~~~~~~~~~~~~~~~~~~
+
+It is also possible to load schema map from a file. Prepare the schema map as
+described above, save it to file, and then pass path to the file using
+``:schema_map_path`` option.
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      schema_map_path: '/path/to/your/file.json',
+      # ... (Fill in other options here)
+    }
+  )
+
+``:bypass_auto_encryption``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``:bypass_auto_encryption`` option is a ``Boolean`` that specifies whether the
+``Mongo::Client`` should skip encryption when writing to the database. If
+``:bypass_auto_encryption`` is ``true``, the client will still perform automatic
+decryption of any previously-encrypted data.
+
+.. code-block:: ruby
+
+  Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      bypass_auto_encryption: true,
+      # ... (Fill in other options here)
+    }
+  )
+
+.. _cse-extra-options:
+
+``:extra_options``
+~~~~~~~~~~~~~~~~~~
+
+``:extra_options`` is a ``Hash`` of options related to spawning mongocryptd.
+Every option in this ``Hash`` has a default value, so it is only necessary to
+provide the options whose defaults you want to override.
+
+- ``:mongocryptd_spawn_args`` - This is an ``Array<String>`` containing arguments
+  for spawning mongocryptd. The Ruby driver will pass these arguments to
+  mongocryptd on spawning the daemon. Possible arguments are:
+
+  - ``"--idleShutdownTimeoutSecs"`` - The number of seconds mongocryptd must remain
+    idle before it shuts itself down. The default value is 60.
+  - ``"--port"`` - The port at which mongocryptd will listen for connections. The
+    default is 27020.
+
+- ``:mongocryptd_uri`` - The URI that the driver will use to connect to mongocryptd.
+  By default, this is ``"mongodb://localhost:27020"``.
+
+- ``:mongocryptd_spawn_path`` - The path to the mongocryptd executable. The default
+  is ``"mongocryptd"``.
+
+- ``:mongocryptd_bypass_spawn`` - A ``Boolean`` indicating whether the driver should
+  skip spawning mongocryptd.
+
+For example, if you would like to run mongocryptd on port 30000, provide
+``extra_options`` as follows:
+
+.. code-block:: ruby
+
+    Mongo::Client.new(['localhost:27017],
+    auto_encryption_options: {
+      extra_options: {
+        mongocryptd_spawn_args: ['--port=30000'],
+        mongocryptd_uri: 'mongodb://localhost:30000',
+      }
+      # ... (Fill in other options here)
+    }
+  )
+
+.. warning::
+
+  The contents of ``:extra_options`` is subject to change in future versions
+  of the client-side encryption API.

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'singleton'
 
@@ -55,7 +55,7 @@ class ClientRegistry
 
   class << self
     def client_perished?(client)
-      if !client.cluster.connected?
+      if !client.cluster.connected? || client.closed?
         true
       else
         perished = false
@@ -84,6 +84,10 @@ class ClientRegistry
     end
 
     @global_clients[name] = new_global_client(name)
+  end
+
+  def new_authorized_client
+    new_global_client('authorized')
   end
 
   def new_global_client(name)

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -42,7 +42,7 @@ describe 'fork reconnect' do
         child_socket.object_id.should_not == socket.object_id
 
         # Exec so that we do not close any clients etc. in the child.
-        exec('/bin/true')
+        exec(Utils::BIN_TRUE)
       end
 
       # Connection should remain serviceable in the parent.

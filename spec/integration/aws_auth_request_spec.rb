@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'net/http'
@@ -8,7 +8,7 @@ describe Mongo::Auth::Aws::Request do
   require_aws_auth
 
   before(:all) do
-    if ENV['AUTH'] =~ /aws-(ec2|ecs)/
+    if ENV['AUTH'] =~ /aws-(ec2|ecs|web)/
       skip "This test requires explicit credentials to be provided"
     end
   end

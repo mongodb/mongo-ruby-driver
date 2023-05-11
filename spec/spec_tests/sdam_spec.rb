@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -45,6 +45,10 @@ describe 'Server Discovery and Monitoring' do
         # background monitoring only gets in the way. Disable it.
         @client = new_local_client_nmio(spec.uri_string,
           heartbeat_frequency: 1000, connect_timeout: 0.1)
+      end
+
+      before do
+        @client.reconnect if @client.closed?
       end
 
       after(:all) do

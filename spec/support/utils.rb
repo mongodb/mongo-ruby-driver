@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 autoload :Base64, 'base64'
 autoload :JSON, 'json'
@@ -138,16 +138,8 @@ module Utils
     mapper = Mongo::URI::OptionsMapper.new
     spec_test_options.reduce({}) do |opts, (name, value)|
       if name == 'autoEncryptOpts'
-        opts.merge!(
-          auto_encryption_options: convert_auto_encryption_client_options(value)
-            .merge(
-              # Spawn mongocryptd on non-default port for sharded cluster tests
-              extra_options: {
-                mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
-                mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
-              }
-            )
-        )
+        auto_encryption_options = convert_auto_encryption_client_options(value)
+        opts.merge!(auto_encryption_options: auto_encryption_options)
       else
         mapper.add_uri_option(name, value.to_s, opts)
       end
@@ -195,16 +187,40 @@ module Utils
     if opts['keyVaultNamespace']
       auto_encrypt_opts[:key_vault_namespace] = opts['keyVaultNamespace']
     else
-      auto_encrypt_opts[:key_vault_namespace] = 'admin.datakeys'
+      auto_encrypt_opts[:key_vault_namespace] = 'keyvault.datakeys'
     end
 
     if opts['schemaMap']
       auto_encrypt_opts[:schema_map] = BSON::ExtJSON.parse_obj(opts['schemaMap'])
     end
 
-    auto_encrypt_opts
+    if opts['encryptedFieldsMap']
+      auto_encrypt_opts[:encrypted_fields_map] = BSON::ExtJSON.parse_obj(opts['encryptedFieldsMap'])
+    end
+
+    auto_encrypt_opts.merge!(extra_options: convert_auto_encryption_extra_options(auto_encrypt_opts))
   end
   module_function :convert_auto_encryption_client_options
+
+  private def convert_auto_encryption_extra_options(opts)
+    # Spawn mongocryptd on non-default port for sharded cluster tests
+    extra_options = {
+      mongocryptd_spawn_args: [ "--port=#{SpecConfig.instance.mongocryptd_port}" ],
+      mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}"
+    }.merge(opts[:extra_options] || {})
+
+    # if bypass_query_analysis has been explicitly specified, then we ignore
+    # any requirement to use the shared library, as the two are not
+    # compatible.
+    if SpecConfig.instance.crypt_shared_lib_required && !opts[:bypass_query_analysis]
+      extra_options[:crypt_shared_lib_required] = SpecConfig.instance.crypt_shared_lib_required
+      extra_options[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
+      extra_options[:mongocryptd_uri] = "mongodb://localhost:27777"
+    end
+
+    extra_options
+  end
+  module_function :convert_auto_encryption_extra_options
 
   def order_hash(hash)
     Hash[hash.to_a.sort]
@@ -404,14 +420,13 @@ module Utils
 
       actual.is_a?(expected_class) || actual.key?(expected_key)
     elsif expected.is_a?(Hash) && actual.is_a?(Hash)
-      same_keys = (expected.keys - actual.keys).empty? &&
-        (actual.keys - expected.keys).empty?
+      has_all_keys = (expected.keys - actual.keys).empty?
 
       same_values = expected.keys.all? do |key|
         match_with_type?(expected[key], actual[key])
       end
 
-      same_keys && same_values
+      has_all_keys && same_values
     elsif expected.is_a?(Array) && actual.is_a?(Array)
       same_length = expected.length == actual.length
 
@@ -499,7 +514,7 @@ module Utils
   end
 
   module_function def wait_for_instance_profile
-    deadline = Time.now + 15
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 15
     loop do
       begin
         ip = ec2_instance_profile
@@ -510,7 +525,7 @@ module Utils
       rescue => e
         puts "Problem retrieving instance profile: #{e.class}: #{e}"
       end
-      if Time.now >= deadline
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
         raise 'Instance profile did not get assigned in 15 seconds'
       end
       sleep 3
@@ -518,7 +533,7 @@ module Utils
   end
 
   module_function def wait_for_no_instance_profile
-    deadline = Time.now + 15
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 15
     loop do
       begin
         ip = ec2_instance_profile
@@ -529,22 +544,25 @@ module Utils
       rescue => e
         puts "Problem retrieving instance profile: #{e.class}: #{e}"
       end
-      if Time.now >= deadline
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
         raise 'Instance profile did not get cleared in 15 seconds'
       end
       sleep 3
     end
   end
 
+  BIN_FALSE = File.executable?("/bin/false") ? "/bin/false" : "false"
+  BIN_TRUE  = File.executable?("/bin/true") ? "/bin/true" : "true"
+
   module_function def wrap_forked_child
     begin
       yield
     rescue => e
       STDERR.puts "Failing process #{Process.pid} due to #{e.class}: #{e}"
-      exec('/bin/false')
+      exec(BIN_FALSE)
     else
       # Exec so that we do not close any clients etc. in the child.
-      exec('/bin/true')
+      exec(BIN_TRUE)
     end
   end
 

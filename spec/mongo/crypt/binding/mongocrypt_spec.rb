@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 require_relative '../helpers/mongo_crypt_spec_helper'
@@ -56,12 +56,6 @@ describe 'Mongo::Crypt::Binding' do
 
         it 'returns true' do
           expect(Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)).to be true
-        end
-      end
-
-      context 'without binding crypto hooks' do
-        it 'returns false' do
-          expect(Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)).to be false
         end
       end
 

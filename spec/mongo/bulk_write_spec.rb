@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -52,6 +52,19 @@ describe Mongo::BulkWrite do
           expect {
             bulk_write.execute
           }.to raise_error(Mongo::Error::InvalidBulkOperationType)
+        end
+      end
+
+      context 'when providing no requests' do
+
+        let(:requests) do
+          []
+        end
+
+        it 'raises an exception' do
+          expect {
+            bulk_write.execute
+          }.to raise_error(ArgumentError, /Bulk write requests cannot be empty/)
         end
       end
 

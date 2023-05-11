@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -26,7 +26,7 @@ describe 'Client-Side Encryption' do
           kms_tls_options: {
             aws: default_kms_tls_options_for_provider
           },
-          key_vault_namespace: 'admin.datakeys',
+          key_vault_namespace: 'keyvault.datakeys',
         },
       )
     end

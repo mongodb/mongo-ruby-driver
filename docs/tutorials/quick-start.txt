@@ -57,6 +57,7 @@ and show its collections:
 
   db.collections # returns a list of collection objects
   db.collection_names # returns a list of collection names
+  db.list_collections # returns a list of collection metadata hashes
 
 To access a collection, refer to it by name.
 

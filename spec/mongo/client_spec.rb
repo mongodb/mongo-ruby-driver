@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -774,7 +774,7 @@ describe Mongo::Client do
 
     it 'disconnects the cluster and returns true' do
       RSpec::Mocks.with_temporary_scope do
-        expect(client.cluster).to receive(:disconnect!).and_call_original
+        expect(client.cluster).to receive(:close).and_call_original
         expect(client.close).to be(true)
       end
     end
@@ -836,7 +836,7 @@ describe Mongo::Client do
         expect(session).to be_a(Mongo::Session)
       end
 
-      retry_test 4
+      retry_test tries: 4
       it 'sets the last use field to the current time' do
         expect(session.instance_variable_get(:@server_session).last_use).to be_within(1).of(Time.now)
       end
@@ -991,10 +991,10 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads
           end
@@ -1009,7 +1009,7 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads << Thread.new do
               client['test'].delete_one({test: "test"})
@@ -1027,7 +1027,7 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads << Thread.new do
               client['test'].find({test: "test"}).to_a
@@ -1045,11 +1045,11 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads << Thread.new do
               client['test'].bulk_write([{ insert_one: { test: "test1" } },
-                                         { update_one: { filter: { test: "test1" }, update: { test: "test2" } } } ])
+                                         { update_one: { filter: { test: "test1" }, update: { "$set" => { test: "test2" } } } } ])
             end
             threads
           end
@@ -1064,7 +1064,7 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads << Thread.new do
               client['test'].find_one_and_delete({test: "test"})
@@ -1082,7 +1082,7 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads << Thread.new do
               client['test'].find_one_and_update({test: "test"}, {test: "test2"})
@@ -1100,7 +1100,7 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads << Thread.new do
               client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
@@ -1118,7 +1118,7 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
             end
             threads << Thread.new do
               client['test'].replace_one({test: "test"}, {test: "test2"})
@@ -1136,7 +1136,7 @@ describe Mongo::Client do
               client['test'].insert_one({test: "test"})
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, {test: "test2"})
+              client['test'].update_one({ test: "test" }, { "$set" => { test: 1 } })
             end
             threads << Thread.new do
               client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
@@ -1149,7 +1149,7 @@ describe Mongo::Client do
             end
             threads << Thread.new do
               client['test'].bulk_write([{ insert_one: { test: "test1" } },
-                                         { update_one: { filter: { test: "test1" }, update: { test: "test2" } } } ])
+                                         { update_one: { filter: { test: "test1" }, update: { "$set" => { test: "test2" } } } } ])
             end
             threads << Thread.new do
               client['test'].find_one_and_delete({test: "test"})
@@ -1250,7 +1250,9 @@ describe Mongo::Client do
     context 'background threads killed' do
       let(:client) do
         authorized_client.tap do |client|
-          client.cluster.servers.map(&:disconnect!)
+          client.cluster.servers.map do |server|
+            server.monitor&.stop!
+          end
         end
       end
 

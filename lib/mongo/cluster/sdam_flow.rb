@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -240,17 +240,25 @@ class Mongo::Cluster
         return
       end
 
-      max_election_id = topology.new_max_election_id(updated_desc)
-      max_set_version = topology.new_max_set_version(updated_desc)
-
-      if max_election_id != topology.max_election_id ||
-        max_set_version != topology.max_set_version
-      then
+      if updated_desc.max_wire_version >= 17
         @topology = Topology::ReplicaSetWithPrimary.new(
           topology.options.merge(
-            max_election_id: max_election_id,
-            max_set_version: max_set_version
+            max_election_id: updated_desc.election_id,
+            max_set_version: updated_desc.set_version
           ), topology.monitoring, self)
+      else
+        max_election_id = topology.new_max_election_id(updated_desc)
+        max_set_version = topology.new_max_set_version(updated_desc)
+
+        if max_election_id != topology.max_election_id ||
+          max_set_version != topology.max_set_version
+        then
+          @topology = Topology::ReplicaSetWithPrimary.new(
+            topology.options.merge(
+              max_election_id: max_election_id,
+              max_set_version: max_set_version
+            ), topology.monitoring, self)
+        end
       end
 
       # At this point we have accepted the updated server description
@@ -365,7 +373,6 @@ class Mongo::Cluster
     #   This is the set of servers on which monitoring should be started.
     def add_servers_from_desc(updated_desc)
       added_servers = []
-      address_strs = servers_list.map(&:address).map(&:to_s)
       %w(hosts passives arbiters).each do |m|
         updated_desc.send(m).each do |address_str|
           if server = cluster.add(address_str, monitor: false)
@@ -414,6 +421,9 @@ class Mongo::Cluster
     def do_remove(address_str)
       servers = cluster.remove(address_str, disconnect: false)
       servers.each do |server|
+        # Clear the description so that the server is marked as unknown.
+        server.clear_description
+
         # We need to publish server closed event here, but we cannot close
         # the server because it could be the server owning the monitor in
         # whose thread this flow is presently executing, in which case closing
@@ -574,12 +584,29 @@ class Mongo::Cluster
 
     # Whether updated_desc is for a stale primary.
     def stale_primary?
-      if updated_desc.election_id && updated_desc.set_version
-        if topology.max_set_version && topology.max_election_id &&
-            (updated_desc.set_version < topology.max_set_version ||
-                (updated_desc.set_version == topology.max_set_version &&
-                    updated_desc.election_id < topology.max_election_id))
+      if updated_desc.max_wire_version >= 17
+        if updated_desc.election_id.nil? && !topology.max_election_id.nil?
           return true
+        end
+        if updated_desc.election_id && topology.max_election_id && updated_desc.election_id < topology.max_election_id
+          return true
+        end
+        if updated_desc.election_id == topology.max_election_id
+          if updated_desc.set_version.nil? && !topology.max_set_version.nil?
+            return true
+          end
+          if updated_desc.set_version && topology.max_set_version && updated_desc.set_version < topology.max_set_version
+            return true
+          end
+        end
+      else
+        if updated_desc.election_id && updated_desc.set_version
+          if topology.max_set_version && topology.max_election_id &&
+              (updated_desc.set_version < topology.max_set_version ||
+                  (updated_desc.set_version == topology.max_set_version &&
+                      updated_desc.election_id < topology.max_election_id))
+            return true
+          end
         end
       end
       false

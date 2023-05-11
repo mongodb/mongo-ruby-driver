@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -26,9 +26,12 @@ module Mongo
     autoload(:Context, 'mongo/crypt/context')
     autoload(:DataKeyContext, 'mongo/crypt/data_key_context')
     autoload(:ExplicitEncryptionContext, 'mongo/crypt/explicit_encryption_context')
+    autoload(:ExplicitEncryptionExpressionContext, 'mongo/crypt/explicit_encryption_expression_context')
     autoload(:AutoEncryptionContext, 'mongo/crypt/auto_encryption_context')
     autoload(:ExplicitDecryptionContext, 'mongo/crypt/explicit_decryption_context')
     autoload(:AutoDecryptionContext, 'mongo/crypt/auto_decryption_context')
+    autoload(:RewrapManyDataKeyContext, 'mongo/crypt/rewrap_many_data_key_context')
+    autoload(:RewrapManyDataKeyResult, 'mongo/crypt/rewrap_many_data_key_result')
     autoload(:EncryptionIO, 'mongo/crypt/encryption_io')
     autoload(:ExplicitEncrypter, 'mongo/crypt/explicit_encrypter')
     autoload(:AutoEncrypter, 'mongo/crypt/auto_encrypter')

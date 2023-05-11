@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -16,9 +16,7 @@
 # limitations under the License.
 
 require 'mongo/operation/get_more/command_builder'
-require 'mongo/operation/get_more/command'
 require 'mongo/operation/get_more/op_msg'
-require 'mongo/operation/get_more/legacy'
 require 'mongo/operation/get_more/result'
 
 module Mongo
@@ -31,7 +29,7 @@ module Mongo
     # @since 2.5.0
     class GetMore
       include Specifiable
-      include OpMsgOrFindCommand
+      include OpMsgExecutable
     end
   end
 end

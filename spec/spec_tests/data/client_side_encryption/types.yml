@@ -27,19 +27,12 @@ tests:
           filter: { _id: 1 }
         result: *doc0
     expectations:
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -75,19 +68,12 @@ tests:
           filter: { _id: 1 }
         result: *doc1
     expectations:
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -123,19 +109,12 @@ tests:
           filter: { _id: 1 }
         result: *doc2
     expectations:
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -167,7 +146,12 @@ tests:
         arguments:
           document: &doc4 { _id: 1, encrypted_double: {"$numberDouble": "1.23"} }
         result:
-            errorContains: "Cannot use deterministic encryption for element of type: double"
+            # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
+            # "Cannot use deterministic encryption for element of type: double"
+            # After it is:
+            # "Cannot encrypt element of type: double"
+            # Only check for the common suffix.
+            errorContains: "element of type: double"
   - description: "type=decimal"
     clientOptions:
       autoEncryptOpts:
@@ -180,7 +164,12 @@ tests:
         arguments:
           document: &doc5 { _id: 1, encrypted_decimal: {"$numberDecimal": "1.23"} }
         result:
-            errorContains: "Cannot use deterministic encryption for element of type: decimal"
+            # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
+            # "Cannot use deterministic encryption for element of type: decimal"
+            # After it is:
+            # "Cannot encrypt element of type: decimal"
+            # Only check for the common suffix.
+            errorContains: "element of type: decimal"
   - description: "type=binData"
     clientOptions:
       autoEncryptOpts:
@@ -197,19 +186,12 @@ tests:
           filter: { _id: 1 }
         result: *doc6
     expectations:
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -245,19 +227,12 @@ tests:
           filter: { _id: 1 }
         result: *doc7
     expectations:
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -289,7 +264,12 @@ tests:
         arguments:
           document: &doc8 { _id: 1, encrypted_javascriptWithScope: {"$code": "var x = 1;", "$scope": {} } }
         result:
-          errorContains: "Cannot use deterministic encryption for element of type: javascriptWithScope"
+          # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
+          # "Cannot use deterministic encryption for element of type: javascriptWithScope"
+          # After it is:
+          # "Cannot encrypt element of type: javascriptWithScope"
+          # Only check for the common suffix.
+          errorContains: "element of type: javascriptWithScope"
   - description: "type=object"
     clientOptions:
       autoEncryptOpts:
@@ -302,7 +282,12 @@ tests:
         arguments:
           document: &doc9 { _id: 1, encrypted_object: {} }
         result:
-          errorContains: "Cannot use deterministic encryption for element of type: object"
+          # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
+          # "Cannot use deterministic encryption for element of type: object"
+          # After it is:
+          # "Cannot encrypt element of type: object"
+          # Only check for the common suffix.
+          errorContains: "element of type: object"
   - description: "type=timestamp"
     clientOptions:
       autoEncryptOpts:
@@ -319,19 +304,12 @@ tests:
           filter: { _id: 1 }
         result: *doc10
     expectations:
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -367,19 +345,12 @@ tests:
           filter: { _id: 1 }
         result: *doc11
     expectations:
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -415,19 +386,12 @@ tests:
           filter: { _id: 1 }
         result: *doc13
     expectations:
-      - command_started_event:
-          command:
-            listCollections: 1
-            filter:
-              name: "datakeys"
-            $db: admin
-          command_name: listCollections
       # Then key is fetched from the key vault.
       - command_started_event:
           command:
             find: datakeys
             filter: {"$or": [{"_id": {"$in": [ {'$binary': {'base64': 'AAAAAAAAAAAAAAAAAAAAAA==', 'subType': '04'}} ] }}, {"keyAltNames": {"$in": []}}]}
-            $db: admin
+            $db: keyvault
             readConcern: { level: "majority" }
           command_name: find
       - command_started_event:
@@ -498,7 +462,12 @@ tests:
         arguments:
           document: &doc17 { _id: 1, encrypted_array: [] }
         result:
-          errorContains: "Cannot use deterministic encryption for element of type: array"
+          # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
+          # "Cannot use deterministic encryption for element of type: array"
+          # After it is:
+          # "Cannot encrypt element of type: array"
+          # Only check for the common suffix.
+          errorContains: "element of type: array"
   - description: "type=bool"
     clientOptions:
       autoEncryptOpts:
@@ -511,7 +480,12 @@ tests:
         arguments:
           document: &doc18 { _id: 1, encrypted_bool: true }
         result:
-          errorContains: "Cannot use deterministic encryption for element of type: bool"
+          # DRIVERS-2272: The expected error message changed in mongocryptd 6.0. Before it was:
+          # "Cannot use deterministic encryption for element of type: bool"
+          # After it is:
+          # "Cannot encrypt element of type: bool"
+          # Only check for the common suffix.
+          errorContains: "element of type: bool"
   - description: "type=null"
     clientOptions:
       autoEncryptOpts:

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -39,11 +39,11 @@ describe 'Client-Side Encryption' do
     end
 
     before do
-      client.use('admin')['datakeys'].drop
+      client.use('keyvault')['datakeys'].drop
       client.use('db')['coll'].drop
 
       data_key = BSON::ExtJSON.parse(File.read('spec/support/crypt/external/external-key.json'))
-      client.use('admin')['datakeys', write_concern: { w: :majority }].insert_one(data_key)
+      client.use('keyvault')['datakeys', write_concern: { w: :majority }].insert_one(data_key)
     end
 
     context 'with default key vault client' do
@@ -53,7 +53,7 @@ describe 'Client-Side Encryption' do
           SpecConfig.instance.test_options.merge(
             auto_encryption_options: {
               kms_providers: local_kms_providers,
-              key_vault_namespace: 'admin.datakeys',
+              key_vault_namespace: 'keyvault.datakeys',
               schema_map: test_schema_map,
               # Spawn mongocryptd on non-default port for sharded cluster tests
               extra_options: extra_options,
@@ -68,7 +68,7 @@ describe 'Client-Side Encryption' do
           client,
           {
             kms_providers: local_kms_providers,
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
           }
         )
       end
@@ -101,7 +101,7 @@ describe 'Client-Side Encryption' do
           SpecConfig.instance.test_options.merge(
             auto_encryption_options: {
               kms_providers: local_kms_providers,
-              key_vault_namespace: 'admin.datakeys',
+              key_vault_namespace: 'keyvault.datakeys',
               schema_map: test_schema_map,
               key_vault_client: external_key_vault_client,
               # Spawn mongocryptd on non-default port for sharded cluster tests
@@ -117,7 +117,7 @@ describe 'Client-Side Encryption' do
           external_key_vault_client,
           {
             kms_providers: local_kms_providers,
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
           }
         )
       end

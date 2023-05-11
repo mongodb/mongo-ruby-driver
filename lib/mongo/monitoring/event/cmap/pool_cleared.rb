@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -34,15 +34,22 @@ module Mongo
           # @return [ nil | Object ] The service id, if any.
           attr_reader :service_id
 
+          # @return [ Hash ] options The options
+          attr_reader :options
+
           # Create the event.
           #
           # @param [ Address ] address
           # @param [ Object ] service_id The service id, if any.
+          # @param [ true | false | nil ] interrupt_in_use_connections The
+          #   interrupt_in_use_connections flag, if given.
           #
           # @api private
-          def initialize(address, service_id: nil)
+          def initialize(address, service_id: nil, interrupt_in_use_connections: nil)
             @address = address
             @service_id = service_id
+            @options = {}
+            @options[:interrupt_in_use_connections] = interrupt_in_use_connections
           end
 
           # Returns a concise yet useful summary of the event.

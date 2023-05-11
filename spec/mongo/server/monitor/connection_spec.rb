@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -59,8 +59,8 @@ describe Mongo::Server::Monitor::Connection do
     monitor.connection.tap do |connection|
       expect(connection).not_to be nil
 
-      deadline = Time.now + 5
-      while Time.now < deadline
+      deadline = Mongo::Utils.monotonic_time + 5
+      while Mongo::Utils.monotonic_time < deadline
         if connection.send(:socket)
           break
         end

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'mongo/operation/context'
 require 'mongo/operation/result'
@@ -9,7 +9,6 @@ require 'mongo/operation/shared/executable'
 require 'mongo/operation/shared/executable_no_validate'
 require 'mongo/operation/shared/executable_transaction_label'
 require 'mongo/operation/shared/polymorphic_lookup'
-require 'mongo/operation/shared/polymorphic_operation'
 require 'mongo/operation/shared/polymorphic_result'
 require 'mongo/operation/shared/read_preference_supported'
 require 'mongo/operation/shared/bypass_document_validation'
@@ -22,8 +21,7 @@ require 'mongo/operation/shared/idable'
 require 'mongo/operation/shared/specifiable'
 require 'mongo/operation/shared/validatable'
 require 'mongo/operation/shared/object_id_generator'
-require 'mongo/operation/shared/op_msg_or_command'
-require 'mongo/operation/shared/op_msg_or_find_command'
+require 'mongo/operation/shared/op_msg_executable'
 
 require 'mongo/operation/op_msg_base'
 require 'mongo/operation/command'

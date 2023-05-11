@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -70,7 +70,7 @@ describe 'Versioned API examples' do
 
   # See also RUBY-2922 for count in versioned api v1.
   context 'servers that exclude count from versioned api' do
-    max_server_version '5.2'
+    max_server_version '5.0.8'
 
     it "Versioned API Strict Migration Example" do
       client = Mongo::Client.new(uri_string, server_api: {version: "1", strict: true})
@@ -98,7 +98,7 @@ describe 'Versioned API examples' do
       # Start Versioned API Example 6
 
       # Mongo::Error::OperationFailure:
-      #   [323:APIStrictError]: Provided apiStrict:true, but the command count is not in API Version 1. Information on supported commands and migrations in API Version 1 can be found at https://dochub.mongodb.org/core/manual-versioned-api
+      #   [323:APIStrictError]: Provided apiStrict:true, but the command count is not in API Version 1. Information on supported commands and migrations in API Version 1 can be found at https://www.mongodb.com/docs/manual/reference/stable-api
 
       # End Versioned API Example 6
 

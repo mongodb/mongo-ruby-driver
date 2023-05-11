@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -39,9 +39,11 @@ module Mongo
         #
         # @param buffer [ String ] Buffer to receive the serialized vector
         # @param value [ Array<Symbol> ] Array of flags to encode
+        # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
+        #   This option is deprecated and will not be used. It will removed in version 3.0.
         #
         # @return [ String ] Buffer that received the serialized vector
-        def serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+        def serialize(buffer, value, validating_keys = nil)
           bits = 0
           value.each { |flag| bits |= (@masks[flag] || 0) }
           buffer.put_int32(bits)

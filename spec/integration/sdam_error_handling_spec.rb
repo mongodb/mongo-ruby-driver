@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -25,6 +25,7 @@ describe 'SDAM error handling' do
       SpecConfig.instance.all_test_options.merge(
         socket_timeout: 3, connect_timeout: 3,
         heartbeat_frequency: 100,
+        populator_io: false,
         # Uncomment to print all events to stdout:
         #sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
         **Utils.disable_retries_client_options)
@@ -92,7 +93,7 @@ describe 'SDAM error handling' do
       generation = server.pool.generation
       RSpec::Mocks.with_temporary_scope do
         operation
-        new_generation = server.pool.generation
+        new_generation = server.pool_internal.generation
         expect(new_generation).to eq(generation + 1)
       end
     end
@@ -103,7 +104,7 @@ describe 'SDAM error handling' do
       generation = server.pool.generation
       RSpec::Mocks.with_temporary_scope do
         operation
-        new_generation = server.pool.generation
+        new_generation = server.pool_internal.generation
         expect(new_generation).to eq(generation)
       end
     end
@@ -248,12 +249,13 @@ describe 'SDAM error handling' do
 
         it 'marks server unknown' do
           server = client.cluster.next_primary
+          pool = client.cluster.pool(server)
           client.cluster.servers.map(&:disconnect!)
 
           RSpec::Mocks.with_temporary_scope do
 
             Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
-
+            allow(pool).to receive(:paused?).and_return(false)
             lambda do
               client.command(ping: 1)
             end.should raise_error(mapped_error_cls, /mocked failure/)
@@ -421,6 +423,65 @@ describe 'SDAM error handling' do
       after do
         admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
       end
+    end
+  end
+
+  context "when there is an error on the handshake" do
+    # require appName for fail point
+    min_server_version "4.9"
+
+    let(:admin_client) do
+      new_local_client(
+        [SpecConfig.instance.addresses.first],
+        SpecConfig.instance.test_options.merge({
+          connect: :direct,
+          populator_io: false,
+          direct_connection: true,
+          app_name: "SDAMMinHeartbeatFrequencyTest",
+          database: 'admin'
+        })
+      )
+    end
+
+    let(:cmd_client) do
+      # Change the server selection timeout so that we are given a new cluster.
+      admin_client.with(server_selection_timeout: 5)
+    end
+
+    let(:set_fail_point) do
+      admin_client.command(
+        configureFailPoint: 'failCommand',
+        mode: { times: 5 },
+        data: {
+          failCommands: %w(isMaster hello),
+          errorCode: 1234,
+          appName: "SDAMMinHeartbeatFrequencyTest"
+        },
+      )
+    end
+
+    let(:operation) do
+      expect(server.monitor.connection).not_to be nil
+      set_fail_point
+    end
+
+    it "waits 500ms between failed hello checks" do
+      operation
+      start = Mongo::Utils.monotonic_time
+      cmd_client.command(hello: 1)
+      duration = Mongo::Utils.monotonic_time - start
+      expect(duration).to be >= 2
+      expect(duration).to be <= 3.5
+
+      # The cluster that we use to set up the failpoint should not be the same
+      # one we ping on, so that the ping will have to select a server. The admin
+      # client has already selected a server.
+      expect(admin_client.cluster.object_id).to_not eq(cmd_client.cluster.object_id)
+    end
+
+    after do
+      admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
+      cmd_client.close
     end
   end
 end

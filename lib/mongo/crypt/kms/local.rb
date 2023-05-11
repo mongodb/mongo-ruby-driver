@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -15,60 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Mongo
-  module Crypt
-    module KMS
-      module Local
-        # Local KMS Credentials object contains credentials for using local KMS provider.
-        #
-        # @api private
-        class Credentials
-          include KMS::Validations
-
-          # @return [ String ] Master key.
-          attr_reader :key
-
-          FORMAT_HINT = "Local KMS provider options must be in the format: " +
-                        "{ key: 'MASTER-KEY' }"
-
-          # Creates a local KMS credentials object form a parameters hash.
-          #
-          # @param [ Hash ] opts A hash that contains credentials for
-          #   local KMS provider
-          # @option opts [ String ] :key Master key.
-          #
-          # @raise [ ArgumentError ] If required options are missing or incorrectly
-          #   formatted.
-          def initialize(opts)
-            @key = validate_param(:key, opts, FORMAT_HINT)
-          end
-
-          # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
-          def to_document
-            BSON::Document.new({
-              key: BSON::Binary.new(@key, :generic),
-            })
-          end
-        end
-
-        # Local KMS master key document object contains KMS master key parameters.
-        #
-        # @api private
-        class MasterKeyDocument
-
-          # Creates a master key document object form a parameters hash.
-          # This empty method is to keep a uniform interface for all KMS providers.
-          def initialize(_opts)
-          end
-
-          # Convert master key document object to a BSON document in libmongocrypt format.
-          #
-          # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
-          def to_document
-            BSON::Document.new({ provider: "local" })
-          end
-        end
-      end
-    end
-  end
-end
+require 'mongo/crypt/kms/local/credentials'
+require 'mongo/crypt/kms/local/master_document'

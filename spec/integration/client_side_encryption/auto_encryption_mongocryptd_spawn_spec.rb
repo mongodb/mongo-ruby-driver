@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -51,7 +51,6 @@ describe 'Auto Encryption' do
         .with(
           hash_including(
             'insert' => 'users',
-            '$db' => 'auto_encryption',
             'ordered' => true,
             'lsid' => kind_of(Hash),
             'documents' => kind_of(Array),

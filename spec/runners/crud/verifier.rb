@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -105,7 +105,7 @@ EOT
           end
         end
         expect(actual_event).not_to be nil
-        expect(actual_event.keys).to eq(expected_event.keys)
+        expect(actual_event.keys.sort).to eq(expected_event.keys.sort)
 
         expected_command = expected_event.delete('command')
         actual_command = actual_event.delete('command')
@@ -144,7 +144,7 @@ EOT
           expected.each do |k, v|
             case k
             when 'errorContains'
-              expect(actual['errorContains']).to include(v)
+              expect(actual['errorContains'].downcase).to include(v.downcase)
             when 'errorLabelsContain'
               v.each do |label|
                 expect(actual['errorLabels']).to include(label)
@@ -158,6 +158,12 @@ EOT
             else
               verify_hash_items_equal(expected, actual, k)
             end
+          end
+        when Array
+          expect(actual).to be_a(Array)
+          expect(actual.size).to eq(expected.size)
+          expected.zip(actual).each do |pair|
+            verify_result(pair.first, pair.last)
           end
         else
           expect(actual).to eq(expected)

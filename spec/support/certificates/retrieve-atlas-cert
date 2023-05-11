@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+# rubocop:todo all
+
+require 'tmpdir'
+
+host = 'freecluster-shard-00-00-oztdp.mongodb-dev.net'
+
+output = `openssl s_client -showcerts -servername #{host} -connect #{host}:27017 </dev/null`
+
+if output.empty?
+  raise 'Something bad happened'
+end
+
+certs = output.scan(/(-----BEGIN CERTIFICATE(.|\n)+?END CERTIFICATE-----)/)
+cert, ca_cert = certs.map { |g| g.first }
+
+Dir.mktmpdir do |path|
+  cert_path = File.join(path, 'cert.pem')
+  File.open(cert_path, 'w') do |f|
+    f << cert
+  end
+  output = `openssl x509 -noout -text -in #{cert_path}`
+  File.open('atlas-ocsp.crt', 'w') do |f|
+    f << output
+    f << "\n"
+    f << cert
+  end
+
+  cert_path = File.join(path, 'cert.pem')
+  File.open(cert_path, 'w') do |f|
+    f << ca_cert
+  end
+  output = `openssl x509 -noout -text -in #{cert_path}`
+  File.open('atlas-ocsp-ca.crt', 'w') do |f|
+    f << output
+    f << "\n"
+    f << ca_cert
+  end
+end

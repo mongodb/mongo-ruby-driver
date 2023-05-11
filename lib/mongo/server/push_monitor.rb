@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -194,6 +194,10 @@ module Mongo
         Timeout.timeout(timeout, Error::SocketTimeoutError, "Failed to read an awaited hello response in #{timeout} seconds") do
           @lock.synchronize { @connection }.read_response(socket_timeout: timeout)
         end
+      end
+
+      def to_s
+        "#<#{self.class.name}:#{object_id} #{server.address}>"
       end
 
     end

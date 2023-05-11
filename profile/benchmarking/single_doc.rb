@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -56,7 +56,7 @@ module Mongo
         results = repetitions.times.collect do
           Benchmark.realtime do
             10_000.times do
-              monitor.connection.ismaster
+              client.database.command(hello: true)
             end
           end
         end

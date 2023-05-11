@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'singleton'
 require 'pathname'
@@ -87,6 +87,8 @@ class SpecConfig
 
       begin
         case client.cluster.topology.class.name
+        when /LoadBalanced/
+          { connect: :load_balanced }
         when /Replica/
           { connect: :replica_set, replica_set: client.cluster.topology.replica_set_name }
         when /Sharded/
@@ -124,6 +126,10 @@ class SpecConfig
 
   def macos?
     !!(RbConfig::CONFIG['host_os'].downcase =~ /\bdarwin/)
+  end
+
+  def windows?
+    ENV['OS'] == 'Windows_NT' && !RUBY_PLATFORM.match?(/cygwin/)
   end
 
   def platform
@@ -366,7 +372,7 @@ EOT
 
   # Whether FLE tests should be enabled
   def fle?
-    ENV['FLE']
+    %w(1 true yes helper).include?(ENV['FLE']&.downcase)
   end
 
   # AWS IAM user access key id
@@ -387,6 +393,21 @@ EOT
   # Amazon resource name (ARN) of AWS customer master key
   def fle_aws_arn
     ENV['MONGO_RUBY_DRIVER_AWS_ARN']
+  end
+
+  # AWS temporary access key id (set by set-temp-creds.sh)
+  def fle_aws_temp_key
+    ENV['CSFLE_AWS_TEMP_ACCESS_KEY_ID']
+  end
+
+  # AWS temporary secret access key (set by set-temp-creds.sh)
+  def fle_aws_temp_secret
+    ENV['CSFLE_AWS_TEMP_SECRET_ACCESS_KEY']
+  end
+
+  # AWS temporary session token (set by set-temp-creds.sh)
+  def fle_aws_temp_session_token
+    ENV['CSFLE_AWS_TEMP_SESSION_TOKEN']
   end
 
   def fle_azure_tenant_id
@@ -465,6 +486,30 @@ EOT
     else
       27020
     end
+  end
+
+  def crypt_shared_lib_path
+    if @without_crypt_shared_lib_path
+      nil
+    else
+      ENV['MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH']
+    end
+  end
+
+  def without_crypt_shared_lib_path
+    saved, @without_crypt_shared_lib_path = @without_crypt_shared_lib_path, true
+    yield
+  ensure
+    @without_crypt_shared_lib_path = saved
+  end
+
+  attr_accessor :crypt_shared_lib_required
+
+  def require_crypt_shared
+    saved, self.crypt_shared_lib_required = crypt_shared_lib_required, true
+    yield
+  ensure
+    self.crypt_shared_lib_required = saved
   end
 
   def auth?
@@ -671,6 +716,10 @@ EOT
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'retryable-writes-tests' },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'ts-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'ts-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'ci-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'ci-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'papi-tests' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'papi-tests' },
       ]
     )
   end

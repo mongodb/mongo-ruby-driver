@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -24,7 +24,7 @@ describe 'Client-Side Encryption' do
         SpecConfig.instance.test_options.merge(
           auto_encryption_options: {
             kms_providers: local_kms_providers,
-            key_vault_namespace: 'admin.datakeys',
+            key_vault_namespace: 'keyvault.datakeys',
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },

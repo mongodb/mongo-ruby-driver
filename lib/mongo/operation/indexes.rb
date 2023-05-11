@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -15,9 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/indexes/command'
 require 'mongo/operation/indexes/op_msg'
-require 'mongo/operation/indexes/legacy'
 require 'mongo/operation/indexes/result'
 
 module Mongo
@@ -30,21 +28,7 @@ module Mongo
     # @since 2.0.0
     class Indexes
       include Specifiable
-      include PolymorphicOperation
-      include PolymorphicLookup
-
-      private
-
-      def final_operation(connection)
-        cls = if connection.features.op_msg_enabled?
-          polymorphic_class(self.class.name, :OpMsg)
-        elsif connection.features.list_indexes_enabled?
-          polymorphic_class(self.class.name, :Command)
-        else
-          polymorphic_class(self.class.name, :Legacy)
-        end
-        cls.new(spec)
-      end
+      include OpMsgExecutable
     end
   end
 end

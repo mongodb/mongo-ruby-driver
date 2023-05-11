@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -21,19 +21,7 @@ module Mongo
     # Exception raised if an operation is attempted on a closed connection pool.
     #
     # @since 2.9.0
-    class PoolClosedError < Error
-
-      # @return [ Mongo::Address ] address The address of the server the
-      # pool's connections connect to.
-      #
-      # @since 2.9.0
-      attr_reader :address
-
-      # @return [ Mongo::Server::ConnectionPool ] pool The pool that is closed.
-      #
-      # @since 2.11.0
-      # @api experimental
-      attr_reader :pool
+    class PoolClosedError < PoolError
 
       # Instantiate the new exception.
       #
@@ -43,9 +31,8 @@ module Mongo
       # @since 2.9.0
       # @api private
       def initialize(address, pool)
-        @address = address
-        @pool = pool
-        super("Attempted to use a connection pool which has been closed (for #{address} " +
+        super(address, pool,
+          "Attempted to use a connection pool which has been closed (for #{address} " +
             "with pool 0x#{pool.object_id})")
       end
     end

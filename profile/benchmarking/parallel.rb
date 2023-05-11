@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -93,10 +93,11 @@ module Mongo
         require 'celluloid'
 
         Mongo::Collection.send(:include, Celluloid)
+        Celluloid.boot
 
         client.database.drop
         create_collection
-        files =  [*1..100].collect { |i| "#{LDJSON_FILE_BASE}#{i.to_s.rjust(3, "0")}.txt" }
+        files =  [*0..99].collect { |i| "#{LDJSON_FILE_BASE}#{i.to_s.rjust(3, "0")}.txt" }
 
         result = Benchmark.realtime do
           Benchmarking::TEST_REPETITIONS.times do |i|

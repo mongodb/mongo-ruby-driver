@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rubocop:todo all
 
 module MongosMacros
 
@@ -12,6 +13,12 @@ module MongosMacros
   def run_mongos_distincts(db_name, collection='test')
     MongosMacros.distinct_ran[db_name] ||= ::Utils.mongos_each_direct_client do |direct_client|
       direct_client.use(db_name)[collection].distinct('foo').to_a
+    end
+  end
+
+  def maybe_run_mongos_distincts(db_name, collection='test')
+    if ClusterConfig.instance.topology == :sharded
+      run_mongos_distincts(db_name, collection)
     end
   end
 end

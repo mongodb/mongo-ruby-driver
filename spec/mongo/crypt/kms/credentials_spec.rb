@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'mongo'
 require 'lite_spec_helper'
@@ -13,17 +13,6 @@ describe Mongo::Crypt::KMS::Credentials do
       Mongo::Crypt::KMS::AWS::Credentials.new(kms_provider)
     end
 
-    context 'with empty AWS kms_provider' do
-      let(:kms_provider) do
-        {}
-      end
-
-      it 'raises an exception' do
-        expect do
-          params
-        end.to raise_error(ArgumentError, /The specified KMS provider options are invalid: {}. AWS KMS provider options must be in the format: { access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' }/)
-      end
-    end
 
     %i(access_key_id secret_access_key).each do |key|
       context "with nil AWS #{key}" do
@@ -94,18 +83,6 @@ describe Mongo::Crypt::KMS::Credentials do
   context 'Azure' do
     let (:params) do
       Mongo::Crypt::KMS::Azure::Credentials.new(kms_provider)
-    end
-
-    context 'with empty Azure kms_provider' do
-      let(:kms_provider) do
-        {}
-      end
-
-      it 'raises an exception' do
-        expect do
-          params
-        end.to raise_error(ArgumentError, /The specified KMS provider options are invalid: {}. Azure KMS provider options must be in the format: { tenant_id: 'TENANT-ID', client_id: 'TENANT_ID', client_secret: 'CLIENT_SECRET' }/)
-      end
     end
 
     %i(tenant_id client_id client_secret).each do |param|
@@ -219,18 +196,6 @@ describe Mongo::Crypt::KMS::Credentials do
       Mongo::Crypt::KMS::GCP::Credentials.new(kms_provider)
     end
 
-    context 'with empty GCP kms_provider' do
-      let(:kms_provider) do
-        {}
-      end
-
-      it 'raises an exception' do
-        expect do
-          params
-        end.to raise_error(ArgumentError, /The specified KMS provider options are invalid: {}. GCP KMS provider options must be in the format: { email: 'EMAIL', private_key: 'PRIVATE-KEY' }/)
-      end
-    end
-
     %i(email private_key).each do |key|
       context "with nil GCP #{key}" do
         let(:kms_provider) do
@@ -324,23 +289,27 @@ describe Mongo::Crypt::KMS::Credentials do
         end
       end
     end
+
+    context 'with access token' do
+      let(:kms_provider) do
+        {
+          access_token: 'access_token'
+        }
+      end
+
+      it 'returns valid libmongocrypt credentials' do
+        expect(params.to_document).to eq(
+          BSON::Document.new({
+            accessToken: 'access_token'
+          })
+        )
+      end
+    end
   end
 
   context 'KMIP' do
     let (:params) do
       Mongo::Crypt::KMS::KMIP::Credentials.new(kms_provider)
-    end
-
-    context 'with empty KMIP kms_provider' do
-      let(:kms_provider) do
-        {}
-      end
-
-      it 'raises an exception' do
-        expect do
-          params
-        end.to raise_error(ArgumentError, /The specified KMS provider options are invalid: {}. KMIP KMS provider options must be in the format: { endpoint: 'ENDPOINT' }/)
-      end
     end
 
     context "with nil KMIP endpoint" do

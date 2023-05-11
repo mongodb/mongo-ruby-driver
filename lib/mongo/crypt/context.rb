@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -27,6 +27,10 @@ module Mongo
     #
     # @api private
     class Context
+      extend Forwardable
+
+      def_delegators :@mongocrypt_handle, :kms_providers
+
       #  Create a new Context object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt_handle A handle to libmongocrypt
@@ -47,6 +51,7 @@ module Mongo
         )
 
         @encryption_io = io
+        @cached_azure_token = nil
       end
 
       attr_reader :ctx_p
@@ -110,11 +115,13 @@ module Mongo
             end
 
             Binding.ctx_kms_done(self)
+          when :need_kms_credentials
+            Binding.ctx_provide_kms_providers(
+              self,
+              retrieve_kms_credentials.to_document
+            )
           else
             raise Error::CryptError.new(
-              # TODO: fix CryptError to improve this API -- the first argument
-              # in the initializer should not be optional
-              nil,
               "State #{state} is not supported by Mongo::Crypt::Context"
             )
           end
@@ -135,6 +142,62 @@ module Mongo
       # @return [ BSON::Document ] BSON document containing the result.
       def mongocrypt_feed(doc)
         Binding.ctx_mongo_feed(self, doc)
+      end
+
+      # Retrieves KMS credentials for providers that are configured
+      # for automatic credentials retrieval.
+      #
+      # @return [ Crypt::KMS::Credentials ] Credentials for the configured
+      #   KMS providers.
+      def retrieve_kms_credentials
+        providers = {}
+        if kms_providers.aws&.empty?
+          begin
+            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials
+          rescue Auth::Aws::CredentialsNotFound
+            raise Error::CryptError.new(
+              "Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)"
+            )
+          end
+          providers[:aws] = aws_credentials.to_h
+        end
+        if kms_providers.gcp&.empty?
+          providers[:gcp] = { access_token: gcp_access_token }
+        end
+        if kms_providers.azure&.empty?
+          providers[:azure] = { access_token: azure_access_token }
+        end
+        KMS::Credentials.new(providers)
+      end
+
+      # Retrieves a GCP access token.
+      #
+      # @return [ String ] A GCP access token.
+      #
+      # @raise [ Error::CryptError ] If the GCP access token could not be
+      def gcp_access_token
+        KMS::GCP::CredentialsRetriever.fetch_access_token
+      rescue KMS::CredentialsNotFound => e
+        raise Error::CryptError.new(
+          "Could not locate GCP credentials: #{e.class}: #{e.message}"
+        )
+      end
+
+      # Returns an Azure access token, retrieving it if necessary.
+      #
+      # @return [ String ] An Azure access token.
+      #
+      # @raise [ Error::CryptError ] If the Azure access token could not be
+      #   retrieved.
+      def azure_access_token
+        if @cached_azure_token.nil? || @cached_azure_token.expired?
+          @cached_azure_token = KMS::Azure::CredentialsRetriever.fetch_access_token
+        end
+        @cached_azure_token.access_token
+      rescue KMS::CredentialsNotFound => e
+        raise Error::CryptError.new(
+          "Could not locate Azure credentials: #{e.class}: #{e.message}"
+        )
       end
     end
   end

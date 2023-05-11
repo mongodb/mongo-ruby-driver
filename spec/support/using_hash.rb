@@ -1,7 +1,10 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 class UsingHash < Hash
+  class UsingHashKeyError < KeyError
+  end
+
   def use(key)
     wrap(self[key]).tap do
       delete(key)
@@ -9,7 +12,13 @@ class UsingHash < Hash
   end
 
   def use!(key)
-    wrap(fetch(key)).tap do
+    begin
+      value = fetch(key)
+    rescue KeyError => e
+      raise UsingHashKeyError, e.to_s
+    end
+
+    wrap(value).tap do
       delete(key)
     end
   end

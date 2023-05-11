@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/insert/command'
 require 'mongo/operation/insert/op_msg'
 require 'mongo/operation/insert/result'
 require 'mongo/operation/insert/bulk_result'

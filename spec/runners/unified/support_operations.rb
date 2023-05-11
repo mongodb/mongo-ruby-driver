@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 module Unified
 
@@ -17,6 +17,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if read_preference = args.use('readPreference')
+          opts[:read] = ::Utils.snakeize_hash(read_preference)
+        end
 
         database.command(cmd, **opts)
       end
@@ -26,7 +29,13 @@ module Unified
       consume_test_runner(op)
       use_arguments(op) do |args|
         client = entities.get(:client, args.use!('client'))
-        client.command(args.use('failPoint'))
+        client.command(fp = args.use('failPoint'))
+
+        $disable_fail_points ||= []
+        $disable_fail_points << [
+          fp,
+          ClusterConfig.instance.primary_address,
+        ]
       end
     end
 
@@ -59,8 +68,11 @@ module Unified
 
     def assert_session_dirty(op)
       consume_test_runner(op)
-      # https://jira.mongodb.org/browse/RUBY-1813
-      true
+      use_arguments(op) do |args|
+        session = entities.get(:session, args.use!('session'))
+        # https://jira.mongodb.org/browse/RUBY-1813
+        true
+      end
     end
 
     def assert_session_not_dirty(op)
@@ -241,6 +253,61 @@ module Unified
         if store_successes
           entities.set(:success_count, store_successes, successes)
         end
+      end
+    end
+
+    def assert_event_count(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        client = entities.get(:client, args.use!('client'))
+        subscriber = @subscribers.fetch(client)
+        event = args.use!('event')
+        assert_eq(event.keys.length, 1, "Expected event must have one key: #{event}")
+        count = args.use!('count')
+
+        events = select_events(subscriber, event)
+        if %w(serverDescriptionChangedEvent poolClearedEvent).include?(event.keys.first)
+          # We publish SDAM events from both regular and push monitors.
+          # This means sometimes there are two ServerMarkedUnknownEvent
+          # events published for the same server transition.
+          # Allow actual event count to be at least the expected event count
+          # in case there are multiple transitions in a single test.
+          assert_gte(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
+        else
+          assert_eq(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
+        end
+      end
+    end
+
+    def select_events(subscriber, event)
+      expected_name, opts = event.first
+      expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { $1.upcase }
+      subscriber.wanted_events.select do |wevent|
+        if wevent.class.name.sub(/.*::/, '') == expected_name
+          spec = UsingHash[opts]
+          result = true
+          if new_desc = spec.use('newDescription')
+            if type = new_desc.use('type')
+              result &&= wevent.new_description.server_type == type.downcase.to_sym
+            end
+          end
+          unless spec.empty?
+            raise NotImplementedError, "Unhandled keys: #{spec}"
+          end
+          result
+        end
+      end
+    end
+
+    def assert_number_connections_checked_out(op)
+      consume_test_runner(op)
+      use_arguments(op) do |args|
+        client = entities.get(:client, args.use!('client'))
+        connections = args.use!('connections')
+        actual_c = client.cluster.servers.map(&:pool_internal).compact.sum do |p|
+          p.instance_variable_get(:@checked_out_connections).length
+        end
+        assert_eq(actual_c, connections, "Expected client #{client} to have #{connections} checked out connections but there are #{actual_c}.")
       end
     end
 

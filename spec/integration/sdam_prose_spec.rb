@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -47,12 +47,12 @@ describe 'SDAM prose tests' do
         },
       )
 
-      deadline = Time.now + 10
+      deadline = Mongo::Utils.monotonic_time + 10
       loop do
         if server.average_round_trip_time > 0.25
           break
         end
-        if Time.now >= deadline
+        if Mongo::Utils.monotonic_time >= deadline
           raise "Failed to witness RTT growing to >= 250 ms in 10 seconds"
         end
         sleep 0.2

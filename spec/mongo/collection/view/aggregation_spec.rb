@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -648,6 +648,125 @@ describe Mongo::Collection::View::Aggregation do
             end
           end
         end
+      end
+    end
+  end
+
+  context "when there is a filter on the view" do
+
+    context "when broken_view_aggregate is turned off" do
+      config_override :broken_view_aggregate, false
+
+      let(:documents) do
+        [
+          { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+          { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+          { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+        ]
+      end
+
+      let(:pipeline) do
+        [{
+          "$project" => {
+            city: 1
+          }
+        }]
+      end
+
+      let(:view) do
+        authorized_collection.find(city: "Berlin")
+      end
+
+      before do
+        authorized_collection.delete_many
+        authorized_collection.insert_many(documents)
+      end
+
+      it "uses the filter on the view" do
+        expect(aggregation.to_a.length).to eq(2)
+      end
+
+      it "adds a match stage" do
+        expect(aggregation.pipeline.length).to eq(2)
+        expect(aggregation.pipeline.first).to eq({ :$match => { "city" => "Berlin" } })
+      end
+    end
+
+    context "when broken_view_aggregate is turned on" do
+      config_override :broken_view_aggregate, true
+
+      let(:documents) do
+        [
+          { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+          { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+          { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+        ]
+      end
+
+      let(:pipeline) do
+        [{
+          "$project" => {
+            city: 1
+          }
+        }]
+      end
+
+      let(:view) do
+        authorized_collection.find(city: "Berlin")
+      end
+
+      before do
+        authorized_collection.delete_many
+        authorized_collection.insert_many(documents)
+      end
+
+      it "ignores the view filter" do
+        expect(aggregation.to_a.length).to eq(3)
+      end
+
+      it "does not add a match stage" do
+        expect(aggregation.pipeline.length).to eq(1)
+        expect(aggregation.pipeline).to eq([ { "$project" => { city: 1 } } ])
+      end
+    end
+  end
+
+  context "when there is no filter on the view" do
+
+    with_config_values :broken_view_aggregate, true, false do
+
+      let(:documents) do
+        [
+          { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+          { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+          { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+        ]
+      end
+
+      let(:pipeline) do
+        [{
+          "$project" => {
+            city: 1
+          }
+        }]
+      end
+
+      let(:view) do
+        authorized_collection.find
+      end
+
+      before do
+        authorized_collection.delete_many
+        authorized_collection.insert_many(documents)
+      end
+
+      it "ignores the view filter" do
+        expect(aggregation.to_a.length).to eq(3)
+      end
+
+      it "does not add a match stage" do
+        expect(aggregation.pipeline.length).to eq(1)
+        expect(aggregation.pipeline).to eq([ { "$project" => { city: 1 } } ])
       end
     end
   end

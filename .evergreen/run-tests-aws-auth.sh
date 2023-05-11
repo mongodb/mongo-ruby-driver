@@ -27,16 +27,16 @@ case "$AUTH" in
     export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_ECS_SECRET_ACCESS_KEY`"
     export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="`get_var IAM_AUTH_ECS_ACCOUNT_ARN`"
     ;;
-    
+
   aws-assume-role)
     export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_ASSUME_AWS_ACCOUNT`"
     export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY`"
-    
+
     # This is the ARN provided in the AssumeRole request. It is different
     # from the ARN that the credentials returned by the AssumeRole request
     # resolve to.
     export MONGO_RUBY_DRIVER_AWS_AUTH_ASSUME_ROLE_ARN="`get_var IAM_AUTH_ASSUME_ROLE_NAME`"
-    
+
     # This is the ARN that the credentials obtained by the AssumeRole
     # request resolve to. It is hardcoded in
     # https://github.com/mongodb-labs/drivers-evergreen-tools/blob/master/.evergreen/auth_aws/aws_e2e_assume_role.js
@@ -45,7 +45,7 @@ case "$AUTH" in
     # obtained from STS. See https://jira.mongodb.org/browse/RUBY-2425.
     export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::557821124784:assumed-role/authtest_user_assume_role/*"
     ;;
-    
+
   aws-ec2)
     export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
     export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
@@ -53,7 +53,7 @@ case "$AUTH" in
     # Region is not specified in Evergreen but can be specified when
     # testing locally.
     export MONGO_RUBY_DRIVER_AWS_AUTH_REGION=${MONGO_RUBY_DRIVER_AWS_AUTH_REGION:=us-east-1}
-    
+
     if test -z "$MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN"; then
       # This is the ARN that the credentials obtained via EC2 instance metadata
       # resolve to. It is hardcoded in
@@ -64,10 +64,10 @@ case "$AUTH" in
       # variable manually.
       export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::557821124784:assumed-role/authtest_instance_profile_role/*"
     fi
-    
+
     export TEST_CMD=${TEST_CMD:=rspec spec/integration/aws*spec.rb spec/integration/client_construction_aws*spec.rb}
     ;;
-    
+
   aws-ecs)
     export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_ECS_ACCOUNT`"
     export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_ECS_SECRET_ACCESS_KEY`"
@@ -78,7 +78,7 @@ case "$AUTH" in
     # Region is not specified in Evergreen but can be specified when
     # testing locally.
     export MONGO_RUBY_DRIVER_AWS_AUTH_REGION=${MONGO_RUBY_DRIVER_AWS_AUTH_REGION:=us-east-1}
-    
+
     if test -z "$MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN"; then
       # This is the ARN that the credentials obtained via ECS task metadata
       # resolve to. It is hardcoded in
@@ -89,11 +89,41 @@ case "$AUTH" in
       # variable manually.
       export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::557821124784:assumed-role/ecsTaskExecutionRole/*"
     fi
-    
+
     export TEST_CMD=${TEST_CMD:=rspec spec/integration/aws*spec.rb spec/integration/client_construction_aws*spec.rb}
     exec `dirname $0`/run-tests-ecs.sh
     ;;
-    
+
+  aws-web-identity)
+    cd `dirname "$0"`/auth_aws
+
+    . ./activate_venv.sh
+    export AWS_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
+    export AWS_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
+    python -u lib/aws_unassign_instance_profile.py
+    unset AWS_ACCESS_KEY_ID
+    unset AWS_SECRET_ACCESS_KEY
+
+    export IDP_ISSUER="`get_var IAM_WEB_IDENTITY_ISSUER`"
+    export IDP_JWKS_URI="`get_var IAM_WEB_IDENTITY_JWKS_URI`"
+    export IDP_RSA_KEY="`get_var IAM_WEB_IDENTITY_RSA_KEY`"
+    export AWS_WEB_IDENTITY_TOKEN_FILE="`get_var IAM_WEB_IDENTITY_TOKEN_FILE`"
+    python -u lib/aws_handle_oidc_creds.py token
+    unset IDP_ISSUER
+    unset IDP_JWKS_URI
+    unset IDP_RSA_KEY
+
+    cd -
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
+    export AWS_WEB_IDENTITY_TOKEN_FILE="`get_var IAM_WEB_IDENTITY_TOKEN_FILE`"
+    export AWS_ROLE_ARN="`get_var IAM_AUTH_ASSUME_WEB_ROLE_NAME`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_ASSUME_ROLE_ARN="`get_var IAM_AUTH_ASSUME_WEB_ROLE_NAME`"
+    export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::857654397073:assumed-role/webIdentityTestRole/*"
+
+    export TEST_CMD=${TEST_CMD:=rspec spec/integration/aws*spec.rb spec/integration/client_construction_aws*spec.rb}
+    ;;
+
   *)
     echo "Unknown AUTH value $AUTH" 1>&2
     exit 1

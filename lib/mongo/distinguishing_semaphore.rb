@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -23,7 +23,7 @@ module Mongo
   class DistinguishingSemaphore
     def initialize
       @lock = Mutex.new
-      @cv = ConditionVariable.new
+      @cv = ::ConditionVariable.new
       @queue = []
     end
 

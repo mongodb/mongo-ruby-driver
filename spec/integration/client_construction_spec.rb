@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'spec_helper'
 
@@ -100,6 +100,28 @@ describe 'Client construction' do
         expect(server.description).to be_primary
       end
     end
+
+    # This test requires a PSA deployment. The port number is fixed for our
+    # Evergreen/Docker setups.
+    context 'when directly connecting to arbiters' do
+      let(:options) do
+        SpecConfig.instance.test_options.tap do |opt|
+          opt.delete(:connect)
+          opt.delete(:replica_set)
+          opt.update(direct_connection: true)
+        end
+      end
+
+      let(:client) do
+        new_local_client(['localhost:27019'], options)
+      end
+
+      let(:response) { client.command(ismaster: 1).documents.first }
+
+      it 'connects' do
+        response.fetch('arbiterOnly').should be true
+      end
+    end
   end
 
   context 'in sharded topology' do
@@ -191,16 +213,82 @@ describe 'Client construction' do
     context 'with default key vault client' do
       let(:key_vault_client) { nil }
 
-      it 'creates a working key vault client' do
-        key_vault_client = client.encrypter.key_vault_client
+      shared_examples 'creates a working key vault client' do
+        it 'creates a working key vault client' do
+          key_vault_client = client.encrypter.key_vault_client
 
-        result = key_vault_client[:test].insert_one(test: 1)
-        expect(result).to be_ok
+          result = key_vault_client[:test].insert_one(test: 1)
+          expect(result).to be_ok
+        end
       end
 
-      it 'creates a key vault client with the same cluster as the existing client' do
-        key_vault_client = client.encrypter.key_vault_client
-        expect(key_vault_client.cluster).to eq(client.cluster)
+      context 'when top-level max pool size is not 0' do
+        include_examples 'creates a working key vault client'
+
+        shared_examples 'limited connection pool' do
+          it 'creates a key vault client with a different cluster than the existing client' do
+            key_vault_client = client.encrypter.key_vault_client
+            expect(key_vault_client.cluster).not_to eq(client.cluster)
+          end
+
+          # min pool size for the key vault client can be greater than 0
+          # when the key vault client is the same as the top-level client.
+          # This is OK because we aren't making any more connections for FLE,
+          # the minimum was requested by application for its own needs.
+          it 'uses min pool size 0 for key vault client' do
+            key_vault_client = client.encrypter.key_vault_client
+            key_vault_client.options[:min_pool_size].should be 0
+          end
+        end
+
+        context 'when top-level max pool size is not specified' do
+          before do
+            client.options[:max_pool_size].should be nil
+          end
+
+          include_examples 'limited connection pool'
+
+          it 'uses unspecified max pool size for key vault client' do
+            key_vault_client = client.encrypter.key_vault_client
+            key_vault_client.options[:max_pool_size].should be nil
+          end
+        end
+
+        context 'when top-level max pool size is specified' do
+          let(:options) do
+            {
+              auto_encryption_options: auto_encryption_options,
+              max_pool_size: 42,
+            }
+          end
+
+          include_examples 'limited connection pool'
+
+          it 'uses the same max pool size for key vault client' do
+            key_vault_client = client.encrypter.key_vault_client
+            key_vault_client.options[:max_pool_size].should be 42
+          end
+        end
+      end
+
+      context 'when top-level max pool size is 0' do
+        let(:options) do
+          {
+            auto_encryption_options: auto_encryption_options,
+            max_pool_size: 0,
+          }
+        end
+
+        before do
+          client.options[:max_pool_size].should be 0
+        end
+
+        include_examples 'creates a working key vault client'
+
+        it 'creates a key vault client with the same cluster as the existing client' do
+          key_vault_client = client.encrypter.key_vault_client
+          expect(key_vault_client.cluster).to eq(client.cluster)
+        end
       end
     end
   end

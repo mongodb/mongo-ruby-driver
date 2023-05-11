@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# encoding: utf-8
+# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'webrick'
@@ -7,6 +7,7 @@ require 'webrick'
 describe Mongo::Socket::OcspVerifier do
   require_ocsp_verifier
   with_openssl_debug
+  retry_test sleep: 5
 
   shared_examples 'verifies' do
     context 'mri' do
@@ -334,6 +335,8 @@ describe Mongo::Socket::OcspVerifier do
     # have a path in the OCSP URI (which the test also asserts).
     # Note that these certificates expire in 3 months and need to be replaced
     # with a more permanent solution.
+    # Use the spec/support/certificates/retrieve-atlas-cert script to retrieve
+    # current certificates from Atlas.
     let(:cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp.crt') }
     let(:ca_cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp-ca.crt') }
     let(:cert_store) do
