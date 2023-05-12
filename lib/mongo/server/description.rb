@@ -869,6 +869,10 @@ module Mongo
       # @api private
       def server_version_gte?(version)
         required_wv = case version
+          when '7.0'
+            21
+          when '6.0'
+            17
           when '5.2'
             15
           when '5.1'
