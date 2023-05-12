@@ -832,7 +832,7 @@ axes:
         display_name: jruby-9.4
         variables:
           RVM_RUBY: "jruby-9.4"
-
+  
   - id: "os"
     display_name: OS
     values:
@@ -1210,7 +1210,7 @@ buildvariants:
   - matrix_name: "solo"
     matrix_spec:
       solo: on
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
+      ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
       mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1380,7 +1380,7 @@ buildvariants:
     matrix_spec:
       ocsp-verifier: true
       # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
+      ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1579,7 +1579,7 @@ buildvariants:
       ruby: ruby-3.0
       fle: helper
       topology: standalone
-      os: debian11
+      os: debian11 # could eventually look at updating this to rhel80
       mongodb-version: 6.0
     display_name: "AZURE KMS"
     tasks:
@@ -1588,7 +1588,7 @@ buildvariants:
 
   - matrix_name: "atlas"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
+      ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
       os: rhel8
     display_name: "Atlas tests ${ruby}"
     tasks:
@@ -1597,8 +1597,8 @@ buildvariants:
   - matrix_name: "serverless"
     matrix_spec:
       # https://jira.mongodb.org/browse/RUBY-3217
-      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
+      # ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
+      ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
       fle: path
       os: rhel8
     display_name: "Atlas serverless ${ruby} single mongos"
