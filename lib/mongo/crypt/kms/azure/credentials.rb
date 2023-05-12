@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -38,11 +37,14 @@ module Mongo
           # @return [ String | nil ] Azure identity platform endpoint.
           attr_reader :identity_platform_endpoint
 
+          # @return [ String | nil ] Azure access token.
+          attr_reader :access_token
+
           # @api private
           def_delegator :@opts, :empty?
 
-          FORMAT_HINT = "Azure KMS provider options must be in the format: " +
-              "{ tenant_id: 'TENANT-ID', client_id: 'TENANT_ID', client_secret: 'CLIENT_SECRET' }"
+          FORMAT_HINT = 'Azure KMS provider options must be in the format: \
+            { tenant_id: "TENANT-ID", client_id: "TENANT_ID", client_secret: "CLIENT_SECRET" }'
 
           # Creates an Azure KMS credentials object form a parameters hash.
           #
@@ -58,7 +60,11 @@ module Mongo
           #   formatted.
           def initialize(opts)
             @opts = opts
-            unless empty?
+            return if empty?
+
+            if opts[:access_token]
+              @access_token = opts[:access_token]
+            else
               @tenant_id = validate_param(:tenant_id, opts, FORMAT_HINT)
               @client_id = validate_param(:client_id, opts, FORMAT_HINT)
               @client_secret = validate_param(:client_secret, opts, FORMAT_HINT)
@@ -73,13 +79,20 @@ module Mongo
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
             return BSON::Document.new if empty?
-            BSON::Document.new({
-              tenantId: @tenant_id,
-              clientId: @client_id,
-              clientSecret: @client_secret,
-            }).tap do |bson|
-              unless identity_platform_endpoint.nil?
-                bson.update({ identityPlatformEndpoint: identity_platform_endpoint })
+
+            if access_token
+              BSON::Document.new({ accessToken: access_token })
+            else
+              BSON::Document.new(
+                {
+                  tenantId: @tenant_id,
+                  clientId: @client_id,
+                  clientSecret: @client_secret
+                }
+              ).tap do |bson|
+                unless identity_platform_endpoint.nil?
+                  bson.update({ identityPlatformEndpoint: identity_platform_endpoint })
+                end
               end
             end
           end

@@ -468,7 +468,19 @@ buildvariants:
       - name: testgcpkms_task_group
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
-  - matrix_name: atlas
+  - matrix_name: testazurekms-variant
+    matrix_spec:
+      ruby: ruby-3.0
+      fle: helper
+      topology: standalone
+      os: debian11 # could eventually look at updating this to rhel80
+      mongodb-version: 6.0
+    display_name: "AZURE KMS"
+    tasks:
+      - name: testazurekms_task_group
+        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+
+  - matrix_name: "atlas"
     matrix_spec:
       ruby: <%= supported_rubies %>
       os: rhel8
