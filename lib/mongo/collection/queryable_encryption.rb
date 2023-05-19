@@ -112,7 +112,6 @@ module Mongo
       def emm_collections(encrypted_fields)
         [
           encrypted_fields['escCollection'] || "enxcol_.#{name}.esc",
-          encrypted_fields['eccCollection'] || "enxcol_.#{name}.ecc",
           encrypted_fields['ecocCollection'] || "enxcol_.#{name}.ecoc",
         ]
       end
