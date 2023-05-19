@@ -174,8 +174,8 @@ module Mongo
       #   lint mode is enabled.
       #
       # @since 2.0.0
-      def select_server(cluster, ping = nil, session = nil, write_aggregation: false)
-        select_server_impl(cluster, ping, session, write_aggregation).tap do |server|
+      def select_server(cluster, ping = nil, session = nil, write_aggregation: false, deprioritized: [])
+        select_server_impl(cluster, ping, session, write_aggregation, deprioritized).tap do |server|
           if Lint.enabled? && !server.pool.ready?
             raise Error::LintError, 'Server selector returning a server with a pool which is not ready'
           end
@@ -183,7 +183,7 @@ module Mongo
       end
 
       # Parameters and return values are the same as for select_server.
-      private def select_server_impl(cluster, ping, session, write_aggregation)
+      private def select_server_impl(cluster, ping, session, write_aggregation, deprioritized)
         if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
           return cluster.servers.first
         end
@@ -266,7 +266,7 @@ module Mongo
             end
           end
 
-          server = try_select_server(cluster, write_aggregation: write_aggregation)
+          server = try_select_server(cluster, write_aggregation: write_aggregation, deprioritized: deprioritized)
 
           if server
             unless cluster.topology.compatible?
@@ -325,7 +325,7 @@ module Mongo
       # @return [ Server | nil ] A suitable server, if one exists.
       #
       # @api private
-      def try_select_server(cluster, write_aggregation: false)
+      def try_select_server(cluster, write_aggregation: false, deprioritized: [])
         servers = if write_aggregation && cluster.replica_set?
           # 1. Check if ALL servers in cluster support secondary writes.
           is_write_supported = cluster.servers.reduce(true) do |res, server|
@@ -347,7 +347,7 @@ module Mongo
         # by the selector (e.g. for secondary preferred, the first
         # server may be a secondary and the second server may be primary)
         # and we should take the first server here respecting the order
-        server = servers.first
+        server = suitable_server(servers, deprioritized)
 
         if server
           if Lint.enabled?
@@ -417,6 +417,15 @@ module Mongo
       end
 
       private
+
+      def suitable_server(servers, deprioritized)
+        preferred = servers - deprioritized
+        if preferred.empty?
+          servers.first
+        else
+          preferred.first
+        end
+      end
 
       # Convert this server preference definition into a format appropriate
       #   for sending to a MongoDB server (i.e., as a command field).

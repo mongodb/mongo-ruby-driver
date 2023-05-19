@@ -107,4 +107,74 @@ describe 'Retryable reads errors tests' do
       })
     end
   end
+
+  context 'retry on different mongos' do
+    require_topology :sharded
+
+    let(:first_mongos) do
+      Mongo::Client.new(
+        [SpecConfig.instance.addresses.first],
+        direct_connection: true,
+        database: 'admin'
+      )
+    end
+
+    let(:second_mongos) do
+      Mongo::Client.new(
+        [SpecConfig.instance.addresses.last],
+        direct_connection: false,
+        database: 'admin'
+      )
+    end
+
+    let(:client) { authorized_client.with(retry_reads: true) }
+
+    before do
+      skip 'This test requires two mongos' unless SpecConfig.instance.addresses.length == 2
+
+      first_mongos.database.command(
+        configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(find),
+            closeConnection: false,
+            errorCode: 11600,
+            errorLabels: ['RetryableWriteError']
+          },
+      )
+
+      second_mongos.database.command(
+        configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(find),
+            closeConnection: false,
+            errorCode: 11600,
+            errorLabels: ['RetryableWriteError']
+          },
+      )
+    end
+
+    let(:subscriber) { Mrss::EventSubscriber.new }
+
+    let(:find_started_events) do
+      subscriber.started_events.select { |e| e.command_name == "find" }
+    end
+
+    let(:find_failed_events) do
+      subscriber.failed_events.select { |e| e.command_name == "find" }
+    end
+
+    after do
+      first_mongos.close
+      second_mongos.close
+    end
+
+    it 'retries on different mongos' do
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      expect { collection.find.first }.to raise_error
+      expect(find_started_events.map { |e| e.address.to_s }.sort).to eq(SpecConfig.instance.addresses.map { |a| a.to_s }.sort)
+      expect(find_failed_events.map { |e| e.address.to_s }.sort).to eq(SpecConfig.instance.addresses.map { |a| a.to_s }.sort)
+    end
+  end
 end
