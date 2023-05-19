@@ -67,6 +67,6 @@ def standard_dependencies
   end
 
   if ENV['FLE'] == 'helper'
-    gem 'libmongocrypt-helper', '~> 1.7.0'
+    gem 'libmongocrypt-helper', '~> 1.8.0'
   end
 end
