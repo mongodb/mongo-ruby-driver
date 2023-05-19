@@ -44,9 +44,53 @@ Bundler/OrderedGems:
 Gemspec/OrderedDependencies:
   Enabled: false
 
+Layout/SpaceInsideArrayLiteralBrackets:
+  EnforcedStyle: space
+
+Layout/SpaceInsidePercentLiteralDelimiters:
+  Enabled: false
+
+Metrics/ModuleLength:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 20
+
+RSpec/BeforeAfterAll:
+  Enabled: false
+
+# Ideally, we'd use this one, too, but our tests have not historically followed
+# this style and it's not worth changing right now, IMO
+RSpec/DescribeClass:
+  Enabled: false
+
+RSpec/ImplicitExpect:
+  EnforcedStyle: is_expected
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+RSpec/NestedGroups:
+  Enabled: false
+
 Style/Documentation:
   Exclude:
     - 'spec/**/*'
 
-Metrics/MethodLength:
-  Max: 20
+Style/ModuleFunction:
+  EnforcedStyle: extend_self
+
+Style/ParallelAssignment:
+  Enabled: false
+
+Style/TernaryParentheses:
+  EnforcedStyle: require_parentheses_when_complex
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: false
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: false
