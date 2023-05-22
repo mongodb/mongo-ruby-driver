@@ -110,6 +110,8 @@ describe 'Retryable reads errors tests' do
 
   context 'retry on different mongos' do
     require_topology :sharded
+    min_server_version '4.2'
+    require_no_auth
 
     let(:first_mongos) do
       Mongo::Client.new(
