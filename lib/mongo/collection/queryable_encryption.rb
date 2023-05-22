@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2022 MongoDB Inc.
 #
@@ -34,34 +33,17 @@ module Mongo
       #
       # @return [ Result ] The result of provided block.
       def maybe_create_qe_collections(encrypted_fields, client, session)
-        encrypted_fields = if encrypted_fields
-          encrypted_fields
-        elsif encrypted_fields_map
-          encrypted_fields_map[namespace] || {}
-        else
-          {}
-        end
-        if encrypted_fields.empty?
-          return yield
-        end
+        encrypted_fields = encrypted_fields_from(encrypted_fields)
+        return yield if encrypted_fields.empty?
 
         check_wire_version!
 
         emm_collections(encrypted_fields).each do |coll|
           context = Operation::Context.new(client: client, session: session)
-          Operation::Create.new(
-            selector: {
-              create: coll,
-              clusteredIndex: {
-                key: {
-                  _id: 1
-                },
-                unique: true
-              }
-            },
-            db_name: database.name,
-          ).execute(next_primary(nil, session), context: context)
+          create_operation_for(coll)
+            .execute(next_primary(nil, session), context: context)
         end
+
         yield(encrypted_fields).tap do |result|
           indexes.create_one(__safeContent__: 1) if result
         end
@@ -77,31 +59,25 @@ module Mongo
       # @return [ Result ] The result of provided block.
       def maybe_drop_emm_collections(encrypted_fields, client, session)
         encrypted_fields = if encrypted_fields
-          encrypted_fields
-        elsif encrypted_fields_map
-          if encrypted_fields_map[namespace]
-            encrypted_fields_map[namespace]
-          else
-            database.list_collections(filter: { name: name })
-              .first
-              &.fetch(:options, {})
-              &.fetch(:encryptedFields, {}) || {}
-          end
-        else
-          {}
-        end
-        if encrypted_fields.empty?
-          return yield
-        end
+                             encrypted_fields
+                           elsif encrypted_fields_map
+                             encrypted_fields_for_drop_from_map
+                           else
+                             {}
+                           end
+
+        return yield if encrypted_fields.empty?
+
         emm_collections(encrypted_fields).each do |coll|
           context = Operation::Context.new(client: client, session: session)
           operation = Operation::Drop.new(
             selector: { drop: coll },
             db_name: database.name,
-            session: session,
+            session: session
           )
           do_drop(operation, session, context)
         end
+
         yield
       end
 
@@ -126,10 +102,55 @@ module Mongo
       # @raise [ Mongo::Error ] if the wire version is not
       #   recent enough
       def check_wire_version!
-        if next_primary.max_wire_version < QE2_MIN_WIRE_VERSION
-          raise Mongo::Error,
-            "Driver support of Queryable Encryption is incompatible with server. Upgrade server to use Queryable Encryption."
-        end
+        return unless next_primary.max_wire_version < QE2_MIN_WIRE_VERSION
+
+        raise Mongo::Error,
+              'Driver support of Queryable Encryption is incompatible with server. ' \
+              'Upgrade server to use Queryable Encryption.'
+      end
+
+      # Tries to return the encrypted fields from the argument. If the argument
+      # is nil, tries to find the encrypted fields from the
+      # encrypted_fields_map.
+      #
+      # @param [ Hash | nil ] fields the encrypted fields
+      #
+      # @return [ Hash ] the encrypted fields
+      def encrypted_fields_from(fields)
+        fields ||
+          (encrypted_fields_map && encrypted_fields_map[namespace]) ||
+          {}
+      end
+
+      # Tries to return the encrypted fields from the {{encrypted_fields_map}}
+      # value, for the current namespace.
+      #
+      # @return [ Hash | nil ] the encrypted fields, if found
+      def encrypted_fields_for_drop_from_map
+        encrypted_fields_map[namespace] ||
+          database.list_collections(filter: { name: name })
+                  .first
+                  &.fetch(:options, {})
+                  &.fetch(:encryptedFields, {}) ||
+          {}
+      end
+
+      # Returns a new create operation for the given collection.
+      #
+      # @param [ String ] coll the name of the collection to create.
+      #
+      # @return [ Operation::Create ] the new create operation.
+      def create_operation_for(coll)
+        Operation::Create.new(
+          selector: {
+            create: coll,
+            clusteredIndex: {
+              key: { _id: 1 },
+              unique: true
+            }
+          },
+          db_name: database.name
+        )
       end
     end
   end

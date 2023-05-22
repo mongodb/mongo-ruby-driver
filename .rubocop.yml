@@ -83,6 +83,9 @@ Style/Documentation:
 Style/ModuleFunction:
   EnforcedStyle: extend_self
 
+Style/OptionalBooleanParameter:
+  Enabled: false
+
 Style/ParallelAssignment:
   Enabled: false
 
