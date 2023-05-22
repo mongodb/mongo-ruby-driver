@@ -22,6 +22,8 @@ module Mongo
     #
     # @api private
     module QueryableEncryption
+      # The minimum wire version for QE2 support
+      QE2_MIN_WIRE_VERSION = 21
 
       # Creates auxiliary collections and indices for queryable encryption if necessary.
       #
@@ -42,6 +44,8 @@ module Mongo
         if encrypted_fields.empty?
           return yield
         end
+
+        check_wire_version!
 
         emm_collections(encrypted_fields).each do |coll|
           context = Operation::Context.new(client: client, session: session)
@@ -116,6 +120,17 @@ module Mongo
         ]
       end
 
+      # Creating encrypted collections is only supported on 7.0.0 and later
+      # (wire version 21+).
+      #
+      # @raise [ Mongo::Error ] if the wire version is not
+      #   recent enough
+      def check_wire_version!
+        if next_primary.max_wire_version < QE2_MIN_WIRE_VERSION
+          raise Mongo::Error,
+            "Driver support of Queryable Encryption is incompatible with server. Upgrade server to use Queryable Encryption."
+        end
+      end
     end
   end
 end
