@@ -6,6 +6,11 @@ module Net
   autoload :HTTP, 'net/http'
 end
 
+MAP_REDUCE_COMMANDS = %w[ map reduce ].freeze
+AUTHENTICATION_COMMANDS = %w[ saslStart saslContinue authenticate getnonce ].freeze
+BIN_FALSE = File.executable?('/bin/false') ? '/bin/false' : 'false'
+BIN_TRUE  = File.executable?('/bin/true') ? '/bin/true' : 'true'
+
 module Utils
   extend self
 
@@ -141,9 +146,6 @@ module Utils
   def order_hash(hash)
     hash.to_a.sort.to_h
   end
-
-  MAP_REDUCE_COMMANDS = %w[ map reduce ].freeze
-  AUTHENTICATION_COMMANDS = %w[ saslStart saslContinue authenticate getnonce ].freeze
 
   # Transforms an array of CommandStarted events to an array of hashes
   # matching event specification in YAML spec files
@@ -459,9 +461,6 @@ module Utils
     end
   end
 
-  BIN_FALSE = File.executable?('/bin/false') ? '/bin/false' : 'false'
-  BIN_TRUE  = File.executable?('/bin/true') ? '/bin/true' : 'true'
-
   def wrap_forked_child
     yield
   rescue StandardError => e
@@ -541,35 +540,39 @@ module Utils
   end
   # rubocop:enable Metrics
 
-  PERMITTED_YAML_CLASSES = [
-    BigDecimal,
-    Date,
-    Time,
-    Range,
-    Regexp,
-    Symbol,
-    BSON::Binary,
-    BSON::Code,
-    BSON::CodeWithScope,
-    BSON::DbPointer,
-    BSON::Decimal128,
-    BSON::Int32,
-    BSON::Int64,
-    BSON::MaxKey,
-    BSON::MinKey,
-    BSON::ObjectId,
-    BSON::Regexp::Raw,
-    BSON::Symbol::Raw,
-    BSON::Timestamp,
-    BSON::Undefined,
-  ].freeze
+  # rubocop:disable Metrics
+  def permitted_yaml_classes
+    @permitted_yaml_classes ||= [
+      BigDecimal,
+      Date,
+      Time,
+      Range,
+      Regexp,
+      Symbol,
+      BSON::Binary,
+      BSON::Code,
+      BSON::CodeWithScope,
+      BSON::DbPointer,
+      BSON::Decimal128,
+      BSON::Int32,
+      BSON::Int64,
+      BSON::MaxKey,
+      BSON::MinKey,
+      BSON::ObjectId,
+      BSON::Regexp::Raw,
+      BSON::Symbol::Raw,
+      BSON::Timestamp,
+      BSON::Undefined,
+    ].freeze
+  end
+  # rubocop:enable Metrics
 
   def load_spec_yaml_file(path)
     if RUBY_VERSION < '2.6'
-      YAML.safe_load(File.read(path), PERMITTED_YAML_CLASSES, [], true)
+      YAML.safe_load(File.read(path), permitted_yaml_classes, [], true)
     else
       # Here we have Ruby 2.6+ that supports the new syntax of `safe_load``.
-      YAML.safe_load(File.read(path), permitted_classes: PERMITTED_YAML_CLASSES, aliases: true)
+      YAML.safe_load(File.read(path), permitted_classes: permitted_yaml_classes, aliases: true)
     end
   end
 
