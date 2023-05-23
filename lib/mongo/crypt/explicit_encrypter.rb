@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -257,6 +256,8 @@ module Mongo
       #
       # @return [ Crypt::RewrapManyDataKeyResult ] Result of the operation.
       def rewrap_many_data_key(filter, opts = {})
+        validate_rewrap_options!(opts)
+
         master_key_document = if opts[:provider]
           options = opts.dup
           provider = options.delete(:provider)
@@ -290,6 +291,18 @@ module Mongo
         RewrapManyDataKeyResult.new(
           @encryption_io.update_data_keys(updates)
         )
+      end
+
+      # Ensures the consistency of the options passed to #rewrap_many_data_keys.
+      #
+      # @param [Hash] opts the options hash to validate
+      #
+      # @raise [ ArgumentError ] if the options are not consistent or
+      #   compatible.
+      def validate_rewrap_options!(opts)
+        if opts.key?(:master_key) && !opts.key?(:provider)
+          raise ArgumentError, 'If :master_key is specified, :provider must also be given'
+        end
       end
     end
   end

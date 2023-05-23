@@ -93,6 +93,14 @@ describe "RewrapManyDataKey" do
           expect(client_encryption_1.decrypt(ciphertext)).to eq('test')
           expect(client_encryption_2.decrypt(ciphertext)).to eq('test')
         end
+
+
+        context 'when master_key is present without provider' do
+          it 'raises an exception' do
+            expect { client_encryption_1.rewrap_many_data_key({}, master_key: {}) }
+              .to raise_error(ArgumentError, /provider/)
+          end
+        end
       end
     end
   end
