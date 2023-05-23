@@ -6,13 +6,20 @@ module Net
   autoload :HTTP, 'net/http'
 end
 
-MAP_REDUCE_COMMANDS = %w[ map reduce ].freeze
-AUTHENTICATION_COMMANDS = %w[ saslStart saslContinue authenticate getnonce ].freeze
-BIN_FALSE = File.executable?('/bin/false') ? '/bin/false' : 'false'
-BIN_TRUE  = File.executable?('/bin/true') ? '/bin/true' : 'true'
-
 module Utils
   extend self
+
+  # Used by #yamlify_command_events
+  MAP_REDUCE_COMMANDS = %w[ map reduce ].freeze
+
+  # Used by #yamlify_command_events
+  AUTHENTICATION_COMMANDS = %w[ saslStart saslContinue authenticate getnonce ].freeze
+
+  # The system command to invoke to represent a false result
+  BIN_FALSE = File.executable?('/bin/false') ? '/bin/false' : 'false'
+
+  # The system command to invoke to represent a true result
+  BIN_TRUE  = File.executable?('/bin/true') ? '/bin/true' : 'true'
 
   # Converts a 'camelCase' string or symbol to a :under_score symbol.
   def underscore(str)
