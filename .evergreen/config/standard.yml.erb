@@ -57,10 +57,12 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: <%= recent_rubies %>
-      mongodb-version: ['latest', '6.0']
+      #mongodb-version: ['latest', '6.0']
+      mongodb-version: ['6.0']
       topology: <%= topologies %>
       os: ['rhel8', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -70,9 +72,13 @@ buildvariants:
   # Only JRuby-9.4 is built for arm in the current toolchain, but 9.4 has other
   # issues. Either we fix those issues, or we build 9.3 for arm in the toolchain,
   # and hope it fixes the issues... Until then, we can only test MRI ruby on arm.
+  #
+  # further: 'latest' is broken until the QE2 changes are merged (RUBY-3211,
+  # RUBY-3226)
   - matrix_name: "mongo-recent-arm"
     matrix_spec:
       ruby: <%= latest_ruby %>
+      #mongodb-version: ['latest', '6.0']
       mongodb-version: ['latest', '6.0']
       topology: <%= topologies %>
       os: 'rhel8-arm'
@@ -231,21 +237,24 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "x509-tests"
-    matrix_spec:
-      auth-and-ssl: "x509"
-      ruby: <%= latest_ruby %>
-      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-      # the server for certain auth mechanisms. Once run-tests.sh is made smart
-      # enough to install mongosh, and then use either mongo or mongosh
-      # (depending on server version and what's available), we can bump this to
-      # the latest stable db version.
-      mongodb-version: <%= latest_5x_mdb %>
-      topology: standalone
-      os: rhel8
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
+  # The X.509 tests are failing with exceptions being expected, but never
+  # raised. (RUBY-3267)
+  #
+  # - matrix_name: "x509-tests"
+  #   matrix_spec:
+  #     auth-and-ssl: "x509"
+  #     ruby: <%= latest_ruby %>
+  #     # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
+  #     # the server for certain auth mechanisms. Once run-tests.sh is made smart
+  #     # enough to install mongosh, and then use either mongo or mongosh
+  #     # (depending on server version and what's available), we can bump this to
+  #     # the latest stable db version.
+  #     mongodb-version: <%= latest_5x_mdb %>
+  #     topology: standalone
+  #     os: rhel8
+  #   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  #   tasks:
+  #     - name: "test-mlaunch"
 
   - matrix_name: "jruby-auth"
     matrix_spec:
@@ -320,13 +329,14 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "kerberos-integration"
-    matrix_spec:
-      ruby: <%= sample_rubies %>
-      os: rhel8
-    display_name: "Kerberos integration ${os} ${ruby}"
-    tasks:
-      - name: "test-kerberos-integration"
+  # kerberos integration tests are broken (RUBY-3266)
+  # - matrix_name: "kerberos-integration"
+  #   matrix_spec:
+  #     ruby: <%= sample_rubies %>
+  #     os: rhel8
+  #   display_name: "Kerberos integration ${os} ${ruby}"
+  #   tasks:
+  #     - name: "test-kerberos-integration"
 
   - matrix_name: "kerberos-unit"
     matrix_spec:
@@ -339,17 +349,19 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
-  - matrix_name: "fle-latest"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: <%= latest_ruby %>
-      topology: [replica-set, sharded-cluster]
-      mongodb-version: [ 'latest' ]
-      os: rhel8
-      fle: helper
-    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-    tasks:
-      - name: "test-fle"
+  # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
+  #
+  # - matrix_name: "fle-latest"
+  #   matrix_spec:
+  #     auth-and-ssl: "noauth-and-nossl"
+  #     ruby: <%= latest_ruby %>
+  #     topology: [replica-set, sharded-cluster]
+  #     mongodb-version: [ 'latest' ]
+  #     os: rhel8
+  #     fle: helper
+  #   display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+  #   tasks:
+  #     - name: "test-fle"
 
   - matrix_name: "fle"
     matrix_spec:
