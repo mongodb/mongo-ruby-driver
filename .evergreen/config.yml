@@ -1088,7 +1088,7 @@ buildvariants:
     matrix_spec:
       ruby: "ruby-3.1"
       #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['latest', '6.0']
+      mongodb-version: ['6.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: 'rhel8-arm'
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"

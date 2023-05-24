@@ -79,7 +79,7 @@ buildvariants:
     matrix_spec:
       ruby: <%= latest_ruby %>
       #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['latest', '6.0']
+      mongodb-version: ['6.0']
       topology: <%= topologies %>
       os: 'rhel8-arm'
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
