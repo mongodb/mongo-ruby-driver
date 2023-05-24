@@ -26,7 +26,7 @@ else
     exit -1
 fi
 
-if ! ( grep -q ^ID.*rhel /etc/os_release & grep -q ^VERSION_ID.*8.0 /etc/os_release ); then
+if ! ( test -f /etc/os-release & grep -q ^ID.*rhel /etc/os-release & grep -q ^VERSION_ID.*8.0 /etc/os-release ); then
     echo Serverless tests assume rhel80
     echo If this has changed, update .evergreen/run-tests-serverless.sh as necessary
     exit -1
