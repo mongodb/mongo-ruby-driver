@@ -53,7 +53,7 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
       os: rhel8
-    display_name: ${auth-and-ssl} ${topology}
+    display_name: ${auth-and-ssl} ${ruby} ${topology}
     tasks:
       - name: "test-mlaunch"
 
@@ -62,7 +62,7 @@ buildvariants:
       ruby: <%= recent_rubies %>
       mongodb-version: ['latest', '6.0']
       topology: <%= topologies %>
-      os: ['rhel8', 'debian11', 'ubuntu2204']
+      os: ['rhel8', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"

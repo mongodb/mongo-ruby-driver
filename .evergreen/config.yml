@@ -1062,7 +1062,7 @@ buildvariants:
       mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
-    display_name: ${auth-and-ssl} ${topology}
+    display_name: ${auth-and-ssl} ${ruby} ${topology}
     tasks:
       - name: "test-mlaunch"
 
@@ -1071,7 +1071,7 @@ buildvariants:
       ruby: ["ruby-3.1", "jruby-9.3"]
       mongodb-version: ['latest', '6.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ['rhel8', 'debian11', 'ubuntu2204']
+      os: ['rhel8', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
