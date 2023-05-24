@@ -339,12 +339,24 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
+  - matrix_name: "fle-latest"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: <%= latest_ruby %>
+      topology: [replica-set, sharded-cluster]
+      mongodb-version: [ 'latest' ]
+      os: rhel8
+      fle: helper
+    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+    tasks:
+      - name: "test-fle"
+
   - matrix_name: "fle"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: <%= sample_rubies %>
+      ruby: <%= sample_mri_rubies %>
       topology: [replica-set, sharded-cluster]
-      mongodb-version: [ 'latest', '6.0', '4.4', '4.2', '4.0' ]
+      mongodb-version: [ '6.0', '4.4', '4.2', '4.0' ]
       os: rhel8
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
