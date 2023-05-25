@@ -49,7 +49,7 @@ fi
 
 # Make sure cmake is installed (in case we need to install the libmongocrypt
 # helper)
-if test -n "$FLE"; then
+if [ "$FLE" = "helper" ]; then
   install_cmake
 fi
 
