@@ -47,6 +47,12 @@ if test "$DOCKER_PRELOAD" != 1; then
   install_mlaunch_venv
 fi
 
+# Make sure cmake is installed (in case we need to install the libmongocrypt
+# helper)
+if [ "$FLE" = "helper" ]; then
+  install_cmake
+fi
+
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
 
