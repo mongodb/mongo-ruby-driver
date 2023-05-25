@@ -1,19 +1,22 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-require "spec_helper"
+require 'spec_helper'
 
-describe "Decryption events" do
+# No need to rewrite legacy tests to use shorter examples, unless/until we
+# revisit these tests and need to make more significant changes.
+# rubocop:disable RSpec/ExampleLength
+describe 'Decryption events' do
   require_enterprise
-  min_server_fcv "4.2"
+  min_server_fcv '4.2'
   require_libmongocrypt
-  include_context "define shared FLE helpers"
+  include_context 'define shared FLE helpers'
+  min_server_version '7.0.0-rc0'
 
   let(:client) do
     ClientRegistry.instance.new_local_client(
       SpecConfig.instance.addresses,
       SpecConfig.instance.test_options.merge(
-        database: SpecConfig.instance.test_db,
+        database: SpecConfig.instance.test_db
       )
     )
   end
@@ -31,34 +34,34 @@ describe "Decryption events" do
   end
 
   let(:existing_key_id) do
-    client_encryption.create_data_key('local', key_alt_names: [existing_key_alt_name])
+    client_encryption.create_data_key('local', key_alt_names: [ existing_key_alt_name ])
   end
 
-  before(:each) do
+  before do
     client.use(key_vault_db)[key_vault_coll].drop
-    client.use(key_vault_db).command({
+    client.use(key_vault_db).command(
       createIndexes: key_vault_coll,
       indexes: [
         {
-          name: "keyAltNames_1",
-          key: { "keyAltNames": 1 },
+          name: 'keyAltNames_1',
+          key: { keyAltNames: 1 },
           unique: true,
-          partialFilterExpression: { keyAltNames: { "$exists" => true } },
+          partialFilterExpression: { keyAltNames: { '$exists' => true } },
         },
       ],
-      writeConcern: { w: "majority" },
-    })
+      writeConcern: { w: 'majority' }
+    )
     # Force key creation
     existing_key_id
   end
 
   it 'tests create_data_key' do
     expect do
-      client_encryption.create_data_key('local', key_alt_names: ['abc'])
+      client_encryption.create_data_key('local', key_alt_names: [ 'abc' ])
     end.not_to raise_error
 
     expect do
-      client_encryption.create_data_key('local', key_alt_names: [existing_key_alt_name])
+      client_encryption.create_data_key('local', key_alt_names: [ existing_key_alt_name ])
     end.to raise_error(Mongo::Error::OperationFailure, /E11000/) # duplicate key error
   end
 
@@ -83,3 +86,4 @@ describe "Decryption events" do
     end.not_to raise_error
   end
 end
+# rubocop:enable RSpec/ExampleLength
