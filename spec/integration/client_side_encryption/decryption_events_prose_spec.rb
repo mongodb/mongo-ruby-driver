@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,13 +8,13 @@ describe 'Decryption events' do
   require_libmongocrypt
   include_context 'define shared FLE helpers'
   require_topology :replica_set
-
+  min_server_version '7.0.0-rc0'
 
   let(:setup_client) do
     ClientRegistry.instance.new_local_client(
       SpecConfig.instance.addresses,
       SpecConfig.instance.test_options.merge(
-        database: SpecConfig.instance.test_db,
+        database: SpecConfig.instance.test_db
       )
     )
   end
@@ -65,7 +64,7 @@ describe 'Decryption events' do
         },
         database: SpecConfig.instance.test_db,
         retry_reads: false,
-        max_read_retries: 0,
+        max_read_retries: 0
       )
     )
   end
@@ -76,7 +75,36 @@ describe 'Decryption events' do
 
   let(:subscriber) { Mrss::EventSubscriber.new }
 
-  before(:each) do
+  let(:command_error) do
+    {
+      'configureFailPoint' => 'failCommand',
+      'mode' => { 'times' => 1 },
+      'data' => {
+        'errorCode' => 123,
+        'failCommands' => [ 'aggregate' ]
+      }
+    }
+  end
+
+  let(:network_error) do
+    {
+      'configureFailPoint' => 'failCommand',
+      'mode' => { 'times' => 1 },
+      'data' => {
+        'errorCode' => 123,
+        'closeConnection' => true,
+        'failCommands' => [ 'aggregate' ]
+      }
+    }
+  end
+
+  let(:aggregate_event) do
+    subscriber.succeeded_events.detect do |evt|
+      evt.command_name == 'aggregate'
+    end
+  end
+
+  before do
     setup_client[collection_name].drop
     setup_client[collection_name].create
 
@@ -84,75 +112,48 @@ describe 'Decryption events' do
   end
 
   it 'tests command error' do
-    setup_client.use(:admin).command(
-      {
-        "configureFailPoint" => "failCommand",
-        "mode" => {
-            "times" => 1
-        },
-        "data" => {
-            "errorCode" => 123,
-            "failCommands" => [
-                "aggregate"
-            ]
-        }
-      }
-    )
+    setup_client.use(:admin).command(command_error)
 
     expect do
       collection.aggregate([]).to_a
     end.to raise_error(Mongo::Error::OperationFailure, /Failing command (?:via|due to) 'failCommand' failpoint/)
-    expect(subscriber.failed_events.length).to eql(1)
+    expect(subscriber.failed_events.length).to be 1
   end
 
   it 'tests network error' do
-    setup_client.use(:admin).command(
-      {
-        "configureFailPoint" => "failCommand",
-        "mode" => {
-            "times" => 1
-        },
-        "data" => {
-            "errorCode" => 123,
-            "closeConnection": true,
-            "failCommands" => [
-                "aggregate"
-            ]
-        }
-      }
-    )
+    setup_client.use(:admin).command(network_error)
 
     expect do
       collection.aggregate([]).to_a
     end.to raise_error(Mongo::Error::SocketError)
-    expect(subscriber.failed_events.length).to eql(1)
+    expect(subscriber.failed_events.length).to be 1
   end
 
-  it 'tests decrypt error' do
-    collection.insert_one(encrypted: malformed_ciphertext)
-    expect do
-      collection.aggregate([]).to_a
-    end.to raise_error(Mongo::Error::CryptError)
-    aggregate_event = subscriber.succeeded_events.detect do |evt|
-      evt.command_name == 'aggregate'
+  context 'when decrypt error' do
+    before do
+      collection.insert_one(encrypted: malformed_ciphertext)
     end
-    expect(aggregate_event).not_to be_nil
-    expect(
-      aggregate_event.reply.dig('cursor', 'firstBatch')&.first&.dig('encrypted')
-    ).to be_a_kind_of(BSON::Binary)
+
+    it 'fails' do
+      expect { collection.aggregate([]).to_a }.to raise_error(Mongo::Error::CryptError)
+      expect(aggregate_event).not_to be_nil
+      expect(
+        aggregate_event.reply.dig('cursor', 'firstBatch')&.first&.dig('encrypted')
+      ).to be_a(BSON::Binary)
+    end
   end
 
-  it 'tests decrypt success' do
-    collection.insert_one(encrypted: ciphertext)
-    expect do
-      collection.aggregate([]).to_a
-    end.not_to raise_error
-    aggregate_event = subscriber.succeeded_events.detect do |evt|
-      evt.command_name == 'aggregate'
+  context 'when decrypt success' do
+    before do
+      collection.insert_one(encrypted: ciphertext)
     end
-    expect(aggregate_event).not_to be_nil
-    expect(
-      aggregate_event.reply.dig('cursor', 'firstBatch')&.first&.dig('encrypted')
-    ).to be_a_kind_of(BSON::Binary)
+
+    it 'succeeds' do
+      expect { collection.aggregate([]).to_a }.not_to raise_error
+      expect(aggregate_event).not_to be_nil
+      expect(
+        aggregate_event.reply.dig('cursor', 'firstBatch')&.first&.dig('encrypted')
+      ).to be_a(BSON::Binary)
+    end
   end
 end
