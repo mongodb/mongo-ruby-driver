@@ -7,7 +7,6 @@ describe 'Client-Side Encryption' do
     require_libmongocrypt
     require_enterprise
     require_topology :replica_set, :sharded, :load_balanced
-    min_server_fcv '6.0'
     min_server_version '7.0.0-rc0'
 
     include_context 'define shared FLE helpers'
