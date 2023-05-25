@@ -44,36 +44,6 @@ EOT
   def get_binding
     binding
   end
-
-  DEBIAN_FOR_RUBY = {
-    'ruby-2.3' => 'debian92',
-    'ruby-2.4' => 'debian92',
-    'ruby-2.5' => 'debian10',
-    'ruby-2.6' => 'debian10',
-    'ruby-2.7' => 'debian10',
-    'ruby-3.0' => 'debian10',
-  }
-
-  def standard_debian_rubies(rubies, key: nil, &block)
-    rubies.flatten!
-    text = block.call
-    contents = YAML.load(text)
-    out = rubies.map do |ruby|
-      contents.merge(
-        'matrix_name' => "#{contents['matrix_name']} - #{ruby}",
-        'matrix_spec' => contents['matrix_spec'].merge(
-          'ruby' => ruby,
-          key || 'os' => DEBIAN_FOR_RUBY.fetch(ruby),
-        ),
-      )
-    end.to_yaml
-    text =~ /\A\n?(\s+)/
-    unless text
-      raise "Couldn't figure out indentation level"
-    end
-    indent = ' ' * ($1.length - 2)
-    "\n" + out.sub(/\A---.*\n/, indent).gsub("\n", "\n#{indent}")
-  end
 end
 
 Runner.new.run
