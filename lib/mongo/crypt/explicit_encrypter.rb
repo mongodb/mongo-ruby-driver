@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
