@@ -132,7 +132,7 @@ describe 'Retryable reads errors tests' do
     let(:client) { authorized_client.with(retry_reads: true) }
 
     before do
-      skip 'This test requires two mongos' unless SpecConfig.instance.addresses.length == 2
+      skip 'This test requires at least two mongos' if SpecConfig.instance.addresses.length < 2
 
       first_mongos.database.command(
         configureFailPoint: 'failCommand',
@@ -140,9 +140,8 @@ describe 'Retryable reads errors tests' do
           data: {
             failCommands: %w(find),
             closeConnection: false,
-            errorCode: 11600,
-            errorLabels: ['RetryableWriteError']
-          },
+            errorCode: 11600
+          }
       )
 
       second_mongos.database.command(
@@ -151,9 +150,8 @@ describe 'Retryable reads errors tests' do
           data: {
             failCommands: %w(find),
             closeConnection: false,
-            errorCode: 11600,
-            errorLabels: ['RetryableWriteError']
-          },
+            errorCode: 11600
+          }
       )
     end
 
@@ -167,6 +165,10 @@ describe 'Retryable reads errors tests' do
       subscriber.failed_events.select { |e| e.command_name == "find" }
     end
 
+    let(:expected_servers) do
+      SpecConfig.instance.addresses.map { |a| a.to_s }.sort
+    end
+
     after do
       first_mongos.close
       second_mongos.close
@@ -175,8 +177,8 @@ describe 'Retryable reads errors tests' do
     it 'retries on different mongos' do
       client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       expect { collection.find.first }.to raise_error
-      expect(find_started_events.map { |e| e.address.to_s }.sort).to eq(SpecConfig.instance.addresses.map { |a| a.to_s }.sort)
-      expect(find_failed_events.map { |e| e.address.to_s }.sort).to eq(SpecConfig.instance.addresses.map { |a| a.to_s }.sort)
+      expect(find_started_events.map { |e| e.address.to_s }.sort).to eq(expected_servers)
+      expect(find_failed_events.map { |e| e.address.to_s }.sort).to eq(expected_servers)
     end
   end
 end
