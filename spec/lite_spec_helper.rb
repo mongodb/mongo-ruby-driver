@@ -110,6 +110,15 @@ RSpec.configure do |config|
   config.include(MongosMacros)
   config.extend(Mongo::Macros)
 
+  # Used for spec/solo/*
+  def require_solo
+    before(:all) do
+      unless %w(1 true yes).include?(ENV['SOLO'])
+        skip 'Set SOLO=1 in environment to run solo tests'
+      end
+    end
+  end
+
   if SpecConfig.instance.ci?
     SdamFormatterIntegration.subscribe
     config.add_formatter(JsonExtFormatter, File.join(File.dirname(__FILE__), '../tmp/rspec.json'))

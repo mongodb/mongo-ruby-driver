@@ -29,6 +29,9 @@ module Mongo
 
       attr_reader :results
 
+      # @return [ Crud::Spec ] the top-level YAML specification object
+      attr_reader :spec
+
       # Instantiate the new CRUDTest.
       #
       # @example Create the test.
@@ -38,6 +41,9 @@ module Mongo
       # @param [ Array<Hash> ] data The documents the collection
       # must have before the test runs.
       # @param [ Hash ] test The test specification.
+      # @param [ true | false | Proc ] expectations_bson_types Whether bson
+      #   types should be expected. If a Proc is given, it is invoked with the
+      #   test as its argument, and should return true or false.
       #
       # @since 2.6.0
       def initialize(crud_spec, data, test, expectations_bson_types: true)
@@ -71,10 +77,11 @@ module Mongo
           Operation.new(self, op)
         end
 
-        mode = if expectations_bson_types then :bson else nil end
-        if crud_spec.description == 'fle2-CreateCollection.yml'
-          mode = nil
+        if expectations_bson_types.respond_to?(:call)
+          expectations_bson_types = expectations_bson_types[self]
         end
+
+        mode = if expectations_bson_types then :bson else nil end
         @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: mode)
 
         if test['outcome']

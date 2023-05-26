@@ -1,11 +1,13 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
+# No need to rewrite existing specs to make the examples shorter, until/unless
+# we revisit these specs and need to make substantial changes.
+# rubocop:disable RSpec/ExampleLength
 describe 'Queryable encryption examples' do
   require_libmongocrypt
-  min_server_version '6.0.0-rc8'
+  min_server_version '7.0.0-rc0'
   require_topology :replica_set, :sharded, :load_balanced
   require_enterprise
 
@@ -63,7 +65,7 @@ describe 'Queryable encryption examples' do
       SpecConfig.instance.addresses,
       SpecConfig.instance.test_options.merge(
         auto_encryption_options: {
-          key_vault_namespace: "keyvault.datakeys",
+          key_vault_namespace: 'keyvault.datakeys',
           kms_providers: {
             local: {
               key: local_master_key
@@ -84,22 +86,22 @@ describe 'Queryable encryption examples' do
     # Auto encrypt an insert and find.
     encrypted_client['encrypted'].insert_one(
       _id: 1,
-      encrypted_indexed: "indexed_value",
-			encrypted_unindexed: "unindexed_value",
+      encrypted_indexed: 'indexed_value',
+      encrypted_unindexed: 'unindexed_value'
     )
 
     find_results = encrypted_client['encrypted'].find(
-      encrypted_indexed: "indexed_value"
+      encrypted_indexed: 'indexed_value'
     ).to_a
     expect(find_results.size).to eq(1)
-    expect(find_results.first[:encrypted_indexed]).to eq("indexed_value")
-    expect(find_results.first[:encrypted_unindexed]).to eq("unindexed_value")
+    expect(find_results.first[:encrypted_indexed]).to eq('indexed_value')
+    expect(find_results.first[:encrypted_unindexed]).to eq('unindexed_value')
 
     # Find documents without decryption.
     find_results = authorized_client
-      .use('docs_examples')['encrypted']
-      .find(_id: 1)
-      .to_a
+                   .use('docs_examples')['encrypted']
+                   .find(_id: 1)
+                   .to_a
     expect(find_results.size).to eq(1)
     expect(find_results.first[:encrypted_indexed]).to be_a(BSON::Binary)
     expect(find_results.first[:encrypted_unindexed]).to be_a(BSON::Binary)
@@ -109,3 +111,4 @@ describe 'Queryable encryption examples' do
     authorized_client.use('keyvault')['datakeys'].drop
   end
 end
+# rubocop:enable RSpec/ExampleLength
