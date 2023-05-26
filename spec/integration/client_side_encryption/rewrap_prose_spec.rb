@@ -104,7 +104,7 @@ describe 'RewrapManyDataKey' do
 
         context 'when master_key is present without provider' do
           it 'raises an exception' do
-            expect { client_encryption_1.rewrap_many_data_key({}, master_key: {}) }
+            expect { client_encryption1.rewrap_many_data_key({}, master_key: {}) }
               .to raise_error(ArgumentError, /provider/)
           end
         end
