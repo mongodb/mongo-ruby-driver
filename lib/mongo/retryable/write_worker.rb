@@ -240,7 +240,7 @@ module Mongo
 
         # Context#with creates a new context, which is not necessary here
         # but the API is less prone to misuse this way.
-        retry_write(e, txn_num, context: context.with(is_retry: true), &block)
+        retry_write(e, txn_num, context: context.with(is_retry: true), failed_server: server, &block)
       end
 
       # Called after a failed write, this will retry the write no more than
@@ -252,7 +252,7 @@ module Mongo
       # @param [ Operation::Context ] context The context for the operation.
       #
       # @return [ Result ] The result of the operation.
-      def retry_write(original_error, txn_num, context:, &block)
+      def retry_write(original_error, txn_num, context:, failed_server: nil, &block)
         session = context.session
 
         # We do not request a scan of the cluster here, because error handling
@@ -260,7 +260,7 @@ module Mongo
         # server description and/or topology as necessary (specifically,
         # a socket error or a not master error should have marked the respective
         # server unknown). Here we just need to wait for server selection.
-        server = select_server(cluster, ServerSelector.primary, session)
+        server = select_server(cluster, ServerSelector.primary, session, failed_server)
         
         unless server.retry_writes?
           # Do not need to add "modern retry" here, it should already be on
