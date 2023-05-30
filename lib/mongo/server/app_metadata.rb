@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/app_metadata/environment'
+
 module Mongo
   class Server
     # Application metadata that is sent to the server during a handshake,
@@ -139,6 +141,22 @@ module Mongo
         document
       end
 
+      # Get BSON::Document to be used as value for `client` key in
+      # handshake document.
+      #
+      # @return [BSON::Document] Document describing client for handshake.
+      #
+      # @api private
+      def client_document
+        BSON::Document.new.tap do |doc|
+          doc[:application] = { name: @app_name } if @app_name
+          doc[:driver] = driver_doc
+          doc[:os] = os_doc
+          doc[:platform] = platform
+          env_doc.tap { |env| doc[:env] = env if env }
+        end
+      end
+
       private
 
       # Check whether it is possible to build a valid app metadata document
@@ -152,20 +170,6 @@ module Mongo
         true
       end
 
-      # Get BSON::Document to be used as value for `client` key in
-      # handshake document.
-      #
-      # @return [BSON::Document] Document describing client for handshake.
-      def full_client_document
-        BSON::Document.new.tap do |doc|
-          doc[:application] = { name: @app_name } if @app_name
-          doc[:driver] = driver_doc
-          doc[:os] = os_doc
-          doc[:platform] = platform
-        end
-      end
-
-
       # Get the metadata as BSON::Document to be sent to
       # as part of the handshake. The document should
       # be appended to a suitable handshake command.
@@ -173,21 +177,21 @@ module Mongo
       # @return [BSON::Document] Document for connection's handshake.
       def document
         @document ||= begin
-          client_document = full_client_document
-          while client_document.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
-            if client_document[:os][:name] || client_document[:os][:architecture]
-              client_document[:os].delete(:name)
-              client_document[:os].delete(:architecture)
-            elsif client_document[:platform]
-              client_document.delete(:platform)
+          client = client_document
+          while client.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
+            if client[:os][:name] || client[:os][:architecture]
+              client[:os].delete(:name)
+              client[:os].delete(:architecture)
+            elsif client[:platform]
+              client.delete(:platform)
             else
-              client_document = nil
+              client = nil
             end
           end
           document = BSON::Document.new(
             {
               compression: @compressors,
-              client: client_document,
+              client: client,
             }
           )
           document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
@@ -221,6 +225,11 @@ module Mongo
           name: name,
           architecture: architecture
         }
+      end
+
+      def env_doc
+        env = Environment.new
+        env.faas? ? env.to_h : nil
       end
 
       def type
