@@ -96,6 +96,18 @@ describe Mongo::Server::AppMetadata::Environment do
         end
       end
 
+      # per DRIVERS-2623, AWS_EXECUTION_ENV must be prefixed
+      # with 'AWS_Lambda_'.
+      context 'when AWS_EXECUTION_ENV is invalid' do
+        local_env(
+          'AWS_EXECUTION_ENV' => 'EC2',
+          'AWS_REGION' => 'us-east-2',
+          'AWS_LAMBDA_FUNCTION_MEMORY_SIZE' => '1024'
+        )
+
+        it_behaves_like 'running outside a FaaS environment'
+      end
+
       context 'when AWS_EXECUTION_ENV is detected' do
         local_env('AWS_EXECUTION_ENV' => 'AWS_Lambda_ruby2.7')
         it_behaves_like 'running in an AWS environment'

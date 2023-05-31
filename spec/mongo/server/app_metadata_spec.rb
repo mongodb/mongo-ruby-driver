@@ -67,14 +67,6 @@ describe Mongo::Server::AppMetadata do
         end
       end
 
-      context 'when the os.type length is too long' do
-        before do
-          allow(app_metadata).to receive(:type).and_return('x'*500)
-        end
-
-        it_behaves_like 'a truncated document'
-      end
-
       context 'when the os.name length is too long' do
         before do
           allow(app_metadata).to receive(:name).and_return('x'*500)
@@ -94,14 +86,6 @@ describe Mongo::Server::AppMetadata do
       context 'when the platform length is too long' do
         before do
           allow(app_metadata).to receive(:platform).and_return('x'*500)
-        end
-
-        it_behaves_like 'a truncated document'
-      end
-
-      context 'when the driver info is too long' do
-        before do
-          allow(app_metadata).to receive(:driver_doc).and_return({ name: 'x'*500 })
         end
 
         it_behaves_like 'a truncated document'

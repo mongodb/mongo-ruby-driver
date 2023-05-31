@@ -46,12 +46,12 @@ module Mongo
         # The mapping that determines which FaaS environment is active, based
         # on which environment variable(s) are present.
         DISCRIMINATORS = {
-          'AWS_EXECUTION_ENV' => 'aws.lambda',
-          'AWS_LAMBDA_RUNTIME_API' => 'aws.lambda',
-          'FUNCTIONS_WORKER_RUNTIME' => 'azure.func',
-          'K_SERVICE' => 'gcp.func',
-          'FUNCTION_NAME' => 'gcp.func',
-          'VERCEL' => 'vercel',
+          'AWS_EXECUTION_ENV' => { pattern: /^AWS_Lambda_/, name: 'aws.lambda' },
+          'AWS_LAMBDA_RUNTIME_API' => { name: 'aws.lambda' },
+          'FUNCTIONS_WORKER_RUNTIME' => { name: 'azure.func' },
+          'K_SERVICE' => { name: 'gcp.func' },
+          'FUNCTION_NAME' => { name: 'gcp.func' },
+          'VERCEL' => { name: 'vercel' },
         }.freeze
 
         # Describes how to coerce values of the specified type.
@@ -180,12 +180,29 @@ module Mongo
         # @raise [ TooManyEnvironments ] if the environment contains
         #   discriminating variables for more than one FaaS provider.
         def detect_environment
-          matches = DISCRIMINATORS.keys.select { |k| ENV[k] }
-          names = matches.map { |m| DISCRIMINATORS[m] }.uniq
+          matches = DISCRIMINATORS.keys.select { |k| discriminator_matches?(k) }
+          names = matches.map { |m| DISCRIMINATORS[m][:name] }.uniq
 
           raise TooManyEnvironments, names.join(', ') if names.length > 1
 
           names.first
+        end
+
+        # Determines whether the named environment variable exists, and (if
+        # a pattern has been declared for that descriminator) whether the
+        # pattern matches the value of the variable.
+        #
+        # @param [ String ] var the name of the environment variable
+        #
+        # @return [ true | false ] if the variable describes the current
+        #   environment or not.
+        def discriminator_matches?(var)
+          return false unless ENV[var]
+
+          disc = DISCRIMINATORS[var]
+          return true unless disc[:pattern]
+
+          disc[:pattern].match?(ENV[var])
         end
 
         # Extracts environment information from the current environment

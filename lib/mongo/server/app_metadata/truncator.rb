@@ -73,7 +73,7 @@ module Mongo
         # Attempt to truncate the document using the documented metadata
         # priorities (see the handshake specification).
         def try_truncate!
-          %i[ platform env os env_name os_type driver app_name ].each do |target|
+          %i[ env_fields os_fields env platform ].each do |target|
             break if ok?
 
             send(:"try_truncate_#{target}!")
@@ -87,41 +87,20 @@ module Mongo
         end
 
         # Attempt to truncate the keys in the {{:env}} subdocument.
-        def try_truncate_env!
+        def try_truncate_env_fields!
           try_truncate_hash(@document[:env], reserved: %w[ name ])
         end
 
         # Attempt to truncate the keys in the {{:os}} subdocument.
-        def try_truncate_os!
+        def try_truncate_os_fields!
           try_truncate_hash(@document[:os], reserved: %w[ type ])
         end
 
-        # Attempt to truncate {{env[:name]}} key. If that does not suffice,
-        # remove the {{:env}} key entirely.
-        def try_truncate_env_name!
+        # Remove the {{:env}} key from the document.
+        def try_truncate_env!
           return unless @document[:env]
 
-          @document.delete(:env) unless try_truncate_string(@document[:env][:name])
-        end
-
-        # Attempt to truncate {{os[:type]}} key. If that does not suffice,
-        # remove the {{:os}} key entirely.
-        def try_truncate_os_type!
-          return unless @document[:os]
-
-          @document.delete(:os) unless try_truncate_string(@document[:os][:type])
-        end
-
-        # Attempt to truncate the keys in the {{:driver}} subdocument. If
-        # that does not suffice, remove the {{:driver}} key entirely.
-        def try_truncate_driver!
-          @document.delete(:driver) unless try_truncate_hash(@document[:driver])
-        end
-
-        # Attempt to truncate {{application[:name]}} key. If that does not
-        # suffice, remove the {{:application}} key entirely.
-        def try_truncate_app_name!
-          @document.delete(:application) unless try_truncate_string(@document[:application][:name])
+          @document.delete(:env)
         end
 
         # A helper method for truncating a string (in-place) by whatever
@@ -138,11 +117,10 @@ module Mongo
           string[(length - excess)..-1] = ''
         end
 
-        # A helper method for truncating the keys of a Hash (in-place) by
-        # whatever {{#excess}} is required. The keys are considered in order
-        # (using the Hash's native key ordering), and each will be either
-        # truncated (if that suffices) or removed from the hash (if truncating
-        # is not sufficient).
+        # A helper method for removing the keys of a Hash (in-place) until
+        # the document is the necessary size. The keys are considered in order
+        # (using the Hash's native key ordering), and each will be removed from
+        # the hash in turn, until the document is the necessary size.
         #
         # Any keys in the {{reserved}} list will be ignored.
         #
@@ -155,7 +133,7 @@ module Mongo
 
           keys = hash.keys - reserved
           keys.each do |key|
-            hash.delete(key) unless try_truncate_string(hash[key].to_s)
+            hash.delete(key)
 
             return true if ok?
           end
