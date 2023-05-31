@@ -249,7 +249,15 @@ module Mongo
       def rewrap_many_data_key(filter, opts = {})
         validate_rewrap_options!(opts)
 
+<<<<<<< HEAD
         master_key_document = master_key_for_provider(opts)
+=======
+        master_key_document = if opts[:provider]
+          options = opts.dup
+          provider = options.delete(:provider)
+          KMS::MasterKeyDocument.new(provider, options)
+        end
+>>>>>>> master
 
         rewrap_result = Crypt::RewrapManyDataKeyContext.new(
           @crypt_handle,
@@ -315,6 +323,18 @@ module Mongo
               },
             }
           }
+        end
+      end
+
+      # Ensures the consistency of the options passed to #rewrap_many_data_keys.
+      #
+      # @param [Hash] opts the options hash to validate
+      #
+      # @raise [ ArgumentError ] if the options are not consistent or
+      #   compatible.
+      def validate_rewrap_options!(opts)
+        if opts.key?(:master_key) && !opts.key?(:provider)
+          raise ArgumentError, 'If :master_key is specified, :provider must also be given'
         end
       end
     end
