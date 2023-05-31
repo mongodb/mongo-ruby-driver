@@ -156,7 +156,7 @@ module Mongo
 
       private
 
-      # Check whether   it is possible to build a valid app metadata document
+      # Check whether it is possible to build a valid app metadata document
       # with params provided on intialization.
       #
       # @raise [ Error::InvalidApplicationName ] When the metadata are invalid.

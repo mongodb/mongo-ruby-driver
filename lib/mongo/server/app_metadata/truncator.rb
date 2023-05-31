@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright (C) 2016-2020 MongoDB Inc.
+# Copyright (C) 2016-2023 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-require 'mongo/server/app_metadata/environment'
 
 module Mongo
   class Server
@@ -98,8 +96,6 @@ module Mongo
 
         # Remove the {{:env}} key from the document.
         def try_truncate_env!
-          return unless @document[:env]
-
           @document.delete(:env)
         end
 

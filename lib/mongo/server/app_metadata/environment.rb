@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright (C) 2016-2020 MongoDB Inc.
+# Copyright (C) 2016-2023 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ module Mongo
         #   detected, or nil if no valid FaaS environment was detected.
         attr_reader :name
 
-        # @return [ Hash | nil ] the fields describing detected FaaS
+        # @return [ Hash | nil ] the fields describing the detected FaaS
         #   environment.
         attr_reader :fields
 
