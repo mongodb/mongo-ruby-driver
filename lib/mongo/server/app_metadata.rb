@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
@@ -16,6 +15,7 @@
 # limitations under the License.
 
 require 'mongo/server/app_metadata/environment'
+require 'mongo/server/app_metadata/platform'
 require 'mongo/server/app_metadata/truncator'
 
 module Mongo
@@ -24,34 +24,22 @@ module Mongo
     #   when a new connection is established.
     #
     # @api private
-    #
-    # @since 2.4.0
     class AppMetadata
       extend Forwardable
 
       # The max application name byte size.
-      #
-      # @since 2.4.0
-      MAX_APP_NAME_SIZE = 128.freeze
+      MAX_APP_NAME_SIZE = 128
 
       # The driver name.
-      #
-      # @since 2.4.0
       DRIVER_NAME = 'mongo-ruby-driver'
 
       # Option keys that affect auth mechanism negotiation.
-      #
-      # @api private
-      AUTH_OPTION_KEYS = [:user, :auth_source, :auth_mech].freeze
+      AUTH_OPTION_KEYS = %i[ user auth_source auth_mech].freeze
 
       # Possible connection purposes.
-      #
-      # @api private
-      PURPOSES = %i(application monitor push_monitor).freeze
+      PURPOSES = %i[ application monitor push_monitor ].freeze
 
       # Instantiate the new AppMetadata object.
-      #
-      # @api private
       #
       # @example Instantiate the app metadata.
       #   Mongo::Server::AppMetadata.new(options)
@@ -86,26 +74,26 @@ module Mongo
       def initialize(options = {})
         @app_name = options[:app_name].to_s if options[:app_name]
         @platform = options[:platform]
-        if @purpose = options[:purpose]
-          unless PURPOSES.include?(@purpose)
-            raise ArgumentError, "Invalid purpose: #{@purpose}"
-          end
-        end
+
+        @purpose = check_purpose!(options[:purpose])
+
         @compressors = options[:compressors] || []
         @wrapping_libraries = options[:wrapping_libraries]
         @server_api = options[:server_api]
 
-        if options[:user] && !options[:auth_mech]
-          auth_db = options[:auth_source] || 'admin'
-          @request_auth_mech = "#{auth_db}.#{options[:user]}"
-        end
+        return unless options[:user] && !options[:auth_mech]
+
+        auth_db = options[:auth_source] || 'admin'
+        @request_auth_mech = "#{auth_db}.#{options[:user]}"
       end
 
       # @return [ Symbol ] The purpose of the connection for which this
       #   app metadata is created.
-      #
-      # @api private
       attr_reader :purpose
+
+      # @return [ String ] The platform information given when the object was
+      #   instantiated.
+      attr_reader :platform
 
       # @return [ Hash | nil ] The requested server API version.
       #
@@ -113,8 +101,6 @@ module Mongo
       #   - *:version* -- string
       #   - *:strict* -- boolean
       #   - *:deprecation_errors* -- boolean
-      #
-      # @api private
       attr_reader :server_api
 
       # @return [ Array<Hash> | nil ] Information about libraries wrapping
@@ -130,8 +116,6 @@ module Mongo
       # @return [BSON::Document] Valid document for connection's handshake.
       #
       # @raise [ Error::InvalidApplicationName ] When the metadata are invalid.
-      #
-      # @api private
       def validated_document
         validate!
         document
@@ -141,15 +125,13 @@ module Mongo
       # handshake document.
       #
       # @return [BSON::Document] Document describing client for handshake.
-      #
-      # @api private
       def client_document
         @client_document ||=
           BSON::Document.new.tap do |doc|
             doc[:application] = { name: @app_name } if @app_name
             doc[:driver] = driver_doc
             doc[:os] = os_doc
-            doc[:platform] = platform
+            doc[:platform] = platform_string
             env_doc.tap { |env| doc[:env] = env if env }
           end
       end
@@ -164,6 +146,7 @@ module Mongo
         if @app_name && @app_name.bytesize > MAX_APP_NAME_SIZE
           raise Error::InvalidApplicationName.new(@app_name, MAX_APP_NAME_SIZE)
         end
+
         true
       end
 
@@ -183,14 +166,13 @@ module Mongo
       end
 
       def driver_doc
-        names = [DRIVER_NAME]
-        versions = [Mongo::VERSION]
-        if wrapping_libraries
-          wrapping_libraries.each do |library|
-            names << library[:name] || ''
-            versions << library[:version] || ''
-          end
+        names = [ DRIVER_NAME ]
+        versions = [ Mongo::VERSION ]
+        wrapping_libraries&.each do |library|
+          names << (library[:name] || '')
+          versions << (library[:version] || '')
         end
+
         {
           name: names.join('|'),
           version: versions.join('|'),
@@ -201,18 +183,25 @@ module Mongo
         {
           type: type,
           name: name,
-          architecture: architecture
+          architecture: architecture,
         }
       end
 
+      # Returns the environment doc describing the current FaaS environment.
+      #
+      # @return [ Hash | nil ] the environment doc (or nil if not in a FaaS
+      #   environment).
       def env_doc
         env = Environment.new
         env.faas? ? env.to_h : nil
       end
 
       def type
-        (RbConfig::CONFIG && RbConfig::CONFIG['host_os']) ?
-          RbConfig::CONFIG['host_os'].split('_').first[/[a-z]+/i].downcase : 'unknown'
+        if RbConfig::CONFIG && RbConfig::CONFIG['host_os']
+          RbConfig::CONFIG['host_os'].split('_').first[/[a-z]+/i].downcase
+        else
+          'unknown'
+        end
       end
 
       def name
@@ -223,31 +212,22 @@ module Mongo
         RbConfig::CONFIG['target_cpu']
       end
 
-      def platform
-        if BSON::Environment.jruby?
-          ruby_versions = ["JRuby #{JRUBY_VERSION}", "like Ruby #{RUBY_VERSION}"]
-          platforms = [RUBY_PLATFORM, "JVM #{java.lang.System.get_property('java.version')}"]
-        else
-          ruby_versions = ["Ruby #{RUBY_VERSION}"]
-          platforms = [RUBY_PLATFORM]
-        end
-        platforms = [
-          @platform,
-          *ruby_versions,
-          *platforms,
-          RbConfig::CONFIG['build'],
-        ]
-        if @purpose
-          platforms << @purpose.to_s[0].upcase
-        end
-        platform = platforms.compact.join(', ')
-        platforms = [platform]
-        if wrapping_libraries
-          wrapping_libraries.each do |library|
-            platforms << library[:platform] || ''
-          end
-        end
-        platforms.join('|')
+      def platform_string
+        Platform.new(self).to_s
+      end
+
+      # Verifies that the given purpose is either nil, or is one of the
+      # allowed purposes.
+      #
+      # @param [ String | nil ] purpose The purpose to validate
+      #
+      # @return [ String | nil ] the {{purpose}} argument
+      #
+      # @raise [ ArgumentError ] if the purpose is invalid
+      def check_purpose!(purpose)
+        return purpose unless purpose && !PURPOSES.include?(purpose)
+
+        raise ArgumentError, "Invalid purpose: #{purpose}"
       end
     end
   end
