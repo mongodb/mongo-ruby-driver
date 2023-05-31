@@ -249,15 +249,7 @@ module Mongo
       def rewrap_many_data_key(filter, opts = {})
         validate_rewrap_options!(opts)
 
-<<<<<<< HEAD
         master_key_document = master_key_for_provider(opts)
-=======
-        master_key_document = if opts[:provider]
-          options = opts.dup
-          provider = options.delete(:provider)
-          KMS::MasterKeyDocument.new(provider, options)
-        end
->>>>>>> master
 
         rewrap_result = Crypt::RewrapManyDataKeyContext.new(
           @crypt_handle,
