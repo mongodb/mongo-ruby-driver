@@ -84,15 +84,23 @@ module Mongo
           ]
         end
 
+        # Returns a single letter representing the purpose reported to the
+        # metadata, or nil if no purpose was specified.
+        #
+        # @return [ String | nil ] the code representing the purpose
+        def purpose
+          return nil unless metadata.purpose
+
+          metadata.purpose.to_s[0].upcase
+        end
+
         # Builds and returns the platform string by concatenating relevant
         # values together.
         #
         # @return [ String ] the platform string
         def to_s
-          list = default_platform_list
-
-          list << metadata.purpose.to_s[0].upcase if metadata.purpose
-          list = [ list.compact.join(', ') ]
+          primary = [ *default_platform_list, purpose ].compact.join(', ')
+          list = [ primary ]
 
           metadata.wrapping_libraries&.each do |library|
             list << (library[:platform] || '')
