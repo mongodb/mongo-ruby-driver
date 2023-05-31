@@ -668,6 +668,10 @@ axes:
         variables:
           MONGODB_VERSION: "latest"
           CRYPT_SHARED_VERSION: "latest"
+      - id: "7.0"
+        display_name: "7.0"
+        variables:
+          MONGODB_VERSION: "7.0"
       - id: "6.0"
         display_name: "6.0"
         variables:
@@ -1059,19 +1063,17 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-3.1"
-      mongodb-version: "6.0"
+      mongodb-version: ["latest", "7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: ${auth-and-ssl} ${ruby} ${topology}
     tasks:
       - name: "test-mlaunch"
 
-  # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-3.1", "jruby-9.3"]
-      #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['6.0']
+      mongodb-version: ["latest", "7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ['rhel8', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1358,19 +1360,17 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
-  # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
-  #
-  # - matrix_name: "fle-latest"
-  #   matrix_spec:
-  #     auth-and-ssl: "noauth-and-nossl"
-  #     ruby: "ruby-3.1"
-  #     topology: [replica-set, sharded-cluster]
-  #     mongodb-version: [ 'latest' ]
-  #     os: rhel8
-  #     fle: helper
-  #   display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-  #   tasks:
-  #     - name: "test-fle"
+  - matrix_name: "fle-latest"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: "ruby-3.1"
+      topology: [replica-set, sharded-cluster]
+      mongodb-version: [ 'latest', '7.0' ]
+      os: rhel8
+      fle: helper
+    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+    tasks:
+      - name: "test-fle"
 
   - matrix_name: "fle"
     matrix_spec:
