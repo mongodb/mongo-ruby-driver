@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -15,9 +14,7 @@ describe Mongo::Server::AppMetadata do
   end
 
   describe '#initialize' do
-
     context 'when the cluster has an app name option set' do
-
       let(:client) do
         authorized_client.with(app_name: :app_metadata_test)
       end
@@ -31,9 +28,8 @@ describe Mongo::Server::AppMetadata do
       end
 
       context 'when the app name exceeds the max length of 128' do
-
         let(:client) do
-          authorized_client.with(app_name: "\u3042"*43)
+          authorized_client.with(app_name: "\u3042" * 43)
         end
 
         let(:cluster) do
@@ -41,17 +37,15 @@ describe Mongo::Server::AppMetadata do
         end
 
         it 'raises an error' do
-          expect {
-            app_metadata.send(:validate!)
-          }.to raise_exception(Mongo::Error::InvalidApplicationName)
+          expect { app_metadata.validated_document }
+            .to raise_exception(Mongo::Error::InvalidApplicationName)
         end
       end
     end
 
     context 'when the cluster does not have an app name option set' do
-
       it 'does not set the app name' do
-        expect(app_metadata.client_document[:application]).to be(nil)
+        expect(app_metadata.client_document[:application]).to be_nil
       end
     end
 
@@ -69,7 +63,7 @@ describe Mongo::Server::AppMetadata do
 
       context 'when the os.name length is too long' do
         before do
-          allow(app_metadata).to receive(:name).and_return('x'*500)
+          allow(app_metadata).to receive(:name).and_return('x' * 500)
         end
 
         it_behaves_like 'a truncated document'
@@ -77,7 +71,7 @@ describe Mongo::Server::AppMetadata do
 
       context 'when the os.architecture length is too long' do
         before do
-          allow(app_metadata).to receive(:architecture).and_return('x'*500)
+          allow(app_metadata).to receive(:architecture).and_return('x' * 500)
         end
 
         it_behaves_like 'a truncated document'
@@ -85,7 +79,7 @@ describe Mongo::Server::AppMetadata do
 
       context 'when the platform length is too long' do
         before do
-          allow(app_metadata).to receive(:platform).and_return('x'*500)
+          allow(app_metadata).to receive(:platform).and_return('x' * 500)
         end
 
         it_behaves_like 'a truncated document'
@@ -93,7 +87,7 @@ describe Mongo::Server::AppMetadata do
     end
 
     context 'when run outside of a FaaS environment' do
-      it 'should exclude the :env key from the client document' do
+      it 'excludes the :env key from the client document' do
         expect(app_metadata.client_document.key?(:env)).to be false
       end
     end
@@ -103,7 +97,7 @@ describe Mongo::Server::AppMetadata do
         # invalid, because it is missing the other required fields
         local_env('AWS_EXECUTION_ENV' => 'AWS_Lambda_ruby2.7')
 
-        it 'should exclude the :env key from the client document' do
+        it 'excludes the :env key from the client document' do
           expect(app_metadata.client_document.key?(:env)).to be false
         end
       end
@@ -112,9 +106,9 @@ describe Mongo::Server::AppMetadata do
         # valid, because Azure requires only the one field
         local_env('FUNCTIONS_WORKER_RUNTIME' => 'ruby')
 
-        it 'should include the :env key in the client document' do
+        it 'includes the :env key in the client document' do
           expect(app_metadata.client_document.key?(:env)).to be true
-          expect(app_metadata.client_document[:env][:name]).to be == "azure.func"
+          expect(app_metadata.client_document[:env][:name]).to be == 'azure.func'
         end
       end
     end
@@ -140,17 +134,15 @@ describe Mongo::Server::AppMetadata do
 
   describe '#validated_document' do
     it 'raises with too long app name' do
-      app_name = 'app'*500
-      expect {
-        described_class.new(app_name: app_name).validated_document
-      }.to raise_error(Mongo::Error::InvalidApplicationName)
+      app_name = 'app' * 500
+      expect { described_class.new(app_name: app_name).validated_document }
+        .to raise_error(Mongo::Error::InvalidApplicationName)
     end
 
     it 'does not raise with correct app name' do
       app_name = 'app'
-      expect {
-        described_class.new(app_name: app_name).validated_document
-      }.not_to raise_error
+      expect { described_class.new(app_name: app_name).validated_document }
+        .not_to raise_error
     end
   end
 end
