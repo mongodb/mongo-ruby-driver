@@ -82,7 +82,7 @@ describe Mongo::Server::AppMetadata::Environment do
       shared_examples_for 'running in an AWS environment' do
         context 'when environment is valid' do
           local_env(
-            'AWS_REGION'                      => 'us-east-2',
+            'AWS_REGION' => 'us-east-2',
             'AWS_LAMBDA_FUNCTION_MEMORY_SIZE' => '1024'
           )
 
@@ -172,10 +172,8 @@ describe Mongo::Server::AppMetadata::Environment do
 
       it 'includes name and all fields' do
         expect(env.to_h).to be == {
-          name: 'gcp.func',
-          memory_mb: 1024,
-          timeout_sec: 60,
-          region: 'us-central1',
+          name: 'gcp.func', memory_mb: 1024,
+          timeout_sec: 60, region: 'us-central1',
         }
       end
     end

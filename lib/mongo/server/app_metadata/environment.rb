@@ -17,6 +17,10 @@
 module Mongo
   class Server
     class AppMetadata
+      # Implements the logic from the handshake spec, for deducing and
+      # reporting the current FaaS environment in which the program is
+      # executing.
+      #
       # @api private
       class Environment
         # Error class for reporting that too many discriminators were found
@@ -39,20 +43,26 @@ module Mongo
         # less than 512.
         MAXIMUM_VALUE_LENGTH = 500
 
+        # The mapping that determines which FaaS environment is active, based
+        # on which environment variable(s) are present.
         DISCRIMINATORS = {
-          'AWS_EXECUTION_ENV'        => 'aws.lambda',
-          'AWS_LAMBDA_RUNTIME_API'   => 'aws.lambda',
+          'AWS_EXECUTION_ENV' => 'aws.lambda',
+          'AWS_LAMBDA_RUNTIME_API' => 'aws.lambda',
           'FUNCTIONS_WORKER_RUNTIME' => 'azure.func',
-          'K_SERVICE'                => 'gcp.func',
-          'FUNCTION_NAME'            => 'gcp.func',
-          'VERCEL'                   => 'vercel',
+          'K_SERVICE' => 'gcp.func',
+          'FUNCTION_NAME' => 'gcp.func',
+          'VERCEL' => 'vercel',
         }.freeze
 
+        # Describes how to coerce values of the specified type.
         COERCIONS = {
-          string:  -> (v) { String(v) },
-          integer: -> (v) { Integer(v) }
-        }
+          string: ->(v) { String(v) },
+          integer: ->(v) { Integer(v) }
+        }.freeze
 
+        # Describes which fields are required for each FaaS environment,
+        # along with their expected types, and how they should be named in
+        # the handshake document.
         FIELDS = {
           'aws.lambda' => {
             'AWS_REGION' => { field: :region, type: :string },
@@ -71,77 +81,154 @@ module Mongo
             'VERCEL_URL' => { field: :url, type: :string },
             'VERCEL_REGION' => { field: :region, type: :string },
           },
-        }
+        }.freeze
 
+        # @return [ String | nil ] the name of the FaaS environment that was
+        #   detected, or nil if no valid FaaS environment was detected.
         attr_reader :name
+
+        # @return [ Hash | nil ] the fields describing detected FaaS
+        #   environment.
         attr_reader :fields
+
+        # @return [ String | nil ] the error message explaining why a valid
+        #   FaaS environment was not detected, or nil if no error occurred.
+        #
+        # @note These error messagess are not to be propogated to the
+        #   user; they are intended only for troubleshooting and debugging.)
         attr_reader :error
 
+        # Create a new AppMetadata::Environment object, initializing it from
+        # the current ENV variables. If no FaaS environment is detected, or
+        # if the environment contains invalid or contradictory state, it will
+        # be initialized with {{name}} set to {{nil}}.
         def initialize
           @error = nil
           @name = detect_environment
           populate_fields
         rescue TooManyEnvironments => e
-          set_error "too many environments detected: #{e.message}"
+          self.error = "too many environments detected: #{e.message}"
         rescue MissingVariable => e
-          set_error "missing environment variable: #{e.message}"
+          self.error = "missing environment variable: #{e.message}"
         rescue TypeMismatch => e
-          set_error e.message
+          self.error = e.message
         rescue ValueTooLong => e
-          set_error "value for #{e.message} is too long"
+          self.error = "value for #{e.message} is too long"
         end
 
+        # Queries whether the current environment is a valid FaaS environment.
+        #
+        # @return [ true | false ] whether the environment is a FaaS
+        #   environment or not.
         def faas?
           @name != nil
         end
 
+        # Queries whether the current environment is a valid AWS Lambda
+        # environment.
+        #
+        # @return [ true | false ] whether the environment is a AWS Lambda
+        #   environment or not.
         def aws?
           @name == 'aws.lambda'
         end
 
+        # Queries whether the current environment is a valid Azure
+        # environment.
+        #
+        # @return [ true | false ] whether the environment is a Azure
+        #   environment or not.
         def azure?
           @name == 'azure.func'
         end
 
+        # Queries whether the current environment is a valid GCP
+        # environment.
+        #
+        # @return [ true | false ] whether the environment is a GCP
+        #   environment or not.
         def gcp?
           @name == 'gcp.func'
         end
 
+        # Queries whether the current environment is a valid Vercel
+        # environment.
+        #
+        # @return [ true | false ] whether the environment is a Vercel
+        #   environment or not.
         def vercel?
           @name == 'vercel'
         end
 
+        # Compiles the detected environment information into a Hash. It will
+        # always include a {{name}} key, but may include other keys as well,
+        # depending on the detected FaaS environment. (See the handshake
+        # spec for details.)
+        #
+        # @return [ Hash ] the detected environment information.
         def to_h
           fields.merge(name: name)
         end
 
         private
 
+        # Searches the DESCRIMINATORS list to see which (if any) apply to
+        # the current environment.
+        #
+        # @return [ String | nil ] the name of the detected FaaS provider.
+        #
+        # @raise [ TooManyEnvironments ] if the environment contains
+        #   discriminating variables for more than one FaaS provider.
         def detect_environment
           matches = DISCRIMINATORS.keys.select { |k| ENV[k] }
           names = matches.map { |m| DISCRIMINATORS[m] }.uniq
 
-          raise TooManyEnvironments, names.join(", ") if names.length > 1
+          raise TooManyEnvironments, names.join(', ') if names.length > 1
 
           names.first
         end
 
+        # Extracts environment information from the current environment
+        # variables, based on the detected FaaS environment. Populates the
+        # {{@fields}} instance variable.
         def populate_fields
           return unless name
 
           @fields = FIELDS[name].each_with_object({}) do |(var, defn), fields|
-            raise MissingVariable, var unless ENV[var]
-
-            raise ValueTooLong, var if ENV[var].length > MAXIMUM_VALUE_LENGTH
-            coerced = COERCIONS[defn[:type]].call(ENV[var])
-
-            fields[defn[:field]] = coerced
-          rescue ArgumentError
-            raise TypeMismatch, "#{var} must be #{defn[:type]} (got #{ENV[var].inspect})"
+            fields[defn[:field]] = extract_field(var, defn)
           end
         end
 
-        def set_error(msg)
+        # Extracts the named variable from the environment and validates it
+        # against its declared definition.
+        #
+        # @param [ String ] var The name of the environment variable to look
+        #   for.
+        # @param [ Hash ] definition The definition of the field that applies
+        #   to the named variable.
+        #
+        # @return [ Integer | String ] the validated and coerced value of the
+        #   given environment variable.
+        #
+        # @raise [ MissingVariable ] if the environment does not include a
+        #   variable required by the current FaaS provider.
+        # @raise [ ValueTooLong ] if a required variable is too long.
+        # @raise [ TypeMismatch ] if a required variable cannot be coerced to
+        #   the expected type.
+        def extract_field(var, definition)
+          raise MissingVariable, var unless ENV[var]
+          raise ValueTooLong, var if ENV[var].length > MAXIMUM_VALUE_LENGTH
+
+          COERCIONS[definition[:type]].call(ENV[var])
+        rescue ArgumentError
+          raise TypeMismatch,
+                "#{var} must be #{definition[:type]} (got #{ENV[var].inspect})"
+        end
+
+        # Sets the error message to the given value and sets the name to nil.
+        #
+        # @param [ String ] msg The error message to store.
+        def error=(msg)
           @name = nil
           @error = msg
         end

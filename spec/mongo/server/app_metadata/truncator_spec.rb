@@ -41,17 +41,17 @@ describe Mongo::Server::AppMetadata::Truncator do
   let(:truncated_length) { truncator.document.to_bson.to_s.length }
 
   shared_examples_for 'a truncated document' do
-    it 'should be shorter' do
+    it 'is shorter' do
       expect(truncated_length).to be < untruncated_length
     end
 
-    it 'should not be longer than the maximum document size' do
+    it 'is not be longer than the maximum document size' do
       expect(truncated_length).to be <= described_class::MAX_DOCUMENT_SIZE
     end
   end
 
   describe 'MAX_DOCUMENT_SIZE' do
-    it 'should be 512 bytes' do
+    it 'is 512 bytes' do
       # This test is an additional check that MAX_DOCUMENT_SIZE
       # has not been accidentially changed.
       expect(described_class::MAX_DOCUMENT_SIZE).to be == 512
@@ -59,16 +59,16 @@ describe Mongo::Server::AppMetadata::Truncator do
   end
 
   context 'when document does not need truncating' do
-    it 'should not truncate anything' do
+    it 'does not truncate anything' do
       expect(truncated_length).to be == untruncated_length
     end
   end
 
   context 'when modifying the platform is sufficient' do
     context 'when truncating the platform is sufficient' do
-      let(:platform) { "a" * 1000 }
+      let(:platform) { 'a' * 1000 }
 
-      it 'should truncate the platform' do
+      it 'truncates the platform' do
         expect(truncator.document[:platform].length).to be < 1000
       end
 
@@ -80,7 +80,7 @@ describe Mongo::Server::AppMetadata::Truncator do
       # be resolved before truncating or removing anything in env.
       let(:env) { { name: 'abc', a: 'a' * 1000 } }
 
-      it 'should remove the platform' do
+      it 'removes the platform' do
         expect(truncator.document.key?(:platform)).to be false
       end
 
@@ -92,7 +92,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when truncating a single key is sufficient' do
       let(:env) { { name: 'abc', a: 'a' * 1000, b: '123' } }
 
-      it 'should truncate that key' do
+      it 'truncates that key' do
         expect(truncator.document[:env].keys.sort).to be == %w[ a b name ]
         expect(truncator.document[:env][:a].length).to be < 1000
         expect(truncator.document[:env][:name]).to be == 'abc'
@@ -105,7 +105,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when removing a key is required' do
       let(:env) { { name: 'abc', a: 'a' * 1000, b: 'b' * 1000 } }
 
-      it 'should remove the key' do
+      it 'removes the key' do
         expect(truncator.document[:env].keys.sort).to be == %w[ b name ]
         expect(truncator.document[:env][:b].length).to be < 1000
         expect(truncator.document[:env][:name]).to be == 'abc'
@@ -120,7 +120,7 @@ describe Mongo::Server::AppMetadata::Truncator do
       let(:env) { { name: 'abc', a: 'a' * 1000, b: 'b' * 1000 } }
       let(:os) { { type: 'abc', a: 'a' * 1000 } }
 
-      it 'should modify env first' do
+      it 'modifies env first' do
         expect(truncator.document[:env].keys.sort).to be == %w[ name ]
         expect(truncator.document[:os].keys.sort).to be == %w[ a type ]
       end
@@ -131,7 +131,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when truncating a single value is sufficient' do
       let(:os) { { type: 'abc', a: 'a' * 1000, b: '123' } }
 
-      it 'should truncate that key' do
+      it 'truncates that key' do
         expect(truncator.document[:os].keys.sort).to be == %w[ a b type ]
         expect(truncator.document[:os][:a].length).to be < 1000
         expect(truncator.document[:os][:type]).to be == 'abc'
@@ -144,7 +144,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when removing a key is required' do
       let(:os) { { type: 'abc', a: 'a' * 1000, b: 'b' * 1000 } }
 
-      it 'should remove the key' do
+      it 'removes the key' do
         expect(truncator.document[:os].keys.sort).to be == %w[ b type ]
         expect(truncator.document[:os][:b].length).to be < 1000
         expect(truncator.document[:os][:type]).to be == 'abc'
@@ -159,7 +159,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     let(:os) { { type: '123', a: 'a' * 1000, b: 'b' * 1000 } }
 
     context 'when truncating env.name is sufficient' do
-      it 'should truncate env.name' do
+      it 'truncates env.name' do
         expect(truncator.document[:env].keys.sort).to be == %w[ name ]
         expect(truncator.document[:os].keys.sort).to be == %w[ type ]
         expect(truncator.document[:env][:name].length).to be < 1000
@@ -171,7 +171,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when removing env.name is required' do
       let(:os) { { type: 'n' * 1000 } }
 
-      it 'should remove env' do
+      it 'removes env' do
         expect(truncator.document.key?(:env)).to be false
       end
 
@@ -183,7 +183,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     let(:os) { { type: 'n' * 1000, a: 'a' * 1000, b: 'b' * 1000 } }
 
     context 'when truncating os.type is sufficient' do
-      it 'should truncate os.type' do
+      it 'truncates os.type' do
         expect(truncator.document.key?(:env)).to be false
         expect(truncator.document[:os].keys.sort).to be == %w[ type ]
         expect(truncator.document[:os][:type].length).to be < 1000
@@ -195,7 +195,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when removing os.type is required' do
       let(:app_name) { 'n' * 1000 }
 
-      it 'should remove os' do
+      it 'removes os' do
         expect(truncator.document.key?(:os)).to be false
       end
 
@@ -207,7 +207,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when truncating a single key is sufficient' do
       let(:driver) { { name: 'd' * 1000, version: '1.2.3' } }
 
-      it 'should truncate that key' do
+      it 'truncates that key' do
         expect(truncator.document.key?(:os)).to be false
         expect(truncator.document[:driver].keys.sort).to be == %w[ name version ]
         expect(truncator.document[:driver][:version].length).to be < 1000
@@ -219,7 +219,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when removing a key is required' do
       let(:driver) { { name: 'd' * 1000, version: 'v' * 1000 } }
 
-      it 'should remove the key' do
+      it 'removes the key' do
         expect(truncator.document.key?(:os)).to be false
         expect(truncator.document[:driver].keys.sort).to be == %w[ version ]
         expect(truncator.document[:driver][:version].length).to be < 1000
@@ -233,7 +233,7 @@ describe Mongo::Server::AppMetadata::Truncator do
     context 'when truncating application.name is sufficient' do
       let(:app_name) { 'n' * 1000 }
 
-      it 'should truncate the name' do
+      it 'truncates the name' do
         expect(truncator.document.key?(:driver)).to be false
         expect(truncator.document[:application][:name].length).to be < 1000
       end
@@ -245,7 +245,7 @@ describe Mongo::Server::AppMetadata::Truncator do
       let(:app_name) { 'n' * 1000 }
       let(:extra) { 'n' * described_class::MAX_DOCUMENT_SIZE }
 
-      it 'should remove the application key' do
+      it 'removes the application key' do
         expect(truncator.document.key?(:driver)).to be false
         expect(truncator.document.key?(:application)).to be false
       end
