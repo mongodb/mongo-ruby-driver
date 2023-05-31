@@ -317,18 +317,6 @@ module Mongo
           }
         end
       end
-
-      # Ensures the consistency of the options passed to #rewrap_many_data_keys.
-      #
-      # @param [Hash] opts the options hash to validate
-      #
-      # @raise [ ArgumentError ] if the options are not consistent or
-      #   compatible.
-      def validate_rewrap_options!(opts)
-        if opts.key?(:master_key) && !opts.key?(:provider)
-          raise ArgumentError, 'If :master_key is specified, :provider must also be given'
-        end
-      end
     end
   end
 end
