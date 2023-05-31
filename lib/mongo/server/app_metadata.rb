@@ -16,6 +16,7 @@
 # limitations under the License.
 
 require 'mongo/server/app_metadata/environment'
+require 'mongo/server/app_metadata/truncator'
 
 module Mongo
   class Server
@@ -27,11 +28,6 @@ module Mongo
     # @since 2.4.0
     class AppMetadata
       extend Forwardable
-
-      # The max application metadata document byte size.
-      #
-      # @since 2.4.0
-      MAX_DOCUMENT_SIZE = 512.freeze
 
       # The max application name byte size.
       #
@@ -148,18 +144,19 @@ module Mongo
       #
       # @api private
       def client_document
-        BSON::Document.new.tap do |doc|
-          doc[:application] = { name: @app_name } if @app_name
-          doc[:driver] = driver_doc
-          doc[:os] = os_doc
-          doc[:platform] = platform
-          env_doc.tap { |env| doc[:env] = env if env }
-        end
+        @client_document ||=
+          BSON::Document.new.tap do |doc|
+            doc[:application] = { name: @app_name } if @app_name
+            doc[:driver] = driver_doc
+            doc[:os] = os_doc
+            doc[:platform] = platform
+            env_doc.tap { |env| doc[:env] = env if env }
+          end
       end
 
       private
 
-      # Check whether it is possible to build a valid app metadata document
+      # Check whether   it is possible to build a valid app metadata document
       # with params provided on intialization.
       #
       # @raise [ Error::InvalidApplicationName ] When the metadata are invalid.
@@ -177,30 +174,11 @@ module Mongo
       # @return [BSON::Document] Document for connection's handshake.
       def document
         @document ||= begin
-          client = client_document
-          while client.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
-            if client[:os][:name] || client[:os][:architecture]
-              client[:os].delete(:name)
-              client[:os].delete(:architecture)
-            elsif client[:platform]
-              client.delete(:platform)
-            else
-              client = nil
-            end
+          client = Truncator.new(client_document).document
+          BSON::Document.new(compression: @compressors, client: client).tap do |doc|
+            doc[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
+            doc.update(Utils.transform_server_api(@server_api)) if @server_api
           end
-          document = BSON::Document.new(
-            {
-              compression: @compressors,
-              client: client,
-            }
-          )
-          document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
-          if @server_api
-            document.update(
-              Utils.transform_server_api(@server_api)
-            )
-          end
-          document
         end
       end
 

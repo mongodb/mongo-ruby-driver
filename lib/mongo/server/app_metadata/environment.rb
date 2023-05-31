@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/server/app_metadata/environment'
-
 module Mongo
   class Server
     class AppMetadata
