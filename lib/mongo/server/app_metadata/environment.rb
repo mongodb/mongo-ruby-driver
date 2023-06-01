@@ -78,7 +78,6 @@ module Mongo
           },
 
           'vercel' => {
-            'VERCEL_URL' => { field: :url, type: :string },
             'VERCEL_REGION' => { field: :region, type: :string },
           },
         }.freeze
@@ -183,6 +182,11 @@ module Mongo
           matches = DISCRIMINATORS.keys.select { |k| discriminator_matches?(k) }
           names = matches.map { |m| DISCRIMINATORS[m][:name] }.uniq
 
+          # From the spec:
+          # When variables for multiple ``client.env.name`` values are present,
+          # ``vercel`` takes precedence over ``aws.lambda``; any other
+          # combination MUST cause ``client.env`` to be entirely omitted.
+          return 'vercel' if names.sort == %w[ aws.lambda vercel ]
           raise TooManyEnvironments, names.join(', ') if names.length > 1
 
           names.first
