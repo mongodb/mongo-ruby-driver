@@ -65,6 +65,24 @@ describe Mongo::Server::AppMetadata::Environment do
       end
     end
 
+    context 'when VERCEL and AWS are both given' do
+      local_env(
+        'AWS_EXECUTION_ENV' => 'AWS_Lambda_ruby2.7',
+        'AWS_REGION' => 'us-east-2',
+        'AWS_LAMBDA_FUNCTION_MEMORY_SIZE' => '1024',
+        'VERCEL' => '1',
+        'VERCEL_REGION' => 'cdg1'
+      )
+
+      it_behaves_like 'running in a FaaS environment'
+
+      it 'prefers vercel' do
+        expect(env.aws?).to be false
+        expect(env.vercel?).to be true
+        expect(env.fields[:region]).to be == 'cdg1'
+      end
+    end
+
     context 'when environment is invalid due to missing variable' do
       local_env(
         'AWS_EXECUTION_ENV' => 'AWS_Lambda_ruby2.7',
