@@ -205,7 +205,7 @@ describe Mongo::Client do
             let(:key_vault_namespace) { nil }
 
             it 'raises an exception' do
-              expect { client }.to raise_error(ArgumentError, /key_vault_namespace option cannot be_nil/)
+              expect { client }.to raise_error(ArgumentError, /key_vault_namespace option cannot be nil/)
             end
           end
 
@@ -224,7 +224,7 @@ describe Mongo::Client do
             let(:kms_providers) { nil }
 
             it 'raises an exception' do
-              expect { client }.to raise_error(ArgumentError, /KMS providers options must not be_nil/)
+              expect { client }.to raise_error(ArgumentError, /KMS providers options must not be nil/)
             end
           end
 
@@ -253,11 +253,14 @@ describe Mongo::Client do
           context 'when aws kms_provider is incorrectly formatted' do
             let(:kms_providers) { { aws: { wrong_key: 'hello' } } }
 
+            let(:expected_options_format) do
+              "{ access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' }"
+            end
+
             it 'raises an exception' do
               expect { client }.to raise_error(
                 ArgumentError,
-                / AWS KMS provider options must be in the format: / +
-                /{ access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' }/
+                / AWS KMS provider options must be in the format: #{expected_options_format}/
               )
             end
           end
