@@ -64,6 +64,9 @@ RSpec/BeforeAfterAll:
 RSpec/DescribeClass:
   Enabled: false
 
+Style/FetchEnvVar:
+  Enabled: false
+
 RSpec/ImplicitExpect:
   EnforcedStyle: is_expected
 

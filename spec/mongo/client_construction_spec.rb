@@ -955,7 +955,7 @@ describe Mongo::Client do
         end
 
         it 'includes the platform info in the app metadata' do
-          expect(app_metadata.send(:full_client_document)[:platform]).to match(/mongoid-6\.0\.2/)
+          expect(app_metadata.client_document[:platform]).to match(/mongoid-6\.0\.2/)
         end
       end
 
@@ -982,7 +982,7 @@ describe Mongo::Client do
           end
 
           it 'does not include the platform info in the app metadata' do
-            expect(app_metadata.send(:full_client_document)[:platform]).to eq(platform_string)
+            expect(app_metadata.client_document[:platform]).to eq(platform_string)
           end
         end
 
@@ -1001,7 +1001,7 @@ describe Mongo::Client do
           end
 
           it 'does not include the platform info in the app metadata' do
-            expect(app_metadata.send(:full_client_document)[:platform]).to eq(platform_string)
+            expect(app_metadata.client_document[:platform]).to eq(platform_string)
           end
         end
       end

@@ -480,7 +480,7 @@ describe Mongo::Cluster do
       end
 
       it 'constructs an AppMetadata object with the app_name' do
-        expect(cluster.app_metadata.send(:full_client_document)[:application]).to eq('name' => 'cluster_test')
+        expect(cluster.app_metadata.client_document[:application]).to eq('name' => 'cluster_test')
       end
     end
 
@@ -491,7 +491,7 @@ describe Mongo::Cluster do
       end
 
       it 'constructs an AppMetadata object with no app_name' do
-        expect(cluster.app_metadata.send(:full_client_document)[:application]).to be_nil
+        expect(cluster.app_metadata.client_document[:application]).to be_nil
       end
     end
   end
