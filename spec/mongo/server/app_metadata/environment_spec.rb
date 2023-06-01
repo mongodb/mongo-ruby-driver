@@ -161,7 +161,6 @@ describe Mongo::Server::AppMetadata::Environment do
     context 'when FaaS environment is Vercel' do
       local_env(
         'VERCEL' => '1',
-        'VERCEL_URL' => '*.vercel.app',
         'VERCEL_REGION' => 'cdg1'
       )
 
@@ -169,7 +168,6 @@ describe Mongo::Server::AppMetadata::Environment do
 
       it 'recognizes Vercel' do
         expect(env.name).to be == 'vercel'
-        expect(env.fields[:url]).to be == '*.vercel.app'
         expect(env.fields[:region]).to be == 'cdg1'
       end
     end

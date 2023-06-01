@@ -78,7 +78,6 @@ module Mongo
           },
 
           'vercel' => {
-            'VERCEL_URL' => { field: :url, type: :string },
             'VERCEL_REGION' => { field: :region, type: :string },
           },
         }.freeze
