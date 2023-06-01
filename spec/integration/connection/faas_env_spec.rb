@@ -23,7 +23,6 @@ SCENARIOS = {
 
   'Valid Vercel' => {
     'VERCEL' => '1',
-    'VERCEL_URL' => '*.vercel.app',
     'VERCEL_REGION' => 'cdg1',
   },
 
