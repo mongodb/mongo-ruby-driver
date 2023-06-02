@@ -41,7 +41,9 @@
   latest_stable_mdb = "6.0".inspect # so it gets quoted as a string
 
   # A few of the most recent MongoDB versions
-  actual_and_upcoming_mdb = %w( latest 7.0 6.0 )
+  # actual_and_upcoming_mdb = %w( latest 7.0 6.0 )
+  # latest is removed until its package is fixed; now there is 4.1.6 in the latest
+  actual_and_upcoming_mdb = %w( 7.0 6.0 )
   recent_mdb = %w( 6.0 5.3 )
   latest_5x_mdb = "5.3".inspect # so it gets quoted as a string
 %>

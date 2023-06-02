@@ -1063,7 +1063,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-3.1"
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: ["7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: ${auth-and-ssl} ${ruby} ${topology}
@@ -1073,7 +1073,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-3.1", "jruby-9.3"]
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: ["7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ['rhel8', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
