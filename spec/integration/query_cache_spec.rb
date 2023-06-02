@@ -192,7 +192,7 @@ describe 'QueryCache' do
     min_server_fcv '3.6'
 
     before do
-      authorized_client['test'].drop
+      authorized_client['test', write_concern: { w: :majority }].drop
     end
 
     context 'when two queries have same read concern' do

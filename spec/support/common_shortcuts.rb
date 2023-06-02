@@ -373,7 +373,11 @@ module CommonShortcuts
         if $last_async_task.nil?
           STDERR.puts "No async task - server never started?"
         else
-          $last_async_task.stop
+          begin
+            $last_async_task.stop
+          rescue NoMethodError => e
+            STDERR.puts "Error stopping async task: #{e}"
+          end
         end
 
         thread.kill
