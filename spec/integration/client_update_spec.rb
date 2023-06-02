@@ -15,8 +15,8 @@ describe Mongo::Client do
     include_context 'with local kms_providers'
 
     before do
-      authorized_client.use(:keyvault)[:datakeys].drop
-      authorized_client.use(:keyvault)[:datakeys].insert_one(data_key)
+      authorized_client.use(:keyvault)[:datakeys, write_concern: { w: :majority }].drop
+      authorized_client.use(:keyvault)[:datakeys, write_concern: { w: :majority }].insert_one(data_key)
       authorized_client.use(:auto_encryption)[:users].drop
       authorized_client.use(:auto_encryption)[:users,
         {
