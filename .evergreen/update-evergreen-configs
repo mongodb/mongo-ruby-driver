@@ -8,9 +8,6 @@ autoload :YAML, 'yaml'
 class Runner
   def run
     transform('config.yml')
-
-    @atlas = true
-    transform('config-atlas.yml')
   end
 
   def transform(output_file_name)
@@ -27,13 +24,8 @@ EOT
     template_path = File.join(File.dirname(__FILE__), 'config/axes.yml.erb')
     contents << Tilt.new(template_path, engine_class: Erubi::CaptureEndEngine).render(self)
 
-    if @atlas
-      template_path = File.join(File.dirname(__FILE__), 'config/atlas.yml.erb')
-      contents << Tilt.new(template_path, engine_class: Erubi::CaptureEndEngine).render(self)
-    else
-      template_path = File.join(File.dirname(__FILE__), 'config/standard.yml.erb')
-      contents << Tilt.new(template_path, engine_class: Erubi::CaptureEndEngine).render(self)
-    end
+    template_path = File.join(File.dirname(__FILE__), 'config/standard.yml.erb')
+    contents << Tilt.new(template_path, engine_class: Erubi::CaptureEndEngine).render(self)
 
     output_path = File.join(File.dirname(__FILE__), output_file_name)
     File.open(output_path, 'w') do |f|
