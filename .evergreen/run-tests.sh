@@ -44,7 +44,7 @@ set_env_ruby
 prepare_server $arch
 
 if test "$DOCKER_PRELOAD" != 1; then
-  install_mlaunch_virtualenv
+  install_mlaunch_venv
 fi
 
 # Make sure cmake is installed (in case we need to install the libmongocrypt
@@ -160,19 +160,33 @@ elif test "$AUTH" = aws-ecs; then
   fi
 
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+elif test "$AUTH" = aws-web-identity; then
+  clear_instance_profile
+
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi
 
 if test -n "$FLE"; then
   # Downloading crypt shared lib
-  crypt_shared_version=`${BINDIR}/mongod --version | grep -oP 'db version v\K.*'`
-  python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out `pwd`/csfle_lib  --target `host_distro` || true
-  if test -f `pwd`/csfle_lib/lib/mongo_crypt_v1.so
-  then
-    export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=`pwd`/csfle_lib/lib/mongo_crypt_v1.so
+  if [ -z "$MONGO_CRYPT_SHARED_DOWNLOAD_URL" ]; then
+    crypt_shared_version=${CRYPT_SHARED_VERSION:-$("${BINDIR}"/mongod --version | grep -oP 'db version v\K.*')}
+    python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out $(pwd)/csfle_lib  --target $(host_distro) || true
+    if test -f $(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+    then
+      export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+    else
+      echo 'Could not find crypt_shared library'
+    fi
+  else
+    echo "Downloading crypt_shared package from $MONGO_CRYPT_SHARED_DOWNLOAD_URL"
+    mkdir -p $(pwd)/csfle_lib
+    cd $(pwd)/csfle_lib
+    curl --retry 3 -fL $MONGO_CRYPT_SHARED_DOWNLOAD_URL | tar zxf -
+    export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/lib/mongo_crypt_v1.so
+    cd -
   fi
-
 
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
@@ -185,13 +199,17 @@ if test -n "$FLE"; then
     # cryptography 3.4 requires rust, see
     # https://github.com/pyca/cryptography/issues/5771.
     #pip install boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
-    pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0
+    pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0 'sqlalchemy<2.0.0'
   fi
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 7999 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/expired.pem --port 8000 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/wrong-host.pem --port 8001 &
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
   python3 -u .evergreen/csfle/kms_kmip_server.py &
+  python3 -u .evergreen/csfle/fake_azure.py &
+
+  # Obtain temporary AWS credentials
+  PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
 
   if test "$FLE" = helper; then
     echo "Using helper gem"
@@ -244,6 +262,7 @@ if test -n "$FLE"; then
    wait_for_kms_server 8001
    wait_for_kms_server 8002
    wait_for_kms_server 5698
+   wait_for_kms_server 8080
    echo "Waiting for mock KMS servers to start... done."
 fi
 
