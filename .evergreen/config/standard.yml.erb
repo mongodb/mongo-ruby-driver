@@ -35,6 +35,7 @@
   latest_stable_mdb = "6.0".inspect # so it gets quoted as a string
 
   # A few of the most recent MongoDB versions
+  actual_and_upcoming_mdb = %w( latest 7.0 6.0 )
   recent_mdb = %w( 6.0 5.3 )
   latest_5x_mdb = "5.3".inspect # so it gets quoted as a string
 %>
@@ -44,21 +45,21 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= actual_and_upcoming_mdb %>
       topology: <%= topologies %>
       os: rhel8
     display_name: ${auth-and-ssl} ${ruby} ${topology}
     tasks:
       - name: "test-mlaunch"
 
-  # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: <%= recent_rubies %>
-      #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['6.0']
+      mongodb-version: <%= actual_and_upcoming_mdb %>
       topology: <%= topologies %>
-      os: ['rhel8', 'ubuntu2204']
+      os: ['rhel8']
+      # There is no latest for ubuntu2204, so we can't test it here.
+      # os: ['rhel8', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -343,19 +344,17 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
-  # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
-  #
-  # - matrix_name: "fle-latest"
-  #   matrix_spec:
-  #     auth-and-ssl: "noauth-and-nossl"
-  #     ruby: <%= latest_ruby %>
-  #     topology: [replica-set, sharded-cluster]
-  #     mongodb-version: [ 'latest' ]
-  #     os: rhel8
-  #     fle: helper
-  #   display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-  #   tasks:
-  #     - name: "test-fle"
+  - matrix_name: "fle-latest"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: <%= latest_ruby %>
+      topology: [replica-set, sharded-cluster]
+      mongodb-version: [ 'latest', '7.0' ]
+      os: rhel8
+      fle: helper
+    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+    tasks:
+      - name: "test-fle"
 
   - matrix_name: "fle"
     matrix_spec:
