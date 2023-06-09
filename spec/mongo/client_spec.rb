@@ -3,11 +3,13 @@
 
 require 'spec_helper'
 
+DEFAULT_LOCAL_HOST = '127.0.0.1:27017'
+ALT_LOCAL_HOST = '127.0.0.1:27010'
+
 # NB: tests for .new, #initialize, #use, #with and #dup are in
 # client_construction_spec.rb.
 
 describe Mongo::Client do
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:monitored_client) do
@@ -17,24 +19,21 @@ describe Mongo::Client do
   end
 
   describe '#==' do
-
     let(:client) do
       new_local_client_nmio(
-        ['127.0.0.1:27017'],
-        :read => { :mode => :primary },
-        :database => SpecConfig.instance.test_db
+        [ DEFAULT_LOCAL_HOST ],
+        read: { mode: :primary },
+        database: SpecConfig.instance.test_db
       )
     end
 
     context 'when the other is a client' do
-
       context 'when the options and cluster are equal' do
-
         let(:other) do
           new_local_client_nmio(
-            ['127.0.0.1:27017'],
-            :read => { :mode => :primary },
-            :database => SpecConfig.instance.test_db
+            [ DEFAULT_LOCAL_HOST ],
+            read: { mode: :primary },
+            database: SpecConfig.instance.test_db
           )
         end
 
@@ -44,12 +43,11 @@ describe Mongo::Client do
       end
 
       context 'when the options are not equal' do
-
         let(:other) do
           new_local_client_nmio(
-            ['127.0.0.1:27017'],
-            :read => { :mode => :secondary },
-            :database => SpecConfig.instance.test_db
+            [ DEFAULT_LOCAL_HOST ],
+            read: { mode: :secondary },
+            database: SpecConfig.instance.test_db
           )
         end
 
@@ -59,12 +57,11 @@ describe Mongo::Client do
       end
 
       context 'when cluster is not equal' do
-
         let(:other) do
           new_local_client_nmio(
-            ['127.0.0.1:27010'],
-            :read => { :mode => :primary },
-            :database => SpecConfig.instance.test_db
+            [ ALT_LOCAL_HOST ],
+            read: { mode: :primary },
+            database: SpecConfig.instance.test_db
           )
         end
 
@@ -75,7 +72,6 @@ describe Mongo::Client do
     end
 
     context 'when the other is not a client' do
-
       it 'returns false' do
         expect(client).not_to eq('test')
       end
@@ -83,14 +79,12 @@ describe Mongo::Client do
   end
 
   describe '#[]' do
-
     let(:client) do
-      new_local_client_nmio(['127.0.0.1:27017'],
-        :database => SpecConfig.instance.test_db)
+      new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
+        database: SpecConfig.instance.test_db)
     end
 
     shared_examples_for 'a collection switching object' do
-
       before do
         client.use(:dbtest)
       end
@@ -101,7 +95,6 @@ describe Mongo::Client do
     end
 
     context 'when provided a string' do
-
       let(:collection) do
         client['users']
       end
@@ -110,7 +103,6 @@ describe Mongo::Client do
     end
 
     context 'when provided a symbol' do
-
       let(:collection) do
         client[:users]
       end
@@ -120,24 +112,21 @@ describe Mongo::Client do
   end
 
   describe '#eql' do
-
     let(:client) do
       new_local_client_nmio(
-        ['127.0.0.1:27017'],
-        :read => { :mode => :primary },
-        :database => SpecConfig.instance.test_db
+        [ DEFAULT_LOCAL_HOST ],
+        read: { mode: :primary },
+        database: SpecConfig.instance.test_db
       )
     end
 
     context 'when the other is a client' do
-
       context 'when the options and cluster are equal' do
-
         let(:other) do
           new_local_client_nmio(
-            ['127.0.0.1:27017'],
-            :read => { :mode => :primary },
-            :database => SpecConfig.instance.test_db
+            [ DEFAULT_LOCAL_HOST ],
+            read: { mode: :primary },
+            database: SpecConfig.instance.test_db
           )
         end
 
@@ -147,12 +136,11 @@ describe Mongo::Client do
       end
 
       context 'when the options are not equal' do
-
         let(:other) do
           new_local_client_nmio(
-            ['127.0.0.1:27017'],
-            :read => { :mode => :secondary },
-            :database => SpecConfig.instance.test_db
+            [ DEFAULT_LOCAL_HOST ],
+            read: { mode: :secondary },
+            database: SpecConfig.instance.test_db
           )
         end
 
@@ -162,12 +150,11 @@ describe Mongo::Client do
       end
 
       context 'when the cluster is not equal' do
-
         let(:other) do
           new_local_client_nmio(
-            ['127.0.0.1:27010'],
-            :read => { :mode => :primary },
-            :database => SpecConfig.instance.test_db
+            [ ALT_LOCAL_HOST ],
+            read: { mode: :primary },
+            database: SpecConfig.instance.test_db
           )
         end
 
@@ -178,12 +165,11 @@ describe Mongo::Client do
     end
 
     context 'when the other is not a client' do
-
       let(:client) do
         new_local_client_nmio(
-          ['127.0.0.1:27017'],
-          :read => { :mode => :primary },
-          :database => SpecConfig.instance.test_db
+          [ DEFAULT_LOCAL_HOST ],
+          read: { mode: :primary },
+          database: SpecConfig.instance.test_db
         )
       end
 
@@ -194,14 +180,13 @@ describe Mongo::Client do
   end
 
   describe '#hash' do
-
     let(:client) do
       new_local_client_nmio(
-        ['127.0.0.1:27017'],
-        :read => { :mode => :primary },
-        :local_threshold => 0.010,
-        :server_selection_timeout => 10000,
-        :database => SpecConfig.instance.test_db
+        [ DEFAULT_LOCAL_HOST ],
+        read: { mode: :primary },
+        local_threshold: 0.010,
+        server_selection_timeout: 10000,
+        database: SpecConfig.instance.test_db
       )
     end
 
@@ -209,14 +194,14 @@ describe Mongo::Client do
       retry_writes: true, retry_reads: true, monitoring_io: false) }
 
     let(:options) do
-      Mongo::Options::Redacted.new(:read => { :mode => :primary },
-                                    :local_threshold => 0.010,
-                                    :server_selection_timeout => 10000,
-                                    :database => SpecConfig.instance.test_db)
+      Mongo::Options::Redacted.new(read: { mode: :primary },
+                                    local_threshold: 0.010,
+                                    server_selection_timeout: 10000,
+                                    database: SpecConfig.instance.test_db)
     end
 
     let(:expected) do
-      [client.cluster, default_options.merge(options)].hash
+      [ client.cluster, default_options.merge(options) ].hash
     end
 
     it 'returns a hash of the cluster and options' do
@@ -225,12 +210,11 @@ describe Mongo::Client do
   end
 
   describe '#inspect' do
-
     let(:client) do
       new_local_client_nmio(
-        ['127.0.0.1:27017'],
-        :read => { :mode => :primary },
-        :database => SpecConfig.instance.test_db
+        [ DEFAULT_LOCAL_HOST ],
+        read: { mode: :primary },
+        database: SpecConfig.instance.test_db
       )
     end
 
@@ -239,14 +223,13 @@ describe Mongo::Client do
     end
 
     context 'when there is sensitive data in the options' do
-
       let(:client) do
         new_local_client_nmio(
-            ['127.0.0.1:27017'],
-            :read => { :mode => :primary },
-            :database => SpecConfig.instance.test_db,
-            :password => 'some_password',
-            :user => 'emily'
+            [ DEFAULT_LOCAL_HOST ],
+            read: { mode: :primary },
+            database: SpecConfig.instance.test_db,
+            password: 'some_password',
+            user: 'emily'
         )
       end
 
@@ -257,14 +240,12 @@ describe Mongo::Client do
   end
 
   describe '#server_selector' do
-
     context 'when there is a read preference set' do
-
       let(:client) do
-        new_local_client_nmio(['127.0.0.1:27017'],
-                            :database => SpecConfig.instance.test_db,
-                            :read => mode,
-                            :server_selection_timeout => 2)
+        new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
+                            database: SpecConfig.instance.test_db,
+                            read: mode,
+                            server_selection_timeout: 2)
       end
 
       let(:server_selector) do
@@ -272,9 +253,8 @@ describe Mongo::Client do
       end
 
       context 'when mode is primary' do
-
         let(:mode) do
-          { :mode => :primary }
+          { mode: :primary }
         end
 
         it 'returns a primary server selector' do
@@ -287,9 +267,8 @@ describe Mongo::Client do
       end
 
       context 'when mode is primary_preferred' do
-
         let(:mode) do
-          { :mode => :primary_preferred }
+          { mode: :primary_preferred }
         end
 
         it 'returns a primary preferred server selector' do
@@ -298,9 +277,8 @@ describe Mongo::Client do
       end
 
       context 'when mode is secondary' do
-
         let(:mode) do
-          { :mode => :secondary }
+          { mode: :secondary }
         end
 
         it 'uses a Secondary server selector' do
@@ -309,9 +287,8 @@ describe Mongo::Client do
       end
 
       context 'when mode is secondary preferred' do
-
         let(:mode) do
-          { :mode => :secondary_preferred }
+          { mode: :secondary_preferred }
         end
 
         it 'uses a Secondary server selector' do
@@ -320,9 +297,8 @@ describe Mongo::Client do
       end
 
       context 'when mode is nearest' do
-
         let(:mode) do
-          { :mode => :nearest }
+          { mode: :nearest }
         end
 
         it 'uses a Secondary server selector' do
@@ -331,11 +307,10 @@ describe Mongo::Client do
       end
 
       context 'when no mode provided' do
-
         let(:client) do
-          new_local_client_nmio(['127.0.0.1:27017'],
-                              :database => SpecConfig.instance.test_db,
-                              :server_selection_timeout => 2)
+          new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
+                              database: SpecConfig.instance.test_db,
+                              server_selection_timeout: 2)
         end
 
         it 'returns a primary server selector' do
@@ -344,7 +319,6 @@ describe Mongo::Client do
       end
 
       context 'when the read preference is printed' do
-
         let(:client) do
           new_local_client_nmio(SpecConfig.instance.addresses, options)
         end
@@ -360,7 +334,7 @@ describe Mongo::Client do
         let(:error) do
           begin
             client.database.command(ping: 1)
-          rescue => e
+          rescue StandardError => e
             e
           end
         end
@@ -373,12 +347,11 @@ describe Mongo::Client do
   end
 
   describe '#read_preference' do
-
     let(:client) do
-      new_local_client_nmio(['127.0.0.1:27017'],
-                          :database => SpecConfig.instance.test_db,
-                          :read => mode,
-                          :server_selection_timeout => 2)
+      new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
+                          database: SpecConfig.instance.test_db,
+                          read: mode,
+                          server_selection_timeout: 2)
     end
 
     let(:preference) do
@@ -386,9 +359,8 @@ describe Mongo::Client do
     end
 
     context 'when mode is primary' do
-
       let(:mode) do
-        { :mode => :primary }
+        { mode: :primary }
       end
 
       it 'returns a primary read preference' do
@@ -397,9 +369,8 @@ describe Mongo::Client do
     end
 
     context 'when mode is primary_preferred' do
-
       let(:mode) do
-        { :mode => :primary_preferred }
+        { mode: :primary_preferred }
       end
 
       it 'returns a primary preferred read preference' do
@@ -408,9 +379,8 @@ describe Mongo::Client do
     end
 
     context 'when mode is secondary' do
-
       let(:mode) do
-        { :mode => :secondary }
+        { mode: :secondary }
       end
 
       it 'returns a secondary read preference' do
@@ -419,9 +389,8 @@ describe Mongo::Client do
     end
 
     context 'when mode is secondary preferred' do
-
       let(:mode) do
-        { :mode => :secondary_preferred }
+        { mode: :secondary_preferred }
       end
 
       it 'returns a secondary preferred read preference' do
@@ -430,9 +399,8 @@ describe Mongo::Client do
     end
 
     context 'when mode is nearest' do
-
       let(:mode) do
-        { :mode => :nearest }
+        { mode: :nearest }
       end
 
       it 'returns a nearest read preference' do
@@ -441,11 +409,10 @@ describe Mongo::Client do
     end
 
     context 'when no mode provided' do
-
       let(:client) do
-        new_local_client_nmio(['127.0.0.1:27017'],
-                            :database => SpecConfig.instance.test_db,
-                            :server_selection_timeout => 2)
+        new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
+                            database: SpecConfig.instance.test_db,
+                            server_selection_timeout: 2)
       end
 
       it 'returns nil' do
@@ -455,12 +422,10 @@ describe Mongo::Client do
   end
 
   describe '#write_concern' do
-
     let(:concern) { client.write_concern }
 
     context 'when no option was provided to the client' do
-
-      let(:client) { new_local_client_nmio(['127.0.0.1:27017'], :database => SpecConfig.instance.test_db) }
+      let(:client) { new_local_client_nmio([ DEFAULT_LOCAL_HOST ], database: SpecConfig.instance.test_db) }
 
       it 'does not set the write concern' do
         expect(concern).to be_nil
@@ -468,24 +433,20 @@ describe Mongo::Client do
     end
 
     context 'when an option is provided' do
-
       context 'when the option is acknowledged' do
-
         let(:client) do
-          new_local_client_nmio(['127.0.0.1:27017'], :write => { :j => true }, :database => SpecConfig.instance.test_db)
+          new_local_client_nmio([ DEFAULT_LOCAL_HOST ], write: { j: true }, database: SpecConfig.instance.test_db)
         end
 
         it 'returns a acknowledged write concern' do
-          expect(concern.get_last_error).to eq(:getlasterror => 1, :j => true)
+          expect(concern.get_last_error).to eq(getlasterror: 1, j: true)
         end
       end
 
       context 'when the option is unacknowledged' do
-
         context 'when the w is 0' do
-
           let(:client) do
-            new_local_client_nmio(['127.0.0.1:27017'], :write => { :w => 0 }, :database => SpecConfig.instance.test_db)
+            new_local_client_nmio([ DEFAULT_LOCAL_HOST ], write: { w: 0 }, database: SpecConfig.instance.test_db)
           end
 
           it 'returns an unacknowledged write concern' do
@@ -494,9 +455,8 @@ describe Mongo::Client do
         end
 
         context 'when the w is -1' do
-
           let(:client) do
-            new_local_client_nmio(['127.0.0.1:27017'], :write => { :w => -1 }, :database => SpecConfig.instance.test_db)
+            new_local_client_nmio([ DEFAULT_LOCAL_HOST ], write: { w: -1 }, database: SpecConfig.instance.test_db)
           end
 
           it 'raises an error' do
@@ -510,15 +470,15 @@ describe Mongo::Client do
   end
 
   [
-    [:max_read_retries, 1],
-    [:read_retry_interval, 5],
-    [:max_write_retries, 1],
+    [ :max_read_retries, 1 ],
+    [ :read_retry_interval, 5 ],
+    [ :max_write_retries, 1 ],
   ].each do |opt, default|
     describe "##{opt}" do
       let(:client_options) { {} }
 
       let(:client) do
-        new_local_client_nmio(['127.0.0.1:27017'], client_options)
+        new_local_client_nmio([ DEFAULT_LOCAL_HOST ], client_options)
       end
 
       it "defaults to #{default}" do
@@ -528,7 +488,7 @@ describe Mongo::Client do
       end
 
       context 'specified on client' do
-        let(:client_options) { {opt => 2} }
+        let(:client_options) { { opt => 2 } }
 
         it 'inherits from client' do
           expect(client.options[opt]).to eq(2)
@@ -550,24 +510,21 @@ describe Mongo::Client do
   end
 
   describe '#database' do
-
     let(:database) { client.database }
 
     context 'when client has :server_api option' do
-
       let(:client) do
-        new_local_client_nmio(['localhost'], server_api: {version: '1'})
+        new_local_client_nmio([ 'localhost' ], server_api: { version: '1' })
       end
 
       it 'is not transfered to the collection' do
-        database.options[:server_api].should be nil
+        expect(database.options[:server_api]).to be_nil
       end
     end
 
   end
 
   describe '#database_names' do
-
     it 'returns a list of database names' do
       expect(root_authorized_client.database_names).to include(
         'admin'
@@ -597,17 +554,16 @@ describe Mongo::Client do
       min_server_version '4.4'
 
       it 'returns a list of database names and send comment' do
-        result = monitored_client.database_names({}, comment: "comment")
+        result = monitored_client.database_names({}, comment: 'comment')
         expect(result).to include('admin')
-        command = subscriber.command_started_events("listDatabases").last&.command
+        command = subscriber.command_started_events('listDatabases').last&.command
         expect(command).not_to be_nil
-        expect(command["comment"]).to eq("comment")
+        expect(command['comment']).to eq('comment')
       end
     end
   end
 
   describe '#list_databases' do
-
     it 'returns a list of database info documents' do
       expect(
         root_authorized_client.list_databases.collect do |i|
@@ -702,19 +658,18 @@ describe Mongo::Client do
       min_server_version '4.4'
 
       it 'returns a list of database names and send comment' do
-        result = monitored_client.list_databases({}, false, comment: "comment").collect do |i|
+        result = monitored_client.list_databases({}, false, comment: 'comment').collect do |i|
           i['name']
         end
         expect(result).to include('admin')
-        command = subscriber.command_started_events("listDatabases").last&.command
+        command = subscriber.command_started_events('listDatabases').last&.command
         expect(command).not_to be_nil
-        expect(command["comment"]).to eq("comment")
+        expect(command['comment']).to eq('comment')
       end
     end
   end
 
   describe '#list_mongo_databases' do
-
     let(:options) do
       { read: { mode: :secondary } }
     end
@@ -758,18 +713,18 @@ describe Mongo::Client do
       min_server_version '4.4'
 
       it 'returns a list of database names and send comment' do
-        result = monitored_client.list_mongo_databases({}, comment: "comment")
+        result = monitored_client.list_mongo_databases({}, comment: 'comment')
         expect(result).to all(be_a(Mongo::Database))
-        command = subscriber.command_started_events("listDatabases").last&.command
+        command = subscriber.command_started_events('listDatabases').last&.command
         expect(command).not_to be_nil
-        expect(command["comment"]).to eq("comment")
+        expect(command['comment']).to eq('comment')
       end
     end
   end
 
   describe '#close' do
     let(:client) do
-      new_local_client_nmio(['127.0.0.1:27017'])
+      new_local_client_nmio([ DEFAULT_LOCAL_HOST ])
     end
 
     it 'disconnects the cluster and returns true' do
@@ -781,9 +736,8 @@ describe Mongo::Client do
   end
 
   describe '#reconnect' do
-
     let(:client) do
-      new_local_client_nmio([ClusterConfig.instance.primary_address_str])
+      new_local_client_nmio([ ClusterConfig.instance.primary_address_str ])
     end
 
     it 'replaces the cluster' do
@@ -806,7 +760,6 @@ describe Mongo::Client do
   end
 
   describe '#collections' do
-
     before do
       authorized_client.database[:users].drop
       authorized_client.database[:users].create
@@ -823,7 +776,6 @@ describe Mongo::Client do
   end
 
   describe '#start_session' do
-
     let(:session) do
       authorized_client.start_session
     end
@@ -842,7 +794,6 @@ describe Mongo::Client do
       end
 
       context 'when options are provided' do
-
         let(:options) do
           { causal_consistency: true }
         end
@@ -857,14 +808,12 @@ describe Mongo::Client do
       end
 
       context 'when options are not provided' do
-
         it 'does not set options on the session' do
           expect(session.options).to eq({ implicit: false })
         end
       end
 
       context 'when a session is checked out and checked back in' do
-
         let!(:session_a) do
           authorized_client.start_session
         end
@@ -902,7 +851,6 @@ describe Mongo::Client do
       end
 
       context 'when an implicit session is used' do
-
         before do
           authorized_client.database.command(ping: 1)
         end
@@ -932,10 +880,10 @@ describe Mongo::Client do
         end
 
         let(:options) do
-          { :max_pool_size => 1, :retry_writes => true }
+          { max_pool_size: 1, retry_writes: true }
         end
 
-        shared_examples "a single connection" do
+        shared_examples 'a single connection' do
           # JRuby, due to being concurrent, does not like rspec setting mocks
           # in threads while other threads are calling the methods being mocked.
           # My theory is that rspec removes & redefines methods as part of
@@ -957,208 +905,208 @@ describe Mongo::Client do
             end
           end
 
-          it 'doesn\'t have any live sessions' do
+          it "doesn't have any live sessions" do
             threads.each do |thread|
               thread.join
             end
           end
         end
 
-        context "when doing three inserts" do
+        context 'when doing three inserts' do
           let(:threads) do
             (1..3).map do |i|
               Thread.new do
-                client['test'].insert_one({test: "test#{i}"})
+                client['test'].insert_one({ test: "test#{i}" })
               end
             end
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing an insert and two updates" do
+        context 'when doing an insert and two updates' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing an insert, update and delete" do
+        context 'when doing an insert, update and delete' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads << Thread.new do
-              client['test'].delete_one({test: "test"})
+              client['test'].delete_one({ test: 'test' })
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing an insert, update and find" do
+        context 'when doing an insert, update and find' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads << Thread.new do
-              client['test'].find({test: "test"}).to_a
+              client['test'].find({ test: 'test' }).to_a
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing an insert, update and bulk write" do
+        context 'when doing an insert, update and bulk write' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads << Thread.new do
-              client['test'].bulk_write([{ insert_one: { test: "test1" } },
-                                         { update_one: { filter: { test: "test1" }, update: { "$set" => { test: "test2" } } } } ])
+              client['test'].bulk_write([ { insert_one: { test: 'test1' } },
+                                          { update_one: { filter: { test: 'test1' }, update: { '$set' => { test: 'test2' } } } } ])
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing an insert, update and find_one_and_delete" do
+        context 'when doing an insert, update and find_one_and_delete' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads << Thread.new do
-              client['test'].find_one_and_delete({test: "test"})
+              client['test'].find_one_and_delete({ test: 'test' })
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing an insert, update and find_one_and_update" do
+        context 'when doing an insert, update and find_one_and_update' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads << Thread.new do
-              client['test'].find_one_and_update({test: "test"}, {test: "test2"})
+              client['test'].find_one_and_update({ test: 'test' }, { test: 'test2' })
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing an insert, update and find_one_and_replace" do
+        context 'when doing an insert, update and find_one_and_replace' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads << Thread.new do
-              client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
+              client['test'].find_one_and_replace({ test: 'test' }, { test: 'test2' })
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing an insert, update and a replace" do
+        context 'when doing an insert, update and a replace' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({test: "test"}, { "$set" => { test: "test2" } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 'test2' } })
             end
             threads << Thread.new do
-              client['test'].replace_one({test: "test"}, {test: "test2"})
+              client['test'].replace_one({ test: 'test' }, { test: 'test2' })
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
 
-        context "when doing all of the operations" do
+        context 'when doing all of the operations' do
           let(:threads) do
             threads = []
             threads << Thread.new do
-              client['test'].insert_one({test: "test"})
+              client['test'].insert_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].update_one({ test: "test" }, { "$set" => { test: 1 } })
+              client['test'].update_one({ test: 'test' }, { '$set' => { test: 1 } })
             end
             threads << Thread.new do
-              client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
+              client['test'].find_one_and_replace({ test: 'test' }, { test: 'test2' })
             end
             threads << Thread.new do
-              client['test'].delete_one({test: "test"})
+              client['test'].delete_one({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].find({test: "test"}).to_a
+              client['test'].find({ test: 'test' }).to_a
             end
             threads << Thread.new do
-              client['test'].bulk_write([{ insert_one: { test: "test1" } },
-                                         { update_one: { filter: { test: "test1" }, update: { "$set" => { test: "test2" } } } } ])
+              client['test'].bulk_write([ { insert_one: { test: 'test1' } },
+                                          { update_one: { filter: { test: 'test1' }, update: { '$set' => { test: 'test2' } } } } ])
             end
             threads << Thread.new do
-              client['test'].find_one_and_delete({test: "test"})
+              client['test'].find_one_and_delete({ test: 'test' })
             end
             threads << Thread.new do
-              client['test'].find_one_and_update({test: "test"}, {test: "test2"})
+              client['test'].find_one_and_update({ test: 'test' }, { test: 'test2' })
             end
             threads << Thread.new do
-              client['test'].find_one_and_replace({test: "test"}, {test: "test2"})
+              client['test'].find_one_and_replace({ test: 'test' }, { test: 'test2' })
             end
             threads << Thread.new do
-              client['test'].replace_one({test: "test"}, {test: "test2"})
+              client['test'].replace_one({ test: 'test' }, { test: 'test2' })
             end
             threads
           end
 
-          include_examples "a single connection"
+          include_examples 'a single connection'
         end
       end
     end
@@ -1211,18 +1159,17 @@ describe Mongo::Client do
   end
 
   describe '#summary' do
-
     context 'monitoring omitted' do
       let(:client) do
         new_local_client_nmio(
-          ['127.0.0.1:27017'],
-          :read => { :mode => :primary },
-          :database => SpecConfig.instance.test_db
+          [ DEFAULT_LOCAL_HOST ],
+          read: { mode: :primary },
+          database: SpecConfig.instance.test_db
         )
       end
 
       it 'indicates lack of monitoring' do
-        client.summary.should =~ /servers=.*UNKNOWN.*NO-MONITORING/
+        expect(client.summary).to match /servers=.*UNKNOWN.*NO-MONITORING/
       end
     end
 
@@ -1234,8 +1181,8 @@ describe Mongo::Client do
       end
 
       it 'does not indicate lack of monitoring' do
-        client.summary.should =~ /servers=.*(?:STANDALONE|PRIMARY|MONGOS)/
-        client.summary.should_not =~ /servers=.*(?:STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
+        expect(client.summary).to match /servers=.*(?:STANDALONE|PRIMARY|MONGOS)/
+        expect(client.summary).not_to match /servers=.*(?:STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
       end
     end
 
@@ -1249,7 +1196,7 @@ describe Mongo::Client do
       end
 
       it 'does not indicate lack of monitoring' do
-        client.summary.should =~ /servers=.*(STANDALONE|PRIMARY|MONGOS|\bLB\b).*NO-MONITORING/
+        expect(client.summary).to match /servers=.*(STANDALONE|PRIMARY|MONGOS|\bLB\b).*NO-MONITORING/
       end
     end
   end
