@@ -1058,7 +1058,7 @@ buildvariants:
   - matrix_name: "auth/ssl"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1069,7 +1069,7 @@ buildvariants:
   # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
   - matrix_name: "mongo-recent"
     matrix_spec:
-      ruby: ["ruby-3.1", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.3"]
       #mongodb-version: ['latest', '6.0']
       mongodb-version: ['6.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
@@ -1086,7 +1086,7 @@ buildvariants:
   # RUBY-3226)
   - matrix_name: "mongo-recent-arm"
     matrix_spec:
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       #mongodb-version: ['latest', '6.0']
       mongodb-version: ['6.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
@@ -1097,7 +1097,7 @@ buildvariants:
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
       mongodb-version: ['5.3', '5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1127,7 +1127,7 @@ buildvariants:
 
   - matrix_name: "single-lb"
     matrix_spec:
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: "6.0"
       topology: load-balanced
       single-mongos: single-mongos
@@ -1138,7 +1138,7 @@ buildvariants:
 
   - matrix_name: "mongo-5.0-api-version"
     matrix_spec:
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: '5.0'
       topology: standalone
       api-version-required: yes
@@ -1149,7 +1149,7 @@ buildvariants:
 
   - matrix_name: "single-mongos"
     matrix_spec:
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: "6.0"
       topology: "sharded-cluster"
       single-mongos: single-mongos
@@ -1161,7 +1161,7 @@ buildvariants:
   - matrix_name: "no-retry-reads"
     matrix_spec:
       retry-reads: no-retry-reads
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1172,7 +1172,7 @@ buildvariants:
   - matrix_name: "no-retry-writes"
     matrix_spec:
       retry-writes: no-retry-writes
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: "6.0"
       topology: [replica-set, sharded-cluster]
       os: rhel8
@@ -1194,7 +1194,7 @@ buildvariants:
   - matrix_name: "lint"
     matrix_spec:
       lint: on
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: "6.0"
       topology: '*'
       os: rhel8
@@ -1205,7 +1205,7 @@ buildvariants:
   - matrix_name: "fork"
     matrix_spec:
       fork: on
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1216,7 +1216,7 @@ buildvariants:
   - matrix_name: "solo"
     matrix_spec:
       solo: on
-      ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
+      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
       mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1238,7 +1238,7 @@ buildvariants:
   - matrix_name: "stress"
     matrix_spec:
       stress: on
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: ["6.0", "5.3"]
       topology: replica-set
       os: rhel8
@@ -1252,7 +1252,7 @@ buildvariants:
   # - matrix_name: "x509-tests"
   #   matrix_spec:
   #     auth-and-ssl: "x509"
-  #     ruby: "ruby-3.1"
+  #     ruby: "ruby-3.2"
   #     # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
   #     # the server for certain auth mechanisms. Once run-tests.sh is made smart
   #     # enough to install mongosh, and then use either mongo or mongosh
@@ -1279,7 +1279,7 @@ buildvariants:
   - matrix_name: "zlib"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
       mongodb-version: "6.0"
       topology: "replica-set"
       compressor: 'zlib'
@@ -1291,7 +1291,7 @@ buildvariants:
   - matrix_name: "snappy"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
       mongodb-version: "6.0"
       topology: "replica-set"
       compressor: 'snappy'
@@ -1307,7 +1307,7 @@ buildvariants:
   - matrix_name: "zstd-auth"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       mongodb-version: "6.0"
       topology: "replica-set"
       compressor: 'zstd'
@@ -1318,7 +1318,7 @@ buildvariants:
 
   - matrix_name: "activesupport"
     matrix_spec:
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
       mongodb-version: "6.0"
       topology: replica-set
       as: as
@@ -1329,7 +1329,7 @@ buildvariants:
 
   - matrix_name: "bson"
     matrix_spec:
-      ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
       mongodb-version: "6.0"
       topology: replica-set
       bson: "*"
@@ -1341,7 +1341,7 @@ buildvariants:
   # kerberos integration tests are broken (RUBY-3266)
   # - matrix_name: "kerberos-integration"
   #   matrix_spec:
-  #     ruby: ["ruby-3.1", "ruby-2.7", "jruby-9.3"]
+  #     ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
   #     os: rhel8
   #   display_name: "Kerberos integration ${os} ${ruby}"
   #   tasks:
@@ -1349,7 +1349,7 @@ buildvariants:
 
   - matrix_name: "kerberos-unit"
     matrix_spec:
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       mongodb-version: "6.0"
       topology: standalone
       os: rhel8
@@ -1363,7 +1363,7 @@ buildvariants:
   # - matrix_name: "fle-latest"
   #   matrix_spec:
   #     auth-and-ssl: "noauth-and-nossl"
-  #     ruby: "ruby-3.1"
+  #     ruby: "ruby-3.2"
   #     topology: [replica-set, sharded-cluster]
   #     mongodb-version: [ 'latest' ]
   #     os: rhel8
@@ -1375,7 +1375,7 @@ buildvariants:
   - matrix_name: "fle"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: [replica-set, sharded-cluster]
       mongodb-version: [ '6.0', '4.4', '4.2', '4.0' ]
       os: rhel8
@@ -1387,7 +1387,7 @@ buildvariants:
   - matrix_name: aws-auth-regular
     matrix_spec:
       auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs, aws-web-identity ]
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       topology: standalone
       # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
       # the server for certain auth mechanisms. Once run-tests.sh is made smart
@@ -1404,7 +1404,7 @@ buildvariants:
     matrix_spec:
       ocsp-verifier: true
       # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
-      ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
+      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1417,7 +1417,7 @@ buildvariants:
       ocsp-algorithm: ecdsa
       ocsp-must-staple: on
       ocsp-delegate: on
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1430,7 +1430,7 @@ buildvariants:
     matrix_spec:
       ocsp-algorithm: rsa
       ocsp-status: unknown
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1446,7 +1446,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "none"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1460,7 +1460,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "none"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1474,7 +1474,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: fail
       extra-uri-options: "none"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1488,7 +1488,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1502,7 +1502,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1516,7 +1516,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1530,7 +1530,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1544,7 +1544,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1558,7 +1558,7 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: ["ruby-3.1", "ruby-2.7"]
+      ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "6.0"
       os: rhel8
@@ -1588,7 +1588,7 @@ buildvariants:
 
   - matrix_name: testgcpkms-variant
     matrix_spec:
-      ruby: "ruby-3.1"
+      ruby: "ruby-3.2"
       fle: helper
       topology: standalone
       os: rhel8
@@ -1612,7 +1612,7 @@ buildvariants:
 
   - matrix_name: "atlas"
     matrix_spec:
-      ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
+      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
       os: rhel8
     display_name: "Atlas tests ${ruby}"
     tasks:
@@ -1621,8 +1621,8 @@ buildvariants:
   - matrix_name: "serverless"
     matrix_spec:
       # https://jira.mongodb.org/browse/RUBY-3217
-      # ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
-      ruby: ["ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
+      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
+      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
       fle: path
       os: rhel8
     display_name: "Atlas serverless ${ruby} single mongos"
