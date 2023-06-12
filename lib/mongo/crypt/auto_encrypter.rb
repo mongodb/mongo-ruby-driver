@@ -91,6 +91,7 @@ module Mongo
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
       def initialize(options)
+        Crypt.validate_ffi!
         # Note that this call may eventually, via other method invocations,
         # create additional clients which have to be cleaned up.
         @options = set_default_options(options).freeze
