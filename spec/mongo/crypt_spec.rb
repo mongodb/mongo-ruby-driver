@@ -1,4 +1,6 @@
-require 'lite_spec_helper'
+# frozen_string_literal: true
+
+require 'spec_helper'
 
 describe Mongo::Crypt do
   describe '.validate_ffi!' do
