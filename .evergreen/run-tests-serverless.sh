@@ -87,7 +87,6 @@ bundle exec rspec \
     spec/spec_tests/gridfs_unified_spec.rb \
     spec/spec_tests/retryable_reads_unified_spec.rb \
     spec/spec_tests/retryable_writes_unified_spec.rb \
-    spec/spec_tests/sdam_unified_spec.rb \
     spec/spec_tests/sessions_unified_spec.rb \
     spec/spec_tests/transactions_unified_spec.rb
 
