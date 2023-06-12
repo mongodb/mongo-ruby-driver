@@ -36,5 +36,16 @@ module Mongo
     autoload(:ExplicitEncrypter, 'mongo/crypt/explicit_encrypter')
     autoload(:AutoEncrypter, 'mongo/crypt/auto_encrypter')
     autoload(:KMS, 'mongo/crypt/kms')
+
+    def validate_ffi!
+      return if defined?(FFI)
+
+      require 'ffi'
+    rescue LoadError => e
+      raise Error::UnmetDependency, 'Cannot enable encryption because the ffi gem ' \
+                                    "has not been installed. Add \"gem 'ffi'\" to your Gemfile and run " \
+                                    "\"bundle install\" to install the gem. (#{e.class}: #{e})"
+    end
+    module_function :validate_ffi!
   end
 end
