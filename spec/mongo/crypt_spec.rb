@@ -13,5 +13,9 @@ describe Mongo::Crypt do
         end
       end
     end
+    # There is no reasonably simple way to test the path where ffi is not
+    # available. The ffi gem is a part of our standard test dependencies, so
+    # it's always available. So, we would need a dedicated configuration
+    # just to test this feature; it seems to be an overhead.
   end
 end
