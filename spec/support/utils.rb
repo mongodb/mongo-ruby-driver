@@ -336,11 +336,6 @@ module Utils
 
       actual.is_a?(expected_class) || actual.key?(expected_key)
     elsif expected.is_a?(Hash) && actual.is_a?(Hash)
-      # some specs treat nil values as meaning that the field should be
-      # absent; we'll just squish nil values out for consistency.
-      expected = expected.compact
-      actual = actual.compact
-
       has_all_keys = (expected.keys - actual.keys).empty?
 
       same_values = expected.keys.all? do |key|
