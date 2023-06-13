@@ -956,12 +956,19 @@ describe Mongo::Index::View do
         end
       end
 
-      context 'on server versions >= 5.0' do
+      context 'on server versions >= 5.0 and < 6.0' do
         min_server_fcv '5.0'
+        max_server_fcv '5.99'
+        it 'passes wildcardProjection correctly' do
+          expect(indexes[:wildcardProjection]).to eq({ '_id' => false, 'rating' => true })
+        end
+      end
+
+      context 'on server versions >= 6.0' do
+        min_server_fcv '6.0'
 
         it 'passes wildcardProjection correctly' do
-          skip 'https://jira.mongodb.org/browse/RUBY-3216'
-          expect(indexes[:wildcardProjection]).to eq({ '_id' => false, 'rating' => true })
+          expect(indexes[:wildcardProjection]).to eq({ 'rating' => 1 })
         end
       end
     end
