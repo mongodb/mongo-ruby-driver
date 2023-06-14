@@ -956,16 +956,8 @@ describe Mongo::Index::View do
         end
       end
 
-      context 'on server versions >= 5.0 and < 6.0' do
+      context 'on server versions >= 5.0' do
         min_server_fcv '5.0'
-        max_server_fcv '5.99'
-        it 'passes wildcardProjection correctly' do
-          expect(indexes[:wildcardProjection]).to eq({ '_id' => false, 'rating' => true })
-        end
-      end
-
-      context 'on server versions >= 6.0' do
-        min_server_fcv '6.0'
 
         it 'passes wildcardProjection correctly' do
           expect(indexes[:wildcardProjection]).to eq({ 'rating' => 1 })
