@@ -36,12 +36,14 @@ module Mongo
         encrypted_fields = encrypted_fields_from(encrypted_fields)
         return yield if encrypted_fields.empty?
 
-        check_wire_version!
-
-        emm_collections(encrypted_fields).each do |coll|
-          context = Operation::Context.new(client: client, session: session)
-          create_operation_for(coll)
-            .execute(next_primary(nil, session), context: context)
+        server = next_primary(nil, session)
+        context = Operation::Context.new(client: client, session: session)
+        server.with_connection do |connection|
+          check_wire_version!(connection)
+          emm_collections(encrypted_fields).each do |coll|
+            create_operation_for(coll)
+              .execute_with_connection(connection, context: context)
+          end
         end
 
         yield(encrypted_fields).tap do |result|
@@ -99,10 +101,13 @@ module Mongo
       # Creating encrypted collections is only supported on 7.0.0 and later
       # (wire version 21+).
       #
+      # @param [ Mongo::Connection ] connection The connection to check
+      #   the wire version of.
+      #
       # @raise [ Mongo::Error ] if the wire version is not
       #   recent enough
-      def check_wire_version!
-        return unless next_primary.max_wire_version < QE2_MIN_WIRE_VERSION
+      def check_wire_version!(connection)
+        return unless connection.description.max_wire_version < QE2_MIN_WIRE_VERSION
 
         raise Mongo::Error,
               'Driver support of Queryable Encryption is incompatible with server. ' \
