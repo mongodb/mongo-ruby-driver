@@ -35,7 +35,6 @@
   latest_stable_mdb = "6.0".inspect # so it gets quoted as a string
 
   # A few of the most recent MongoDB versions
-  actual_and_upcoming_mdb = %w( latest 7.0 6.0 )
   recent_mdb = %w( 6.0 5.3 )
   latest_5x_mdb = "5.3".inspect # so it gets quoted as a string
 %>
@@ -45,7 +44,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= actual_and_upcoming_mdb %>
+      mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
       os: rhel8
     display_name: ${auth-and-ssl} ${ruby} ${topology}
@@ -55,7 +54,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: <%= recent_rubies %>
-      mongodb-version: <%= actual_and_upcoming_mdb %>
+      mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
       os: ['rhel8']
       # There is no latest for ubuntu2204, so we can't test it here.
