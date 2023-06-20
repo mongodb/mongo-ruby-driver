@@ -48,6 +48,7 @@ def standard_dependencies
     gem 'concurrent-ruby', platforms: :jruby
     gem 'dotenv'
     gem 'childprocess'
+    gem 'nokogiri'
   end
 
   group :development do
