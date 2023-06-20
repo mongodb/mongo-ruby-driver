@@ -21,6 +21,7 @@ def standard_dependencies
     gem 'aws-sdk-ec2'
     gem 'aws-sdk-ecs'
     gem 'aws-sdk-iam'
+    gem 'aws-sdk-sts'
     gem 'paint'
 
     # for benchmark tests

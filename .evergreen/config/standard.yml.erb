@@ -1,12 +1,6 @@
 <%
   topologies = %w( standalone replica-set sharded-cluster )
 
-  # ruby-3.2 is available in the toolchain, but tests break. It will
-  # require some investigation. Once available:
-  #   1. set `latest_ruby` to ruby-3.2
-  #   2. add ruby-3.2 to `recent_rubies` and `supported_mri_rubies`
-  #   3. replace ruby-3.1 with ruby-3.2 in `sample_mri_rubies`.
-
   # jruby-9.4 is available in the toolchain, but tests break. It will
   # require some investigation. Once available:
   #  1. replace jruby-9.3 with jruby-9.4 in `recent_rubies` and
@@ -15,13 +9,13 @@
 
   # latest_ruby = the most recently released, stable version of Ruby
   #    (make sure this version is being built by 10gen/mongo-ruby-toolchain)
-  latest_ruby = "ruby-3.1".inspect # so it gets quoted as a string
+  latest_ruby = "ruby-3.2".inspect # so it gets quoted as a string
 
   # these are used for testing against a few recent ruby versions
-  recent_rubies = %w( ruby-3.1 jruby-9.3 )
+  recent_rubies = %w( ruby-3.2 ruby-3.1 jruby-9.3 )
 
   # this is a list of the most most recent 3.x and 2.x MRI ruby versions
-  sample_mri_rubies = %w( ruby-3.1 ruby-2.7 )
+  sample_mri_rubies = %w( ruby-3.2 ruby-2.7 )
 
   # as above, but including the most recent JRuby release
   sample_rubies = sample_mri_rubies + %w( jruby-9.3 )
@@ -32,7 +26,7 @@
   # all supported JRuby versions provided by 10gen/mongo-ruby-toolchain
   jrubies = %w( jruby-9.3 jruby-9.2 )
 
-  supported_mri_rubies = %w( ruby-3.1 ruby-3.0
+  supported_mri_rubies = %w( ruby-3.2 ruby-3.1 ruby-3.0
                              ruby-2.7 ruby-2.6 ruby-2.5 )
 
   supported_rubies = supported_mri_rubies + jrubies
@@ -41,6 +35,7 @@
   latest_stable_mdb = "6.0".inspect # so it gets quoted as a string
 
   # A few of the most recent MongoDB versions
+  actual_and_upcoming_mdb = %w( latest 7.0 6.0 )
   recent_mdb = %w( 6.0 5.3 )
   latest_5x_mdb = "5.3".inspect # so it gets quoted as a string
 %>
@@ -50,21 +45,21 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= actual_and_upcoming_mdb %>
       topology: <%= topologies %>
       os: rhel8
     display_name: ${auth-and-ssl} ${ruby} ${topology}
     tasks:
       - name: "test-mlaunch"
 
-  # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: <%= recent_rubies %>
-      #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['6.0']
+      mongodb-version: <%= actual_and_upcoming_mdb %>
       topology: <%= topologies %>
-      os: ['rhel8', 'ubuntu2204']
+      os: ['rhel8']
+      # There is no latest for ubuntu2204, so we can't test it here.
+      # os: ['rhel8', 'ubuntu2204']
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -349,19 +344,17 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
-  # 'latest' is broken until the QE2 changes are merged (RUBY-3211, RUBY-3226)
-  #
-  # - matrix_name: "fle-latest"
-  #   matrix_spec:
-  #     auth-and-ssl: "noauth-and-nossl"
-  #     ruby: <%= latest_ruby %>
-  #     topology: [replica-set, sharded-cluster]
-  #     mongodb-version: [ 'latest' ]
-  #     os: rhel8
-  #     fle: helper
-  #   display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-  #   tasks:
-  #     - name: "test-fle"
+  - matrix_name: "fle-latest"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: <%= latest_ruby %>
+      topology: [replica-set, sharded-cluster]
+      mongodb-version: [ 'latest', '7.0' ]
+      os: rhel8
+      fle: helper
+    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+    tasks:
+      - name: "test-fle"
 
   - matrix_name: "fle"
     matrix_spec:
@@ -479,6 +472,30 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
+
+  - matrix_name: testgcpkms-variant
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      fle: helper
+      topology: standalone
+      os: rhel8
+      mongodb-version: <%= latest_stable_mdb %>
+    display_name: "GCP KMS"
+    tasks:
+      - name: testgcpkms_task_group
+        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+
+  - matrix_name: testazurekms-variant
+    matrix_spec:
+      ruby: ruby-3.0
+      fle: helper
+      topology: standalone
+      os: debian11 # could eventually look at updating this to rhel80
+      mongodb-version: 6.0
+    display_name: "AZURE KMS"
+    tasks:
+      - name: testazurekms_task_group
+        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
   - matrix_name: "atlas"
     matrix_spec:
