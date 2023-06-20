@@ -370,7 +370,7 @@ buildvariants:
 
   - matrix_name: aws-auth-regular
     matrix_spec:
-      auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs, aws-web-identity ]
+      auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs ]
       ruby: <%= latest_ruby %>
       topology: standalone
       # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure

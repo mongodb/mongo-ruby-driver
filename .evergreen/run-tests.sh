@@ -160,10 +160,6 @@ elif test "$AUTH" = aws-ecs; then
   fi
 
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
-elif test "$AUTH" = aws-web-identity; then
-  clear_instance_profile
-
-  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi

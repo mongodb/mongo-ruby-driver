@@ -94,36 +94,6 @@ case "$AUTH" in
     exec `dirname $0`/run-tests-ecs.sh
     ;;
 
-  aws-web-identity)
-    cd `dirname "$0"`/auth_aws
-
-    . ./activate_venv.sh
-    export AWS_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
-    export AWS_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
-    python -u lib/aws_unassign_instance_profile.py
-    unset AWS_ACCESS_KEY_ID
-    unset AWS_SECRET_ACCESS_KEY
-
-    export IDP_ISSUER="`get_var IAM_WEB_IDENTITY_ISSUER`"
-    export IDP_JWKS_URI="`get_var IAM_WEB_IDENTITY_JWKS_URI`"
-    export IDP_RSA_KEY="`get_var IAM_WEB_IDENTITY_RSA_KEY`"
-    export AWS_WEB_IDENTITY_TOKEN_FILE="`get_var IAM_WEB_IDENTITY_TOKEN_FILE`"
-    python -u lib/aws_handle_oidc_creds.py token
-    unset IDP_ISSUER
-    unset IDP_JWKS_URI
-    unset IDP_RSA_KEY
-
-    cd -
-    export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
-    export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
-    export AWS_WEB_IDENTITY_TOKEN_FILE="`get_var IAM_WEB_IDENTITY_TOKEN_FILE`"
-    export AWS_ROLE_ARN="`get_var IAM_AUTH_ASSUME_WEB_ROLE_NAME`"
-    export MONGO_RUBY_DRIVER_AWS_AUTH_ASSUME_ROLE_ARN="`get_var IAM_AUTH_ASSUME_WEB_ROLE_NAME`"
-    export MONGO_RUBY_DRIVER_AWS_AUTH_USER_ARN="arn:aws:sts::857654397073:assumed-role/webIdentityTestRole/*"
-
-    export TEST_CMD=${TEST_CMD:=rspec spec/integration/aws*spec.rb spec/integration/client_construction_aws*spec.rb}
-    ;;
-
   *)
     echo "Unknown AUTH value $AUTH" 1>&2
     exit 1

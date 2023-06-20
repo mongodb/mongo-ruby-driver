@@ -784,10 +784,6 @@ axes:
         display_name: AWS Auth ECS Task
         variables:
           AUTH: aws-ecs
-      - id: aws-web-identity
-        display_name: AWS Auth Web Identity Task
-        variables:
-          AUTH: aws-web-identity
 
   - id: "ruby"
     display_name: Ruby Version
@@ -836,7 +832,7 @@ axes:
         display_name: jruby-9.4
         variables:
           RVM_RUBY: "jruby-9.4"
-  
+
   - id: "os"
     display_name: OS
     values:
@@ -1388,7 +1384,7 @@ buildvariants:
 
   - matrix_name: aws-auth-regular
     matrix_spec:
-      auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs, aws-web-identity ]
+      auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs ]
       ruby: "ruby-3.2"
       topology: standalone
       # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
