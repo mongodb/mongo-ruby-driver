@@ -1059,7 +1059,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-3.2"
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: ${auth-and-ssl} ${ruby} ${topology}
@@ -1069,7 +1069,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.3"]
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: "6.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ['rhel8']
       # There is no latest for ubuntu2204, so we can't test it here.
@@ -1357,18 +1357,6 @@ buildvariants:
     display_name: "Kerberos Tests"
     tasks:
       - name: "test-kerberos"
-
-  - matrix_name: "fle-latest"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: "ruby-3.2"
-      topology: [replica-set, sharded-cluster]
-      mongodb-version: [ 'latest', '7.0' ]
-      os: rhel8
-      fle: helper
-    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-    tasks:
-      - name: "test-fle"
 
   - matrix_name: "fle"
     matrix_spec:
