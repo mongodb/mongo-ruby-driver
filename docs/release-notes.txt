@@ -23,14 +23,22 @@ its test suite.
 2.19
 ====
 
+This release of the Ruby driver supports MongoDB version 7.0. The Ruby driver
+now supports Ruby 3.2. Ruby 2.5 and 2.6 are now deprecated.
+
 This release includes the following new features:
 
-- Added support for automatic AWS credentials retrieval when AWS KMS is used for
-  client side encryption.
+- Added support for automatic AWS credentials retrieval abd  authentication
+  with temporary credentials when AWS KMS is used for client side encryption.
 - Added support for automatic GCP credentials retrieval when Google Cloud Key
   Management is used for client side encryption.
+- Added support the Azure VM-assigned Managed Identity for Automatic KMS Credentials
+  when Azure Key Vault is used for client side encryption.
+- `Queryable encryption <https://www.mongodb.com/docs/upcoming/core/queryable-encryption/queryable-encryption/>`_ support is extended.
+- A crypt shared library can be now used instead of mongocryptd.
 - Added support for AWS IAM Roles for service accounts, EKS in particular.
-
+- AWS Credentials are now cached when possible.
+- Added support for Range Indexes.
 
 .. _release-notes-2.18:
 
