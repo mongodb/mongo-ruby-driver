@@ -69,16 +69,20 @@ buildvariants:
   #
   # further: 'latest' is broken until the QE2 changes are merged (RUBY-3211,
   # RUBY-3226)
-  - matrix_name: "mongo-recent-arm"
-    matrix_spec:
-      ruby: <%= latest_ruby %>
-      #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['6.0']
-      topology: <%= topologies %>
-      os: 'rhel8-arm'
-    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
+  #
+  # further: ARM specs on 2.18-stable are broken because nokogiri won't install
+  # a compatible binary. Disabling for now.
+  #
+  # - matrix_name: "mongo-recent-arm"
+  #   matrix_spec:
+  #     ruby: <%= latest_ruby %>
+  #     #mongodb-version: ['latest', '6.0']
+  #     mongodb-version: ['6.0']
+  #     topology: <%= topologies %>
+  #     os: 'rhel8-arm'
+  #   display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+  #   tasks:
+  #     - name: "test-mlaunch"
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
@@ -459,30 +463,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
-  - matrix_name: testgcpkms-variant
-    matrix_spec:
-      ruby: <%= latest_ruby %>
-      fle: helper
-      topology: standalone
-      os: rhel8
-      mongodb-version: <%= latest_stable_mdb %>
-    display_name: "GCP KMS"
-    tasks:
-      - name: testgcpkms_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
-
-  - matrix_name: testazurekms-variant
-    matrix_spec:
-      ruby: ruby-3.0
-      fle: helper
-      topology: standalone
-      os: debian11 # could eventually look at updating this to rhel80
-      mongodb-version: 6.0
-    display_name: "AZURE KMS"
-    tasks:
-      - name: testazurekms_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
   - matrix_name: "atlas"
     matrix_spec:

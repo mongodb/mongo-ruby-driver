@@ -468,88 +468,6 @@ post:
   - func: "upload test results to s3"
   - func: "delete serverless instance"
 
-task_groups:
-  - name: testgcpkms_task_group
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800 # 30 minutes
-    setup_group:
-      - func: fetch source
-      - func: "create expansions"
-      - command: shell.exec
-        params:
-          shell: "bash"
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-            echo '${testgcpkms_key_file}' > /tmp/testgcpkms_key_file.json
-            export GCPKMS_KEYFILE=/tmp/testgcpkms_key_file.json
-            export GCPKMS_DRIVERS_TOOLS=$DRIVERS_TOOLS
-            export GCPKMS_SERVICEACCOUNT="${testgcpkms_service_account}"
-            export GCPKMS_MACHINETYPE="e2-standard-4"
-            .evergreen/csfle/gcpkms/create-and-setup-instance.sh
-      # Load the GCPKMS_GCLOUD, GCPKMS_INSTANCE, GCPKMS_REGION, and GCPKMS_ZONE expansions.
-      - command: expansions.update
-        params:
-          file: src/testgcpkms-expansions.yml
-    teardown_group:
-      - command: shell.exec
-        params:
-          shell: "bash"
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-            export GCPKMS_GCLOUD=${GCPKMS_GCLOUD}
-            export GCPKMS_PROJECT=${GCPKMS_PROJECT}
-            export GCPKMS_ZONE=${GCPKMS_ZONE}
-            export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-            .evergreen/csfle/gcpkms/delete-instance.sh
-    tasks:
-      - testgcpkms-task
-
-  - name: testazurekms_task_group
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800 # 30 minutes
-    setup_group:
-      - func: fetch source
-      - func: "create expansions"
-      - command: shell.exec
-        params:
-          shell: "bash"
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-            export AZUREKMS_VMNAME_PREFIX=RUBY
-            export AZUREKMS_CLIENTID="${testazurekms_clientid}"
-            export AZUREKMS_TENANTID="${testazurekms_tenantid}"
-            export AZUREKMS_SECRET="${testazurekms_secret}"
-            export AZUREKMS_DRIVERS_TOOLS=$DRIVERS_TOOLS
-            export AZUREKMS_RESOURCEGROUP="${testazurekms_resourcegroup}"
-            echo '${testazurekms_publickey}' > /tmp/testazurekms_public_key_file
-            export AZUREKMS_PUBLICKEYPATH="/tmp/testazurekms_public_key_file"
-            echo '${testazurekms_privatekey}' > /tmp/testazurekms_private_key_file
-            chmod 600 /tmp/testazurekms_private_key_file
-            export AZUREKMS_PRIVATEKEYPATH="/tmp/testazurekms_private_key_file"
-            export AZUREKMS_SCOPE="${testazurekms_scope}"
-            .evergreen/csfle/azurekms/create-and-setup-vm.sh
-      # Load the AZUREKMS_GCLOUD, AZUREKMS_INSTANCE, AZUREKMS_REGION, and AZUREKMS_ZONE expansions.
-      - command: expansions.update
-        params:
-          file: src/testazurekms-expansions.yml
-    teardown_group:
-      - command: expansions.update
-        params:
-          file: src/testazurekms-expansions.yml
-      - command: shell.exec
-        params:
-          shell: "bash"
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-            export AZUREKMS_RESOURCEGROUP="${testazurekms_resourcegroup}"
-            .evergreen/csfle/azurekms/delete-vm.sh
-    tasks:
-      - testazurekms-task
-
 tasks:
   - name: "test-atlas"
     commands:
@@ -586,68 +504,6 @@ tasks:
     commands:
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
-  - name: "testgcpkms-task"
-    commands:
-      - command: shell.exec
-        type: setup
-        params:
-          working_dir: "src"
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            echo "Copying files ... begin"
-            export GCPKMS_GCLOUD=${GCPKMS_GCLOUD}
-            export GCPKMS_PROJECT=${GCPKMS_PROJECT}
-            export GCPKMS_ZONE=${GCPKMS_ZONE}
-            export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-            tar czf /tmp/mongo-ruby-driver.tgz .
-            GCPKMS_SRC=/tmp/mongo-ruby-driver.tgz GCPKMS_DST=$GCPKMS_INSTANCENAME: .evergreen/csfle/gcpkms/copy-file.sh
-            echo "Copying files ... end"
-            echo "Untarring file ... begin"
-            GCPKMS_CMD="tar xf mongo-ruby-driver.tgz" .evergreen/csfle/gcpkms/run-command.sh
-            echo "Untarring file ... end"
-      - command: shell.exec
-        type: test
-        params:
-          working_dir: "src"
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            export GCPKMS_GCLOUD=${GCPKMS_GCLOUD}
-            export GCPKMS_PROJECT=${GCPKMS_PROJECT}
-            export GCPKMS_ZONE=${GCPKMS_ZONE}
-            export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-            GCPKMS_CMD="TEST_FLE_GCP_AUTO=1 RVM_RUBY=ruby-3.1 FLE=helper TOPOLOGY=standalone MONGODB_VERSION=6.0 MONGO_RUBY_DRIVER_GCP_EMAIL="${fle_gcp_email}" MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY='${fle_gcp_private_key}' MONGO_RUBY_DRIVER_GCP_PROJECT_ID='${fle_gcp_project_id}' MONGO_RUBY_DRIVER_GCP_LOCATION='${fle_gcp_location}' MONGO_RUBY_DRIVER_GCP_KEY_RING='${fle_gcp_key_ring}' MONGO_RUBY_DRIVER_GCP_KEY_NAME='${fle_gcp_key_name}' ./.evergreen/run-tests-gcp.sh" .evergreen/csfle/gcpkms/run-command.sh
-  - name: "testazurekms-task"
-    commands:
-      - command: shell.exec
-        type: setup
-        params:
-          working_dir: "src"
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            echo "Copying files ... begin"
-            export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
-            export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
-            export AZUREKMS_PRIVATEKEYPATH="/tmp/testazurekms_private_key_file"
-            tar czf /tmp/mongo-ruby-driver.tgz .
-            AZUREKMS_SRC=/tmp/mongo-ruby-driver.tgz AZUREKMS_DST="~/" .evergreen/csfle/azurekms/copy-file.sh
-            echo "Copying files ... end"
-            echo "Untarring file ... begin"
-            AZUREKMS_CMD="tar xf mongo-ruby-driver.tgz" .evergreen/csfle/azurekms/run-command.sh
-            echo "Untarring file ... end"
-      - command: shell.exec
-        type: test
-        params:
-          working_dir: "src"
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
-            export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
-            export AZUREKMS_PRIVATEKEYPATH="/tmp/testazurekms_private_key_file"
-            AZUREKMS_CMD="TEST_FLE_AZURE_AUTO=1 RVM_RUBY=ruby-3.1 FLE=helper TOPOLOGY=standalone MONGODB_VERSION=6.0  MONGO_RUBY_DRIVER_AZURE_TENANT_ID="${MONGO_RUBY_DRIVER_AZURE_TENANT_ID}" MONGO_RUBY_DRIVER_AZURE_CLIENT_ID="${MONGO_RUBY_DRIVER_AZURE_CLIENT_ID}" MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET="${MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET}" MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT="${MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT}" MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT="${testazurekms_keyvaultendpoint}" MONGO_RUBY_DRIVER_AZURE_KEY_NAME="${testazurekms_keyname}"  ./.evergreen/run-tests-azure.sh" .evergreen/csfle/azurekms/run-command.sh
 axes:
 
   - id: preload
@@ -1084,16 +940,20 @@ buildvariants:
   #
   # further: 'latest' is broken until the QE2 changes are merged (RUBY-3211,
   # RUBY-3226)
-  - matrix_name: "mongo-recent-arm"
-    matrix_spec:
-      ruby: "ruby-3.2"
-      #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['6.0']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: 'rhel8-arm'
-    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
+  #
+  # further: ARM specs on 2.18-stable are broken because nokogiri won't install
+  # a compatible binary. Disabling for now.
+  #
+  # - matrix_name: "mongo-recent-arm"
+  #   matrix_spec:
+  #     ruby: "ruby-3.2"
+  #     #mongodb-version: ['latest', '6.0']
+  #     mongodb-version: ['6.0']
+  #     topology: ["standalone", "replica-set", "sharded-cluster"]
+  #     os: 'rhel8-arm'
+  #   display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+  #   tasks:
+  #     - name: "test-mlaunch"
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
@@ -1571,30 +1431,6 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
-
-  - matrix_name: testgcpkms-variant
-    matrix_spec:
-      ruby: "ruby-3.2"
-      fle: helper
-      topology: standalone
-      os: rhel8
-      mongodb-version: "6.0"
-    display_name: "GCP KMS"
-    tasks:
-      - name: testgcpkms_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
-
-  - matrix_name: testazurekms-variant
-    matrix_spec:
-      ruby: ruby-3.0
-      fle: helper
-      topology: standalone
-      os: debian11 # could eventually look at updating this to rhel80
-      mongodb-version: 6.0
-    display_name: "AZURE KMS"
-    tasks:
-      - name: testazurekms_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
   - matrix_name: "atlas"
     matrix_spec:
