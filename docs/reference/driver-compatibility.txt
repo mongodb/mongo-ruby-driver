@@ -620,7 +620,7 @@ the driver.
    * - Ruby Driver
      - mongo_kerberos |nbsp| 2.1
 
-   * - 2.7 - 2.18
+   * - 2.7 - 2.19
      - |checkmark|
 
 
