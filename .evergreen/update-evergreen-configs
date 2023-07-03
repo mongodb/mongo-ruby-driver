@@ -8,9 +8,6 @@ autoload :YAML, 'yaml'
 class Runner
   def run
     transform('config.yml')
-
-    @atlas = true
-    transform('config-atlas.yml')
   end
 
   def transform(output_file_name)
@@ -27,13 +24,8 @@ EOT
     template_path = File.join(File.dirname(__FILE__), 'config/axes.yml.erb')
     contents << Tilt.new(template_path, engine_class: Erubi::CaptureEndEngine).render(self)
 
-    if @atlas
-      template_path = File.join(File.dirname(__FILE__), 'config/atlas.yml.erb')
-      contents << Tilt.new(template_path, engine_class: Erubi::CaptureEndEngine).render(self)
-    else
-      template_path = File.join(File.dirname(__FILE__), 'config/standard.yml.erb')
-      contents << Tilt.new(template_path, engine_class: Erubi::CaptureEndEngine).render(self)
-    end
+    template_path = File.join(File.dirname(__FILE__), 'config/standard.yml.erb')
+    contents << Tilt.new(template_path, engine_class: Erubi::CaptureEndEngine).render(self)
 
     output_path = File.join(File.dirname(__FILE__), output_file_name)
     File.open(output_path, 'w') do |f|
@@ -43,36 +35,6 @@ EOT
 
   def get_binding
     binding
-  end
-
-  DEBIAN_FOR_RUBY = {
-    'ruby-2.3' => 'debian92',
-    'ruby-2.4' => 'debian92',
-    'ruby-2.5' => 'debian10',
-    'ruby-2.6' => 'debian10',
-    'ruby-2.7' => 'debian10',
-    'ruby-3.0' => 'debian10',
-  }
-
-  def standard_debian_rubies(rubies, key: nil, &block)
-    rubies.flatten!
-    text = block.call
-    contents = YAML.load(text)
-    out = rubies.map do |ruby|
-      contents.merge(
-        'matrix_name' => "#{contents['matrix_name']} - #{ruby}",
-        'matrix_spec' => contents['matrix_spec'].merge(
-          'ruby' => ruby,
-          key || 'os' => DEBIAN_FOR_RUBY.fetch(ruby),
-        ),
-      )
-    end.to_yaml
-    text =~ /\A\n?(\s+)/
-    unless text
-      raise "Couldn't figure out indentation level"
-    end
-    indent = ' ' * ($1.length - 2)
-    "\n" + out.sub(/\A---.*\n/, indent).gsub("\n", "\n#{indent}")
   end
 end
 

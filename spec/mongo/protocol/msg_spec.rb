@@ -403,10 +403,8 @@ describe Mongo::Protocol::Msg do
         { validating_keys: true }
       end
 
-      it 'checks the sequence document keys' do
-        expect {
-          message.serialize
-        }.to raise_exception(BSON::String::IllegalKey)
+      it 'does not check the sequence document keys' do
+        expect(message.serialize).to be_a(BSON::ByteBuffer)
       end
     end
 
