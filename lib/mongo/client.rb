@@ -71,6 +71,7 @@ module Mongo
       :local_threshold,
       :logger,
       :log_prefix,
+      :max_connecting,
       :max_idle_time,
       :max_pool_size,
       :max_read_retries,
