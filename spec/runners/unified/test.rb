@@ -320,21 +320,21 @@ module Unified
         collection = root_authorized_client.with(write_concern: {w: :majority}).
           use(spec.use!('databaseName'))[spec.use!('collectionName')]
         collection.drop
+        create_options = spec.use('createOptions') || {}
         docs = spec.use!('documents')
+        begin
+          collection.create(create_options)
+        rescue Mongo::Error => e
+          if Mongo::Error::OperationFailure === e && (
+              e.code == 48 || e.message =~ /collection already exists/
+          )
+            # Already exists
+          else
+            raise
+          end
+        end
         if docs.any?
           collection.insert_many(docs)
-        else
-          begin
-            collection.create
-          rescue Mongo::Error => e
-            if Mongo::Error::OperationFailure === e && (
-              e.code == 48 || e.message =~ /collection already exists/
-            )
-              # Already exists
-            else
-              raise
-            end
-          end
         end
         unless spec.empty?
           raise NotImplementedError, "Unhandled spec keys: #{spec}"
