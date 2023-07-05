@@ -162,7 +162,7 @@ describe 'aggregation examples in Ruby' do
 
       # Start runCommand Example 2
 
-      client.database.command(collStats: 'restaurants')
+      client.database.command(dbStats: 1)
 
       # End runCommand Example 2
     end

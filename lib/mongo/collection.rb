@@ -314,7 +314,9 @@ module Mongo
     #
     # @since 2.0.0
     def capped?
-      database.read_command(:collstats => name).documents[0][CAPPED]
+      database.list_collections(filter: { name: name })
+        .first
+        &.dig('options', 'capped') || false
     end
 
     # Force the collection to be created in the database.
