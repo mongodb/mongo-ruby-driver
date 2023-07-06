@@ -316,7 +316,7 @@ module Mongo
     def capped?
       database.list_collections(filter: { name: name })
         .first
-        &.dig('options', 'capped') || false
+        &.dig('options', CAPPED) || false
     end
 
     # Force the collection to be created in the database.
