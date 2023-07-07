@@ -797,6 +797,33 @@ describe Mongo::Client do
         end
       end
 
+      context 'when max_connecting is provided' do
+        let(:client) do
+          new_local_client_nmio(SINGLE_CLIENT, options)
+        end
+
+        context 'when max_connecting is a positive integer' do
+          let(:options) do
+            { max_connecting: 5 }
+          end
+
+          it 'sets the max connecting' do
+            expect(client.options[:max_connecting]).to eq(options[:max_connecting])
+          end
+        end
+
+        context 'when max_connecting is a negative integer' do
+          let(:options) do
+            { max_connecting: -5 }
+          end
+
+          it 'raises an exception' do
+            expect { client }.to raise_error(Mongo::Error::InvalidMaxConnecting)
+          end
+        end
+
+      end
+
       context 'when min_pool_size is provided' do
         let(:client) { new_local_client_nmio(SINGLE_CLIENT, options) }
 

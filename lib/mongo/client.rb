@@ -1319,6 +1319,7 @@ module Mongo
         key = k.to_sym
         if VALID_OPTIONS.include?(key)
           validate_max_min_pool_size!(key, opts)
+          validate_max_connecting!(key, opts)
           validate_read!(key, opts)
           if key == :compressors
             compressors = valid_compressors(v)
@@ -1576,6 +1577,16 @@ module Mongo
         max = opts[:max_pool_size] || Server::ConnectionPool::DEFAULT_MAX_SIZE
         if max != 0 && opts[:min_pool_size] > max
           raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max)
+        end
+      end
+      true
+    end
+
+    def validate_max_connecting!(option, opts)
+      if option == :max_connecting && opts.key?(:max_connecting)
+        max_connecting = opts[:max_connecting] || Server::ConnectionPool::DEFAULT_MAX_CONNECTING
+        if max_connecting <= 0
+          raise Error::InvalidMaxConnecting.new(opts[:max_connecting])
         end
       end
       true

@@ -36,6 +36,10 @@ module Mongo
       # @since 2.9.0
       DEFAULT_MIN_SIZE = 0.freeze
 
+      # The default maximum number of connections that can be connecting at
+      # any given time.
+      DEFAULT_MAX_CONNECTING = 2.freeze
+
       # The default timeout, in seconds, to wait for a connection.
       #
       # This timeout applies while in flow threads are waiting for background
@@ -89,6 +93,7 @@ module Mongo
       #   any connections created by the pool.
       #
       # @since 2.0.0, API changed in 2.9.0
+
       def initialize(server, options = {})
         unless server.is_a?(Server)
           raise ArgumentError, 'First argument must be a Server instance'
@@ -157,7 +162,7 @@ module Mongo
         # Thei condition variable should be signaled when the number of pending
         # connections decreases.
         @max_connecting_cv = Mongo::ConditionVariable.new(@lock)
-        @max_connecting = options.fetch(:max_connecting, 2)
+        @max_connecting = options.fetch(:max_connecting, DEFAULT_MAX_CONNECTING)
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
