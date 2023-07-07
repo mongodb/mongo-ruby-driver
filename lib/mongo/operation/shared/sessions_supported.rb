@@ -30,7 +30,6 @@ module Mongo
 
       READ_COMMANDS = [
         :aggregate,
-        :collStats,
         :count,
         :dbStats,
         :distinct,
