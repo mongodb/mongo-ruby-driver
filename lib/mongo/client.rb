@@ -1582,6 +1582,13 @@ module Mongo
       true
     end
 
+    # Validates whether the max_connecting option is valid.
+    #
+    # @param [ Symbol ] option The option to validate.
+    # @param [ Hash ] opts The client options.
+    #
+    # @return [ true ] If the option is valid.
+    # @raise [ Error::InvalidMaxConnecting ] If the option is invalid.
     def validate_max_connecting!(option, opts)
       if option == :max_connecting && opts.key?(:max_connecting)
         max_connecting = opts[:max_connecting] || Server::ConnectionPool::DEFAULT_MAX_CONNECTING
