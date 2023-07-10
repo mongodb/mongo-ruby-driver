@@ -1023,7 +1023,7 @@ describe Mongo::URI::SRVProtocol do
         let(:max_connecting) { 10 }
         let(:options) { "maxConnecting=#{max_connecting}" }
 
-        it 'sets the max pool size option' do
+        it 'sets the max connecting option' do
           expect(uri.uri_options[:max_connecting]).to eq(max_connecting)
         end
 
