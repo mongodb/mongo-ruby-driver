@@ -1338,7 +1338,7 @@ buildvariants:
       topology: replica-set
       bson: "*"
       os: rhel8
-    display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
+    display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
