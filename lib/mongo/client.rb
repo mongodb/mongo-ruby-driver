@@ -272,7 +272,7 @@ module Mongo
     #  This option should be increased if there are many threads that share
     #  the same client and the application is experiencing timeouts
     #  while waiting for connections to be established.
-    # selecting a server for an operation. The default is 100.
+    #  selecting a server for an operation. The default is 2.
     # @option options [ Integer ] :max_idle_time The maximum seconds a socket can remain idle
     #   since it has been checked in to the pool.
     # @option options [ Integer ] :max_pool_size The maximum size of the
