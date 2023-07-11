@@ -575,6 +575,11 @@ Ruby Options
      - ``Object``
      - ``Logger``
 
+   * - ``:max_connecting``
+     - The maximum number of connections that the connection pool will try to establish in parallel.
+     - ``Integer``
+     - 2
+
    * - ``:max_idle_time``
      - The maximum time, in seconds, that a connection can be idle before it
        is closed by the connection pool.
@@ -1017,6 +1022,9 @@ URI options are explained in detail in the :manual:`Connection URI reference
 
    * - localThresholdMS=Integer
      - ``:local_threshold => Float``
+
+   * - maxConnecting=Integer
+     - ``:max_connecting => Integer``
 
    * - maxIdleTimeMS=Integer
      - ``:max_idle_time => Float``
@@ -1551,6 +1559,14 @@ maximum size, the thread waits for a connection to be returned to the pool by
 another thread. If ``max_pool_size`` is set to zero, there is no limit for the
 maximum number of connections in the pool.
 
+Each pool has a limit on the number of connections that can be concurrently
+connecting to a server. This limit is called ``max_connecting`` and defaults to
+2. If the number of connections that are currently connecting to a server
+reaches this limit, the pool will wait for a connection attempt to succeed or
+fail before attempting to create a new connection. If your application
+has a large number of threads, you may want to increase ``max_connecting`` to avoid
+having threads wait for a connection to be established.
+
 The number of seconds the thread will wait for a connection to become available
 is configurable. This setting, called ``wait_queue_timeout``, is defined in
 seconds. If this timeout is reached, a ``Timeout::Error`` is raised. The
@@ -1595,6 +1611,14 @@ process, increase ``max_pool_size``:
 
     client = Mongo::Client.new(["localhost:27017"], max_pool_size: 200)
 
+To support extremely high numbers of threads that share the same client
+within one process, increase ``max_connecting``:
+
+.. code-block:: ruby
+
+    client = Mongo::Client.new(["localhost:27017"], max_pool_size: 200, max_connecting: 10)
+
+
 Any number of threads are allowed to wait for connections to become available,
 and they can wait the default (1 second) or the ``wait_queue_timeout`` setting:
 
@@ -1627,7 +1651,7 @@ such as Unicorn, Puma or Passenger, or when the application otherwise forks,
 each process should generally each have their own ``Mongo::Client`` instances.
 This is because:
 
-1. The background threads remain in the parent process and are not transfered
+1. The background threads remain in the parent process and are not transferred
    to the child process.
 2. File descriptors like network sockets are shared between parent and
    child processes.

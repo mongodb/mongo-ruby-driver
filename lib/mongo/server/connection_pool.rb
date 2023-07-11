@@ -65,6 +65,11 @@ module Mongo
       #
       # @option options [ Integer ] :max_size The maximum pool size. Setting
       #   this option to zero creates an unlimited connection pool.
+      # @option options [ Integer ] :max_connecting The maximum number of
+      #  connections that can be connecting simultaneously. The default is 2.
+      #  This option should be increased if there are many threads that share
+      #  same connection pool and the application is experiencing timeouts
+      #  while waiting for connections to be established.
       # @option options [ Integer ] :max_pool_size Deprecated.
       #   The maximum pool size. If max_size is also given, max_size and
       #   max_pool_size must be identical.
