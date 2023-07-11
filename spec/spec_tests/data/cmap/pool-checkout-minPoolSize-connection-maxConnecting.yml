@@ -1,12 +1,10 @@
 version: 1
 style: integration
 description: threads blocked by maxConnecting check out minPoolSize connections
-# Remove the topology runOn requirement when cmap specs are adjusted for lbs
 runOn:
   -
     # required for blockConnection in fail point
     minServerVersion: "4.4.0"
-  - topology: [ "single", "replicaset", "sharded" ]
 failPoint:
   configureFailPoint: failCommand
   mode: "alwaysOn"
@@ -14,7 +12,7 @@ failPoint:
     failCommands: ["isMaster","hello"]
     closeConnection: false
     blockConnection: true
-    blockTimeMS: 500
+    blockTimeMS: 1000
 poolOptions:
   # allows both thread1 and the background thread to start opening connections concurrently
   minPoolSize: 2
@@ -35,9 +33,8 @@ operations:
   # - it is long enough to make sure that the background thread opens a connection before thread1 releases its permit;
   # - it is short enough to allow thread2 to become blocked acquiring a permit to open a connection, and then grab the connection
   #   opened by the background thread, before the background thread releases its permit.
-  # This wait is not necessary in ruby since the background thread runs immediately.
   - name: wait
-    ms: 0
+    ms: 200
   - name: checkOut
     thread: thread1
   - name: waitForEvent
