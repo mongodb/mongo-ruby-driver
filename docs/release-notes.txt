@@ -28,7 +28,7 @@ now supports Ruby 3.2. Ruby 2.5 and 2.6 are now deprecated.
 
 This release includes the following new features:
 
-- The driver now limits of the number of connections established by a connection
+- The driver now limits the number of connections established by a connection
   pool simultaneously. By default the limit is 2. The limit can be configured
   with the ``:max_connecting`` option of the ``Mongo::Client`` constructor.
   The default should be sufficient for most applications. However, if your
