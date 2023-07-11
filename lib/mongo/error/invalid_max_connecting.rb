@@ -16,13 +16,11 @@
 
 module Mongo
   class Error
-
     # Exception that is raised when trying to create a client with an invalid
     #   max_connecting option.
     #
     # @since 2.4.2
     class InvalidMaxConnecting < Error
-
       # Instantiate the new exception.
       def initialize(max_connecting)
         super("Invalid max_connecting: #{max_connecting}. Please ensure that it is greater than zero. ")
