@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # rubocop:todo all
 
-require 'lite_spec_helper'
+require 'spec_helper'
 require 'support/shared/protocol'
 
 describe Mongo::Protocol::Msg do
@@ -237,44 +237,6 @@ describe Mongo::Protocol::Msg do
         end
       end
 
-=begin no longer supported
-      context 'when a 0 payload type is specified' do
-
-        let(:section) do
-          { type: 0, payload: { ismaster: 1 } }
-        end
-
-        let(:section_payload_type) { bytes.to_s[36] }
-        let(:section_bytes) { bytes.to_s[37..-1] }
-
-        it 'sets the payload type' do
-          expect(section_payload_type).to eq(0.chr)
-        end
-
-        it 'serializes the section' do
-          expect(section_bytes).to be_bson(section[:payload])
-        end
-      end
-
-      context 'when a no payload type is specified' do
-
-        let(:section) do
-          { payload: { ismaster: 1 } }
-        end
-
-        let(:section_payload_type) { bytes.to_s[36] }
-        let(:section_bytes) { bytes.to_s[37..-1] }
-
-        it 'sets the payload type as 0' do
-          expect(section_payload_type).to eq(0.chr)
-        end
-
-        it 'serializes the section' do
-          expect(section_bytes).to be_bson(section[:payload])
-        end
-      end
-=end
-
       context 'when a payload of type 1 is specified' do
 
         let(:section) do
@@ -366,32 +328,9 @@ describe Mongo::Protocol::Msg do
           end
         end
       end
-
-=begin no longer supported
-      context 'when the sections are mixed types and payload type 1 comes before type 0' do
-
-        let(:section1) do
-          Mongo::Protocol::Msg::Section1.new('documents', [ { a: 1 } ])
-        end
-
-        let(:section2) do
-          { type: 0, payload: { 'b' => 2 } }
-        end
-
-        let(:sections) do
-          [ section1, section2 ]
-        end
-
-        it 'serializes all sections' do
-          expect(deserialized.documents).to eq([ BSON::Document.new(main_document), { 'a' => 1 }, { 'b' => 2 }])
-        end
-      end
-=end
     end
 
     context 'when the validating_keys option is true with payload 1' do
-      max_bson_version '4.99.99'
-
       let(:sequences) do
         [ section ]
       end
