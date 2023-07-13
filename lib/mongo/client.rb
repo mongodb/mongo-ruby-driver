@@ -71,6 +71,7 @@ module Mongo
       :local_threshold,
       :logger,
       :log_prefix,
+      :max_connecting,
       :max_idle_time,
       :max_pool_size,
       :max_read_retries,
@@ -266,6 +267,12 @@ module Mongo
     # @option options [ String ] :log_prefix A custom log prefix to use when
     #   logging. This option is experimental and subject to change in a future
     #   version of the driver.
+    # @option options [ Integer ] :max_connecting The maximum number of
+    #  connections that can be connecting simultaneously. The default is 2.
+    #  This option should be increased if there are many threads that share
+    #  the same client and the application is experiencing timeouts
+    #  while waiting for connections to be established.
+    #  selecting a server for an operation. The default is 2.
     # @option options [ Integer ] :max_idle_time The maximum seconds a socket can remain idle
     #   since it has been checked in to the pool.
     # @option options [ Integer ] :max_pool_size The maximum size of the
@@ -1318,6 +1325,7 @@ module Mongo
         key = k.to_sym
         if VALID_OPTIONS.include?(key)
           validate_max_min_pool_size!(key, opts)
+          validate_max_connecting!(key, opts)
           validate_read!(key, opts)
           if key == :compressors
             compressors = valid_compressors(v)
@@ -1575,6 +1583,23 @@ module Mongo
         max = opts[:max_pool_size] || Server::ConnectionPool::DEFAULT_MAX_SIZE
         if max != 0 && opts[:min_pool_size] > max
           raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max)
+        end
+      end
+      true
+    end
+
+    # Validates whether the max_connecting option is valid.
+    #
+    # @param [ Symbol ] option The option to validate.
+    # @param [ Hash ] opts The client options.
+    #
+    # @return [ true ] If the option is valid.
+    # @raise [ Error::InvalidMaxConnecting ] If the option is invalid.
+    def validate_max_connecting!(option, opts)
+      if option == :max_connecting && opts.key?(:max_connecting)
+        max_connecting = opts[:max_connecting] || Server::ConnectionPool::DEFAULT_MAX_CONNECTING
+        if max_connecting <= 0
+          raise Error::InvalidMaxConnecting.new(opts[:max_connecting])
         end
       end
       true

@@ -1066,7 +1066,7 @@ buildvariants:
       mongodb-version: ["latest", "7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
-    display_name: ${auth-and-ssl} ${ruby} ${topology}
+    display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
     tasks:
       - name: "test-mlaunch"
 
@@ -1338,7 +1338,7 @@ buildvariants:
       topology: replica-set
       bson: "*"
       os: rhel8
-    display_name: "AS ${mongodb-version} ${topology} ${ruby} ${bson}"
+    display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 

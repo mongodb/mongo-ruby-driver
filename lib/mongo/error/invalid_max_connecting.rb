@@ -1,7 +1,6 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-# Copyright (C) 2014-2020 MongoDB Inc.
+# Copyright (C) 2014-present MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +15,14 @@
 # limitations under the License.
 
 module Mongo
-
-  # The current version of the driver.
-  #
-  # @since 2.0.0
-  VERSION = '2.19.1'.freeze
+  class Error
+    # Exception that is raised when trying to create a client with an invalid
+    #   max_connecting option.
+    class InvalidMaxConnecting < Error
+      # Instantiate the new exception.
+      def initialize(max_connecting)
+        super("Invalid max_connecting: #{max_connecting}. Please ensure that it is greater than zero. ")
+      end
+    end
+  end
 end

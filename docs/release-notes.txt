@@ -28,6 +28,12 @@ now supports Ruby 3.2. Ruby 2.5 and 2.6 are now deprecated.
 
 This release includes the following new features:
 
+- The driver now limits the number of connections established by a connection
+  pool simultaneously. By default the limit is 2. The limit can be configured
+  with the ``:max_connecting`` option of the ``Mongo::Client`` constructor.
+  The default should be sufficient for most applications. However, if your
+  application is using a large number of threads, you may need to increase
+  the limit.
 - Added support for automatic AWS credentials retrieval and authentication
   with temporary credentials when AWS KMS is used for client side encryption.
 - Added support for automatic GCP credentials retrieval when Google Cloud Key

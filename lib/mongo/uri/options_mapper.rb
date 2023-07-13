@@ -285,6 +285,7 @@ module Mongo
       uri_option 'maxStalenessSeconds', :max_staleness, group: :read, type: :max_staleness
 
       # Pool options
+      uri_option 'maxConnecting', :max_connecting, type: :integer
       uri_option 'minPoolSize', :min_pool_size, type: :integer
       uri_option 'maxPoolSize', :max_pool_size, type: :integer
       uri_option 'waitQueueTimeoutMS', :wait_queue_timeout, type: :ms
