@@ -1018,6 +1018,18 @@ describe Mongo::URI::SRVProtocol do
         include_examples "roundtrips string"
       end
 
+      context 'when providing maxConnecting' do
+
+        let(:max_connecting) { 10 }
+        let(:options) { "maxConnecting=#{max_connecting}" }
+
+        it 'sets the max connecting option' do
+          expect(uri.uri_options[:max_connecting]).to eq(max_connecting)
+        end
+
+        include_examples "roundtrips string"
+      end
+
       context 'when providing maxPoolSize' do
 
         let(:max_pool_size) { 10 }
