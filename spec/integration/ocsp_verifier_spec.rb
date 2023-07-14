@@ -352,7 +352,7 @@ describe Mongo::Socket::OcspVerifier do
 
     it 'verifies' do
       # TODO This test will fail if the certificate expires
-      verifier.verify.should be true
+      expect(verifier.verify).to be(true), "If atlas-ocsp certificates have expired, run spec/support/certificates/retrieve-atlas-cert to get a new ones"
     end
   end
 end

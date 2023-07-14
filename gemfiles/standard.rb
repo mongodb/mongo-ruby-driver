@@ -8,9 +8,7 @@ def standard_dependencies
   group :development, :testing do
     gem 'jruby-openssl', platforms: :jruby
     gem 'json', platforms: :jruby
-    # Explicitly specify each rspec dependency so that we can use
-    # rspec-mocks-diag instead of rspec-mocks
-    gem 'rspec-core', '~> 3.9'
+    gem 'rspec', '~> 3.12'
     gem 'activesupport', '<7.1'
     gem 'rake'
     gem 'webrick'
@@ -23,6 +21,7 @@ def standard_dependencies
     gem 'aws-sdk-ec2'
     gem 'aws-sdk-ecs'
     gem 'aws-sdk-iam'
+    gem 'aws-sdk-sts'
     gem 'paint'
 
     # for benchmark tests
@@ -43,14 +42,13 @@ def standard_dependencies
     gem 'ice_nine'
     gem 'rubydns', platforms: :mri
     gem 'rspec-retry'
-    gem 'rspec-expectations', '~> 3.9'
-    gem 'rspec-mocks-diag', '~> 3.9'
     gem 'rfc', '~> 0.2.0'
     gem 'fuubar'
     gem 'timeout-interrupt', platforms: :mri
     gem 'concurrent-ruby', platforms: :jruby
     gem 'dotenv'
     gem 'childprocess'
+    gem 'nokogiri'
   end
 
   group :development do

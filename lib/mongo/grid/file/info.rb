@@ -228,11 +228,12 @@ module Mongo
         #
         # @param [ BSON::ByteBuffer ] buffer The encoded BSON buffer to append to.
         # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
+        #   This option is deprecated and will not be used. It will removed in version 3.0.
         #
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
-        def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
+        def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
           if @client_md5 && !document[:md5]
             document[:md5] = @client_md5.hexdigest
           end

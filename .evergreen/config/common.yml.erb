@@ -11,13 +11,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-<% if @atlas %>
-exec_timeout_secs: 1800
-<% else %>
-exec_timeout_secs: 2700
-<% end %>
-
-<% egos_wrap = "./egos stdbuf -i0 -o0 -e0" %>
+exec_timeout_secs: 3600
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
 timeout:
@@ -40,21 +34,6 @@ functions:
 
           git submodule update --init --recursive
 
-  "fetch egos":
-    - command: shell.exec
-      params:
-        working_dir: "src"
-        script: |
-          set -e
-
-          # Python version:
-          #curl -sfLo egos https://raw.githubusercontent.com/p-mongo/egos/master/egos
-
-          # C version:
-          curl --retry 3 -sfLo egos.c https://raw.githubusercontent.com/p-mongo/egos/master/egos.c
-          gcc -O2 -g -oegos -lrt egos.c
-
-  <% if @atlas %>
   "create expansions":
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
@@ -68,71 +47,7 @@ functions:
             CURRENT_VERSION=latest
           fi
 
-          export DRIVERS_TOOLS="$(pwd)/../drivers-tools"
-
-          # Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
-          if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
-            export DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
-          fi
-
-          export MONGO_ORCHESTRATION_HOME="$DRIVERS_TOOLS/.evergreen/orchestration"
-          export MONGODB_BINARIES="$DRIVERS_TOOLS/mongodb/bin"
-          export UPLOAD_BUCKET="${project}"
-          export PROJECT_DIRECTORY="$(pwd)"
-
-          cat <<EOT > expansion.yml
-          CURRENT_VERSION: "$CURRENT_VERSION"
-          DRIVERS_TOOLS: "$DRIVERS_TOOLS"
-          MONGO_ORCHESTRATION_HOME: "$MONGO_ORCHESTRATION_HOME"
-          MONGODB_BINARIES: "$MONGODB_BINARIES"
-          UPLOAD_BUCKET: "$UPLOAD_BUCKET"
-          PROJECT_DIRECTORY: "$PROJECT_DIRECTORY"
-          PREPARE_SHELL: |
-            set -o errexit
-            set -o xtrace
-            export DRIVERS_TOOLS="$DRIVERS_TOOLS"
-            export MONGO_ORCHESTRATION_HOME="$MONGO_ORCHESTRATION_HOME"
-            export MONGODB_BINARIES="$MONGODB_BINARIES"
-            export UPLOAD_BUCKET="$UPLOAD_BUCKET"
-            export PROJECT_DIRECTORY="$PROJECT_DIRECTORY"
-
-            # TMPDIR cannot be too long, see
-            # https://github.com/broadinstitute/cromwell/issues/3647.
-            # Why is it even set at all?
-            #export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
-            export PATH="$MONGODB_BINARIES:$PATH"
-            export PROJECT="${project}"
-            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
-            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
-            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
-            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
-            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
-            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
-            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
-            export RVM_RUBY="${RVM_RUBY}"
-            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
-            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
-            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
-            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
-            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
-          EOT
-          # See what we've done
-          cat expansion.yml
-  <% else %>
-  "create expansions":
-    # Make an evergreen expansion file with dynamic values
-    - command: shell.exec
-      params:
-        working_dir: "src"
-        script: |
-          # Get the current unique version of this checkout
-          if [ "${is_patch}" = "true" ]; then
-            CURRENT_VERSION=$(git describe)-patch-${version_id}
-          else
-            CURRENT_VERSION=latest
-          fi
-
-          export DRIVERS_TOOLS="$(pwd)/../drivers-tools"
+          export DRIVERS_TOOLS="$(pwd)/.mod/drivers-evergreen-tools"
 
           # Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
           if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
@@ -173,6 +88,7 @@ functions:
             export COMPRESSOR=${COMPRESSOR}
             export RVM_RUBY="${RVM_RUBY}"
             export MONGODB_VERSION=${MONGODB_VERSION}
+            export CRYPT_SHARED_VERSION=${CRYPT_SHARED_VERSION}
             export FCV=${FCV}
             export MONGO_RUBY_DRIVER_LINT=${LINT}
             export RETRY_READS=${RETRY_READS}
@@ -195,11 +111,32 @@ functions:
             export OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}"
             export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
             export OCSP_VERIFIER="${OCSP_VERIFIER}"
+
+            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
+            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
+            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
+            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
+            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
+            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
+            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
+            export RVM_RUBY="${RVM_RUBY}"
+            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
+            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
+            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
+            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
+
+            # Needed for generating temporary aws credentials.
+            if [ -n "${FLE}" ];
+            then
+              export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+              export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+              export AWS_DEFAULT_REGION="${fle_aws_region}"
+            fi
           EOT
 
           # See what we've done
           cat expansion.yml
-  <% end %>
 
     # Load the expansion file to make an evergreen variable with the current
     # unique version
@@ -240,6 +177,13 @@ functions:
           IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
           IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
           IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition}"
+
+          IAM_WEB_IDENTITY_ISSUER="${iam_web_identity_issuer}"
+          IAM_WEB_IDENTITY_JWKS_URI="${iam_web_identity_jwks_uri}"
+          IAM_WEB_IDENTITY_RSA_KEY="${iam_web_identity_rsa_key}"
+          IAM_WEB_IDENTITY_TOKEN_FILE="${iam_web_identity_token_file}"
+          IAM_AUTH_ASSUME_WEB_ROLE_NAME="${iam_auth_assume_web_role_name}"
+
           EOT
 
   "export FLE credentials":
@@ -421,7 +365,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           set -x
-          <%= egos_wrap %> .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
+          .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
 
   "run tests":
     - command: shell.exec
@@ -431,7 +375,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          <%= egos_wrap %> .evergreen/run-tests.sh
+          .evergreen/run-tests.sh
 
   "run tests via docker":
     - command: shell.exec
@@ -441,7 +385,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          <%= egos_wrap %> .evergreen/run-tests-docker.sh
+          .evergreen/run-tests-docker.sh
 
   "run AWS auth tests":
     - command: shell.exec
@@ -451,7 +395,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          <%= egos_wrap %> .evergreen/run-tests-aws-auth.sh
+          .evergreen/run-tests-aws-auth.sh
 
   "run Kerberos unit tests":
     - command: shell.exec
@@ -461,7 +405,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          <%= egos_wrap %> .evergreen/run-tests-kerberos-unit.sh
+          .evergreen/run-tests-kerberos-unit.sh
 
   "run Kerberos integration tests":
     - command: shell.exec
@@ -471,7 +415,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          <%= egos_wrap %> .evergreen/run-tests-kerberos-integration.sh
+          .evergreen/run-tests-kerberos-integration.sh
 
   "run Atlas tests":
     - command: shell.exec
@@ -506,11 +450,10 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" .evergreen/run-tests-serverless.sh
+          SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
 
 pre:
   - func: "fetch source"
-  - func: "fetch egos"
   - func: "create expansions"
 
 post:
@@ -520,20 +463,16 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
-  <% if @atlas %>
   - func: "delete serverless instance"
-  <% end %>
 
 tasks:
-
-  <% if @atlas %>
   - name: "test-atlas"
     commands:
       - func: "run Atlas tests"
   - name: "test-serverless"
     commands:
+      - func: "export FLE credentials"
       - func: "run serverless tests"
-  <% else %>
   - name: "test-docker"
     commands:
       - func: "build and test docker image"
@@ -562,4 +501,3 @@ tasks:
     commands:
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
-  <% end %>
