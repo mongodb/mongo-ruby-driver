@@ -592,14 +592,8 @@ describe Mongo::Socket::SSL do
         )
       end
 
-      around do |example|
-        saved = ENV['SSL_CERT_FILE']
-        ENV['SSL_CERT_FILE'] = SpecConfig.instance.local_ca_cert_path
-        begin
-          example.run
-        ensure
-          ENV['SSL_CERT_FILE'] = saved
-        end
+      local_env do
+        { 'SSL_CERT_FILE' => SpecConfig.instance.local_ca_cert_path }
       end
 
       it 'uses the default cert store' do
