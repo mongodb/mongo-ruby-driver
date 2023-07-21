@@ -79,7 +79,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       /tutorials/ruby-driver-gridfs
       /tutorials/client-side-encryption
       bson-tutorials
-      API <http://api.mongodb.com/ruby/current/>
+      API <https://mongodb.com/docs/ruby-driver/current/api/>
       /reference/driver-compatibility
       /reference/additional-resources
       /contribute
