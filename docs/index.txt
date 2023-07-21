@@ -63,7 +63,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
 
       /quick-start
       bson-tutorials
-      API <https://api.mongodb.com/ruby/2.0.6/>
+      API <https://mongodb.com/docs/ruby-driver/current/api/>
       /reference/driver-compatibility
       /reference/additional-resources
       /contribute
