@@ -128,12 +128,12 @@ enterprise-only feature. If you only intend to use explicit encryption, you may
 skip this step.
 
 Mongocryptd comes pre-packaged with enterprise builds of the MongoDB server
-(versions 4.2 and newer). For installation instructions, see
-`the MongoDB manual <https://mongodb.com/docs/manual/reference/security-client-side-encryption-appendix/#installation>`_.
+(versions 4.2 and newer). For installation instructions, see the
+`MongoDB manual <https://mongodb.com/docs/manual/reference/security-client-side-encryption-appendix/#installation>`_.
 
 In order to configure mongocryptd (for example, which port it listens on or the
 path used to spawn the daemon), it is necessary to pass different options to the
-``Mongo::Client`` performing automatic encryption. See the `:extra_options`_
+``Mongo::Client`` performing automatic encryption. See the :ref:`:extra_options <cse-extra-options>`
 section of this tutorial for more information.
 
 Automatic Encryption
@@ -274,8 +274,8 @@ The example above demonstrates using automatic encryption with a local master ke
 For more information about using other key management services to create a
 master key and create data keys, see the following sections of this tutorial:
 
-- `Creating A Master Key`_
-- `Creating A Data Key`_
+- :ref:`Creating A Master Key <creating-a-master-key>`
+- :ref:`Creating A Data Key <creating-a-data-key>`
 
 Explicit Encryption
 ===================
@@ -372,8 +372,8 @@ The example above demonstrates using explicit encryption with a local master key
 For more information about using other key management services to create a
 master key and create data keys, see the following sections of this tutorial:
 
-- `Creating A Master Key`_,
-- `Creating A Data Key`_,
+- :ref:`Creating A Master Key <creating-a-master-key>`
+- :ref:`Creating A Data Key <creating-a-data-key>`
 
 Queryable Encryption
 ====================
@@ -485,8 +485,8 @@ The example above demonstrates using automatic encryption with a local master ke
 For more information about using other key management services to create a
 master key and create data keys, see the following sections of this tutorial:
 
-- `Creating A Master Key`_
-- `Creating A Data Key`_
+- :ref:`Creating A Master Key <creating-a-master-key>`
+- :ref:`Creating A Data Key <creating-a-data-key>`
 
 Below is an example of explicit queryable encryption.
 
@@ -598,6 +598,7 @@ Below is an example of explicit queryable encryption.
   find_result = client['encryption_coll'].find(encrypted_field: find_payload).first['encrypted_field']
   # => 'sensitive data'
 
+.. _creating-a-master-key:
 
 Creating a Master Key
 =====================
@@ -607,6 +608,8 @@ user data. The master key can be generated in one of two ways: by creating a
 local key, or by creating a key in a key management service. Currently
 Ruby driver supports AWS Key Management Service (KMS), Azure Key Vault, and
 Google Cloud Key Management (GCP KMS).
+
+.. _local-master-key:
 
 Local Master Key
 ~~~~~~~~~~~~~~~~
@@ -626,16 +629,20 @@ Run the following code to generate a local master key using Ruby:
   local_master_key = SecureRandom.random_bytes(96)
   # => "\xB2\xBE\x8EN\xD4\x14\xC2\x13\xC3..." (a binary blob)
 
+.. _remote-master-key:
+
 Remote Master Key
 ~~~~~~~~~~~~~~~~~
 It is recommended that you use a remote Key Management Service to create and
 store your master key. To do so, follow steps of the
-:drivers:`"Set up a Remote Master Key" section</security/client-side-field-level-encryption-local-key-to-kms/#set-up-a-remote-master-key>`
+`"Set up a Remote Master Key" <https://www.mongodb.com/docs/manual/core/csfle/tutorials/#set-up-a-remote-master-key>`_
 in the MongoDB Client-Side Encryption documentation.
 
 For more information about creating a master key, see the
-:drivers:`Create a Master Key </security/client-side-field-level-encryption-guide/#a.-create-a-master-key>`
+`Create a Master Key <https://www.mongodb.com/docs/manual/core/csfle/#a.-create-a-master-key>`_
 section of the MongoDB manual.
+
+.. _creating-a-data-key:
 
 Creating a Data Key
 ===================
@@ -679,8 +686,8 @@ key with the following code snippet:
   data_key_id = client_encryption.create_data_key('local')
   # => <BSON::Binary... type=ciphertext...>
 
-See the `Local Master Key`_ section for more information about generating a new
-local master key.
+See the :ref:`Local Master Key <local-master-key>` section for more information
+about generating a new local master key.
 
 Create a Data Key Using a Remote Master Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -788,12 +795,12 @@ certificate and private key to authenticate to KMIP server.
   )
   # => <BSON::Binary... type=ciphertext...>
 
-See the `Remote Master Key`_ section of this tutorial  for more information about
-generating a new remote master key and finding the information you need to
-create data keys.
+See the :ref:`Remote Master Key <remote-master-key>` section of this tutorial
+for more information about generating a new remote master key and finding the
+information you need to create data keys.
 
 For more information about creating a data key, see the
-:drivers:`Create a Data Encryption Key </security/client-side-field-level-encryption-guide/#b.-create-a-data-encryption-key>`
+`Create a Data Encryption Key <https://www.mongodb.com/docs/manual/core/csfle/#b.-create-a-data-encryption-key>`_
 section of the MongoDB manual.
 
 For a list of possible KMS TLS options
@@ -974,7 +981,7 @@ When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
 
 .. seealso::
 
-  :drivers:`Specify Encrypted Fields Using JSON Schema</security/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`,
+  `Specify Encrypted Fields Using JSON Schema <https://www.mongodb.com/docs/manual/core/csfle/#c-specify-encrypted-fields-using-json-schema>`_,
   :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
 
 .. _schema-map-path:
@@ -1011,6 +1018,8 @@ decryption of any previously-encrypted data.
       # ... (Fill in other options here)
     }
   )
+
+.. _cse-extra-options:
 
 ``:extra_options``
 ~~~~~~~~~~~~~~~~~~
