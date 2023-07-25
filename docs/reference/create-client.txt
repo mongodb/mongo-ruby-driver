@@ -713,6 +713,7 @@ URI options are explained in detail in the :manual:`Connection URI reference
 </reference/connection-string/>`.
 
 .. note::
+
   Options that are set in **milliseconds** in the URI are
   represented as a ``float`` in Ruby and the units are **seconds**.
 
@@ -1144,7 +1145,7 @@ It is also possible to remove hooks from ``Mongo.tls_context_hooks`` by storing
 a reference to the Procs somewhere else in the application, and then using
 ``Array#delete_if`` to remove the desired hooks.
 
-..warning ::
+.. warning::
 
   TLS context hooks are global and will affect every instance of ``Mongo::Client``.
   Any library that allows applications to enable these hooks should expose methods to

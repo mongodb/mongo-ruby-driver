@@ -58,7 +58,7 @@ Contribute Code
 The MongoDB Ruby driver source is located
 `at GitHub <https://github.com/mongodb/mongo-ruby-driver>`_.
 
-The list of known issues in the driver is available 
+The list of known issues in the driver is available
 `in JIRA <https://jira.mongodb.org/browse/RUBY>`_.
 
 We recommend creating a JIRA ticket before starting work on a bug fix or
@@ -73,7 +73,7 @@ the changes to the stable branches, if needed.
 A MongoDB deployment is required to run the tests. Setup procedures and
 recommendations for various deployments, as well as how to configure the
 driver's test suite for the deployments, are covered in the `spec
-readme <https://github.com/mongodb/mongo-ruby-driver/blob/master/spec/README.md>`.
+readme <https://github.com/mongodb/mongo-ruby-driver/blob/master/spec/README.md>`__.
 
 The driver is tested on `Evergreen <https://github.com/evergreen-ci/evergreen>`_,
 MongoDB's in-house continuous integration platform. After a pull request
