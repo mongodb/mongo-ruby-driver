@@ -134,35 +134,35 @@ can look like the following:
       format("SDAM | %s".freeze, message)
     end
   end
-  
+
   class TopologyOpeningLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Topology type '#{event.topology.display_name}' initializing."
     end
   end
-  
+
   class ServerOpeningLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Server #{event.address} initializing."
     end
   end
-  
+
   class ServerDescriptionChangedLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Server description for #{event.address} changed from " +
       "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'."
     end
   end
-  
+
   class TopologyChangedLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       if event.previous_topology != event.new_topology
         "Topology type '#{event.previous_topology.display_name}' changed to " +
@@ -173,18 +173,18 @@ can look like the following:
       end
     end
   end
-  
+
   class ServerClosedLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Server #{event.address} connection closed."
     end
   end
-  
+
   class TopologyClosedLogSubscriber < SDAMLogSubscriber
     private
-    
+
     def format_event(event)
       "Topology type '#{event.topology.display_name}' closed."
     end
@@ -225,7 +225,7 @@ since the events may be published during the client's construction:
   topology_changed_subscriber = TopologyChangedLogSubscriber.new
   server_closed_subscriber = ServerClosedLogSubscriber.new
   topology_closed_subscriber = TopologyClosedLogSubscriber.new
-  
+
   sdam_proc = Proc.new do |client|
     client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING,
       topology_opening_subscriber)
@@ -282,9 +282,9 @@ Server Heartbeats
 
 The application can be notified of each server heartbeat by subscribing
 to SERVER_HEARTBEAT topic. A server heartbeat listener must implement
-three methods: `started`, `succeeded` and `failed`. Each heartbeat invokes
-the `started` method on the listener, and then either `succeeded` or `failed`
-method depending on the outcome of the heartbeat.
+three methods: ``started``, ``succeeded`` and ``failed``. Each heartbeat
+invokes the ``started`` method on the listener, and then either ``succeeded``
+or ``failed`` method depending on the outcome of the heartbeat.
 
 All heartbeat events contain the address of the server that the heartbeat
 was sent to. Succeeded and failed events contain the round trip time for
@@ -311,9 +311,9 @@ The following is an example logging heartbeat event subscriber:
     def failed(event)
       log_debug("#{event.address} | FAILED | #{event.error.class}: #{event.error.message} | #{event.duration}s")
     end
-    
+
     private
-    
+
     def logger
       Mongo::Logger.logger
     end

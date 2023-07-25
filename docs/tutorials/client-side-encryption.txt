@@ -74,12 +74,12 @@ enterprise-only feature. If you only intend to use explicit encryption, you may
 skip this step.
 
 Mongocryptd comes pre-packaged with enterprise builds of the MongoDB server
-(versions 4.2 and newer). For installation instructions, see
-`the MongoDB manual <https://docs.mongodb.com/manual/reference/security-client-side-encryption-appendix/#installation>`_.
+(versions 4.2 and newer). For installation instructions, see the
+`MongoDB manual <https://mongodb.com/docs/manual/reference/security-client-side-encryption-appendix/#installation>`_.
 
 In order to configure mongocryptd (for example, which port it listens on or the
 path used to spawn the daemon), it is necessary to pass different options to the
-``Mongo::Client`` performing automatic encryption. See the `:extra_options`_
+``Mongo::Client`` performing automatic encryption. See the :ref:`:extra_options <cse-extra-options>`
 section of this tutorial for more information.
 
 Automatic Encryption
@@ -202,11 +202,12 @@ The example above demonstrates using automatic encryption with a local master ke
 For more information about using the AWS Key Management Service to create a
 master key and create data keys, see the following sections of this tutorial:
 
-- `Creating A Master Key`_
-- `Creating A Data Key`_
+- :ref:`Creating A Master Key <creating-a-master-key>`
+- :ref:`Creating A Data Key <creating-a-data-key>`
 
 Explicit Encryption
 ===================
+
 Explicit encryption is a feature that allows users to encrypt and decrypt
 individual pieces of data such as strings, integers, or symbols. Explicit
 encryption is a community feature and does not require an enterprise build
@@ -296,8 +297,8 @@ The example above demonstrates using explicit encryption with a local master key
 For more information about using the AWS Key Management Service to create a
 master key and create data keys, see the following sections of this tutorial:
 
-- `Creating A Master Key`_,
-- `Creating A Data Key`_,
+- :ref:`Creating A Master Key <creating-a-master-key>`
+- :ref:`Creating A Data Key <creating-a-data-key>`
 
 Creating a Master Key
 =====================
@@ -307,8 +308,11 @@ user data. The master key can be generated in one of two ways: by creating a
 local key, or by creating a key in the Amazon Web Services Key Management
 Service (AWS KMS).
 
+.. _local-master-key:
+
 Local Master Key
 ~~~~~~~~~~~~~~~~
+
 A local master key is a 96-byte binary string. It should be persisted
 on your machine as an environment variable or in a text file.
 
@@ -329,14 +333,25 @@ AWS Master Key
 It is recommended that you use Amazon's Key Management Service to create and
 store your master key. To do so, follow steps 1 and 2 of the
 :drivers:`"Convert to a Remote Master Key" section</security/client-side-field-level-encryption-local-key-to-kms/#convert-to-a-remote-master-key>`
+.. _remote-master-key:
+
+Remote Master Key
+~~~~~~~~~~~~~~~~~
+It is recommended that you use a remote Key Management Service to create and
+store your master key. To do so, follow steps of the
+`"Set up a Remote Master Key" <https://www.mongodb.com/docs/manual/core/csfle/tutorials/#set-up-a-remote-master-key>`_
 in the MongoDB Client-Side Encryption documentation.
 
 For more information about creating a master key, see the
 :drivers:`Create a Master Key </security/client-side-field-level-encryption-guide/#a-create-a-master-key>`
+`Create a Master Key <https://www.mongodb.com/docs/manual/core/csfle/#a.-create-a-master-key>`_
 section of the MongoDB manual.
+
+.. _creating-a-data-key:
 
 Creating a Data Key
 ===================
+
 Once you have created a master key, create a data key by calling the
 ``#create_data_key`` method on an instance of the ``Mongo::ClientEncryption``
 class. This method generates a new data key and inserts it into the key vault
@@ -376,8 +391,8 @@ key with the following code snippet:
   data_key_id = client_encryption.create_data_key('local')
   # => <BSON::Binary... type=ciphertext...>
 
-See the `Local Master Key`_ section for more information about generating a new
-local master key.
+See the :ref:`Local Master Key <local-master-key>` section for more information
+about generating a new local master key.
 
 Create a Data Key Using an AWS Master Key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -423,11 +438,12 @@ generating a new master key on AWS and finding the information you need to
 create data keys.
 
 For more information about creating a data key, see the
-:drivers:`Create a Data Encryption Key </security/client-side-field-level-encryption-guide/#b-create-a-data-encryption-key>`
+`Create a Data Encryption Key <https://www.mongodb.com/docs/manual/core/csfle/#b.-create-a-data-encryption-key>`_
 section of the MongoDB manual.
 
 Auto-Encryption Options
 =======================
+
 Automatic encryption can be configured on a ``Mongo::Client`` using the
 ``auto_encryption_options`` option ``Hash``. This section provides an overview
 of the fields inside ``auto_encryption_options`` and explains how to choose their
@@ -435,6 +451,7 @@ values.
 
 ``:key_vault_client``
 ~~~~~~~~~~~~~~~~~~~~~
+
 The key vault client is a ``Mongo::Client`` instance that will be used to connect
 to the MongoDB collection containing your encryption data keys. For example, if
 your key vault was hosted on a MongoDB instance at ``localhost:30000``:
@@ -456,6 +473,7 @@ to insert and fetch data keys.
 
 ``:key_vault_namespace``
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
 The key vault namespace is a ``String`` in the format ``"database_name.collection_name"``,
 where ``database_name`` and ``collection_name`` are the name of the database and
 collection in which you would like to store your data keys. For example, if your data
@@ -474,6 +492,7 @@ There is no default key vault namespace, and this option must be provided.
 
 ``:schema_map``
 ~~~~~~~~~~~~~~~
+
 A schema map is a Hash with information about which fields to automatically
 encrypt and decrypt.
 
@@ -549,11 +568,12 @@ When you intend to use your schema map, convert it to a Ruby ``Hash`` using the
 
 .. seealso::
 
-  :drivers:`Specify Encrypted Fields Using JSON Schema</security/client-side-field-level-encryption-guide/#c-specify-encrypted-fields-using-json-schema>`,
+  `Specify Encrypted Fields Using JSON Schema <https://www.mongodb.com/docs/manual/core/csfle/#c-specify-encrypted-fields-using-json-schema>`_,
   :manual:`Automatic Encryption Rules</reference/security-client-side-automatic-json-schema/>`
 
 ``:bypass_auto_encryption``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The ``:bypass_auto_encryption`` option is a ``Boolean`` that specifies whether the
 ``Mongo::Client`` should skip encryption when writing to the database. If
 ``:bypass_auto_encryption`` is ``true``, the client will still perform automatic
@@ -568,8 +588,11 @@ decryption of any previously-encrypted data.
     }
   )
 
+.. _cse-extra-options:
+
 ``:extra_options``
 ~~~~~~~~~~~~~~~~~~
+
 ``:extra_options`` is a ``Hash`` of options related to spawning mongocryptd.
 Every option in this ``Hash`` has a default value, so it is only necessary to
 provide the options whose defaults you want to override.
