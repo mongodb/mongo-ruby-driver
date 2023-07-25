@@ -12,7 +12,7 @@ options the driver provides, including authentication.
 .. toctree::
   :titlesonly:
 
-  create-client
-  authentication
-  monitoring
-  user-management
+  /reference/create-client
+  /reference/authentication
+  /reference/monitoring
+  /reference/user-management

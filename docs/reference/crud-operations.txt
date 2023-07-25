@@ -967,7 +967,7 @@ underscore one that Ruby driver uses.
 A Note about the BSON Symbol type
 =================================
 
-Because the BSON specification deprecated the BSON symbol type, the `bson` gem
+Because the BSON specification deprecated the BSON symbol type, the ``bson`` gem
 will serialize Ruby symbols into BSON strings when used on its own. However, in
 order to maintain backwards compatibility with older datasets, the Ruby driver
 overrides this behavior to serialize Ruby symbols as BSON symbols. This is
