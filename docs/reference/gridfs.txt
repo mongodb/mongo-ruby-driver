@@ -252,7 +252,7 @@ by default into the ``fs.chunks`` collection and file metadata is inserted into 
 
   client.database.fs.insert_one(file)
 
-To insert into collections with a name prefix other than `fs`, access the
+To insert into collections with a name prefix other than ``fs``, access the
 filesystem with a ``:fs_name`` option.
 
 .. code-block:: ruby
