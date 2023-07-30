@@ -43,7 +43,7 @@ class FileUploader
   private
 
   def key(file, local_folder_path)
-    File.join(@prefix, file.gsub("#{@docs_path}/",''))
+    File.join(@prefix, file.gsub("#{@docs_path}/", ''))
   end
 
   def upload_file(file, key)
@@ -62,8 +62,9 @@ class Options
     @options = {}
     parse_cli_options!
     parse_env_options!
-    @options[:prefix] = "docs/ruby-driver/#{@options[:version]}/api"
-    @options[:docs_path] = "build/public/#{@options[:version]}/api"
+    @options[:branch] = `git rev-parse --abbrev-ref HEAD`.strip
+    @options[:prefix] = "docs/ruby-driver/#{@options[:branch]}/api"
+    @options[:docs_path] = "build/public/#{@options[:branch]}/api"
   end
 
   def [](key)
@@ -76,9 +77,6 @@ class Options
     OptionParser.new do |opts|
       opts.banner = "Usage: upload-api-docs [options]"
 
-      opts.on("-v VERSION", "--version=VERSION", "Driver version") do |v|
-        @options[:version] = v
-      end
       opts.on('-b BUCKET', '--bucket=BUCKET', 'S3 Bucket to upload') do |b|
         @options[:bucket] = b
       end
@@ -86,16 +84,15 @@ class Options
         @options[:region] = r
       end
     end.parse!
-    [:version, :bucket, :region].each do |opt|
+    [:bucket, :region].each do |opt|
       raise OptionParser::MissingArgument, "Option --#{opt} is required" unless @options[opt]
     end
   end
 
   def parse_env_options!
-    @options[:access_key]= ENV['DOCS_AWS_ACCESS_KEY_ID'] || raise ArgumentError, 'Please provide aws access key via DOCS_AWS_ACCESS_KEY_ID env variable'
-    @options[:secret_key] = ENV['DOCS_AWS_SECRET_ACCESS_KEY'] || raise ArgumentError, 'Please provide aws secret key via DOCS_AWS_SECRET_ACCESS_KEY env variable'
+    @options[:access_key] = ENV.fetch('DOCS_AWS_ACCESS_KEY_ID') { raise ArgumentError, 'Please provide aws access key via DOCS_AWS_ACCESS_KEY_ID env variable' }
+    @options[:secret_key] = ENV.fetch('DOCS_AWS_SECRET_ACCESS_KEY') { raise ArgumentError, 'Please provide aws secret key via DOCS_AWS_SECRET_ACCESS_KEY env variable' }
   end
-
 end
 
 def generate_docs(options)
