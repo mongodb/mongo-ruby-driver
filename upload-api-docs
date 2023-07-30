@@ -62,9 +62,8 @@ class Options
     @options = {}
     parse_cli_options!
     parse_env_options!
-    @options[:branch] = `git rev-parse --abbrev-ref HEAD`.strip
-    @options[:prefix] = "docs/ruby-driver/#{@options[:branch]}/api"
-    @options[:docs_path] = "build/public/#{@options[:branch]}/api"
+    @options[:prefix] = "docs/ruby-driver/#{@options[:version]}/api"
+    @options[:docs_path] = "build/public/#{@options[:version]}/api"
   end
 
   def [](key)
@@ -83,15 +82,22 @@ class Options
       opts.on('-r REGION', '--region=REGION', 'AWS region') do |r|
         @options[:region] = r
       end
+      opt.on('-v VERSION', '--version=VERSION', 'Ruby driver version') do |v|
+        @options[:version] = v
+      end
     end.parse!
-    [:bucket, :region].each do |opt|
+    [:bucket, :region, :version].each do |opt|
       raise OptionParser::MissingArgument, "Option --#{opt} is required" unless @options[opt]
     end
   end
 
   def parse_env_options!
-    @options[:access_key] = ENV.fetch('DOCS_AWS_ACCESS_KEY_ID') { raise ArgumentError, 'Please provide aws access key via DOCS_AWS_ACCESS_KEY_ID env variable' }
-    @options[:secret_key] = ENV.fetch('DOCS_AWS_SECRET_ACCESS_KEY') { raise ArgumentError, 'Please provide aws secret key via DOCS_AWS_SECRET_ACCESS_KEY env variable' }
+    @options[:access_key] = ENV.fetch('DOCS_AWS_ACCESS_KEY_ID') do
+      raise ArgumentError, 'Please provide aws access key via DOCS_AWS_ACCESS_KEY_ID env variable'
+    end
+    @options[:secret_key] = ENV.fetch('DOCS_AWS_SECRET_ACCESS_KEY') do
+      raise ArgumentError, 'Please provide aws secret key via DOCS_AWS_SECRET_ACCESS_KEY env variable'
+    end
   end
 end
 
@@ -113,4 +119,4 @@ end
 options = Options.new
 generate_docs(options)
 FileUploader.new(options).upload_docs
-
+return 0
