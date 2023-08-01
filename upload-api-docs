@@ -6,12 +6,10 @@ gemfile true do
   source 'https://rubygems.org'
   gem 'nokogiri'
   gem 'aws-sdk-s3'
-  gem 'mimemagic'
   gem 'yard'
 end
 
 require 'aws-sdk-s3'
-require 'mimemagic'
 require 'optparse'
 require 'yard'
 
@@ -26,7 +24,6 @@ class FileUploader
     @bucket = options[:bucket]
     @prefix = options[:prefix]
     @docs_path = options[:docs_path]
-    MimeMagic.add('text/html', extensions: ['html'])
   end
 
   def upload_docs
@@ -42,18 +39,21 @@ class FileUploader
 
   private
 
-  def key(file, local_folder_path)
+  def key(file)
     File.join(@prefix, file.gsub("#{@docs_path}/", ''))
   end
 
   def upload_file(file, key)
-    mime_type = MimeMagic.by_path(file)
-    if mime_type.nil?
-      puts "Unable to determine mime type for #{file}"
-      @s3.put_object(bucket: @bucket, key: key, body: File.read(file))
-    else
-      @s3.put_object(bucket: @bucket, key: key, body: File.read(file), content_type: mime_type.type)
-    end
+    mime_type = mime_type(file)
+    @s3.put_object(bucket: @bucket, key: key, body: File.read(file), content_type: mime_type)
+  end
+
+  def mime_type(file)
+    {
+      '.html' => 'text/html',
+      '.css' => 'text/css',
+      '.js' => 'application/javascript',
+    }.fetch(File.extname(file))
   end
 end
 
@@ -62,8 +62,8 @@ class Options
     @options = {}
     parse_cli_options!
     parse_env_options!
-    @options[:prefix] = "docs/ruby-driver/#{@options[:version]}/api"
-    @options[:docs_path] = "build/public/#{@options[:version]}/api"
+    @options[:prefix] = "docs/ruby-driver/current/api"
+    @options[:docs_path] = "build/public/current/api"
   end
 
   def [](key)
@@ -82,11 +82,8 @@ class Options
       opts.on('-r REGION', '--region=REGION', 'AWS region') do |r|
         @options[:region] = r
       end
-      opt.on('-v VERSION', '--version=VERSION', 'Ruby driver version') do |v|
-        @options[:version] = v
-      end
     end.parse!
-    [:bucket, :region, :version].each do |opt|
+    [:bucket, :region].each do |opt|
       raise OptionParser::MissingArgument, "Option --#{opt} is required" unless @options[opt]
     end
   end
