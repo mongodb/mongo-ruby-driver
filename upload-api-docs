@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'bundler/inline'
 
@@ -13,12 +14,13 @@ require 'aws-sdk-s3'
 require 'optparse'
 require 'yard'
 
+# This class contains logic for uploading API docs to S3.
 class FileUploader
   def initialize(options)
     Aws.config.update({
-      region: options[:region],
-      credentials: Aws::Credentials.new(options[:access_key], options[:secret_key])
-    })
+                        region: options[:region],
+                        credentials: Aws::Credentials.new(options[:access_key], options[:secret_key])
+                      })
     Aws.use_bundled_cert!
     @s3 = Aws::S3::Client.new
     @bucket = options[:bucket]
@@ -57,13 +59,14 @@ class FileUploader
   end
 end
 
+# This class contains logic for parsing CLI and ENV options.
 class Options
   def initialize
     @options = {}
     parse_cli_options!
     parse_env_options!
-    @options[:prefix] = "docs/ruby-driver/current/api"
-    @options[:docs_path] = "build/public/current/api"
+    @options[:prefix] = 'docs/ruby-driver/current/api'
+    @options[:docs_path] = 'build/public/current/api'
   end
 
   def [](key)
@@ -74,7 +77,7 @@ class Options
 
   def parse_cli_options!
     OptionParser.new do |opts|
-      opts.banner = "Usage: upload-api-docs [options]"
+      opts.banner = 'Usage: upload-api-docs [options]'
 
       opts.on('-b BUCKET', '--bucket=BUCKET', 'S3 Bucket to upload') do |b|
         @options[:bucket] = b
@@ -83,7 +86,7 @@ class Options
         @options[:region] = r
       end
     end.parse!
-    [:bucket, :region].each do |opt|
+    %i[bucket region].each do |opt|
       raise OptionParser::MissingArgument, "Option --#{opt} is required" unless @options[opt]
     end
   end
@@ -112,8 +115,7 @@ def generate_docs(options)
   )
 end
 
-
 options = Options.new
 generate_docs(options)
 FileUploader.new(options).upload_docs
-return 0
+return
