@@ -250,6 +250,8 @@ module Mongo
       #   retry.
       # @param [ Number ] txn_num The transaction number.
       # @param [ Operation::Context ] context The context for the operation.
+      # @param [ Mongo::Server ] failed_server The server on which the original
+      #   operation failed.
       #
       # @return [ Result ] The result of the operation.
       def retry_write(original_error, txn_num, context:, failed_server: nil, &block)

@@ -164,6 +164,10 @@ module Mongo
       #   for mongos pinning. Added in version 2.10.0.
       # @param [ true | false ] write_aggregation Whether we need a server that
       #   supports writing aggregations (e.g. with $merge/$out) on secondaries.
+      # @param [ Array<Server> ] deprioritized A list of servers that should
+      #   be selected from only if no other servers are available. This is
+      #   used to avoid selecting the same server twice in a row when
+      #   retrying a command.
       #
       # @return [ Mongo::Server ] A server matching the server preference.
       #
@@ -321,6 +325,10 @@ module Mongo
       #   an eligible server.
       # @param [ true | false ] write_aggregation Whether we need a server that
       #   supports writing aggregations (e.g. with $merge/$out) on secondaries.
+      # @param [ Array<Server> ] deprioritized A list of servers that should
+      #   be selected from only if no other servers are available. This is
+      #   used to avoid selecting the same server twice in a row when
+      #   retrying a command.
       #
       # @return [ Server | nil ] A suitable server, if one exists.
       #
@@ -418,6 +426,15 @@ module Mongo
 
       private
 
+      # Returns a server from the list of servers that is suitable for
+      # executing the operation.
+      #
+      # @param [ Array<Server> ] servers The candidate servers.
+      # @param [ Array<Server> ] deprioritized A list of servers that should
+      #  be selected from only if no other servers are available.
+      #
+      # @return [ Server | nil ] The suitable server or nil if no suitable
+      #  server is available.
       def suitable_server(servers, deprioritized)
         preferred = servers - deprioritized
         if preferred.empty?

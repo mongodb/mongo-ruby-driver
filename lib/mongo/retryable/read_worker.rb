@@ -258,6 +258,8 @@ module Mongo
       #   being run on.
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
+      # @param [ Mongo::Server ] failed_server The server on which the original
+      #   operation failed.
       # @param [ Proc ] block The block to execute.
       # 
       # @return [ Result ] The result of the operation.
