@@ -458,7 +458,7 @@ part of the command:
 
 .. code-block:: ruby
 
-  client.database.command(collstats: 'test', readConcern: {level: :majority})
+  client.database.command(dbStats: 1, readConcern: {level: :majority})
 
 
 .. _read-preference:
@@ -504,7 +504,7 @@ option when a command is run on a database:
                                     } )
 
   # Set read preference for a given command
-  client.database.command( { collstats: 'test' }, read: { mode: secondary,
+  client.database.command( { dbStats: 1 }, read: { mode: secondary,
                                                        tag_sets: [ { 'dc' => 'nyc' } ] } )
 
 Read preference can also be set for specific operations on a collection

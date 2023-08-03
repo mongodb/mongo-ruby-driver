@@ -4,13 +4,14 @@
 autoload :Byebug, 'byebug'
 autoload :Paint, 'paint'
 
+require 'aws-sdk-core'
+
 module Aws
   autoload :CloudWatchLogs, 'aws-sdk-cloudwatchlogs'
-  autoload :Credentials, 'aws-sdk-core'
   autoload :EC2, 'aws-sdk-ec2'
   autoload :ECS, 'aws-sdk-ecs'
   autoload :IAM, 'aws-sdk-iam'
-  autoload :STS, 'aws-sdk-core'
+  autoload :STS, 'aws-sdk-sts'
 end
 
 module AwsUtils

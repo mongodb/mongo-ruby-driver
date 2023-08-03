@@ -62,7 +62,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://mongodb.com/docs/mong
     reference/working-with-data
     reference/schema-operations
     bson-tutorials
-    API <https://mongodb.com/docs/ruby-driver/master/api/>
+    API <https://mongodb.com/docs/ruby-driver/current/api/>
     release-notes
     reference/additional-resources
     contribute

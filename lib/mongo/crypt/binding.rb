@@ -94,6 +94,32 @@ module Mongo
       #   @return [ String ] A version string for libmongocrypt.
       attach_function :mongocrypt_version, [:pointer], :string
 
+      # Given a string representing a version number, parses it into a
+      # Gem::Version object. This handles the case where the string is not
+      # in a format supported by Gem::Version by doing some custom parsing.
+      #
+      # @param [ String ] version String representing a version number.
+      #
+      # @return [ Gem::Version ] the version number
+      #
+      # @raise [ ArgumentError ] if the string cannot be parsed.
+      #
+      # @api private
+      def self.parse_version(version)
+        Gem::Version.new(version)
+      rescue ArgumentError
+        match = version.match(/\A(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)?(-[A-Za-z\+\d]+)?\z/)
+        raise ArgumentError.new("Malformed version number string #{version}") if match.nil?
+
+        Gem::Version.new(
+          [
+            match[:major],
+            match[:minor],
+            match[:patch]
+          ].join('.')
+        )
+      end
+
       # Validates if provided version of libmongocrypt is valid, i.e. equal or
       # greater than minimum required version. Raises a LoadError if not.
       #
@@ -103,25 +129,7 @@ module Mongo
       #
       # @api private
       def self.validate_version(lmc_version)
-        if (actual_version = Gem::Version.new(lmc_version)) < MIN_LIBMONGOCRYPT_VERSION
-          raise LoadError, "libmongocrypt version #{MIN_LIBMONGOCRYPT_VERSION} or above is required, " +
-            "but version #{actual_version} was found."
-        end
-      rescue ArgumentError => e
-        # Some lmc versions cannot be parsed with Gem::Version class,
-        # so we fall back to regex.
-        match = lmc_version.match(/\A(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)?(-[A-Za-z\+\d]+)?\z/)
-        if match.nil?
-          raise ArgumentError.new("Malformed version number string #{lmc_version}")
-        end
-        actual_version = Gem::Version.new(
-          [
-            match[:major],
-            match[:minor],
-            match[:patch]
-          ].join('.')
-        )
-        if actual_version < MIN_LIBMONGOCRYPT_VERSION
+        if (actual_version = parse_version(lmc_version)) < MIN_LIBMONGOCRYPT_VERSION
           raise LoadError, "libmongocrypt version #{MIN_LIBMONGOCRYPT_VERSION} or above is required, " +
             "but version #{actual_version} was found."
         end

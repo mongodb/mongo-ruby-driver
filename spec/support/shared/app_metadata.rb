@@ -1,6 +1,18 @@
 # frozen_string_literal: true
 # rubocop:todo all
 
+def target_arch
+  @target_arch ||= begin
+    uname = `uname -a`.strip
+    case uname
+    when /aarch/ then "aarch64"
+    when /x86/   then "x86_64"
+    when /arm/   then "arm64"
+    else raise "unrecognized architecture: #{uname.inspect}"
+    end
+  end
+end
+
 shared_examples 'app metadata document' do
   let(:app_metadata) do
     described_class.new({})
@@ -27,7 +39,7 @@ shared_examples 'app metadata document' do
         # Ruby 2.7.3 uses linux.
         %w(linux linux-gnu).should include(document[:client][:os][:name])
       end
-      document[:client][:os][:architecture].should == 'x86_64'
+      document[:client][:os][:architecture].should == target_arch
     end
   end
 
@@ -45,7 +57,7 @@ shared_examples 'app metadata document' do
       else
         document[:client][:os][:name].should =~ /darwin\d+/
       end
-      document[:client][:os][:architecture].should == 'x86_64'
+      document[:client][:os][:architecture].should == target_arch
     end
   end
 

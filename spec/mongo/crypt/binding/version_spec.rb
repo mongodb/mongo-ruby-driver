@@ -43,10 +43,24 @@ describe 'Mongo::Crypt::Binding' do
     end
 
     context 'when in a non-parsable format' do
-      it 'does not raise ArgumentError' do
-        expect do
-          Mongo::Crypt::Binding.validate_version("1.5.3-dev+20220730git8f8675fa11")
-        end.not_to raise_error(ArgumentError, /Malformed version number string/)
+      let(:base_version) { Mongo::Crypt::Binding::MIN_LIBMONGOCRYPT_VERSION.to_s }
+
+      shared_examples_for 'non-standard version format' do
+        it 'does not raise an exception' do
+          expect do
+            Mongo::Crypt::Binding.validate_version(version)
+          end.not_to raise_error
+        end
+      end
+
+      context 'when the version is MAJOR.MINOR.PATH-dev+datecommit' do
+        let(:version) { "#{base_version}-dev+20220730git8f8675fa11" }
+        include_examples 'non-standard version format'
+      end
+
+      context 'when the version is MAJOR.MINOR.PATH-date+commit' do
+        let(:version) { "#{base_version}-20230601+git9b07846bef" }
+        include_examples 'non-standard version format'
       end
     end
   end

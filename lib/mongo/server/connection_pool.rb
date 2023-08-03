@@ -29,12 +29,16 @@ module Mongo
       # The default max size for the connection pool.
       #
       # @since 2.9.0
-      DEFAULT_MAX_SIZE = 20.freeze
+      DEFAULT_MAX_SIZE = 20
 
       # The default min size for the connection pool.
       #
       # @since 2.9.0
-      DEFAULT_MIN_SIZE = 0.freeze
+      DEFAULT_MIN_SIZE = 0
+
+      # The default maximum number of connections that can be connecting at
+      # any given time.
+      DEFAULT_MAX_CONNECTING = 2
 
       # The default timeout, in seconds, to wait for a connection.
       #
@@ -61,6 +65,11 @@ module Mongo
       #
       # @option options [ Integer ] :max_size The maximum pool size. Setting
       #   this option to zero creates an unlimited connection pool.
+      # @option options [ Integer ] :max_connecting The maximum number of
+      #  connections that can be connecting simultaneously. The default is 2.
+      #  This option should be increased if there are many threads that share
+      #  same connection pool and the application is experiencing timeouts
+      #  while waiting for connections to be established.
       # @option options [ Integer ] :max_pool_size Deprecated.
       #   The maximum pool size. If max_size is also given, max_size and
       #   max_pool_size must be identical.
@@ -89,6 +98,7 @@ module Mongo
       #   any connections created by the pool.
       #
       # @since 2.0.0, API changed in 2.9.0
+
       def initialize(server, options = {})
         unless server.is_a?(Server)
           raise ArgumentError, 'First argument must be a Server instance'
@@ -146,7 +156,7 @@ module Mongo
         # Condition variable to enforce the first check in check_out: max_pool_size.
         # This condition variable should be signaled when the number of
         # unavailable connections decreases (pending + pending_connections +
-        # available_connections).
+        # checked_out_connections).
         @size_cv = Mongo::ConditionVariable.new(@lock)
         # This represents the number of threads that have made it past the size_cv
         # gate but have not acquired a connection to add to the pending_connections
@@ -157,7 +167,7 @@ module Mongo
         # Thei condition variable should be signaled when the number of pending
         # connections decreases.
         @max_connecting_cv = Mongo::ConditionVariable.new(@lock)
-        @max_connecting = options.fetch(:max_connecting, 2)
+        @max_connecting = options.fetch(:max_connecting, DEFAULT_MAX_CONNECTING)
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
@@ -1074,7 +1084,8 @@ module Mongo
           "from pool for #{@server.address}#{connection_global_id_msg} after #{wait_timeout} sec. " +
           "Connections in pool: #{@available_connections.length} available, " +
           "#{@checked_out_connections.length} checked out, " +
-          "#{@pending_connections.length + @connection_requests} pending " +
+          "#{@pending_connections.length} pending, " +
+          "#{@connection_requests} connections requests " +
           "(max size: #{max_size})"
         raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
       end
@@ -1170,7 +1181,6 @@ module Mongo
       # one. If no connection exists and the pool is at max size, wait until
       # a connection is checked back into the pool.
       #
-      # @param [ Float ] deadline The deadline to get the connection.
       # @param [ Integer ] pid The current process id.
       # @param [ Integer ] connection_global_id The global id for the
       #   connection to check out.
@@ -1180,17 +1190,22 @@ module Mongo
       # @raise [ Error::PoolClosedError ] If the pool has been closed.
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
-      def get_connection(deadline, pid, connection_global_id)
+      def get_connection(pid, connection_global_id)
         if connection = next_available_connection(connection_global_id)
           unless valid_available_connection?(connection, pid, connection_global_id)
             return nil
           end
 
+          # We've got a connection, so we decrement the number of connection
+          # requests.
+          # We do not need to signal condition variable here, because
+          # because the execution will continue, and we signal later.
+          @connection_requests -= 1
+
           # If the connection is connected, it's not considered a
           # "pending connection". The pending_connections list represents
           # the set of connections that are awaiting connection.
           unless connection.connected?
-            @connection_requests -= 1
             @pending_connections << connection
           end
           return connection
@@ -1207,6 +1222,9 @@ module Mongo
                   Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
                 ),
               )
+              # We're going to raise, so we need to decrement the number of
+              # connection requests.
+              decrement_connection_requests_and_signal
               raise Error::MissingConnection.new
             end
           end
@@ -1237,7 +1255,6 @@ module Mongo
         connection = nil
 
         @lock.synchronize do
-
           # The first gate to checking out a connection. Make sure the number of
           # unavailable connections is less than the max pool size.
           until max_size == 0 || unavailable_connections < max_size
@@ -1247,53 +1264,15 @@ module Mongo
             raise_if_not_ready!
           end
           @connection_requests += 1
-
-          while connection.nil?
-            # The second gate to checking out a connection. Make sure 1) there
-            # exists an available connection and 2) we are under max_connecting.
-            until @available_connections.any? || @pending_connections.length < @max_connecting
-              wait = deadline - Utils.monotonic_time
-              raise_check_out_timeout!(connection_global_id) if wait <= 0
-              @max_connecting_cv.wait(wait)
-              raise_if_not_ready!
-            end
-
-            connection = get_connection(deadline, Process.pid, connection_global_id)
-            wait = deadline - Utils.monotonic_time
-            raise_check_out_timeout!(connection_global_id) if connection.nil? && wait <= 0
-          end
+          connection = wait_for_connection(connection_global_id, deadline)
         end
 
-        begin
-          connect_connection(connection)
-        rescue Exception
-          # Handshake or authentication failed
-          @lock.synchronize do
-            if @pending_connections.include?(connection)
-              @pending_connections.delete(connection)
-            else
-              @connection_requests -= 1
-            end
-            @max_connecting_cv.signal
-            @size_cv.signal
-          end
-          @populate_semaphore.signal
-
-          publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-              @server.address,
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
-            ),
-          )
-          raise
-        end
+        connect_or_raise(connection) unless connection.connected?
 
         @lock.synchronize do
           @checked_out_connections << connection
           if @pending_connections.include?(connection)
             @pending_connections.delete(connection)
-          else
-            @connection_requests -= 1
           end
           @max_connecting_cv.signal
           # no need to signal size_cv here since the number of unavailable
@@ -1301,6 +1280,81 @@ module Mongo
         end
 
         connection
+      end
+
+      # Waits for a connection to become available, or raises is no connection
+      # becomes available before the timeout.
+      # @param [ Integer ] connection_global_id The global id for the
+      #   connection to check out.
+      # @param [ Float ] deadline The time at which to stop waiting.
+      #
+      # @return [ Mongo::Server::Connection ] The checked out connection.
+      def wait_for_connection(connection_global_id, deadline)
+        connection = nil
+        while connection.nil?
+          # The second gate to checking out a connection. Make sure 1) there
+          # exists an available connection and 2) we are under max_connecting.
+          until @available_connections.any? || @pending_connections.length < @max_connecting
+            wait = deadline - Utils.monotonic_time
+            if wait <= 0
+              # We are going to raise a timeout error, so the connection
+              # request is not going to be fulfilled. Decrement the counter
+              # here.
+              decrement_connection_requests_and_signal
+              raise_check_out_timeout!(connection_global_id)
+            end
+            @max_connecting_cv.wait(wait)
+            # We do not need to decrement the connection_requests counter
+            # or signal here because the pool is not ready yet.
+            raise_if_not_ready!
+          end
+
+          connection = get_connection(Process.pid, connection_global_id)
+          wait = deadline - Utils.monotonic_time
+          if connection.nil? && wait <= 0
+            # connection is nil here, it means that get_connection method
+            # did not create a new connection; therefore, it did not decrease
+            # the connection_requests counter. We need to do it here.
+            decrement_connection_requests_and_signal
+            raise_check_out_timeout!(connection_global_id)
+          end
+        end
+
+        connection
+      end
+
+      # Connects a connection and raises an exception if the connection
+      # cannot be connected.
+      # This method also publish corresponding event and ensures that counters
+      # and condition variables are updated.
+      def connect_or_raise(connection)
+        connect_connection(connection)
+      rescue Exception
+        # Handshake or authentication failed
+        @lock.synchronize do
+          if @pending_connections.include?(connection)
+            @pending_connections.delete(connection)
+          end
+          @max_connecting_cv.signal
+          @size_cv.signal
+        end
+        @populate_semaphore.signal
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+            @server.address,
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+          ),
+        )
+        raise
+      end
+
+
+      # Decrement connection requests counter and signal the condition
+      # variables that the number of unavailable connections has decreased.
+      def decrement_connection_requests_and_signal
+        @connection_requests -= 1
+        @max_connecting_cv.signal
+        @size_cv.signal
       end
     end
   end

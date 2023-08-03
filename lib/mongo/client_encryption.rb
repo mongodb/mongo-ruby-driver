@@ -255,10 +255,6 @@ module Mongo
     #   created by this method with automatic encryption, the user must create
     #   a new client after calling this function with the :encrypted_fields returned.
     #
-    # @note This method is a part of the queryable encryption API and therefore
-    #   is in public technical preview. This method should be considered
-    #   experimental and is subject to change.
-    #
     # @param [ Mongo::Database ] database Database to create collection in.
     # @param [ String ] coll_name Name of collection to create.
     # @param [ Hash ] coll_opts Options for collection to create.

@@ -2,7 +2,6 @@
 
 require 'spec_helper'
 
-# rubocop:disable RSpec/DescribeClass
 describe 'On-demand Azure Credentials' do
   require_libmongocrypt
   include_context 'define shared FLE helpers'
@@ -45,4 +44,3 @@ describe 'On-demand Azure Credentials' do
     end
   end
 end
-# rubocop:enable RSpec/DescribeClass

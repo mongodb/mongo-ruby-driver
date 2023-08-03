@@ -16,7 +16,11 @@ GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/gridfs/*.yml").sort
 TRANSACTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions/*.yml").sort
 TRANSACTIONS_API_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions_api/*.yml").sort
 CHANGE_STREAMS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/change_streams/*.yml").sort
-CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
+CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort.select do |f|
+  # Skip tests that are flaky on JRuby.
+  # https://jira.mongodb.org/browse/RUBY-3292
+  !defined?(JRUBY_VERSION) || !f.include?('pool-checkout-minPoolSize-connection-maxConnecting.yml')
+end
 AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
 CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort
 
@@ -109,6 +113,15 @@ RSpec.configure do |config|
   config.include(ClientRegistryMacros)
   config.include(MongosMacros)
   config.extend(Mongo::Macros)
+
+  # Used for spec/solo/*
+  def require_solo
+    before(:all) do
+      unless %w(1 true yes).include?(ENV['SOLO'])
+        skip 'Set SOLO=1 in environment to run solo tests'
+      end
+    end
+  end
 
   if SpecConfig.instance.ci?
     SdamFormatterIntegration.subscribe

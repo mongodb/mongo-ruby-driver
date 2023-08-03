@@ -26,12 +26,18 @@ else
     exit -1
 fi
 
+if ! ( test -f /etc/os-release & grep -q ^ID.*rhel /etc/os-release & grep -q ^VERSION_ID.*8.0 /etc/os-release ); then
+    echo Serverless tests assume rhel80
+    echo If this has changed, update .evergreen/run-tests-serverless.sh as necessary
+    exit -1
+fi
+
 mkdir libmongocrypt
 cd libmongocrypt
 curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
 tar xf libmongocrypt-all.tar.gz
-# We assume that serverless tests are always use ubuntu2004
-export LIBMONGOCRYPT_PATH=`pwd`/ubuntu2004-64/nocrypto/lib/libmongocrypt.so
+# We assume that serverless tests always use rhel80
+export LIBMONGOCRYPT_PATH=`pwd`/rhel-80-64-bit/nocrypto/lib64/libmongocrypt.so
 cd -
 
 cd .evergreen/csfle
@@ -70,6 +76,7 @@ cd -
 echo "Running specs"
 
 bundle exec rspec \
+    spec/spec_tests/client_side_encryption_spec.rb \
     spec/spec_tests/crud_spec.rb \
     spec/spec_tests/retryable_reads_spec.rb \
     spec/spec_tests/retryable_writes_spec.rb \
@@ -84,9 +91,6 @@ bundle exec rspec \
     spec/spec_tests/sdam_unified_spec.rb \
     spec/spec_tests/sessions_unified_spec.rb \
     spec/spec_tests/transactions_unified_spec.rb
-
-# https://jira.mongodb.org/browse/RUBY-3249
-# Add when fixed: spec/spec_tests/client_side_encryption_spec.rb \
 
 kill_jruby
 # Terminate all kmip servers... and whatever else happens to be running

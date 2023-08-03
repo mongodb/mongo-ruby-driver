@@ -18,6 +18,10 @@ axes:
         variables:
           MONGODB_VERSION: "latest"
           CRYPT_SHARED_VERSION: "latest"
+      - id: "7.0"
+        display_name: "7.0"
+        variables:
+          MONGODB_VERSION: "7.0"
       - id: "6.0"
         display_name: "6.0"
         variables:
@@ -138,6 +142,14 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-3.2"
+        display_name: ruby-3.2
+        variables:
+          RVM_RUBY: "ruby-3.2"
+      - id: "ruby-3.1"
+        display_name: ruby-3.1
+        variables:
+          RVM_RUBY: "ruby-3.1"
       - id: "ruby-3.1"
         display_name: ruby-3.1
         variables:
@@ -170,36 +182,31 @@ axes:
         display_name: jruby-9.3
         variables:
           RVM_RUBY: "jruby-9.3"
-
+      - id: "jruby-9.4"
+        display_name: jruby-9.4
+        variables:
+          RVM_RUBY: "jruby-9.4"
+  
   - id: "os"
     display_name: OS
     values:
       - id: debian11
         display_name: "Debian 11"
         run_on: debian11-small
-      - id: ubuntu2004
-        display_name: "Ubuntu 20.04"
-        run_on: ubuntu2004-small
-      - id: ubuntu1804
-        display_name: "Ubuntu 18.04"
-        run_on: ubuntu1804-small
-      - id: ubuntu1604
-        display_name: "Ubuntu 16.04"
-        run_on: ubuntu1604-small
-      - id: rhel80
+      - id: ubuntu2204
+        display_name: "Ubuntu 22.04"
+        run_on: ubuntu2204-small
+      - id: rhel8
         display_name: "RHEL 8"
         run_on: rhel80-small
-      - id: rhel70
-        display_name: "RHEL 7"
-        run_on: rhel70-small
-      - id: rhel62
-        display_name: "RHEL 6"
-        run_on: rhel62-small
+      - id: rhel8-arm
+        display_name: "RHEL 8 ARM64"
+        run_on: rhel82-arm64-small
 
   - id: docker-distro
     display_name: Docker Distro
     values:
-      <% %w(debian92 debian10 ubuntu1804 ubuntu2004).each do |distro| %>
+      <% %w(debian11 ubuntu2204).each do |distro| %>
         - id: <%= distro %>
           display_name: <%= distro %>
           variables:
@@ -299,7 +306,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1604-small
+        run_on: rhel80-small
         variables:
           MMAPV1: 'true'
 
