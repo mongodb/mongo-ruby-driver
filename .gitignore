@@ -25,3 +25,4 @@ data/*
 gemfiles/*.gemfile.lock
 .env.private*
 .env
+build
