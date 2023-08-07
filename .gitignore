@@ -26,7 +26,3 @@ gemfiles/*.gemfile.lock
 .env.private*
 .env
 build
-profile/benchmarking/data
-secrets-export.sh
-secrets-expansion.yml
-atlas-expansion.yml
