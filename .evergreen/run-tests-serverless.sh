@@ -16,14 +16,19 @@ export MONGODB_URI=`echo ${SERVERLESS_URI} | sed -r 's/mongodb\+srv:\/\//mongodb
 
 export TOPOLOGY="load-balanced"
 
-python3 -u .evergreen/mongodl.py --component crypt_shared -V ${SERVERLESS_MONGODB_VERSION} --out `pwd`/csfle_lib  --target `host_distro` || true
-if test -f `pwd`/csfle_lib/lib/mongo_crypt_v1.so
-then
-    echo Usinn crypt shared library version ${SERVERLESS_MONGODB_VERSION}
-    export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=`pwd`/csfle_lib/lib/mongo_crypt_v1.so
+if [ -n $CRYPT_SHARED_LIB_PATH ]; then
+    echo crypt_shared library is already present at ${CRYPT_SHARED_LIB_PATH}
+    export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$CRYPT_SHARED_LIB_PATH
 else
-    echo Failed to download crypt shared library
-    exit -1
+    python3 -u .evergreen/mongodl.py --component crypt_shared -V ${SERVERLESS_MONGODB_VERSION} --out `pwd`/csfle_lib  --target `host_distro` || true
+    if test -f `pwd`/csfle_lib/lib/mongo_crypt_v1.so
+    then
+        echo Usinn crypt shared library version ${SERVERLESS_MONGODB_VERSION}
+        export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=`pwd`/csfle_lib/lib/mongo_crypt_v1.so
+    else
+        echo Failed to download crypt shared library
+        exit -1
+    fi
 fi
 
 if ! ( test -f /etc/os-release & grep -q ^ID.*rhel /etc/os-release & grep -q ^VERSION_ID.*8.0 /etc/os-release ); then
