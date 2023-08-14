@@ -83,6 +83,9 @@ Style/Documentation:
   Exclude:
     - 'spec/**/*'
 
+Style/FormatStringToken:
+  Enabled: false
+
 Style/ModuleFunction:
   EnforcedStyle: extend_self
 
