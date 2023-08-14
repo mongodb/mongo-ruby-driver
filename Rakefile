@@ -137,22 +137,20 @@ require_relative "profile/benchmarking"
 namespace :benchmark do
   desc "Run the driver benchmark tests."
 
-  namespace :micro do
-    desc "Run the common driver micro benchmarking tests"
+  namespace :bson do
+    desc "Run the bson benchmarking tests"
 
     namespace :flat do
       desc "Benchmarking for flat bson documents."
 
       # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called flat_bson.json.
       task :encode do
-        puts "MICRO BENCHMARK:: FLAT:: ENCODE"
-        Mongo::Benchmarking::Micro.run(:flat, :encode)
+        Mongo::Benchmarking.report({ bson: { flat: { encode: Mongo::Benchmarking::Micro.run(:flat, :encode) } } })
       end
 
       # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called flat_bson.json.
       task :decode do
-        puts "MICRO BENCHMARK:: FLAT:: DECODE"
-        Mongo::Benchmarking::Micro.run(:flat, :decode)
+        Mongo::Benchmarking.report({ bson: { flat: { decode: Mongo::Benchmarking::Micro.run(:flat, :encode) } } })
       end
     end
 

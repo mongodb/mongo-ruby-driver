@@ -81,19 +81,73 @@ module Mongo
       end
     end
 
+    # Formats and displays a report of the given results.
+    #
+    # @param [ Hash ] results the results of a benchmarking run.
+    # @param [ Integer ] indent how much the report should be indented.
+    # @param [ Array<Number> ] percentiles the percentile values to report
+    def report(results, indent: 0, percentiles: [ 10, 25, 50, 75, 90, 95, 98, 99 ])
+      indentation = ' ' * indent
+      results.each do |key, value|
+        puts "#{indentation}#{key}:"
+        if value.is_a?(Hash)
+          report(value, indent: indent + 2, percentiles: percentiles)
+        else
+          ps = Percentiles.new(value)
+          puts "#{indentation}  median: %g" % [ ps[50] ]
+          puts "#{indentation}  percentiles:"
+          percentiles.each do |pct|
+            puts "#{indentation}    %g: %g" % [ pct, ps[pct] ]
+          end
+        end
+      end
+    end
+
+    # A utility class for returning the list item at a given percentile
+    # value.
+    class Percentiles
+      # @return [ Array<Number> ] the sorted list of numbers to consider
+      attr_reader :list
+
+      # Create a new Percentiles object that encapsulates the given list of
+      # numbers.
+      #
+      # @param [ Array<Number> ] list the list of numbers to considier
+      def initialize(list)
+        @list = list.sort
+      end
+
+      # Finds and returns the element in the list that represents the given
+      # percentile value.
+      #
+      # @param [ Number ] percentile a number in the range [1,100]
+      #
+      # @return [ Number ] the element of the list for the given percentile.
+      def [](percentile)
+        i = (list.size * percentile / 100.0).ceil - 1
+        list[i]
+      end
+    end
+
     # Get the median of values in a list.
     #
     # @example Get the median.
     #   Benchmarking.median(values)
     #
-    # @param [ Array ] The values to get the median of.
+    # @param [ Array ] values The values to get the median of.
     #
     # @return [ Numeric ] The median of the list.
-    #
-    # @since 2.2.3
     def median(values)
       i = (values.size / 2) - 1
       values.sort[i]
+    end
+
+    # Runs a given block with GC disabled.
+    def without_gc
+      GC.disable
+      yield
+    ensure
+      GC.enable
     end
   end
 end
