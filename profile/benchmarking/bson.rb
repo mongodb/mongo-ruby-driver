@@ -18,13 +18,13 @@ module Mongo
   module Benchmarking
     # These tests focus on BSON encoding and decoding; they are client-side only and
     # do not involve any transmission of data to or from the server.
-    module Micro
+    module BSON
       extend self
 
       # Runs all of the benchmarks specified by the given mapping.
       #
       # @example Run a collection of benchmarks.
-      #   Benchmarking::Micro.run_all(
+      #   Benchmarking::BSON.run_all(
       #     flat: %i[ encode decode ],
       #     deep: %i[ encode decode ],
       #     full: %i[ encode decode ]
@@ -43,10 +43,10 @@ module Mongo
         end
       end
 
-      # Run a micro benchmark test.
+      # Run a BSON benchmark test.
       #
       # @example Run a test.
-      #   Benchmarking::Micro.run(:flat)
+      #   Benchmarking::BSON.run(:flat)
       #
       # @param [ Symbol ] type The type of test to run.
       # @param [ :encode | :decode ] action The action to perform.
@@ -57,10 +57,10 @@ module Mongo
         Benchmarking.without_gc { send(action, file_path) }
       end
 
-      # Run an encoding micro benchmark test.
+      # Run an encoding BSON benchmark test.
       #
       # @example Run an encoding test.
-      #   Benchmarking::Micro.encode(file_name)
+      #   Benchmarking::BSON.encode(file_name)
       #
       # @param [ String ] file_name The name of the file with data for the test.
       # @param [ Integer ] repetitions The number of test repetitions.
@@ -68,17 +68,17 @@ module Mongo
       # @return [ Array<Numeric> ] The list of the results for each iteration
       def encode(file_name)
         data = Benchmarking.load_file(file_name)
-        document = BSON::Document.new(data.first)
+        document = ::BSON::Document.new(data.first)
 
         Benchmarking.benchmark do
           10_000.times { document.to_bson }
         end
       end
 
-      # Run a decoding micro benchmark test.
+      # Run a decoding BSON benchmark test.
       #
       # @example Run an decoding test.
-      #   Benchmarking::Micro.decode(file_name)
+      #   Benchmarking::BSON.decode(file_name)
       #
       # @param [ String ] file_name The name of the file with data for the test.
       # @param [ Integer ] repetitions The number of test repetitions.
@@ -86,11 +86,11 @@ module Mongo
       # @return [ Array<Numeric> ] The list of the results for each iteration
       def decode(file_name)
         data = Benchmarking.load_file(file_name)
-        buffer = BSON::Document.new(data.first).to_bson
+        buffer = ::BSON::Document.new(data.first).to_bson
 
         Benchmarking.benchmark do
           10_000.times do
-            BSON::Document.from_bson(buffer)
+            ::BSON::Document.from_bson(buffer)
             buffer.rewind!
           end
         end

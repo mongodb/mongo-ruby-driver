@@ -135,22 +135,32 @@ require_relative "profile/benchmarking"
 
 # Some require data files, available from the drivers team. See the comments above each task for details."
 namespace :benchmark do
-  desc "Run the driver benchmark tests."
+  desc "Run the bson benchmarking tests"
+  task :bson do
+    puts "BSON BENCHMARK"
+    Mongo::Benchmarking.report({
+      bson: Mongo::Benchmarking::BSON.run_all({
+        flat: %i[ encode decode ],
+        deep: %i[ encode decode ],
+        full: %i[ encode decode ],
+      })
+    })
+  end
 
   namespace :bson do
-    desc "Run the bson benchmarking tests"
-
     namespace :flat do
       desc "Benchmarking for flat bson documents."
 
       # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called flat_bson.json.
       task :encode do
-        Mongo::Benchmarking.report({ bson: { flat: { encode: Mongo::Benchmarking::Micro.run(:flat, :encode) } } })
+        puts "BSON BENCHMARK :: FLAT :: ENCODE"
+        Mongo::Benchmarking.report({ bson: { flat: { encode: Mongo::Benchmarking::BSON.run(:flat, :encode) } } })
       end
 
       # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called flat_bson.json.
       task :decode do
-        Mongo::Benchmarking.report({ bson: { flat: { decode: Mongo::Benchmarking::Micro.run(:flat, :encode) } } })
+        puts "BSON BENCHMARK :: FLAT :: DECODE"
+        Mongo::Benchmarking.report({ bson: { flat: { decode: Mongo::Benchmarking::BSON.run(:flat, :decode) } } })
       end
     end
 
@@ -159,14 +169,14 @@ namespace :benchmark do
 
       # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called deep_bson.json.
       task :encode do
-        puts "MICRO BENCHMARK:: DEEP:: ENCODE"
-        Mongo::Benchmarking::Micro.run(:deep, :encode)
+        puts "BSON BENCHMARK :: DEEP :: ENCODE"
+        Mongo::Benchmarking.report({ bson: { deep: { encode: Mongo::Benchmarking::BSON.run(:deep, :encode) } } })
       end
 
       # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called deep_bson.json.
       task :decode do
-        puts "MICRO BENCHMARK:: DEEP:: DECODE"
-        Mongo::Benchmarking::Micro.run(:deep, :decode)
+        puts "BSON BENCHMARK :: DEEP :: DECODE"
+        Mongo::Benchmarking.report({ bson: { deep: { decode: Mongo::Benchmarking::BSON.run(:deep, :decode) } } })
       end
     end
 
@@ -175,14 +185,14 @@ namespace :benchmark do
 
       # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called full_bson.json.
       task :encode do
-        puts "MICRO BENCHMARK:: FULL:: ENCODE"
-        Mongo::Benchmarking::Micro.run(:full, :encode)
+        puts "BSON BENCHMARK :: FULL :: ENCODE"
+        Mongo::Benchmarking.report({ bson: { full: { encode: Mongo::Benchmarking::BSON.run(:full, :encode) } } })
       end
 
       # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called full_bson.json.
       task :decode do
-        puts "MICRO BENCHMARK:: FULL:: DECODE"
-        Mongo::Benchmarking::Micro.run(:full, :decode)
+        puts "BSON BENCHMARK :: FULL :: DECODE"
+        Mongo::Benchmarking.report({ bson: { full: { decode: Mongo::Benchmarking::BSON.run(:full, :decode) } } })
       end
     end
   end

@@ -36,7 +36,7 @@ module Mongo
     # @since 2.2.3
     def parse_json(document)
       JSON.parse(document).tap do |doc|
-        doc['_id'] = BSON::ObjectId.from_string(doc['_id']['$oid']) if doc['_id'] && doc['_id']['$oid']
+        doc['_id'] = ::BSON::ObjectId.from_string(doc['_id']['$oid']) if doc['_id'] && doc['_id']['$oid']
       end
     end
 
