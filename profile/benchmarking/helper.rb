@@ -89,37 +89,12 @@ module Mongo
     def report(results, indent: 0, percentiles: [ 10, 25, 50, 75, 90, 95, 98, 99 ])
       results.each do |key, value|
         puts format('%*s%s:', indent, '', key)
-        if value.is_a?(Hash)
-          report(value, indent: indent + 2, percentiles: percentiles)
+
+        if value.respond_to?(:summary)
+          puts value.summary(indent + 2, percentiles)
         else
-          report_result(value, indent, percentiles)
+          report(value, indent: indent + 2, percentiles: percentiles)
         end
-      end
-    end
-
-    # A utility class for returning the list item at a given percentile
-    # value.
-    class Percentiles
-      # @return [ Array<Number> ] the sorted list of numbers to consider
-      attr_reader :list
-
-      # Create a new Percentiles object that encapsulates the given list of
-      # numbers.
-      #
-      # @param [ Array<Number> ] list the list of numbers to considier
-      def initialize(list)
-        @list = list.sort
-      end
-
-      # Finds and returns the element in the list that represents the given
-      # percentile value.
-      #
-      # @param [ Number ] percentile a number in the range [1,100]
-      #
-      # @return [ Number ] the element of the list for the given percentile.
-      def [](percentile)
-        i = (list.size * percentile / 100.0).ceil - 1
-        list[i]
       end
     end
 
@@ -142,22 +117,6 @@ module Mongo
       yield
     ensure
       GC.enable
-    end
-
-    private
-
-    # Formats and displays the results of a single benchmark run.
-    #
-    # @param [ Array<Numeric> ] results the results to report
-    # @param [ Integer ] indent how much the report should be indented
-    # @param [ Array<Numeric> ] percentiles the percentiles to report
-    def report_result(results, indent, percentiles)
-      ps = Percentiles.new(results)
-      puts format('%*smedian: %g', indent + 2, '', ps[50])
-      puts format('%*spercentiles:', indent + 2, '')
-      percentiles.each do |pct|
-        puts format('%*s%g: %g', indent + 4, '', pct, ps[pct])
-      end
     end
   end
 end
