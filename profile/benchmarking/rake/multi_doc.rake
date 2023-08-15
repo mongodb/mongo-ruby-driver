@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rubocop:todo all
 
 namespace :multi_doc do
   # Requirement: A file in Mongo::Benchmarking::DATA_PATH, called TWEET.json.

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rubocop:todo all
 
 namespace :single_doc do
   task :command do

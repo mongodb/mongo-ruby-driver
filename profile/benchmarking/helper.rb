@@ -63,7 +63,7 @@ module Mongo
                   max_time: 5 * 60,
                   progress: default_progress_callback,
                   &block)
-      progress ||= -> (state) {} # fallback to a no-op callback
+      progress ||= ->(state) {} # fallback to a no-op callback
       progress[:start]
 
       [].tap do |results|
@@ -138,9 +138,9 @@ module Mongo
     #   be used)
     def default_progress_callback
       case ENV['PROGRESS']
-      when nil, '0', 'false', 'none'
+      when '0', 'false', 'none'
         nil
-      when '1', 'true', 'minimal'
+      when nil, '1', 'true', 'minimal'
         method(:minimal_progress_callback).to_proc
       else
         raise ArgumentError, "unsupported progress callback #{ENV['PROGRESS'].inspect}"

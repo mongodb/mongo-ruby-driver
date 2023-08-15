@@ -1,18 +1,29 @@
 # frozen_string_literal: true
 
+# rubocop:disable Layout/FirstHashElementIndentation
+
 desc 'Run the full BSON benchmarking suite'
 task :bson do
   puts 'BSON BENCHMARK SUITE'
   Mongo::Benchmarking.report({
-    bson: Mongo::Benchmarking::BSON.run_all({
+    bson: Mongo::Benchmarking::BSON.run_all(
       flat: %i[ encode decode ],
       deep: %i[ encode decode ],
-      full: %i[ encode decode ],
-    })
+      full: %i[ encode decode ]
+    )
   })
 end
 
-namespace :bson do
+namespace :bson do # rubocop:disable Metrics/BlockLength
+  # a convenience task for running all of the bson benchmark tasks; this is
+  # only useful for testing that they all work.
+  task test: %w[
+    bson
+    bson:flat bson:flat:encode bson:flat:decode
+    bson:deep bson:deep:encode bson:deep:decode
+    bson:full bson:full:encode bson:full:decode
+  ]
+
   desc 'Learn how to run the BSON benchmarks'
   task :help do
     puts <<~HELP
@@ -45,7 +56,7 @@ namespace :bson do
   task :flat do
     puts 'BSON BENCHMARK :: FLAT'
     Mongo::Benchmarking.report({
-      bson: Mongo::Benchmarking::BSON.run_all({ flat: %i[ encode decode ] })
+      bson: Mongo::Benchmarking::BSON.run_all(flat: %i[ encode decode ])
     })
   end
 
@@ -67,7 +78,7 @@ namespace :bson do
   task :deep do
     puts 'BSON BENCHMARK :: DEEP'
     Mongo::Benchmarking.report({
-      bson: Mongo::Benchmarking::BSON.run_all({ deep: %i[ encode decode ] })
+      bson: Mongo::Benchmarking::BSON.run_all(deep: %i[ encode decode ])
     })
   end
 
@@ -107,3 +118,5 @@ namespace :bson do
     end
   end
 end
+
+# rubocop:enable Layout/FirstHashElementIndentation

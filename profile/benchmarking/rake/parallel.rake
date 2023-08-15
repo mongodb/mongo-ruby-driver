@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rubocop:todo all
 
 namespace :parallel do
   # Requirement: A directory in Mongo::Benchmarking::DATA_PATH, called LDJSON_MULTI,
