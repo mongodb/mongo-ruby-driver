@@ -58,13 +58,21 @@ module Mongo
     #   iterating.
     #
     # @return [ Array<Float> ] the timings for each iteration
-    def benchmark(max_iterations: Benchmarking::TEST_REPETITIONS, min_time: 60, max_time: 5 * 60, &block)
+    def benchmark(max_iterations: Benchmarking::TEST_REPETITIONS,
+                  min_time: 60,
+                  max_time: 5 * 60,
+                  progress: default_progress_callback,
+                  &block)
+      progress ||= -> (state) {} # fallback to a no-op callback
+      progress[:start]
+
       [].tap do |results|
         iteration_count = 0
         cumulative_time = 0
 
         loop do
-          timing = Benchmark.realtime(&block)
+          timing = without_gc { Benchmark.realtime(&block) }
+          progress[:step]
 
           iteration_count += 1
           cumulative_time += timing
@@ -78,6 +86,8 @@ module Mongo
           # number of iterations have been reached.
           break if cumulative_time >= min_time && iteration_count >= max_iterations
         end
+
+        progress[:end]
       end
     end
 
@@ -117,6 +127,38 @@ module Mongo
       yield
     ensure
       GC.enable
+    end
+
+    private
+
+    # Returns the proc object (or nil) corresponding to the "PROGRESS"
+    # environment variable.
+    #
+    # @return [ Proc | nil ] the callback proc to use (or nil if none should
+    #   be used)
+    def default_progress_callback
+      case ENV['PROGRESS']
+      when nil, '0', 'false', 'none'
+        nil
+      when '1', 'true', 'minimal'
+        method(:minimal_progress_callback).to_proc
+      else
+        raise ArgumentError, "unsupported progress callback #{ENV['PROGRESS'].inspect}"
+      end
+    end
+
+    # A minimal progress callback implementation, printing '|' when a benchmark
+    # starts and '.' for each iteration.
+    #
+    # @param [ :start | :step | :end ] state the current progress state
+    def minimal_progress_callback(state)
+      case state
+      when :start then print '|'
+      when :step  then print '.'
+      when :end   then puts
+      end
+
+      $stdout.flush
     end
   end
 end
