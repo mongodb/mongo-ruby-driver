@@ -1,11 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
-
   # Helper functions used by benchmarking tasks
   module Benchmarking
-
     extend self
 
     # Load a json file and represent each document as a Hash.
@@ -19,7 +16,7 @@ module Mongo
     #
     # @since 2.2.3
     def load_file(file_name)
-      File.open(file_name, "r") do |f|
+      File.open(file_name, 'r') do |f|
         f.each_line.collect do |line|
           parse_json(line)
         end
@@ -39,8 +36,47 @@ module Mongo
     # @since 2.2.3
     def parse_json(document)
       JSON.parse(document).tap do |doc|
-        if doc['_id'] && doc['_id']['$oid']
-          doc['_id'] = BSON::ObjectId.from_string(doc['_id']['$oid'])
+        doc['_id'] = BSON::ObjectId.from_string(doc['_id']['$oid']) if doc['_id'] && doc['_id']['$oid']
+      end
+    end
+
+    # The spec requires that most benchmarks use a variable number of
+    # iterations, defined as follows:
+    #
+    # * iterations should loop for at least 1 minute cumulative execution
+    #   time
+    # * iterations should stop after 100 iterations or 5 minutes cumulative
+    #   execution time, whichever is shorter
+    #
+    # This method will yield once for each iteration.
+    #
+    # @param [ Integer ] max_iterations the maximum number of iterations to
+    #   attempt (default: 100)
+    # @param [ Integer ] min_time the minimum number of seconds to spend
+    #   iterating
+    # @param [ Integer ] max_time the maximum number of seconds to spend
+    #   iterating.
+    #
+    # @return [ Array<Float> ] the timings for each iteration
+    def benchmark(max_iterations: Benchmarking::TEST_REPETITIONS, min_time: 60, max_time: 5 * 60, &block)
+      [].tap do |results|
+        iteration_count = 0
+        cumulative_time = 0
+
+        loop do
+          timing = Benchmark.realtime(&block)
+
+          iteration_count += 1
+          cumulative_time += timing
+          results.push timing
+
+          # always stop after the maximum time has elapsed, regardless of
+          # iteration count.
+          break if cumulative_time > max_time
+
+          # otherwise, break if the minimum time has elapsed, and the maximum
+          # number of iterations have been reached.
+          break if cumulative_time >= min_time && iteration_count >= max_iterations
         end
       end
     end
@@ -56,7 +92,8 @@ module Mongo
     #
     # @since 2.2.3
     def median(values)
-      values.sort![values.size/2-1]
+      i = (values.size / 2) - 1
+      values.sort[i]
     end
   end
 end
