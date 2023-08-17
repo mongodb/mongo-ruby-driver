@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Benchmarking
-
     # These tests focus on BSON encoding and decoding; they are client-side only and
     # do not involve any transmission of data to or from the server.
     #
     # @since 2.2.3
     module Micro
-
       extend self
 
       # Run a micro benchmark test.
@@ -38,10 +35,11 @@ module Mongo
       #
       # @since 2.2.3
       def run(type, action, repetitions = Benchmarking::TEST_REPETITIONS)
-        file_name = type.to_s << "_bson.json"
+        file_name = type.to_s << '_bson.json'
         GC.disable
-        file_path = [Benchmarking::DATA_PATH, file_name].join('/')
+        file_path = [ Benchmarking::DATA_PATH, file_name ].join('/')
         puts "#{action} : #{send(action, file_path, repetitions)}"
+        GC.enable
       end
 
       # Run an encoding micro benchmark test.
@@ -59,16 +57,8 @@ module Mongo
         data = Benchmarking.load_file(file_name)
         document = BSON::Document.new(data.first)
 
-        # WARMUP_REPETITIONS.times do
-        #   doc.to_bson
-        # end
-
-        results = repetitions.times.collect do
-          Benchmark.realtime do
-            10_000.times do
-              document.to_bson
-            end
-          end
+        results = Benchmarking.benchmark(max_iterations: repetitions) do
+          10_000.times { document.to_bson }
         end
         Benchmarking.median(results)
       end
@@ -88,18 +78,13 @@ module Mongo
         data = Benchmarking.load_file(file_name)
         buffer = BSON::Document.new(data.first).to_bson
 
-        # WARMUP_REPETITIONS.times do
-        #   BSON::Document.from_bson(buffers.shift)
-        # end
-
-        results = repetitions.times.collect do
-          Benchmark.realtime do
-            10_000.times do
-              BSON::Document.from_bson(buffer)
-              buffer.rewind!
-            end
+        results = Benchmarking.benchmark(max_iterations: repetitions) do
+          10_000.times do
+            BSON::Document.from_bson(buffer)
+            buffer.rewind!
           end
         end
+
         Benchmarking.median(results)
       end
     end

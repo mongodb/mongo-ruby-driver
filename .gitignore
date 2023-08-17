@@ -25,3 +25,5 @@ data/*
 gemfiles/*.gemfile.lock
 .env.private*
 .env
+build
+profile/benchmarking/data
