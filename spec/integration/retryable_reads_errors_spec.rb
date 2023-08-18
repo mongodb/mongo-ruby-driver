@@ -20,14 +20,14 @@ describe 'Retryable reads errors tests' do
 
     let(:failpoint) do
       {
-          configureFailPoint: "failCommand",
-          mode: { times: 1 },
-          data: {
-              failCommands: [ "find" ],
-              errorCode: 91,
-              blockConnection: true,
-              blockTimeMS: 1000
-          }
+        configureFailPoint: "failCommand",
+        mode: { times: 1 },
+        data: {
+          failCommands: [ "find" ],
+          errorCode: 91,
+          blockConnection: true,
+          blockTimeMS: 1000
+        }
       }
     end
 
@@ -108,52 +108,10 @@ describe 'Retryable reads errors tests' do
     end
   end
 
-  context 'retry on different mongos' do
+  context 'Retries in a sharded cluster' do
     require_topology :sharded
     min_server_version '4.2'
     require_no_auth
-
-    let(:first_mongos) do
-      Mongo::Client.new(
-        [SpecConfig.instance.addresses.first],
-        direct_connection: true,
-        database: 'admin'
-      )
-    end
-
-    let(:second_mongos) do
-      Mongo::Client.new(
-        [SpecConfig.instance.addresses.last],
-        direct_connection: false,
-        database: 'admin'
-      )
-    end
-
-    let(:client) { authorized_client.with(retry_reads: true) }
-
-    before do
-      skip 'This test requires at least two mongos' if SpecConfig.instance.addresses.length < 2
-
-      first_mongos.database.command(
-        configureFailPoint: 'failCommand',
-          mode: { times: 1 },
-          data: {
-            failCommands: %w(find),
-            closeConnection: false,
-            errorCode: 11600
-          }
-      )
-
-      second_mongos.database.command(
-        configureFailPoint: 'failCommand',
-          mode: { times: 1 },
-          data: {
-            failCommands: %w(find),
-            closeConnection: false,
-            errorCode: 11600
-          }
-      )
-    end
 
     let(:subscriber) { Mrss::EventSubscriber.new }
 
@@ -165,20 +123,141 @@ describe 'Retryable reads errors tests' do
       subscriber.failed_events.select { |e| e.command_name == "find" }
     end
 
-    let(:expected_servers) do
-      SpecConfig.instance.addresses.map { |a| a.to_s }.sort
+    let(:find_succeeded_events) do
+      subscriber.succeeded_events.select { |e| e.command_name == "find" }
     end
 
-    after do
-      first_mongos.close
-      second_mongos.close
+    context 'when another mongos is available' do
+
+      let(:first_mongos) do
+        Mongo::Client.new(
+          [SpecConfig.instance.addresses.first],
+          direct_connection: true,
+          database: 'admin'
+        )
+      end
+
+      let(:second_mongos) do
+        Mongo::Client.new(
+          [SpecConfig.instance.addresses.last],
+          direct_connection: false,
+          database: 'admin'
+        )
+      end
+
+      let(:client) do
+        new_local_client(
+          [
+            SpecConfig.instance.addresses.first,
+            SpecConfig.instance.addresses.last,
+          ],
+          SpecConfig.instance.test_options.merge(retry_reads: true)
+        )
+      end
+
+      let(:expected_servers) do
+        [
+          SpecConfig.instance.addresses.first.to_s,
+          SpecConfig.instance.addresses.last.to_s
+        ].sort
+      end
+
+      before do
+        skip 'This test requires at least two mongos' if SpecConfig.instance.addresses.length < 2
+
+        first_mongos.database.command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(find),
+            closeConnection: false,
+            errorCode: 6
+          }
+        )
+
+        second_mongos.database.command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(find),
+            closeConnection: false,
+            errorCode: 6
+          }
+        )
+      end
+
+      after do
+        [first_mongos, second_mongos].each do |admin_client|
+          admin_client.database.command(
+            configureFailPoint: 'failCommand',
+            mode: 'off'
+          )
+          admin_client.close
+        end
+        client.close
+      end
+
+      it 'retries on different mongos' do
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        expect { collection.find.first }.to raise_error(Mongo::Error::OperationFailure)
+        expect(find_started_events.map { |e| e.address.to_s }.sort).to eq(expected_servers)
+        expect(find_failed_events.map { |e| e.address.to_s }.sort).to eq(expected_servers)
+      end
     end
 
-    it 'retries on different mongos' do
-      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-      expect { collection.find.first }.to raise_error
-      expect(find_started_events.map { |e| e.address.to_s }.sort).to eq(expected_servers)
-      expect(find_failed_events.map { |e| e.address.to_s }.sort).to eq(expected_servers)
+    context 'when no other mongos is available' do
+      let(:mongos) do
+        Mongo::Client.new(
+          [SpecConfig.instance.addresses.first],
+          direct_connection: true,
+          database: 'admin'
+        )
+      end
+
+      let(:client) do
+        new_local_client(
+          [
+            SpecConfig.instance.addresses.first
+          ],
+          SpecConfig.instance.test_options.merge(retry_reads: true)
+        )
+      end
+
+      before do
+        mongos.database.command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(find),
+            closeConnection: false,
+            errorCode: 6
+          }
+        )
+      end
+
+      after do
+        mongos.database.command(
+          configureFailPoint: 'failCommand',
+          mode: 'off'
+        )
+        mongos.close
+        client.close
+      end
+
+      it 'retries on the same mongos' do
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        expect { collection.find.first }.not_to raise_error
+        expect(find_started_events.map { |e| e.address.to_s }.sort).to eq([
+          SpecConfig.instance.addresses.first.to_s,
+          SpecConfig.instance.addresses.first.to_s
+        ])
+        expect(find_failed_events.map { |e| e.address.to_s }.sort).to eq([
+          SpecConfig.instance.addresses.first.to_s
+        ])
+        expect(find_succeeded_events.map { |e| e.address.to_s }.sort).to eq([
+          SpecConfig.instance.addresses.first.to_s
+        ])
+      end
     end
   end
 end

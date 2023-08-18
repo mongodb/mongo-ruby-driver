@@ -292,8 +292,6 @@ module Mongo
           raise original_error
         end
       end
-  
     end
-
   end
 end
