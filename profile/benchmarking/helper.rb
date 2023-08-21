@@ -98,22 +98,6 @@ module Mongo
       end
     end
 
-    # Formats and displays a report of the given results.
-    #
-    # @param [ Hash ] results the results of a benchmarking run.
-    # @param [ Integer ] indent how much the report should be indented.
-    # @param [ Array<Numeric> ] percentiles the percentile values to report
-    def report(results, indent: 0, percentiles: [ 10, 25, 50, 75, 90, 95, 98, 99 ])
-      results.each do |key, value|
-        puts format('%*s%s:', indent, '', key)
-        if value.is_a?(Hash)
-          report(value, indent: indent + 2, percentiles: percentiles)
-        else
-          puts value.summary(indent, percentiles)
-        end
-      end
-    end
-
     # A utility class for returning the list item at a given percentile
     # value.
     class Percentiles
