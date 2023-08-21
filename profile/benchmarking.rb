@@ -16,7 +16,7 @@
 
 require 'benchmark'
 require_relative 'benchmarking/helper'
-require_relative 'benchmarking/micro'
+require_relative 'benchmarking/bson'
 require_relative 'benchmarking/single_doc'
 require_relative 'benchmarking/multi_doc'
 require_relative 'benchmarking/parallel'
