@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require_relative 'percentiles'
+require_relative 'summary'
+
 module Mongo
   module Benchmarking
     # These tests focus on BSON encoding and decoding; they are client-side only and
@@ -43,6 +46,20 @@ module Mongo
         end
       end
 
+      # As defined by the spec, the score for a given benchmark is the
+      # size of the task (in MB) divided by the median wall clock time.
+      #
+      # @param [ Symbol ] type the type of the task
+      # @param [ Mongo::Benchmarking::Percentiles ] percentiles the Percentiles
+      #   object to query for the median time.
+      # @param [ Numeric ] scale the number of times the operation is performed
+      #   per iteration, used to scale the task size.
+      #
+      # @return [ Numeric ] the score for the given task.
+      def score_for(type, percentiles, scale: 10_000)
+        task_size(type, scale) / percentiles[50]
+      end
+
       # Run a BSON benchmark test.
       #
       # @example Run a test.
@@ -51,10 +68,14 @@ module Mongo
       # @param [ Symbol ] type The type of test to run.
       # @param [ :encode | :decode ] action The action to perform.
       #
-      # @return [ Array<Number> ] The test results for each iteration
+      # @return [ Hash<:timings,:percentiles,:score> ] The test results for
+      #    the requested benchmark.
       def run(type, action)
-        file_path = File.join(Benchmarking::DATA_PATH, "#{type}_bson.json")
-        Benchmarking.without_gc { send(action, file_path) }
+        timings = Benchmarking.without_gc { send(action, file_for(type)) }
+        percentiles = Percentiles.new(timings)
+        score = score_for(type, percentiles)
+
+        Summary.new(timings, percentiles, score)
       end
 
       # Run an encoding BSON benchmark test.
@@ -94,6 +115,36 @@ module Mongo
             buffer.rewind!
           end
         end
+      end
+
+      private
+
+      # The path to the source file for the given task type.
+      #
+      # @param [ Symbol ] type the task type
+      #
+      # @return [ String ] the path to the source file.
+      def file_for(type)
+        File.join(Benchmarking::DATA_PATH, "#{type}_bson.json")
+      end
+
+      # As defined by the spec, the size of a BSON task is the size of the
+      # file, multipled by the scale (the number of times the file is processed
+      # per iteration), divided by a million.
+      #
+      # "the dataset size for a task is the size of the single-document source
+      # file...times 10,000 operations"
+      #
+      # "Each task will have defined for it an associated size in
+      # megabytes (MB)"
+      #
+      # @param [ Symbol ] type the type of the task
+      # @param [ Numeric ] scale the number of times the operation is performed
+      #   per iteration (e.g. 10,000)
+      #
+      # @return [ Numeric ] the score for the task, reported in MB
+      def task_size(type, scale)
+        File.size(file_for(type)) * scale / 1_000_000.0
       end
     end
   end
