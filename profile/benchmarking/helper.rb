@@ -89,10 +89,11 @@ module Mongo
     def report(results, indent: 0, percentiles: [ 10, 25, 50, 75, 90, 95, 98, 99 ])
       results.each do |key, value|
         puts format('%*s%s:', indent, '', key)
-        if value.is_a?(Hash)
-          report(value, indent: indent + 2, percentiles: percentiles)
+
+        if value.respond_to?(:summary)
+          puts value.summary(indent + 2, percentiles)
         else
-          report_result(value, indent, percentiles)
+          report(value, indent: indent + 2, percentiles: percentiles)
         end
       end
     end
@@ -142,22 +143,6 @@ module Mongo
       yield
     ensure
       GC.enable
-    end
-
-    private
-
-    # Formats and displays the results of a single benchmark run.
-    #
-    # @param [ Array<Numeric> ] results the results to report
-    # @param [ Integer ] indent how much the report should be indented
-    # @param [ Array<Numeric> ] percentiles the percentiles to report
-    def report_result(results, indent, percentiles)
-      ps = Percentiles.new(results)
-      puts format('%*smedian: %g', indent + 2, '', ps[50])
-      puts format('%*spercentiles:', indent + 2, '')
-      percentiles.each do |pct|
-        puts format('%*s%g: %g', indent + 4, '', pct, ps[pct])
-      end
     end
   end
 end
