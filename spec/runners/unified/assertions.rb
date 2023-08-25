@@ -293,7 +293,7 @@ module Unified
     def get_actual_value(actual, key)
       if Hash === actual
         actual[key]
-      elsif Mongo::Operation::Result === actual
+      elsif Mongo::Operation::Result === actual && !actual.respond_to?(key.to_sym)
         actual.documents.first[key]
       else
         actual.send(key)
