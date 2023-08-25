@@ -251,11 +251,11 @@ module Unified
         end
       when Hash
         if expected.keys == %w($$unsetOrMatches) && expected.values.first.keys == %w(insertedId)
-          actual_v = actual.inserted_id
+          actual_v = get_actual_value(actual, 'inserted_id')
           expected_v = expected.values.first.values.first
           assert_value_matches(actual_v, expected_v, 'inserted_id')
         elsif expected.keys == %w(insertedId)
-          actual_v = actual.inserted_id
+          actual_v = get_actual_value(actual, 'inserted_id')
           expected_v = expected.values.first
           assert_value_matches(actual_v, expected_v, 'inserted_id')
         else
@@ -270,7 +270,7 @@ module Unified
               if k.start_with?('$$')
                 assert_value_matches(actual, expected, k)
               else
-                actual_v = actual[k]
+                actual_v = get_actual_value(actual, k)
                 if Hash === expected_v && expected_v.length == 1 && expected_v.keys.first.start_with?('$$')
                   assert_value_matches(actual_v, expected_v, k)
                 else
@@ -287,6 +287,16 @@ module Unified
         unless actual == expected
           raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}"
         end
+      end
+    end
+
+    def get_actual_value(actual, key)
+      if Hash === actual
+        actual[key]
+      elsif Mongo::Operation::Result === actual
+        actual.documents.first[key]
+      else
+        actual.send(key)
       end
     end
 
