@@ -290,6 +290,9 @@ module Unified
       end
     end
 
+    # The actual value may be of different types depending on the operation.
+    # In order to avoid having to write a lot of code to handle the different
+    # types, we use this method to get the actual value.
     def get_actual_value(actual, key)
       if Hash === actual
         actual[key]
