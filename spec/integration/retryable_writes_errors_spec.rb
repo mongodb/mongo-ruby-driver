@@ -189,4 +189,160 @@ describe 'Retryable writes errors tests' do
       })
     end
   end
+
+  context 'Retries in a sharded cluster' do
+    require_topology :sharded
+    min_server_version '4.2'
+    require_no_auth
+
+    let(:subscriber) { Mrss::EventSubscriber.new }
+
+    let(:insert_started_events) do
+      subscriber.started_events.select { |e| e.command_name == "insert" }
+    end
+
+    let(:insert_failed_events) do
+      subscriber.failed_events.select { |e| e.command_name == "insert" }
+    end
+
+    let(:insert_succeeded_events) do
+      subscriber.succeeded_events.select { |e| e.command_name == "insert" }
+    end
+
+    context 'when another mongos is available' do
+
+      let(:first_mongos) do
+        Mongo::Client.new(
+          [SpecConfig.instance.addresses.first],
+          direct_connection: true,
+          database: 'admin'
+        )
+      end
+
+      let(:second_mongos) do
+        Mongo::Client.new(
+          [SpecConfig.instance.addresses.last],
+          direct_connection: false,
+          database: 'admin'
+        )
+      end
+
+      let(:client) do
+        new_local_client(
+          [
+            SpecConfig.instance.addresses.first,
+            SpecConfig.instance.addresses.last,
+          ],
+          SpecConfig.instance.test_options.merge(retry_writes: true)
+        )
+      end
+
+      let(:expected_servers) do
+        [
+          SpecConfig.instance.addresses.first.to_s,
+          SpecConfig.instance.addresses.last.to_s
+        ].sort
+      end
+
+      before do
+        skip 'This test requires at least two mongos' if SpecConfig.instance.addresses.length < 2
+
+        first_mongos.database.command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(insert),
+            closeConnection: false,
+            errorCode: 6,
+            errorLabels: ['RetryableWriteError']
+          }
+        )
+
+        second_mongos.database.command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(insert),
+            closeConnection: false,
+            errorCode: 6,
+            errorLabels: ['RetryableWriteError']
+          }
+        )
+      end
+
+      after do
+        [first_mongos, second_mongos].each do |admin_client|
+          admin_client.database.command(
+            configureFailPoint: 'failCommand',
+            mode: 'off'
+          )
+          admin_client.close
+        end
+        client.close
+      end
+
+      it 'retries on different mongos' do
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        expect { collection.insert_one(x: 1) }.to raise_error(Mongo::Error::OperationFailure)
+        expect(insert_started_events.map { |e| e.address.to_s }.sort).to eq(expected_servers)
+        expect(insert_failed_events.map { |e| e.address.to_s }.sort).to eq(expected_servers)
+      end
+    end
+
+    context 'when no other mongos is available' do
+      let(:mongos) do
+        Mongo::Client.new(
+          [SpecConfig.instance.addresses.first],
+          direct_connection: true,
+          database: 'admin'
+        )
+      end
+
+      let(:client) do
+        new_local_client(
+          [
+            SpecConfig.instance.addresses.first
+          ],
+          SpecConfig.instance.test_options.merge(retry_writes: true)
+        )
+      end
+
+      before do
+        mongos.database.command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(insert),
+            closeConnection: false,
+            errorCode: 6,
+            errorLabels: ['RetryableWriteError']
+          }
+        )
+      end
+
+      after do
+        mongos.database.command(
+          configureFailPoint: 'failCommand',
+          mode: 'off'
+        )
+        mongos.close
+        client.close
+      end
+
+      it 'retries on the same mongos' do
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        expect { collection.insert_one(x: 1) }.not_to raise_error
+        expect(insert_started_events.map { |e| e.address.to_s }.sort).to eq([
+          SpecConfig.instance.addresses.first.to_s,
+          SpecConfig.instance.addresses.first.to_s
+        ])
+        expect(insert_failed_events.map { |e| e.address.to_s }.sort).to eq([
+          SpecConfig.instance.addresses.first.to_s
+        ])
+        expect(insert_succeeded_events.map { |e| e.address.to_s }.sort).to eq([
+          SpecConfig.instance.addresses.first.to_s
+        ])
+      end
+    end
+  end
 end
