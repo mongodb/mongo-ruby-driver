@@ -71,7 +71,7 @@ module Mongo
       # @return [ Hash<:timings,:percentiles,:score> ] The test results for
       #    the requested benchmark.
       def run(type, action)
-        timings = Benchmarking.without_gc { send(action, file_for(type)) }
+        timings = send(action, file_for(type))
         percentiles = Percentiles.new(timings)
         score = score_for(type, percentiles)
 
