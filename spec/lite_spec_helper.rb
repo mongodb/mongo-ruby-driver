@@ -123,6 +123,12 @@ RSpec.configure do |config|
     end
   end
 
+  def require_atlas
+    before do
+      skip 'Set ATLAS_URI in environment to run atlas tests' if ENV['ATLAS_URI'].nil?
+    end
+  end
+
   if SpecConfig.instance.ci?
     SdamFormatterIntegration.subscribe
     config.add_formatter(JsonExtFormatter, File.join(File.dirname(__FILE__), '../tmp/rspec.json'))
