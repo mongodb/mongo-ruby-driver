@@ -56,6 +56,9 @@ Metrics/ModuleLength:
 Metrics/MethodLength:
   Max: 20
 
+Naming/MethodParameterName:
+  AllowedNames: [ id, op ]
+
 RSpec/BeforeAfterAll:
   Enabled: false
 
