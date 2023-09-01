@@ -28,7 +28,7 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
 
       use_arguments(op) do |args|
-        collection.search_indexes.drop(
+        collection.search_indexes.drop_one(
           id: args.use('id'),
           name: args.use('name')
         )
@@ -52,7 +52,7 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
 
       use_arguments(op) do |args|
-        collection.search_indexes.update(
+        collection.search_indexes.update_one(
           args.use('definition'),
           id: args.use('id'),
           name: args.use('name')
