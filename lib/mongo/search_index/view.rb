@@ -57,7 +57,8 @@ module Mongo
       # @return [ Array<String> ] the names of the new search indexes.
       def create_many(indexes)
         spec = spec_with(indexes: indexes.map { |v| validate_search_index!(v) })
-        Operation::CreateSearchIndexes.new(spec).execute(server, context: execution_context)
+        result = Operation::CreateSearchIndexes.new(spec).execute(server, context: execution_context)
+        result.first['indexesCreated'].map { |idx| idx['name'] }
       end
 
       # Drop the search index with the given id, or name. One or the other must
