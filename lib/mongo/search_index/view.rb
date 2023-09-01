@@ -6,6 +6,7 @@ module Mongo
     class View
       include Enumerable
       include Retryable
+      include Collection::Helpers
 
       # @return [ Mongo::Collection ] the collection this view belongs to
       attr_reader :collection
@@ -57,7 +58,7 @@ module Mongo
       # @return [ Array<String> ] the names of the new search indexes.
       def create_many(indexes)
         spec = spec_with(indexes: indexes.map { |v| validate_search_index!(v) })
-        result = Operation::CreateSearchIndexes.new(spec).execute(server, context: execution_context)
+        result = Operation::CreateSearchIndexes.new(spec).execute(next_primary, context: execution_context)
         result.first['indexesCreated'].map { |idx| idx['name'] }
       end
 
@@ -67,12 +68,18 @@ module Mongo
       # @param [ String ] id the id of the index to drop
       # @param [ String ] name the name of the index to drop
       #
-      # @return [ Mongo::Operation::Result ] the result of the operation
+      # @return [ Mongo::Operation::Result | false ] the result of the
+      #    operation, or false if the given index does not exist.
       def drop_one(id: nil, name: nil)
         validate_id_or_name!(id, name)
 
         spec = spec_with(index_id: id, index_name: name)
-        Operation::DropSearchIndex.new(spec).execute(server, context: execution_context)
+        op = Operation::DropSearchIndex.new(spec)
+
+        # per the spec:
+        # Drivers MUST suppress NamespaceNotFound errors for the
+        # ``dropSearchIndex`` helper.  Drop operations should be idempotent.
+        do_drop(op, nil, execution_context)
       end
 
       # Iterate over the search indexes.
@@ -112,7 +119,7 @@ module Mongo
         validate_id_or_name!(id, name)
 
         spec = spec_with(index_id: id, index_name: name, index: definition)
-        Operation::UpdateSearchIndex.new(spec).execute(server, context: execution_context)
+        Operation::UpdateSearchIndex.new(spec).execute(next_primary, context: execution_context)
       end
 
       private
@@ -133,8 +140,8 @@ module Mongo
       # A helper method for retrieving the primary server from the cluster.
       #
       # @return [ Mongo::Server ] the server to use
-      def server
-        collection.cluster.next_primary
+      def next_primary(ping = nil, session = nil)
+        collection.cluster.next_primary(ping, session)
       end
 
       # A helper method for constructing a new operation context for executing
