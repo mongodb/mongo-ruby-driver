@@ -37,7 +37,7 @@ class SearchIndexHelper
   def wait_for_absense_of(*names)
     names.each do |name|
       timeboxed_wait do
-        return if collection.search_indexes(name: name).empty?
+        break if collection.search_indexes(name: name).empty?
       end
     end
   end
@@ -128,6 +128,13 @@ describe 'Mongo::Collection#search_indexes prose tests' do
   context 'when updating search indexes' do
     let(:new_definition) { { 'mappings' => { 'dynamic' => true } } }
 
+    let(:index) do
+      helper
+        .wait_for(name) { |idx| idx['queryable'] && idx['status'] == 'READY' }
+        .first
+    end
+
+    # rubocop:disable RSpec/ExampleLength
     it 'succeeds' do
       expect(create_index).to be == name
       helper.wait_for(name)
@@ -136,18 +143,16 @@ describe 'Mongo::Collection#search_indexes prose tests' do
         helper.collection.search_indexes.update_one(new_definition, name: name)
       end.not_to raise_error
 
-      result = helper.wait_for(name) { |idx| idx['queryable'] && idx['status'] == 'READY' }
-      index = result.first
-
       expect(index['latestDefinition']).to be == new_definition
     end
+    # rubocop:enable RSpec/ExampleLength
   end
 
   # Case 5: dropSearchIndex suppresses namespace not found errors
   context 'when dropping a non-existent search index' do
     it 'ignores `namespace not found` errors' do
       collection = helper.collection(soft_create: true)
-      expect { helper.collection.search_indexes.drop_one(name: name) }
+      expect { collection.search_indexes.drop_one(name: name) }
         .not_to raise_error
     end
   end
