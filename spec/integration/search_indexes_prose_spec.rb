@@ -27,7 +27,7 @@ class SearchIndexHelper
   # the list of index definitions corresponding to those names.
   def wait_for(*names, &condition)
     timeboxed_wait do
-      result = collection.search_indexes.to_a
+      result = collection.search_indexes
       return filter_results(result, names) if names.all? { |name| ready?(result, name, &condition) }
     end
   end
@@ -44,14 +44,14 @@ class SearchIndexHelper
 
   private
 
-  def timeboxed_wait(step: 5, max: 60)
-    start = Utils.monotonic_time
+  def timeboxed_wait(step: 5, max: 300)
+    start = Mongo::Utils.monotonic_time
 
     loop do
       yield
 
       sleep step
-      raise Timeout::Error, 'wait took too long' if Utils.monotonic_time - start > max
+      raise Timeout::Error, 'wait took too long' if Mongo::Utils.monotonic_time - start > max
     end
   end
 
@@ -72,7 +72,15 @@ describe 'Mongo::Collection#search_indexes prose tests' do
   # "These tests must run against an Atlas cluster with a 7.0+ server."
   require_atlas
 
-  let(:helper) { SearchIndexHelper.new(authorized_client) }
+  let(:client) do
+    Mongo::Client.new(
+      ENV['ATLAS_URI'],
+      database: SpecConfig.instance.test_db,
+      ssl: true,
+      ssl_verify: true)
+  end
+
+  let(:helper) { SearchIndexHelper.new(client) }
 
   let(:name) { 'test-search-index' }
   let(:definition) { { 'mappings' => { 'dynamic' => false } } }

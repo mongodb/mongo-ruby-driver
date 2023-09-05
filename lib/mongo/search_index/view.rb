@@ -90,19 +90,21 @@ module Mongo
       # @return [ self | Enumerator ] if a block is given, self is returned.
       #    Otherwise, an enumerator will be returned.
       def each(&block)
-        spec = {}.tap do |s|
-          s[:id] = requested_index_id if requested_index_id
-          s[:name] = requested_index_name if requested_index_name
+        @result ||= begin
+          spec = {}.tap do |s|
+            s[:id] = requested_index_id if requested_index_id
+            s[:name] = requested_index_name if requested_index_name
+          end
+
+          collection.aggregate(
+            [ { '$listSearchIndexes' => spec } ],
+            batch_size: batch_size
+          )
         end
 
-        result = collection.aggregate(
-          [ { '$listSearchIndexes' => spec } ],
-          batch_size: batch_size
-        )
+        return @result.to_enum unless block
 
-        return result.to_enum unless block
-
-        result.each(&block)
+        @result.each(&block)
         self
       end
 
@@ -120,6 +122,16 @@ module Mongo
 
         spec = spec_with(index_id: id, index_name: name, index: definition)
         Operation::UpdateSearchIndex.new(spec).execute(next_primary, context: execution_context)
+      end
+
+      # The following methods are to make the view act more like an array,
+      # without having to explicitly make it an array...
+
+      # Queries whether the search index enumerable is empty.
+      #
+      # @return [ true | false ] whether the enumerable is empty or not.
+      def empty?
+        all?
       end
 
       private
