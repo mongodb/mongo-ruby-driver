@@ -106,6 +106,31 @@ Mrss.patch_mongo_for_session_registry
 
 class ExampleTimeout < StandardError; end
 
+STANDARD_TIMEOUTS = {
+  stress: 210,
+  jruby: 90,
+  default: 45,
+}.freeze
+
+def timeout_type
+  if ENV['EXAMPLE_TIMEOUT'].to_i > 0
+    :custom
+  elsif %w(1 true yes).include?(ENV['STRESS']&.downcase)
+    :stress
+  elsif BSON::Environment.jruby?
+    :jruby
+  else
+    :default
+  end
+end
+
+def example_timeout_seconds
+  STANDARD_TIMEOUTS.fetch(
+    timeout_type,
+    (ENV['EXAMPLE_TIMEOUT'] || STANDARD_TIMEOUTS[:default]).to_i
+  )
+end
+
 RSpec.configure do |config|
   config.extend(CommonShortcuts::ClassMethods)
   config.include(CommonShortcuts::InstanceMethods)
@@ -147,16 +172,7 @@ RSpec.configure do |config|
     # Tests should take under 10 seconds ideally but it seems
     # we have some that run for more than 10 seconds in CI.
     config.around(:each) do |example|
-      timeout = if %w(1 true yes).include?(ENV['STRESS']&.downcase)
-        210
-      else
-        if BSON::Environment.jruby?
-          90
-        else
-          45
-        end
-      end
-      TimeoutInterrupt.timeout(timeout, ExampleTimeout) do
+      TimeoutInterrupt.timeout(example_timeout_seconds, ExampleTimeout) do
         example.run
       end
     end
