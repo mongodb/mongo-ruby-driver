@@ -77,7 +77,8 @@ describe 'Mongo::Collection#search_indexes prose tests' do
       ENV['ATLAS_URI'],
       database: SpecConfig.instance.test_db,
       ssl: true,
-      ssl_verify: true)
+      ssl_verify: true
+    )
   end
 
   let(:helper) { SearchIndexHelper.new(client) }
