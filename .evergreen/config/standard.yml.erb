@@ -497,6 +497,15 @@ buildvariants:
       - name: testazurekms_task_group
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
+  - matrix_name: atlas-full
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      os: rhel8
+      fle: helper
+    display_name: "Atlas (Full)"
+    tasks:
+      - name: testatlas_task_group
+
   - matrix_name: "atlas"
     matrix_spec:
       ruby: <%= supported_rubies %>
