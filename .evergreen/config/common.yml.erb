@@ -632,7 +632,7 @@ tasks:
           shell: "bash"
           script: |
             ${PREPARE_SHELL}
-            .evergreen/run-tests-atlas-full.sh
+            MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-atlas-full.sh
   - name: "testgcpkms-task"
     commands:
       - command: shell.exec
