@@ -1666,7 +1666,6 @@ buildvariants:
     matrix_spec:
       ruby: "ruby-3.2"
       os: rhel8
-      fle: helper
     display_name: "Atlas (Full)"
     tasks:
       - name: testatlas_task_group
