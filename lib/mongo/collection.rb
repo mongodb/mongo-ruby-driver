@@ -744,8 +744,8 @@ module Mongo
     #
     # @option options [ String ] :id The id of the specific index to query (optional)
     # @option options [ String ] :name The name of the specific index to query (optional)
-    # @option options [ Integer ] :batch_size The batch size to use when querying
-    #   the indexes (optional)
+    # @option options [ Hash ] :aggregate The options hash to pass to the
+    #    aggregate command (optional)
     #
     # @return [ SearchIndex::View ] The search index view.
     #

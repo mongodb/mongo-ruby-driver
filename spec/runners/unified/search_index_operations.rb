@@ -43,7 +43,7 @@ module Unified
         collection.search_indexes(
           id: args.use('id'),
           name: args.use('name'),
-          batch_size: agg_opts['batchSize']
+          aggregate: ::Utils.underscore_hash(agg_opts)
         ).to_a
       end
     end

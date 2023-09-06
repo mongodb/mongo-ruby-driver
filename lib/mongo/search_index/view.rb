@@ -17,9 +17,9 @@ module Mongo
       # @return [ nil | String ] the index name to query
       attr_reader :requested_index_name
 
-      # @return [ nil | Integer ] the batch size to use for the aggregation
-      #   pipeline
-      attr_reader :batch_size
+      # @return [ Hash ] the options hash to use for the aggregate command
+      #   when querying the available indexes.
+      attr_reader :aggregate_options
 
       # Create the new search index view.
       #
@@ -28,13 +28,17 @@ module Mongo
       #
       # @option options [ String ] :id The specific index id to query (optional)
       # @option options [ String ] :name The name of the specific index to query (optional)
-      # @option options [ Integer ] :batch_size The batch size to use for
-      #    returning the indexes (optional)
+      # @option options [ Hash ] :aggregate The options hash to send to the
+      #   aggregate command when querying the available indexes.
       def initialize(collection, options = {})
         @collection = collection
         @requested_index_id = options[:id]
         @requested_index_name = options[:name]
-        @batch_size = options[:batch_size]
+        @aggregate_options = options[:aggregate] || {}
+
+        return if @aggregate_options.is_a?(Hash)
+
+        raise ArgumentError, "The :aggregate option must be a Hash (got a #{@aggregate_options.class})"
       end
 
       # Create a single search index with the given definition. If the name is
@@ -98,7 +102,7 @@ module Mongo
 
           collection.aggregate(
             [ { '$listSearchIndexes' => spec } ],
-            batch_size: batch_size
+            aggregate_options
           )
         end
 
