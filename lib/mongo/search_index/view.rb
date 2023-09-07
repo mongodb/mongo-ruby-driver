@@ -49,8 +49,7 @@ module Mongo
       #
       # @return [ String ] the name of the new search index.
       def create_one(definition, name: nil)
-        doc = validate_search_index!({ name: name, definition: definition })
-        create_many([ doc ]).first
+        create_many([ { name: name, definition: definition } ]).first
       end
 
       # Create multiple search indexes with a single command.
