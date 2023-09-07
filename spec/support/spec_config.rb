@@ -172,6 +172,11 @@ class SpecConfig
     !!ENV['SERVERLESS']
   end
 
+  def kill_all_server_sessions?
+    !serverless? && # Serverless instances do not support killAllSessions command.
+      ClusterConfig.instance.fcv_ish >= '3.6'
+  end
+
   # Test suite configuration
 
   def client_debug?
