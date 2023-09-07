@@ -135,7 +135,7 @@ module Mongo
       #
       # @return [ true | false ] whether the enumerable is empty or not.
       def empty?
-        all?
+        count.zero?
       end
 
       private
