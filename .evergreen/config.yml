@@ -469,6 +469,46 @@ post:
   - func: "delete serverless instance"
 
 task_groups:
+  - name: testatlas_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: fetch source
+      - func: create expansions
+      - command: shell.exec
+        params:
+          shell: "bash"
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+
+            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
+              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
+              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
+              DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
+              MONGODB_VERSION="7.0" \
+              $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
+      - command: expansions.update
+        params:
+          file: src/atlas-expansion.yml
+    teardown_group:
+      - command: shell.exec
+        params:
+          shell: "bash"
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+
+            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
+              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
+              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
+              $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
+    tasks:
+      - test-full-atlas-task
+
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -586,6 +626,16 @@ tasks:
     commands:
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
+  - name: "test-full-atlas-task"
+    commands:
+      - command: shell.exec
+        type: test
+        params:
+          working_dir: "src"
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-atlas-full.sh
   - name: "testgcpkms-task"
     commands:
       - command: shell.exec
@@ -1611,6 +1661,14 @@ buildvariants:
     tasks:
       - name: testazurekms_task_group
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+
+  - matrix_name: atlas-full
+    matrix_spec:
+      ruby: "ruby-3.2"
+      os: rhel8
+    display_name: "Atlas (Full)"
+    tasks:
+      - name: testatlas_task_group
 
   - matrix_name: "atlas"
     matrix_spec:

@@ -9,6 +9,7 @@ require 'runners/unified/ddl_operations'
 require 'runners/unified/change_stream_operations'
 require 'runners/unified/support_operations'
 require 'runners/unified/thread_operations'
+require 'runners/unified/search_index_operations'
 require 'runners/unified/assertions'
 require 'support/utils'
 require 'support/crypt'
@@ -23,6 +24,7 @@ module Unified
     include ChangeStreamOperations
     include SupportOperations
     include ThreadOperations
+    include SearchIndexOperations
     include Assertions
     include RSpec::Core::Pending
 
@@ -120,7 +122,7 @@ module Unified
             # the other set members, in standalone deployments because
             # there is only one server, but changes behavior in
             # sharded clusters compared to how the test suite is configured.
-            opts[:single_address] = true
+            options[:single_address] = true
           end
 
           if store_events = spec.use('storeEventsAsEntities')
