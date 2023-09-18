@@ -490,6 +490,7 @@ task_groups:
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
+              execution="${execution}" \
               $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
       - command: expansions.update
         params:
@@ -507,6 +508,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
+              execution="${execution}" \
               $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
     tasks:
       - test-full-atlas-task
