@@ -1304,24 +1304,21 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  # The X.509 tests are failing with exceptions being expected, but never
-  # raised. (RUBY-3267)
-  #
-  # - matrix_name: "x509-tests"
-  #   matrix_spec:
-  #     auth-and-ssl: "x509"
-  #     ruby: "ruby-3.2"
-  #     # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-  #     # the server for certain auth mechanisms. Once run-tests.sh is made smart
-  #     # enough to install mongosh, and then use either mongo or mongosh
-  #     # (depending on server version and what's available), we can bump this to
-  #     # the latest stable db version.
-  #     mongodb-version: "5.3"
-  #     topology: standalone
-  #     os: rhel8
-  #   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-  #   tasks:
-  #     - name: "test-mlaunch"
+  - matrix_name: "x509-tests"
+    matrix_spec:
+      auth-and-ssl: "x509"
+      ruby: "ruby-3.2"
+      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
+      # the server for certain auth mechanisms. Once run-tests.sh is made smart
+      # enough to install mongosh, and then use either mongo or mongosh
+      # (depending on server version and what's available), we can bump this to
+      # the latest stable db version.
+      mongodb-version: "5.3"
+      topology: standalone
+      os: rhel8
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
 
   - matrix_name: "jruby-auth"
     matrix_spec:
