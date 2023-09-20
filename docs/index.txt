@@ -25,7 +25,7 @@ BSON
 The Ruby BSON implementation is packaged in a separate gem with C and
 Java extensions for speed depending on the runtime enviroment.
 
-For reference on the Ruby BSON gem, see :doc:`/bson-tutorials`.
+For reference on the Ruby BSON gem, see the :doc:`/tutorials/bson-v4`.
 
 Object Mappers
 ==============
