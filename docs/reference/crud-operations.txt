@@ -93,7 +93,7 @@ Specify a ``Decimal128`` number
 .. versionadded:: 3.4
 
 :manual:`Decimal128</tutorial/model-monetary-data>` is a
-:doc:`BSON datatype </bson-tutorials>`
+:doc:`BSON datatype </tutorials/bson-v4>`
 that employs 128-bit decimal-based floating-point values capable
 of emulating decimal rounding with exact precision. This
 functionality is intended for applications that handle
