@@ -260,6 +260,13 @@ module Mongo
         spec[INDEX]
       end
 
+      # Get the index id from the spec.
+      #
+      # @return [ String ] The index id.
+      def index_id
+        spec[:index_id]
+      end
+
       # Get the index name from the spec.
       #
       # @example Get the index name.

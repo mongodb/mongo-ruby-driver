@@ -51,6 +51,9 @@ require 'mongo/operation/update_user'
 require 'mongo/operation/remove_user'
 require 'mongo/operation/create_index'
 require 'mongo/operation/drop_index'
+require 'mongo/operation/create_search_indexes'
+require 'mongo/operation/drop_search_index'
+require 'mongo/operation/update_search_index'
 
 module Mongo
 

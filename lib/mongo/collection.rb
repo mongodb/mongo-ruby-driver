@@ -725,11 +725,33 @@ module Mongo
     #
     # @option options [ Session ] :session The session to use.
     #
-    # @return [ View::Index ] The index view.
+    # @return [ Index::View ] The index view.
     #
     # @since 2.0.0
     def indexes(options = {})
       Index::View.new(self, options)
+    end
+
+    # Get a view of all search indexes for this collection. Can be iterated or
+    # operated on directly. If id or name are given, the iterator will return
+    # only the indicated index. For all other operations, id and name are
+    # ignored.
+    #
+    # @note Only one of id or name may be given; it is an error to specify both,
+    #   although both may be omitted safely.
+    #
+    # @param [ Hash ] options The options to use to configure the view.
+    #
+    # @option options [ String ] :id The id of the specific index to query (optional)
+    # @option options [ String ] :name The name of the specific index to query (optional)
+    # @option options [ Hash ] :aggregate The options hash to pass to the
+    #    aggregate command (optional)
+    #
+    # @return [ SearchIndex::View ] The search index view.
+    #
+    # @since 2.0.0
+    def search_indexes(options = {})
+      SearchIndex::View.new(self, options)
     end
 
     # Get a pretty printed string inspection for the collection.

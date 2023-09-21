@@ -56,6 +56,9 @@ Metrics/ModuleLength:
 Metrics/MethodLength:
   Max: 20
 
+Naming/MethodParameterName:
+  AllowedNames: [ id, op ]
+
 RSpec/BeforeAfterAll:
   Enabled: false
 
@@ -82,6 +85,9 @@ RSpec/NestedGroups:
 Style/Documentation:
   Exclude:
     - 'spec/**/*'
+
+Style/FormatStringToken:
+  Enabled: false
 
 Style/ModuleFunction:
   EnforcedStyle: extend_self
