@@ -25,7 +25,7 @@ BSON
 The Ruby BSON implementation is packaged in a separate gem with C and
 Java extensions for speed depending on the runtime enviroment.
 
-For reference on the Ruby BSON gem, see :doc:`/bson-tutorials`.
+For reference on the Ruby BSON gem, see the :doc:`/tutorials/bson-v4`.
 
 Object Mappers
 ==============
@@ -61,8 +61,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://mongodb.com/docs/mong
     reference/connection-and-configuration
     reference/working-with-data
     reference/schema-operations
-    bson-tutorials
-    API <https://mongodb.com/docs/ruby-driver/current/api/>
+    API <https://mongodb.com/docs/ruby-driver/master/api/>
     release-notes
     reference/additional-resources
     contribute
