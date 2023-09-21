@@ -15,3 +15,5 @@ operations available in the Ruby driver.
 
   tutorials/quick-start
   tutorials/common-errors
+  tutorials/bson-v4
+
