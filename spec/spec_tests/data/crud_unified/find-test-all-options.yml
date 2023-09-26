@@ -87,3 +87,327 @@ tests:
                 skip: *skip
               commandName: find
               databaseName: *database0Name
+
+  - description: "limit"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          limit: &limit 10
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                limit: *limit
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "batchSize"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          batchSize: &batchSize 10
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                batchSize: *batchSize
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "singleBatch"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          singleBatch: &singleBatch true
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                singleBatch: *singleBatch
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "comment"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          comment: &comment 'comment'
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                comment: *comment
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "maxTimeMS"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          maxTimeMS: &maxTimeMS 1000
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                maxTimeMS: *maxTimeMS
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "readConcern"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          readConcern: &readConcern { level: "local" }
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                readConcern: *readConcern
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "max"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          max: &max { _id: 10 }
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                max: *max
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "min"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          min: &min { _id: 10 }
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                min: *min
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "returnKey"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          returnKey: &returnKey false
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                returnKey: *returnKey
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "showRecordId"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          showRecordId: &showRecordId false
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                showRecordId: *showRecordId
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "tailable"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          tailable: &tailable false
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                tailable: *tailable
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "awaitData"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          awaitData: &awaitData false
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                awaitData: *awaitData
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "oplogReply"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          oplogReply: &oplogReply false
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                oplogReply: *oplogReply
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "noCursorTimeout"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          noCursorTimeout: &noCursorTimeout false
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                noCursorTimeout: *noCursorTimeout
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "allowPartialResults"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          allowPartialResults: &allowPartialResults false
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                allowPartialResults: *allowPartialResults
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "collation"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          collation: &collation { locale: "en" }
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                collation: *collation
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "allowDiskUse"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          allowDiskUse: &allowDiskUse true
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                allowDiskUse: *allowDiskUse
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "let"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          let: &let { name: "Mary" }
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                let: *let
+              commandName: find
+              databaseName: *database0Name
