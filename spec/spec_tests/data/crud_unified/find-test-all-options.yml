@@ -1,0 +1,89 @@
+description: "find options"
+
+schemaVersion: "1.0"
+
+createEntities:
+  - client:
+      id: &client0 client0
+      useMultipleMongoses: true # ensure cursors pin to a single server
+      observeEvents: [ commandStartedEvent ]
+  - database:
+      id: &database0 database0
+      client: *client0
+      databaseName: &database0Name find-tests
+  - collection:
+      id: &collection0 collection0
+      database: *database0
+      collectionName: &collection0Name coll0
+
+tests:
+  - description: "sort"
+    operations:
+      - name: find
+        arguments:
+          filter: &filter { _name: "John" }
+          sort: &sort { _id: 1 }
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                sort: *sort
+              commandName: find
+
+  - description: "projection"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          projection: &projection { _id: 1 } 
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                projection: *projection
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "hint"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          hint: &hint { _id: 1 }
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                hint: *hint
+              commandName: find
+              databaseName: *database0Name
+
+  - description: "skip"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          skip: &skip 10
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                skip: *skip
+              commandName: find
+              databaseName: *database0Name
