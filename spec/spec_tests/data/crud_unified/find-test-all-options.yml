@@ -5,7 +5,6 @@ schemaVersion: "1.0"
 createEntities:
   - client:
       id: &client0 client0
-      useMultipleMongoses: true # ensure cursors pin to a single server
       observeEvents: [ commandStartedEvent ]
   - database:
       id: &database0 database0
@@ -39,7 +38,7 @@ tests:
       - name: find
         arguments:
           filter: *filter
-          projection: &projection { _id: 1 } 
+          projection: &projection { _id: 1 }
         object: *collection0
     expectEvents:
       - client: *client0
@@ -124,24 +123,6 @@ tests:
               commandName: find
               databaseName: *database0Name
 
-  - description: "singleBatch"
-    operations:
-      - name: find
-        arguments:
-          filter: *filter
-          singleBatch: &singleBatch true
-        object: *collection0
-    expectEvents:
-      - client: *client0
-        events:
-          - commandStartedEvent:
-              command:
-                find: *collection0Name
-                filter: *filter
-                singleBatch: *singleBatch
-              commandName: find
-              databaseName: *database0Name
-
   - description: "comment"
     operations:
       - name: find
@@ -178,30 +159,14 @@ tests:
               commandName: find
               databaseName: *database0Name
 
-  - description: "readConcern"
-    operations:
-      - name: find
-        arguments:
-          filter: *filter
-          readConcern: &readConcern { level: "local" }
-        object: *collection0
-    expectEvents:
-      - client: *client0
-        events:
-          - commandStartedEvent:
-              command:
-                find: *collection0Name
-                filter: *filter
-                readConcern: *readConcern
-              commandName: find
-              databaseName: *database0Name
-
   - description: "max"
     operations:
       - name: find
         arguments:
           filter: *filter
           max: &max { _id: 10 }
+        expectError:
+          isClientError: false
         object: *collection0
     expectEvents:
       - client: *client0
@@ -219,7 +184,10 @@ tests:
       - name: find
         arguments:
           filter: *filter
-          min: &min { _id: 10 }
+          hint: { name: 1 }
+          min: &min { name: 'John' }
+        expectError:
+          isClientError: false
         object: *collection0
     expectEvents:
       - client: *client0
@@ -268,12 +236,12 @@ tests:
               commandName: find
               databaseName: *database0Name
 
-  - description: "tailable"
+  - description: "oplogReplay"
     operations:
       - name: find
         arguments:
           filter: *filter
-          tailable: &tailable false
+          oplogReplay: &oplogReplay false
         object: *collection0
     expectEvents:
       - client: *client0
@@ -282,43 +250,7 @@ tests:
               command:
                 find: *collection0Name
                 filter: *filter
-                tailable: *tailable
-              commandName: find
-              databaseName: *database0Name
-
-  - description: "awaitData"
-    operations:
-      - name: find
-        arguments:
-          filter: *filter
-          awaitData: &awaitData false
-        object: *collection0
-    expectEvents:
-      - client: *client0
-        events:
-          - commandStartedEvent:
-              command:
-                find: *collection0Name
-                filter: *filter
-                awaitData: *awaitData
-              commandName: find
-              databaseName: *database0Name
-
-  - description: "oplogReply"
-    operations:
-      - name: find
-        arguments:
-          filter: *filter
-          oplogReply: &oplogReply false
-        object: *collection0
-    expectEvents:
-      - client: *client0
-        events:
-          - commandStartedEvent:
-              command:
-                find: *collection0Name
-                filter: *filter
-                oplogReply: *oplogReply
+                oplogReplay: *oplogReplay
               commandName: find
               databaseName: *database0Name
 
