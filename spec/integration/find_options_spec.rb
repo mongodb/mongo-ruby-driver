@@ -73,4 +73,88 @@ describe 'Find operation options' do
       end
     end
   end
+
+  describe 'read concern' do
+    let(:read_concern) do
+      { 'level' => 'local' }
+    end
+
+    context 'when defined on the client' do
+      let(:client_options) do
+        { read_concern: read_concern }
+      end
+
+      let(:collection_options) do
+        {}
+      end
+
+      it 'uses the read concern defined on the client' do
+        collection.find.to_a
+        expect(find_command.command['readConcern']).to eq(read_concern)
+      end
+
+      context 'when defined on the collection' do
+        let(:collection_options) do
+          { read_concern: { 'level' => 'majority' } }
+        end
+
+        it 'uses the read concern defined on the collection' do
+          collection.find.to_a
+          expect(find_command.command['readConcern']).to eq(collection_options[:read_concern])
+        end
+
+        context 'when defined on the operation' do
+          let(:operation_read_concern) do
+            { 'level' => 'available' }
+          end
+
+          it 'uses the read concern defined on the operation' do
+            collection.find({}, read_concern: operation_read_concern).to_a
+            expect(find_command.command['readConcern']).to eq(operation_read_concern)
+          end
+        end
+      end
+
+      context 'when defined on the operation' do
+        let(:collection_options) do
+          {}
+        end
+
+        let(:operation_read_concern) do
+          { 'level' => 'available' }
+        end
+
+        it 'uses the read concern defined on the operation' do
+          collection.find({}, read_concern: operation_read_concern).to_a
+          expect(find_command.command['readConcern']).to eq(operation_read_concern)
+        end
+      end
+    end
+
+    context 'when defined on the collection' do
+      let(:client_options) do
+        {}
+      end
+
+      let(:collection_options) do
+        { read_concern: { 'level' => 'majority' } }
+      end
+
+      it 'uses the read concern defined on the collection' do
+        collection.find.to_a
+        expect(find_command.command['readConcern']).to eq(collection_options[:read_concern])
+      end
+
+      context 'when defined on the operation' do
+        let(:operation_read_concern) do
+          { 'level' => 'available' }
+        end
+
+        it 'uses the read concern defined on the operation' do
+          collection.find({}, read_concern: operation_read_concern).to_a
+          expect(find_command.command['readConcern']).to eq(operation_read_concern)
+        end
+      end
+    end
+  end
 end
