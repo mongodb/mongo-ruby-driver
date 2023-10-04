@@ -157,4 +157,34 @@ describe 'Find operation options' do
       end
     end
   end
+
+  describe 'read preference' do
+    require_topology :replica_set
+
+    context 'when defined on the client' do
+      let(:client_options) do
+        { read: { mode: :secondary } }
+      end
+
+      let(:collection_options) do
+        {}
+      end
+
+      it 'uses the read preference defined on the client' do
+        collection.find.to_a
+        expect(find_command.command['$readPreference']).to eq('mode' => 'secondary')
+      end
+
+      context 'when defined on the collection' do
+        let(:collection_options) do
+          { read: { mode: :secondary_preferred } }
+        end
+
+        it 'uses the read concern defined on the collection' do
+          collection.find.to_a
+          expect(find_command.command['$readPreference']).to eq('mode' => 'secondaryPreferred')
+        end
+      end
+    end
+  end
 end
