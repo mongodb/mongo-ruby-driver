@@ -162,6 +162,7 @@ module Mongo
             let: options[:let],
             limit: limit,
             allow_disk_use: options[:allow_disk_use],
+            allow_partial_results: options[:allow_partial_results],
             read: read,
             read_concern: options[:read_concern] || read_concern,
             batch_size: batch_size,
