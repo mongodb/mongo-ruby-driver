@@ -165,8 +165,6 @@ tests:
         arguments:
           filter: *filter
           max: &max { _id: 10 }
-        expectError:
-          isClientError: false
         object: *collection0
     expectEvents:
       - client: *client0
@@ -186,8 +184,6 @@ tests:
           filter: *filter
           hint: { name: 1 }
           min: &min { name: 'John' }
-        expectError:
-          isClientError: false
         object: *collection0
     expectEvents:
       - client: *client0
