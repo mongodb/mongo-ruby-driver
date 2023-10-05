@@ -77,13 +77,9 @@ describe 'Find operation options' do
   end
 
   describe 'read concern' do
-    let(:read_concern) do
-      { 'level' => 'local' }
-    end
-
     context 'when defined on the client' do
       let(:client_options) do
-        { read_concern: read_concern }
+        { read_concern: { level: :local } }
       end
 
       let(:collection_options) do
@@ -92,27 +88,27 @@ describe 'Find operation options' do
 
       it 'uses the read concern defined on the client' do
         collection.find.to_a
-        expect(find_command.command['readConcern']).to eq(read_concern)
+        expect(find_command.command['readConcern']).to eq('level' => 'local')
       end
 
       context 'when defined on the collection' do
         let(:collection_options) do
-          { read_concern: { 'level' => 'majority' } }
+          { read_concern: { level: :majority } }
         end
 
         it 'uses the read concern defined on the collection' do
           collection.find.to_a
-          expect(find_command.command['readConcern']).to eq(collection_options[:read_concern])
+          expect(find_command.command['readConcern']).to eq('level' => 'majority')
         end
 
         context 'when defined on the operation' do
           let(:operation_read_concern) do
-            { 'level' => 'available' }
+            { level: :available }
           end
 
           it 'uses the read concern defined on the operation' do
             collection.find({}, read_concern: operation_read_concern).to_a
-            expect(find_command.command['readConcern']).to eq(operation_read_concern)
+            expect(find_command.command['readConcern']).to eq('level' => 'available')
           end
         end
       end
@@ -123,12 +119,12 @@ describe 'Find operation options' do
         end
 
         let(:operation_read_concern) do
-          { 'level' => 'available' }
+          { level: :available }
         end
 
         it 'uses the read concern defined on the operation' do
           collection.find({}, read_concern: operation_read_concern).to_a
-          expect(find_command.command['readConcern']).to eq(operation_read_concern)
+          expect(find_command.command['readConcern']).to eq('level' => 'available')
         end
       end
     end
@@ -139,22 +135,22 @@ describe 'Find operation options' do
       end
 
       let(:collection_options) do
-        { read_concern: { 'level' => 'majority' } }
+        { read_concern: { level: :majority } }
       end
 
       it 'uses the read concern defined on the collection' do
         collection.find.to_a
-        expect(find_command.command['readConcern']).to eq(collection_options[:read_concern])
+        expect(find_command.command['readConcern']).to eq('level' => 'majority')
       end
 
       context 'when defined on the operation' do
         let(:operation_read_concern) do
-          { 'level' => 'available' }
+          { level: :available }
         end
 
         it 'uses the read concern defined on the operation' do
           collection.find({}, read_concern: operation_read_concern).to_a
-          expect(find_command.command['readConcern']).to eq(operation_read_concern)
+          expect(find_command.command['readConcern']).to eq('level' => 'available')
         end
       end
     end

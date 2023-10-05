@@ -305,6 +305,8 @@ tests:
               databaseName: *database0Name
 
   - description: "allowDiskUse"
+    runOnRequirements:
+      - minServerVersion: 4.4
     operations:
       - name: find
         arguments:
