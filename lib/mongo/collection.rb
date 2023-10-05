@@ -339,7 +339,9 @@ module Mongo
     #     inserted or updated documents where the clustered index key value
     #     matches an existing value in the index.
     #   - *:name* -- Optional. A name that uniquely identifies the clustered index.
-    # @option opts [ Hash ] :collation The collation to use.
+    # @option opts [ Hash ] :collation The collation to use when creating the
+    #   collection. This option will not be sent to the server when calling
+    #   collection methods.
     # @option opts [ Hash ] :encrypted_fields Hash describing encrypted fields
     #   for queryable encryption.
     # @option opts [ Integer ] :expire_after Number indicating

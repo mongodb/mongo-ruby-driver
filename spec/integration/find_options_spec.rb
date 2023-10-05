@@ -13,20 +13,10 @@ describe 'Find operation options' do
     [ SpecConfig.instance.addresses.first ]
   end
 
-  let(:client_options) do
-    {}
-  end
-
-  let(:collection_options) do
-    {}
-  end
-
   let(:client) do
     ClientRegistry.instance.new_local_client(
       seeds,
-      SpecConfig.instance.test_options
-        .merge(database: SpecConfig.instance.test_db)
-        .merge(client_options)
+      SpecConfig.instance.test_options.merge(client_options)
     ).tap do |client|
       client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
@@ -40,11 +30,8 @@ describe 'Find operation options' do
     subscriber.started_events.find { |cmd| cmd.command_name == 'find' }
   end
 
-  let(:should_create_collection) { true }
-
   before do
-    client['find_options'].drop
-    collection.create if should_create_collection
+    ClientRegistry.instance.global_client('authorized')['find_options'].drop
     collection.insert_many([ { a: 1 }, { a: 2 }, { a: 3 } ])
   end
 
@@ -83,8 +70,6 @@ describe 'Find operation options' do
       let(:collection_options) do
         { 'locale' => 'de_AT' }
       end
-
-      let(:should_create_collection) { false }
 
       it 'uses the collation defined on the collection' do
         collection.find({}, collation: collation).to_a
@@ -199,28 +184,6 @@ describe 'Find operation options' do
           collection.find.to_a
           expect(find_command.command['$readPreference']).to eq('mode' => 'secondaryPreferred')
         end
-      end
-    end
-  end
-
-  describe 'cursor type' do
-    let(:collection_options) do
-      { capped: true, size: 1000 }
-    end
-
-    context 'when cursor type is :tailable' do
-      it 'sets the cursor type to tailable' do
-        collection.find({}, cursor_type: :tailable).first
-        expect(find_command.command['tailable']).to be true
-        expect(find_command.command['awaitData']).to be_falsey
-      end
-    end
-
-    context 'when cursor type is :tailable_await' do
-      it 'sets the cursor type to tailable' do
-        collection.find({}, cursor_type: :tailable_await).first
-        expect(find_command.command['tailable']).to be true
-        expect(find_command.command['awaitData']).to be true
       end
     end
   end

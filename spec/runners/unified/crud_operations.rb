@@ -32,6 +32,18 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if collation = args.use('collation')
+          opts[:collation] = collation
+        end
+        if args.key?('noCursorTimeout')
+          opts[:no_cursor_timeout] = args.use('noCursorTimeout')
+        end
+        if args.key?('oplogReplay')
+          opts[:oplog_replay] = args.use('oplogReplay')
+        end
+        if args.key?('allowPartialResults')
+          opts[:allow_partial_results] = args.use('allowPartialResults')
+        end
         req = collection.find(args.use!('filter'), **opts)
         if batch_size = args.use('batchSize')
           req = req.batch_size(batch_size)
