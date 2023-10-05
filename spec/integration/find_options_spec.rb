@@ -3,6 +3,8 @@
 require 'spec_helper'
 
 describe 'Find operation options' do
+  require_no_auth
+
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:seeds) do
