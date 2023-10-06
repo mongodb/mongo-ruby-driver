@@ -28,6 +28,13 @@ particular version of the driver will generally work with newer versions of
 the server but may not take advantage of the functionality released in the
 newer version of the server.
 
+.. important::
+
+   MongoDB ensures compatibility between the MongoDB Server and the drivers
+   for three years after the server version's end of life (EOL) date. To learn
+   more about the MongoDB release and EOL dates, see
+   `MongoDB Software Lifecycle Schedules <https://www.mongodb.com/support-policy/lifecycles>`__.
+
 The first column lists the driver versions.“D” in other columns means support
 for that MongoDB version is deprecated and will be removed in a future driver
 version.
