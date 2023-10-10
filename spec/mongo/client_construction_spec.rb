@@ -2659,11 +2659,11 @@ describe Mongo::Client do
         new_client.cluster.next_primary
 
         # Diagnostics
-        # rubocop:disable Style/IfUnlessModifier
+        # rubocop:disable Style/IfUnlessModifier, Lint/Debugger
         unless subscriber.started_events.empty?
           p subscriber.started_events
         end
-        # rubocop:enable Style/IfUnlessModifier
+        # rubocop:enable Style/IfUnlessModifier, Lint/Debugger
 
         expect(subscriber.started_events.length).to eq 0
         expect(new_client.cluster.topology.class).not_to be Mongo::Cluster::Topology::Unknown
