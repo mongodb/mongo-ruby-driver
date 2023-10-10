@@ -87,8 +87,9 @@ describe Mongo::Cluster do
     end
 
     context 'when a non-genuine host is detected' do
-      let(:logger) { RecordingLogger.new }
       before { described_class.new(host_names, monitoring, logger: logger, monitoring_io: false) }
+
+      let(:logger) { RecordingLogger.new }
 
       shared_examples 'an action that logs' do
         it 'writes a warning to the log' do
@@ -98,21 +99,23 @@ describe Mongo::Cluster do
 
       context 'when CosmosDB is detected' do
         let(:host_names) { %w[ xyz.cosmos.azure.com ] }
-        let(:expected_log_output) { /https:\/\/www.mongodb.com\/supportability\/cosmosdb/ }
+        let(:expected_log_output) { %r{https://www.mongodb.com/supportability/cosmosdb} }
 
         it_behaves_like 'an action that logs'
       end
 
       context 'when DocumentDB is detected' do
-        let(:expected_log_output) { /https:\/\/www.mongodb.com\/supportability\/documentdb/ }
+        let(:expected_log_output) { %r{https://www.mongodb.com/supportability/documentdb} }
 
         context 'with docdb uri' do
           let(:host_names) { [ 'xyz.docdb.amazonaws.com' ] }
+
           it_behaves_like 'an action that logs'
         end
 
         context 'with docdb-elastic uri' do
           let(:host_names) { [ 'xyz.docdb-elastic.amazonaws.com' ] }
+
           it_behaves_like 'an action that logs'
         end
       end
