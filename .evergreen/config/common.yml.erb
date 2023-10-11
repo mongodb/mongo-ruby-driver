@@ -125,6 +125,18 @@ functions:
             export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
             export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
+            export LAMBDA_AWS_ROLE_ARN="${LAMBDA_AWS_ROLE_ARN}"
+
+            # For starting/stopping/managing an atlas cluster
+            export DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}"
+            export DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}"
+            export DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}"
+            export DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}"
+            export DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}"
+            export LAMBDA_STACK_NAME="dbx-ruby-lambda"
+            export MONGODB_VERSION="7.0"
+            export task_id="${task_id}"
+            export execution="${execution}"
 
             # Needed for generating temporary aws credentials.
             if [ -n "${FLE}" ];
@@ -478,17 +490,7 @@ task_groups:
           working_dir: "src"
           script: |
             ${PREPARE_SHELL}
-
-            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
-              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
-              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
-              DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
-              DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
-              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
-              MONGODB_VERSION="7.0" \
-              task_id="${task_id}" \
-              execution="${execution}" \
-              $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
+            $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
       - command: expansions.update
         params:
           file: src/atlas-expansion.yml
@@ -499,16 +501,10 @@ task_groups:
           working_dir: "src"
           script: |
             ${PREPARE_SHELL}
-
-            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
-              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
-              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
-              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
-              task_id="${task_id}" \
-              execution="${execution}" \
-              $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
+            $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
     tasks:
       - test-full-atlas-task
+      - test-faas-aws-lambda-task
 
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
@@ -637,6 +633,24 @@ tasks:
           script: |
             ${PREPARE_SHELL}
             MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-atlas-full.sh
+  - name: "test-faas-aws-lambda-task"
+    commands:
+      - command: ec2.assume_role
+        params:
+          role_arn: ${LAMBDA_AWS_ROLE_ARN}
+          duration_seconds: 3600
+      - command: shell.exec
+        type: test
+        params:
+          working_dir: src
+          shell: bash
+          script: |
+            ${PREPARE_SHELL}
+
+            TEST_LAMBDA_DIRECTORY="${PROJECT_DIRECTORY}/spec/support/faas/app/aws_lambda" \
+              AWS_REGION="us-east-1" \
+              MONGODB_URI="${MONGODB_URI}" \
+              .evergreen/aws_lambda/run-deployed-lambda-aws-tests.sh
   - name: "testgcpkms-task"
     commands:
       - command: shell.exec
