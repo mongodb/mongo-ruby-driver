@@ -211,6 +211,22 @@ module Mongo
           end
         end
 
+        # Compares each server address against the list of patterns.
+        #
+        # @param [ Array<String> ] patterns the URL suffixes to compare
+        #   each server against.
+        #
+        # @return [ true | false ] whether any of the addresses match any of
+        #   the patterns or not.
+        #
+        # @api private
+        def server_hosts_match_any?(patterns)
+          server_descriptions.any? do |addr_spec, _desc|
+            addr, _port = addr_spec.split(/:/)
+            patterns.any? { |pattern| addr.end_with?(pattern) }
+          end
+        end
+
         private
 
         # Validates and/or transforms options as necessary for the topology.
