@@ -186,6 +186,14 @@ module Mongo
             collection.client.log_warn("The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later")
           end
 
+          case cursor_type
+          when :tailable
+            spec[:tailable] = true
+          when :tailable_await
+            spec[:tailable] = true
+            spec[:await_data] = true
+          end
+
           if explained?
             spec[:explain] = options[:explain]
             Operation::Explain.new(spec)
