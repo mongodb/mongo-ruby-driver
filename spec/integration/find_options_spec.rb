@@ -212,6 +212,7 @@ describe 'Find operation options' do
       it 'sets the cursor type to tailable' do
         collection.find({}, cursor_type: :tailable).first
         expect(find_command.command['tailable']).to be true
+        expect(find_command.command['awaitData']).to be_falsey
       end
     end
 
