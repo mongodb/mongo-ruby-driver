@@ -186,6 +186,8 @@ module Mongo
             collection.client.log_warn("The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later")
           end
 
+          maybe_set_tailable_options(spec)
+
           if explained?
             spec[:explain] = options[:explain]
             Operation::Explain.new(spec)
@@ -200,6 +202,19 @@ module Mongo
 
         def use_query_cache?
           QueryCache.enabled? && !collection.system_collection?
+        end
+
+        # Add tailable cusror options to the command specifiction if needed.
+        #
+        # @param [ Hash ] spec The command specification.
+        def maybe_set_tailable_options(spec)
+          case cursor_type
+          when :tailable
+            spec[:tailable] = true
+          when :tailable_await
+            spec[:tailable] = true
+            spec[:await_data] = true
+          end
         end
       end
     end
