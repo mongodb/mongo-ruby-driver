@@ -509,6 +509,7 @@ task_groups:
               $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
     tasks:
       - test-full-atlas-task
+      - test-aws-lambda-deployed
 
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
@@ -699,3 +700,21 @@ tasks:
             export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
             export AZUREKMS_PRIVATEKEYPATH="/tmp/testazurekms_private_key_file"
             AZUREKMS_CMD="TEST_FLE_AZURE_AUTO=1 RVM_RUBY=ruby-3.1 FLE=helper TOPOLOGY=standalone MONGODB_VERSION=6.0  MONGO_RUBY_DRIVER_AZURE_TENANT_ID="${MONGO_RUBY_DRIVER_AZURE_TENANT_ID}" MONGO_RUBY_DRIVER_AZURE_CLIENT_ID="${MONGO_RUBY_DRIVER_AZURE_CLIENT_ID}" MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET="${MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET}" MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT="${MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT}" MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT="${testazurekms_keyvaultendpoint}" MONGO_RUBY_DRIVER_AZURE_KEY_NAME="${testazurekms_keyname}"  ./.evergreen/run-tests-azure.sh" .evergreen/csfle/azurekms/run-command.sh
+
+  - name: "test-aws-lambda-deployed"
+    commands:
+      - func: "install dependencies"
+      - command: ec2.assume_role
+        params:
+          role_arn: ${LAMBDA_AWS_ROLE_ARN}
+          duration_seconds: 3600
+      - command: subprocess.exec
+        params:
+          working_dir: src
+          binary: bash
+          add_expansions_to_env: true
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/aws_lambda/run-deployed-lambda-aws-tests.sh
+          env:
+            TEST_LAMBDA_DIRECTORY: ${PROJECT_DIRECTORY}/spec/faas/ruby-sam-app
+            AWS_REGION: us-east-1
