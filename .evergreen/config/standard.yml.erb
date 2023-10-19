@@ -524,7 +524,7 @@ buildvariants:
   - matrix_name: "aws-lambda"
     matrix_spec:
       ruby: <%= latest_ruby %>
-      os: rhel8
+      os: ubuntu2204
     display_name: "AWS Lambda"
     tasks:
-       - name: test-aws-lambda-deployed
+       - name: test_aws_lambda_task_group

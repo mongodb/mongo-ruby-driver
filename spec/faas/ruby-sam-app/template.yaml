@@ -21,7 +21,7 @@ Resources:
       CodeUri: mongodb/
       Environment:
         Variables:
-          MONGODB_URI: !Ref MongoDBUri
+          MONGODB_URI: !Ref MongoDbUri
       Handler: app.lambda_handler
       Runtime: ruby3.2
       Architectures:
@@ -38,11 +38,11 @@ Outputs:
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   MongoDBApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Description: "API Gateway endpoint URL for Prod stage for MongoDB function"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mongodb/"
   MongoDBFunction:
-    Description: "Hello World Lambda Function ARN"
+    Description: "MongoDB Lambda Function ARN"
     Value: !GetAtt MongoDBFunction.Arn
   MongoDBFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
+    Description: "Implicit IAM Role created for MongoDB function"
     Value: !GetAtt MongoDBFunctionRole.Arn
