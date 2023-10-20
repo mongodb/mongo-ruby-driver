@@ -721,7 +721,6 @@ tasks:
             export MONGODB_URI=${MONGODB_URI}
             .evergreen/run-tests-deployed-lambda.sh
           env:
-            TEST_LAMBDA_DIRECTORY: ${PROJECT_DIRECTORY}/spec/faas/ruby-sam-app
             AWS_REGION: us-east-1
             PROJECT_DIRECTORY: ${PROJECT_DIRECTORY}
             DRIVERS_TOOLS: ${DRIVERS_TOOLS}
@@ -736,3 +735,4 @@ tasks:
             LAMBDA_STACK_NAME: "dbx-ruby-lambda"
             RVM_RUBY: ruby-3.2
             MONGODB_URI: ${MONGODB_URI}
+            TEST_LAMBDA_DIRECTORY: ${PROJECT_DIRECTORY}/spec/faas/ruby-sam-app
