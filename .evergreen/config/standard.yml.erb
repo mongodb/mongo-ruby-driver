@@ -494,10 +494,10 @@ buildvariants:
       - name: testazurekms_task_group
         batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
-  - matrix_name: atlas-full-and-lambda
+  - matrix_name: atlas-full
     matrix_spec:
       ruby: <%= latest_ruby %>
-      os: ubuntu2204
+      os: rhel8
     display_name: "Atlas (Full)"
     tasks:
       - name: testatlas_task_group
@@ -520,3 +520,11 @@ buildvariants:
     display_name: "Atlas serverless ${ruby} single mongos"
     tasks:
        - name: test-serverless
+
+  - matrix_name: "aws-lambda"
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      os: ubuntu2204
+    display_name: "AWS Lambda"
+    tasks:
+       - name: test_aws_lambda_task_group

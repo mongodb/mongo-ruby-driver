@@ -10,8 +10,6 @@ set_env_vars
 set_env_python
 set_env_ruby
 
-echo MONGODB_URI: ${MONGODB_URI}
-
 export MONGODB_URI=${MONGODB_URI}
 export TEST_LAMBDA_DIRECTORY=`dirname "$0"`/../spec/faas/ruby-sam-app
 
