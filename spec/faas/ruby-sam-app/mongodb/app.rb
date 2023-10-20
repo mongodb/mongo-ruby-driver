@@ -3,57 +3,123 @@
 require 'mongo'
 require 'json'
 
-$open_connections = 0
-$heartbeats_count = 0
-$total_heartbeat_time = 0
-$commands_count = 0
-$total_command_time = 0
+class StatsAggregator
 
-
-class CommandMonitor
-  def started(event)
+  def initialize
+    @open_connections = 0
+    @heartbeats_count = 0
+    @total_heartbeat_time = 0
+    @commands_count = 0
+    @total_command_time = 0
   end
 
+  def add_command(duration)
+    @commands_count += 1
+    @total_command_time += duration
+  end
+
+  def add_heartbeat(duration)
+    @heartbeats_count += 1
+    @total_heartbeat_time += duration
+  end
+
+  def add_connection
+    @open_connections += 1
+  end
+
+  def remove_connection
+    @open_connections -= 1
+  end
+
+  def average_heartbeat_time
+    if @heartbeats_count == 0
+      0
+    else
+      @total_heartbeat_time / @heartbeats_count
+    end
+  end
+
+  def average_command_time
+    if @commands_count == 0
+      0
+    else
+      @total_command_time / @commands_count
+    end
+  end
+
+  def reset
+    @open_connections = 0
+    @heartbeats_count = 0
+    @total_heartbeat_time = 0
+    @commands_count = 0
+    @total_command_time = 0
+  end
+
+  def result
+    {
+      average_heartbeat_time: average_heartbeat_time,
+      average_command_time: average_command_time,
+      heartbeats_count: @heartbeats_count,
+      open_connections: @open_connections,
+    }
+  end
+end
+
+class CommandMonitor
+
+  def initialize(stats_aggregator)
+    @stats_aggregator = stats_aggregator
+  end
+
+  def started(event); end
+
   def failed(event)
-    $commands_count += 1
-    $total_command_time += event.duration
+    @stats_aggregator.add_command(event.duration)
   end
 
   def succeeded(event)
-    $commands_count += 1
-    $total_command_time += event.duration
+    @stats_aggregator.add_command(event.duration)
   end
 end
 
 class HeartbeatMonitor
-  def started(event)
+
+  def initialize(stats_aggregator)
+    @stats_aggregator = stats_aggregator
   end
 
+  def started(event); end
+
   def succeeded(event)
-    $heartbeats_count += 1
-    $total_heartbeat_time += event.duration
+    @stats_aggregator.add_heartbeat(event.duration)
   end
 
   def failed(event)
-    $heartbeats_count += 1
-    $total_heartbeat_time += event.duration
+    @stats_aggregator.add_heartbeat(event.duration)
   end
 end
 
 class PoolMonitor
+
+  def initialize(stats_aggregator)
+    @stats_aggregator = stats_aggregator
+  end
+
   def published(event)
     case event
     when Mongo::Monitoring::Event::Cmap::ConnectionCreated
-      $open_connections += 1
+      @stats_aggregator.add_connection
     when Mongo::Monitoring::Event::Cmap::ConnectionClosed
-      $open_connections -= 1
+      @stats_aggregator.remove_connection
     end
   end
 end
 
-command_monitor = CommandMonitor.new
-heartbeat_monitor = HeartbeatMonitor.new
-pool_monitor = PoolMonitor.new
+$stats_aggregator = StatsAggregator.new
+
+command_monitor = CommandMonitor.new($stats_aggregator)
+heartbeat_monitor = HeartbeatMonitor.new($stats_aggregator)
+pool_monitor = PoolMonitor.new($stats_aggregator)
 
 sdam_proc = proc do |client|
   client.subscribe(Mongo::Monitoring::COMMAND, command_monitor)
@@ -61,48 +127,19 @@ sdam_proc = proc do |client|
   client.subscribe(Mongo::Monitoring::CONNECTION_POOL, pool_monitor)
 end
 
-$client = Mongo::Client.new(ENV['MONGODB_URI'], sdam_proc: sdam_proc)
-
 puts 'Connecting'
+$client = Mongo::Client.new(ENV['MONGODB_URI'], sdam_proc: sdam_proc)
+# Populate the connection pool
 $client.use('lambda_test').database.list_collections
 puts 'Connected'
-
-def reset_counters
-  $heartbeats_count = 0
-  $total_heartbeat_time = 0
-  $commands_count = 0
-  $total_command_time = 0
-  $open_connections = 0
-end
-
-def average_heartbeat_time
-  if $heartbeats_count == 0
-    0
-  else
-    $total_heartbeat_time / $heartbeats_count
-  end
-end
-
-def average_command_time
-  if $commands_count == 0
-    0
-  else
-    $total_command_time / $commands_count
-  end
-end
 
 def lambda_handler(event:, context:)
   db = $client.use('lambda_test')
   collection = db[:test_collection]
   result = collection.insert_one({ name: 'test' })
   collection.delete_one({ _id: result.inserted_id })
-  response = {
-    average_heartbeat_time: average_heartbeat_time,
-    average_command_time: average_command_time,
-    heartbeats_count: $heartbeats_count,
-    open_connections: $open_connections,
-  }.to_json
-  reset_counters
+  response = $stats_aggregator.result.to_json
+  $stats_aggregator.reset
   puts "Response: #{response}"
 
   {
@@ -110,6 +147,3 @@ def lambda_handler(event:, context:)
     body: response
   }
 end
-
-
-lambda_handler(event: nil, context: nil)
