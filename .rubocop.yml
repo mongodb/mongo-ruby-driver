@@ -51,6 +51,10 @@ Layout/SpaceInsideArrayLiteralBrackets:
 Layout/SpaceInsidePercentLiteralDelimiters:
   Enabled: false
 
+Lint/Debugger:
+  DebuggerMethods:
+    - p
+
 Metrics/ModuleLength:
   Enabled: false
 
