@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Cluster
     module Topology
-
       # Defines behavior common to all topologies.
       #
       # @since 2.7.0
@@ -53,6 +51,7 @@ module Mongo
         #
         # @since 2.7.0
         # @api private
+        # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
         def initialize(options, monitoring, cluster)
           options = validate_options(options, cluster)
 
@@ -63,7 +62,7 @@ module Mongo
           # topology creation. If server description change later, a
           # new topology instance should be created.
           @server_descriptions = {}
-          (servers = cluster.servers_list).each do |server|
+          cluster.servers_list.each do |server|
             @server_descriptions[server.address.to_s] = server.description
           end
 
@@ -71,10 +70,8 @@ module Mongo
             @compatible = true
           else
             begin
-              server_descriptions.each do |address_str, desc|
-                unless desc.unknown?
-                  desc.features.check_driver_support!
-                end
+              server_descriptions.each do |_address_str, desc|
+                desc.features.check_driver_support! unless desc.unknown?
               end
             rescue Error::UnsupportedFeatures => e
               @compatible = false
@@ -85,21 +82,21 @@ module Mongo
           end
 
           @have_data_bearing_servers = false
-          @logical_session_timeout = server_descriptions.inject(nil) do |min, (address_str, desc)|
+          @logical_session_timeout = server_descriptions.inject(nil) do |min, (_address_str, desc)|
             # LST is only read from data-bearing servers
             if desc.data_bearing?
               @have_data_bearing_servers = true
-              break unless timeout = desc.logical_session_timeout
-              [timeout, (min || timeout)].min
+              break unless (timeout = desc.logical_session_timeout)
+
+              [ timeout, (min || timeout) ].min
             else
               min
             end
           end
 
-          if Mongo::Lint.enabled?
-            freeze
-          end
+          freeze if Mongo::Lint.enabled?
         end
+        # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
         # @return [ Hash ] options The options.
         attr_reader :options
@@ -192,8 +189,7 @@ module Mongo
         # @api private
         def new_max_election_id(description)
           if description.election_id &&
-              (max_election_id.nil? ||
-                  description.election_id > max_election_id)
+             (max_election_id.nil? || description.election_id > max_election_id)
             description.election_id
           else
             max_election_id
@@ -203,8 +199,7 @@ module Mongo
         # @api private
         def new_max_set_version(description)
           if description.set_version &&
-              (max_set_version.nil? ||
-                  description.set_version > max_set_version)
+             (max_set_version.nil? || description.set_version > max_set_version)
             description.set_version
           else
             max_set_version
@@ -222,7 +217,7 @@ module Mongo
         # @api private
         def server_hosts_match_any?(patterns)
           server_descriptions.any? do |addr_spec, _desc|
-            addr, _port = addr_spec.split(/:/)
+            addr, _port = addr_spec.split(':')
             patterns.any? { |pattern| addr.end_with?(pattern) }
           end
         end
@@ -232,7 +227,7 @@ module Mongo
         # Validates and/or transforms options as necessary for the topology.
         #
         # @return [ Hash ] New options
-        def validate_options(options, cluster)
+        def validate_options(options, _cluster)
           options
         end
       end

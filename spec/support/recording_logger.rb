@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'stringio'
 
@@ -22,6 +21,6 @@ class RecordingLogger < Logger
   #
   # @return [ Array<String> ] the individual log lines
   def lines
-    contents.split(/\n/)
+    contents.split("\n")
   end
 end
