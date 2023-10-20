@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for ruby-sam-app
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 128
+
+Parameters:
+  MongoDbUri:
+    Type: String
+    Description: The MongoDB connection string.
+
+Resources:
+  MongoDBFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: mongodb/
+      Environment:
+        Variables:
+          MONGODB_URI: !Ref MongoDbUri
+      Handler: app.lambda_handler
+      Runtime: ruby3.2
+      Architectures:
+        - x86_64
+      Events:
+        MongoDB:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /mongodb
+            Method: get
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  MongoDBApi:
+    Description: "API Gateway endpoint URL for Prod stage for MongoDB function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mongodb/"
+  MongoDBFunction:
+    Description: "MongoDB Lambda Function ARN"
+    Value: !GetAtt MongoDBFunction.Arn
+  MongoDBFunctionIamRole:
+    Description: "Implicit IAM Role created for MongoDB function"
+    Value: !GetAtt MongoDBFunctionRole.Arn
