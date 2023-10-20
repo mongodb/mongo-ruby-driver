@@ -780,9 +780,7 @@ module Mongo
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
         # have changed.
-        if cluster_modifying?(opts)
-          Cluster.create(client, monitoring: opts[:monitoring])
-        end
+        client.recreate_cluster(opts[:monitoring]) if cluster_modifying?(opts)
       end
     end
 
@@ -1183,6 +1181,19 @@ module Mongo
     # @api private
     def encrypted_fields_map
       @encrypted_fields_map ||= @options.fetch(:auto_encryption_options, {})[:encrypted_fields_map]
+    end
+
+    # Recreates the cluster using the current addresses and options.
+    #
+    # @param [ Monitoring | nil ] monitoring the Monitoring object to use
+    #
+    # @api private
+    def recreate_cluster(monitoring)
+      @cluster = Cluster.new(
+        cluster.addresses.map(&:to_s),
+        monitoring || Monitoring.new,
+        cluster_options
+      )
     end
 
     private

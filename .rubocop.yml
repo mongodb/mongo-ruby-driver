@@ -4,7 +4,7 @@ require:
   - rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.6
   NewCops: enable
   Exclude:
     - 'spec/shared/**/*'
@@ -43,6 +43,9 @@ Bundler/OrderedGems:
   Enabled: false
 
 Gemspec/OrderedDependencies:
+  Enabled: false
+
+Layout/LineEndStringConcatenationIndentation:
   Enabled: false
 
 Layout/SpaceInsideArrayLiteralBrackets:
@@ -90,6 +93,12 @@ RSpec/NestedGroups:
 Style/Documentation:
   Exclude:
     - 'spec/**/*'
+
+Style/ExplicitBlockArgument:
+  Enabled: false
+
+Style/FormatString:
+  Enabled: false
 
 Style/FormatStringToken:
   Enabled: false

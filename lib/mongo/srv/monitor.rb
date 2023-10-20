@@ -90,7 +90,7 @@ module Mongo
           return
         end
 
-        @cluster.set_server_list(last_result.address_strs)
+        @cluster.server_list = last_result.address_strs
       end
 
       def scan_interval
