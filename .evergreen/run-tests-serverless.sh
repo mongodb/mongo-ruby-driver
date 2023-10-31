@@ -75,7 +75,8 @@ wait_for_kms_server 5698
 echo "Waiting for mock KMS servers to start... done."
 
 # Obtain temporary AWS credentials
-. ./set-temp-creds.sh
+pip3 install boto3
+PYTHON=python3 . ./set-temp-creds.sh
 cd -
 
 echo "Running specs"
