@@ -1,6 +1,9 @@
 description: "find options"
 
 schemaVersion: "1.0"
+runOnRequirements:
+  - serverless: 'forbid'
+
 
 createEntities:
   - client:
