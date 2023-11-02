@@ -376,7 +376,7 @@ buildvariants:
       # (depending on server version and what's available), we can bump this to
       # the latest stable db version.
       mongodb-version: <%= latest_5x_mdb %>
-      os: rhel8
+      os: ubuntu2004
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"

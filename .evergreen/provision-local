@@ -27,5 +27,5 @@ sudo env DEBIAN_FRONTEND=noninteractive \
 # Need binutils for `strings` utility per
 # https://aws.amazon.com/premiumsupport/knowledge-center/ecs-iam-task-roles-config-errors/
 sudo env DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
-  krb5-user bzip2 libgmp-dev python-pip python2.7-dev binutils
+  apt-get install -y libsnmp35 libyaml-0-2 gcc make git lsb-release \
+  krb5-user bzip2 libgmp-dev python3-pip python2.7-dev binutils
