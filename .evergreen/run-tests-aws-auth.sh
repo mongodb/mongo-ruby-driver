@@ -10,6 +10,15 @@ MRSS_ROOT=`dirname "$0"`/../spec/shared
 . $MRSS_ROOT/shlib/set_env.sh
 . `dirname "$0"`/functions.sh
 
+arch=`host_distro`
+
+show_local_instructions
+
+set_home
+set_env_vars
+set_env_python
+set_env_ruby
+
 # When running in Evergreen, credentials are written to this file.
 # In Docker they are already in the environment and the file does not exist.
 if test -f .env.private; then
