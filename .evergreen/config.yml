@@ -179,7 +179,7 @@ functions:
           IAM_AUTH_ECS_SECURITY_GROUP="${iam_auth_ecs_security_group}"
           IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
           IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
-          IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition}"
+          IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition_ubuntu2004}"
 
           IAM_WEB_IDENTITY_ISSUER="${iam_web_identity_issuer}"
           IAM_WEB_IDENTITY_JWKS_URI="${iam_web_identity_jwks_uri}"
@@ -972,7 +972,7 @@ axes:
         display_name: jruby-9.4
         variables:
           RVM_RUBY: "jruby-9.4"
-  
+
   - id: "os"
     display_name: OS
     values:
@@ -982,6 +982,9 @@ axes:
       - id: ubuntu2204
         display_name: "Ubuntu 22.04"
         run_on: ubuntu2204-small
+      - id: ubuntu2004
+        display_name: "Ubuntu 20.04"
+        run_on: ubuntu2004-small
       - id: rhel8
         display_name: "RHEL 8"
         run_on: rhel80-small
@@ -1530,7 +1533,7 @@ buildvariants:
       # (depending on server version and what's available), we can bump this to
       # the latest stable db version.
       mongodb-version: "5.3"
-      os: rhel8
+      os: ubuntu2004
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"

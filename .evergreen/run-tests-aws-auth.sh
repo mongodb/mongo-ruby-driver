@@ -97,9 +97,11 @@ case "$AUTH" in
   aws-web-identity)
     cd `dirname "$0"`/auth_aws
 
-    . ./activate_venv.sh
+    echo "Activating virtual environment 'authawsvenv'..."
+    . ./activate-authawsvenv.sh
     export AWS_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
     export AWS_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
+    echo "Unassigning instance profile..."
     python -u lib/aws_unassign_instance_profile.py
     unset AWS_ACCESS_KEY_ID
     unset AWS_SECRET_ACCESS_KEY
@@ -113,6 +115,7 @@ case "$AUTH" in
     unset IDP_JWKS_URI
     unset IDP_RSA_KEY
 
+    deactivate
     cd -
     export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
     export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
