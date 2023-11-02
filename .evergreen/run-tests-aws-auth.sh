@@ -4,6 +4,10 @@ set -e
 # IMPORTANT: Don't set trace (-x) to avoid secrets showing up in the logs.
 set +x
 
+MRSS_ROOT=`dirname "$0"`/../spec/shared
+
+. $MRSS_ROOT/shlib/distro.sh
+. $MRSS_ROOT/shlib/set_env.sh
 . `dirname "$0"`/functions.sh
 
 # When running in Evergreen, credentials are written to this file.
