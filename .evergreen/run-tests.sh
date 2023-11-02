@@ -34,6 +34,8 @@ MRSS_ROOT=`dirname "$0"`/../spec/shared
 
 arch=`host_distro`
 
+show_local_instructions
+
 set_home
 set_env_vars
 set_env_python
