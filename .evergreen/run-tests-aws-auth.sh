@@ -4,18 +4,7 @@ set -e
 # IMPORTANT: Don't set trace (-x) to avoid secrets showing up in the logs.
 set +x
 
-MRSS_ROOT=`dirname "$0"`/../spec/shared
-
-. $MRSS_ROOT/shlib/distro.sh
-. $MRSS_ROOT/shlib/set_env.sh
 . `dirname "$0"`/functions.sh
-
-arch=`host_distro`
-
-set_home
-set_env_vars
-set_env_python
-set_env_ruby
 
 # When running in Evergreen, credentials are written to this file.
 # In Docker they are already in the environment and the file does not exist.
@@ -106,25 +95,25 @@ case "$AUTH" in
     ;;
 
   aws-web-identity)
-    cd `dirname "$0"`/auth_aws
-
-    . ./activate-authawsvenv.sh
-    export AWS_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
-    export AWS_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
-    python -u lib/aws_unassign_instance_profile.py
-    unset AWS_ACCESS_KEY_ID
-    unset AWS_SECRET_ACCESS_KEY
-
-    export IDP_ISSUER="`get_var IAM_WEB_IDENTITY_ISSUER`"
-    export IDP_JWKS_URI="`get_var IAM_WEB_IDENTITY_JWKS_URI`"
-    export IDP_RSA_KEY="`get_var IAM_WEB_IDENTITY_RSA_KEY`"
-    export AWS_WEB_IDENTITY_TOKEN_FILE="`get_var IAM_WEB_IDENTITY_TOKEN_FILE`"
-    python -u lib/aws_handle_oidc_creds.py token
-    unset IDP_ISSUER
-    unset IDP_JWKS_URI
-    unset IDP_RSA_KEY
-
-    cd -
+    # cd `dirname "$0"`/auth_aws
+    #
+    # . ./activate-authawsvenv.sh
+    # export AWS_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
+    # export AWS_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
+    # python -u lib/aws_unassign_instance_profile.py
+    # unset AWS_ACCESS_KEY_ID
+    # unset AWS_SECRET_ACCESS_KEY
+    #
+    # export IDP_ISSUER="`get_var IAM_WEB_IDENTITY_ISSUER`"
+    # export IDP_JWKS_URI="`get_var IAM_WEB_IDENTITY_JWKS_URI`"
+    # export IDP_RSA_KEY="`get_var IAM_WEB_IDENTITY_RSA_KEY`"
+    # export AWS_WEB_IDENTITY_TOKEN_FILE="`get_var IAM_WEB_IDENTITY_TOKEN_FILE`"
+    # python -u lib/aws_handle_oidc_creds.py token
+    # unset IDP_ISSUER
+    # unset IDP_JWKS_URI
+    # unset IDP_RSA_KEY
+    #
+    # cd -
     export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
     export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
     export AWS_WEB_IDENTITY_TOKEN_FILE="`get_var IAM_WEB_IDENTITY_TOKEN_FILE`"
