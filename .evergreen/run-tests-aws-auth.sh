@@ -97,7 +97,7 @@ case "$AUTH" in
   aws-web-identity)
     cd `dirname "$0"`/auth_aws
 
-    . ./activate_venv.sh
+    . ./activate-authawsvenv.sh
     export AWS_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
     export AWS_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
     python -u lib/aws_unassign_instance_profile.py
