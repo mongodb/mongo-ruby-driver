@@ -103,7 +103,7 @@ module Mongo
       def nro_write_with_retry(write_concern, context:, &block)
         session = context.session
         server = select_server(cluster, ServerSelector.primary, session)
-        
+
         if session&.client.options[:retry_writes]
           begin
             server.with_connection(connection_global_id: context.connection_global_id) do |connection|
@@ -218,7 +218,7 @@ module Mongo
       def modern_write_with_retry(session, server, context, &block)
         txn_num = nil
         connection_succeeded = false
-        
+
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           connection_succeeded = true
 
@@ -233,6 +233,10 @@ module Mongo
         e.add_notes('modern retry', 'attempt 1')
 
         if e.is_a?(Error::OperationFailure)
+          if session.in_transaction? && !e.label?('TransientTransactionError')
+            # If the error is a transient transaction error, we should not
+            session.abort_transaction if session.in_transaction?
+          end
           ensure_retryable!(e)
         else
           ensure_labeled_retryable!(e, connection_succeeded, session)
@@ -263,7 +267,7 @@ module Mongo
         # a socket error or a not master error should have marked the respective
         # server unknown). Here we just need to wait for server selection.
         server = select_server(cluster, ServerSelector.primary, session, failed_server)
-        
+
         unless server.retry_writes?
           # Do not need to add "modern retry" here, it should already be on
           # the first exception.
@@ -277,7 +281,7 @@ module Mongo
           # special marker class to bypass the ordinarily applicable rescues.
           raise Error::RaiseOriginalError
         end
-        
+
         log_retry(original_error, message: 'Write retry')
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
