@@ -49,6 +49,7 @@ def standard_dependencies
   group :testing do
     gem 'timecop'
     gem 'ice_nine'
+    gem 'async-io', '~> 1.36.0' # 1.37.0 introduced a regression that breaks on Ruby 2.5, 2.6
     gem 'rubydns', platforms: :mri
     gem 'rspec-retry'
     gem 'rfc', '~> 0.2.0'

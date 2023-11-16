@@ -42,10 +42,12 @@ This release includes the following new features:
   when Azure Key Vault is used for client side encryption.
 - `Queryable Encryption <https://www.mongodb.com/docs/upcoming/core/queryable-encryption/queryable-encryption/>`_ support is extended.
 - Added support for Queryable Encryption Range Indexes.
-- A `crypt_shared <https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/shared-library/#download-the-automatic-encryption-shared-library>`_ 
+- A `crypt_shared <https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/shared-library/#download-the-automatic-encryption-shared-library>`_
   library can be now used instead of ``mongocryptd``.
 - Added support for AWS IAM Roles for service accounts, EKS in particular.
 - AWS Credentials are now cached when possible.
+- Added support for creating and managing `Atlas search indexes <https://www.mongodb.com/docs/atlas/atlas-search/>`_ via the
+  Ruby driver.
 
 .. _release-notes-2.18:
 

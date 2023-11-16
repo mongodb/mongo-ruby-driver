@@ -15,4 +15,5 @@ including managing databases, collections, indexes and users.
   /reference/database-tasks
   /reference/collection-tasks
   /reference/indexing
+  /reference/search-indexes
   /reference/collations
