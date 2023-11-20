@@ -171,7 +171,7 @@ Handling Errors
 
 If a command inside the transaction fails with, the transaction may be aborted
 on the server. Errors that abort transactions do not have
-``TransientTransactionError`` in their error labels. An attempt to commit such
+``TransientTransactionError`` in their error labels. An attempt to commit such a
 transaction will be rejected with ``NoSuchTransaction`` error.
 
 
