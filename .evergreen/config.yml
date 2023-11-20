@@ -123,7 +123,14 @@ functions:
             export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
             export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
             export RVM_RUBY="${RVM_RUBY}"
-            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+
+            if [[ -n "${USE_PROXY_SERVERLESS}" ]];
+            then
+              export SERVERLESS_DRIVERS_GROUP="${PROXY_SERVERLESS_DRIVERS_GROUP}"
+            else
+              export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            fi
+
             export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
             export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
@@ -1197,6 +1204,16 @@ axes:
       - id: no
         display_name: No
 
+  - id: serverless-project
+    display_name: serverless project
+    values:
+        - id: original
+          display_name: Original
+        - id: proxy
+          display_name: Proxy
+          variables:
+            USE_PROXY_SERVERLESS: 1
+
 buildvariants:
   - matrix_name: "auth/ssl"
     matrix_spec:
@@ -1771,7 +1788,8 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
       fle: path
       os: rhel8
-    display_name: "Atlas serverless ${ruby} single mongos"
+      serverless-project: [ original, proxy ]
+    display_name: "Atlas serverless ${ruby} ${serverless-project}"
     tasks:
        - name: test-serverless
 
