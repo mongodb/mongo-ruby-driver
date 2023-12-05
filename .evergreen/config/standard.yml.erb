@@ -517,7 +517,8 @@ buildvariants:
       ruby: <%= supported_mri_rubies %>
       fle: path
       os: rhel8
-    display_name: "Atlas serverless ${ruby} single mongos"
+      serverless-project: [ original, proxy ]
+    display_name: "Atlas serverless ${ruby} ${serverless-project}"
     tasks:
        - name: test-serverless
 

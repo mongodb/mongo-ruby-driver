@@ -120,7 +120,14 @@ functions:
             export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
             export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
             export RVM_RUBY="${RVM_RUBY}"
-            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+
+            if [[ -n "${USE_PROXY_SERVERLESS}" ]];
+            then
+              export SERVERLESS_DRIVERS_GROUP="${PROXY_SERVERLESS_DRIVERS_GROUP}"
+            else
+              export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            fi
+
             export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
             export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
