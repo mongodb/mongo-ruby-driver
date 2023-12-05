@@ -76,6 +76,31 @@ which are read concern, write concern and read preference:
     collection.insert_one({hello: 'world'}, session: session)
   end
 
+Handling Errors Within the ``with_transaction`` Block
+-----------------------------------------------------
+
+If a command inside the ``with_transaction`` block fails, it may cause
+the transaction on the server to be aborted. This situation is normally handled
+transparently by the driver. However, if the application catches such an error
+and does not re-raise it, the driver will not be able to determine whether
+the transaction was aborted or not. The driver will then retry the block
+indefinitely.
+
+To avoid this situation, the application must not silently handle errors within
+``with_transaction`` block. If the application needs to handle errors within
+the block, it must re-raise the errors.
+
+.. code-block:: ruby
+
+  session.with_transaction do
+    collection.insert_one({hello: 'world'}, session: session)
+  rescue Mongo::Error::OperationFailure => e
+    # Do something in response to the error
+    raise e
+  end
+
+If the applications needs to handle errors in a custom way, it should use
+the low level API instead.
 
 Low Level API
 =============
@@ -144,6 +169,14 @@ session if one is in progress:
   c2 = Mongo::Client.new(['127.0.0.1:27017']).use(:test_db)
   # ok
   c2.database.drop
+
+Handling Errors
+---------------
+
+If a command inside the transaction fails, the transaction may be aborted
+on the server. Errors that abort transactions do not have
+``TransientTransactionError`` in their error labels. An attempt to commit such a
+transaction will be rejected with ``NoSuchTransaction`` error.
 
 
 Retrying Commits
