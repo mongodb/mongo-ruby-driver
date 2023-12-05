@@ -86,8 +86,9 @@ and does not re-raise it, the driver will not be able to determine whether
 the transaction was aborted or not. The driver will then retry the block
 indefinitely.
 
-To avoid this situation, the application should re-raise errors that do not
-have ``TransientTransactionError`` in their error labels. For example:
+To avoid this situation, the application must not silently handle errors within
+``with_transaction`` block. If the application needs to handle errors within
+the block, it must re-raise the errors.
 
 .. code-block:: ruby
 
@@ -95,8 +96,11 @@ have ``TransientTransactionError`` in their error labels. For example:
     collection.insert_one({hello: 'world'}, session: session)
   rescue Mongo::Error::OperationFailure => e
     # Do something in response to the error
-    raise unless e.label?('TransientTransactionError')
+    raise e
   end
+
+If the applications needs to handle errors in a custom way, it should use
+the low level API instead.
 
 Low Level API
 =============
