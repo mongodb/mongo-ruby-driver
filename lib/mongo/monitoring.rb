@@ -236,7 +236,7 @@ module Mongo
         subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
         subscribe(TOPOLOGY_CLOSED, TopologyClosedLogSubscriber.new(options))
       end
-      @tracer = options[:otel_tracer] || OpenTelemetryTracer.new
+      @tracer = options[:otel_tracer] || OpenTelemetry::Tracer.new
     end
 
     attr_reader :tracer
@@ -372,7 +372,7 @@ require 'mongo/monitoring/event'
 require 'mongo/monitoring/publishable'
 require 'mongo/monitoring/command_log_subscriber'
 require 'mongo/monitoring/cmap_log_subscriber'
-require 'mongo/monitoring/open_telemetry_tracer'
+require 'mongo/monitoring/open_telemetry'
 require 'mongo/monitoring/sdam_log_subscriber'
 require 'mongo/monitoring/server_description_changed_log_subscriber'
 require 'mongo/monitoring/server_closed_log_subscriber'
