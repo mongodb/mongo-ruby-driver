@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+#
 # Copyright (C) 2015-present MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -16,7 +17,7 @@
 
 module Mongo
   class Monitoring
-    # Subscribes to command events and traces them to OpenTelemetry.
+    # This module contains classes related to OpenTelemetry instrumentation.
     #
     # @api private
     module OpenTelemetry

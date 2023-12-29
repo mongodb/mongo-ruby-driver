@@ -18,11 +18,9 @@ module Mongo
   class Monitoring
     # @api private
     module OpenTelemetry
-
     end
   end
 end
-
 
 require 'mongo/monitoring/open_telemetry/statement_builder'
 require 'mongo/monitoring/open_telemetry/tracer'

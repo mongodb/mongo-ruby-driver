@@ -30,13 +30,16 @@ RSpec.describe Mongo::Monitoring::OpenTelemetry::StatementBuilder do
       end
       let(:command) { { 'aggregate' => 'orders', 'pipeline' => pipeline, '$db' => 'test' } }
 
+      let(:expected_pipeline) do
+        if obfuscate
+          [ { '$match' => { 'status' => '?' } },
+            { '$group' => { '_id' => '?', 'total' => { '$sum' => '?' } } } ]
+        else
+          pipeline
+        end
+      end
+
       it 'returns the correct statement' do
-        expected_pipeline = if obfuscate
-                              [ { '$match' => { 'status' => '?' } },
-                                { '$group' => { '_id' => '?', 'total' => { '$sum' => '?' } } } ]
-                            else
-                              pipeline
-                            end
         expected_statement = { 'aggregate' => 'orders', 'pipeline' => expected_pipeline }.to_json.freeze
         expect(statement_builder.build).to eq(expected_statement)
       end
@@ -81,13 +84,16 @@ RSpec.describe Mongo::Monitoring::OpenTelemetry::StatementBuilder do
         { 'delete' => 'users', 'deletes' => [ { 'q' => { 'name' => 'John' }, 'limit' => 1 } ], '$db' => 'test' }
       end
 
+      let(:expected_deletes) do
+        if obfuscate
+          [ { 'q' => { 'name' => '?' },
+              'limit' => '?' } ]
+        else
+          [ { 'q' => { 'name' => 'John' }, 'limit' => 1 } ]
+        end
+      end
+
       it 'returns the correct statement' do
-        expected_deletes = if obfuscate
-                             [ { 'q' => { 'name' => '?' },
-                                 'limit' => '?' } ]
-                           else
-                             [ { 'q' => { 'name' => 'John' }, 'limit' => 1 } ]
-                           end
         expected_statement = { 'delete' => 'users', 'deletes' => expected_deletes }.to_json.freeze
         expect(statement_builder.build).to eq(expected_statement)
       end

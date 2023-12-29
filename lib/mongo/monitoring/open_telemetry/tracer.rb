@@ -17,6 +17,8 @@
 module Mongo
   class Monitoring
     module OpenTelemetry
+      # This is a wrapper around OpenTelemetry tracer that provides a convenient
+      # interface for creating spans.
       class Tracer
         ENV_VARIABLE_ENABLED = 'OTEL_RUBY_INSTRUMENTATION_MONGODB_DISABLED'
 
@@ -24,7 +26,7 @@ module Mongo
 
         DB_STATEMENT_DEFAULT_VALUE = 'obfuscate'
 
-        DB_STATEMENT_VALUES = %i[omit obfuscate include]
+        DB_STATEMENT_VALUES = %i[omit obfuscate include].freeze
 
         OTEL_TRACER_NAME = 'mongo-ruby-driver'
 
