@@ -96,12 +96,8 @@ module Mongo
       def dispatch_message(connection, context, options = {})
         message = build_message(connection, context)
         message = message.maybe_encrypt(connection, context)
-        if connection.server.cluster.monitoring&.tracer&.enabled?
-          reply = nil
-          connection.server.cluster.monitoring.tracer.in_span(message, self, connection.address) do |span|
-            reply = connection.dispatch([ message ], context, options)
-          end
-        else
+        reply = nil
+        connection.server.cluster.monitoring.tracer.in_span(message, self, connection.address) do
           reply = connection.dispatch([ message ], context, options)
         end
         [reply, connection.description, connection.global_id]
