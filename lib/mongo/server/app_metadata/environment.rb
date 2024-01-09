@@ -18,8 +18,11 @@ module Mongo
   class Server
     class AppMetadata
       # Implements the logic from the handshake spec, for deducing and
-      # reporting the current FaaS environment in which the program is
+      # reporting the current environment in which the program is
       # executing.
+      #
+      # This includes FaaS environment checks, as well as checks for the
+      # presence of a container (Docker) and/or orchestrator (Kubernetes).
       #
       # @api private
       class Environment
@@ -104,7 +107,8 @@ module Mongo
         def initialize
           @error = nil
           @name = detect_environment
-          populate_fields
+          populate_faas_fields
+          detect_container
         rescue TooManyEnvironments => e
           self.error = "too many environments detected: #{e.message}"
         rescue MissingVariable => e
@@ -113,6 +117,14 @@ module Mongo
           self.error = e.message
         rescue ValueTooLong => e
           self.error = "value for #{e.message} is too long"
+        end
+
+        # Queries the detected container information.
+        #
+        # @return [ Hash | nil ] the detected container information, or
+        #    nil if no container was detected.
+        def container
+          fields && fields[:container]
         end
 
         # Queries whether the current environment is a valid FaaS environment.
@@ -192,6 +204,33 @@ module Mongo
           names.first
         end
 
+        # Looks for the presence of a container. Currently can detect
+        # Docker (by the existence of a Dockerfile in the working
+        # directory) and Kubernetes (by the existence of the KUBERNETES_SERVICE_HOST
+        # environment variable).
+        def detect_container
+          runtime = docker_present? && 'docker'
+          orchestrator = kubernetes_present? && 'kubernetes'
+
+          if runtime || orchestrator
+            @fields ||= {}
+            fields[:container] = {}
+            fields[:container][:runtime] = runtime if runtime
+            fields[:container][:orchestrator] = orchestrator if orchestrator
+          end
+        end
+
+        # Checks for the existence of a Dockerfile in the working directory.
+        def docker_present?
+          File.exist?('Dockerfile')
+        end
+
+        # Checks for the presence of a non-empty KUBERNETES_SERVICE_HOST
+        # environment variable.
+        def kubernetes_present?
+          ENV['KUBERNETES_SERVICE_HOST'].to_s.length > 0
+        end
+
         # Determines whether the named environment variable exists, and (if
         # a pattern has been declared for that descriminator) whether the
         # pattern matches the value of the variable.
@@ -212,7 +251,7 @@ module Mongo
         # Extracts environment information from the current environment
         # variables, based on the detected FaaS environment. Populates the
         # {{@fields}} instance variable.
-        def populate_fields
+        def populate_faas_fields
           return unless name
 
           @fields = FIELDS[name].each_with_object({}) do |(var, defn), fields|
