@@ -105,6 +105,7 @@ module Mongo
         # if the environment contains invalid or contradictory state, it will
         # be initialized with {{name}} set to {{nil}}.
         def initialize
+          @fields = {}
           @error = nil
           @name = detect_environment
           populate_faas_fields
@@ -124,7 +125,16 @@ module Mongo
         # @return [ Hash | nil ] the detected container information, or
         #    nil if no container was detected.
         def container
-          fields && fields[:container]
+          fields[:container]
+        end
+
+        # Queries whether any environment information was able to be
+        # detected.
+        #
+        # @return [ true | false ] if any environment information was
+        #   detected.
+        def present?
+          @name || fields.any?
         end
 
         # Queries whether the current environment is a valid FaaS environment.
@@ -171,14 +181,11 @@ module Mongo
           @name == 'vercel'
         end
 
-        # Compiles the detected environment information into a Hash. It will
-        # always include a {{name}} key, but may include other keys as well,
-        # depending on the detected FaaS environment. (See the handshake
-        # spec for details.)
+        # Compiles the detected environment information into a Hash.
         #
         # @return [ Hash ] the detected environment information.
         def to_h
-          fields.merge(name: name)
+          name ? fields.merge(name: name) : fields
         end
 
         private
@@ -213,7 +220,6 @@ module Mongo
           orchestrator = kubernetes_present? && 'kubernetes'
 
           if runtime || orchestrator
-            @fields ||= {}
             fields[:container] = {}
             fields[:container][:runtime] = runtime if runtime
             fields[:container][:orchestrator] = orchestrator if orchestrator
@@ -254,7 +260,7 @@ module Mongo
         def populate_faas_fields
           return unless name
 
-          @fields = FIELDS[name].each_with_object({}) do |(var, defn), fields|
+          FIELDS[name].each_with_object(@fields) do |(var, defn), fields|
             fields[defn[:field]] = extract_field(var, defn)
           end
         end
