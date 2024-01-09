@@ -3,8 +3,10 @@ description: "retryable-writes bulkWrite serverErrors"
 schemaVersion: "1.0"
 
 runOnRequirements:
-  - minServerVersion: "3.6"
+  - minServerVersion: "4.0"
     topologies: [ replicaset ]
+  - minServerVersion: "4.1.7"
+    topologies: [ sharded ]
 
 createEntities:
   - client:
@@ -29,11 +31,6 @@ initialData:
 
 tests:
   - description: "BulkWrite succeeds after retryable writeConcernError in first batch"
-    runOnRequirements:
-      - minServerVersion: "4.0"
-        topologies: [ replicaset ]
-      - minServerVersion: "4.1.7"
-        topologies: [ sharded ]
     operations:
       - name: failPoint
         object: testRunner
