@@ -25,21 +25,6 @@ module Mongo
     #
     # @since 2.5.0
     class SessionPool
-
-      # Create a SessionPool.
-      #
-      # @example
-      #   SessionPool.create(cluster)
-      #
-      # @param [ Mongo::Cluster ] cluster The cluster that will be associated with this
-      #   session pool.
-      #
-      # @since 2.5.0
-      def self.create(cluster)
-        pool = new(cluster)
-        cluster.instance_variable_set(:@session_pool, pool)
-      end
-
       # Initialize a SessionPool.
       #
       # @example

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -27,7 +26,6 @@ require 'mongo/collection/view/writable'
 
 module Mongo
   class Collection
-
     # Representation of a query and options producing a result set of documents.
     #
     # A +View+ can be modified using helpers. Helpers can be chained,
@@ -72,7 +70,7 @@ module Mongo
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
 
-      alias :selector :filter
+      alias selector filter
 
       # Compare two +View+ objects.
       #
@@ -85,11 +83,12 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(View)
+
         collection == other.collection &&
-            filter == other.filter &&
-            options == other.options
+          filter == other.filter &&
+          options == other.options
       end
-      alias_method :eql?, :==
+      alias eql? ==
 
       # A hash value for the +View+ composed of the collection namespace,
       # hash of the options and hash of the filter.
@@ -101,7 +100,7 @@ module Mongo
       #
       # @since 2.0.0
       def hash
-        [ collection.namespace, options.hash, filter.hash ].hash
+        [ collection.namespace, options, filter ].hash
       end
 
       # Creates a new +View+.
@@ -180,8 +179,8 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}'" +
-            " @filter=#{filter.to_s} @options=#{options.to_s}>"
+        "#<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}' " \
+          "@filter=#{filter} @options=#{options}>"
       end
 
       # Get the write concern on this +View+.
@@ -208,7 +207,9 @@ module Mongo
         View.new(collection, filter, options)
       end
 
-      def view; self; end
+      def view
+        self
+      end
 
       def with_session(opts = {}, &block)
         client.send(:with_session, @options.merge(opts), &block)
