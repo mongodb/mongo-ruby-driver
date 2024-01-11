@@ -538,6 +538,8 @@ module Mongo
     #
     # @since 2.6.0
     def start_transaction(options = nil)
+      check_transactions_supported!
+
       if options
         Lint.validate_read_concern_option(options[:read_concern])
 
@@ -1183,6 +1185,19 @@ module Mongo
     def check_matching_cluster!(client)
       if @client.cluster != client.cluster
         raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
+      end
+    end
+
+    def check_transactions_supported!
+      raise Mongo::Error::TransactionsNotSupported, "standalone topology" if cluster.single?
+
+      cluster.next_primary.with_connection do |conn|
+        if cluster.replica_set? && !conn.features.transactions_enabled?
+          raise Mongo::Error::TransactionsNotSupported, "server version is < 4.0"
+        end
+        if cluster.sharded? && !conn.features.sharded_transactions_enabled?
+          raise Mongo::Error::TransactionsNotSupported, "sharded transactions require server version >= 4.2"
+        end
       end
     end
   end

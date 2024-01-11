@@ -26,6 +26,17 @@ describe Mongo::Session do
     collection.delete_many
   end
 
+  describe 'start_transaction' do
+    context 'when topology is sharded and server is < 4.2' do
+      max_server_fcv '4.2'
+      require_topology :sharded
+
+      it 'raises an error' do
+        expect { session.start_transaction }.to raise_error(Mongo::Error::TransactionsNotSupported, /sharded transactions require server version/)
+      end
+    end
+  end
+
   describe '#abort_transaction' do
     require_topology :replica_set
 
@@ -75,6 +86,8 @@ describe Mongo::Session do
   end
 
   describe '#with_transaction' do
+    require_topology :replica_set
+
     context 'callback successful' do
       it 'commits' do
         session.with_transaction do
