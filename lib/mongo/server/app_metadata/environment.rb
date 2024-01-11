@@ -42,6 +42,10 @@ module Mongo
         # Error class for reporting that the value for a field is too long.
         class ValueTooLong < Mongo::Error; end
 
+        # The name and location of the .dockerenv file that will signal the
+        # presence of Docker.
+        DOCKERENV_PATH = '/.dockerenv'.freeze
+
         # This value is not explicitly specified in the spec, only implied to be
         # less than 512.
         MAXIMUM_VALUE_LENGTH = 500
@@ -212,7 +216,7 @@ module Mongo
         end
 
         # Looks for the presence of a container. Currently can detect
-        # Docker (by the existence of a Dockerfile in the working
+        # Docker (by the existence of a .dockerenv file in the root
         # directory) and Kubernetes (by the existence of the KUBERNETES_SERVICE_HOST
         # environment variable).
         def detect_container
@@ -228,7 +232,13 @@ module Mongo
 
         # Checks for the existence of a Dockerfile in the working directory.
         def docker_present?
-          File.exist?('Dockerfile')
+          File.exist?(dockerenv_path)
+        end
+
+        # Implementing this as a method so that it can be mocked in tests, to
+        # test the presence or absence of Docker.
+        def dockerenv_path
+          DOCKERENV_PATH
         end
 
         # Checks for the presence of a non-empty KUBERNETES_SERVICE_HOST

@@ -3,24 +3,34 @@
 require 'spec_helper'
 require 'fileutils'
 
+MOCKED_DOCKERENV_PATH = File.expand_path(File.join(Dir.pwd, '.dockerenv-mocked'))
+
 module ContainerChecking
+  def mock_dockerenv_path
+    before do
+      allow_any_instance_of(Mongo::Server::AppMetadata::Environment)
+        .to receive(:dockerenv_path)
+        .and_return(MOCKED_DOCKERENV_PATH)
+    end
+  end
+
   def with_docker
+    mock_dockerenv_path
+
     around do |example|
-      keep = File.exist?('Dockerfile')
-      File.write('Dockerfile', 'placeholder') unless keep
+      File.write(MOCKED_DOCKERENV_PATH, 'placeholder')
       example.run
     ensure
-      File.delete('Dockerfile') unless keep
+      File.delete(MOCKED_DOCKERENV_PATH)
     end
   end
 
   def without_docker
+    mock_dockerenv_path
+
     around do |example|
-      save = 'Dockerfile' if File.exist?('Dockerfile')
-      FileUtils.mv('Dockerfile', '_Dockerfile') if save
+      FileUtils.rm_f(MOCKED_DOCKERENV_PATH)
       example.run
-    ensure
-      FileUtils.mv('_Dockerfile', 'Dockerfile') if save
     end
   end
 
