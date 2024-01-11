@@ -28,7 +28,7 @@ describe Mongo::Session do
 
   describe 'start_transaction' do
     context 'when topology is sharded and server is < 4.2' do
-      max_server_fcv '4.2'
+      max_server_fcv '4.1'
       require_topology :sharded
 
       it 'raises an error' do
