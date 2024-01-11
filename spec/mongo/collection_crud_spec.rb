@@ -2491,7 +2491,7 @@ describe Mongo::Collection do
       end
 
       let(:updated) do
-        authorized_collection.find.to_a.last
+        authorized_collection.find.sort(_id: 1).to_a.last
       end
 
       it 'reports that a document was written' do
