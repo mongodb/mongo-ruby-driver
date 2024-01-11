@@ -301,6 +301,12 @@ describe Mongo::Server::AppMetadata::Environment do
     end
   end
 
+  # have a specific test for this, since the tests that check
+  # for Docker use a mocked value for the .dockerenv path.
+  it 'should look for dockerenv in root directory' do
+    expect(described_class::DOCKERENV_PATH).to be == '/.dockerenv'
+  end
+
   context 'when no container is present' do
     without_kubernetes
     without_docker

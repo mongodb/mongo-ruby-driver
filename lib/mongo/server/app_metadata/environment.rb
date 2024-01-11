@@ -230,7 +230,7 @@ module Mongo
           end
         end
 
-        # Checks for the existence of a Dockerfile in the working directory.
+        # Checks for the existence of a .dockerenv in the root directory.
         def docker_present?
           File.exist?(dockerenv_path)
         end
