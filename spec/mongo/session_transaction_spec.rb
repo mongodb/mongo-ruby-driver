@@ -136,6 +136,7 @@ describe Mongo::Session do
         expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 1)
         expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 2)
         expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
+        allow(session).to receive('check_transactions_supported!').and_return true
 
         expect do
           session.with_transaction do
@@ -169,6 +170,7 @@ describe Mongo::Session do
             expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + i)
           end
           expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
+          allow(session).to receive('check_transactions_supported!').and_return true
 
           exc = Mongo::Error::OperationFailure.new('timeout test')
           exc.add_label(label)
