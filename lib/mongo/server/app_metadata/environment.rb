@@ -44,7 +44,7 @@ module Mongo
 
         # The name and location of the .dockerenv file that will signal the
         # presence of Docker.
-        DOCKERENV_PATH = '/.dockerenv'.freeze
+        DOCKERENV_PATH = '/.dockerenv'
 
         # This value is not explicitly specified in the spec, only implied to be
         # less than 512.
@@ -223,11 +223,11 @@ module Mongo
           runtime = docker_present? && 'docker'
           orchestrator = kubernetes_present? && 'kubernetes'
 
-          if runtime || orchestrator
-            fields[:container] = {}
-            fields[:container][:runtime] = runtime if runtime
-            fields[:container][:orchestrator] = orchestrator if orchestrator
-          end
+          return unless runtime || orchestrator
+
+          fields[:container] = {}
+          fields[:container][:runtime] = runtime if runtime
+          fields[:container][:orchestrator] = orchestrator if orchestrator
         end
 
         # Checks for the existence of a .dockerenv in the root directory.
@@ -244,7 +244,7 @@ module Mongo
         # Checks for the presence of a non-empty KUBERNETES_SERVICE_HOST
         # environment variable.
         def kubernetes_present?
-          ENV['KUBERNETES_SERVICE_HOST'].to_s.length > 0
+          !ENV['KUBERNETES_SERVICE_HOST'].to_s.empty?
         end
 
         # Determines whether the named environment variable exists, and (if
