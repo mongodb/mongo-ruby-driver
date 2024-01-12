@@ -187,13 +187,14 @@ module Mongo
         }
       end
 
-      # Returns the environment doc describing the current FaaS environment.
+      # Returns the environment doc describing the current execution
+      # environment.
       #
-      # @return [ Hash | nil ] the environment doc (or nil if not in a FaaS
-      #   environment).
+      # @return [ Hash | nil ] the environment doc (or nil if no relevant
+      #    environment info was detected)
       def env_doc
         env = Environment.new
-        env.faas? ? env.to_h : nil
+        env.present? ? env.to_h : nil
       end
 
       def type
