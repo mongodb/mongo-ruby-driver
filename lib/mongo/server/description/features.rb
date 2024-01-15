@@ -48,6 +48,7 @@ module Mongo
           # provided by the client during findAndModify operations, requiring the
           # driver to raise client-side errors when those options are provided.
           find_and_modify_option_validation: 8,
+          sharded_transactions: 8,
           transactions: 7,
           scram_sha_256: 7,
           array_filters: 6,
