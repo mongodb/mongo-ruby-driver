@@ -1,8 +1,52 @@
 # frozen_string_literal: true
+# rubocop:todo all
 
 require 'spec_helper'
+require 'fileutils'
+
+MOCKED_DOCKERENV_PATH = File.expand_path(File.join(Dir.pwd, '.dockerenv-mocked'))
+
+module ContainerChecking
+  def mock_dockerenv_path
+    before do
+      allow_any_instance_of(Mongo::Server::AppMetadata::Environment)
+        .to receive(:dockerenv_path)
+        .and_return(MOCKED_DOCKERENV_PATH)
+    end
+  end
+
+  def with_docker
+    mock_dockerenv_path
+
+    around do |example|
+      File.write(MOCKED_DOCKERENV_PATH, 'placeholder')
+      example.run
+    ensure
+      File.delete(MOCKED_DOCKERENV_PATH)
+    end
+  end
+
+  def without_docker
+    mock_dockerenv_path
+
+    around do |example|
+      FileUtils.rm_f(MOCKED_DOCKERENV_PATH)
+      example.run
+    end
+  end
+
+  def with_kubernetes
+    local_env 'KUBERNETES_SERVICE_HOST' => 'kubernetes.default.svc.cluster.local'
+  end
+
+  def without_kubernetes
+    local_env 'KUBERNETES_SERVICE_HOST' => nil
+  end
+end
 
 describe Mongo::Server::AppMetadata::Environment do
+  extend ContainerChecking
+
   let(:env) { described_class.new }
 
   shared_examples_for 'running in a FaaS environment' do
@@ -14,6 +58,36 @@ describe Mongo::Server::AppMetadata::Environment do
   shared_examples_for 'running outside a FaaS environment' do
     it 'reports that no FaaS environment is detected' do
       expect(env.faas?).to be false
+    end
+  end
+
+  shared_examples_for 'not running in a Docker container' do
+    it 'does not detect Docker' do
+      expect(env.container || {}).not_to include :runtime
+    end
+  end
+
+  shared_examples_for 'not running under Kubernetes' do
+    it 'does not detect Kubernetes' do
+      expect(env.container || {}).not_to include :orchestrator
+    end
+  end
+
+  shared_examples_for 'running under Kubernetes' do
+    it 'detects that Kubernetes is present' do
+      expect(env.container[:orchestrator]).to be == 'kubernetes'
+    end
+  end
+
+  shared_examples_for 'running in a Docker container' do
+    it 'detects that Docker is present' do
+      expect(env.container[:runtime]).to be == 'docker'
+    end
+  end
+
+  shared_examples_for 'running under Kerbenetes' do
+    it 'detects that kubernetes is present' do
+      expect(env.container['orchestrator']).to be == 'kubernetes'
     end
   end
 
@@ -204,6 +278,67 @@ describe Mongo::Server::AppMetadata::Environment do
           timeout_sec: 60, region: 'us-central1',
         }
       end
+
+      context 'when a container is present' do
+        with_kubernetes
+        with_docker
+
+        it 'includes a container key' do
+          expect(env.to_h[:container]).to be == {
+            runtime: 'docker',
+            orchestrator: 'kubernetes'
+          }
+        end
+      end
+
+      context 'when no container is present' do
+        without_kubernetes
+        without_docker
+
+        it 'does not include a container key' do
+          expect(env.to_h).not_to include(:container)
+        end
+      end
+    end
+  end
+
+  # have a specific test for this, since the tests that check
+  # for Docker use a mocked value for the .dockerenv path.
+  it 'should look for dockerenv in root directory' do
+    expect(described_class::DOCKERENV_PATH).to be == '/.dockerenv'
+  end
+
+  context 'when no container is present' do
+    without_kubernetes
+    without_docker
+
+    it_behaves_like 'not running in a Docker container'
+    it_behaves_like 'not running under Kubernetes'
+  end
+
+  context 'when container is present' do
+    context 'when kubernetes is present' do
+      without_docker
+      with_kubernetes
+
+      it_behaves_like 'not running in a Docker container'
+      it_behaves_like 'running under Kubernetes'
+    end
+
+    context 'when docker is present' do
+      with_docker
+      without_kubernetes
+
+      it_behaves_like 'running in a Docker container'
+      it_behaves_like 'not running under Kubernetes'
+    end
+
+    context 'when both kubernetes and docker are present' do
+      with_docker
+      with_kubernetes
+
+      it_behaves_like 'running in a Docker container'
+      it_behaves_like 'running under Kubernetes'
     end
   end
 end

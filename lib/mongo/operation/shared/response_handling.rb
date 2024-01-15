@@ -50,35 +50,33 @@ module Mongo
       #   the operation is performed.
       # @param [ Mongo::Operation::Context ] context The operation context.
       def add_error_labels(connection, context)
-        begin
-          yield
-        rescue Mongo::Error::SocketError => e
-          if context.in_transaction? && !context.committing_transaction?
-            e.add_label('TransientTransactionError')
-          end
-          if context.committing_transaction?
+        yield
+      rescue Mongo::Error::SocketError => e
+        if context.in_transaction? && !context.committing_transaction?
+          e.add_label('TransientTransactionError')
+        end
+        if context.committing_transaction?
+          e.add_label('UnknownTransactionCommitResult')
+        end
+
+        maybe_add_retryable_write_error_label!(e, connection, context)
+
+        raise e
+      rescue Mongo::Error::SocketTimeoutError => e
+        maybe_add_retryable_write_error_label!(e, connection, context)
+        raise e
+      rescue Mongo::Error::OperationFailure => e
+        if context.committing_transaction?
+          if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
+              !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code)
+          ) || e.max_time_ms_expired?
             e.add_label('UnknownTransactionCommitResult')
           end
-
-          maybe_add_retryable_write_error_label!(e, connection, context)
-
-          raise e
-        rescue Mongo::Error::SocketTimeoutError => e
-          maybe_add_retryable_write_error_label!(e, connection, context)
-          raise e
-        rescue Mongo::Error::OperationFailure => e
-          if context.committing_transaction?
-            if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
-                !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code)
-            ) || e.max_time_ms_expired?
-              e.add_label('UnknownTransactionCommitResult')
-            end
-          end
-
-          maybe_add_retryable_write_error_label!(e, connection, context)
-
-          raise e
         end
+
+        maybe_add_retryable_write_error_label!(e, connection, context)
+
+        raise e
       end
 
       # Unpins the session and/or the connection if  the yielded to block
