@@ -790,7 +790,7 @@ module Mongo
     def insert_one(document, opts = {})
       QueryCache.clear_namespace(namespace)
 
-      client.send(:with_session, opts) do |session|
+      client.with_session(opts) do |session|
         write_concern = if opts[:write_concern]
           WriteConcern.get(opts[:write_concern])
         else

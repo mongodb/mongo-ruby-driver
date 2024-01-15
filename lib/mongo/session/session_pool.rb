@@ -25,21 +25,6 @@ module Mongo
     #
     # @since 2.5.0
     class SessionPool
-
-      # Create a SessionPool.
-      #
-      # @example
-      #   SessionPool.create(cluster)
-      #
-      # @param [ Mongo::Cluster ] cluster The cluster that will be associated with this
-      #   session pool.
-      #
-      # @since 2.5.0
-      def self.create(cluster)
-        pool = new(cluster)
-        cluster.instance_variable_set(:@session_pool, pool)
-      end
-
       # Initialize a SessionPool.
       #
       # @example
@@ -105,9 +90,7 @@ module Mongo
 
         @mutex.synchronize do
           prune!
-          unless about_to_expire?(session)
-            @queue.unshift(session)
-          end
+          @queue.unshift(session) if return_to_queue?(session)
         end
       end
 
@@ -135,6 +118,17 @@ module Mongo
       end
 
       private
+
+      # Query whether the given session is okay to return to the
+      # pool's queue.
+      #
+      # @param [ Session::ServerSession ] session the session to query
+      #
+      # @return [ true | false ] whether to return the session to the
+      #   queue.
+      def return_to_queue?(session)
+        !session.dirty? && !about_to_expire?(session)
+      end
 
       def about_to_expire?(session)
         if session.nil?

@@ -123,6 +123,23 @@ module Mongo
     # @since 2.5.0
     attr_reader :operation_time
 
+    # Sets the dirty state to the given value for the underlying server
+    # session. If there is no server session, this does nothing.
+    #
+    # @param [ true | false ] mark whether to mark the server session as
+    #   dirty, or not.
+    def dirty!(mark = true)
+      @server_session&.dirty!(mark)
+    end
+
+    # @return [ true | false | nil ] whether the underlying server session is
+    #   dirty. If no server session exists for this session, returns nil.
+    #
+    # @api private
+    def dirty?
+      @server_session&.dirty?
+    end
+
     # @return [ Hash ] The options for the transaction currently being executed
     # on this session.
     #

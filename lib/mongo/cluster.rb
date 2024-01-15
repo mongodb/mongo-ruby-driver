@@ -157,7 +157,7 @@ module Mongo
       # @sdam_flow_lock covers just the sdam flow. Note it does not apply
       # to @topology replacements which are done under @update_lock.
       @sdam_flow_lock = Mutex.new
-      Session::SessionPool.create(self)
+      @session_pool = Session::SessionPool.new(self)
 
       if seeds.empty? && load_balanced?
         raise ArgumentError, 'Load-balanced clusters with no seeds are prohibited'
