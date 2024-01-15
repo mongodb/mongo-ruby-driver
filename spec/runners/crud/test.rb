@@ -110,14 +110,6 @@ module Mongo
         end
         setup_fail_point(client)
       end
-
-      def actual_collection_contents(client)
-        unless @spec.collection_name
-          raise ArgumentError, 'Spec does not specify a global collection'
-        end
-
-        client[@spec.collection_name, read_concern: {level: :majority}].find.to_a
-      end
     end
   end
 end
