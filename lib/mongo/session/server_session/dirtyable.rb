@@ -43,7 +43,6 @@ module Mongo
         #
         # @param [ true | false ] mark whether the mark the server session
         #   dirty or not.
-        #   or not.
         def dirty!(mark = true)
           @dirty = mark
         end
