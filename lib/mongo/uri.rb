@@ -377,10 +377,6 @@ module Mongo
         raise_invalid_error!("Options contain an unescaped question mark (?), or the database name contains a question mark and was not escaped")
       end
 
-      if options && !hosts_and_db.index('/')
-        raise_invalid_error!("MongoDB URI must have a slash (/) after the hosts if options are given")
-      end
-
       hosts, db = hosts_and_db.split('/', 2)
       if db && db.index('/')
         raise_invalid_error!("Database name contains an unescaped slash (/): #{db}")
