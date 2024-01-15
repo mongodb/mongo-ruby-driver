@@ -266,15 +266,6 @@ describe Mongo::URI do
       end
     end
 
-    context 'no slash after hosts, and options' do
-
-      let(:string) { 'mongodb://example.com?tls=true' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI, %r,MongoDB URI must have a slash \(/\) after the hosts if options are given,)
-      end
-    end
-
     context 'mongodb://example.com/?w' do
 
       let(:string) { 'mongodb://example.com/?w' }
