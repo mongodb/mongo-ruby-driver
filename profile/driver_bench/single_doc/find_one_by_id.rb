@@ -19,10 +19,8 @@ module Mongo
         def setup
           super
 
-          doc = dataset
-          10_000.times do |i|
-            @collection.insert_one(doc.merge(_id: i + 1))
-          end
+          docs = 10_000.times.map { |i| dataset.merge(_id: i + 1) }
+          @collection.insert_many(docs)
         end
 
         def do_task

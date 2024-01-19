@@ -41,9 +41,13 @@ module Mongo
 
       # Instantiate a new micro-benchmark class.
       def initialize
-        @max_iterations = 100
-        @min_time = ENV['CHEAT'] ? 10 : 60
+        @max_iterations = debug_mode? ? 10 : 100
+        @min_time = debug_mode? ? 1 : 60
         @max_time = 300 # 5 minutes
+      end
+
+      def debug_mode?
+        ENV['PERF_DEBUG']
       end
 
       # Runs the benchmark and returns the score.
@@ -81,7 +85,7 @@ module Mongo
 
           loop do
             before_task
-            timing = without_gc { Benchmark.realtime { ENV['CHEAT'] ? sleep(0.1) : do_task } }
+            timing = without_gc { Benchmark.realtime { debug_mode? ? sleep(0.1) : do_task } }
             after_task
 
             iteration_count += 1

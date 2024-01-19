@@ -21,9 +21,8 @@ module Mongo
         def setup
           super
 
-          10_000.times do
-            @collection.insert_one(dataset.first)
-          end
+          docs = 10_000.times.map { dataset.first }
+          @collection.insert_many(docs)
         end
 
         def do_task
