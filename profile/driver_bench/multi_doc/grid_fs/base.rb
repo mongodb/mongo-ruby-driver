@@ -6,9 +6,14 @@ module Mongo
   module DriverBench
     module MultiDoc
       module GridFS
+        # Abstract base class for multi-doc GridFS benchmarks.
+        #
+        # @api private
         class Base < Mongo::DriverBench::MultiDoc::Base
           private
 
+          # how much the dataset size ought to be scaled (for scoring
+          # purposes).
           def scale
             1
           end

@@ -5,11 +5,13 @@ require_relative '../base'
 module Mongo
   module DriverBench
     module SingleDoc
+      # Abstract base class for all single-doc benchmarks.
+      #
+      # @api private
       class Base < Mongo::DriverBench::Base
         private
 
-        attr_reader :client
-        attr_reader :collection
+        attr_reader :client, :collection
 
         def setup
           if file_name
@@ -20,6 +22,8 @@ module Mongo
           prepare_client
         end
 
+        # The amount by which the dataset size should be scaled (for scoring
+        # purposes).
         def scale
           10_000
         end

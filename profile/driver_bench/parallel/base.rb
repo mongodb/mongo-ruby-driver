@@ -5,6 +5,9 @@ require_relative '../base'
 module Mongo
   module DriverBench
     module Parallel
+      # Abstract base class for parallel micro-benchmarks.
+      #
+      # @api private
       class Base < Mongo::DriverBench::Base
         private
 

@@ -131,4 +131,4 @@ namespace :docs do
   end
 end
 
-load 'profile/benchmarking/rake/tasks.rake'
+load 'profile/driver_bench/rake/tasks.rake'

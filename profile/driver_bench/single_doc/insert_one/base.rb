@@ -6,8 +6,12 @@ module Mongo
   module DriverBench
     module SingleDoc
       module InsertOne
+        # Abstract base class for "insert one" benchmarks.
+        #
+        # @api private
         class Base < Mongo::DriverBench::SingleDoc::Base
           attr_reader :repetitions
+          alias scale repetitions
 
           def before_task
             collection.drop

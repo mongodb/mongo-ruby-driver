@@ -5,7 +5,13 @@ require_relative 'base'
 module Mongo
   module DriverBench
     module SingleDoc
+      # "This benchmark tests driver performance sending a command to the
+      # database and reading a response."
+      #
+      # @api private
       class RunCommand < Mongo::DriverBench::SingleDoc::Base
+        bench_name 'Run command'
+
         def setup
           super
           @dataset_size = { hello: true }.to_bson.length * scale

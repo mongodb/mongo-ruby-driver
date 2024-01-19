@@ -5,9 +5,15 @@ require_relative 'base'
 module Mongo
   module DriverBench
     module SingleDoc
+      # "This benchmark tests driver performance sending an indexed query to
+      # the database and reading a single document in response."
+      #
+      # @api private
       class FindOneByID < Mongo::DriverBench::SingleDoc::Base
+        bench_name 'Find one by ID'
+
         def file_name
-          "single_and_multi_document/tweet.json"
+          'single_and_multi_document/tweet.json'
         end
 
         def setup

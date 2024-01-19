@@ -8,9 +8,20 @@ module Mongo
   module DriverBench
     module Parallel
       module GridFS
+        # This benchmark tests driver performance downloading files from
+        # GridFS to disk.
+        #
+        # @api private
         class Download < Mongo::DriverBench::Parallel::GridFS::Base
+          bench_name 'GridFS multi-file download'
+
           private
 
+          # The source object to use for this benchmark. Each batch is a tuple
+          # consisting of the list position, and the element in the list at
+          # that position.
+          #
+          # @api private
           class Source
             def initialize(list)
               @list = list

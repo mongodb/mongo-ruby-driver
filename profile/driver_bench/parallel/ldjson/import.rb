@@ -7,9 +7,17 @@ module Mongo
   module DriverBench
     module Parallel
       module LDJSON
+        # "This benchmark tests driver performance importing documents from a
+        # set of LDJSON files."
+        #
+        # @api private
         class Import < Mongo::DriverBench::Parallel::LDJSON::Base
+          bench_name 'LDJSON multi-file import'
+
           private
 
+          # The data source for this benchmark. Each batch is the name of a
+          # file to read documents file.
           class DataSource
             def initialize(bench)
               @n = 0

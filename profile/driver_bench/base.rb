@@ -11,6 +11,12 @@ module Mongo
     #
     # @api private
     class Base
+      # A convenience for setting and querying the benchmark's name
+      def self.bench_name(benchmark_name = nil)
+        @bench_name = benchmark_name if benchmark_name
+        @bench_name
+      end
+
       # Where to look for the data files
       DATA_PATH = File.expand_path('../data/driver_bench', __dir__)
 
@@ -36,20 +42,22 @@ module Mongo
       # Instantiate a new micro-benchmark class.
       def initialize
         @max_iterations = 100
-        @min_time = 60
+        @min_time = ENV['CHEAT'] ? 10 : 60
         @max_time = 300 # 5 minutes
       end
 
+      # Runs the benchmark and returns the score.
+      #
+      # @return [ Hash<name,score,percentiles> ] the score and other
+      #   attributes of the benchmark.
       def run
         timings = run_benchmark
         percentiles = Percentiles.new(timings)
         score = dataset_size / percentiles[50] / 1_000_000.0
 
-        puts "score: #{score}"
-        puts "percentiles:"
-        [ 10, 25, 50, 75, 90, 95, 98, 99 ].each do |pct|
-          puts "  #{pct}: #{percentiles[pct]}"
-        end
+        { name: self.class.bench_name,
+          score: score,
+          percentiles: percentiles }
       end
 
       private
@@ -70,9 +78,8 @@ module Mongo
           setup
 
           loop do
-#puts "elapsed: #{cumulative_time}s"
             before_task
-            timing = without_gc { Benchmark.realtime { do_task } }
+            timing = without_gc { Benchmark.realtime { ENV['CHEAT'] ? sleep(0.1) : do_task } }
             after_task
 
             iteration_count += 1

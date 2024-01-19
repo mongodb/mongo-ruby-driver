@@ -10,9 +10,17 @@ module Mongo
   module DriverBench
     module Parallel
       module LDJSON
+        # "This benchmark tests driver performance exporting documents to a
+        # set of LDJSON files."
+        #
+        # @api private
         class Export < Mongo::DriverBench::Parallel::LDJSON::Base
+          bench_name 'LDJSON multi-file export'
+
           private
 
+          # The data source for this benchmark; each batch is a set of 5000
+          # documents.
           class DataSource
             def initialize(collection)
               @n = 0

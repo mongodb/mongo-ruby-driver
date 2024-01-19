@@ -5,9 +5,17 @@ require_relative 'base'
 module Mongo
   module DriverBench
     module MultiDoc
+      # "This benchmark tests driver performance retrieving multiple documents
+      # from a query."
+      #
+      # @api private
       class FindMany < Mongo::DriverBench::MultiDoc::Base
+        bench_name 'Find many and empty the cursor'
+
+        private
+
         def file_name
-          "single_and_multi_document/tweet.json"
+          'single_and_multi_document/tweet.json'
         end
 
         def setup

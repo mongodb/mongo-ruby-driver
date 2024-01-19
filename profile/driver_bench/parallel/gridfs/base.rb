@@ -6,9 +6,12 @@ module Mongo
   module DriverBench
     module Parallel
       module GridFS
+        # Abstract base class of parallel GridFS micro-benchmarks.
+        #
+        # @api private
         class Base < Mongo::DriverBench::Parallel::Base
           def file_name_at(index)
-            format("parallel/gridfs_multi/file%02d.txt", index)
+            format('parallel/gridfs_multi/file%02d.txt', index)
           end
 
           private
@@ -23,7 +26,7 @@ module Mongo
           def prepare_bucket(initialize: true)
             @bucket = client.database.fs
             @bucket.drop
-            @bucket.upload_from_stream "one-byte-file", "\n" if initialize
+            @bucket.upload_from_stream 'one-byte-file', "\n" if initialize
           end
 
           def upload_file(file_name)

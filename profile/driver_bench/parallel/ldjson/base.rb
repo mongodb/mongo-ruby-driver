@@ -6,9 +6,12 @@ module Mongo
   module DriverBench
     module Parallel
       module LDJSON
+        # The abstract base class for parallel LDSON benchmarks.
+        #
+        # @api private
         class Base < Mongo::DriverBench::Parallel::Base
           def file_name_at(index)
-            format("parallel/ldjson_multi/ldjson%03d.txt", index)
+            format('parallel/ldjson_multi/ldjson%03d.txt', index)
           end
 
           private

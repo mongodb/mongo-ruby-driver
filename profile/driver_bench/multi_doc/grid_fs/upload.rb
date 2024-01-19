@@ -6,7 +6,13 @@ module Mongo
   module DriverBench
     module MultiDoc
       module GridFS
+        # "This benchmark tests driver performance uploading a GridFS file
+        # from memory."
+        #
+        # @api private
         class Upload < Mongo::DriverBench::MultiDoc::GridFS::Base
+          bench_name 'GridFS Upload'
+
           private
 
           attr_reader :fs_bucket
@@ -17,7 +23,7 @@ module Mongo
             @fs_bucket = client.database.fs
             @fs_bucket.drop
 
-            @fs_bucket.upload_from_stream "one-byte-file", "\n"
+            @fs_bucket.upload_from_stream 'one-byte-file', "\n"
           end
 
           def do_task
