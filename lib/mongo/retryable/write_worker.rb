@@ -103,8 +103,9 @@ module Mongo
       def nro_write_with_retry(write_concern, context:, &block)
         session = context.session
         server = select_server(cluster, ServerSelector.primary, session)
+        options = session&.client&.options || {}
         
-        if session&.client.options[:retry_writes]
+        if options[:retry_writes]
           begin
             server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, nil, context
