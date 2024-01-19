@@ -26,7 +26,7 @@ module Mongo
         end
 
         def do_task
-          10_000.times do |i|
+          10_000.times do
             client.database.command(hello: true)
           end
         end

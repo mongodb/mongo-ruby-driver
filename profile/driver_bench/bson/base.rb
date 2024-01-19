@@ -13,8 +13,10 @@ module Mongo
 
         # Common setup for these benchmarks.
         def setup
+          # rubocop:disable Naming/MemoizedInstanceVariableName
           @dataset ||= load_file(file_name).first
           @dataset_size ||= size_of_file(file_name) * 10_000
+          # rubocop:enable Naming/MemoizedInstanceVariableName
         end
 
         # Returns the name of the file name that contains

@@ -21,7 +21,7 @@ module Mongo
         def setup
           super
 
-          10_000.times do |i|
+          10_000.times do
             @collection.insert_one(dataset.first)
           end
         end

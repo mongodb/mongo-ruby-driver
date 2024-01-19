@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'bson'
 require_relative 'multi_doc'
 require_relative 'parallel'
@@ -5,7 +7,7 @@ require_relative 'single_doc'
 
 module Mongo
   module DriverBench
-    ALL = [ *BSON::ALL, *SingleDoc::ALL, *MultiDoc::ALL, *Parallel::ALL ]
+    ALL = [ *BSON::ALL, *SingleDoc::ALL, *MultiDoc::ALL, *Parallel::ALL ].freeze
 
     BENCHES = {
       'BSONBench' => BSON::BENCH,
@@ -45,7 +47,7 @@ module Mongo
 
       def run
         perf_data = []
-        benches = Hash.new { |h,k| h[k] = [] }
+        benches = Hash.new { |h, k| h[k] = [] }
 
         ALL.each do |klass|
           result = run_benchmark(klass)
@@ -62,7 +64,9 @@ module Mongo
       private
 
       def run_benchmark(klass)
-        print klass.bench_name, ': '; $stdout.flush
+        print klass.bench_name, ': '
+        $stdout.flush
+
         klass.new.run.tap do |result|
           puts format('%4.4g', result[:score])
         end
@@ -89,7 +93,7 @@ module Mongo
       end
 
       def compile_benchmarks(benches)
-        benches.keys.each do |key|
+        benches.each_key do |key|
           benches[key] = benches[key].sum / benches[key].length
         end
 

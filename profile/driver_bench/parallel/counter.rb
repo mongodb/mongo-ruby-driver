@@ -33,6 +33,7 @@ module Mongo
         def wait
           @mutex.synchronize do
             return if @counter.zero?
+
             @condition.wait(@mutex)
           end
         end
@@ -46,7 +47,7 @@ module Mongo
         # a signal is sent to any waiting process.
         def dec
           @mutex.synchronize do
-            @counter -= 1 if @counter > 0
+            @counter -= 1 if @counter.positive?
             @condition.signal if @counter.zero?
           end
         end

@@ -33,7 +33,15 @@ module Mongo
           @counter = Counter.new
           @source_mutex = Thread::Mutex.new
 
-          @threads = Array.new(workers).map { Thread.new { @counter.enter { Thread.stop; worker_loop(&block) } } }
+          @threads = Array.new(workers).map do
+            Thread.new do
+              @counter.enter do
+                Thread.stop
+                worker_loop(&block)
+              end
+            end
+          end
+
           sleep 0.1 until @threads.all? { |t| t.status == 'sleep' }
         end
 
@@ -55,10 +63,10 @@ module Mongo
 
         # Fetches the next batch and passes it to the block, in a loop.
         # Terminates when the next batch is ``nil``.
-        def worker_loop(&block)
+        def worker_loop
           loop do
             batch = next_batch or return
-            block.call(batch)
+            yield batch
           end
         end
       end

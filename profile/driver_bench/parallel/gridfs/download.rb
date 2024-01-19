@@ -61,8 +61,8 @@ module Mongo
             @dispatcher.run
           end
 
-          def download_file(n, id)
-            path = File.join(@destination, file_name_at(n))
+          def download_file(index, id)
+            path = File.join(@destination, file_name_at(index))
             FileUtils.mkdir_p(File.dirname(path))
 
             File.open(path, 'w') do |file|

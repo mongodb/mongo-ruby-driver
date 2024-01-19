@@ -70,6 +70,8 @@ module Mongo
       #
       # @return [ Array<Float> ] the array of timings (in seconds) for
       #   each iteration.
+      #
+      # rubocop:disable Metrics/AbcSize
       def run_benchmark
         [].tap do |timings|
           iteration_count = 0
@@ -98,6 +100,7 @@ module Mongo
           teardown
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Instantiate a new client.
       def new_client(uri = ENV['MONGODB_URI'])
@@ -116,6 +119,7 @@ module Mongo
       # DATA_PATH, unless the file name is an absolute path.
       def path_to_file(file_name)
         return file_name if file_name.start_with?('/')
+
         File.join(DATA_PATH, file_name)
       end
 
@@ -146,12 +150,10 @@ module Mongo
       end
 
       # Executed at the start of the micro-benchmark.
-      def setup
-      end
+      def setup; end
 
       # Executed before each iteration of the benchmark.
-      def before_task
-      end
+      def before_task; end
 
       # Smallest amount of code necessary to do the task,
       # invoked once per iteration.
@@ -160,12 +162,10 @@ module Mongo
       end
 
       # Executed after each iteration of the benchmark.
-      def after_task
-      end
+      def after_task; end
 
       # Executed at the end of the micro-benchmark.
-      def teardown
-      end
+      def teardown; end
     end
   end
 end

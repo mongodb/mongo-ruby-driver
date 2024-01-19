@@ -19,7 +19,7 @@ module Mongo
           end
 
           def do_task
-            repetitions.times do |i|
+            repetitions.times do
               collection.insert_one(dataset)
             end
           end

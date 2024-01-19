@@ -63,8 +63,8 @@ module Mongo
             FileUtils.rm_rf(@destination)
           end
 
-          def worker_task(n, batch)
-            path = File.join(@destination, file_name_at(n))
+          def worker_task(index, batch)
+            path = File.join(@destination, file_name_at(index))
             FileUtils.mkdir_p(File.dirname(path))
             File.write(path, batch.map(&:to_json).join("\n"))
           end
