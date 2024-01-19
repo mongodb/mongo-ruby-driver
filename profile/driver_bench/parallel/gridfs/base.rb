@@ -15,6 +15,11 @@ module Mongo
 
           attr_reader :bucket
 
+          def setup
+            super
+            @dataset_size = 50.times.sum { |i| File.size(path_to_file(file_name_at(i))) }
+          end
+
           def prepare_bucket(initialize: true)
             @bucket = client.database.fs
             @bucket.drop

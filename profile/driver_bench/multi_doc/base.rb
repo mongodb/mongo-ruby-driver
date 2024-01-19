@@ -14,10 +14,14 @@ module Mongo
         def setup
           if file_name
             @dataset ||= load_file(file_name)
-            @dataset_size ||= size_of_file(file_name)
+            @dataset_size ||= size_of_file(file_name) * scale
           end
 
           prepare_client
+        end
+
+        def scale
+          10_000
         end
 
         def teardown

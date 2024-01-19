@@ -15,6 +15,10 @@ module Mongo
             @bulk_dataset = dataset * repetitions
           end
 
+          def scale
+            @repetitions
+          end
+
           def before_task
             collection.drop
             collection.create

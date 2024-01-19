@@ -29,6 +29,11 @@ module Mongo
             collection.insert_many(docs)
           end
 
+          def setup
+            super
+            @dataset_size = 100.times.sum { |i| File.size(path_to_file(file_name_at(i))) }
+          end
+
           def prepare_collection
             @collection = @client.database[:corpus].tap do |corpus|
               corpus.drop

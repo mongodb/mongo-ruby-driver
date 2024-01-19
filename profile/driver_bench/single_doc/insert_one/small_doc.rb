@@ -12,6 +12,10 @@ module Mongo
             @repetitions = 10_000
           end
 
+          def scale
+            @repetitions
+          end
+
           def file_name
             "single_and_multi_document/small_doc.json"
           end

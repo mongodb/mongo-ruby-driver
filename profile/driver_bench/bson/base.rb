@@ -10,7 +10,7 @@ module Mongo
 
         def setup
           @dataset ||= load_file(file_name).first
-          @dataset_size ||= size_of_file(file_name)
+          @dataset_size ||= size_of_file(file_name) * 10_000
         end
 
         # Returns the name of the file name that contains

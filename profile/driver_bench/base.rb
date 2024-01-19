@@ -3,6 +3,8 @@
 require 'benchmark'
 require 'mongo'
 
+require_relative 'percentiles'
+
 module Mongo
   module DriverBench
     # Base class for DriverBench profile benchmarking classes.
@@ -38,6 +40,20 @@ module Mongo
         @max_time = 300 # 5 minutes
       end
 
+      def run
+        timings = run_benchmark
+        percentiles = Percentiles.new(timings)
+        score = dataset_size / percentiles[50] / 1_000_000.0
+
+        puts "score: #{score}"
+        puts "percentiles:"
+        [ 10, 25, 50, 75, 90, 95, 98, 99 ].each do |pct|
+          puts "  #{pct}: #{percentiles[pct]}"
+        end
+      end
+
+      private
+
       # Runs the micro-benchmark, and returns an array of timings, with one
       # entry for each iteration of the benchmark. It may have fewer than
       # max_iterations entries if it takes longer than max_time seconds, or
@@ -46,7 +62,7 @@ module Mongo
       #
       # @return [ Array<Float> ] the array of timings (in seconds) for
       #   each iteration.
-      def run
+      def run_benchmark
         [].tap do |timings|
           iteration_count = 0
           cumulative_time = 0
@@ -54,6 +70,7 @@ module Mongo
           setup
 
           loop do
+#puts "elapsed: #{cumulative_time}s"
             before_task
             timing = without_gc { Benchmark.realtime { do_task } }
             after_task
@@ -74,8 +91,6 @@ module Mongo
           teardown
         end
       end
-
-      private
 
       # Instantiate a new client.
       def new_client(uri = ENV['MONGODB_URI'])
@@ -103,7 +118,7 @@ module Mongo
       #
       # @return [ Array ] A list of extended-json documents.
       def load_file(file_name)
-        File.readlines(path_to_file(file_name)).map { |line| BSON::Document.new(parse_line(line)) }
+        File.readlines(path_to_file(file_name)).map { |line| ::BSON::Document.new(parse_line(line)) }
       end
 
       # Returns the size (in bytes) of the given file.

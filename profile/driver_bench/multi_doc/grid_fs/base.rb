@@ -9,6 +9,10 @@ module Mongo
         class Base < Mongo::DriverBench::MultiDoc::Base
           private
 
+          def scale
+            1
+          end
+
           def file_name
             'single_and_multi_document/gridfs_large.bin'
           end

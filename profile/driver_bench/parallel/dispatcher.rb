@@ -11,13 +11,13 @@ module Mongo
       class Dispatcher
         attr_reader :source
 
-        def initialize(source, workers: Etc.nprocessors, &block)
+        def initialize(source, workers: (ENV['WORKERS'] || (Etc.nprocessors * 0.4)).to_i, &block)
           @source = source
           @counter = Counter.new
           @source_mutex = Thread::Mutex.new
 
           @threads = Array.new(workers).map { Thread.new { @counter.enter { Thread.stop; worker_loop(&block) } } }
-          loop until @threads.all? { |t| t.status == 'sleep' }
+          sleep 0.1 until @threads.all? { |t| t.status == 'sleep' }
         end
 
         def run
