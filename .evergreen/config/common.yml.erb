@@ -382,7 +382,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          .evergreen/run-benchmarks.sh
+          TEST_CMD="bundle exec rake driver_bench" .evergreen/run-tests.sh
     - command: perf.send
       params:
         file: ./results.json
