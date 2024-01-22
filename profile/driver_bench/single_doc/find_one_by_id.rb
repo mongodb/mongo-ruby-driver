@@ -19,7 +19,7 @@ module Mongo
         def setup
           super
 
-          docs = 10_000.times.map { |i| dataset.merge(_id: i + 1) }
+          docs = Array.new(10_000) { |i| dataset.merge(_id: i + 1) }
           @collection.insert_many(docs)
         end
 

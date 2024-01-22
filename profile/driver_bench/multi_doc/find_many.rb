@@ -21,7 +21,7 @@ module Mongo
         def setup
           super
 
-          docs = 10_000.times.map { dataset.first }
+          docs = Array.new(10_000) { dataset.first }
           @collection.insert_many(docs)
         end
 
