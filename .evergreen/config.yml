@@ -385,10 +385,10 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          TEST_CMD="bundle exec rake driver_bench" .evergreen/run-tests.sh
+          TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
     - command: perf.send
       params:
-        file: ./results.json
+        file: "${PROJECT_DIRECTORY}/perf.json"
 
   "run tests":
     - command: shell.exec

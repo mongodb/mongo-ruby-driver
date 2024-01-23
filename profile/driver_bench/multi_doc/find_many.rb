@@ -21,8 +21,11 @@ module Mongo
         def setup
           super
 
-          docs = Array.new(10_000) { dataset.first }
-          @collection.insert_many(docs)
+          prototype = dataset.first
+          10.times do
+            docs = Array.new(1000, prototype)
+            @collection.insert_many(docs)
+          end
         end
 
         def do_task

@@ -85,7 +85,7 @@ module Mongo
 
           loop do
             before_task
-            timing = without_gc { Benchmark.realtime { debug_mode? ? sleep(0.1) : do_task } }
+            timing = consider_gc { Benchmark.realtime { debug_mode? ? sleep(0.1) : do_task } }
             after_task
 
             iteration_count += 1
@@ -111,12 +111,18 @@ module Mongo
         Mongo::Client.new(uri)
       end
 
-      # Runs a given block with GC disabled.
-      def without_gc
-        GC.disable
+      # Takes care of garbage collection considerations before
+      # running the block.
+      #
+      # Set BENCHMARK_NO_GC environment variable to suppress GC during
+      # the core benchmark tasks; note that this may result in obscure issues
+      # due to memory pressures on larger benchmarks.
+      def consider_gc
+        GC.start
+        GC.disable if ENV['BENCHMARK_NO_GC']
         yield
       ensure
-        GC.enable
+        GC.enable if ENV['BENCHMARK_NO_GC']
       end
 
       # By default, the file name is assumed to be relative to the

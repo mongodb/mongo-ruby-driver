@@ -73,8 +73,9 @@ module Mongo
       end
 
       def compile_perf_data(result)
-        percentile_data = PERCENTILES.each_with_object({}) do |n, hash|
-          hash["time-#{n}%"] = result[:percentiles][n]
+        percentile_data = PERCENTILES.map do |percentile|
+          { 'name' => "time-#{percentile}%",
+            'value' => result[:percentiles][percentile] }
         end
 
         {
@@ -82,7 +83,11 @@ module Mongo
             'test_name' => result[:name],
             'args' => {},
           },
-          'metrics' => percentile_data.merge('score' => result[:score]),
+          'metrics' => [
+            { 'name' => 'score',
+              'value' => result[:score] },
+            *percentile_data
+          ]
         }
       end
 
@@ -105,27 +110,32 @@ module Mongo
               'test_name' => bench,
               'args' => {}
             },
-            'metrics' => {
-              'score' => score
-            }
+            'metrics' => [
+              { 'name' => 'score',
+                'value' => score }
+            ]
           }
         end
       end
 
+      # rubocop:disable Metrics/AbcSize
       def summarize_perf_data(data)
         puts '===== Performance Results ====='
         data.each do |item|
-          puts format('%s : %4.4g', item['info']['test_name'], item['metrics']['score'])
-          next unless item['metrics']['time-10%']
+          puts format('%s : %4.4g', item['info']['test_name'], item['metrics'][0]['value'])
+          next unless item['metrics'].length > 1
 
-          PERCENTILES.each do |n|
-            puts format('  %d%% : %4.4g', n, item['metrics']["time-#{n}%"])
+          item['metrics'].each do |metric|
+            next if metric['name'] == 'score'
+
+            puts format('  %s : %4.4g', metric['name'], metric['value'])
           end
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
-      def save_perf_data(data)
-        File.write('results.json', data.to_json)
+      def save_perf_data(data, file_name: ENV['PERFORMANCE_RESULTS_FILE'] || 'results.json')
+        File.write(file_name, data.to_json)
       end
     end
   end
