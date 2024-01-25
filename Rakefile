@@ -119,6 +119,32 @@ end
 
 task :release => ['release:check_private_key', 'release:do']
 
+desc 'Build and validate the evergreen config'
+task eg: %w[ eg:build eg:validate ]
+
+# 'eg' == 'evergreen', but evergreen is too many letters for convenience
+namespace :eg do
+  desc 'Builds the .evergreen/config.yml file from the templates'
+  task :build do
+    ruby '.evergreen/update-evergreen-configs'
+  end
+
+  desc 'Validates the .evergreen/config.yml file'
+  task :validate do
+    system 'evergreen validate --project mongo-ruby-driver .evergreen/config.yml'
+  end
+
+  desc 'Updates the evergreen executable to the latest available version'
+  task :update do
+    system 'evergreen get-update --install'
+  end
+
+  desc 'Runs the current branch as an evergreen patch'
+  task :patch do
+    system 'evergreen patch --uncommitted --project mongo-ruby-driver --browse --auto-description --yes'
+  end
+end
+
 desc "Generate all documentation"
 task :docs => 'docs:yard'
 
@@ -131,4 +157,4 @@ namespace :docs do
   end
 end
 
-load 'profile/benchmarking/rake/tasks.rake'
+load 'profile/driver_bench/rake/tasks.rake'
