@@ -121,25 +121,8 @@ functions:
             export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
             export RVM_RUBY="${RVM_RUBY}"
 
-            if [[ -n "${USE_PROXY_SERVERLESS}" ]];
-            then
-              export SERVERLESS_DRIVERS_GROUP="${PROXY_SERVERLESS_DRIVERS_GROUP}"
-            else
-              export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
-            fi
-
-            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
-            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
             export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
-
-            # Needed for generating temporary aws credentials.
-            if [ -n "${FLE}" ];
-            then
-              export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-              export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-              export AWS_DEFAULT_REGION="${fle_aws_region}"
-            fi
           EOT
 
           # See what we've done
@@ -150,17 +133,6 @@ functions:
     - command: expansions.update
       params:
         file: src/expansion.yml
-
-  "delete serverless instance":
-    - command: shell.exec
-      params:
-        working_dir: "src"
-        shell: bash
-        script: |
-          ${PREPARE_SHELL}
-          if [[ -n "${SERVERLESS_INSTANCE_NAME}" ]]; then
-            SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} .evergreen/serverless/delete-instance.sh
-          fi
 
   "export AWS auth credentials":
     - command: shell.exec
@@ -382,6 +354,13 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
           .evergreen/run-tests.sh
 
   "run tests via docker":
@@ -392,6 +371,13 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
           .evergreen/run-tests-docker.sh
 
   "run AWS auth tests":
@@ -436,27 +422,20 @@ functions:
 
   "run serverless tests":
     - command: shell.exec
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          # This hack with PROJECT env is necessary while serverless
-          # rejects creating instances with too long names.
-          PROJECT="mongo-ruby-driver" LOADBALANCED="ON" .evergreen/serverless/create-instance.sh
-          cat serverless-expansion.yml
-
-    - command: expansions.update
-      params:
-        file: src/serverless-expansion.yml
-
-    - command: shell.exec
       type: test
       params:
         shell: bash
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
+
           CRYPT_SHARED_LIB_PATH="${CRYPT_SHARED_LIB_PATH}" SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
 
 pre:
@@ -470,9 +449,67 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
-  - func: "delete serverless instance"
 
 task_groups:
+  - name: serverless_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: "fetch source"
+      - func: "create expansions"
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
+      - command: shell.exec
+        params:
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
+      - command: expansions.update
+        params:
+          file: serverless-expansion.yml
+    teardown_task:
+      - command: shell.exec
+        params:
+          script: |
+            ${PREPARE_SHELL}
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
+      - func: "upload test results"
+    tasks:
+      - "test-serverless"
+
+  - name: serverless_next_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: "fetch source"
+      - func: "create expansions"
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
+      - command: shell.exec
+        params:
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh serverless_next
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
+      - command: expansions.update
+        params:
+          file: serverless-expansion.yml
+    teardown_task:
+      - command: shell.exec
+        params:
+          script: |
+            ${PREPARE_SHELL}
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh serverless_next
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
+      - func: "upload test results"
+    tasks:
+      - "test-serverless"
+
   - name: testatlas_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
