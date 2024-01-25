@@ -11,7 +11,7 @@ describe 'Atlas connectivity' do
 
   describe 'connection to Atlas' do
     it 'runs ismaster successfully' do
-      expect { client.database.command(:ismaster => 1) }
+      expect { client.database.command(:hello => 1) }
         .not_to raise_error
     end
 
