@@ -484,6 +484,12 @@ module Mongo
         end
       end
 
+      # Drop the collections that implement this bucket.
+      def drop
+        files_collection.drop
+        chunks_collection.drop
+      end
+
       private
 
       # @param [ Hash ] opts The options.

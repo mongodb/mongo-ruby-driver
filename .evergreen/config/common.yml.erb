@@ -346,6 +346,19 @@ functions:
           set -x
           .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
 
+  "run benchmarks":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
+    - command: perf.send
+      params:
+        file: "${PROJECT_DIRECTORY}/perf.json"
+
   "run tests":
     - command: shell.exec
       type: test
@@ -699,6 +712,9 @@ tasks:
   - name: "test-mlaunch"
     commands:
       - func: "run tests"
+  - name: "driver-bench"
+    commands:
+      - func: "run benchmarks"
   - name: "test-via-docker"
     commands:
       - func: "run tests via docker"

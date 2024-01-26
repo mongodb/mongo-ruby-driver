@@ -41,6 +41,16 @@
 %>
 
 buildvariants:
+  - matrix_name: DriverBench
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      mongodb-version: latest
+      topology: standalone
+    run_on: rhel80-large
+    display_name: DriverBench
+    tasks:
+      - name: "driver-bench"
+
   - matrix_name: "auth/ssl"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
