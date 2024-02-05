@@ -1200,7 +1200,7 @@ module Mongo
     end
 
     def check_matching_client!(client)
-      if @client != client
+      if @client.cluster != client.cluster
         raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
       end
     end
