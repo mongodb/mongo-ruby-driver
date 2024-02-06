@@ -1152,5 +1152,9 @@ module Mongo
     def system_collection?
       name.start_with?('system.')
     end
+
+    def timeout_ms
+      options.fetch(:timeout_ms) { database.timeout_ms }
+    end
   end
 end

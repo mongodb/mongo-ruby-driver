@@ -111,6 +111,7 @@ module Mongo
       :ssl_verify_certificate,
       :ssl_verify_hostname,
       :ssl_verify_ocsp_endpoint,
+      :timeout_ms,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
@@ -413,6 +414,8 @@ module Mongo
     # @option options [ true, false ] :ssl_verify_hostname Whether to perform peer hostname
     #   validation. This setting overrides :ssl_verify with respect to whether hostname validation
     #   is performed.
+    # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
     # @option options [ String ] :user The user name.
@@ -1183,6 +1186,11 @@ module Mongo
     # @api private
     def encrypted_fields_map
       @encrypted_fields_map ||= @options.fetch(:auto_encryption_options, {})[:encrypted_fields_map]
+    end
+
+    # @api private
+    def timeout_ms
+      @options[:timeout_ms]
     end
 
     private
