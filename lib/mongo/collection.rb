@@ -401,7 +401,10 @@ module Mongo
           self.write_concern
         end
 
-        context = Operation::Context.new(client: client, session: session)
+        context = Operation::Context.new(
+          client: client,
+          session: session
+        )
         maybe_create_qe_collections(opts[:encrypted_fields], client, session) do |encrypted_fields|
           Operation::Create.new(
             selector: operation,
@@ -413,7 +416,10 @@ module Mongo
             collation: options[:collation] || options['collation'],
             encrypted_fields: encrypted_fields,
             validator: options[:validator],
-          ).execute(next_primary(nil, session), context: context)
+          ).execute(
+            next_primary(nil, session),
+            context: context
+          )
         end
       end
     end

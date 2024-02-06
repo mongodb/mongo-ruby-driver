@@ -33,11 +33,11 @@ module Mongo
       #
       # @option options [ Integer ] :local_threshold The local threshold boundary for
       #  nearest selection in seconds.
-      # @option options [ Integer ] max_staleness The maximum replication lag,
+      # @option options [ Integer ] :max_staleness The maximum replication lag,
       #   in seconds, that a secondary can suffer and still be eligible for a read.
       #   A value of -1 is treated identically to nil, which is to not
       #   have a maximum staleness.
-      # @option options [ Hash | nil ] hedge A Hash specifying whether to enable hedged
+      # @option options [ Hash | nil ] :hedge A Hash specifying whether to enable hedged
       #   reads on the server. Hedged reads are not enabled by default. When
       #   specifying this option, it must be in the format: { enabled: true },
       #   where the value of the :enabled key is a boolean value.
@@ -178,8 +178,15 @@ module Mongo
       #   lint mode is enabled.
       #
       # @since 2.0.0
-      def select_server(cluster, ping = nil, session = nil, write_aggregation: false, deprioritized: [])
-        select_server_impl(cluster, ping, session, write_aggregation, deprioritized).tap do |server|
+      def select_server(
+        cluster,
+        ping = nil,
+        session = nil,
+        write_aggregation: false,
+        deprioritized: [],
+        remaining_timeout_ms: nil
+      )
+        select_server_impl(cluster, ping, session, write_aggregation, deprioritized, remaining_timeout_ms).tap do |server|
           if Lint.enabled? && !server.pool.ready?
             raise Error::LintError, 'Server selector returning a server with a pool which is not ready'
           end
@@ -187,12 +194,18 @@ module Mongo
       end
 
       # Parameters and return values are the same as for select_server.
-      private def select_server_impl(cluster, ping, session, write_aggregation, deprioritized)
+      private def select_server_impl(cluster, ping, session, write_aggregation, deprioritized, remaining_timeout_ms)
         if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
           return cluster.servers.first
         end
 
-        server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+        timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+
+        server_selection_timeout = if remaining_timeout_ms
+                                     [timeout, remaining_timeout_ms].min
+                                   else
+                                     timeout
+                                   end
 
         # Special handling for zero timeout: if we have to select a server,
         # and the timeout is zero, fail immediately (since server selection

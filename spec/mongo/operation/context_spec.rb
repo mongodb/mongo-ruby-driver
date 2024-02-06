@@ -14,31 +14,67 @@ describe Mongo::Operation::Context do
   end
 
   describe '#deadline' do
-    before do
-      expect(Mongo::Utils).to receive(:monotonic_time).and_return(100.0)
-    end
-
-    let(:timeout_ms) { 10_000 }
-
     let(:context) { described_class.new(timeout_ms: timeout_ms) }
 
-    it 'calculates the deadline' do
-      expect(context.deadline).to eq(110)
+    context 'when timeout_ms is nil' do
+      let(:timeout_ms) { nil }
+
+      it 'returns nil' do
+        expect(context.deadline).to be_nil
+      end
+    end
+
+    context 'when timeout_ms is zero' do
+      let(:timeout_ms) { 0 }
+
+      it 'returns nil' do
+        expect(context.deadline).to be_nil
+      end
+    end
+
+    context 'when timeout_ms is positive' do
+      before do
+        expect(Mongo::Utils).to receive(:monotonic_time).and_return(100.0)
+      end
+
+      let(:timeout_ms) { 10_000 }
+
+      it 'calculates the deadline' do
+        expect(context.deadline).to eq(110)
+      end
     end
   end
 
   describe '#remaining_timeout_ms' do
-    before do
-      expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(100.0)
-      expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(105.0)
-    end
-
-    let(:timeout_ms) { 10_000 }
-
     let(:context) { described_class.new(timeout_ms: timeout_ms) }
 
-    it 'calculates the remaining time' do
-      expect(context.remaining_timeout_ms).to eq(5_000)
+    context 'when timeout_ms is nil' do
+      let(:timeout_ms) { nil }
+
+      it 'returns nil' do
+        expect(context.remaining_timeout_ms).to be_nil
+      end
+    end
+
+    context 'when timeout_ms is zero' do
+      let(:timeout_ms) { 0 }
+
+      it 'returns nil' do
+        expect(context.remaining_timeout_ms).to be_nil
+      end
+    end
+
+    context 'when timeout_ms is positive' do
+      before do
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(100.0)
+        expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(105.0)
+      end
+
+      let(:timeout_ms) { 10_000 }
+
+      it 'calculates the remaining time' do
+        expect(context.remaining_timeout_ms).to eq(5_000)
+      end
     end
   end
 end

@@ -63,10 +63,11 @@ module Mongo
         @client = client
         @session = session
         @connection_global_id = connection_global_id
-        @deadline = if timeout_ms && timeout_ms > 0
-                      Utils.monotonic_time + (timeout_ms / 1_000)
+        @timeout_ms = timeout_ms
+        @deadline = if @timeout_ms && @timeout_ms > 0
+                      Utils.monotonic_time + (@timeout_ms / 1_000)
                     else
-                      0
+                      nil
                     end
         @options = options
       end
@@ -151,6 +152,8 @@ module Mongo
       end
 
       def remaining_timeout_ms
+        return nil if @timeout_ms.nil? || @timeout_ms == 0
+
         ((deadline - Utils.monotonic_time) * 1_000).to_i
       end
     end
