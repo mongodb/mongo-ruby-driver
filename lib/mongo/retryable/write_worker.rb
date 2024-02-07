@@ -187,7 +187,10 @@ module Mongo
             session,
             remaining_timeout_ms: context.remaining_timeout_ms
           )
-          server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+          server.with_connection(
+            connection_global_id: context.connection_global_id,
+            remaining_timeout_sec: context.remaining_timeout_sec
+          ) do |connection|
             # Legacy retries do not use txn_num
             yield connection, nil, context.dup
           end
@@ -229,7 +232,10 @@ module Mongo
         txn_num = nil
         connection_succeeded = false
         
-        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+        server.with_connection(
+          connection_global_id: context.connection_global_id,
+          remaining_timeout_sec: context.remaining_timeout_sec
+        ) do |connection|
           connection_succeeded = true
 
           session.materialize_if_needed

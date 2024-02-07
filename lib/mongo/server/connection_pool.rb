@@ -208,8 +208,12 @@ module Mongo
       # @return [ Float ] The queue wait timeout.
       #
       # @since 2.9.0
-      def wait_timeout
-        @wait_timeout ||= options[:wait_timeout] || DEFAULT_WAIT_TIMEOUT
+      def wait_timeout(remaining_timeout_sec: nil)
+        if remaining_timeout_sec.nil?
+          options[:wait_timeout] || DEFAULT_WAIT_TIMEOUT
+        else
+          remaining_timeout_sec
+        end
       end
 
       # The maximum seconds a socket can remain idle since it has been
@@ -352,7 +356,7 @@ module Mongo
       #   and remains so for longer than the wait timeout.
       #
       # @since 2.9.0
-      def check_out(connection_global_id: nil)
+      def check_out(connection_global_id: nil, remaining_timeout_sec: nil)
         check_invariants
 
         publish_cmap_event(
@@ -362,7 +366,9 @@ module Mongo
         raise_if_pool_closed!
         raise_if_pool_paused_locked!
 
-        connection = retrieve_and_connect_connection(connection_global_id)
+        connection = retrieve_and_connect_connection(
+          connection_global_id
+        )
 
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id, self),
@@ -698,10 +704,13 @@ module Mongo
       # @return [ Object ] The result of the block.
       #
       # @since 2.0.0
-      def with_connection(connection_global_id: nil)
+      def with_connection(connection_global_id: nil, remaining_timeout_sec: nil)
         raise_if_closed!
 
-        connection = check_out(connection_global_id: connection_global_id)
+        connection = check_out(
+          connection_global_id: connection_global_id,
+          remaining_timeout_sec: remaining_timeout_sec
+        )
         yield(connection)
       rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished => e
         maybe_raise_pool_cleared!(connection, e)
@@ -1250,8 +1259,8 @@ module Mongo
       # @raise [ Error::PoolClosedError ] If the pool has been closed.
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
-      def retrieve_and_connect_connection(connection_global_id)
-        deadline = Utils.monotonic_time + wait_timeout
+      def retrieve_and_connect_connection(connection_global_id, remaining_timeout_sec: nil)
+        deadline = Utils.monotonic_time + wait_timeout(remaining_timeout_sec: remaining_timeout_sec)
         connection = nil
 
         @lock.synchronize do

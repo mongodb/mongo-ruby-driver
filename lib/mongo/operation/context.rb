@@ -151,13 +151,21 @@ module Mongo
         end
       end
 
-      def remaining_timeout_ms
+      def remaining_timeout_sec
         return nil if @timeout_ms.nil? || @timeout_ms == 0
 
         remaining_seconds = deadline - Utils.monotonic_time
-        return 0 if remaining_seconds <= 0
+        if remaining_seconds <= 0
+          0
+        else
+          remaining_seconds
+        end
+      end
 
-        (remaining_seconds * 1_000).to_i
+      def remaining_timeout_ms
+        return nil if remaining_timeout_sec.nil?
+
+        (remaining_timeout_sec * 1_000).to_i
       end
     end
   end
