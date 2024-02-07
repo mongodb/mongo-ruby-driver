@@ -807,7 +807,11 @@ module Mongo
           raise ArgumentError, "Document to be inserted cannot be nil"
         end
 
-        context = Operation::Context.new(client: client, session: session)
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          timeout_ms: timeout_ms(opts)
+          )
         write_with_retry(write_concern, context: context) do |connection, txn_num, context|
           Operation::Insert.new(
             :documents => [ document ],
@@ -1159,8 +1163,12 @@ module Mongo
       name.start_with?('system.')
     end
 
-    def timeout_ms
-      options.fetch(:timeout_ms) { database.timeout_ms }
+    def timeout_ms(opts = {})
+      if opts.key?(:timeout_ms)
+        opts.delete(:timeout_ms)
+      else
+        options.fetch(:timeout_ms) { database.timeout_ms }
+      end
     end
   end
 end

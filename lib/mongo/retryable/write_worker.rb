@@ -74,7 +74,11 @@ module Mongo
         # If we are here, session is not nil. A session being nil would have
         # failed retry_write_allowed? check.
 
-        server = select_server(cluster, ServerSelector.primary, session)
+        server = select_server(
+          cluster, ServerSelector.primary,
+          session,
+          remaining_timeout_ms: context.remaining_timeout_ms
+        )
 
         unless ending_transaction || server.retry_writes?
           return legacy_write_with_retry(server, context: context, &block)
@@ -177,7 +181,12 @@ module Mongo
         attempt = 0
         begin
           attempt += 1
-          server ||= select_server(cluster, ServerSelector.primary, session)
+          server ||= select_server(
+            cluster,
+            ServerSelector.primary,
+            session,
+            remaining_timeout_ms: context.remaining_timeout_ms
+          )
           server.with_connection(connection_global_id: context.connection_global_id) do |connection|
             # Legacy retries do not use txn_num
             yield connection, nil, context.dup
@@ -263,7 +272,13 @@ module Mongo
         # server description and/or topology as necessary (specifically,
         # a socket error or a not master error should have marked the respective
         # server unknown). Here we just need to wait for server selection.
-        server = select_server(cluster, ServerSelector.primary, session, failed_server)
+        server = select_server(
+          cluster,
+          ServerSelector.primary,
+          session,
+          failed_server,
+          remaining_timeout_ms: context.remaining_timeout_ms
+        )
         
         unless server.retry_writes?
           # Do not need to add "modern retry" here, it should already be on
