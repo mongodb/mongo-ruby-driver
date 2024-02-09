@@ -490,10 +490,10 @@ module Mongo
     # @return [ Object ] The result of the block execution.
     #
     # @since 2.3.0
-    def with_connection(connection_global_id: nil, remaining_timeout_sec: nil, &block)
+    def with_connection(connection_global_id: nil, context: nil, &block)
       pool.with_connection(
         connection_global_id: connection_global_id,
-        remaining_timeout_sec: remaining_timeout_sec,
+        context: context,
         &block
       )
     end

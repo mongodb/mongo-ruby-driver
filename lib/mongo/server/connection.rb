@@ -226,11 +226,11 @@ module Mongo
       # @return [ true ] If the connection succeeded.
       #
       # @since 2.0.0
-      def connect!
+      def connect!(context = nil)
         raise_if_closed!
 
         unless @socket
-          @socket = create_socket
+          @socket = create_socket(context)
           @description, @compressor = do_connect
 
           if server.load_balancer?
@@ -256,8 +256,15 @@ module Mongo
       #
       #
       # @return [ Socket ] The created socket.
-      private def create_socket
+      private def create_socket(context = nil)
         add_server_diagnostics do
+          opts = ssl_options.merge(
+            connection_address: address,
+            connection_generation: generation,
+            pipe: options[:pipe]
+          ).tap do |o|
+            o[:connect_timeout]
+          end
           address.socket(socket_timeout, ssl_options.merge(
             connection_address: address, connection_generation: generation, pipe: options[:pipe]))
         end

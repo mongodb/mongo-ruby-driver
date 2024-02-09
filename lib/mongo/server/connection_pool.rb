@@ -208,7 +208,7 @@ module Mongo
       # @return [ Float ] The queue wait timeout.
       #
       # @since 2.9.0
-      def wait_timeout(remaining_timeout_sec: nil)
+      def wait_timeout(remaining_timeout_sec = nil)
         if remaining_timeout_sec.nil?
           options[:wait_timeout] || DEFAULT_WAIT_TIMEOUT
         else
@@ -356,7 +356,7 @@ module Mongo
       #   and remains so for longer than the wait timeout.
       #
       # @since 2.9.0
-      def check_out(connection_global_id: nil, remaining_timeout_sec: nil)
+      def check_out(connection_global_id: nil, context: nil)
         check_invariants
 
         publish_cmap_event(
@@ -367,7 +367,7 @@ module Mongo
         raise_if_pool_paused_locked!
 
         connection = retrieve_and_connect_connection(
-          connection_global_id
+          connection_global_id, context
         )
 
         publish_cmap_event(
@@ -704,12 +704,12 @@ module Mongo
       # @return [ Object ] The result of the block.
       #
       # @since 2.0.0
-      def with_connection(connection_global_id: nil, remaining_timeout_sec: nil)
+      def with_connection(connection_global_id: nil, context: nil)
         raise_if_closed!
 
         connection = check_out(
           connection_global_id: connection_global_id,
-          remaining_timeout_sec: remaining_timeout_sec
+          context: context
         )
         yield(connection)
       rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished => e
@@ -984,9 +984,9 @@ module Mongo
 
       # Attempts to connect (handshake and auth) the connection. If an error is
       # encountered, closes the connection and raises the error.
-      def connect_connection(connection)
+      def connect_connection(connection, context)
         begin
-          connection.connect!
+          connection.connect!(context)
         rescue Exception
           connection.disconnect!(reason: :error)
           raise
@@ -1259,8 +1259,8 @@ module Mongo
       # @raise [ Error::PoolClosedError ] If the pool has been closed.
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
-      def retrieve_and_connect_connection(connection_global_id, remaining_timeout_sec: nil)
-        deadline = Utils.monotonic_time + wait_timeout(remaining_timeout_sec: remaining_timeout_sec)
+      def retrieve_and_connect_connection(connection_global_id, context =  nil)
+        deadline = Utils.monotonic_time + wait_timeout(context.remaining_timeout_sec)
         connection = nil
 
         @lock.synchronize do
@@ -1276,7 +1276,7 @@ module Mongo
           connection = wait_for_connection(connection_global_id, deadline)
         end
 
-        connect_or_raise(connection) unless connection.connected?
+        connect_or_raise(connection, context) unless connection.connected?
 
         @lock.synchronize do
           @checked_out_connections << connection
@@ -1336,8 +1336,8 @@ module Mongo
       # cannot be connected.
       # This method also publish corresponding event and ensures that counters
       # and condition variables are updated.
-      def connect_or_raise(connection)
-        connect_connection(connection)
+      def connect_or_raise(connection, context)
+        connect_connection(connection, context)
       rescue Exception
         # Handshake or authentication failed
         @lock.synchronize do
