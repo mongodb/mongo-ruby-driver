@@ -1260,7 +1260,7 @@ module Mongo
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
       def retrieve_and_connect_connection(connection_global_id, context =  nil)
-        deadline = Utils.monotonic_time + wait_timeout(context.remaining_timeout_sec)
+        deadline = Utils.monotonic_time + wait_timeout(context&.remaining_timeout_sec)
         connection = nil
 
         @lock.synchronize do

@@ -261,12 +261,10 @@ module Mongo
           opts = ssl_options.merge(
             connection_address: address,
             connection_generation: generation,
-            pipe: options[:pipe]
-          ).tap do |o|
-            o[:connect_timeout]
-          end
-          address.socket(socket_timeout, ssl_options.merge(
-            connection_address: address, connection_generation: generation, pipe: options[:pipe]))
+            pipe: options[:pipe],
+            connect_timeout: context&.remaining_timeout_sec
+          )
+          address.socket(socket_timeout, opts)
         end
       end
 
