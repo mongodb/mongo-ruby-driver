@@ -46,7 +46,9 @@ describe Mongo::Operation::Context do
   end
 
   describe '#remaining_timeout_ms' do
-    let(:context) { described_class.new(timeout_ms: timeout_ms) }
+    let(:context) {
+      described_class.new(timeout_ms: timeout_ms)
+    }
 
     context 'when timeout_ms is nil' do
       let(:timeout_ms) { nil }
