@@ -984,7 +984,7 @@ module Mongo
 
       # Attempts to connect (handshake and auth) the connection. If an error is
       # encountered, closes the connection and raises the error.
-      def connect_connection(connection, context)
+      def connect_connection(connection, context = nil)
         begin
           connection.connect!(context)
         rescue Exception
