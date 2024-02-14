@@ -42,6 +42,7 @@ describe Mongo::Collection::View::Explainable do
             max_server_version '3.0'
 
             it 'executes the explain' do
+              skip 'https://jira.mongodb.org/browse/RUBY-3399'
               explain[:queryPlanner][:parsedQuery].should be_a(Hash)
             end
           end
@@ -50,6 +51,7 @@ describe Mongo::Collection::View::Explainable do
             min_server_fcv '3.2'
 
             it 'executes the explain' do
+              skip 'https://jira.mongodb.org/browse/RUBY-3399'
               explain[:queryPlanner][:mongosPlannerVersion].should == 1
             end
           end
