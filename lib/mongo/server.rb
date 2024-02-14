@@ -80,7 +80,7 @@ module Mongo
         include Id
       end
       @scan_semaphore = DistinguishingSemaphore.new
-      @round_trip_time_averager = RoundTripTimeAverager.new
+      @round_trip_time_calculator = RoundTripTimeCalculator.new
       @description = Description.new(address, {},
         load_balancer: !!@options[:load_balancer],
         force_load_balancer: force_load_balancer?,
@@ -228,9 +228,9 @@ module Mongo
     # @api private
     attr_reader :scan_semaphore
 
-    # @return [ RoundTripTimeAverager ] Round trip time averager object.
+    # @return [ RoundTripTimeCalculator ] Round trip time calculator object.
     # @api private
-    attr_reader :round_trip_time_averager
+    attr_reader :round_trip_time_calculator
 
     # Is this server equal to another?
     #
@@ -701,5 +701,5 @@ require 'mongo/server/connection'
 require 'mongo/server/connection_pool'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
-require 'mongo/server/round_trip_time_averager'
+require 'mongo/server/round_trip_time_calculator'
 require 'mongo/server/push_monitor'

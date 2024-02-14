@@ -131,7 +131,7 @@ module Mongo
         doc = nil
         @server.handle_handshake_failure! do
           begin
-            response = @server.round_trip_time_averager.measure do
+            response = @server.round_trip_time_calculator.measure do
               add_server_diagnostics do
                 socket.write(hello_command.serialize.to_s)
                 Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE)
@@ -155,7 +155,7 @@ module Mongo
           doc['serviceId'] ||= "fake:#{rand(2**32-1)+1}"
         end
 
-        post_handshake(doc, @server.round_trip_time_averager.average_round_trip_time)
+        post_handshake(doc, @server.round_trip_time_calculator.average_round_trip_time)
 
         doc
       end
