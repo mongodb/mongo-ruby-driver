@@ -18,20 +18,29 @@
 module Mongo
   class Server
     # @api private
-    class RoundTripTimeAverager
+    class RoundTripTimeCalculator
 
       # The weighting factor (alpha) for calculating the average moving
       # round trip time.
       RTT_WEIGHT_FACTOR = 0.2.freeze
       private_constant :RTT_WEIGHT_FACTOR
 
+      RTT_SAMPLES_FOR_MINIMUM = 10
+      private_constant :RTT_SAMPLES_FOR_MINIMUM
+
+      MIN_SAMPLES = 3
+      private_constant :MIN_SAMPLES
+
       def initialize
         @last_round_trip_time = nil
         @average_round_trip_time = nil
+        @minimum_round_trip_time = 0
+        @rtts = []
       end
 
       attr_reader :last_round_trip_time
       attr_reader :average_round_trip_time
+      attr_reader :minimum_round_trip_time
 
       def measure
         start = Utils.monotonic_time
@@ -44,14 +53,15 @@ module Mongo
         rescue Error, Error::AuthError => exc
           # For other errors, RTT is valid.
         end
-        last_round_trip_time = Utils.monotonic_time - start
+        last_rtt = Utils.monotonic_time - start
 
         # If hello fails, we need to return the last round trip time
         # because it is used in the heartbeat failed SDAM event,
         # but we must not update the round trip time recorded in the server.
         unless exc
-          @last_round_trip_time = last_round_trip_time
+          @last_round_trip_time = last_rtt
           update_average_round_trip_time
+          update_minimum_round_trip_time
         end
 
         if exc
@@ -61,15 +71,20 @@ module Mongo
         end
       end
 
-      private
-
-      # This method is separate for testing purposes.
       def update_average_round_trip_time
         @average_round_trip_time = if average_round_trip_time
           RTT_WEIGHT_FACTOR * last_round_trip_time + (1 - RTT_WEIGHT_FACTOR) * average_round_trip_time
         else
           last_round_trip_time
         end
+      end
+
+      def update_minimum_round_trip_time
+        @rtts.push(@last_round_trip_time) unless @last_round_trip_time.nil?
+        @minimum_round_trip_time = 0 and return if @rtts.size < MIN_SAMPLES
+
+        @rtts.shift if @rtts.size > RTT_SAMPLES_FOR_MINIMUM
+        @minimum_round_trip_time = @rtts.compact.min
       end
     end
   end
