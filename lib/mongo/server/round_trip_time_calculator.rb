@@ -84,7 +84,7 @@ module Mongo
         @minimum_round_trip_time = 0 and return if @rtts.size < 3
 
         @rtts.shift if @rtts.size > RTT_SAMPLES_FOR_MINIMUM
-        @minimum_round_trip_time = @rtts.min
+        @minimum_round_trip_time = @rtts.compact.min
       end
     end
   end
