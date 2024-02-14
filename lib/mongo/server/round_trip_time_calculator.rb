@@ -81,7 +81,7 @@ module Mongo
 
       def update_minimum_round_trip_time
         @rtts.push(@last_round_trip_time) unless @last_round_trip_time.nil?
-        @minimum_round_trip_time = 0 and return if @rtts.size < 3
+        @minimum_round_trip_time = 0 and return if @rtts.size < MIN_SAMPLES
 
         @rtts.shift if @rtts.size > RTT_SAMPLES_FOR_MINIMUM
         @minimum_round_trip_time = @rtts.compact.min
