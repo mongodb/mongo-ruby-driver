@@ -497,5 +497,9 @@ module Mongo
       database = Database.new(client, client.options[:database], client.options)
       client.instance_variable_set(:@database, database)
     end
+
+    def timeout_ms
+      options.fetch(:timeout_ms) { client.timeout_ms }
+    end
   end
 end

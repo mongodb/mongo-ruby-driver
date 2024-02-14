@@ -490,8 +490,12 @@ module Mongo
     # @return [ Object ] The result of the block execution.
     #
     # @since 2.3.0
-    def with_connection(connection_global_id: nil, &block)
-      pool.with_connection(connection_global_id: connection_global_id, &block)
+    def with_connection(connection_global_id: nil, context: nil, &block)
+      pool.with_connection(
+        connection_global_id: connection_global_id,
+        context: context,
+        &block
+      )
     end
 
     # Handle handshake failure.

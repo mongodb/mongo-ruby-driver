@@ -254,7 +254,7 @@ module Mongo
       true
     end
 
-    # For backwards compatibilty only, do not use.
+    # For backwards compatibility only, do not use.
     #
     # @return [ true ] Always true.
     #

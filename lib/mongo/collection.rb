@@ -401,7 +401,10 @@ module Mongo
           self.write_concern
         end
 
-        context = Operation::Context.new(client: client, session: session)
+        context = Operation::Context.new(
+          client: client,
+          session: session
+        )
         maybe_create_qe_collections(opts[:encrypted_fields], client, session) do |encrypted_fields|
           Operation::Create.new(
             selector: operation,
@@ -413,7 +416,10 @@ module Mongo
             collation: options[:collation] || options['collation'],
             encrypted_fields: encrypted_fields,
             validator: options[:validator],
-          ).execute(next_primary(nil, session), context: context)
+          ).execute(
+            next_primary(nil, session),
+            context: context
+          )
         end
       end
     end
@@ -801,7 +807,11 @@ module Mongo
           raise ArgumentError, "Document to be inserted cannot be nil"
         end
 
-        context = Operation::Context.new(client: client, session: session)
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          timeout_ms: timeout_ms(opts)
+          )
         write_with_retry(write_concern, context: context) do |connection, txn_num, context|
           Operation::Insert.new(
             :documents => [ document ],
@@ -1151,6 +1161,14 @@ module Mongo
     # @api private
     def system_collection?
       name.start_with?('system.')
+    end
+
+    def timeout_ms(opts = {})
+      if opts.key?(:timeout_ms)
+        opts.delete(:timeout_ms)
+      else
+        options.fetch(:timeout_ms) { database.timeout_ms }
+      end
     end
   end
 end

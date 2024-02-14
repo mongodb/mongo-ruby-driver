@@ -783,8 +783,13 @@ module Mongo
     # @return [ Mongo::Server ] A primary server.
     #
     # @since 2.0.0
-    def next_primary(ping = nil, session = nil)
-      ServerSelector.primary.select_server(self, nil, session)
+    def next_primary(ping = nil, session = nil, remaining_timeout_ms: nil)
+      ServerSelector.primary.select_server(
+        self,
+        nil,
+        session,
+        remaining_timeout_ms: remaining_timeout_ms
+      )
     end
 
     # Get the connection pool for the server.

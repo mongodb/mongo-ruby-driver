@@ -35,7 +35,13 @@ module Mongo
     #
     # @api private
     class Context
-      def initialize(client: nil, session: nil, connection_global_id: nil, options: nil)
+      def initialize(
+        client: nil,
+        session: nil,
+        connection_global_id: nil,
+        timeout_ms: nil,
+        options: nil
+      )
         if options
           if client
             raise ArgumentError, 'Client and options cannot both be specified'
@@ -50,14 +56,25 @@ module Mongo
           raise ArgumentError, 'Trying to pin context to a connection when the session is already pinned to a connection.'
         end
 
+        if timeout_ms && timeout_ms < 0
+          raise ArgumentError, 'timeout_ms must be a positive integer'
+        end
+
         @client = client
         @session = session
         @connection_global_id = connection_global_id
+        @timeout_ms = timeout_ms
+        @deadline = if @timeout_ms && @timeout_ms > 0
+                      Utils.monotonic_time + (@timeout_ms / 1_000.0)
+                    else
+                      nil
+                    end
         @options = options
       end
 
       attr_reader :client
       attr_reader :session
+      attr_reader :deadline
       attr_reader :options
 
       def connection_global_id
@@ -132,6 +149,24 @@ module Mongo
         else
           raise Error::InternalDriverError, 'Encrypter should only be accessed when encryption is to be performed'
         end
+      end
+
+      def remaining_timeout_sec
+        return nil if @timeout_ms.nil? || @timeout_ms == 0
+
+        remaining_seconds = deadline - Utils.monotonic_time
+        if remaining_seconds <= 0
+          0
+        else
+          remaining_seconds
+        end
+      end
+
+      def remaining_timeout_ms
+        seconds = remaining_timeout_sec
+        return nil if seconds.nil?
+
+        (seconds * 1_000).to_i
       end
     end
   end
