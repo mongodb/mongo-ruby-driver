@@ -209,8 +209,6 @@ module Mongo
       # @param [ Hash ] config The result of the hello command.
       # @param [ Float ] average_round_trip_time The moving average time (sec) the hello
       #   command took to complete.
-      # @param [ Float ] average_round_trip_time The moving average time (sec)
-      #   the ismaster call took to complete.
       # @param [ true | false ] load_balancer Whether the server is treated as
       #   a load balancer.
       # @param [ true | false ] force_load_balancer Whether the server is
@@ -218,7 +216,8 @@ module Mongo
       #
       # @api private
       def initialize(address, config = {}, average_round_trip_time: nil,
-        load_balancer: false, force_load_balancer: false
+        minimum_round_trip_time: 0, load_balancer: false,
+        force_load_balancer: false
       )
         @address = address
         @config = config
@@ -226,6 +225,7 @@ module Mongo
         @force_load_balancer = !!force_load_balancer
         @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
+        @minimum_round_trip_time = minimum_round_trip_time
         @last_update_time = Time.now.freeze
         @last_update_monotime = Utils.monotonic_time
 
@@ -301,6 +301,10 @@ module Mongo
 
       # @return [ Float ] The moving average time the hello call took to complete.
       attr_reader :average_round_trip_time
+
+      # @return [ Float ] The minimum time from the ten last hello calls took
+      #   to complete.
+      attr_reader :minimum_round_trip_time
 
       # Returns whether this server is an arbiter, per the SDAM spec.
       #

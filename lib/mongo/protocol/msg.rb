@@ -301,6 +301,22 @@ module Mongo
         Msg.new(@flags, @options, main_document, *@sequences)
       end
 
+      def maybe_add_max_time_ms(connection, context)
+        return self if context.remaining_timeout_sec.nil?
+
+        max_time_sec = context.remaining_timeout_sec - connection.server.minimum_round_trip_time
+        if max_time_sec > 0
+          max_time_ms = (max_time_sec * 1_000).to_i
+          main_document = @main_document.merge(
+            maxTimeMS: max_time_ms
+          )
+          Msg.new(@flags, @options, main_document, *@sequences)
+        else
+          raise Mongo::Error::TimeoutError
+        end
+      end
+
+
       # Returns the number of documents returned from the server.
       #
       # The Msg instance must be for a server reply and the reply must return
