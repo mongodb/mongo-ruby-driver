@@ -112,6 +112,7 @@ module Mongo
         if server_api = context.server_api
           msg = msg.maybe_add_server_api(server_api)
         end
+        msg = msg.maybe_add_max_time_ms(connection, context)
         msg
       end
 
