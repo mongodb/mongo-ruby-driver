@@ -17,8 +17,6 @@
 module Mongo
   class Error
     # Raised when a Client Side Operation Timeout times out.
-    #
-    # @since 2.0.0
     class TimeoutError < Error
     end
   end

@@ -301,6 +301,21 @@ module Mongo
         Msg.new(@flags, @options, main_document, *@sequences)
       end
 
+      # Adds maxTimeMS attribute to the message if timeoutMS is set
+      # and there is enough time left to send the message to the server
+      # (remaining timeout is bigger than minimum round trip time for
+      # the server.
+      #
+      # @param [ Mongo::Server::Connection ] connection Connection the message
+      #   should be sent with.
+      # @param [ Mongo::Operation::Context ] context Context of the operation
+      #  the message is build from.
+      #
+      # @return [ Mongo::Protocol::Msg] message with added maxTimeMS attribute
+      #   if needed.
+      #
+      # @raise [ Mongo::Error::TimeoutError ] if timeout expired or there is
+      #   not enough time to send the message to the server.
       def maybe_add_max_time_ms(connection, context)
         return self if context.remaining_timeout_sec.nil?
 

@@ -275,6 +275,15 @@ module Mongo
         buffer
       end
 
+      # If timeoutMS is set for the operation context, checks whether there is
+      # enough time left to send the corresponding message to the server
+      # (remaining timeout is bigger than minimum round trip time for
+      # the server)
+      #
+      # @param [ Mongo::Operation::Context ] context Context of the operation.
+      #
+      # @raise [ Mongo::Error::TimeoutError ] if timeout expired or there is
+      #   not enough time to send the message to the server.
       def check_timeout!(context)
         return if context.remaining_timeout_sec.nil?
         time_to_execute = context.remaining_timeout_sec - server.minimum_round_trip_time

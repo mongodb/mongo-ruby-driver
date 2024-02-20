@@ -209,6 +209,8 @@ module Mongo
       # @param [ Hash ] config The result of the hello command.
       # @param [ Float ] average_round_trip_time The moving average time (sec) the hello
       #   command took to complete.
+      # @param [ Float ] minimum_round_trip_time The minimum round trip time
+      #   of ten last hello commands.
       # @param [ true | false ] load_balancer Whether the server is treated as
       #   a load balancer.
       # @param [ true | false ] force_load_balancer Whether the server is
