@@ -302,7 +302,7 @@ module Mongo
       end
 
       def maybe_add_max_time_ms(connection, context)
-        return self if context.remaining_timeout_ms.nil?
+        return self if context.remaining_timeout_sec.nil?
 
         max_time_sec = context.remaining_timeout_sec - connection.server.minimum_round_trip_time
         if max_time_sec > 0
@@ -312,8 +312,7 @@ module Mongo
           )
           Msg.new(@flags, @options, main_document, *@sequences)
         else
-          # TODO: Raise proper CSOT error
-          raise RuntimeError, 'Timeout!'
+          raise Mongo::Error::TimeoutError
         end
       end
 
