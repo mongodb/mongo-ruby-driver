@@ -169,6 +169,7 @@ module Mongo
           raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
         end
         buffer = serialize(message, context)
+        check_timeout!(context)
         ensure_connected do |socket|
           operation_id = Monitoring.next_operation_id
           started_event = command_started(address, operation_id, message.payload,
@@ -272,6 +273,23 @@ module Mongo
         final_message.serialize(buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
 
         buffer
+      end
+
+      # If timeoutMS is set for the operation context, checks whether there is
+      # enough time left to send the corresponding message to the server
+      # (remaining timeout is bigger than minimum round trip time for
+      # the server)
+      #
+      # @param [ Mongo::Operation::Context ] context Context of the operation.
+      #
+      # @raise [ Mongo::Error::TimeoutError ] if timeout expired or there is
+      #   not enough time to send the message to the server.
+      def check_timeout!(context)
+        return if context.remaining_timeout_sec.nil?
+        time_to_execute = context.remaining_timeout_sec - server.minimum_round_trip_time
+        if time_to_execute <= 0
+          raise Mongo::Error:TimeoutError
+        end
       end
     end
   end
