@@ -687,7 +687,7 @@ Ruby Options
    * - ``:sdam_proc``
      - Since the client begins monitoring the deployment in background as
        soon as it is constructed, constructing a client and then subscribing
-       to `SDAM <sdam>`_ events in a separate statement may result in the
+       to :ref:`SDAM <sdam>` events in a separate statement may result in the
        subscriber not receiving some of the SDAM events. The ``:sdam_proc``
        option permits adding event subscribers on the client being constructed
        before any SDAM events are published.
