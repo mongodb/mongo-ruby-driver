@@ -182,9 +182,10 @@ module Mongo
           result = nil
           begin
             result = add_server_diagnostics do
-              socket.write(buffer.to_s)
+              socket.write(buffer.to_s, timeout: context.remaining_timeout_sec)
               if message.replyable?
-                Protocol::Message.deserialize(socket, max_message_size, message.request_id, options)
+                check_timeout!(context)
+                Protocol::Message.deserialize(socket, max_message_size, message.request_id, options.merge(timeout: context.remaining_timeout_sec))
               else
                 nil
               end
@@ -288,7 +289,7 @@ module Mongo
         return if context.remaining_timeout_sec.nil?
         time_to_execute = context.remaining_timeout_sec - server.minimum_round_trip_time
         if time_to_execute <= 0
-          raise Mongo::Error:TimeoutError
+          raise Mongo::Error::TimeoutError
         end
       end
     end

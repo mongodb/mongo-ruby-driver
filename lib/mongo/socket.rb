@@ -239,9 +239,9 @@ module Mongo
     # @raise [ Error::SocketError | Error::SocketTimeoutError ] When there is a network error during the write.
     #
     # @since 2.0.0
-    def write(*args)
+    def write(*args, timeout: nil)
       map_exceptions do
-        do_write(*args)
+        do_write(*args, timeout: timeout)
       end
     end
 
@@ -404,7 +404,15 @@ module Mongo
     # @param [ Array<Object> ] args The data to be written.
     #
     # @return [ Integer ] The length of bytes written to the socket.
-    def do_write(*args)
+    def do_write(*args, timeout: nil)
+      if timeout.nil?
+        write_without_timeout(*args)
+      else
+        write_with_timeout(*args, timeout: timeout)
+      end
+    end
+
+    def write_without_timeout(*args)
       # This method used to forward arguments to @socket.write in a
       # single call like so:
       #
@@ -426,6 +434,51 @@ module Mongo
           i += WRITE_CHUNK_SIZE
         end
       end
+    end
+
+    def write_with_timeout(*args, timeout:)
+      raise ArgumentError, 'timeout cannot be nil' if timeout.nil?
+      raise Errno::ETIMEDOUT, "Negative timeout #{timeout} given to socket" if timeout < 0
+
+      written = 0
+      args.each do |buf|
+        buf = buf.to_s
+        i = 0
+        while i < buf.length
+          chunk = buf[i...(i + WRITE_CHUNK_SIZE)]
+          written += write_chunk(chunk, timeout)
+          i += WRITE_CHUNK_SIZE
+        end
+      end
+      written
+    end
+
+    def write_chunk(chunk, timeout)
+      deadline = Utils.monotonic_time + timeout
+      written = 0
+      begin
+        written += @socket.write_nonblock(chunk[written..-1])
+      rescue IO::WaitWritable, Errno::EINTR
+        select_timeout = deadline - Utils.monotonic_time
+        rv = Kernel.select(nil, [@socket], nil, select_timeout)
+        if BSON::Environment.jruby?
+          # Ignore the return value of Kernel.select.
+          # On JRuby, select appears to return nil prior to timeout expiration
+          # (apparently due to a EAGAIN) which then causes us to fail the read
+          # even though we could have retried it.
+          # Check the deadline ourselves.
+          if deadline
+            select_timeout = deadline - Utils.monotonic_time
+            if select_timeout <= 0
+              raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data"
+            end
+          end
+        elsif rv.nil?
+          raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data (select call timed out)"
+        end
+        retry
+      end
+      written
     end
 
     def unix_socket?(sock)

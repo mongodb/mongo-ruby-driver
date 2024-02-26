@@ -245,7 +245,7 @@ module Mongo
         # method with some other IO-like object, pass options only when they
         # are not empty.
         read_options = {}
-        if timeout = options[:socket_timeout]
+        if timeout = (options[:timeout] || options[:socket_timeout])
           read_options[:timeout] = timeout
         end
 
