@@ -48,10 +48,6 @@ module Mongo
         #   See the server documentation for details.
         # @option options [ Integer ] :max_time_ms The maximum amount of time in
         #   milliseconds to allow the aggregation to run.
-        # @option options [ true, false ] :use_cursor Indicates whether the command
-        #   will request that the server provide results using a cursor. Note that
-        #   as of server version 3.6, aggregations always provide results using a
-        #   cursor and this option is therefore not valid.
         # @option options [ Session ] :session The session to use.
         #
         # @return [ Aggregation ] The aggregation object.
@@ -656,24 +652,11 @@ module Mongo
           end
         end
 
-        private
-
-        def collation(doc = nil)
-          configure(:collation, doc)
-        end
-
-        def server_selector
-          @server_selector ||= if options[:session] && options[:session].in_transaction?
-            ServerSelector.get(read_preference || client.server_selector)
-          else
-            ServerSelector.get(read_preference || collection.server_selector)
-          end
-        end
-
+        # @api private
         def parallel_scan(cursor_count, options = {})
           if options[:session]
             # The session would be overwritten by the one in +options+ later.
-            session = client.send(:get_session, @options)
+            session = client.get_session(@options)
           else
             session = nil
           end
@@ -709,6 +692,20 @@ module Mongo
             )
             result = op.execute(server, context: context)
             Cursor.new(self, result, server, session: session)
+          end
+        end
+
+        private
+
+        def collation(doc = nil)
+          configure(:collation, doc)
+        end
+
+        def server_selector
+          @server_selector ||= if options[:session] && options[:session].in_transaction?
+            ServerSelector.get(read_preference || client.server_selector)
+          else
+            ServerSelector.get(read_preference || collection.server_selector)
           end
         end
 

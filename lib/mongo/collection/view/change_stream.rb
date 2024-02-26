@@ -303,7 +303,7 @@ module Mongo
           # (rolling upgrades)
           @start_at_operation_time_supported = nil
 
-          session = client.send(:get_session, @options)
+          session = client.get_session(@options)
           start_at_operation_time = nil
           start_at_operation_time_supported = nil
           @cursor = read_with_retry_cursor(session, server_selector, view) do |server|

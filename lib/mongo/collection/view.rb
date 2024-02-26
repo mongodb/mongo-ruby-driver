@@ -152,9 +152,15 @@ module Mongo
       #   document more than once. Deprecated as of MongoDB server version 4.0.
       # @option options [ Hash ] :sort The key and direction pairs used to sort
       #   the results.
+      # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+      #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+      #   iteration).
+      # @option options [ Integer ] :timeout_ms The maximum amount of time to
+      #   allow the query to run, in milliseconds.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
+        validate_timeout_mode!(options)
         validate_doc!(filter)
         @collection = collection
 

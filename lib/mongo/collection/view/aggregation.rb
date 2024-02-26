@@ -86,15 +86,19 @@ module Mongo
         # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
         #   See the server documentation for details.
         # @option options [ Integer ] :max_time_ms The maximum amount of time in
-        #   milliseconds to allow the aggregation to run.
-        # @option options [ true, false ] :use_cursor Indicates whether the command
-        #   will request that the server provide results using a cursor. Note that
-        #   as of server version 3.6, aggregations always provide results using a
-        #   cursor and this option is therefore not valid.
+        #   milliseconds to allow the aggregation to run. (Deprecated, use
+        #   :timeout_ms instead.)
+        # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+        #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+        #   iteration).
+        # @option options [ Integer ] :timeout_ms The maximum amount of time to
+        #   allow the query to run, in milliseconds.
         # @option options [ Session ] :session The session to use.
         #
         # @since 2.0.0
         def initialize(view, pipeline, options = {})
+          validate_timeout_mode!(options)
+
           @view = view
           @pipeline = pipeline.dup
           unless Mongo.broken_view_aggregate || view.filter.empty?
