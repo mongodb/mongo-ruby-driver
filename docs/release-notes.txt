@@ -88,7 +88,7 @@ This release includes the following new features:
   5.1/5.2/5.3) or newer to use the ``count`` command when API strict is enabled,
   or avoid setting ``api_strict: true`` when constructing ``Mongo::Client``
   instances with server versions 5.0.0-5.0.7 and 5.1.0-5.3.1.
-- The DBRef class has been moved to ``bson-ruby``. For backwards compatibility,
+- The ``DBRef`` class has been moved to ``bson-ruby``. For backwards compatibility,
   ``BSON::DBRef`` is aliased as ``Mongo::DBRef``. The ``BSON::DBRef`` class
   derives from ``BSON::Document``, unlike the legacy ``Mongo::DBRef`` which
   derived from ``Object``. ``BSON::DBRef`` retains all attributes passed into
