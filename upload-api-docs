@@ -29,6 +29,7 @@ class FileUploader
   end
 
   def upload_docs
+    puts "Uploading to #{@bucket}"
     Dir.glob("#{@docs_path}/**/*").each do |file|
       next if File.directory?(file)
 
@@ -112,6 +113,7 @@ def generate_docs(options)
     '--exclude', './spec',
     '--readme', './README.md',
     '-o', options[:docs_path]
+    File.delete(File.join(options[:docs_path], 'frames.html')) rescue nil
   )
 end
 
