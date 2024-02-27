@@ -192,14 +192,19 @@ module Mongo
     #   socket.read(4096)
     #
     # @param [ Integer ] length The number of bytes to read.
-    # @param [ Numeric ] timeout The timeout to use for each chunk read.
+    # @param [ Numeric ] socket_timeout The timeout to use for each chunk read,
+    #   mutually exclusive to +timeout+.
+    # @param [ Numeric ] timeout The total timeout to the whole read operation,
+    #   mutually exclusive to +socket_timeout+.
     #
     # @raise [ Mongo::SocketError ] If not all data is returned.
     #
     # @return [ Object ] The data from the socket.
     #
     # @since 2.0.0
-    def read(length, timeout: nil)
+    def read(length, socket_timeout: nil, timeout: nil)
+      if !socket_timeout.nil? && !timeout.nil?
+        raise ArgumentError, 'Both timeout and socket_timeout cannot be set'
       map_exceptions do
         data = read_from_socket(length, timeout: timeout)
         unless (data.length > 0 || length == 0)
@@ -265,13 +270,33 @@ module Mongo
 
     private
 
-    def read_from_socket(length, timeout: nil)
+    def read_with_timeout(length, timeout)
+    end
+
+    def read_without_timeout(length, socket_timeout = nil)
+      map_exceptions do
+        data = read_from_socket(length, timeout: socket_timeout)
+        unless (data.length > 0 || length == 0)
+          raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+        end
+        while data.length < length
+          chunk = read_from_socket(length - data.length, timeout: timeout)
+          unless (chunk.length > 0 || length == 0)
+            raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+          end
+          data << chunk
+        end
+        data
+      end
+    end
+
+    def read_from_socket(length, socket_timeout: nil)
       # Just in case
       if length == 0
         return ''.force_encoding('BINARY')
       end
 
-      _timeout = timeout || self.timeout
+      _timeout = socket_timeout || self.timeout
       if _timeout
         if _timeout > 0
           deadline = Utils.monotonic_time + _timeout
