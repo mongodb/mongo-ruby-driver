@@ -205,19 +205,11 @@ module Mongo
     def read(length, socket_timeout: nil, timeout: nil)
       if !socket_timeout.nil? && !timeout.nil?
         raise ArgumentError, 'Both timeout and socket_timeout cannot be set'
-      map_exceptions do
-        data = read_from_socket(length, timeout: timeout)
-        unless (data.length > 0 || length == 0)
-          raise IOError, "Expected to read > 0 bytes but read 0 bytes"
-        end
-        while data.length < length
-          chunk = read_from_socket(length - data.length, timeout: timeout)
-          unless (chunk.length > 0 || length == 0)
-            raise IOError, "Expected to read > 0 bytes but read 0 bytes"
-          end
-          data << chunk
-        end
-        data
+      end
+      if !socket_timeout.nil? || timeout.nil?
+        read_without_timeout(length, socket_timeout)
+      else
+        read_with_timeout(length, timeout)
       end
     end
 
@@ -271,16 +263,39 @@ module Mongo
     private
 
     def read_with_timeout(length, timeout)
-    end
-
-    def read_without_timeout(length, socket_timeout = nil)
+      deadline = Utils.monotonic_time + timeout
       map_exceptions do
-        data = read_from_socket(length, timeout: socket_timeout)
+        socket_timeout = deadline - Utils.monotonic_time
+        if socket_timeout <= 0
+          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+        end
+        data = read_from_socket(length, socket_timeout: socket_timeout)
         unless (data.length > 0 || length == 0)
           raise IOError, "Expected to read > 0 bytes but read 0 bytes"
         end
         while data.length < length
-          chunk = read_from_socket(length - data.length, timeout: timeout)
+          socket_timeout = deadline - Utils.monotonic_time
+          if socket_timeout <= 0
+            raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+          end
+          chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout)
+          unless (chunk.length > 0 || length == 0)
+            raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+          end
+          data << chunk
+        end
+        data
+      end
+    end
+
+    def read_without_timeout(length, socket_timeout = nil)
+      map_exceptions do
+        data = read_from_socket(length, socket_timeout: socket_timeout)
+        unless (data.length > 0 || length == 0)
+          raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+        end
+        while data.length < length
+          chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout)
           unless (chunk.length > 0 || length == 0)
             raise IOError, "Expected to read > 0 bytes but read 0 bytes"
           end
