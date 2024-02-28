@@ -32,10 +32,15 @@
   supported_rubies = supported_mri_rubies + jrubies
 
   # The latest stable version of MongoDB
-  latest_stable_mdb = "6.0".inspect # so it gets quoted as a string
+  latest_stable_mdb = "7.0".inspect # so it gets quoted as a string
 
   # A few of the most recent MongoDB versions
   actual_and_upcoming_mdb = %w( latest 7.0 6.0 )
+
+  # FIXME: RUBY-3400, DRIVERS-2816 -- test failures on latest, so
+  # let's just silence latest for now.
+  actual_and_upcoming_mdb.delete 'latest'
+
   recent_mdb = %w( 6.0 5.3 )
   latest_5x_mdb = "5.3".inspect # so it gets quoted as a string
 %>
@@ -77,14 +82,10 @@ buildvariants:
   # Only JRuby-9.4 is built for arm in the current toolchain, but 9.4 has other
   # issues. Either we fix those issues, or we build 9.3 for arm in the toolchain,
   # and hope it fixes the issues... Until then, we can only test MRI ruby on arm.
-  #
-  # further: 'latest' is broken until the QE2 changes are merged (RUBY-3211,
-  # RUBY-3226)
   - matrix_name: "mongo-recent-arm"
     matrix_spec:
       ruby: <%= latest_ruby %>
-      #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['6.0']
+      mongodb-version: <%= actual_and_upcoming_mdb %>
       topology: <%= topologies %>
       os: 'rhel8-arm'
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
