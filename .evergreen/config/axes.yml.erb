@@ -186,7 +186,7 @@ axes:
         display_name: jruby-9.4
         variables:
           RVM_RUBY: "jruby-9.4"
-  
+
   - id: "os"
     display_name: OS
     values:
@@ -196,6 +196,9 @@ axes:
       - id: ubuntu2204
         display_name: "Ubuntu 22.04"
         run_on: ubuntu2204-small
+      - id: ubuntu2004
+        display_name: "Ubuntu 20.04"
+        run_on: ubuntu2004-small
       - id: rhel8
         display_name: "RHEL 8"
         run_on: rhel80-small
@@ -402,3 +405,13 @@ axes:
           API_VERSION_REQUIRED: 1
       - id: no
         display_name: No
+
+  - id: serverless-project
+    display_name: serverless project
+    values:
+        - id: original
+          display_name: Original
+        - id: proxy
+          display_name: Proxy
+          variables:
+            USE_PROXY_SERVERLESS: 1

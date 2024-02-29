@@ -26,6 +26,17 @@ describe Mongo::Session do
     collection.delete_many
   end
 
+  describe 'start_transaction' do
+    context 'when topology is sharded and server is < 4.2' do
+      max_server_fcv '4.1'
+      require_topology :sharded
+
+      it 'raises an error' do
+        expect { session.start_transaction }.to raise_error(Mongo::Error::TransactionsNotSupported, /sharded transactions require server version/)
+      end
+    end
+  end
+
   describe '#abort_transaction' do
     require_topology :replica_set
 
@@ -75,6 +86,8 @@ describe Mongo::Session do
   end
 
   describe '#with_transaction' do
+    require_topology :replica_set
+
     context 'callback successful' do
       it 'commits' do
         session.with_transaction do
@@ -123,6 +136,7 @@ describe Mongo::Session do
         expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 1)
         expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 2)
         expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
+        allow(session).to receive('check_transactions_supported!').and_return true
 
         expect do
           session.with_transaction do
@@ -156,6 +170,7 @@ describe Mongo::Session do
             expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + i)
           end
           expect(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(start + 200)
+          allow(session).to receive('check_transactions_supported!').and_return true
 
           exc = Mongo::Error::OperationFailure.new('timeout test')
           exc.add_label(label)

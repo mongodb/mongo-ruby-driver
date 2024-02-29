@@ -70,8 +70,7 @@ module Unified
       consume_test_runner(op)
       use_arguments(op) do |args|
         session = entities.get(:session, args.use!('session'))
-        # https://jira.mongodb.org/browse/RUBY-1813
-        true
+        session.dirty? || raise(Error::ResultMismatch, 'expected session to be dirty')
       end
     end
 
@@ -79,8 +78,7 @@ module Unified
       consume_test_runner(op)
       use_arguments(op) do |args|
         session = entities.get(:session, args.use!('session'))
-        # https://jira.mongodb.org/browse/RUBY-1813
-        true
+        session.dirty? && raise(Error::ResultMismatch, 'expected session to be not dirty')
       end
     end
 
@@ -92,7 +90,7 @@ module Unified
         unless subscriber.started_events.length >= 2
           raise Error::ResultMismatch, "Must have at least 2 events, have #{subscriber.started_events.length}"
         end
-        lsids = subscriber.started_events[-2...-1].map do |cmd|
+        lsids = subscriber.started_events[-2..-1].map do |cmd|
           cmd.command.fetch('lsid')
         end
         if expected

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'support/recording_logger'
 
 # let these existing styles stand, rather than going in for a deep refactoring
 # of these specs.
@@ -82,6 +83,41 @@ describe Mongo::Cluster do
         expect(monitoring).to have_received(:succeeded).with(
           Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, any_args
         )
+      end
+    end
+
+    context 'when a non-genuine host is detected' do
+      before { described_class.new(host_names, monitoring, logger: logger, monitoring_io: false) }
+
+      let(:logger) { RecordingLogger.new }
+
+      shared_examples 'an action that logs' do
+        it 'writes a warning to the log' do
+          expect(logger.lines).to include(a_string_matching(expected_log_output))
+        end
+      end
+
+      context 'when CosmosDB is detected' do
+        let(:host_names) { %w[ xyz.cosmos.azure.com ] }
+        let(:expected_log_output) { %r{https://www.mongodb.com/supportability/cosmosdb} }
+
+        it_behaves_like 'an action that logs'
+      end
+
+      context 'when DocumentDB is detected' do
+        let(:expected_log_output) { %r{https://www.mongodb.com/supportability/documentdb} }
+
+        context 'with docdb uri' do
+          let(:host_names) { [ 'xyz.docdb.amazonaws.com' ] }
+
+          it_behaves_like 'an action that logs'
+        end
+
+        context 'with docdb-elastic uri' do
+          let(:host_names) { [ 'xyz.docdb-elastic.amazonaws.com' ] }
+
+          it_behaves_like 'an action that logs'
+        end
       end
     end
   end

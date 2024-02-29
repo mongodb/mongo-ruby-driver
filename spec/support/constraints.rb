@@ -17,6 +17,12 @@ module Constraints
     end
   end
 
+  def forbid_x509_auth
+    before(:all) do
+      skip 'X.509 auth not allowed' if SpecConfig.instance.x509_auth?
+    end
+  end
+
   def max_bson_version(version)
     required_version = version.split('.').map(&:to_i)
     actual_version = bson_version(required_version.length)

@@ -190,12 +190,13 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def modern_read_with_retry(session, server_selector, &block)
-        yield select_server(cluster, server_selector, session)
+        server = select_server(cluster, server_selector, session)
+        yield server
       rescue *retryable_exceptions, Error::OperationFailure, Auth::Unauthorized, Error::PoolError => e
         e.add_notes('modern retry', 'attempt 1')
         raise e if session.in_transaction?
         raise e if !is_retryable_exception?(e) && !e.write_retryable?
-        retry_read(e, session, server_selector, &block)
+        retry_read(e, session, server_selector, failed_server: server, &block)
       end
   
       # Attempts to do a "legacy" read with retry. The operation will be
@@ -257,12 +258,14 @@ module Mongo
       #   being run on.
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
+      # @param [ Mongo::Server ] failed_server The server on which the original
+      #   operation failed.
       # @param [ Proc ] block The block to execute.
       # 
       # @return [ Result ] The result of the operation.
-      def retry_read(original_error, session, server_selector, &block)
+      def retry_read(original_error, session, server_selector, failed_server: nil, &block)
         begin
-          server = select_server(cluster, server_selector, session)
+          server = select_server(cluster, server_selector, session, failed_server)
         rescue Error, Error::AuthError => e
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error
@@ -289,8 +292,6 @@ module Mongo
           raise original_error
         end
       end
-  
     end
-
   end
 end

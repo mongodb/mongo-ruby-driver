@@ -265,6 +265,10 @@ describe Mongo::Server::Connection do
       context 'when #authenticate! raises an exception' do
         require_auth
 
+        # because the mock/stub flow here doesn't cover the flow used by
+        # the X.509 authentication mechanism...
+        forbid_x509_auth
+
         let(:server_options) do
           Mongo::Client.canonicalize_ruby_options(
             SpecConfig.instance.all_test_options,

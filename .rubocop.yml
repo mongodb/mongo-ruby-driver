@@ -8,6 +8,7 @@ AllCops:
   NewCops: enable
   Exclude:
     - 'spec/shared/**/*'
+    - 'spec/faas/**/*'
     - 'vendor/**/*'
 
 Bundler:
@@ -50,6 +51,9 @@ Layout/SpaceInsideArrayLiteralBrackets:
 Layout/SpaceInsidePercentLiteralDelimiters:
   Enabled: false
 
+Metrics/ClassLength:
+  Max: 200
+
 Metrics/ModuleLength:
   Enabled: false
 
@@ -85,6 +89,9 @@ RSpec/NestedGroups:
 Style/Documentation:
   Exclude:
     - 'spec/**/*'
+
+Style/FormatStringToken:
+  Enabled: false
 
 Style/ModuleFunction:
   EnforcedStyle: extend_self

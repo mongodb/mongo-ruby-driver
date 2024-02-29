@@ -157,7 +157,7 @@ module Mongo
       # @sdam_flow_lock covers just the sdam flow. Note it does not apply
       # to @topology replacements which are done under @update_lock.
       @sdam_flow_lock = Mutex.new
-      Session::SessionPool.create(self)
+      @session_pool = Session::SessionPool.new(self)
 
       if seeds.empty? && load_balanced?
         raise ArgumentError, 'Load-balanced clusters with no seeds are prohibited'
@@ -185,6 +185,8 @@ module Mongo
         # Recreate the topology to get the current server list into it
         recreate_topology(topology, opening_topology)
       end
+
+      possibly_warn_about_compatibility!
 
       if load_balanced?
         # We are required by the specifications to produce certain SDAM events
@@ -1081,6 +1083,30 @@ module Mongo
         Monitoring::TOPOLOGY_CHANGED,
         Monitoring::Event::TopologyChanged.new(previous_topology, @topology)
       )
+    end
+
+    COSMOSDB_HOST_PATTERNS = %w[ .cosmos.azure.com ]
+    COSMOSDB_LOG_MESSAGE = 'You appear to be connected to a CosmosDB cluster. ' \
+      'For more information regarding feature compatibility and support please visit ' \
+      'https://www.mongodb.com/supportability/cosmosdb'
+
+    DOCUMENTDB_HOST_PATTERNS = %w[ .docdb.amazonaws.com .docdb-elastic.amazonaws.com ]
+    DOCUMENTDB_LOG_MESSAGE = 'You appear to be connected to a DocumentDB cluster. ' \
+      'For more information regarding feature compatibility and support please visit ' \
+      'https://www.mongodb.com/supportability/documentdb'
+
+    # Compares the server hosts with address suffixes of known services
+    # that provide limited MongoDB API compatibility, and warns about them.
+    def possibly_warn_about_compatibility!
+      if topology.server_hosts_match_any?(COSMOSDB_HOST_PATTERNS)
+        log_info COSMOSDB_LOG_MESSAGE
+        return
+      end
+
+      if topology.server_hosts_match_any?(DOCUMENTDB_HOST_PATTERNS)
+        log_info DOCUMENTDB_LOG_MESSAGE
+        return
+      end
     end
   end
 end

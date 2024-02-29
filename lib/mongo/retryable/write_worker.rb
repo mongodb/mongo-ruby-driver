@@ -103,8 +103,9 @@ module Mongo
       def nro_write_with_retry(write_concern, context:, &block)
         session = context.session
         server = select_server(cluster, ServerSelector.primary, session)
+        options = session&.client&.options || {}
         
-        if session&.client.options[:retry_writes]
+        if options[:retry_writes]
           begin
             server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, nil, context
@@ -240,7 +241,7 @@ module Mongo
 
         # Context#with creates a new context, which is not necessary here
         # but the API is less prone to misuse this way.
-        retry_write(e, txn_num, context: context.with(is_retry: true), &block)
+        retry_write(e, txn_num, context: context.with(is_retry: true), failed_server: server, &block)
       end
 
       # Called after a failed write, this will retry the write no more than
@@ -250,9 +251,11 @@ module Mongo
       #   retry.
       # @param [ Number ] txn_num The transaction number.
       # @param [ Operation::Context ] context The context for the operation.
+      # @param [ Mongo::Server ] failed_server The server on which the original
+      #   operation failed.
       #
       # @return [ Result ] The result of the operation.
-      def retry_write(original_error, txn_num, context:, &block)
+      def retry_write(original_error, txn_num, context:, failed_server: nil, &block)
         session = context.session
 
         # We do not request a scan of the cluster here, because error handling
@@ -260,7 +263,7 @@ module Mongo
         # server description and/or topology as necessary (specifically,
         # a socket error or a not master error should have marked the respective
         # server unknown). Here we just need to wait for server selection.
-        server = select_server(cluster, ServerSelector.primary, session)
+        server = select_server(cluster, ServerSelector.primary, session, failed_server)
         
         unless server.retry_writes?
           # Do not need to add "modern retry" here, it should already be on

@@ -87,8 +87,18 @@ describe Mongo::Server::AppMetadata do
     end
 
     context 'when run outside of a FaaS environment' do
-      it 'excludes the :env key from the client document' do
-        expect(app_metadata.client_document.key?(:env)).to be false
+      context 'when a container is present' do
+        local_env 'KUBERNETES_SERVICE_HOST' => 'something'
+
+        it 'includes the :env key in the client document' do
+          expect(app_metadata.client_document.key?(:env)).to be true
+        end
+      end
+
+      context 'when no container is present' do
+        it 'excludes the :env key from the client document' do
+          expect(app_metadata.client_document.key?(:env)).to be false
+        end
       end
     end
 

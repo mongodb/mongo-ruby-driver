@@ -339,7 +339,9 @@ module Mongo
     #     inserted or updated documents where the clustered index key value
     #     matches an existing value in the index.
     #   - *:name* -- Optional. A name that uniquely identifies the clustered index.
-    # @option opts [ Hash ] :collation The collation to use.
+    # @option opts [ Hash ] :collation The collation to use when creating the
+    #   collection. This option will not be sent to the server when calling
+    #   collection methods.
     # @option opts [ Hash ] :encrypted_fields Hash describing encrypted fields
     #   for queryable encryption.
     # @option opts [ Integer ] :expire_after Number indicating
@@ -788,7 +790,7 @@ module Mongo
     def insert_one(document, opts = {})
       QueryCache.clear_namespace(namespace)
 
-      client.send(:with_session, opts) do |session|
+      client.with_session(opts) do |session|
         write_concern = if opts[:write_concern]
           WriteConcern.get(opts[:write_concern])
         else

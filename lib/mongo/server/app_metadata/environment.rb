@@ -18,8 +18,11 @@ module Mongo
   class Server
     class AppMetadata
       # Implements the logic from the handshake spec, for deducing and
-      # reporting the current FaaS environment in which the program is
+      # reporting the current environment in which the program is
       # executing.
+      #
+      # This includes FaaS environment checks, as well as checks for the
+      # presence of a container (Docker) and/or orchestrator (Kubernetes).
       #
       # @api private
       class Environment
@@ -38,6 +41,10 @@ module Mongo
 
         # Error class for reporting that the value for a field is too long.
         class ValueTooLong < Mongo::Error; end
+
+        # The name and location of the .dockerenv file that will signal the
+        # presence of Docker.
+        DOCKERENV_PATH = '/.dockerenv'
 
         # This value is not explicitly specified in the spec, only implied to be
         # less than 512.
@@ -102,9 +109,11 @@ module Mongo
         # if the environment contains invalid or contradictory state, it will
         # be initialized with {{name}} set to {{nil}}.
         def initialize
+          @fields = {}
           @error = nil
           @name = detect_environment
-          populate_fields
+          populate_faas_fields
+          detect_container
         rescue TooManyEnvironments => e
           self.error = "too many environments detected: #{e.message}"
         rescue MissingVariable => e
@@ -113,6 +122,23 @@ module Mongo
           self.error = e.message
         rescue ValueTooLong => e
           self.error = "value for #{e.message} is too long"
+        end
+
+        # Queries the detected container information.
+        #
+        # @return [ Hash | nil ] the detected container information, or
+        #    nil if no container was detected.
+        def container
+          fields[:container]
+        end
+
+        # Queries whether any environment information was able to be
+        # detected.
+        #
+        # @return [ true | false ] if any environment information was
+        #   detected.
+        def present?
+          @name || fields.any?
         end
 
         # Queries whether the current environment is a valid FaaS environment.
@@ -159,14 +185,11 @@ module Mongo
           @name == 'vercel'
         end
 
-        # Compiles the detected environment information into a Hash. It will
-        # always include a {{name}} key, but may include other keys as well,
-        # depending on the detected FaaS environment. (See the handshake
-        # spec for details.)
+        # Compiles the detected environment information into a Hash.
         #
         # @return [ Hash ] the detected environment information.
         def to_h
-          fields.merge(name: name)
+          name ? fields.merge(name: name) : fields
         end
 
         private
@@ -192,6 +215,38 @@ module Mongo
           names.first
         end
 
+        # Looks for the presence of a container. Currently can detect
+        # Docker (by the existence of a .dockerenv file in the root
+        # directory) and Kubernetes (by the existence of the KUBERNETES_SERVICE_HOST
+        # environment variable).
+        def detect_container
+          runtime = docker_present? && 'docker'
+          orchestrator = kubernetes_present? && 'kubernetes'
+
+          return unless runtime || orchestrator
+
+          fields[:container] = {}
+          fields[:container][:runtime] = runtime if runtime
+          fields[:container][:orchestrator] = orchestrator if orchestrator
+        end
+
+        # Checks for the existence of a .dockerenv in the root directory.
+        def docker_present?
+          File.exist?(dockerenv_path)
+        end
+
+        # Implementing this as a method so that it can be mocked in tests, to
+        # test the presence or absence of Docker.
+        def dockerenv_path
+          DOCKERENV_PATH
+        end
+
+        # Checks for the presence of a non-empty KUBERNETES_SERVICE_HOST
+        # environment variable.
+        def kubernetes_present?
+          !ENV['KUBERNETES_SERVICE_HOST'].to_s.empty?
+        end
+
         # Determines whether the named environment variable exists, and (if
         # a pattern has been declared for that descriminator) whether the
         # pattern matches the value of the variable.
@@ -212,10 +267,10 @@ module Mongo
         # Extracts environment information from the current environment
         # variables, based on the detected FaaS environment. Populates the
         # {{@fields}} instance variable.
-        def populate_fields
+        def populate_faas_fields
           return unless name
 
-          @fields = FIELDS[name].each_with_object({}) do |(var, defn), fields|
+          FIELDS[name].each_with_object(@fields) do |(var, defn), fields|
             fields[defn[:field]] = extract_field(var, defn)
           end
         end
