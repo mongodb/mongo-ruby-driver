@@ -2,7 +2,7 @@
 
 # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength
 def standard_dependencies
-  gem 'yard'
+  gem 'yard', '>= 0.9.35'
   gem 'ffi'
 
   group :development, :testing do
