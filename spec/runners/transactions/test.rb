@@ -131,8 +131,6 @@ module Mongo
       def test_client
         @test_client ||= begin
           sdam_proc = lambda do |test_client|
-            test_client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
-
             test_client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, sdam_subscriber)
             test_client.subscribe(Mongo::Monitoring::SERVER_OPENING, sdam_subscriber)
             test_client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, sdam_subscriber)
@@ -179,7 +177,11 @@ module Mongo
               database: @spec.database_name,
               auth_source: SpecConfig.instance.auth_options[:auth_source] || 'admin',
               sdam_proc: sdam_proc,
-            ).merge(@client_options))
+            ).merge(@client_options)).tap do |client|
+              # DRIVERS-2816, adjusted for legacy spec runner
+              @cluster_time = client.command(ping: 1).cluster_time
+              client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
+            end
         end
       end
 
@@ -358,12 +360,19 @@ module Mongo
         end
       end
 
+      def new_session(options)
+        test_client.start_session(options || {}).tap do |s|
+          # DRIVERS-2816, adjusted for legacy spec runner
+          s.advance_cluster_time(@cluster_time)
+        end
+      end
+
       def session0
-        @session0 ||= test_client.start_session(@session_options[:session0] || {})
+        @session0 ||= new_session(@session_options[:session0])
       end
 
       def session1
-        @session1 ||= test_client.start_session(@session_options[:session1] || {})
+        @session1 ||= new_session(@session_options[:session1])
       end
     end
   end
