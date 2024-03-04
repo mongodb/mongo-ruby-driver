@@ -7,7 +7,7 @@ gemfile true do
   source 'https://rubygems.org'
   gem 'nokogiri'
   gem 'aws-sdk-s3'
-  gem 'yard'
+  gem 'yard', '>= 0.9.35'
 end
 
 require 'aws-sdk-s3'
@@ -113,8 +113,12 @@ def generate_docs(options)
     '--exclude', './spec',
     '--readme', './README.md',
     '-o', options[:docs_path]
-    File.delete(File.join(options[:docs_path], 'frames.html')) rescue nil
   )
+  begin
+    File.delete(File.join(options[:docs_path], 'frames.html'))
+  rescue StandardError
+    nil
+  end
 end
 
 options = Options.new
