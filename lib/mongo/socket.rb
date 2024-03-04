@@ -230,6 +230,7 @@ module Mongo
     # Writes data to the socket instance.
     #
     # @param [ Array<Object> ] args The data to be written.
+    # @param [ Numeric ] timeout The total timeout to the whole write operation.
     #
     # @return [ Integer ] The length of bytes written to the socket.
     #
@@ -262,6 +263,13 @@ module Mongo
 
     private
 
+    # Reads the +length+ bytes from the socket, the read operation duration is
+    # limited to +timeout+ second.
+    #
+    # @param [ Integer ] length The number of bytes to read.
+    # @param [ Numeric ] timeout The total timeout to the whole read operation.
+    #
+    # @return [ Object ] The data from the socket.
     def read_with_timeout(length, timeout)
       deadline = Utils.monotonic_time + timeout
       map_exceptions do
@@ -288,6 +296,14 @@ module Mongo
       end
     end
 
+    # Reads the +length+ bytes from the socket. The read operation may involve
+    # multiple socket reads, each read is limited to +timeout+ second,
+    # if the parameter is provided.
+    #
+    # @param [ Integer ] length The number of bytes to read.
+    # @param [ Numeric ] socket_timeout The timeout to use for each chunk read.
+    #
+    # @return [ Object ] The data from the socket.
     def read_without_timeout(length, socket_timeout = nil)
       map_exceptions do
         data = read_from_socket(length, socket_timeout: socket_timeout)
@@ -305,6 +321,16 @@ module Mongo
       end
     end
 
+
+    # Reads the +length+ bytes from the socket. The read operation may involve
+    # multiple socket reads, each read is limited to +timeout+ second,
+    # if the parameter is provided.
+    #
+    # @param [ Integer ] length The number of bytes to read.
+    # @param [ Numeric ] :socket_timeout The timeout to use for each chunk read.
+    # @param [ true | false ] :csot Whether the CSOT timeout is set for the operation.
+    #
+    # @return [ Object ] The data from the socket.
     def read_from_socket(length, socket_timeout: nil, csot: false)
       # Just in case
       if length == 0
@@ -442,6 +468,7 @@ module Mongo
     # sholud map exceptions.
     #
     # @param [ Array<Object> ] args The data to be written.
+    # @param [ Numeric ] :timeout The total timeout to the whole write operation.
     #
     # @return [ Integer ] The length of bytes written to the socket.
     def do_write(*args, timeout: nil)
@@ -452,6 +479,11 @@ module Mongo
       end
     end
 
+    # Writes data to to the socket.
+    #
+    # @param [ Array<Object> ] args The data to be written.
+    #
+    # @return [ Integer ] The length of bytes written to the socket.
     def write_without_timeout(*args)
       # This method used to forward arguments to @socket.write in a
       # single call like so:
@@ -476,6 +508,12 @@ module Mongo
       end
     end
 
+    # Writes data to to the socket, the write duration is limited to +timeout+.
+    #
+    # @param [ Array<Object> ] args The data to be written.
+    # @param [ Numeric ] :timeout The total timeout to the whole write operation.
+    #
+    # @return [ Integer ] The length of bytes written to the socket.
     def write_with_timeout(*args, timeout:)
       raise ArgumentError, 'timeout cannot be nil' if timeout.nil?
       raise_timeout_error!("Negative timeout #{timeout} given to socket", true) if timeout < 0

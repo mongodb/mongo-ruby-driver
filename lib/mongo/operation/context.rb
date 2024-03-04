@@ -151,10 +151,6 @@ module Mongo
         end
       end
 
-      def csot?
-        !@timeout_ms.nil? && @timout_ms > 0
-      end
-
       def remaining_timeout_sec
         return nil if @timeout_ms.nil? || @timeout_ms == 0
 
