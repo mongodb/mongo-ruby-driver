@@ -267,18 +267,18 @@ module Mongo
       map_exceptions do
         socket_timeout = deadline - Utils.monotonic_time
         if socket_timeout <= 0
-          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+          raise Mongo::Error::TimeoutError
         end
-        data = read_from_socket(length, socket_timeout: socket_timeout)
+        data = read_from_socket(length, socket_timeout: socket_timeout, csot: true)
         unless (data.length > 0 || length == 0)
           raise IOError, "Expected to read > 0 bytes but read 0 bytes"
         end
         while data.length < length
           socket_timeout = deadline - Utils.monotonic_time
           if socket_timeout <= 0
-            raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+            raise Mongo::Error::TimeoutError
           end
-          chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout)
+          chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout, csot: true)
           unless (chunk.length > 0 || length == 0)
             raise IOError, "Expected to read > 0 bytes but read 0 bytes"
           end
@@ -305,7 +305,7 @@ module Mongo
       end
     end
 
-    def read_from_socket(length, socket_timeout: nil)
+    def read_from_socket(length, socket_timeout: nil, csot: false)
       # Just in case
       if length == 0
         return ''.force_encoding('BINARY')
@@ -316,7 +316,7 @@ module Mongo
         if _timeout > 0
           deadline = Utils.monotonic_time + _timeout
         elsif _timeout < 0
-          raise Errno::ETIMEDOUT, "Negative timeout #{_timeout} given to socket"
+          raise_timeout_error!("Negative timeout #{_timeout} given to socket", csot)
         end
       end
 
@@ -371,7 +371,7 @@ module Mongo
         if deadline
           select_timeout = deadline - Utils.monotonic_time
           if select_timeout <= 0
-            raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+            raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot)
           end
         end
         pipe = options[:pipe]
@@ -413,11 +413,11 @@ module Mongo
           if deadline
             select_timeout = deadline - Utils.monotonic_time
             if select_timeout <= 0
-              raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+              raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot)
             end
           end
         elsif rv.nil?
-          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data (select call timed out)"
+          raise_timeout_error!("Took more than #{_timeout} seconds to receive data (select call timed out)", csot)
         end
         retry
       end
@@ -478,7 +478,7 @@ module Mongo
 
     def write_with_timeout(*args, timeout:)
       raise ArgumentError, 'timeout cannot be nil' if timeout.nil?
-      raise Errno::ETIMEDOUT, "Negative timeout #{timeout} given to socket" if timeout < 0
+      raise_timeout_error!("Negative timeout #{timeout} given to socket", true) if timeout < 0
 
       written = 0
       args.each do |buf|
@@ -510,11 +510,11 @@ module Mongo
           if deadline
             select_timeout = deadline - Utils.monotonic_time
             if select_timeout <= 0
-              raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data"
+              raise_timeout_error!("Took more than #{timeout} seconds to receive data", true)
             end
           end
         elsif rv.nil?
-          raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data (select call timed out)"
+          raise_timeout_error!("Took more than #{timeout} seconds to receive data (select call timed out)", true)
         end
         retry
       end
@@ -574,6 +574,14 @@ module Mongo
 
     def human_address
       raise NotImplementedError
+    end
+
+    def raise_timeout_error!(message = nil, csot = false)
+      if csot
+        raise Mongo::Error::TimeoutError
+      else
+        raise Errno::ETIMEDOUT, message
+      end
     end
   end
 end
