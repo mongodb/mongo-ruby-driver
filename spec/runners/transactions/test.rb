@@ -131,6 +131,7 @@ module Mongo
       def test_client
         @test_client ||= begin
           sdam_proc = lambda do |test_client|
+            test_client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
             test_client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, sdam_subscriber)
             test_client.subscribe(Mongo::Monitoring::SERVER_OPENING, sdam_subscriber)
             test_client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, sdam_subscriber)
@@ -177,11 +178,7 @@ module Mongo
               database: @spec.database_name,
               auth_source: SpecConfig.instance.auth_options[:auth_source] || 'admin',
               sdam_proc: sdam_proc,
-            ).merge(@client_options)).tap do |client|
-              # DRIVERS-2816, adjusted for legacy spec runner
-              @cluster_time = client.command(ping: 1).cluster_time
-              client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
-            end
+            ).merge(@client_options))
         end
       end
 
@@ -323,6 +320,9 @@ module Mongo
         # without auto_encryption_options for querying results.
         result_collection_name = outcome&.collection_name || @spec.collection_name
         @result_collection = support_client.use(@spec.database_name)[result_collection_name]
+
+        # DRIVERS-2816, adjusted for legacy spec runner
+        @cluster_time = support_client.command(ping: 1).cluster_time
       end
 
       def teardown_test
