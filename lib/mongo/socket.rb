@@ -299,18 +299,15 @@ module Mongo
     # @return [ Object ] The data from the socket.
     def read_without_timeout(length, socket_timeout = nil)
       map_exceptions do
-        data = read_from_socket(length, socket_timeout: socket_timeout)
-        unless (data.length > 0 || length == 0)
-          raise IOError, "Expected to read > 0 bytes but read 0 bytes"
-        end
-        while data.length < length
-          chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout)
-          unless (chunk.length > 0 || length == 0)
-            raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+        "".tap do |data|
+          while data.length < length
+            chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout)
+            unless chunk.length > 0
+              raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+            end
+            data << chunk
           end
-          data << chunk
         end
-        data
       end
     end
 
