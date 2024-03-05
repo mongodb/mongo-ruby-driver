@@ -134,8 +134,10 @@ module Mongo
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
     #   - *:local_threshold*.
-    # @option opts [ Session ] :session The session to use for the operation.
-    # @option opts [ Integer ] :size The size of the capped collection.
+    # @option options [ Session ] :session The session to use for the operation.
+    # @option options [ Integer ] :size The size of the capped collection.
+    # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     # @option opts [ Hash ] :time_series Create a time-series collection.
     #   The hash may have the following items:
     #   - *:timeField* -- The name of the field which contains the date in each
@@ -362,6 +364,8 @@ module Mongo
     #   - *:granularity* -- Set the granularity to the value that is the closest
     #     match to the time span between consecutive incoming measurements.
     #     Possible values are "seconds" (default), "minutes", and "hours".
+    # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     # @option opts [ Hash ] :validator Hash describing document validation
     #   options for the collection.
     # @option opts [ String ] :view_on The name of the source collection or

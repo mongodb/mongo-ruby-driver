@@ -1188,6 +1188,7 @@ module Mongo
       @encrypted_fields_map ||= @options.fetch(:auto_encryption_options, {})[:encrypted_fields_map]
     end
 
+    # @return [ Integer | nil ] Value of timeout_ms option if set.
     # @api private
     def timeout_ms
       @options[:timeout_ms]
