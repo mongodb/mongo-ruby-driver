@@ -273,7 +273,7 @@ module Mongo
     def read_with_timeout(length, timeout)
       deadline = Utils.monotonic_time + timeout
       map_exceptions do
-        "".tap do |data|
+        String.new.tap do |data|
           while data.length < length
             socket_timeout = deadline - Utils.monotonic_time
             if socket_timeout <= 0
@@ -299,7 +299,7 @@ module Mongo
     # @return [ Object ] The data from the socket.
     def read_without_timeout(length, socket_timeout = nil)
       map_exceptions do
-        "".tap do |data|
+        String.new.tap do |data|
           while data.length < length
             chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout)
             unless chunk.length > 0
