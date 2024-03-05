@@ -273,26 +273,19 @@ module Mongo
     def read_with_timeout(length, timeout)
       deadline = Utils.monotonic_time + timeout
       map_exceptions do
-        socket_timeout = deadline - Utils.monotonic_time
-        if socket_timeout <= 0
-          raise Mongo::Error::TimeoutError
-        end
-        data = read_from_socket(length, socket_timeout: socket_timeout, csot: true)
-        unless (data.length > 0 || length == 0)
-          raise IOError, "Expected to read > 0 bytes but read 0 bytes"
-        end
-        while data.length < length
-          socket_timeout = deadline - Utils.monotonic_time
-          if socket_timeout <= 0
-            raise Mongo::Error::TimeoutError
+        "".tap do |data|
+          while data.length < length
+            socket_timeout = deadline - Utils.monotonic_time
+            if socket_timeout <= 0
+              raise Mongo::Error::TimeoutError
+            end
+            chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout, csot: true)
+            unless chunk.length > 0
+              raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+            end
+            data << chunk
           end
-          chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout, csot: true)
-          unless (chunk.length > 0 || length == 0)
-            raise IOError, "Expected to read > 0 bytes but read 0 bytes"
-          end
-          data << chunk
         end
-        data
       end
     end
 
