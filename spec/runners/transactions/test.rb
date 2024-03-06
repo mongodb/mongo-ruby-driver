@@ -132,7 +132,6 @@ module Mongo
         @test_client ||= begin
           sdam_proc = lambda do |test_client|
             test_client.subscribe(Mongo::Monitoring::COMMAND, command_subscriber)
-
             test_client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, sdam_subscriber)
             test_client.subscribe(Mongo::Monitoring::SERVER_OPENING, sdam_subscriber)
             test_client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, sdam_subscriber)
@@ -321,6 +320,9 @@ module Mongo
         # without auto_encryption_options for querying results.
         result_collection_name = outcome&.collection_name || @spec.collection_name
         @result_collection = support_client.use(@spec.database_name)[result_collection_name]
+
+        # DRIVERS-2816, adjusted for legacy spec runner
+        @cluster_time = support_client.command(ping: 1).cluster_time
       end
 
       def teardown_test
@@ -358,12 +360,19 @@ module Mongo
         end
       end
 
+      def new_session(options)
+        test_client.start_session(options || {}).tap do |s|
+          # DRIVERS-2816, adjusted for legacy spec runner
+          s.advance_cluster_time(@cluster_time)
+        end
+      end
+
       def session0
-        @session0 ||= test_client.start_session(@session_options[:session0] || {})
+        @session0 ||= new_session(@session_options[:session0])
       end
 
       def session1
-        @session1 ||= test_client.start_session(@session_options[:session1] || {})
+        @session1 ||= new_session(@session_options[:session1])
       end
     end
   end
