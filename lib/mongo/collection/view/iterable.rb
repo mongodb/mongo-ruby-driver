@@ -197,7 +197,12 @@ module Mongo
         end
 
         def send_initial_query(server, session = nil)
-          initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            timeout_ms: timeout_ms
+          )
+          initial_query_op(session).execute(server, context: )
         end
 
         def use_query_cache?

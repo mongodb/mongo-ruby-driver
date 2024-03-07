@@ -46,11 +46,13 @@ module Mongo
         # @option opts [ Session ] :session The session to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        # @option opts [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
-        # @option options [ Object ] :comment A user-provided
+        # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
         #
         # @return [ BSON::Document, nil ] The document, if found.
@@ -80,7 +82,11 @@ module Mongo
               comment: opts[:comment],
             }.compact
 
-            context = Operation::Context.new(client: client, session: session)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              timeout_ms: timeout_ms(opts)
+            )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_4 = connection.server.description.server_version_gte?('4.4')
               if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
@@ -116,9 +122,11 @@ module Mongo
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        # @option opts [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
         #
         # @return [ BSON::Document ] The document.
@@ -136,7 +144,7 @@ module Mongo
         # @param [ BSON::Document ] document The updates.
         # @param [ Hash ] opts The options.
         #
-        # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
+        # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
         #   to run in milliseconds.
         # @option opts [ Hash ] :projection The fields to include or exclude in the returned doc.
         # @option opts [ Hash ] :sort The key and direction pairs by which the result set
@@ -149,13 +157,15 @@ module Mongo
         # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
         # an update should apply.
         # @option opts [ Session ] :session The session to use.
+        # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        # @option opts [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
-        # @option options [ Object ] :comment A user-provided
+        # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
         #
         # @return [ BSON::Document | nil ] The document or nil if none is found.
@@ -188,7 +198,11 @@ module Mongo
               comment: opts[:comment]
             }.compact
 
-            context = Operation::Context.new(client: client, session: session)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              timeout_ms: timeout_ms(opts)
+            )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_4 = connection.server.description.server_version_gte?('4.4')
               if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
@@ -216,13 +230,15 @@ module Mongo
         #
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Session ] :session The session to use.
+        # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        # @option opts [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
-        # @option options [ Object ] :comment A user-provided
+        # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
@@ -245,7 +261,11 @@ module Mongo
               collation: opts[:collation] || opts['collation'] || collation,
             }.compact
 
-            context = Operation::Context.new(client: client, session: session)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              timeout_ms: timeout_ms(opts)
+            )
             nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_4 = connection.server.description.server_version_gte?('4.4')
               if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
@@ -274,15 +294,17 @@ module Mongo
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Hash ] :collation The collation to use.
-        # @option opts [ Session ] :session The session to use.
+        # @option opts [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
+        # @option opts [ Session ] :session The session to use.
+        # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-        # @option options [ Hash ] :let Mapping of variables to use in the command.
-        #   See the server documentation for details.
-        # @option options [ Object ] :comment A user-provided
-        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -304,7 +326,11 @@ module Mongo
               collation: opts[:collation] || opts['collation'] || collation,
             }.compact
 
-            context = Operation::Context.new(client: client, session: session)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              timeout_ms: timeout_ms(opts)
+            )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_4 = connection.server.description.server_version_gte?('4.4')
               if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
@@ -334,20 +360,22 @@ module Mongo
         # @param [ Hash ] replacement The replacement document.
         # @param [ Hash ] opts The options.
         #
-        # @option opts [ true, false ] :upsert Whether to upsert if the
-        #   document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
         # @option opts [ Hash ] :collation The collation to use.
-        # @option opts [ Session ] :session The session to use.
+        # @option opts [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
-        # @option opts [ Hash ] :write_concern The write concern options.
-        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-        # @option options [ Hash ] :let Mapping of variables to use in the command.
+        # @option opts [ Hash ] :let Mapping of variables to use in the command.
         #   See the server documentation for details.
-        # @option options [ Object ] :comment A user-provided
-        #   comment to attach to this command.
+        # @option opts [ Session ] :session The session to use.
+        # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
+        # @option opts [ Hash ] :write_concern The write concern options.
+        # @option opts [ true, false ] :upsert Whether to upsert if the
+        #   document doesn't exist.
+        #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
         # @return [ Result ] The response from the database.
         #
@@ -374,7 +402,11 @@ module Mongo
               update_doc['upsert'] = true
             end
 
-            context = Operation::Context.new(client: client, session: session)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              timeout_ms: timeout_ms(opts)
+            )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_2 = connection.server.description.server_version_gte?('4.2')
               if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
@@ -404,22 +436,24 @@ module Mongo
         # @param [ Hash | Array<Hash> ] spec The update document or pipeline.
         # @param [ Hash ] opts The options.
         #
-        # @option opts [ true, false ] :upsert Whether to upsert if the
-        #   document doesn't exist.
+        # @option opts [ Array ] :array_filters A set of filters specifying to
+        #   which array elements an update should apply.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
         # @option opts [ Hash ] :collation The collation to use.
-        # @option opts [ Array ] :array_filters A set of filters specifying to
-        #   which array elements an update should apply.
-        # @option opts [ Session ] :session The session to use.
+        # @option opts [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
+        # @option opts [ Session ] :session The session to use.
+        # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
+        # @option opts [ true, false ] :upsert Whether to upsert if the
+        #   document doesn't exist.
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-        # @option options [ Hash ] :let Mapping of variables to use in the command.
-        #   See the server documentation for details.
-        # @option options [ Object ] :comment A user-provided
-        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -447,7 +481,11 @@ module Mongo
               update_doc['upsert'] = true
             end
 
-            context = Operation::Context.new(client: client, session: session)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              timeout_ms: timeout_ms(opts)
+            )
             nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_2 = connection.server.description.server_version_gte?('4.2')
               if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
@@ -476,22 +514,24 @@ module Mongo
         # @param [ Hash | Array<Hash> ] spec The update document or pipeline.
         # @param [ Hash ] opts The options.
         #
-        # @option opts [ true, false ] :upsert Whether to upsert if the
-        #   document doesn't exist.
+        # @option opts [ Array ] :array_filters A set of filters specifying to
+        #   which array elements an update should apply.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
         # @option opts [ Hash ] :collation The collation to use.
-        # @option opts [ Array ] :array_filters A set of filters specifying to
-        #   which array elements an update should apply.
-        # @option opts [ Session ] :session The session to use.
+        # @option opts [ Object ] :comment A user-provided
+        #   comment to attach to this command.
         # @option opts [ Hash | String ] :hint The index to use for this operation.
         #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+        # @option opts [ Hash ] :let Mapping of variables to use in the command.
+        #   See the server documentation for details.
+        # @option opts [ Session ] :session The session to use.
+        # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
+        # @option opts [ true, false ] :upsert Whether to upsert if the
+        #   document doesn't exist.
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
-        # @option options [ Hash ] :let Mapping of variables to use in the command.
-        #   See the server documentation for details.
-        # @option options [ Object ] :comment A user-provided
-        #   comment to attach to this command.
         #
         # @return [ Result ] The response from the database.
         #
@@ -518,7 +558,11 @@ module Mongo
               update_doc['upsert'] = true
             end
 
-            context = Operation::Context.new(client: client, session: session)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              timeout_ms: timeout_ms(opts)
+            )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_2 = connection.server.description.server_version_gte?('4.2')
               if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?

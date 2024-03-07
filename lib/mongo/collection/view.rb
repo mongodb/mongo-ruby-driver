@@ -152,6 +152,8 @@ module Mongo
       #   document more than once. Deprecated as of MongoDB server version 4.0.
       # @option options [ Hash ] :sort The key and direction pairs used to sort
       #   the results.
+      # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+      #   Must a positive integer. The default value is unset which means infinite.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
@@ -213,6 +215,14 @@ module Mongo
 
       def with_session(opts = {}, &block)
         client.send(:with_session, @options.merge(opts), &block)
+      end
+
+      def timeout_ms(opts = {})
+        if opts.key?(:timeout_ms)
+          opts.delete(:timeout_ms)
+        else
+          @options.fetch(:timeout_ms) { collection.timeout_ms }
+        end
       end
     end
   end
