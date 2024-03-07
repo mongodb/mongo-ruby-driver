@@ -202,7 +202,7 @@ module Mongo
             session: session,
             timeout_ms: timeout_ms
           )
-          initial_query_op(session).execute(server, context: )
+          initial_query_op(session).execute(server, context: context)
         end
 
         def use_query_cache?
