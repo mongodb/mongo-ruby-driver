@@ -411,6 +411,11 @@ module Unified
 
             public_send(method_name, op)
           rescue Mongo::Error, bson_error, Mongo::Auth::Unauthorized, ArgumentError => e
+            if expected_error.use('isTimeoutError')
+              unless Mongo::Error::TimeoutError === e
+                raise Error::ErrorMismatch, %Q,Expected TimeoutError ("isTimeoutError") but got #{e},
+              end
+            end
             if expected_error.use('isClientError')
               # isClientError doesn't actually mean a client error.
               # It means anything other than OperationFailure. DRIVERS-1799

@@ -653,6 +653,15 @@ module Mongo
           configure(:cursor_type, type)
         end
 
+        # The per-operation timeout in milliseconds. Must a positive integer.
+        #
+        # @param [ Integer ] timeout_ms Timeout value.
+        #
+        # @return [ Integer, View ] Either the timeout_ms value or a new +View+.
+        def timeout_ms(timeout_ms = nil)
+          configure(:timeout_ms, timeout_ms)
+        end
+
         # @api private
         def read_concern
           if options[:session] && options[:session].in_transaction?

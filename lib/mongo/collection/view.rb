@@ -218,10 +218,10 @@ module Mongo
       end
 
       def timeout_ms(opts = {})
-        if opts.key?(:timeout_ms)
-          opts.delete(:timeout_ms)
+        if opts[:timeout_ms].nil?
+          options[:timeout_ms] || database.timeout_ms
         else
-          @options.fetch(:timeout_ms) { collection.timeout_ms }
+          opts.delete(:timeout_ms)
         end
       end
     end
