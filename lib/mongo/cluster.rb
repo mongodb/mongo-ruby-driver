@@ -779,16 +779,18 @@ module Mongo
     #   Deprecated and ignored.
     # @param [ Session | nil ] session Optional session to take into account
     #   for mongos pinning.
+    # @param [ Float | nil ] :timeout Timeout in seconds for the operation,
+    #   if any.
     #
     # @return [ Mongo::Server ] A primary server.
     #
     # @since 2.0.0
-    def next_primary(ping = nil, session = nil, remaining_timeout_ms: nil)
+    def next_primary(ping = nil, session = nil, timeout: nil)
       ServerSelector.primary.select_server(
         self,
         nil,
         session,
-        remaining_timeout_ms: remaining_timeout_ms
+        timeout: timeout
       )
     end
 

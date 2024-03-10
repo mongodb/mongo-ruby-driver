@@ -46,13 +46,13 @@ module Mongo
     # @api private
     #
     # @return [ Mongo::Server ] A server matching the server preference.
-    def select_server(cluster, server_selector, session, failed_server = nil, remaining_timeout_ms: nil)
+    def select_server(cluster, server_selector, session, failed_server = nil, timeout: nil)
       server_selector.select_server(
         cluster,
         nil,
         session,
         deprioritized: [failed_server].compact,
-        remaining_timeout_ms: remaining_timeout_ms
+        timeout: timeout
       )
     end
 

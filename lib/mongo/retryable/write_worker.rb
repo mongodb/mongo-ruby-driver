@@ -77,7 +77,7 @@ module Mongo
         server = select_server(
           cluster, ServerSelector.primary,
           session,
-          remaining_timeout_ms: context.remaining_timeout_ms
+          timeout: context.remaining_timeout_sec
         )
 
         unless ending_transaction || server.retry_writes?
@@ -185,7 +185,7 @@ module Mongo
             cluster,
             ServerSelector.primary,
             session,
-            remaining_timeout_ms: context.remaining_timeout_ms
+            timeout: context.remaining_timeout_sec
           )
           server.with_connection(
             connection_global_id: context.connection_global_id,
@@ -283,7 +283,7 @@ module Mongo
           ServerSelector.primary,
           session,
           failed_server,
-          remaining_timeout_ms: context.remaining_timeout_ms
+          timeout: context.remaining_timeout_sec
         )
         
         unless server.retry_writes?
