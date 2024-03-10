@@ -53,6 +53,8 @@ module Mongo
         #   as of server version 3.6, aggregations always provide results using a
         #   cursor and this option is therefore not valid.
         # @option options [ Session ] :session The session to use.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @return [ Aggregation ] The aggregation object.
         #
@@ -157,6 +159,8 @@ module Mongo
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @return [ Integer ] The document count.
         #
@@ -193,7 +197,14 @@ module Mongo
                 # string key. Note that this isn't documented as valid usage.
                 collation: opts[:collation] || opts['collation'] || collation,
                 comment: opts[:comment],
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
+              ).execute(
+                server,
+                context: Operation::Context.new(
+                  client: client,
+                  session: session,
+                  timeout_ms: timeout_ms(opts)
+                )
+              )
             end.n.to_i
           end
         end
@@ -216,6 +227,8 @@ module Mongo
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
         # @option ops [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @return [ Integer ] The document count.
         #
@@ -247,6 +260,8 @@ module Mongo
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @return [ Integer ] The document count.
         #
@@ -268,7 +283,11 @@ module Mongo
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
             read_with_retry(session, selector) do |server|
-              context = Operation::Context.new(client: client, session: session)
+              context = Operation::Context.new(
+                client: client,
+                session: session,
+                timeout_ms: timeout_ms(opts)
+              )
               cmd = { count: collection.name }
               cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
               if read_concern
@@ -342,7 +361,14 @@ module Mongo
                 # For some reason collation was historically accepted as a
                 # string key. Note that this isn't documented as valid usage.
                 collation: opts[:collation] || opts['collation'] || collation,
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
+              ).execute(
+                server,
+                context: Operation::Context.new(
+                  client: client,
+                  session: session,
+                  timeout_ms: timeout_ms(opts)
+                )
+              )
             end.first['values']
           end
         end
@@ -625,6 +651,15 @@ module Mongo
         # @since 2.3.0
         def cursor_type(type = nil)
           configure(:cursor_type, type)
+        end
+
+        # The per-operation timeout in milliseconds. Must a positive integer.
+        #
+        # @param [ Integer ] timeout_ms Timeout value.
+        #
+        # @return [ Integer, View ] Either the timeout_ms value or a new +View+.
+        def timeout_ms(timeout_ms = nil)
+          configure(:timeout_ms, timeout_ms)
         end
 
         # @api private
