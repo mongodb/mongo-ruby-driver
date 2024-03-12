@@ -155,8 +155,8 @@ module Mongo
       # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
       #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
       #   iteration).
-      # @option options [ Integer ] :timeout_ms The maximum amount of time to
-      #   allow the query to run, in milliseconds.
+      # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+      #   Must a positive integer. The default value is unset which means infinite.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
@@ -219,6 +219,14 @@ module Mongo
 
       def with_session(opts = {}, &block)
         client.send(:with_session, @options.merge(opts), &block)
+      end
+
+      def timeout_ms(opts = {})
+        if opts[:timeout_ms].nil?
+          options[:timeout_ms] || database.timeout_ms
+        else
+          opts.delete(:timeout_ms)
+        end
       end
     end
   end

@@ -94,6 +94,8 @@ module Mongo
         # @option options [ Integer ] :timeout_ms The maximum amount of time to
         #   allow the query to run, in milliseconds.
         # @option options [ Session ] :session The session to use.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @since 2.0.0
         def initialize(view, pipeline, options = {})
@@ -185,13 +187,18 @@ module Mongo
         end
 
         def send_initial_query(server, session)
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            timeout_ms: timeout_ms
+          )
           server.with_connection do |connection|
             initial_query_op(
               session,
               effective_read_preference(connection)
             ).execute_with_connection(
               connection,
-              context: Operation::Context.new(client: client, session: session)
+              context: context
             )
           end
         end
@@ -209,6 +216,14 @@ module Mongo
             # so they will be cleared on every write operation.
             multi_collection: true,
           }
+        end
+
+        def timeout_ms(opts = {})
+          if opts[:timeout_ms].nil?
+            options[:timeout_ms] || database.timeout_ms
+          else
+            opts.delete(:timeout_ms)
+          end
         end
       end
     end

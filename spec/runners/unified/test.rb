@@ -227,7 +227,9 @@ module Unified
             opts = {}
           end
 
-          client.start_session(**opts)
+          client.start_session(**opts).tap do |session|
+            session.advance_cluster_time(@cluster_time)
+          end
         when 'clientEncryption'
           client_encryption_opts = spec.use!('clientEncryptionOpts')
           key_vault_client = entities.get(:client, client_encryption_opts['keyVaultClient'])
@@ -342,6 +344,11 @@ module Unified
           raise NotImplementedError, "Unhandled spec keys: #{spec}"
         end
       end
+
+      # the cluster time is used to advance the cluster time of any
+      # sessions created during this test.
+      # -> see DRIVERS-2816
+      @cluster_time = root_authorized_client.command(ping: 1).cluster_time
     end
 
     def run
@@ -404,6 +411,11 @@ module Unified
 
             public_send(method_name, op)
           rescue Mongo::Error, bson_error, Mongo::Auth::Unauthorized, ArgumentError => e
+            if expected_error.use('isTimeoutError')
+              unless Mongo::Error::TimeoutError === e
+                raise Error::ErrorMismatch, %Q,Expected TimeoutError ("isTimeoutError") but got #{e},
+              end
+            end
             if expected_error.use('isClientError')
               # isClientError doesn't actually mean a client error.
               # It means anything other than OperationFailure. DRIVERS-1799

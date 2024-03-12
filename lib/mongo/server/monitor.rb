@@ -237,8 +237,11 @@ module Mongo
         @sdam_mutex.synchronize do
           old_description = server.description
 
-          new_description = Description.new(server.address, result,
-            average_round_trip_time: server.round_trip_time_calculator.average_round_trip_time
+          new_description = Description.new(
+            server.address,
+            result,
+            average_round_trip_time: server.round_trip_time_calculator.average_round_trip_time,
+            minimum_round_trip_time: server.round_trip_time_calculator.minimum_round_trip_time
           )
 
           server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited, scan_error: scan_error)

@@ -197,6 +197,7 @@ module Mongo
                    :max_message_size,
                    :tags,
                    :average_round_trip_time,
+                   :minimum_round_trip_time,
                    :mongos?,
                    :other?,
                    :primary?,

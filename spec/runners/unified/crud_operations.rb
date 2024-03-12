@@ -162,7 +162,8 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = {
-          comment: args.use('comment')
+          comment: args.use('comment'),
+          timeout_ms: args.use('timeoutMS')
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)

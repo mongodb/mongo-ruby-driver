@@ -495,7 +495,7 @@ module Mongo
     end
 
     def timeout_ms
-      options.fetch(:timeout_ms) { client.timeout_ms }
+      options[:timeout_ms] || client.timeout_ms
     end
   end
 end

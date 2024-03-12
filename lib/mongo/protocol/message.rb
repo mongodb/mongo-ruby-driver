@@ -244,10 +244,7 @@ module Mongo
         # timeout option. For compatibility with whoever might call this
         # method with some other IO-like object, pass options only when they
         # are not empty.
-        read_options = {}
-        if timeout = options[:socket_timeout]
-          read_options[:timeout] = timeout
-        end
+        read_options = options.slice(:timeout, :socket_timeout)
 
         if read_options.empty?
           chunk = io.read(16)

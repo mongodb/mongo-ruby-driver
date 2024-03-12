@@ -174,7 +174,11 @@ module Mongo
         end
 
         def send_initial_query(server, session = nil)
-          context = Operation::Context.new(client: client, session: session)
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            timeout_ms: timeout_ms
+          )
           initial_query_op(session).execute(server, context: context)
         end
 

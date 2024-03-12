@@ -155,7 +155,11 @@ module Mongo
           doc['serviceId'] ||= "fake:#{rand(2**32-1)+1}"
         end
 
-        post_handshake(doc, @server.round_trip_time_calculator.average_round_trip_time)
+        post_handshake(
+          doc,
+          @server.round_trip_time_calculator.average_round_trip_time,
+          @server.round_trip_time_calculator.minimum_round_trip_time
+        )
 
         doc
       end
@@ -205,7 +209,7 @@ module Mongo
       #
       # @return [ Server::Description ] The server description calculated from
       #   the handshake response for this particular connection.
-      def post_handshake(response, average_rtt)
+      def post_handshake(response, average_rtt, minimum_rtt)
         if response["ok"] == 1
           # Auth mechanism is entirely dependent on the contents of
           # hello response *for this connection*.
