@@ -57,6 +57,12 @@ module Mongo
     #
     # @option options [ true|false ] :causal_consistency Whether to enable
     #   causal consistency for this session.
+    # @option options [ Integer ] :default_timeout_ms The timeoutMS value for
+    #   the following operations executed on the session:
+    #   - commitTransaction
+    #   - abortTransaction
+    #   - withTransaction
+    #   - endSession
     # @option options [ Hash ] :default_transaction_options Options to pass
     #   to start_transaction by default, can contain any of the options that
     #   start_transaction accepts.
@@ -647,7 +653,11 @@ module Mongo
             write_concern = WriteConcern.get(write_concern)
           end
 
-          context = Operation::Context.new(client: @client, session: self)
+          context = Operation::Context.new(
+            client: @client,
+            session: self,
+            timeout_ms: timeout_ms
+          )
           write_with_retry(write_concern, ending_transaction: true,
             context: context,
           ) do |connection, txn_num, context|
@@ -708,7 +718,11 @@ module Mongo
       begin
         unless starting_transaction?
           @aborting_transaction = true
-          context = Operation::Context.new(client: @client, session: self)
+          context = Operation::Context.new(
+            client: @client,
+            session: self,
+            timeout_ms: timeout_ms
+          )
           write_with_retry(txn_options[:write_concern],
             ending_transaction: true, context: context,
           ) do |connection, txn_num, context|
@@ -1216,6 +1230,10 @@ module Mongo
           raise Mongo::Error::TransactionsNotSupported, "sharded transactions require server version >= 4.2"
         end
       end
+    end
+
+    def timeout_ms
+      options[:default_timeout_ms] || @client.timeout_ms
     end
   end
 end
