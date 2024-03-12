@@ -654,9 +654,9 @@ module Mongo
       # state resulting from SDAM will immediately wake up this method and
       # cause it to return.
       #
-      # If the cluster des not have a server selection semaphore, waits
+      # If the cluster does not have a server selection semaphore, waits
       # the smaller of 0.25 seconds and the specified remaining time.
-      # This functionality is provided for backwards compatibilty only for
+      # This functionality is provided for backwards compatibility only for
       # applications directly invoking the server selection process.
       # If lint mode is enabled and the cluster does not have a server
       # selection semaphore, Error::LintError will be raised.

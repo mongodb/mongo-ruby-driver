@@ -1119,6 +1119,8 @@ module Mongo
     # @option options [ true | false ] :implicit When no session is passed in,
     #   whether to create an implicit session.
     # @option options [ Session ] :session The session to validate and return.
+    # @option options [ Operation::Context | nil ] :context Context of the
+    #   operation the session is used for.
     #
     # @return [ Session | nil ] Session object or nil if sessions are not
     #   supported by the deployment.
@@ -1148,6 +1150,8 @@ module Mongo
     # @option options [ true | false ] :implicit When no session is passed in,
     #   whether to create an implicit session.
     # @option options [ Session ] :session The session to validate and return.
+    # @option options [ Operation::Context | nil ] :context Context of the
+    #   operation the session is used for.
     #
     # @api private
     def with_session(options = {}, &block)
@@ -1192,6 +1196,14 @@ module Mongo
     # @api private
     def timeout_ms
       @options[:timeout_ms]
+    end
+
+    def timeout_sec
+      if timeout_ms.nil?
+        nil
+      else
+        timeout_ms / 1_000.0
+      end
     end
 
     private
@@ -1239,6 +1251,8 @@ module Mongo
     # @option options [ true | false ] :implicit When no session is passed in,
     #   whether to create an implicit session.
     # @option options [ Session ] :session The session to validate and return.
+    # @option options [ Operation::Context | nil ] :context Context of the
+    #   operation the session is used for.
     #
     # @return [ Session ] A session object.
     #
@@ -1251,7 +1265,8 @@ module Mongo
         return options[:session].validate!(self)
       end
 
-      cluster.validate_session_support!
+      timeout = options[:context]&.remaining_timeout_sec || timeout_sec
+      cluster.validate_session_support!(timeout: timeout)
 
       options = {implicit: true}.update(options)
 

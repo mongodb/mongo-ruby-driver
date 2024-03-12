@@ -982,7 +982,7 @@ module Mongo
     #   server selection timeout.
     #
     # @api private
-    def validate_session_support!
+    def validate_session_support!(timeout: nil)
       if topology.is_a?(Topology::LoadBalanced)
         return
       end
@@ -1000,7 +1000,7 @@ module Mongo
       # No data bearing servers known - perform server selection to try to
       # get a response from at least one of them, to return an accurate
       # assessment of whether sessions are currently supported.
-      ServerSelector.get(mode: :primary_preferred).select_server(self)
+      ServerSelector.get(mode: :primary_preferred).select_server(self, timeout: timeout)
       @state_change_lock.synchronize do
         @sdam_flow_lock.synchronize do
           unless topology.logical_session_timeout
