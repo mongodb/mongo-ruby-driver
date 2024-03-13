@@ -517,6 +517,12 @@ Ruby Options
      - ``Array<String>``
      - none
 
+   * - ``:warn_compression_disabled``
+     - By default, the driver warns if you have not set the ``:compressors`` option.
+       Set this option ``false`` to silence the warning.
+     - ``true``, ``false``
+     - none
+
    * - ``:connect``
      - **Deprecated.** Disables deployment topology discovery normally
        performed by the dirver and forces the cluster topology to a specific
