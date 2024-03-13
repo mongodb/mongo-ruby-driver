@@ -185,12 +185,12 @@ module Mongo
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
-          context = Operation::Context.new(
-            client: client,
-            session: session,
-            timeout_ms: timeout_ms(opts)
-          )
           with_session(opts.merge(context: context)) do |session|
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              timeout_ms: timeout_ms(opts)
+            )
             read_with_retry(session, selector) do |server|
               Operation::Count.new(
                 selector: cmd,
