@@ -185,7 +185,7 @@ module Mongo
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
-          with_session(opts.merge(context: context)) do |session|
+          with_session(opts) do |session|
             context = Operation::Context.new(
               client: client,
               session: session,
