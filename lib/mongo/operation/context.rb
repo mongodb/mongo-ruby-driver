@@ -60,11 +60,17 @@ module Mongo
           raise ArgumentError, 'timeout_ms must be a positive integer'
         end
 
+        if timeout_ms && session&.with_transaction_deadline
+          raise ArgumentError, 'Cannot override timeout_ms inside with_transaction block'
+        end
+
         @client = client
         @session = session
         @connection_global_id = connection_global_id
         @timeout_ms = timeout_ms
-        @deadline = if @timeout_ms && @timeout_ms > 0
+        @deadline = if session&.with_transaction_deadline
+                      session.with_transaction_deadline
+                    @timeout_ms && @timeout_ms > 0
                       Utils.monotonic_time + (@timeout_ms / 1_000.0)
                     else
                       nil

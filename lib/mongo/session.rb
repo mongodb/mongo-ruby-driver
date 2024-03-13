@@ -102,6 +102,7 @@ module Mongo
       @options = options.dup.freeze
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
+      @with_transaction_deadline = nil
     end
 
     # @return [ Hash ] The options for this session.
@@ -445,8 +446,12 @@ module Mongo
     #
     # @since 2.7.0
     def with_transaction(options=nil)
-      # Non-configurable 120 second timeout for the entire operation
-      deadline = Utils.monotonic_time + 120
+      if @client.timeout_sec
+        deadline = Utils.monotonic_time + @client.timeout_sec
+        @with_transaction_deadline = deadline
+      else
+        Utils.monotonic_time + 120
+      end
       transaction_in_progress = false
       loop do
         commit_options = {}
@@ -531,6 +536,7 @@ module Mongo
         rescue Error::OperationFailure, Error::InvalidTransactionOperation
         end
       end
+      @with_transaction_deadline = nil
     end
 
     # Places subsequent operations in this session into a new transaction.
@@ -1151,6 +1157,8 @@ module Mongo
 
     # @api private
     attr_accessor :snapshot_timestamp
+
+    attr_reader :with_transaction_deadline
 
     private
 
