@@ -37,7 +37,7 @@ module Mongo
         attr_reader :pipeline
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster
+        def_delegators :view, :collection, :read, :cluster, :cursor_type
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database, :client

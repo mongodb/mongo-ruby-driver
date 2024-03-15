@@ -238,20 +238,20 @@ module Mongo
         end
 
         # Sets zero or one of :timeout_ms or :max_time_ms for the cursor's
-        # initial operation, based on the cursor_type and cursor_mode, per the
+        # initial operation, based on the cursor_type and timeout_mode, per the
         # CSOT cursor spec.
         #
         # @param [ Hash ] spec The command specification.
         def set_timeouts_for_initial_op(spec)
           case cursor_type
           when nil # non-tailable
-            if cursor_mode == :cursor_lifetime
+            if timeout_mode == :cursor_lifetime
               if timeout_ms
                 spec[:max_time_ms] = timeout_ms
               elsif options[:max_time_ms]
                 spec[:max_time_ms] = options[:max_time_ms]
               end
-            else # cursor_mode == :iterable
+            else # timeout_mode == :iterable
               # drivers MUST honor the timeoutMS option for the initial command
               # but MUST NOT append a maxTimeMS field to the command sent to the
               # server

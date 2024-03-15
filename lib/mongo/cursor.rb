@@ -523,14 +523,14 @@ module Mongo
     end
 
     # Sets zero or one of :max_time_ms and :timeout_ms on the given
-    # command spec, considering the cursor_mode and cursor_type, as
+    # command spec, considering the timeout_mode and cursor_type, as
     # specified in the CSOT spec.
     #
     # @param [ Hash ] spec the getMore command specification
     def set_timeouts_for_get_more(spec)
       case view.cursor_type
       when nil then # non-tailable
-        if view.cursor_mode == :cursor_lifetime
+        if view.timeout_mode == :cursor_lifetime
           # When executing next calls on the cursor, drivers MUST use the remaining
           # timeout as the timeoutMS value for the operation but MUST NOT append a
           # maxTimeMS field to getMore commands.
