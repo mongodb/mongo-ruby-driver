@@ -49,6 +49,9 @@ module Mongo
     # @api private
     attr_reader :resume_token
 
+    # @return [ Operation::Context ] context the context for this cursor
+    attr_reader :context
+
     # Creates a +Cursor+ object.
     #
     # @example Instantiate the cursor.
@@ -64,6 +67,8 @@ module Mongo
     #   operations are no longer retried)
     # @option options [ true, false ] :retry_reads Retry reads (following
     #   the modern mechanism), default is true
+    # @option options [ Operation::Context ] :context The operation context
+    #   for this cursor.
     #
     # @since 2.0.0
     def initialize(view, result, server, options = {})
@@ -83,6 +88,7 @@ module Mongo
       @connection_global_id = result.connection_global_id
       @options = options
       @session = @options[:session]
+      @context = @options[:context]
       @explicitly_closed = false
       @lock = Mutex.new
       unless closed?
@@ -434,16 +440,11 @@ module Mongo
         # 3.2+ servers use batch_size, 3.0- servers use to_return.
         # TODO should to_return be calculated in the operation layer?
         batch_size: batch_size_for_get_more,
-        to_return: to_return,
-        max_time_ms: if view.respond_to?(:max_await_time_ms) &&
-          view.max_await_time_ms &&
-          view.options[:await_data]
-        then
-          view.max_await_time_ms
-        else
-          nil
-        end,
+        to_return: to_return
       }
+
+      set_timeouts_for_get_more(spec)
+
       if view.respond_to?(:options) && view.options.is_a?(Hash)
         spec[:comment] = view.options[:comment] unless view.options[:comment].nil?
       end
@@ -521,6 +522,45 @@ module Mongo
                    end
     end
 
+    # Sets zero or one of :max_time_ms and :timeout_ms on the given
+    # command spec, considering the cursor_mode and cursor_type, as
+    # specified in the CSOT spec.
+    #
+    # @param [ Hash ] spec the getMore command specification
+    def set_timeouts_for_get_more(spec)
+      case view.cursor_type
+      when nil then # non-tailable
+        if view.cursor_mode == :cursor_lifetime
+          # When executing next calls on the cursor, drivers MUST use the remaining
+          # timeout as the timeoutMS value for the operation but MUST NOT append a
+          # maxTimeMS field to getMore commands.
+          spec[:timeout_ms] = context&.remaining_timeout_ms
+        else # :iterable
+          spec[:timeout_ms] = context&.timeout_ms
+        end
+
+      when :tailable then
+        # If timeoutMS is set, drivers MUST apply it separately to the original
+        # operation and to all next calls on the resulting cursor but MUST NOT
+        # append a maxTimeMS field to any commands.
+        spec[:timeout_ms] = context&.timeout_ms
+
+      when :tailable_await then
+        # If timeoutMS is set, drivers MUST apply it to the original operation.
+        # Drivers MUST also apply the original timeoutMS value to each next
+        # call on the resulting cursor but MUST NOT use it to derive a
+        # maxTimeMS value for getMore commands. Helpers for operations that
+        # create tailable awaitData cursors MUST also support the
+        # maxAwaitTimeMS option. Drivers MUST error if this option is set,
+        # timeoutMS is set to a non-zero value, and maxAwaitTimeMS is greater
+        # than or equal to timeoutMS. If this option is set, drivers MUST use
+        # it as the maxTimeMS field on getMore commands.
+        spec[:timeout_ms] = context&.timeout_ms
+
+        max_await_time_ms = view.respond_to?(:max_await_time_ms) && view.max_await_time_ms
+        spec[:max_time_ms] = max_await_time_ms if max_await_time_ms
+      end
+    end
   end
 end
 

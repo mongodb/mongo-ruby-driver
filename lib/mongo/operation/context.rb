@@ -76,6 +76,7 @@ module Mongo
       attr_reader :session
       attr_reader :deadline
       attr_reader :options
+      attr_reader :timeout_ms
 
       def connection_global_id
         @connection_global_id || session&.pinned_connection_global_id

@@ -223,7 +223,10 @@ module Mongo
 
       def timeout_ms(opts = {})
         if opts[:timeout_ms].nil?
-          options[:timeout_ms] || database.timeout_ms
+          # `options` could be nil during view instantiation, because
+          # validate_timeout_mode! is invoked before `@options` is
+          # set.
+          (options && options[:timeout_ms]) || database.timeout_ms
         else
           opts.delete(:timeout_ms)
         end

@@ -90,18 +90,24 @@ module Mongo
         private
 
         def select_cursor(session)
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            timeout_ms: timeout_ms
+          )
+
           if respond_to?(:write?, true) && write?
             server = server_selector.select_server(cluster, nil, session, write_aggregation: true)
-            result = send_initial_query(server, session)
+            result = send_initial_query(server, context)
 
             if use_query_cache?
-              CachingCursor.new(view, result, server, session: session)
+              CachingCursor.new(view, result, server, session: session, context: context)
             else
-              Cursor.new(view, result, server, session: session)
+              Cursor.new(view, result, server, session: session, context: context)
             end
           else
             read_with_retry_cursor(session, server_selector, view) do |server|
-              send_initial_query(server, session)
+              send_initial_query(server, context)
             end
           end
         end
@@ -145,19 +151,16 @@ module Mongo
             batch_size: batch_size,
             hint: options[:hint],
             max_scan: options[:max_scan],
-            max_time_ms: options[:max_time_ms],
             max_value: options[:max_value],
             min_value: options[:min_value],
             no_cursor_timeout: options[:no_cursor_timeout],
             return_key: options[:return_key],
             show_disk_loc: options[:show_disk_loc],
             comment: options[:comment],
-            oplog_replay: if (v = options[:oplog_replay]).nil?
-                            collection.options[:oplog_replay]
-                          else
-                            v
-                          end,
+            oplog_replay: oplog_replay,
           }
+
+          set_timeouts_for_initial_op(spec)
 
           if spec[:oplog_replay]
             collection.client.log_warn("The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later")
@@ -173,13 +176,8 @@ module Mongo
           end
         end
 
-        def send_initial_query(server, session = nil)
-          context = Operation::Context.new(
-            client: client,
-            session: session,
-            timeout_ms: timeout_ms
-          )
-          initial_query_op(session).execute(server, context: context)
+        def send_initial_query(server, context)
+          initial_query_op(context.session).execute(server, context: context)
         end
 
         def use_query_cache?
@@ -232,6 +230,51 @@ module Mongo
           end
         end
 
+        # @return [ true | false | nil ] options[:oplog_replay], if
+        #    set, otherwise the same option from the collection.
+        def oplog_replay
+          v = options[:oplog_replay]
+          v.nil? ? collection.options[:oplog_replay] : v
+        end
+
+        # Sets zero or one of :timeout_ms or :max_time_ms for the cursor's
+        # initial operation, based on the cursor_type and cursor_mode, per the
+        # CSOT cursor spec.
+        #
+        # @param [ Hash ] spec The command specification.
+        def set_timeouts_for_initial_op(spec)
+          case cursor_type
+          when nil # non-tailable
+            if cursor_mode == :cursor_lifetime
+              if timeout_ms
+                spec[:max_time_ms] = timeout_ms
+              elsif options[:max_time_ms]
+                spec[:max_time_ms] = options[:max_time_ms]
+              end
+            else # cursor_mode == :iterable
+              # drivers MUST honor the timeoutMS option for the initial command
+              # but MUST NOT append a maxTimeMS field to the command sent to the
+              # server
+              spec[:timeout_ms] = timeout_ms if timeout_ms
+            end
+
+          when :tailable
+            # If timeoutMS is set, drivers MUST apply it separately to the
+            # original operation and to all next calls on the resulting cursor
+            # but MUST NOT append a maxTimeMS field to any commands.
+            spec[:timeout_ms] = timeout_ms if timeout_ms
+
+          when :tailable_await
+            # If timeoutMS is set, drivers MUST apply it to the original operation.
+            # The server supports the maxTimeMS option for the original command.
+            if timeout_ms
+              spec[:max_time_ms] = timeout_ms
+            elsif options[:max_time_ms]
+              spec[:max_time_ms] = options[:max_time_ms]
+            end
+          end
+        end
+
         # Ensure the timeout mode is appropriate for other options that
         # have been given.
         #
@@ -241,7 +284,7 @@ module Mongo
         #   detected.
         def validate_timeout_mode!(options)
           cursor_type = options[:cursor_type]
-          timeout_ms = options[:timeout_ms]
+          timeout_ms = options[:timeout_ms] || timeout_ms
           timeout_mode = options[:timeout_mode]
 
           if timeout_ms
