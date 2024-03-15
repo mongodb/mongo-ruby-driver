@@ -142,7 +142,9 @@ module Mongo
             pipeline,
             view,
             options.merge(session: session, read_preference: read_preference)
-          ).specification
+          ).specification.tap do |spec|
+            set_timeouts_for_initial_op(spec)
+          end
         end
 
         def new(options)
