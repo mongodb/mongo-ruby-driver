@@ -85,7 +85,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              timeout_ms: timeout_ms(opts)
+              operation_timeouts: operation_timeouts(opts)
             )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_4 = connection.server.description.server_version_gte?('4.4')
@@ -201,7 +201,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              timeout_ms: timeout_ms(opts)
+              operation_timeouts: operation_timeouts(opts)
             )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_4 = connection.server.description.server_version_gte?('4.4')
@@ -260,11 +260,10 @@ module Mongo
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
             }.compact
-
             context = Operation::Context.new(
               client: client,
               session: session,
-              timeout_ms: timeout_ms(opts)
+              operation_timeouts: operation_timeouts(opts)
             )
             nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_4 = connection.server.description.server_version_gte?('4.4')
@@ -329,7 +328,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              timeout_ms: timeout_ms(opts)
+              operation_timeouts: operation_timeouts(opts)
             )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_4 = connection.server.description.server_version_gte?('4.4')
@@ -405,7 +404,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              timeout_ms: timeout_ms(opts)
+              operation_timeouts: operation_timeouts(opts)
             )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_2 = connection.server.description.server_version_gte?('4.2')
@@ -484,7 +483,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              timeout_ms: timeout_ms(opts)
+              operation_timeouts: operation_timeouts(opts)
             )
             nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_2 = connection.server.description.server_version_gte?('4.2')
@@ -561,7 +560,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              timeout_ms: timeout_ms(opts)
+              operation_timeouts: operation_timeouts(opts)
             )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
               gte_4_2 = connection.server.description.server_version_gte?('4.2')

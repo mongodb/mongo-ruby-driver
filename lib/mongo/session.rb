@@ -450,7 +450,7 @@ module Mongo
         deadline = Utils.monotonic_time + @client.timeout_sec
         @with_transaction_deadline = deadline
       else
-        Utils.monotonic_time + 120
+        deadline = Utils.monotonic_time + 120
       end
       transaction_in_progress = false
       loop do
@@ -662,7 +662,7 @@ module Mongo
           context = Operation::Context.new(
             client: @client,
             session: self,
-            timeout_ms: timeout_ms
+            operation_timeouts: operation_timeouts
           )
           write_with_retry(write_concern, ending_transaction: true,
             context: context,
@@ -727,7 +727,7 @@ module Mongo
           context = Operation::Context.new(
             client: @client,
             session: self,
-            timeout_ms: timeout_ms
+            client_timeouts: client_timeouts
           )
           write_with_retry(txn_options[:write_concern],
             ending_transaction: true, context: context,
@@ -1240,8 +1240,13 @@ module Mongo
       end
     end
 
-    def timeout_ms
-      options[:default_timeout_ms] || @client.timeout_ms
+    def operation_timeouts
+      {}.tap do |result|
+        if default_timeout_ms = options[:default_timeout_ms]
+          result[:operation_timeout_ms] = default_timeout_ms
+        end
+        result[:inherited_timeout_ms] = @client.timeout_ms
+      end
     end
   end
 end

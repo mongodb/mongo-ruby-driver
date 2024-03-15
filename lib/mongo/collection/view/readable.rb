@@ -189,7 +189,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              timeout_ms: timeout_ms(opts)
+              operation_timeouts: operation_timeouts(opts)
             )
             read_with_retry(session, selector) do |server|
               Operation::Count.new(
@@ -287,7 +287,7 @@ module Mongo
               context = Operation::Context.new(
                 client: client,
                 session: session,
-                timeout_ms: timeout_ms(opts)
+                operation_timeouts: operation_timeouts(opts)
               )
               cmd = { count: collection.name }
               cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
@@ -367,7 +367,7 @@ module Mongo
                 context: Operation::Context.new(
                   client: client,
                   session: session,
-                  timeout_ms: timeout_ms(opts)
+                  operation_timeouts: operation_timeouts(opts)
                 )
               )
             end.first['values']
