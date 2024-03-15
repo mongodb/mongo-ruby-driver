@@ -169,8 +169,12 @@ module Mongo
 
         if session&.with_transaction_deadline
           session&.with_transaction_deadline
-        elsif opts[:operation_timeout_ms] && opts[:operation_timeout_ms] > 0
-          Utils.monotonic_time + (opts[:operation_timeout_ms] / 1_000.0)
+        elsif operation_timeout_ms = opts[:operation_timeout_ms]
+          if operation_timeout_ms > 0
+            Utils.monotonic_time + (operation_timeout_ms / 1_000.0)
+          elsif operation_timeout_ms < 0
+            raise ArgumentError, /must be a non-negative integer/
+          end
         elsif opts[:inherited_timeout_ms] && opts[:inherited_timeout_ms] > 0
           Utils.monotonic_time + (opts[:inherited_timeout_ms] / 1_000.0)
         else

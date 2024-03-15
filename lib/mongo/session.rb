@@ -727,7 +727,7 @@ module Mongo
           context = Operation::Context.new(
             client: @client,
             session: self,
-            client_timeouts: client_timeouts
+            operation_timeouts: operation_timeouts
           )
           write_with_retry(txn_options[:write_concern],
             ending_transaction: true, context: context,
