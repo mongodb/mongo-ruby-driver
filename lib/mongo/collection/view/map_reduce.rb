@@ -51,7 +51,7 @@ module Mongo
         attr_reader :reduce_function
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster
+        def_delegators :view, :collection, :read, :cluster, :timeout_ms
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database, :client
@@ -70,9 +70,10 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          session = client.send(:get_session, @options)
+          session = client.get_session(@options)
           server = cluster.next_primary(nil, session)
-          result = send_initial_query(server, session, context: Operation::Context.new(client: client, session: session))
+          context = Operation::Context.new(client: client, session: session, timeout_ms: timeout_ms)
+          result = send_initial_query(server, context)
           result = send_fetch_query(server, session) unless inline?
           @cursor = Cursor.new(view, result, server, session: session)
           if block_given?
