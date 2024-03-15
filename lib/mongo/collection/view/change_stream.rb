@@ -390,11 +390,11 @@ module Mongo
           end
         end
 
-        def send_initial_query(connection, session)
-          initial_query_op(session, view.read_preference)
+        def send_initial_query(connection, context)
+          initial_query_op(context.session, view.read_preference)
             .execute_with_connection(
               connection,
-              context: Operation::Context.new(client: client, session: session),
+              context: context,
             )
         end
 

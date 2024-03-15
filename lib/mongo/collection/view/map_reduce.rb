@@ -279,9 +279,9 @@ module Mongo
           out.respond_to?(:keys) && out.keys.first.to_s.downcase == INLINE
         end
 
-        def send_initial_query(server, session, context:)
+        def send_initial_query(server, context)
           server.with_connection do |connection|
-            send_initial_query_with_connection(connection, session, context: context)
+            send_initial_query_with_connection(connection, context.session, context: context)
           end
         end
 

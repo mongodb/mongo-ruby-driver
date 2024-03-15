@@ -188,15 +188,10 @@ module Mongo
 
         end
 
-        def send_initial_query(server, session)
-          context = Operation::Context.new(
-            client: client,
-            session: session,
-            timeout_ms: timeout_ms
-          )
+        def send_initial_query(server, context)
           server.with_connection do |connection|
             initial_query_op(
-              session,
+              context.session,
               effective_read_preference(connection)
             ).execute_with_connection(
               connection,
