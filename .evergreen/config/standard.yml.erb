@@ -45,7 +45,7 @@ buildvariants:
   - matrix_name: DriverBench
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: latest
+      mongodb-version: <%= latest_stable_mdb %>
       topology: standalone
     run_on: rhel80-large
     display_name: DriverBench

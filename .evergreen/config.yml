@@ -1249,7 +1249,7 @@ buildvariants:
   - matrix_name: DriverBench
     matrix_spec:
       ruby: "ruby-3.2"
-      mongodb-version: latest
+      mongodb-version: "7.0"
       topology: standalone
     run_on: rhel80-large
     display_name: DriverBench
