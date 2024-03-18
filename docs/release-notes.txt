@@ -18,6 +18,21 @@ for the complete list of changes, including those internal to the driver and
 its test suite.
 
 
+.. _release-notes-2.20:
+
+2.20
+====
+
+This release includes the following new features:
+
+- Support for Ruby 2.5 and 2.6 has been discontinued. Support for Ruby 2.7 has
+  been deprecated, and will be discontinued in the next minor driver version.
+- Connection strings no longer require a slash between the hosts and the
+  options. E.g., "mongodb://example.com?w=1" and "mongodb://example.com/?w=1"
+  are both valid connection strings now.
+- Container runtime and orchestration metadata for the client environment are
+  now sent to the server for analytics purposes.
+
 .. _release-notes-2.19:
 
 2.19
