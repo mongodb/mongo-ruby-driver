@@ -1269,7 +1269,7 @@ buildvariants:
 
   - matrix_name: "mongo-recent"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.4"]
       mongodb-version: ["latest", "7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ['rhel8']
@@ -1294,7 +1294,7 @@ buildvariants:
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
       mongodb-version: ['5.3', '5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1413,7 +1413,7 @@ buildvariants:
   - matrix_name: "solo"
     matrix_spec:
       solo: on
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
       mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1462,7 +1462,7 @@ buildvariants:
   - matrix_name: "jruby-auth"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: jruby-9.3
+      ruby: jruby-9.4
       mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
@@ -1473,7 +1473,7 @@ buildvariants:
   - matrix_name: "zlib"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
       mongodb-version: "7.0"
       topology: "replica-set"
       compressor: 'zlib'
@@ -1485,7 +1485,7 @@ buildvariants:
   - matrix_name: "snappy"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
       mongodb-version: "7.0"
       topology: "replica-set"
       compressor: 'snappy'
@@ -1512,7 +1512,7 @@ buildvariants:
 
   - matrix_name: "activesupport"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
       mongodb-version: "7.0"
       topology: replica-set
       as: as
@@ -1523,7 +1523,7 @@ buildvariants:
 
   - matrix_name: "bson"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
       mongodb-version: "7.0"
       topology: replica-set
       bson: "*"
@@ -1535,7 +1535,7 @@ buildvariants:
   # kerberos integration tests are broken (RUBY-3266)
   # - matrix_name: "kerberos-integration"
   #   matrix_spec:
-  #     ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
+  #     ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
   #     os: rhel8
   #   display_name: "Kerberos integration ${os} ${ruby}"
   #   tasks:
@@ -1770,7 +1770,7 @@ buildvariants:
       ocsp-status: [valid, unknown]
       ocsp-delegate: '*'
       ocsp-connectivity: pass
-      ruby: jruby-9.3
+      ruby: jruby-9.4
       topology: standalone
       mongodb-version: "7.0"
       os: rhel8
@@ -1812,7 +1812,7 @@ buildvariants:
 
   - matrix_name: "atlas"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
       os: rhel8
     display_name: "Atlas tests ${ruby}"
     tasks:
@@ -1822,7 +1822,7 @@ buildvariants:
 #  - matrix_name: "serverless"
 #    matrix_spec:
 #      # https://jira.mongodb.org/browse/RUBY-3217
-#      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.3"]
+#      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
 #      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7"]
 #      fle: path
 #      os: rhel8
@@ -1833,7 +1833,7 @@ buildvariants:
 #  - matrix_name: "serverless-next"
 #    matrix_spec:
 #      # https://jira.mongodb.org/browse/RUBY-3217
-#      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.3"]
+#      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
 #      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7"]
 #      fle: path
 #      os: rhel8
