@@ -88,7 +88,7 @@ module Mongo
       @connection_global_id = result.connection_global_id
       @options = options
       @session = @options[:session]
-      @context = @options[:context]
+      @context = @options[:context] || fresh_context
       @explicitly_closed = false
       @lock = Mutex.new
       unless closed?
@@ -497,12 +497,16 @@ module Mongo
     end
 
     def execute_operation(op)
-      context = Operation::Context.new(
-        client: client,
-        session: @session,
-        connection_global_id: @connection_global_id,
-      )
-      op.execute(@server, context: context)
+      op.execute(@server, context: possibly_refreshed_context)
+    end
+
+    # Considers the timeout mode and will either return the cursor's
+    # context directly, or will return a new (refreshed) context.
+    #
+    # @return [ Operation::Context ] the (possibly-refreshed) context.
+    def possibly_refreshed_context
+      return context if view.timeout_mode == :cursor_lifetime
+      context.refresh
     end
 
     # Sets @cursor_id from the operation result.
@@ -520,6 +524,14 @@ module Mongo
                    else
                      result.cursor_id
                    end
+    end
+
+    # Returns a newly instantiated operation context based on the
+    # default values from the view.
+    def fresh_context
+      Operation::Context.new(client: view.client,
+                             session: @session,
+                             timeout_ms: view.timeout_ms)
     end
 
     # Sets zero or one of :max_time_ms and :timeout_ms on the given

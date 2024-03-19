@@ -203,6 +203,17 @@ module Mongo
         WriteConcern.get(options[:write_concern] || options[:write] || collection.write_concern)
       end
 
+      def timeout_ms(opts = {})
+        if opts[:timeout_ms].nil?
+          # `options` could be nil during view instantiation, because
+          # validate_timeout_mode! is invoked before `@options` is
+          # set.
+          (options && options[:timeout_ms]) || database.timeout_ms
+        else
+          opts.delete(:timeout_ms)
+        end
+      end
+
       private
 
       def initialize_copy(other)
@@ -219,17 +230,6 @@ module Mongo
 
       def with_session(opts = {}, &block)
         client.send(:with_session, @options.merge(opts), &block)
-      end
-
-      def timeout_ms(opts = {})
-        if opts[:timeout_ms].nil?
-          # `options` could be nil during view instantiation, because
-          # validate_timeout_mode! is invoked before `@options` is
-          # set.
-          (options && options[:timeout_ms]) || database.timeout_ms
-        else
-          opts.delete(:timeout_ms)
-        end
       end
     end
   end

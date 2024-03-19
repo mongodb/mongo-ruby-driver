@@ -304,13 +304,16 @@ module Mongo
           @start_at_operation_time_supported = nil
 
           session = client.get_session(@options)
+          context = Operation::Context.new(client: client, session: session, timeout_ms: timeout_ms)
+
           start_at_operation_time = nil
           start_at_operation_time_supported = nil
-          @cursor = read_with_retry_cursor(session, server_selector, view) do |server|
+          @cursor = read_with_retry_cursor(session, server_selector, view, context: context) do |server|
             server.with_connection do |connection|
               start_at_operation_time_supported = connection.description.server_version_gte?('4.0')
 
-              result = send_initial_query(connection, session)
+              result = send_initial_query(connection, context)
+
               if doc = result.replies.first && result.replies.first.documents.first
                 start_at_operation_time = doc['operationTime']
               else
