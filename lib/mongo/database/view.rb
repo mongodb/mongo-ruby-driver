@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/cursor/nontailable'
+
 module Mongo
   class Database
 
@@ -25,10 +27,11 @@ module Mongo
       extend Forwardable
       include Enumerable
       include Retryable
+      include Cursor::NonTailable
 
       def_delegators :@database, :cluster, :read_preference, :client
       # @api private
-      def_delegators :@database, :server_selector, :read_concern, :write_concern
+      def_delegators :@database, :server_selector, :read_concern, :write_concern, :timeout_ms
       def_delegators :cluster, :next_primary
 
       # @return [ Integer ] batch_size The size of the batch of results

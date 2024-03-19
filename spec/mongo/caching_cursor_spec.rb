@@ -23,7 +23,7 @@ describe Mongo::CachingCursor do
   end
 
   let(:reply) do
-    view.send(:send_initial_query, server)
+    view.send(:send_initial_query, server, Mongo::Operation::Context.new(client: authorized_client))
   end
 
   let(:cursor) do

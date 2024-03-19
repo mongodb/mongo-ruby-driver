@@ -207,14 +207,12 @@ module Mongo
         end
 
         def compute_limit_for_cached_query
-          if use_query_cache? && respond_to?(:limit)
-            # If a query with a limit is performed, the query cache will
-            # re-use results from an earlier query with the same or larger
-            # limit, and then impose the lower limit during iteration.
-            QueryCache.normalized_limit(limit)
-          end
+          return nil unless use_query_cache? && respond_to?(:limit)
 
-          nil
+          # If a query with a limit is performed, the query cache will
+          # re-use results from an earlier query with the same or larger
+          # limit, and then impose the lower limit during iteration.
+          return QueryCache.normalized_limit(limit)
         end
 
         # Add tailable cusror options to the command specifiction if needed.

@@ -467,7 +467,7 @@ module Mongo
     # @since 2.6.0
     def watch(pipeline = [], options = {})
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] ||= :tailable_await if options[:max_await_time_ms]
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(collection("#{COMMAND}.aggregate"), {}, view_options),
