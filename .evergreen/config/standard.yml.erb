@@ -69,9 +69,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  # Only JRuby-9.4 is built for arm in the current toolchain, but 9.4 has other
-  # issues. Either we fix those issues, or we build 9.3 for arm in the toolchain,
-  # and hope it fixes the issues... Until then, we can only test MRI ruby on arm.
   - matrix_name: "mongo-recent-arm"
     matrix_spec:
       ruby: <%= latest_ruby %>

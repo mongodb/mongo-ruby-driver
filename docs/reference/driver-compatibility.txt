@@ -305,6 +305,7 @@ for that Ruby version is deprecated.
      - Ruby 2.1
      - Ruby 2.0
      - Ruby 1.9
+     - JRuby 9.4
      - JRuby 9.3
      - JRuby 9.2
      - JRuby 9.1
@@ -323,6 +324,7 @@ for that Ruby version is deprecated.
      -
      -
      - |checkmark|
+     - |checkmark|
      - D
      -
 
@@ -333,6 +335,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - D
      - D
+     -
      -
      -
      -
@@ -350,6 +353,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     -
      -
      -
      -
@@ -374,6 +378,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      -
 
@@ -385,6 +390,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - D
+     -
      -
      -
      -
@@ -408,6 +414,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      -
 
@@ -420,6 +427,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - D
      - D
+     -
      -
      -
      -
@@ -442,6 +450,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      -
 
@@ -454,6 +463,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     -
      -
      -
      -
@@ -476,6 +486,7 @@ for that Ruby version is deprecated.
      -
      -
      -
+     -
      - |checkmark|
      -
 
@@ -492,6 +503,7 @@ for that Ruby version is deprecated.
      - D
      - D
      - D
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -510,6 +522,7 @@ for that Ruby version is deprecated.
      - D
      - D
      -
+     -
      - |checkmark|
      - |checkmark|
 
@@ -526,6 +539,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -544,6 +558,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      -
+     -
      - |checkmark|
      - |checkmark|
 
@@ -560,6 +575,7 @@ for that Ruby version is deprecated.
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     -
      -
      - |checkmark|
      - |checkmark|

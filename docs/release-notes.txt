@@ -25,8 +25,9 @@ its test suite.
 
 This release includes the following new features:
 
-- Support for Ruby 2.5 and 2.6 has been discontinued. Support for Ruby 2.7 has
-  been deprecated, and will be discontinued in the next minor driver version.
+- Support for Ruby 2.5 and 2.6 has been discontinued. Support for Ruby 2.7 and
+  JRuby 9.2 has been deprecated, and will be discontinued in the next minor
+  driver version. Support for JRuby 9.4 has been added.
 - Support for the newly-released Ruby-BSON version 5.0.
 - Connection strings no longer require a slash between the hosts and the
   options. E.g., "mongodb://example.com?w=1" and "mongodb://example.com/?w=1"
