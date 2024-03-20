@@ -214,11 +214,12 @@ module Mongo
     # @since 2.0.0
     # @api private
     def socket(socket_timeout, opts = {})
+      csot = !!opts.delete(:csot)
       opts = {
         connect_timeout: Server::CONNECT_TIMEOUT,
       }.update(options).update(Hash[opts.map { |k, v| [k.to_sym, v] }])
 
-      map_exceptions do
+      map_exceptions(csot) do
         if seed.downcase =~ Unix::MATCH
           specific_address = Unix.new(seed.downcase)
           return specific_address.socket(socket_timeout, opts)
@@ -281,11 +282,21 @@ module Mongo
       end
     end
 
-    def map_exceptions
+    def map_exceptions(csot)
       begin
         yield
       rescue Errno::ETIMEDOUT => e
-        raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{self})"
+        if csot
+          raise Error::TimeoutError, "#{e.class}: #{e} (for #{self})"
+        else
+          raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{self})"
+        end
+      rescue Error::SocketTimeoutError => e
+        if csot
+          raise Error::TimeoutError, "#{e.class}: #{e} (for #{self})"
+        else
+          raise e
+        end
       rescue IOError, SystemCallError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
       rescue OpenSSL::SSL::SSLError => e

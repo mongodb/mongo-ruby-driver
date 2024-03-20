@@ -445,8 +445,16 @@ module Mongo
     #   progress or if the write concern is unacknowledged.
     #
     # @since 2.7.0
-    def with_transaction(options=nil)
-      if @client.timeout_sec
+    def with_transaction(options = nil)
+      if timeout_ms = (options || {})[:timeout_ms]
+        timeout_sec = timeout_ms / 1_000.0
+        deadline = Utils.monotonic_time + timeout_sec
+        @with_transaction_deadline = deadline
+      elsif default_timeout_ms = @options[:default_timeout_ms]
+        timeout_sec = default_timeout_ms / 1_000.0
+        deadline = Utils.monotonic_time + timeout_sec
+        @with_transaction_deadline = deadline
+      elsif @client.timeout_sec
         deadline = Utils.monotonic_time + @client.timeout_sec
         @with_transaction_deadline = deadline
       else
@@ -465,6 +473,7 @@ module Mongo
         rescue Exception => e
           if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
             log_warn("Aborting transaction due to #{e.class}: #{e}")
+            @with_transaction_deadline = nil
             abort_transaction
             transaction_in_progress = false
           end
@@ -662,7 +671,7 @@ module Mongo
           context = Operation::Context.new(
             client: @client,
             session: self,
-            operation_timeouts: operation_timeouts
+            operation_timeouts: operation_timeouts(options)
           )
           write_with_retry(write_concern, ending_transaction: true,
             context: context,
@@ -704,7 +713,7 @@ module Mongo
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
     # @since 2.6.0
-    def abort_transaction
+    def abort_transaction(options = nil)
       QueryCache.clear
 
       check_if_ended!
@@ -721,13 +730,15 @@ module Mongo
           Mongo::Error::InvalidTransactionOperation.cannot_call_twice_msg(:abortTransaction))
       end
 
+      options ||= {}
+
       begin
         unless starting_transaction?
           @aborting_transaction = true
           context = Operation::Context.new(
             client: @client,
             session: self,
-            operation_timeouts: operation_timeouts
+            operation_timeouts: operation_timeouts(options)
           )
           write_with_retry(txn_options[:write_concern],
             ending_transaction: true, context: context,
@@ -1240,12 +1251,17 @@ module Mongo
       end
     end
 
-    def operation_timeouts
-      {}.tap do |result|
-        if default_timeout_ms = options[:default_timeout_ms]
-          result[:operation_timeout_ms] = default_timeout_ms
+    def operation_timeouts(opts)
+      {
+        inherited_timeout_ms: @client.timeout_ms
+      }.tap do |result|
+        if @with_transaction_deadline.nil?
+          if timeout_ms = opts[:timeout_ms]
+            result[:operation_timeout_ms] = timeout_ms
+          elsif default_timeout_ms = options[:default_timeout_ms]
+            result[:operation_timeout_ms] = default_timeout_ms
+          end
         end
-        result[:inherited_timeout_ms] = @client.timeout_ms
       end
     end
   end
