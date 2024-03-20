@@ -173,16 +173,19 @@ describe 'fork reconnect' do
       end
 
       # Test from Driver Sessions Spec
+      # https://github.com/mongodb/specifications/blob/master/source/sessions/tests/README.rst#session-pool-can-be-cleared-after-forking-without-calling-endsession
       #   * Create ClientSession
       #   * Record its lsid
+      #   * Delete it (so the lsid is pushed into the pool)
       #   * Fork
-      #   * In the parent, return the ClientSession to the pool, create a new
-      #     ClientSession, and assert its lsid is the same.
-      #   * In the child, return the ClientSession to the pool, create a new
-      #     ClientSession, and assert its lsid is different.
+      #   * In the parent, create a ClientSession and
+      #     assert its lsid is the same.
+      #   * In the child, create a ClientSession and
+      #     assert its lsid is different.
       it 'does not return parent process sessions to child process pool' do
         session = client.get_session.materialize_if_needed
         parent_lsid = session.session_id
+        session.end_session
 
         if pid = fork
           pid, status = Process.wait2(pid)
@@ -190,7 +193,6 @@ describe 'fork reconnect' do
         else
           Utils.wrap_forked_child do
             client.reconnect
-            session.end_session
             child_session = client.get_session.materialize_if_needed
 
             child_lsid = child_session.session_id
@@ -198,7 +200,6 @@ describe 'fork reconnect' do
           end
         end
 
-        session.end_session
         session_id = client.get_session.materialize_if_needed.session_id
         expect(session_id).to eq(parent_lsid)
       end

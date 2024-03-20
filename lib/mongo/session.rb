@@ -92,7 +92,7 @@ module Mongo
       @server_session = server_session
       options = options.dup
 
-      @client = client.use(:admin)
+      @client = client
       @options = options.dup.freeze
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
@@ -1023,7 +1023,7 @@ module Mongo
     # @since 2.5.0
     # @api private
     def validate!(client)
-      check_matching_cluster!(client)
+      check_matching_client!(client)
       check_if_ended!
       self
     end
@@ -1199,7 +1199,7 @@ module Mongo
       raise Mongo::Error::InvalidSession.new(SESSION_ENDED_ERROR_MSG) if ended?
     end
 
-    def check_matching_cluster!(client)
+    def check_matching_client!(client)
       if @client.cluster != client.cluster
         raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
       end
