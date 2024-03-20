@@ -142,6 +142,8 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
+        raise Error::SocketTimeoutError, 'connect_timeout expired' if options[:connect_timeout] < 0
+
         Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
           map_exceptions do
             @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
