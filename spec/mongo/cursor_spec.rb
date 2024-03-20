@@ -8,6 +8,10 @@ describe Mongo::Cursor do
     authorized_client['cursor_spec_collection']
   end
 
+  let(:context) do
+    Mongo::Operation::Context.new(client: authorized_client)
+  end
+
   before do
     authorized_collection.drop
   end
@@ -18,7 +22,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      view.send(:send_initial_query, server, context)
     end
 
     let(:cursor) do
@@ -118,7 +122,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      view.send(:send_initial_query, server, context)
     end
 
     let(:cursor) do
@@ -645,7 +649,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, authorized_primary)
+      view.send(:send_initial_query, authorized_primary, context)
     end
 
     let(:cursor) do
@@ -721,7 +725,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      view.send(:send_initial_query, server, context)
     end
 
     let(:cursor) do

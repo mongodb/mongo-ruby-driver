@@ -152,11 +152,15 @@ module Mongo
       #   document more than once. Deprecated as of MongoDB server version 4.0.
       # @option options [ Hash ] :sort The key and direction pairs used to sort
       #   the results.
+      # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+      #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+      #   iteration).
       # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
       #   Must a positive integer. The default value is unset which means infinite.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
+        validate_timeout_mode!(options)
         validate_doc!(filter)
         @collection = collection
 
@@ -199,6 +203,17 @@ module Mongo
         WriteConcern.get(options[:write_concern] || options[:write] || collection.write_concern)
       end
 
+      def timeout_ms(opts = {})
+        if opts[:timeout_ms].nil?
+          # `options` could be nil during view instantiation, because
+          # validate_timeout_mode! is invoked before `@options` is
+          # set.
+          (options && options[:timeout_ms]) || database.timeout_ms
+        else
+          opts.delete(:timeout_ms)
+        end
+      end
+
       private
 
       def initialize_copy(other)
@@ -215,14 +230,6 @@ module Mongo
 
       def with_session(opts = {}, &block)
         client.send(:with_session, @options.merge(opts), &block)
-      end
-
-      def timeout_ms(opts = {})
-        if opts[:timeout_ms].nil?
-          options[:timeout_ms] || database.timeout_ms
-        else
-          opts.delete(:timeout_ms)
-        end
       end
     end
   end

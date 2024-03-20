@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/cursor/nontailable'
+
 module Mongo
   module Index
 
@@ -25,6 +27,7 @@ module Mongo
       extend Forwardable
       include Enumerable
       include Retryable
+      include Cursor::NonTailable
 
       # @return [ Collection ] collection The indexes collection.
       attr_reader :collection
@@ -33,7 +36,7 @@ module Mongo
       #   when sending the listIndexes command.
       attr_reader :batch_size
 
-      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
+      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client, :timeout_ms
       def_delegators :cluster, :next_primary
 
       # The index key field.

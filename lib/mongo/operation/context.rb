@@ -76,6 +76,19 @@ module Mongo
       attr_reader :session
       attr_reader :deadline
       attr_reader :options
+      attr_reader :timeout_ms
+
+      # Returns a new Operation::Context with the deadline refreshed
+      # and relative to the current moment.
+      #
+      # @return [ Operation::Context ] the refreshed context
+      def refresh
+        self.class.new(client: client,
+                       session: session,
+                       connection_global_id: connection_global_id,
+                       timeout_ms: timeout_ms,
+                       options: options)
+      end
 
       def connection_global_id
         @connection_global_id || session&.pinned_connection_global_id

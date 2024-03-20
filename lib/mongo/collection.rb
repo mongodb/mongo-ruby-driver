@@ -488,9 +488,12 @@ module Mongo
     # @option options [ Object ] :comment A user-provided comment to attach to
     #   this command.
     # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
+    # @option options [ Hash ] :let Mapping of variables to use in the command.
+    #   See the server documentation for details.
     # @option options [ Integer ] :limit The max number of docs to return from the query.
     # @option options [ Integer ] :max_time_ms
     #   The maximum amount of time to allow the query to run, in milliseconds.
+    #   (Deprecated; use :timeout_ms instead.)
     # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
     #   output or behavior of a query.
     # @option options [ true | false ] :no_cursor_timeout The server normally times out idle
@@ -504,6 +507,9 @@ module Mongo
     # @option options [ Integer ] :skip The number of docs to skip before returning results.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
     # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
     #    Must a positive integer. The default value is unset which means infinite.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
@@ -537,12 +543,12 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
     #   See the server documentation for details.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in
-    #   milliseconds to allow the aggregation to run.
-    # @option options [ true | false ] :use_cursor Indicates whether the command
-    #   will request that the server provide results using a cursor. Note that
-    #   as of server version 3.6, aggregations always provide results using a
-    #   cursor and this option is therefore not valid.
+    #   milliseconds to allow the aggregation to run. (Deprecated; use
+    #   :timeout_ms instead.)
     # @option options [ Session ] :session The session to use.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
     # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
     #   Must a positive integer. The default value is unset which means infinite.
     #
@@ -612,6 +618,11 @@ module Mongo
     #   events included with this flag set are: createIndexes, dropIndexes,
     #   modify, create, shardCollection, reshardCollection,
     #   refineCollectionShardKey.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
+    # @option options [ Integer ] :timeout_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with
@@ -622,7 +633,7 @@ module Mongo
     # @since 2.5.0
     def watch(pipeline = [], options = {})
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] ||= :tailable_await if options[:max_await_time_ms]
       View::ChangeStream.new(View.new(self, {}, view_options), pipeline, nil, options)
     end
 
@@ -636,7 +647,8 @@ module Mongo
     #
     # @option options [ Hash ] :hint The index to use.
     # @option options [ Integer ] :limit The maximum number of documents to count.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the command to run.
     # @option options [ Integer ] :skip The number of documents to skip before counting.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
@@ -963,14 +975,19 @@ module Mongo
     # @param [ Hash ] options The parallel scan command options.
     #
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
-    #   to run in milliseconds.
+    #   to run in milliseconds. (Deprecated; use :timeout_ms instead.)
     # @option options [ Session ] :session The session to use.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
+    # @option options [ Integer ] :timeout_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds.
     #
     # @return [ Array<Cursor> ] An array of cursors.
     #
     # @since 2.1
     def parallel_scan(cursor_count, options = {})
-      find({}, options).send(:parallel_scan, cursor_count, options)
+      find({}, options).parallel_scan(cursor_count, options)
     end
 
     # Replaces a single document in the collection with the new document.

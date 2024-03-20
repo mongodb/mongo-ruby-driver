@@ -37,7 +37,7 @@ module Mongo
         attr_reader :pipeline
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster
+        def_delegators :view, :collection, :read, :cluster, :cursor_type
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database, :client
@@ -86,17 +86,21 @@ module Mongo
         # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
         #   See the server documentation for details.
         # @option options [ Integer ] :max_time_ms The maximum amount of time in
-        #   milliseconds to allow the aggregation to run.
-        # @option options [ true, false ] :use_cursor Indicates whether the command
-        #   will request that the server provide results using a cursor. Note that
-        #   as of server version 3.6, aggregations always provide results using a
-        #   cursor and this option is therefore not valid.
+        #   milliseconds to allow the aggregation to run. (Deprecated, use
+        #   :timeout_ms instead.)
+        # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+        #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+        #   iteration).
+        # @option options [ Integer ] :timeout_ms The maximum amount of time to
+        #   allow the query to run, in milliseconds.
         # @option options [ Session ] :session The session to use.
         # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
         #   Must a positive integer. The default value is unset which means infinite.
         #
         # @since 2.0.0
         def initialize(view, pipeline, options = {})
+          validate_timeout_mode!(options)
+
           @view = view
           @pipeline = pipeline.dup
           unless Mongo.broken_view_aggregate || view.filter.empty?
@@ -138,7 +142,9 @@ module Mongo
             pipeline,
             view,
             options.merge(session: session, read_preference: read_preference)
-          ).specification
+          ).specification.tap do |spec|
+            set_timeouts_for_initial_op(spec)
+          end
         end
 
         def new(options)
@@ -182,15 +188,10 @@ module Mongo
 
         end
 
-        def send_initial_query(server, session)
-          context = Operation::Context.new(
-            client: client,
-            session: session,
-            timeout_ms: timeout_ms
-          )
+        def send_initial_query(server, context)
           server.with_connection do |connection|
             initial_query_op(
-              session,
+              context.session,
               effective_read_preference(connection)
             ).execute_with_connection(
               connection,
