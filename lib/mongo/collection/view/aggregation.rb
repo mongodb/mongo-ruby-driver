@@ -186,7 +186,7 @@ module Mongo
           context = Operation::Context.new(
             client: client,
             session: session,
-            timeout_ms: timeout_ms
+            operation_timeouts: operation_timeouts(options)
           )
           server.with_connection do |connection|
             initial_query_op(
@@ -214,11 +214,17 @@ module Mongo
           }
         end
 
-        def timeout_ms(opts = {})
-          if opts[:timeout_ms].nil?
-            options[:timeout_ms] || database.timeout_ms
-          else
-            opts.delete(:timeout_ms)
+      # @return [ Hash ] timeout_ms value set on the operation level (if any),
+      #   and/or timeout_ms that is set on collection/database/client level (if any).
+      #
+      # @api private
+        def operation_timeouts(opts)
+          {}.tap do |result|
+            if opts.key?(:timeout_ms)
+              result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+            else
+              result[:inherited_timeout_ms] = collection.timeout_ms
+            end
           end
         end
       end

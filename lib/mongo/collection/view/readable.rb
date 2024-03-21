@@ -186,6 +186,11 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              operation_timeouts: operation_timeouts(opts)
+            )
             read_with_retry(session, selector) do |server|
               Operation::Count.new(
                 selector: cmd,
@@ -199,11 +204,7 @@ module Mongo
                 comment: opts[:comment],
               ).execute(
                 server,
-                context: Operation::Context.new(
-                  client: client,
-                  session: session,
-                  timeout_ms: timeout_ms(opts)
-                )
+                context: context
               )
             end.n.to_i
           end
@@ -286,7 +287,7 @@ module Mongo
               context = Operation::Context.new(
                 client: client,
                 session: session,
-                timeout_ms: timeout_ms(opts)
+                operation_timeouts: operation_timeouts(opts)
               )
               cmd = { count: collection.name }
               cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
@@ -366,7 +367,7 @@ module Mongo
                 context: Operation::Context.new(
                   client: client,
                   session: session,
-                  timeout_ms: timeout_ms(opts)
+                  operation_timeouts: operation_timeouts(opts)
                 )
               )
             end.first['values']

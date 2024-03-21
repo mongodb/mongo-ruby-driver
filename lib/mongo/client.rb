@@ -1194,6 +1194,16 @@ module Mongo
       @options[:timeout_ms]
     end
 
+    # @return [ Float | nil ] Value of timeout_ms option converted to seconds.
+    # @api private
+    def timeout_sec
+      if timeout_ms.nil?
+        nil
+      else
+        timeout_ms / 1_000.0
+      end
+    end
+
     private
 
     # Create a new encrypter object using the client's auto encryption options
@@ -1239,6 +1249,8 @@ module Mongo
     # @option options [ true | false ] :implicit When no session is passed in,
     #   whether to create an implicit session.
     # @option options [ Session ] :session The session to validate and return.
+    # @option options [ Operation::Context | nil ] :context Context of the
+    #   operation the session is used for.
     #
     # @return [ Session ] A session object.
     #
@@ -1251,7 +1263,7 @@ module Mongo
         return options[:session].validate!(self)
       end
 
-      cluster.validate_session_support!
+      cluster.validate_session_support!(timeout: timeout_sec)
 
       options = {implicit: true}.update(options)
 

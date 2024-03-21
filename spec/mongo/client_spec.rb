@@ -1156,6 +1156,26 @@ describe Mongo::Client do
         }.to raise_exception(Mongo::Error::InvalidSession)
       end
     end
+
+    context 'when CSOT is set on the client' do
+      require_topology :replica_set
+
+      let(:timeout_ms) { 10 }
+
+      let(:timeout_sec) { timeout_ms / 1_000.0 }
+
+      let(:client) do
+        authorized_client.with(timeout_ms: timeout_ms)
+      end
+
+      it 'uses CSOT timeout set on the client' do
+        expect_any_instance_of(Mongo::ServerSelector::PrimaryPreferred).to(
+          receive(:select_server).with(anything, {timeout: timeout_sec}).and_call_original
+        )
+
+        client.start_session
+      end
+    end
   end
 
   describe '#summary' do

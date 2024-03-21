@@ -39,7 +39,7 @@ module Mongo
         client: nil,
         session: nil,
         connection_global_id: nil,
-        timeout_ms: nil,
+        operation_timeouts: {},
         options: nil
       )
         if options
@@ -56,19 +56,10 @@ module Mongo
           raise ArgumentError, 'Trying to pin context to a connection when the session is already pinned to a connection.'
         end
 
-        if timeout_ms && timeout_ms < 0
-          raise ArgumentError, 'timeout_ms must be a positive integer'
-        end
-
         @client = client
         @session = session
         @connection_global_id = connection_global_id
-        @timeout_ms = timeout_ms
-        @deadline = if @timeout_ms && @timeout_ms > 0
-                      Utils.monotonic_time + (@timeout_ms / 1_000.0)
-                    else
-                      nil
-                    end
+        @deadline = calculate_deadline(operation_timeouts, session)
         @options = options
       end
 
@@ -152,14 +143,9 @@ module Mongo
       end
 
       def remaining_timeout_sec
-        return nil if @timeout_ms.nil? || @timeout_ms == 0
+        return nil if @deadline.nil?
 
-        remaining_seconds = deadline - Utils.monotonic_time
-        if remaining_seconds <= 0
-          0
-        else
-          remaining_seconds
-        end
+        deadline - Utils.monotonic_time
       end
 
       def remaining_timeout_ms
@@ -167,6 +153,28 @@ module Mongo
         return nil if seconds.nil?
 
         (seconds * 1_000).to_i
+      end
+
+      private
+
+      def calculate_deadline(opts = {}, session = nil)
+        if opts[:operation_timeout_ms] && session&.with_transaction_deadline
+          raise ArgumentError, 'Cannot override timeout_ms inside with_transaction block'
+        end
+
+        if session&.with_transaction_deadline
+          session&.with_transaction_deadline
+        elsif operation_timeout_ms = opts[:operation_timeout_ms]
+          if operation_timeout_ms > 0
+            Utils.monotonic_time + (operation_timeout_ms / 1_000.0)
+          elsif operation_timeout_ms < 0
+            raise ArgumentError, /must be a non-negative integer/
+          end
+        elsif opts[:inherited_timeout_ms] && opts[:inherited_timeout_ms] > 0
+          Utils.monotonic_time + (opts[:inherited_timeout_ms] / 1_000.0)
+        else
+          nil
+        end
       end
     end
   end

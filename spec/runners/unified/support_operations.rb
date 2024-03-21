@@ -129,14 +129,20 @@ module Unified
 
     def commit_transaction(op)
       session = entities.get(:session, op.use!('object'))
-      assert_no_arguments(op)
-      session.commit_transaction
+      opts = {}
+      use_arguments(op) do |args|
+        opts[:timeout_ms] = args.use('timeoutMS')
+      end
+      session.commit_transaction(opts.compact)
     end
 
     def abort_transaction(op)
       session = entities.get(:session, op.use!('object'))
-      assert_no_arguments(op)
-      session.abort_transaction
+      opts = {}
+      use_arguments(op) do |args|
+        opts[:timeout_ms] = args.use('timeoutMS')
+      end
+      session.abort_transaction(opts.compact)
     end
 
     def with_transaction(op)

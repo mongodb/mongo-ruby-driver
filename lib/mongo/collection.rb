@@ -826,7 +826,7 @@ module Mongo
         context = Operation::Context.new(
           client: client,
           session: session,
-          timeout_ms: timeout_ms(opts)
+          operation_timeouts: operation_timeouts(opts)
           )
         write_with_retry(write_concern, context: context) do |connection, txn_num, context|
           Operation::Insert.new(
@@ -1199,12 +1199,23 @@ module Mongo
       name.start_with?('system.')
     end
 
-    def timeout_ms(opts = {})
-      if opts[:timeout_ms].nil?
-        options[:timeout_ms] || database.timeout_ms
-      else
-        opts.delete(:timeout_ms)
-      end
+    def timeout_ms
+      options[:timeout_ms] || database.timeout_ms
+    end
+
+    # @return [ Hash ] timeout_ms value set on the operation level (if any),
+    #   and/or timeout_ms that is set on collection/database/client level (if any).
+    #
+    # @api private
+    def operation_timeouts(opts)
+      # TODO: We should re-evaluate if we need two timeouts separately.
+      {}.tap do |result|
+          if opts.key?(:timeout_ms)
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+          else
+            result[:inherited_timeout_ms] = timeout_ms
+          end
+        end
     end
   end
 end

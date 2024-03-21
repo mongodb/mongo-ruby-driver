@@ -104,7 +104,7 @@ module Mongo
       # raised during execution of operations on servers.
       def add_server_diagnostics(connection)
         yield
-      rescue Error::SocketError, Error::SocketTimeoutError
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::TimeoutError
         # Diagnostics should have already been added by the connection code,
         # do not add them again.
         raise
