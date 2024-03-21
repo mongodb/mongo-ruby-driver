@@ -1194,6 +1194,8 @@ module Mongo
       @options[:timeout_ms]
     end
 
+    # @return [ Float | nil ] Value of timeout_ms option converted to seconds.
+    # @api private
     def timeout_sec
       if timeout_ms.nil?
         nil

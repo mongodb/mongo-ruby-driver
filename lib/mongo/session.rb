@@ -570,6 +570,8 @@ module Mongo
     #   items:
     #   - *:mode* -- read preference specified as a symbol; the only valid value is
     #     *:primary*.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds
+    #   that is applied to the whole transaction. Must a positive integer.
     #
     # @raise [ Error::InvalidTransactionOperation ] If a transaction is already in
     #   progress or if the write concern is unacknowledged.
@@ -632,6 +634,8 @@ module Mongo
     #
     # @option options :write_concern [ nil | WriteConcern::Base ] The write
     #   concern to use for this operation.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #   Must a positive integer.
     #
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
@@ -709,6 +713,9 @@ module Mongo
     #
     # @example Abort the transaction.
     #   session.abort_transaction
+    #
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #   Must a positive integer.
     #
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #

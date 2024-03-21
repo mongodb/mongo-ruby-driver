@@ -981,6 +981,9 @@ module Mongo
     #   any servers and doesn't find any servers for the duration of
     #   server selection timeout.
     #
+    # @param [ Float | nil ] :timeout Timeout for the validation. Since the
+    #   validation process involves server selection,
+    #
     # @api private
     def validate_session_support!(timeout: nil)
       if topology.is_a?(Topology::LoadBalanced)

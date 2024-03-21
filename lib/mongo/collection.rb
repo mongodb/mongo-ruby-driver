@@ -1203,10 +1203,16 @@ module Mongo
       options[:timeout_ms] || database.timeout_ms
     end
 
+    # @return [ Hash ] timeout_ms value set on the operation level (if any),
+    #   and/or timeout_ms that is set on collection/database/client level (if any).
+    #
+    # @api private
     def operation_timeouts(opts)
+      # TODO: We should re-evaluate if we need two timeouts separately.
       {}.tap do |result|
           if opts.key?(:timeout_ms)
             result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+          else
             result[:inherited_timeout_ms] = timeout_ms
           end
         end

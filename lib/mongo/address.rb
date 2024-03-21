@@ -178,6 +178,9 @@ module Mongo
     # @param [ Hash ] opts The options.
     #
     # @option opts [ Float ] :connect_timeout Connect timeout.
+    # @option opts [ Boolean ] :csot Whether the client-side operation timeout
+    #   should be considered when connecting the socket. This option influences
+    #   only what errors will be raised if timeout expires.
     # @option opts [ true | false ] :ssl Whether to use SSL.
     # @option opts [ String ] :ssl_ca_cert
     #   Same as the corresponding Client/Socket::SSL option.
@@ -282,6 +285,11 @@ module Mongo
       end
     end
 
+    # Maps some errors to different ones, mostly low-level errors to driver
+    # level errors
+    #
+    # @param [ Boolean ] csot Whether the client-side operation timeout
+    #   should be considered when connecting the socket.
     def map_exceptions(csot)
       begin
         yield
