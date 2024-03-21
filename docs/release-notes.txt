@@ -34,6 +34,11 @@ This release includes the following new features:
   are both valid connection strings now.
 - Container runtime and orchestration metadata for the client environment are
   now sent to the server for analytics purposes.
+- A warning message is now written to the log when the host is detected to be
+  a CosmosDB (Azure) or DocumentDB (Amazon) instance.
+- When attempting a retry of a read or write operation in a sharded topology,
+  the retry will be attempted on a different mongos instance, if possible.
+
 
 .. _release-notes-2.19:
 
