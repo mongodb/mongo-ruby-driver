@@ -13,7 +13,7 @@ class Runner
   def transform(output_file_name)
     contents = <<-EOT
 # GENERATED FILE - DO NOT EDIT.
-# Run ./.evergreen/update-evergreen-configs to regenerate this file.
+# Run `rake eg` to regenerate this file.
 
 EOT
 

@@ -20,5 +20,5 @@ module Mongo
   # The current version of the driver.
   #
   # @since 2.0.0
-  VERSION = '2.19.1'.freeze
+  VERSION = '2.20.0'.freeze
 end

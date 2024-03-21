@@ -1,33 +1,27 @@
 <%
   topologies = %w( standalone replica-set sharded-cluster )
 
-  # jruby-9.4 is available in the toolchain, but tests break. It will
-  # require some investigation. Once available:
-  #  1. replace jruby-9.3 with jruby-9.4 in `recent_rubies` and
-  #     `sample_rubies`.
-  #  2. add jruby-9.4 to the front of `jrubies`.
-
   # latest_ruby = the most recently released, stable version of Ruby
   #    (make sure this version is being built by 10gen/mongo-ruby-toolchain)
   latest_ruby = "ruby-3.2".inspect # so it gets quoted as a string
 
   # these are used for testing against a few recent ruby versions
-  recent_rubies = %w( ruby-3.2 ruby-3.1 jruby-9.3 )
+  recent_rubies = %w( ruby-3.2 ruby-3.1 jruby-9.4 )
 
   # this is a list of the most most recent 3.x and 2.x MRI ruby versions
   sample_mri_rubies = %w( ruby-3.2 ruby-2.7 )
 
   # as above, but including the most recent JRuby release
-  sample_rubies = sample_mri_rubies + %w( jruby-9.3 )
+  sample_rubies = sample_mri_rubies + %w( jruby-9.4 )
 
   # older Ruby versions provided by 10gen/mongo-ruby-toolchain
-  older_rubies = %w( ruby-3.0 ruby-2.7 ruby-2.6 ruby-2.5 )
+  older_rubies = %w( ruby-3.0 ruby-2.7  )
 
   # all supported JRuby versions provided by 10gen/mongo-ruby-toolchain
-  jrubies = %w( jruby-9.3 jruby-9.2 )
+  jrubies = %w( jruby-9.4 jruby-9.3 )
 
   supported_mri_rubies = %w( ruby-3.2 ruby-3.1 ruby-3.0
-                             ruby-2.7 ruby-2.6 ruby-2.5 )
+                             ruby-2.7 )
 
   supported_rubies = supported_mri_rubies + jrubies
 
@@ -45,7 +39,7 @@ buildvariants:
   - matrix_name: DriverBench
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: latest
+      mongodb-version: <%= latest_stable_mdb %>
       topology: standalone
     run_on: rhel80-large
     display_name: DriverBench
@@ -75,9 +69,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  # Only JRuby-9.4 is built for arm in the current toolchain, but 9.4 has other
-  # issues. Either we fix those issues, or we build 9.3 for arm in the toolchain,
-  # and hope it fixes the issues... Until then, we can only test MRI ruby on arm.
   - matrix_name: "mongo-recent-arm"
     matrix_spec:
       ruby: <%= latest_ruby %>
@@ -110,7 +101,7 @@ buildvariants:
 
   - matrix_name: "mongo-3.6"
     matrix_spec:
-      ruby: "ruby-2.5"
+      ruby: "ruby-2.7"
       mongodb-version: ['3.6']
       topology: <%= topologies %>
       os: rhel8
@@ -175,7 +166,7 @@ buildvariants:
 
   - matrix_name: mmapv1
     matrix_spec:
-      ruby: "ruby-2.5"
+      ruby: "ruby-2.7"
       mongodb-version: ['3.6', '4.0']
       topology: <%= topologies %>
       storage-engine: mmapv1
