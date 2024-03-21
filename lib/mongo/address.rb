@@ -214,7 +214,7 @@ module Mongo
     # @since 2.0.0
     # @api private
     def socket(socket_timeout, opts = {})
-      csot = !!opts.delete(:csot)
+      csot = !!opts[:csot]
       opts = {
         connect_timeout: Server::CONNECT_TIMEOUT,
       }.update(options).update(Hash[opts.map { |k, v| [k.to_sym, v] }])
