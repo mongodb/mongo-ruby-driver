@@ -163,7 +163,7 @@ module Mongo
           map_exceptions do
             begin
               @socket.connect_nonblock
-            rescue IO::WaitReadable, IO::WaitWritable
+            rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable, IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
               if IO.select(nil, [socket], nil, connect_timeout)
                 begin
                   socket.connect_nonblock
