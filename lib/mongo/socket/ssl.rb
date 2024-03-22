@@ -149,8 +149,13 @@ module Mongo
         map_exceptions do
           @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
         end
+
         tcp_connect_end = Utils.monotonic_time
-        connect_timeout -= (tcp_connect_end - tcp_connect_start)
+        if connect_timeout && !connect_timeout > 0
+          connect_timeout -= (tcp_connect_end - tcp_connect_start)
+          raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout < 0
+        end
+
         @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
         begin
           @socket.hostname = @host_name
@@ -161,7 +166,7 @@ module Mongo
             rescue IO::WaitReadable, IO::WaitWritable
               if IO.select(nil, [socket], nil, connect_timeout)
                 begin
-                  socket.connect_nonblock(sockaddr)
+                  socket.connect_nonblock
                 rescue Errno::EISCONN
                   #
                 end
