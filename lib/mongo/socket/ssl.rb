@@ -151,7 +151,7 @@ module Mongo
         end
 
         tcp_connect_end = Utils.monotonic_time
-        if connect_timeout && !connect_timeout > 0
+        if connect_timeout && connect_timeout > 0
           connect_timeout -= (tcp_connect_end - tcp_connect_start)
           raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout < 0
         end
