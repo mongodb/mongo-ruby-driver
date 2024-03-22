@@ -262,7 +262,8 @@ module Mongo
             connection_address: address,
             connection_generation: generation,
             pipe: options[:pipe],
-            connect_timeout: context&.remaining_timeout_sec
+            connect_timeout: context&.remaining_timeout_sec,
+            csot: context&.remaining_timeout_sec != nil
           )
           address.socket(socket_timeout, opts)
         end

@@ -168,6 +168,8 @@ module Mongo
       #   be selected from only if no other servers are available. This is
       #   used to avoid selecting the same server twice in a row when
       #   retrying a command.
+      # @param [ Float | nil ] :timeout Timeout in seconds for the operation,
+      #   if any.
       #
       # @return [ Mongo::Server ] A server matching the server preference.
       #
@@ -184,25 +186,26 @@ module Mongo
         session = nil,
         write_aggregation: false,
         deprioritized: [],
-        remaining_timeout_ms: nil
+        timeout: nil
       )
-        select_server_impl(cluster, ping, session, write_aggregation, deprioritized, remaining_timeout_ms).tap do |server|
+        select_server_impl(cluster, ping, session, write_aggregation, deprioritized, timeout).tap do |server|
           if Lint.enabled? && !server.pool.ready?
             raise Error::LintError, 'Server selector returning a server with a pool which is not ready'
           end
         end
       end
 
-      # Parameters and return values are the same as for select_server.
-      private def select_server_impl(cluster, ping, session, write_aggregation, deprioritized, remaining_timeout_ms)
+      # Parameters and return values are the same as for select_server, only
+      # the +timeout+ param is renamed to +csot_timeout+.
+      private def select_server_impl(cluster, ping, session, write_aggregation, deprioritized, csot_timeout)
         if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
           return cluster.servers.first
         end
 
         timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
 
-        server_selection_timeout = if remaining_timeout_ms
-                                     [timeout, remaining_timeout_ms].min
+        server_selection_timeout = if csot_timeout
+                                     [timeout, csot_timeout].min
                                    else
                                      timeout
                                    end
@@ -651,9 +654,9 @@ module Mongo
       # state resulting from SDAM will immediately wake up this method and
       # cause it to return.
       #
-      # If the cluster des not have a server selection semaphore, waits
+      # If the cluster does not have a server selection semaphore, waits
       # the smaller of 0.25 seconds and the specified remaining time.
-      # This functionality is provided for backwards compatibilty only for
+      # This functionality is provided for backwards compatibility only for
       # applications directly invoking the server selection process.
       # If lint mode is enabled and the cluster does not have a server
       # selection semaphore, Error::LintError will be raised.

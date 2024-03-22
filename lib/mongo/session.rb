@@ -57,6 +57,12 @@ module Mongo
     #
     # @option options [ true|false ] :causal_consistency Whether to enable
     #   causal consistency for this session.
+    # @option options [ Integer ] :default_timeout_ms The timeoutMS value for
+    #   the following operations executed on the session:
+    #   - commitTransaction
+    #   - abortTransaction
+    #   - withTransaction
+    #   - endSession
     # @option options [ Hash ] :default_transaction_options Options to pass
     #   to start_transaction by default, can contain any of the options that
     #   start_transaction accepts.
@@ -96,6 +102,7 @@ module Mongo
       @options = options.dup.freeze
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
+      @with_transaction_deadline = nil
     end
 
     # @return [ Hash ] The options for this session.
@@ -438,9 +445,21 @@ module Mongo
     #   progress or if the write concern is unacknowledged.
     #
     # @since 2.7.0
-    def with_transaction(options=nil)
-      # Non-configurable 120 second timeout for the entire operation
-      deadline = Utils.monotonic_time + 120
+    def with_transaction(options = nil)
+      if timeout_ms = (options || {})[:timeout_ms]
+        timeout_sec = timeout_ms / 1_000.0
+        deadline = Utils.monotonic_time + timeout_sec
+        @with_transaction_deadline = deadline
+      elsif default_timeout_ms = @options[:default_timeout_ms]
+        timeout_sec = default_timeout_ms / 1_000.0
+        deadline = Utils.monotonic_time + timeout_sec
+        @with_transaction_deadline = deadline
+      elsif @client.timeout_sec
+        deadline = Utils.monotonic_time + @client.timeout_sec
+        @with_transaction_deadline = deadline
+      else
+        deadline = Utils.monotonic_time + 120
+      end
       transaction_in_progress = false
       loop do
         commit_options = {}
@@ -454,6 +473,7 @@ module Mongo
         rescue Exception => e
           if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
             log_warn("Aborting transaction due to #{e.class}: #{e}")
+            @with_transaction_deadline = nil
             abort_transaction
             transaction_in_progress = false
           end
@@ -525,6 +545,7 @@ module Mongo
         rescue Error::OperationFailure, Error::InvalidTransactionOperation
         end
       end
+      @with_transaction_deadline = nil
     end
 
     # Places subsequent operations in this session into a new transaction.
@@ -549,6 +570,8 @@ module Mongo
     #   items:
     #   - *:mode* -- read preference specified as a symbol; the only valid value is
     #     *:primary*.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds
+    #   that is applied to the whole transaction. Must a positive integer.
     #
     # @raise [ Error::InvalidTransactionOperation ] If a transaction is already in
     #   progress or if the write concern is unacknowledged.
@@ -611,6 +634,8 @@ module Mongo
     #
     # @option options :write_concern [ nil | WriteConcern::Base ] The write
     #   concern to use for this operation.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #   Must a positive integer.
     #
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
@@ -647,7 +672,11 @@ module Mongo
             write_concern = WriteConcern.get(write_concern)
           end
 
-          context = Operation::Context.new(client: @client, session: self)
+          context = Operation::Context.new(
+            client: @client,
+            session: self,
+            operation_timeouts: operation_timeouts(options)
+          )
           write_with_retry(write_concern, ending_transaction: true,
             context: context,
           ) do |connection, txn_num, context|
@@ -685,10 +714,13 @@ module Mongo
     # @example Abort the transaction.
     #   session.abort_transaction
     #
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #   Must a positive integer.
+    #
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
     # @since 2.6.0
-    def abort_transaction
+    def abort_transaction(options = nil)
       QueryCache.clear
 
       check_if_ended!
@@ -705,10 +737,16 @@ module Mongo
           Mongo::Error::InvalidTransactionOperation.cannot_call_twice_msg(:abortTransaction))
       end
 
+      options ||= {}
+
       begin
         unless starting_transaction?
           @aborting_transaction = true
-          context = Operation::Context.new(client: @client, session: self)
+          context = Operation::Context.new(
+            client: @client,
+            session: self,
+            operation_timeouts: operation_timeouts(options)
+          )
           write_with_retry(txn_options[:write_concern],
             ending_transaction: true, context: context,
           ) do |connection, txn_num, context|
@@ -1138,6 +1176,8 @@ module Mongo
     # @api private
     attr_accessor :snapshot_timestamp
 
+    attr_reader :with_transaction_deadline
+
     private
 
     # Get the read concern the session will use when starting a transaction.
@@ -1214,6 +1254,20 @@ module Mongo
         end
         if cluster.sharded? && !conn.features.sharded_transactions_enabled?
           raise Mongo::Error::TransactionsNotSupported, "sharded transactions require server version >= 4.2"
+        end
+      end
+    end
+
+    def operation_timeouts(opts)
+      {
+        inherited_timeout_ms: @client.timeout_ms
+      }.tap do |result|
+        if @with_transaction_deadline.nil?
+          if timeout_ms = opts[:timeout_ms]
+            result[:operation_timeout_ms] = timeout_ms
+          elsif default_timeout_ms = options[:default_timeout_ms]
+            result[:operation_timeout_ms] = default_timeout_ms
+          end
         end
       end
     end

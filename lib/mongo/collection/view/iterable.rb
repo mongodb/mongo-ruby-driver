@@ -93,7 +93,7 @@ module Mongo
           context = Operation::Context.new(
             client: client,
             session: session,
-            timeout_ms: timeout_ms
+            operation_timeouts: operation_timeouts(options)
           )
 
           if respond_to?(:write?, true) && write?

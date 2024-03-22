@@ -7,14 +7,14 @@ describe Mongo::Operation::Context do
     context 'when timeout_ms is negative' do
       it 'raises an error' do
         expect do
-          described_class.new(timeout_ms: -1)
-        end.to raise_error ArgumentError, /must be a positive integer/
+          described_class.new(operation_timeouts: { operation_timeout_ms: -1 })
+        end.to raise_error ArgumentError, /must be a non-negative integer/
       end
     end
   end
 
   describe '#deadline' do
-    let(:context) { described_class.new(timeout_ms: timeout_ms) }
+    let(:context) { described_class.new(operation_timeouts: { operation_timeout_ms: timeout_ms }) }
 
     context 'when timeout_ms is nil' do
       let(:timeout_ms) { nil }
@@ -46,7 +46,7 @@ describe Mongo::Operation::Context do
   end
 
   describe '#remaining_timeout_ms' do
-    let(:context) { described_class.new(timeout_ms: timeout_ms) }
+    let(:context) { described_class.new(operation_timeouts: { operation_timeout_ms: timeout_ms }) }
 
     context 'when timeout_ms is nil' do
       let(:timeout_ms) { nil }

@@ -205,14 +205,17 @@ module Mongo
 
       # The time to wait, in seconds, for a connection to become available.
       #
+      # @param [ Mongo::Operation:Context | nil ] context Context of the operation
+      #   the connection is requested for, if any.
+      #
       # @return [ Float ] The queue wait timeout.
       #
       # @since 2.9.0
-      def wait_timeout(remaining_timeout_sec = nil)
-        if remaining_timeout_sec.nil?
+      def wait_timeout(context = nil)
+        if context&.remaining_timeout_sec.nil?
           options[:wait_timeout] || DEFAULT_WAIT_TIMEOUT
         else
-          remaining_timeout_sec
+          context&.remaining_timeout_sec
         end
       end
 
@@ -349,6 +352,10 @@ module Mongo
       # The returned connection counts toward the pool's max size. When the
       # caller is finished using the connection, the connection should be
       # checked back in via the check_in method.
+      # @param [ Integer | nil ] :connection_global_id The global id for the
+      #   connection to check out.
+      # @param [ Mongo::Operation:Context | nil ] :context Context of the operation
+      #   the connection is requested for, if any.
       #
       # @return [ Mongo::Server::Connection ] The checked out connection.
       # @raise [ Error::PoolClosedError ] If the pool has been closed.
@@ -1251,8 +1258,10 @@ module Mongo
 
       # Retrieves a connection and connects it.
       #
-      # @param [ Integer ] connection_global_id The global id for the
+      # @param [ Integer | nil ] connection_global_id The global id for the
       #   connection to check out.
+      # @param [ Mongo::Operation:Context | nil ] context Context of the operation
+      #   the connection is requested for, if any.
       #
       # @return [ Mongo::Server::Connection ] The checked out connection.
       #
@@ -1260,7 +1269,7 @@ module Mongo
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
       def retrieve_and_connect_connection(connection_global_id, context =  nil)
-        deadline = Utils.monotonic_time + wait_timeout(context&.remaining_timeout_sec)
+        deadline = Utils.monotonic_time + wait_timeout(context)
         connection = nil
 
         @lock.synchronize do
