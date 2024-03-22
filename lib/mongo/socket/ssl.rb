@@ -144,26 +144,43 @@ module Mongo
       def connect!
         raise Error::SocketTimeoutError, 'connect_timeout expired' if (options[:connect_timeout] || 0) < 0
 
-        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
-          map_exceptions do
-            @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
-          end
-          @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
-          begin
-            @socket.hostname = @host_name
-            @socket.sync_close = true
-            map_exceptions do
-              @socket.connect
-            end
-            verify_certificate!(@socket)
-            verify_ocsp_endpoint!(@socket)
-          rescue
-            @socket.close
-            @socket = nil
-            raise
-          end
-          self
+        connect_timeout = options[:connect_timeout]
+        tcp_connect_start = Utils.monotonic_time
+        map_exceptions do
+          @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
         end
+        tcp_connect_end = Utils.monotonic_time
+        connect_timeout -= (tcp_connect_end - tcp_connect_start)
+        @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
+        begin
+          @socket.hostname = @host_name
+          @socket.sync_close = true
+          map_exceptions do
+            begin
+              @socket.connect_nonblock
+            rescue IO::WaitReadable, IO::WaitWritable
+              if IO.select(nil, [socket], nil, connect_timeout)
+                begin
+                  socket.connect_nonblock(sockaddr)
+                rescue Errno::EISCONN
+                  #
+                end
+              else
+                socket.close
+                raise Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect"
+              end
+            end
+          end
+          # TODO: Add timeout
+          verify_certificate!(@socket)
+          # TODO: Add timeout
+          verify_ocsp_endpoint!(@socket)
+        rescue
+          @socket.close
+          @socket = nil
+          raise
+        end
+        self
       end
       private :connect!
 
