@@ -88,18 +88,13 @@ module Mongo
           socket.connect_nonblock(sockaddr)
         rescue IO::WaitWritable
           if IO.select(nil, [socket], nil, connect_timeout)
-            begin
-              socket.connect_nonblock(sockaddr)
-            rescue Errno::EISCONN
-              #
-            rescue Exception => e
-              socket.close
-              raise e
-            end
+            retry
           else
             socket.close
             raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
           end
+        rescue Errno::EISCONN
+          #
         end
         self
       end

@@ -163,17 +163,20 @@ module Mongo
           map_exceptions do
             begin
               @socket.connect_nonblock
-            rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable, IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
-              if IO.select(nil, [socket], nil, connect_timeout)
-                begin
-                  socket.connect_nonblock
-                rescue Errno::EISCONN
-                  #
-                end
+            rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable
+              if IO.select([@socket], nil, nil, connect_timeout)
+                retry
               else
-                socket.close
                 raise Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect"
               end
+            rescue IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
+              if IO.select(nil, [@socket], nil, connect_timeout)
+                retry
+              else
+                raise Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect"
+              end
+            rescue Errno::EISCONN
+              #
             end
           end
           # TODO: Add timeout
