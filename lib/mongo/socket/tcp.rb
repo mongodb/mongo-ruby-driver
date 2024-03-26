@@ -95,12 +95,12 @@ module Mongo
       end
 
       # @api private
-      def connect_without_timeout!(sockaddr)
+      def connect_without_timeout(sockaddr)
         socket.connect(sockaddr)
       end
 
       # @api private
-      def connect_with_timeout!(sockadd, connect_timeout)
+      def connect_with_timeout(sockadd, connect_timeout)
         raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout <= 0
 
         begin

@@ -146,9 +146,9 @@ module Mongo
         connect_timeout = options[:connect_timeout]
         map_exceptions do
           if connect_timeout && connect_timeout != 0
-            connect_with_timeout!(sockaddr, connect_timeout)
+            connect_with_timeout(sockaddr, connect_timeout)
           else
-            connect_without_timeout!(sockaddr)
+            connect_without_timeout(sockaddr)
           end
         end
         self
@@ -176,7 +176,7 @@ module Mongo
 
       private
 
-      def connect_without_timeout!(sockaddr)
+      def connect_without_timeout(sockaddr)
         @tcp_socket.connect(sockaddr)
         @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
         @socket.hostname = @host_name
@@ -186,7 +186,7 @@ module Mongo
         verify_ocsp_endpoint!(@socket)
       end
 
-      def connect_with_timeout!(sockaddr, connect_timeout)
+      def connect_with_timeout(sockaddr, connect_timeout)
         raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout <= 0
 
         tcp_connect_start = Utils.monotonic_time
