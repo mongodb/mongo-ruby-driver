@@ -142,53 +142,20 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        raise Error::SocketTimeoutError, 'connect_timeout expired' if (options[:connect_timeout] || 0) < 0
-
+        sockaddr = ::Socket.pack_sockaddr_in(port, host)
         connect_timeout = options[:connect_timeout]
-        tcp_connect_start = Utils.monotonic_time
         map_exceptions do
-          @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
-        end
-
-        tcp_connect_end = Utils.monotonic_time
-        if connect_timeout && connect_timeout > 0
-          connect_timeout -= (tcp_connect_end - tcp_connect_start)
-          raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout < 0
-        end
-
-        @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
-        begin
-          @socket.hostname = @host_name
-          @socket.sync_close = true
-          map_exceptions do
-            begin
-              @socket.connect_nonblock
-            rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable
-              if IO.select([@socket], nil, nil, connect_timeout)
-                retry
-              else
-                raise Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect"
-              end
-            rescue IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
-              if IO.select(nil, [@socket], nil, connect_timeout)
-                retry
-              else
-                raise Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect"
-              end
-            rescue Errno::EISCONN
-              #
-            end
+          if connect_timeout && connect_timeout != 0
+            connect_with_timeout!(sockaddr, connect_timeout)
+          else
+            connect_without_timeout!(sockaddr)
           end
-          # TODO: Add timeout
-          verify_certificate!(@socket)
-          # TODO: Add timeout
-          verify_ocsp_endpoint!(@socket)
-        rescue
-          @socket.close
-          @socket = nil
-          raise
         end
         self
+      rescue
+        @socket&.close
+        @socket = nil
+        raise
       end
       private :connect!
 
@@ -208,6 +175,63 @@ module Mongo
       end
 
       private
+
+      def connect_without_timeout!(sockaddr)
+        @tcp_socket.connect(sockaddr)
+        @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
+        @socket.hostname = @host_name
+        @socket.sync_close = true
+        @socket.connect
+        verify_certificate!(@socket)
+        verify_ocsp_endpoint!(@socket)
+      end
+
+      def connect_with_timeout!(sockaddr, connect_timeout)
+        raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout <= 0
+
+        tcp_connect_start = Utils.monotonic_time
+        begin
+          @tcp_socket.connect_nonblock(sockaddr)
+        rescue IO::WaitWritable
+          if IO.select(nil, [@tcp_socket], nil, connect_timeout)
+            retry
+          else
+            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+          end
+        rescue Errno::EISCONN
+          #
+        end
+        tcp_connect_end = Utils.monotonic_time
+
+        connect_timeout -= (tcp_connect_end - tcp_connect_start)
+        raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout <= 0
+
+        @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
+        @socket.hostname = @host_name
+        @socket.sync_close = true
+
+        begin
+          @socket.connect_nonblock
+        rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable
+          if IO.select([@socket], nil, nil, connect_timeout)
+            retry
+          else
+            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+          end
+        rescue IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
+          if IO.select(nil, [@socket], nil, connect_timeout)
+            retry
+          else
+            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+          end
+        rescue Errno::EISCONN
+          #
+        end
+        # TODO: Add timeout
+        verify_certificate!(@socket)
+        # TODO: Add timeout
+        verify_ocsp_endpoint!(@socket)
+      end
 
       def verify_certificate?
         # If ssl_verify_certificate is not present, disable only if

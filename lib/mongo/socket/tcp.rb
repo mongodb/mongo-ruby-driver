@@ -79,11 +79,30 @@ module Mongo
       # @return [ TCP ] The connected socket instance.
       #
       # @since 2.0.0
+      # @api private
       def connect!
-        raise Error::SocketTimeoutError, 'connect_timeout expired' if (options[:connect_timeout] || 0) < 0
-
+        socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
         sockaddr = ::Socket.pack_sockaddr_in(port, host)
         connect_timeout = options[:connect_timeout]
+        map_exceptions do
+          if connect_timeout && connect_timeout != 0
+            connect_with_timeout(sockaddr, connect_timeout)
+          else
+            connect_without_timeout(sockaddr)
+          end
+        end
+        self
+      end
+
+      # @api private
+      def connect_without_timeout!(sockaddr)
+        socket.connect(sockaddr)
+      end
+
+      # @api private
+      def connect_with_timeout!(sockadd, connect_timeout)
+        raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout <= 0
+
         begin
           socket.connect_nonblock(sockaddr)
         rescue IO::WaitWritable
@@ -96,9 +115,7 @@ module Mongo
         rescue Errno::EISCONN
           #
         end
-        self
       end
-      private :connect!
 
       private
 
