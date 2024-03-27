@@ -86,15 +86,7 @@ module Mongo
         connect_timeout = options[:connect_timeout]
         map_exceptions do
           if connect_timeout && connect_timeout != 0
-            if BSON::Environment.jruby?
-              raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout < 0
-
-              Timeout.timeout(connect_timeout, Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
-                connect_without_timeout(sockaddr)
-              end
-            else
-              connect_with_timeout(sockaddr, connect_timeout)
-            end
+            connect_with_timeout(sockaddr, connect_timeout)
           else
             connect_without_timeout(sockaddr)
           end
@@ -109,19 +101,26 @@ module Mongo
 
       # @api private
       def connect_with_timeout(sockaddr, connect_timeout)
-        raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout <= 0
+        if connect_timeout <= 0
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
 
+        deadline = Utils.monotonic_time + connect_timeout
         begin
           socket.connect_nonblock(sockaddr)
         rescue IO::WaitWritable
-          if IO.select(nil, [socket], nil, connect_timeout)
+          select_timeout = deadline - Utils.monotonic_time
+          if select_timeout <= 0
+            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+          end
+          if IO.select(nil, [socket], nil, select_timeout)
             retry
           else
             socket.close
             raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
           end
         rescue Errno::EISCONN
-          #
+          # Socket is connected, nothing more to do
         end
       end
 
