@@ -86,7 +86,15 @@ module Mongo
         connect_timeout = options[:connect_timeout]
         map_exceptions do
           if connect_timeout && connect_timeout != 0
-            connect_with_timeout(sockaddr, connect_timeout)
+            if BSON::Environment.jruby?
+              raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout < 0
+
+              Timeout.timeout(connect_timeout, Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
+                connect_without_timeout(sockaddr)
+              end
+            else
+              connect_with_timeout(sockaddr, connect_timeout)
+            end
           else
             connect_without_timeout(sockaddr)
           end

@@ -146,7 +146,15 @@ module Mongo
         connect_timeout = options[:connect_timeout]
         map_exceptions do
           if connect_timeout && connect_timeout != 0
-            connect_with_timeout(sockaddr, connect_timeout)
+            if BSON::Environment.jruby?
+              raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout < 0
+
+              Timeout.timeout(connect_timeout, Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
+                connect_without_timeout(sockaddr)
+              end
+            else
+              connect_with_timeout(sockaddr, connect_timeout)
+            end
           else
             connect_without_timeout(sockaddr)
           end
@@ -189,6 +197,7 @@ module Mongo
       def connect_with_timeout(sockaddr, connect_timeout)
         raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout <= 0
 
+        deadline = Utils.monotonic_time + connect_timeout
         tcp_connect_start = Utils.monotonic_time
         begin
           @tcp_socket.connect_nonblock(sockaddr)
@@ -212,18 +221,21 @@ module Mongo
 
         begin
           @socket.connect_nonblock
-        rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable
-          if IO.select([@socket], nil, nil, connect_timeout)
-            retry
-          else
+        rescue IO::WaitReadable#, OpenSSL::SSL::SSLErrorWaitReadable
+          rv = IO.select([@socket], nil, nil, connect_timeout)
+          if rv.nil?
             raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
-          end
-        rescue IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
-          if IO.select(nil, [@socket], nil, connect_timeout)
-            retry
           else
-            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+            retry
           end
+        rescue IO::WaitWritable#, OpenSSL::SSL::SSLErrorWaitWritable
+          rv = IO.select(nil, [@socket], nil, connect_timeout)
+          if rv.nil?
+            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+          else
+            retry
+          end
+          retry
         rescue Errno::EISCONN
           #
         end
