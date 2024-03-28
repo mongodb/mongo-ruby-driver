@@ -79,18 +79,50 @@ module Mongo
       # @return [ TCP ] The connected socket instance.
       #
       # @since 2.0.0
+      # @api private
       def connect!
-        raise Error::SocketTimeoutError, 'connect_timeout expired' if (options[:connect_timeout] || 0) < 0
-
-        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
-          socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-          map_exceptions do
-            socket.connect(::Socket.pack_sockaddr_in(port, host))
+        socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+        sockaddr = ::Socket.pack_sockaddr_in(port, host)
+        connect_timeout = options[:connect_timeout]
+        map_exceptions do
+          if connect_timeout && connect_timeout != 0
+            connect_with_timeout(sockaddr, connect_timeout)
+          else
+            connect_without_timeout(sockaddr)
           end
-          self
+        end
+        self
+      end
+
+      # @api private
+      def connect_without_timeout(sockaddr)
+        socket.connect(sockaddr)
+      end
+
+      # @api private
+      def connect_with_timeout(sockaddr, connect_timeout)
+        if connect_timeout <= 0
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
+
+        deadline = Utils.monotonic_time + connect_timeout
+        begin
+          socket.connect_nonblock(sockaddr)
+        rescue IO::WaitWritable
+          select_timeout = deadline - Utils.monotonic_time
+          if select_timeout <= 0
+            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+          end
+          if IO.select(nil, [socket], nil, select_timeout)
+            retry
+          else
+            socket.close
+            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+          end
+        rescue Errno::EISCONN
+          # Socket is connected, nothing more to do
         end
       end
-      private :connect!
 
       private
 

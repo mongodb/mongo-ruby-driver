@@ -223,10 +223,10 @@ module Mongo
       # @api private
       def operation_timeouts(opts)
         {}.tap do |result|
-          if opts.key?(:timeout_ms)
-            result[:operation_timeout_ms] = opts.delete(:timeout_ms)
-          else
+          if opts[:timeout_ms].nil?
             result[:inherited_timeout_ms] = collection.timeout_ms
+          else
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms)
           end
         end
       end
