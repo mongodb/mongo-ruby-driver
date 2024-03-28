@@ -162,6 +162,8 @@ module Mongo
             connect_without_timeout(sockaddr)
           end
         end
+        verify_certificate!(@socket)
+        verify_ocsp_endpoint!(@socket)
         self
       rescue
         @socket&.close
@@ -196,8 +198,6 @@ module Mongo
         @socket.hostname = @host_name
         @socket.sync_close = true
         @socket.connect
-        verify_certificate!(@socket)
-        verify_ocsp_endpoint!(@socket)
       end
 
       # Connects the socket with the connect timeout. The timeout applies to
@@ -210,27 +210,30 @@ module Mongo
         end
 
         deadline = Utils.monotonic_time + connect_timeout
-        # Connect tcp socket first.
-        begin
-          @tcp_socket.connect_nonblock(sockaddr)
-        rescue IO::WaitWritable
-          select_timeout = deadline - Utils.monotonic_time
-          if select_timeout <= 0
-            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
-          end
-          if IO.select(nil, [@tcp_socket], nil, select_timeout)
-            retry
-          else
-            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
-          end
-        rescue Errno::EISCONN
-          # Socket is connected, nothing to do.
-        end
+        connect_tcp_socket_with_timeout(sockaddr, deadline, connect_timeout)
+        connnect_ssl_socket_with_timeout(deadline, connect_timeout)
+      end
 
+      def connect_tcp_socket_with_timeout(sockaddr, deadline, connect_timeout)
         if deadline <= Utils.monotonic_time
           raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
         end
+        begin
+          @tcp_socket.connect_nonblock(sockaddr)
+        rescue IO::WaitWritable
+          with_select_timeout(deadline, connect_timeout) do |select_timeout|
+            IO.select(nil, [@tcp_socket], nil, select_timeout)
+          end
+          retry
+        rescue Errno::EISCONN
+          # Socket is connected, nothing to do.
+        end
+      end
 
+      def connnect_ssl_socket_with_timeout(deadline, connect_timeout)
+        if deadline <= Utils.monotonic_time
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
         @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
         @socket.hostname = @host_name
         @socket.sync_close = true
@@ -239,35 +242,32 @@ module Mongo
         begin
           @socket.connect_nonblock
         rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable
-          select_timeout = deadline - Utils.monotonic_time
-          if select_timeout <= 0
-            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+          with_select_timeout(deadline, connect_timeout) do |select_timeout|
+            IO.select([@socket], nil, nil, select_timeout)
           end
-          rv = IO.select([@socket], nil, nil, select_timeout)
-          if rv.nil?
-            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
-          else
-            retry
-          end
+          retry
         rescue IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
-          select_timeout = deadline - Utils.monotonic_time
-          if select_timeout <= 0
-            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
-          end
-          rv = IO.select(nil, [@socket], nil, select_timeout)
-          if rv.nil?
-            raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
-          else
-            retry
+          with_select_timeout(deadline, connect_timeout) do |select_timeout|
+            IO.select(nil, [@socket], nil, select_timeout)
           end
           retry
         rescue Errno::EISCONN
           # Socket is connected, nothing to do
         end
-        # TODO: Add timeout
-        verify_certificate!(@socket)
-        # TODO: Add timeout
-        verify_ocsp_endpoint!(@socket)
+      end
+
+      # Raises +Error::SocketTimeoutError+ exception if deadline reached or the
+      # block returns nil. The block should call +IO.select+ with the
+      # +connect_timeout+ value. It returns nil if the +connect_timeout+ expires.
+      def with_select_timeout(deadline, connect_timeout, &block)
+        select_timeout = deadline - Utils.monotonic_time
+        if select_timeout <= 0
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
+        rv = block.call(select_timeout)
+        if rv.nil?
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
       end
 
       def verify_certificate?
