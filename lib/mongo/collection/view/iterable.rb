@@ -93,7 +93,7 @@ module Mongo
           context = Operation::Context.new(
             client: client,
             session: session,
-            operation_timeouts: operation_timeouts(options)
+            operation_timeouts: operation_timeouts
           )
 
           if respond_to?(:write?, true) && write?
@@ -282,7 +282,6 @@ module Mongo
         #   detected.
         def validate_timeout_mode!(options)
           cursor_type = options[:cursor_type]
-          timeout_ms = options[:timeout_ms] || timeout_ms
           timeout_mode = options[:timeout_mode]
 
           if timeout_ms

@@ -304,7 +304,7 @@ module Mongo
           @start_at_operation_time_supported = nil
 
           session = client.get_session(@options)
-          context = Operation::Context.new(client: client, session: session, timeout_ms: timeout_ms)
+          context = Operation::Context.new(client: client, session: session, operation_timeouts: operation_timeouts)
 
           start_at_operation_time = nil
           start_at_operation_time_supported = nil

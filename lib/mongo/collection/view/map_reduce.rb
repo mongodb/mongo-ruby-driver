@@ -72,7 +72,7 @@ module Mongo
           @cursor = nil
           session = client.get_session(@options)
           server = cluster.next_primary(nil, session)
-          context = Operation::Context.new(client: client, session: session, timeout_ms: timeout_ms)
+          context = Operation::Context.new(client: client, session: session, operation_timeouts: view.operation_timeouts)
           result = send_initial_query(server, context)
           result = send_fetch_query(server, session) unless inline?
           @cursor = Cursor.new(view, result, server, session: session)

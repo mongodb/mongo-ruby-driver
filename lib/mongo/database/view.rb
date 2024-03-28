@@ -155,6 +155,17 @@ module Mongo
         Collection::View::Aggregation.new(self, pipeline, options)
       end
 
+      # @return [ Hash ] timeout_ms value set on the operation level (if any).
+      #
+      # @api private
+      def operation_timeouts(opts = {})
+        {}.tap do |result|
+          if opts[:timeout_ms] || timeout_ms
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || timeout_ms
+          end
+        end
+      end
+
       private
 
       def collections_info(session, server_selector, options = {}, &block)

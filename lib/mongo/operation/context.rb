@@ -60,6 +60,7 @@ module Mongo
         @session = session
         @connection_global_id = connection_global_id
         @deadline = calculate_deadline(operation_timeouts, session)
+        @operation_timeouts = operation_timeouts
         @options = options
       end
 
@@ -67,7 +68,6 @@ module Mongo
       attr_reader :session
       attr_reader :deadline
       attr_reader :options
-      attr_reader :timeout_ms
 
       # Returns a new Operation::Context with the deadline refreshed
       # and relative to the current moment.
@@ -77,8 +77,13 @@ module Mongo
         self.class.new(client: client,
                        session: session,
                        connection_global_id: connection_global_id,
-                       timeout_ms: timeout_ms,
+                       operation_timeouts: @operation_timeouts,
                        options: options)
+      end
+
+      def timeout_ms
+        @operation_timeouts[:inherited_timeout_ms] ||
+          @operation_timeouts[:operation_timeout_ms]
       end
 
       def connection_global_id

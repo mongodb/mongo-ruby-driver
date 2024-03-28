@@ -36,6 +36,12 @@ module Mongo
         # @return [ Array<Hash> ] pipeline The aggregation pipeline.
         attr_reader :pipeline
 
+        # @return [ Integer | nil ] the timeout_ms value that was passed as
+        #   an option to this object.
+        #
+        # @api private
+        attr_reader :timeout_ms
+
         # Delegate necessary operations to the view.
         def_delegators :view, :collection, :read, :cluster, :cursor_type
 
@@ -99,6 +105,9 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(view, pipeline, options = {})
+          @timeout_ms = options.delete(:timeout_ms)
+          @options = BSON::Document.new(options).freeze
+
           validate_timeout_mode!(options)
 
           @view = view
@@ -106,7 +115,6 @@ module Mongo
           unless Mongo.broken_view_aggregate || view.filter.empty?
             @pipeline.unshift(:$match => view.filter)
           end
-          @options = BSON::Document.new(options).freeze
         end
 
         # Get the explain plan for the aggregation.
@@ -219,10 +227,10 @@ module Mongo
       #   and/or timeout_ms that is set on collection/database/client level (if any).
       #
       # @api private
-        def operation_timeouts(opts)
+        def operation_timeouts
           {}.tap do |result|
-            if opts.key?(:timeout_ms)
-              result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+            if timeout_ms
+              result[:operation_timeout_ms] = timeout_ms
             else
               result[:inherited_timeout_ms] = collection.timeout_ms
             end

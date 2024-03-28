@@ -75,6 +75,12 @@ module Mongo
 
       alias :selector :filter
 
+      # @return [ Integer | nil | The timeout_ms value that was passed as an
+      #   option to the view.
+      #
+      # @api private
+      attr_reader :timeout_ms
+
       # Compare two +View+ objects.
       #
       # @example Compare the view with another object.
@@ -160,12 +166,15 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
-        validate_timeout_mode!(options)
         validate_doc!(filter)
-        @collection = collection
 
         filter = BSON::Document.new(filter)
         options = BSON::Document.new(options)
+
+        @timeout_ms = options.delete(:timeout_ms)
+
+        validate_timeout_mode!(options)
+        @collection = collection
 
         # This is when users pass $query in filter and other modifiers
         # alongside?
@@ -203,14 +212,17 @@ module Mongo
         WriteConcern.get(options[:write_concern] || options[:write] || collection.write_concern)
       end
 
-      def timeout_ms(opts = {})
-        if opts[:timeout_ms].nil?
-          # `options` could be nil during view instantiation, because
-          # validate_timeout_mode! is invoked before `@options` is
-          # set.
-          (options && options[:timeout_ms]) || database.timeout_ms
-        else
-          opts.delete(:timeout_ms)
+      # @return [ Hash ] timeout_ms value set on the operation level (if any),
+      #   and/or timeout_ms that is set on collection/database/client level (if any).
+      #
+      # @api private
+      def operation_timeouts(opts = {})
+        {}.tap do |result|
+          if opts[:timeout_ms] || timeout_ms
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || timeout_ms
+          else
+            result[:inherited_timeout_ms] = collection.timeout_ms
+          end
         end
       end
 
@@ -230,20 +242,6 @@ module Mongo
 
       def with_session(opts = {}, &block)
         client.send(:with_session, @options.merge(opts), &block)
-      end
-
-      # @return [ Hash ] timeout_ms value set on the operation level (if any),
-      #   and/or timeout_ms that is set on collection/database/client level (if any).
-      #
-      # @api private
-      def operation_timeouts(opts)
-        {}.tap do |result|
-          if opts.key?(:timeout_ms)
-            result[:operation_timeout_ms] = opts.delete(:timeout_ms)
-          else
-            result[:inherited_timeout_ms] = collection.timeout_ms
-          end
-        end
       end
     end
   end

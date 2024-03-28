@@ -531,7 +531,7 @@ module Mongo
     def fresh_context
       Operation::Context.new(client: view.client,
                              session: @session,
-                             timeout_ms: view.timeout_ms)
+                             operation_timeouts: view.operation_timeouts)
     end
 
     # Sets zero or one of :max_time_ms and :timeout_ms on the given
