@@ -142,28 +142,33 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        raise Error::SocketTimeoutError, 'connect_timeout expired' if (options[:connect_timeout] || 0) < 0
+        sockaddr = ::Socket.pack_sockaddr_in(port, host)
+        connect_timeout = options[:connect_timeout]
+        map_exceptions do
+          if connect_timeout && connect_timeout != 0
+            if BSON::Environment.jruby?
+              # We encounter some strange problems with connect_nonblock for
+              # ssl sockets on JRuby. Therefore, we use the old +Timeout.timeout+
+              # solution, even though it is known to be not very reliable.
+              raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout < 0
 
-        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
-          map_exceptions do
-            @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
-          end
-          @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
-          begin
-            @socket.hostname = @host_name
-            @socket.sync_close = true
-            map_exceptions do
-              @socket.connect
+              Timeout.timeout(connect_timeout, Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
+                connect_without_timeout(sockaddr)
+              end
+            else
+              connect_with_timeout(sockaddr, connect_timeout)
             end
-            verify_certificate!(@socket)
-            verify_ocsp_endpoint!(@socket)
-          rescue
-            @socket.close
-            @socket = nil
-            raise
+          else
+            connect_without_timeout(sockaddr)
           end
-          self
         end
+        verify_certificate!(@socket)
+        verify_ocsp_endpoint!(@socket)
+        self
+      rescue
+        @socket&.close
+        @socket = nil
+        raise
       end
       private :connect!
 
@@ -183,6 +188,87 @@ module Mongo
       end
 
       private
+
+      # Connects the socket without a timeout provided.
+      #
+      # @param [ String ] sockaddr Address to connect to.
+      def connect_without_timeout(sockaddr)
+        @tcp_socket.connect(sockaddr)
+        @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
+        @socket.hostname = @host_name
+        @socket.sync_close = true
+        @socket.connect
+      end
+
+      # Connects the socket with the connect timeout. The timeout applies to
+      # connecting both ssl socket and the underlying tcp socket.
+      #
+      # @param [ String ] sockaddr Address to connect to.
+      def connect_with_timeout(sockaddr, connect_timeout)
+        if connect_timeout <= 0
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
+
+        deadline = Utils.monotonic_time + connect_timeout
+        connect_tcp_socket_with_timeout(sockaddr, deadline, connect_timeout)
+        connnect_ssl_socket_with_timeout(deadline, connect_timeout)
+      end
+
+      def connect_tcp_socket_with_timeout(sockaddr, deadline, connect_timeout)
+        if deadline <= Utils.monotonic_time
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
+        begin
+          @tcp_socket.connect_nonblock(sockaddr)
+        rescue IO::WaitWritable
+          with_select_timeout(deadline, connect_timeout) do |select_timeout|
+            IO.select(nil, [@tcp_socket], nil, select_timeout)
+          end
+          retry
+        rescue Errno::EISCONN
+          # Socket is connected, nothing to do.
+        end
+      end
+
+      def connnect_ssl_socket_with_timeout(deadline, connect_timeout)
+        if deadline <= Utils.monotonic_time
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
+        @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
+        @socket.hostname = @host_name
+        @socket.sync_close = true
+
+        # We still have time, connecting ssl socket.
+        begin
+          @socket.connect_nonblock
+        rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable
+          with_select_timeout(deadline, connect_timeout) do |select_timeout|
+            IO.select([@socket], nil, nil, select_timeout)
+          end
+          retry
+        rescue IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
+          with_select_timeout(deadline, connect_timeout) do |select_timeout|
+            IO.select(nil, [@socket], nil, select_timeout)
+          end
+          retry
+        rescue Errno::EISCONN
+          # Socket is connected, nothing to do
+        end
+      end
+
+      # Raises +Error::SocketTimeoutError+ exception if deadline reached or the
+      # block returns nil. The block should call +IO.select+ with the
+      # +connect_timeout+ value. It returns nil if the +connect_timeout+ expires.
+      def with_select_timeout(deadline, connect_timeout, &block)
+        select_timeout = deadline - Utils.monotonic_time
+        if select_timeout <= 0
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
+        rv = block.call(select_timeout)
+        if rv.nil?
+          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
+        end
+      end
 
       def verify_certificate?
         # If ssl_verify_certificate is not present, disable only if
