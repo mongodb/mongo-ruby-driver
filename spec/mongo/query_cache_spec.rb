@@ -141,7 +141,7 @@ describe Mongo::QueryCache do
     let(:view) do
       double("Mongo::Collection::View").tap do |view|
         allow(view).to receive(:client).and_return(client)
-        allow(view).to receive(:timeout_ms).and_return(nil)
+        allow(view).to receive(:operation_timeouts).and_return({})
       end
     end
 

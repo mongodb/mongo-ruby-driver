@@ -36,7 +36,7 @@ module Mongo
       #   when sending the listIndexes command.
       attr_reader :batch_size
 
-      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client, :timeout_ms
+      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client, :operation_timeouts
       def_delegators :cluster, :next_primary
 
       # The index key field.
