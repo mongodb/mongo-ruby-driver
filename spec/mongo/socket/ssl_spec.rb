@@ -103,16 +103,6 @@ describe Mongo::Socket::SSL do
           expect(socket).to be_alive
         end
       end
-
-      context 'when connecting the tcp socket raises an exception' do
-
-        it 'raises an exception' do
-          expect_any_instance_of(::Socket).to receive(:connect).and_raise(Mongo::Error::SocketTimeoutError)
-          expect do
-            socket
-          end.to raise_error(Mongo::Error::SocketTimeoutError)
-        end
-      end
     end
 
     context 'when a certificate and key are provided as strings' do

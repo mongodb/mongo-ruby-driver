@@ -243,6 +243,20 @@ module Mongo
       def with_session(opts = {}, &block)
         client.send(:with_session, @options.merge(opts), &block)
       end
+
+      # @return [ Hash ] timeout_ms value set on the operation level (if any),
+      #   and/or timeout_ms that is set on collection/database/client level (if any).
+      #
+      # @api private
+      def operation_timeouts(opts)
+        {}.tap do |result|
+          if opts[:timeout_ms].nil?
+            result[:inherited_timeout_ms] = collection.timeout_ms
+          else
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+          end
+        end
+      end
     end
   end
 end

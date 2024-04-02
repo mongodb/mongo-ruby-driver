@@ -1227,12 +1227,12 @@ module Mongo
     def operation_timeouts(opts)
       # TODO: We should re-evaluate if we need two timeouts separately.
       {}.tap do |result|
-          if opts.key?(:timeout_ms)
-            result[:operation_timeout_ms] = opts.delete(:timeout_ms)
-          else
-            result[:inherited_timeout_ms] = timeout_ms
-          end
+        if opts[:timeout_ms].nil?
+          result[:inherited_timeout_ms] = timeout_ms
+        else
+          result[:operation_timeout_ms] = opts.delete(:timeout_ms)
         end
+      end
     end
   end
 end
