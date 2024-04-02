@@ -27,6 +27,7 @@ module Unified
           hint: args.use('hint'),
           max_value: args.use('max'),
           max_time_ms: args.use('maxTimeMS'),
+          timeout_ms: args.use('timeoutMS'),
           min_value: args.use('min'),
         }
         if session = args.use('session')

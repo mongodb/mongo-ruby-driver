@@ -165,6 +165,7 @@ module Mongo
       @database = database
       @name = name.to_s.freeze
       @options = options.dup
+      @timeout_ms = @options.delete(:timeout_ms)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
         # Cache the instance so that we do not needlessly reconstruct it.
@@ -1217,17 +1218,17 @@ module Mongo
     end
 
     def timeout_ms
-      options[:timeout_ms] || database.timeout_ms
+      @timeout_ms || database.timeout_ms
     end
 
     # @return [ Hash ] timeout_ms value set on the operation level (if any),
     #   and/or timeout_ms that is set on collection/database/client level (if any).
     #
     # @api private
-    def operation_timeouts(opts)
+    def operation_timeouts(opts = {})
       # TODO: We should re-evaluate if we need two timeouts separately.
       {}.tap do |result|
-        if opts[:timeout_ms].nil?
+        if opts[:timeout_ms].nil? && timeout_ms.nil?
           result[:inherited_timeout_ms] = timeout_ms
         else
           result[:operation_timeout_ms] = opts.delete(:timeout_ms)

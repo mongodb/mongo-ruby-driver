@@ -227,10 +227,10 @@ module Mongo
       #   and/or timeout_ms that is set on collection/database/client level (if any).
       #
       # @api private
-        def operation_timeouts
+        def operation_timeouts(opts = {})
           {}.tap do |result|
-            if timeout_ms
-              result[:operation_timeout_ms] = timeout_ms
+            if opts[:timeout_ms] || timeout_ms
+              result[:operation_timeout_ms] = opts.delete(:timeout_ms) || timeout_ms
             else
               result[:inherited_timeout_ms] = collection.timeout_ms
             end
