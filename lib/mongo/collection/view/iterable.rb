@@ -253,7 +253,11 @@ module Mongo
               # drivers MUST honor the timeoutMS option for the initial command
               # but MUST NOT append a maxTimeMS field to the command sent to the
               # server
-              spec[:timeout_ms] = timeout_ms if timeout_ms
+              if timeout_ms
+                spec[:timeout_ms] = timeout_ms
+              elsif options[:max_time_ms]
+                spec[:max_time_ms] = options[:max_time_ms]
+              end
             end
 
           when :tailable
