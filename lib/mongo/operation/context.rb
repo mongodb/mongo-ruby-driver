@@ -68,12 +68,13 @@ module Mongo
       attr_reader :session
       attr_reader :deadline
       attr_reader :options
+      attr_reader :operation_timeouts
 
       # Returns a new Operation::Context with the deadline refreshed
       # and relative to the current moment.
       #
       # @return [ Operation::Context ] the refreshed context
-      def refresh
+      def refresh(connection_global_id: @connection_global_id)
         self.class.new(client: client,
                        session: session,
                        connection_global_id: connection_global_id,
@@ -171,6 +172,10 @@ module Mongo
         return nil if seconds.nil?
 
         (seconds * 1_000).to_i
+      end
+
+      def inspect
+        "#<#{self.class} connection_global_id=#{connection_global_id.inspect} deadline=#{deadline.inspect} options=#{options.inspect} operation_timeouts=#{operation_timeouts.inspect}>"
       end
 
       private

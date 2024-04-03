@@ -88,7 +88,7 @@ module Mongo
       @connection_global_id = result.connection_global_id
       @options = options
       @session = @options[:session]
-      @context = @options[:context] || fresh_context
+      @context = @options[:context]&.refresh(connection_global_id: @connection_global_id) || fresh_context
       @explicitly_closed = false
       @lock = Mutex.new
       unless closed?
@@ -531,6 +531,7 @@ module Mongo
     def fresh_context
       Operation::Context.new(client: view.client,
                              session: @session,
+                             connection_global_id: @connection_global_id,
                              operation_timeouts: view.operation_timeouts)
     end
 
