@@ -85,10 +85,10 @@ module Mongo
       if @cursor_id.nil?
         raise ArgumentError, 'Cursor id must be present in the result'
       end
-      @connection_global_id = result.connection_global_id
       @options = options
       @session = @options[:session]
-      @context = @options[:context]&.refresh(connection_global_id: @connection_global_id) || fresh_context
+      @connection_global_id = result.connection_global_id
+      @context = @options[:context]&.refresh(connection_global_id: connection_global_id_for_context) || fresh_context
       @explicitly_closed = false
       @lock = Mutex.new
       unless closed?
@@ -531,7 +531,7 @@ module Mongo
     def fresh_context
       Operation::Context.new(client: view.client,
                              session: @session,
-                             connection_global_id: @connection_global_id,
+                             connection_global_id: connection_global_id_for_context,
                              operation_timeouts: view.operation_timeouts)
     end
 
@@ -572,6 +572,17 @@ module Mongo
 
         max_await_time_ms = view.respond_to?(:max_await_time_ms) && view.max_await_time_ms
         spec[:max_time_ms] = max_await_time_ms if max_await_time_ms
+      end
+    end
+
+    # Because a context must not have a connection_global_id if the session
+    # is already pinned to one, this method checks to see whether or not there's
+    # pinned connection_global_id on the session and returns nil if so.
+    def connection_global_id_for_context
+      if @session&.pinned_connection_global_id
+        nil
+      else
+        @connection_global_id
       end
     end
   end
