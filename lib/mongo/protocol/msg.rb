@@ -317,7 +317,7 @@ module Mongo
       # @raise [ Mongo::Error::TimeoutError ] if timeout expired or there is
       #   not enough time to send the message to the server.
       def maybe_add_max_time_ms(connection, context)
-        return self if context.remaining_timeout_sec.nil?
+        return self if [nil, 0].include?(context.deadline)
 
         max_time_sec = context.remaining_timeout_sec - connection.server.minimum_round_trip_time
         if max_time_sec > 0

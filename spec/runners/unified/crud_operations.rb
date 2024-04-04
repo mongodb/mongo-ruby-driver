@@ -44,6 +44,9 @@ module Unified
         if args.key?('allowPartialResults')
           opts[:allow_partial_results] = args.use('allowPartialResults')
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         req = collection.find(args.use!('filter'), **opts)
         if batch_size = args.use('batchSize')
           req = req.batch_size(batch_size)
@@ -121,6 +124,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         collection.find_one_and_update(filter, update, **opts)
       end
     end
@@ -138,6 +144,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         collection.find_one_and_replace(filter, update, **opts)
       end
     end
@@ -153,6 +162,9 @@ module Unified
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
+        end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
         end
         collection.find_one_and_delete(filter, **opts)
       end
@@ -183,6 +195,9 @@ module Unified
         end
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
+        end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
         end
         collection.insert_many(args.use!('documents'), **opts)
       end

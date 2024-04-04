@@ -143,7 +143,7 @@ module Mongo
       end
 
       def remaining_timeout_sec
-        return nil if @deadline.nil?
+        return nil if [nil, 0].include?(@deadline)
 
         deadline - Utils.monotonic_time
       end
@@ -167,13 +167,17 @@ module Mongo
         elsif operation_timeout_ms = opts[:operation_timeout_ms]
           if operation_timeout_ms > 0
             Utils.monotonic_time + (operation_timeout_ms / 1_000.0)
+          elsif operation_timeout_ms == 0
+            0
           elsif operation_timeout_ms < 0
             raise ArgumentError, /must be a non-negative integer/
           end
-        elsif opts[:inherited_timeout_ms] && opts[:inherited_timeout_ms] > 0
-          Utils.monotonic_time + (opts[:inherited_timeout_ms] / 1_000.0)
-        else
-          nil
+        elsif inherited_timeout_ms = opts[:inherited_timeout_ms]
+          if inherited_timeout_ms > 0
+            Utils.monotonic_time + (opts[:inherited_timeout_ms] / 1_000.0)
+          elsif inherited_timeout_ms == 0
+            0
+          end
         end
       end
     end
