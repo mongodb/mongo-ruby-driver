@@ -1705,7 +1705,7 @@ perform actions when the worker processes are forked. The recommended
 hooks are:
 
 - For `Puma <https://puma.io/puma/#clustered-mode>`_,
-  use ``before_fork`` and ``before_refork`` to close clients in
+  use ``before_fork`` and ``on_refork`` to close clients in
   the parent process and ``on_worker_boot`` to reconnect in the
   child processes.
 - For `Unicorn <https://yhbt.net/unicorn/Unicorn/Configurator.html>`_,
