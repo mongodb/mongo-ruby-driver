@@ -1649,8 +1649,8 @@ When using the Mongo Ruby driver in a Web application with a forking web server
 such as Puma, or when the application otherwise forks, each process (parent and child)
 must have its own client connections. This is because:
 
-1. Background threads such as those used to monitor connection state are
-   **not** transferred to the child process.
+1. Background Ruby threads, such as those used to monitor connection state,
+   are **not** transferred to the child process.
 2. File descriptors like network sockets **are** shared between parent and
    child processes, which can cause I/O conflicts.
 
@@ -1684,8 +1684,8 @@ file descriptors.
 
 .. note::
 
-  Closing clients won't disrupt database commands currently in-flight.
-  Clients will automatically reconnect when new commands arrive.
+  Calling ``Client#close`` does not disrupt database operations currently in-flight.
+  Clients will automatically reconnect when you perform new operations.
 
 Then, immediately after forking, reconnect your clients in the newly
 forked child process:
