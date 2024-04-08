@@ -271,12 +271,7 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def retry_write(original_error, txn_num, context:, failed_server: nil, &block)
-        if deadline = context&.deadline
-          if deadline > 0 && Utils.monotonic_time >= context&.deadline
-            # TODO: Error message
-            raise Error::TimeoutError, "Timeout expired"
-          end
-        end
+        context&.check_timeout!
 
         session = context.session
 

@@ -275,12 +275,7 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def retry_read(original_error, session, server_selector, context: nil, failed_server: nil, &block)
-        if deadline = context&.deadline
-          if deadline > 0 && Utils.monotonic_time >= context&.deadline
-            # TODO: Error message
-            raise Error::TimeoutError, "Timeout expired"
-          end
-        end
+        context&.check_timeout!
 
         server = select_server_for_retry(
           original_error, session, server_selector, context, failed_server

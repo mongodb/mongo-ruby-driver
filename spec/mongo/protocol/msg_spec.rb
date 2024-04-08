@@ -532,7 +532,7 @@ describe Mongo::Protocol::Msg do
       let(:context) do
         instance_double(Mongo::Operation::Context).tap do |ctx|
           # Ten seconds
-          allow(ctx).to receive(:deadline).and_return(Mongo::Utils.monotonic_time + 10)
+          allow(ctx).to receive(:has_timeout?).and_return(true)
           allow(ctx).to receive(:remaining_timeout_sec).twice.and_return(10)
         end
       end
@@ -551,7 +551,7 @@ describe Mongo::Protocol::Msg do
     context 'when there is not enough time to send the message' do
       let(:context) do
         instance_double(Mongo::Operation::Context).tap do |ctx|
-          allow(ctx).to receive(:deadline).and_return(Mongo::Utils.monotonic_time + 0.1)
+          allow(ctx).to receive(:has_timeout?).and_return(true)
           allow(ctx).to receive(:remaining_timeout_sec).twice.and_return(0.1)
         end
       end
