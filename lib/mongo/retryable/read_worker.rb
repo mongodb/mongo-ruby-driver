@@ -107,14 +107,16 @@ module Mongo
       #   is being run on.
       # @param [ Mongo::ServerSelector::Selectable | nil ] server_selector
       #   Server selector for the operation.
+      # @param [ Mongo::Operation::Context | nil ] context Context for the
+      #   read operation.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def read_with_retry(session = nil, server_selector = nil, &block)
+      def read_with_retry(session = nil, server_selector = nil, context = nil, &block)
         if session.nil? && server_selector.nil?
           deprecated_legacy_read_with_retry(&block)
         elsif session&.retry_reads?
-          modern_read_with_retry(session, server_selector, &block)
+          modern_read_with_retry(session, server_selector, context, &block)
         elsif client.max_read_retries > 0
           legacy_read_with_retry(session, server_selector, &block)
         else
@@ -186,19 +188,26 @@ module Mongo
       #   being run on.
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
+      # @param [ Mongo::Operation::Context ] context Context for the
+      #   read operation.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def modern_read_with_retry(session, server_selector, &block)
-        server = select_server(cluster, server_selector, session)
+      def modern_read_with_retry(session, server_selector, context, &block)
+        server = select_server(
+          cluster,
+          server_selector,
+          session,
+          timeout: context&.remaining_timeout_sec
+        )
         yield server
       rescue *retryable_exceptions, Error::OperationFailure, Auth::Unauthorized, Error::PoolError => e
         e.add_notes('modern retry', 'attempt 1')
         raise e if session.in_transaction?
         raise e if !is_retryable_exception?(e) && !e.write_retryable?
-        retry_read(e, session, server_selector, failed_server: server, &block)
+        retry_read(e, session, server_selector, context: context, failed_server: server, &block)
       end
-  
+
       # Attempts to do a "legacy" read with retry. The operation will be
       # attempted multiple times, up to the client's `max_read_retries`
       # setting.
@@ -215,7 +224,7 @@ module Mongo
         yield select_server(cluster, server_selector, session)
       rescue *retryable_exceptions, Error::OperationFailure, Error::PoolError => e
         e.add_notes('legacy retry', "attempt #{attempt}")
-        
+
         if is_retryable_exception?(e)
           raise e if attempt > client.max_read_retries || session&.in_transaction?
         elsif e.retryable? && !session&.in_transaction?
@@ -223,7 +232,7 @@ module Mongo
         else
           raise e
         end
-        
+
         log_retry(e, message: 'Legacy read retry')
         sleep(client.read_retry_interval) unless is_retryable_exception?(e)
         retry
@@ -258,39 +267,65 @@ module Mongo
       #   being run on.
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
-      # @param [ Mongo::Server ] failed_server The server on which the original
+      # @param [ Mongo::Operation::Context | nil ] :context Context for the
+      #   read operation.
+      # @param [ Mongo::Server | nil ] :failed_server The server on which the original
       #   operation failed.
       # @param [ Proc ] block The block to execute.
-      # 
+      #
       # @return [ Result ] The result of the operation.
-      def retry_read(original_error, session, server_selector, failed_server: nil, &block)
-        begin
-          server = select_server(cluster, server_selector, session, failed_server)
-        rescue Error, Error::AuthError => e
-          original_error.add_note("later retry failed: #{e.class}: #{e}")
-          raise original_error
-        end
-  
+      def retry_read(original_error, session, server_selector, context: nil, failed_server: nil, &block)
+        context&.check_timeout!
+
+        server = select_server_for_retry(
+          original_error, session, server_selector, context, failed_server
+        )
+
         log_retry(original_error, message: 'Read retry')
-  
+
         begin
+          attempt = attempt ? attempt + 1 : 2
           yield server, true
         rescue *retryable_exceptions => e
-          e.add_notes('modern retry', 'attempt 2')
-          raise e
+          e.add_notes('modern retry', "attempt #{attempt}")
+          if context&.deadlie
+            failed_server = server
+            retry
+          else
+            raise e
+          end
         rescue Error::OperationFailure, Error::PoolError => e
           e.add_note('modern retry')
-          unless e.write_retryable?
+          if e.write_retryable?
+            e.add_note("attempt #{attempt}")
+            if context&.deadlie
+              failed_server = server
+              retry
+            else
+              raise e
+            end
+          else
             original_error.add_note("later retry failed: #{e.class}: #{e}")
             raise original_error
           end
-          e.add_note("attempt 2")
-          raise e
         rescue Error, Error::AuthError => e
           e.add_note('modern retry')
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error
         end
+      end
+
+      def select_server_for_retry(original_error, session, server_selector, context, failed_server)
+        select_server(
+          cluster,
+          server_selector,
+          session,
+          failed_server,
+          timeout: context&.remaining_timeout_sec
+        )
+      rescue Error, Error::AuthError => e
+        original_error.add_note("later retry failed: #{e.class}: #{e}")
+        raise original_error
       end
     end
   end

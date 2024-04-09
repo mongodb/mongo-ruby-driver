@@ -286,7 +286,8 @@ module Mongo
       # @raise [ Mongo::Error::TimeoutError ] if timeout expired or there is
       #   not enough time to send the message to the server.
       def check_timeout!(context)
-        return if context.remaining_timeout_sec.nil?
+        return if [nil, 0].include?(context.deadline)
+
         time_to_execute = context.remaining_timeout_sec - server.minimum_round_trip_time
         if time_to_execute <= 0
           raise Mongo::Error::TimeoutError

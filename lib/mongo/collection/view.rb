@@ -226,7 +226,7 @@ module Mongo
           if opts[:timeout_ms].nil?
             result[:inherited_timeout_ms] = collection.timeout_ms
           else
-            result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+            result[:operation_timeout_ms] = opts[:timeout_ms]
           end
         end
       end
