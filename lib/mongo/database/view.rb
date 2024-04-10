@@ -28,10 +28,11 @@ module Mongo
       include Enumerable
       include Retryable
       include Cursor::NonTailable
+      include Mongo::CursorHost
 
       def_delegators :@database, :cluster, :read_preference, :client
       # @api private
-      def_delegators :@database, :server_selector, :read_concern, :write_concern, :timeout_ms
+      def_delegators :@database, :server_selector, :read_concern, :write_concern
       def_delegators :cluster, :next_primary
 
       # @return [ Integer ] batch_size The size of the batch of results
@@ -122,13 +123,24 @@ module Mongo
       # Create the new database view.
       #
       # @example Create the new database view.
-      #   View::Index.new(database)
+      #   Database::View.new(database)
       #
       # @param [ Database ] database The database.
+      # @param [ Hash ] options The options to configure the view with.
+      #
+      # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+      #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+      #   iteration).
+      # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+      #   Must a positive integer. The default value is unset which means infinite.
       #
       # @since 2.0.0
-      def initialize(database)
+      def initialize(database, options={})
         @database = database
+        @operation_timeout_ms = options.delete(:timeout_ms)
+
+        validate_timeout_mode!(options)
+
         @batch_size =  nil
         @limit = nil
         @collection = @database[Database::COMMAND]
@@ -136,6 +148,12 @@ module Mongo
 
       # @api private
       attr_reader :database
+
+      # @return [ Integer | nil | The timeout_ms value that was passed as an
+      #   option to the view.
+      #
+      # @api private
+      attr_reader :operation_timeout_ms
 
       # Execute an aggregation on the database view.
       #
@@ -155,13 +173,23 @@ module Mongo
         Collection::View::Aggregation.new(self, pipeline, options)
       end
 
+      # The timeout_ms value to use for this operation; either specified as an
+      # option to the view, or inherited from the database.
+      #
+      # @return [ Integer | nil ] the timeout_ms for this operation
+      def timeout_ms
+        operation_timeout_ms || database.timeout_ms
+      end
+
       # @return [ Hash ] timeout_ms value set on the operation level (if any).
       #
       # @api private
       def operation_timeouts(opts = {})
         {}.tap do |result|
-          if opts[:timeout_ms] || timeout_ms
-            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || timeout_ms
+          if opts[:timeout_ms] || operation_timeout_ms
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || operation_timeout_ms
+          else
+            result[:inherited_timeout_ms] = database.timeout_ms
           end
         end
       end
@@ -246,7 +274,7 @@ module Mongo
         end
         initial_query_op(session, opts).execute(
           server,
-          context: Operation::Context.new(client: client, session: session),
+          context: Operation::Context.new(client: client, session: session, operation_timeouts: operation_timeouts(opts)),
           options: execution_opts
         )
       end

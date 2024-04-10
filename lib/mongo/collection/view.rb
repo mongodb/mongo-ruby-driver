@@ -66,7 +66,6 @@ module Mongo
                      :nro_write_with_retry,
                      :read_with_retry,
                      :read_with_retry_cursor,
-                     :timeout_ms,
                      :write_with_retry,
                      :write_concern_with_session
 
@@ -79,7 +78,7 @@ module Mongo
       #   option to the view.
       #
       # @api private
-      attr_reader :timeout_ms
+      attr_reader :operation_timeout_ms
 
       # Compare two +View+ objects.
       #
@@ -171,10 +170,10 @@ module Mongo
         filter = BSON::Document.new(filter)
         options = BSON::Document.new(options)
 
-        @timeout_ms = options.delete(:timeout_ms)
+        @collection = collection
+        @operation_timeout_ms = options.delete(:timeout_ms)
 
         validate_timeout_mode!(options)
-        @collection = collection
 
         # This is when users pass $query in filter and other modifiers
         # alongside?
@@ -185,6 +184,14 @@ module Mongo
         modifiers = filter.merge(options.delete(:modifiers) || {})
         @filter = (query || filter).freeze
         @options = Operation::Find::Builder::Modifiers.map_driver_options(modifiers).merge!(options).freeze
+      end
+
+      # The timeout_ms value to use for this operation; either specified as an
+      # option to the view, or inherited from the collection.
+      #
+      # @return [ Integer | nil ] the timeout_ms for this operation
+      def timeout_ms
+        operation_timeout_ms || collection.timeout_ms
       end
 
       # Get a human-readable string representation of +View+.
@@ -218,8 +225,8 @@ module Mongo
       # @api private
       def operation_timeouts(opts = {})
         {}.tap do |result|
-          if opts[:timeout_ms] || timeout_ms
-            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || timeout_ms
+          if opts[:timeout_ms] || operation_timeout_ms
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || operation_timeout_ms
           else
             result[:inherited_timeout_ms] = collection.timeout_ms
           end
@@ -235,6 +242,7 @@ module Mongo
       end
 
       def new(options)
+        options = options.merge(timeout_ms: operation_timeout_ms) if operation_timeout_ms
         View.new(collection, filter, options)
       end
 

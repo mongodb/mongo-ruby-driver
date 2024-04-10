@@ -16,36 +16,21 @@ module Unified
     def get_find_view(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {
-          let: args.use('let'),
-          comment: args.use('comment'),
-          allow_disk_use: args.use('allowDiskUse'),
-          show_disk_loc: args.use('showRecordId'),
-          return_key: args.use('returnKey'),
-          projection: args.use('projection'),
-          skip: args.use('skip'),
-          hint: args.use('hint'),
-          max_value: args.use('max'),
-          max_time_ms: args.use('maxTimeMS'),
-          timeout_ms: args.use('timeoutMS'),
-          min_value: args.use('min'),
-        }
-        if session = args.use('session')
-          opts[:session] = entities.get(:session, session)
-        end
-        if collation = args.use('collation')
-          opts[:collation] = collation
-        end
-        if args.key?('noCursorTimeout')
-          opts[:no_cursor_timeout] = args.use('noCursorTimeout')
-        end
-        if args.key?('oplogReplay')
-          opts[:oplog_replay] = args.use('oplogReplay')
-        end
-        if args.key?('allowPartialResults')
-          opts[:allow_partial_results] = args.use('allowPartialResults')
-        end
-        req = collection.find(args.use!('filter'), **opts)
+        filter = args.use!('filter')
+        session = args.use('session')
+
+        opts = extract_options(args, 'let', 'comment',
+          'allowDiskUse', 'returnKey', 'projection',
+          'skip', 'hint', 'max', 'maxTimeMS', 'timeoutMS', 'min',
+          'collation', 'noCursorTimeout', 'oplogReplay', 'allowPartialResults',
+          'timeoutMode',
+          { 'showRecordId' => :show_disk_loc, 'max' => :max_value, 'min' => :min_value },
+          allow_extra: true)
+        symbolize_options!(opts, :timeout_mode)
+
+        opts[:session] = entities.get(:session, session) if session
+
+        req = collection.find(filter, **opts)
         if batch_size = args.use('batchSize')
           req = req.batch_size(batch_size)
         end
@@ -282,25 +267,32 @@ module Unified
       obj = entities.get_any(op.use!('object'))
       args = op.use!('arguments')
       pipeline = args.use!('pipeline')
-      opts = {
-        let: args.use('let'),
-      }
+      opts = extract_options(args, 'let', 'comment', 'batchSize',
+        'allowDiskUse', 'timeoutMode', 'timeoutMS', allow_extra: true)
+      symbolize_options!(opts, :timeout_mode)
+
       if session = args.use('session')
         opts[:session] = entities.get(:session, session)
       end
-      if comment = args.use('comment')
-        opts[:comment] = comment
-      end
-      if batch_size = args.use('batchSize')
-        opts[:batch_size] = batch_size
-      end
-      if args.key?('allowDiskUse')
-        opts[:allow_disk_use] = args.use('allowDiskUse')
-      end
+
       unless args.empty?
         raise NotImplementedError, "Unhandled spec keys: #{args} in #{test_spec}"
       end
+
       obj.aggregate(pipeline, **opts).to_a
+    end
+
+    def create_find_cursor(op)
+      obj = entities.get_any(op.use!('object'))
+      args = op.use!('arguments')
+
+      filter = args.use('filter')
+      opts = extract_options(args, 'batchSize', 'timeoutMS')
+
+      view = obj.find(filter, opts)
+      view.each # to initialize the cursor
+
+      view.cursor
     end
 
     private

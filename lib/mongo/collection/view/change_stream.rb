@@ -231,13 +231,16 @@ module Mongo
         #   This method ignores any errors that occur when closing the
         #   server-side cursor.
         #
+        # @params [ Hash ] opts Options to be passed to the cursor close
+        #   command.
+        #
         # @return [ nil ] Always nil.
         #
         # @since 2.5.0
-        def close
+        def close(opts = {})
           unless closed?
             begin
-              @cursor.close
+              @cursor.close(opts)
             rescue Error::OperationFailure, Error::SocketError, Error::SocketTimeoutError, Error::MissingConnection
               # ignore
             end

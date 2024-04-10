@@ -40,6 +40,7 @@ module Mongo
         session: nil,
         connection_global_id: nil,
         operation_timeouts: {},
+        view: nil,
         options: nil
       )
         if options
@@ -58,6 +59,7 @@ module Mongo
 
         @client = client
         @session = session
+        @view = view
         @connection_global_id = connection_global_id
         @deadline = calculate_deadline(operation_timeouts, session)
         @operation_timeouts = operation_timeouts
@@ -66,6 +68,7 @@ module Mongo
 
       attr_reader :client
       attr_reader :session
+      attr_reader :view
       attr_reader :deadline
       attr_reader :options
       attr_reader :operation_timeouts
@@ -74,11 +77,15 @@ module Mongo
       # and relative to the current moment.
       #
       # @return [ Operation::Context ] the refreshed context
-      def refresh(connection_global_id: @connection_global_id)
+      def refresh(connection_global_id: @connection_global_id, timeout_ms: nil)
+        operation_timeouts = @operation_timeouts
+        operation_timeouts = operation_timeouts.merge(operation_timeout_ms: timeout_ms) if timeout_ms
+
         self.class.new(client: client,
                        session: session,
                        connection_global_id: connection_global_id,
-                       operation_timeouts: @operation_timeouts,
+                       operation_timeouts: operation_timeouts,
+                       view: view,
                        options: options)
       end
 

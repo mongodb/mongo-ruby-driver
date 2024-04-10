@@ -35,18 +35,15 @@ module Unified
 
     def iterate_until_document_or_error(op)
       object_id = op.use!('object')
-      object = entities.get(:change_stream, object_id)
-      object.to_enum.next
+      object = entities.get_any(object_id)
+      object.try_next
     end
 
     def close(op)
       object_id = op.use!('object')
-      # The Ruby driver unified spec runner does not currently implement
-      # find cursors as created by createFindCursor. This will be done
-      # as part of CSOT implementation. When this is done, the line(s) below
-      # should be changed to retrieve such cursor instances and close them.
-      object = entities.get(:csot_cursor, object_id)
-      object.close
+      opts = op.key?('arguments') ? extract_options(op.use!('arguments'), 'timeoutMS') : {}
+      object = entities.get_any(object_id)
+      object.close(opts)
     end
   end
 end

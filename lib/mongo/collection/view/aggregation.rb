@@ -36,12 +36,6 @@ module Mongo
         # @return [ Array<Hash> ] pipeline The aggregation pipeline.
         attr_reader :pipeline
 
-        # @return [ Integer | nil ] the timeout_ms value that was passed as
-        #   an option to this object.
-        #
-        # @api private
-        attr_reader :timeout_ms
-
         # Delegate necessary operations to the view.
         def_delegators :view, :collection, :read, :cluster, :cursor_type
 
@@ -105,16 +99,24 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(view, pipeline, options = {})
+          @pipeline = pipeline.dup
           @timeout_ms = options.delete(:timeout_ms)
           @options = BSON::Document.new(options).freeze
 
           validate_timeout_mode!(options)
 
           @view = view
-          @pipeline = pipeline.dup
           unless Mongo.broken_view_aggregate || view.filter.empty?
             @pipeline.unshift(:$match => view.filter)
           end
+        end
+
+        # @return [ Integer | nil ] the timeout_ms value that was passed as
+        #   an option to this object.
+        #
+        # @api private
+        def timeout_ms
+          @timeout_ms || view.timeout_ms
         end
 
         # Get the explain plan for the aggregation.
@@ -223,16 +225,16 @@ module Mongo
           }
         end
 
-      # @return [ Hash ] timeout_ms value set on the operation level (if any),
-      #   and/or timeout_ms that is set on collection/database/client level (if any).
-      #
-      # @api private
+        # @return [ Hash ] timeout_ms value set on the operation level (if any),
+        #   and/or timeout_ms that is set on collection/database/client level (if any).
+        #
+        # @api private
         def operation_timeouts(opts = {})
           {}.tap do |result|
-            if opts[:timeout_ms] || timeout_ms
-              result[:operation_timeout_ms] = opts.delete(:timeout_ms) || timeout_ms
+            if opts[:timeout_ms] || @timeout_ms
+              result[:operation_timeout_ms] = opts.delete(:timeout_ms) || @timeout_ms
             else
-              result[:inherited_timeout_ms] = collection.timeout_ms
+              result[:inherited_timeout_ms] = view.timeout_ms
             end
           end
         end

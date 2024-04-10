@@ -339,21 +339,29 @@ module Mongo
       #
       # @api private
       def error
-        @error ||= Error::OperationFailure.new(
-          parser.message,
-          self,
-          code: parser.code,
-          code_name: parser.code_name,
-          write_concern_error_document: parser.write_concern_error_document,
-          write_concern_error_code: parser.write_concern_error_code,
-          write_concern_error_code_name: parser.write_concern_error_code_name,
-          write_concern_error_labels: parser.write_concern_error_labels,
-          labels: parser.labels,
-          wtimeout: parser.wtimeout,
-          connection_description: connection_description,
-          document: parser.document,
-          server_message: parser.server_message,
-        )
+        @error ||= begin
+          error = Error::OperationFailure.new(
+            parser.message,
+            self,
+            code: parser.code,
+            code_name: parser.code_name,
+            write_concern_error_document: parser.write_concern_error_document,
+            write_concern_error_code: parser.write_concern_error_code,
+            write_concern_error_code_name: parser.write_concern_error_code_name,
+            write_concern_error_labels: parser.write_concern_error_labels,
+            labels: parser.labels,
+            wtimeout: parser.wtimeout,
+            connection_description: connection_description,
+            document: parser.document,
+            server_message: parser.server_message,
+          )
+
+          if error.code == 50 # MaxTimeMSExpired
+            Error::TimeoutError.wrap(error)
+          else
+            error
+          end
+        end
       end
 
       # Raises a Mongo::OperationFailure exception corresponding to the

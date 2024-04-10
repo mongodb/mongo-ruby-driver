@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/cursor_host'
+
 module Mongo
   class Collection
     class View
@@ -24,17 +26,7 @@ module Mongo
       #
       # @since 2.0.0
       module Iterable
-
-        # Returns the cursor associated with this view, if any.
-        #
-        # @return [ nil | Cursor ] The cursor, if any.
-        #
-        # @api private
-        attr_reader :cursor
-
-        # @return [ :cursor_lifetime | :iteration ] The timeout mode to be
-        #   used by this view.
-        attr_reader :timeout_mode
+        include Mongo::CursorHost
 
         # Iterate through documents returned by a query with this +View+.
         #
@@ -93,7 +85,8 @@ module Mongo
           context = Operation::Context.new(
             client: client,
             session: session,
-            operation_timeouts: operation_timeouts
+            operation_timeouts: operation_timeouts,
+            view: self
           )
 
           if respond_to?(:write?, true) && write?
@@ -159,8 +152,6 @@ module Mongo
             comment: options[:comment],
             oplog_replay: oplog_replay,
           }
-
-          set_timeouts_for_initial_op(spec)
 
           if spec[:oplog_replay]
             collection.client.log_warn("The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later")
@@ -233,96 +224,6 @@ module Mongo
         def oplog_replay
           v = options[:oplog_replay]
           v.nil? ? collection.options[:oplog_replay] : v
-        end
-
-        # Sets zero or one of :timeout_ms or :max_time_ms for the cursor's
-        # initial operation, based on the cursor_type and timeout_mode, per the
-        # CSOT cursor spec.
-        #
-        # @param [ Hash ] spec The command specification.
-        def set_timeouts_for_initial_op(spec)
-          case cursor_type
-          when nil # non-tailable
-            if timeout_mode == :cursor_lifetime
-              if timeout_ms
-                spec[:max_time_ms] = timeout_ms
-              elsif options[:max_time_ms]
-                spec[:max_time_ms] = options[:max_time_ms]
-              end
-            else # timeout_mode == :iterable
-              # drivers MUST honor the timeoutMS option for the initial command
-              # but MUST NOT append a maxTimeMS field to the command sent to the
-              # server
-              if timeout_ms
-                spec[:timeout_ms] = timeout_ms
-              elsif options[:max_time_ms]
-                spec[:max_time_ms] = options[:max_time_ms]
-              end
-            end
-
-          when :tailable
-            # If timeoutMS is set, drivers MUST apply it separately to the
-            # original operation and to all next calls on the resulting cursor
-            # but MUST NOT append a maxTimeMS field to any commands.
-            spec[:timeout_ms] = timeout_ms if timeout_ms
-
-          when :tailable_await
-            # If timeoutMS is set, drivers MUST apply it to the original operation.
-            # The server supports the maxTimeMS option for the original command.
-            if timeout_ms
-              spec[:max_time_ms] = timeout_ms
-            elsif options[:max_time_ms]
-              spec[:max_time_ms] = options[:max_time_ms]
-            end
-          end
-        end
-
-        # Ensure the timeout mode is appropriate for other options that
-        # have been given.
-        #
-        # @param [ Hash ] options The options to inspect.
-        #
-        # @raise [ ArgumentError ] if inconsistent or incompatible options are
-        #   detected.
-        def validate_timeout_mode!(options)
-          cursor_type = options[:cursor_type]
-          timeout_mode = options[:timeout_mode]
-
-          if timeout_ms
-            # "Tailable cursors only support the ITERATION value for the
-            # timeoutMode option. This is the default value and drivers MUST
-            # error if the option is set to CURSOR_LIFETIME."
-            if cursor_type
-              timeout_mode ||= :iteration
-              if timeout_mode == :cursor_lifetime
-                raise ArgumentError, 'tailable cursors only support `timeout_mode: :iteration`'
-              end
-
-              # "Drivers MUST error if [the maxAwaitTimeMS] option is set,
-              # timeoutMS is set to a non-zero value, and maxAwaitTimeMS is
-              # greater than or equal to timeoutMS."
-              max_await_time_ms = options[:max_await_time_ms] || 0
-              if cursor_type == :tailable_await && max_await_time_ms >= timeout_ms
-                raise ArgumentError, ':max_await_time_ms must not be >= :timeout_ms'
-              end
-            else
-              # "For non-tailable cursors, the default value of timeoutMode
-              # is CURSOR_LIFETIME."
-              timeout_mode ||= :cursor_lifetime
-            end
-          elsif timeout_mode
-            raise ArgumentError, ':timeout_ms must be set if :timeout_mode is set'
-          end
-
-          if timeout_mode == :iteration && respond_to?(:write?) && write?
-            raise ArgumentError, 'timeout_mode=:iteration is not supported for aggregation pipelines with $out or $merge'
-          end
-
-          # set it as an instance variable, rather than updating the options,
-          # because if the cursor type changes (e.g. via #configure()), the new
-          # View instance must be able to select a different default timeout_mode
-          # if no timeout_mode was set initially.
-          @timeout_mode = timeout_mode
         end
       end
     end

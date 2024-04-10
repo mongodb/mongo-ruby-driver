@@ -320,15 +320,14 @@ module Mongo
         return self if context.remaining_timeout_sec.nil?
 
         max_time_sec = context.remaining_timeout_sec - connection.server.minimum_round_trip_time
-        if max_time_sec > 0
-          max_time_ms = (max_time_sec * 1_000).to_i
-          main_document = @main_document.merge(
-            maxTimeMS: max_time_ms
-          )
-          Msg.new(@flags, @options, main_document, *@sequences)
-        else
-          raise Mongo::Error::TimeoutError
-        end
+        raise Mongo::Error::TimeoutError if max_time_sec <= 0
+
+        max_time_ms = (max_time_sec * 1_000).to_i
+
+        return maybe_add_timeouts_for_find(max_time_ms, context) if find?
+        return maybe_add_timeouts_for_get_more(max_time_ms, context) if get_more?
+
+        add_max_time_ms(max_time_ms)
       end
 
 
@@ -351,6 +350,123 @@ module Mongo
       end
 
       private
+
+      # @return [ true | false ] whether the current message represents a
+      #   'getMore' cursor command.
+      def get_more?
+        @main_document.key?('getMore')
+      end
+
+      # @return [ true | false ] whether the current message represents a
+      #   'find' command.
+      def find?
+        @main_document.key?('find')
+      end
+
+      # Adds a maxTimeMS field with the given value and returns a new message.
+      #
+      # @param [ Integer ] max_time_ms the value to use as maxTimeMS
+      #
+      # @return [ Protocol::Msg ] a new message instance with the given
+      #   maxTimeMS field set.
+      def add_max_time_ms(max_time_ms)
+        clone_self(maxTimeMS: max_time_ms)
+      end
+
+      # Returns a clone of the current message, with the main document extended
+      # by the given attribute hash.
+      #
+      # @param [ Hash ] attrs the key/value pairs to extend the main document
+      #   with.
+      #
+      # @return [ Operation::Msg ] a clone of the current message object,
+      #   with the main document extended as described.
+      def clone_self(attrs)
+        main_document = @main_document.merge(attrs)
+        Msg.new(@flags, @options, main_document, *@sequences)
+      end
+
+      # Considers the cursor type and timeout mode and will add (or omit) a
+      # maxTimeMS field accordingly, for a find command.
+      #
+      # @param [ Integer ] max_time_ms the value to set the maxTimeMS field,
+      #   if it needs to be added.
+      # @param [ Operation::Context ] context the context for the current
+      #   operation.
+      #
+      # @return [ Operation::Msg ] either a new msg instance (if a maxTimeMS
+      #   field is added), or self.
+      def maybe_add_timeouts_for_find(max_time_ms, context)
+        view = context&.view
+        return self unless view
+
+        case view.cursor_type
+        when nil # non-tailable
+          if view.timeout_mode == :cursor_lifetime
+            if view.timeout_ms
+              clone_self(maxTimeMS: view.timeout_ms)
+            elsif view.options[:max_time_ms]
+              clone_self(maxTimeMS: view.options[:max_time_ms])
+            else
+              self
+            end
+          else # timeout_mode == :iterable
+            # drivers MUST honor the timeoutMS option for the initial command
+            # but MUST NOT append a maxTimeMS field to the command sent to the
+            # server
+            if !view.timeout_ms && view.options[:max_time_ms]
+              clone_self(maxTimeMS: view.options[:max_time_ms])
+            else
+              self
+            end
+          end
+
+        when :tailable
+          # If timeoutMS is set, drivers...MUST NOT append a maxTimeMS field to any commands.
+          self
+
+        when :tailable_await
+          # The server supports the maxTimeMS option for the original command.
+          if view.timeout_ms
+            clone_self(maxTimeMS: view.timeout_ms)
+          elsif view.options[:max_time_ms]
+            clone_self(maxTimeMS: view.options[:max_time_ms])
+          else
+            self
+          end
+        end
+      end
+
+      # Considers the cursor type and timeout mode and will add (or omit) a
+      # maxTimeMS field accordingly, for a getMore command.
+      #
+      # @param [ Integer ] max_time_ms the value to set the maxTimeMS field,
+      #   if it needs to be added.
+      # @param [ Operation::Context ] context the context for the current
+      #   operation.
+      #
+      # @return [ Operation::Msg ] either a new msg instance (if a maxTimeMS
+      #   field is added), or self.
+      def maybe_add_timeouts_for_get_more(max_time_ms, context)
+        view = context&.view
+        return self unless view
+
+        if view.cursor_type == :tailable_await
+          # If timeoutMS is set, drivers MUST apply it to the original operation.
+          # Drivers MUST also apply the original timeoutMS value to each next
+          # call on the resulting cursor but MUST NOT use it to derive a
+          # maxTimeMS value for getMore commands. Helpers for operations that
+          # create tailable awaitData cursors MUST also support the
+          # maxAwaitTimeMS option. Drivers MUST error if this option is set,
+          # timeoutMS is set to a non-zero value, and maxAwaitTimeMS is greater
+          # than or equal to timeoutMS. If this option is set, drivers MUST use
+          # it as the maxTimeMS field on getMore commands.
+          max_await_time_ms = view.respond_to?(:max_await_time_ms) ? view.max_await_time_ms : nil
+          return clone_self(maxTimeMS: max_await_time_ms) if max_await_time_ms
+        end
+
+        self
+      end
 
       # Validate that the documents in this message are all smaller than the
       # maxBsonObjectSize. If not, raise an exception.

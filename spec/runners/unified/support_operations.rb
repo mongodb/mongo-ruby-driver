@@ -317,6 +317,36 @@ module Unified
 
     private
 
+    # @param [ UsingHash ] args the arguments to extract options from
+    # @param [ Array<String | Hash> ] keys an array of strings and Hashes,
+    #   where Hashes represent a mapping from the MDB key to the correspoding
+    #   Ruby key. For Strings, the Ruby key is assumed to be a simple conversion
+    #   of the MDB key, from camel-case to snake-case.
+    # @param [ true | false ] allow_extra whether or not extra keys are allowed
+    #   to exist in the args hash, beyond those listed.
+    def extract_options(args, *keys, allow_extra: false)
+      {}.tap do |opts|
+        keys.each do |key|
+          Array(key).each do |mdb_key, ruby_key|
+            value = args.use(mdb_key)
+            opts[ruby_key || mdb_name_to_ruby(mdb_key)] = value unless value.nil?
+          end
+        end
+
+        raise NotImplementedError, "unhandled keys: #{args}" if !allow_extra && !args.empty?
+      end
+    end
+
+    def symbolize_options!(opts, *keys)
+      keys.each do |key|
+        opts[key] = mdb_name_to_ruby(opts[key]) if opts[key]
+      end
+    end
+
+    def mdb_name_to_ruby(name)
+      name.to_s.gsub(/([a-z])([A-Z])/) { "#{$1}_#{$2}" }.downcase.to_sym
+    end
+
     def assert_no_arguments(op)
       if op.key?('arguments')
         raise NotimplementedError, "Arguments are not allowed"

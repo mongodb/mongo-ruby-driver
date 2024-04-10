@@ -28,6 +28,7 @@ module Mongo
       include Enumerable
       include Retryable
       include Cursor::NonTailable
+      include Mongo::CursorHost
 
       # @return [ Collection ] collection The indexes collection.
       attr_reader :collection
@@ -36,7 +37,13 @@ module Mongo
       #   when sending the listIndexes command.
       attr_reader :batch_size
 
-      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client, :operation_timeouts
+      # @return [ Integer | nil | The timeout_ms value that was passed as an
+      #   option to the view.
+      #
+      # @api private
+      attr_reader :operation_timeout_ms
+
+      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
       def_delegators :cluster, :next_primary
 
       # The index key field.
@@ -286,17 +293,46 @@ module Mongo
       #
       # @param [ Collection ] collection The collection.
       # @param [ Hash ] options Options for getting a list of indexes.
-      #   Only relevant for when the listIndexes command is used with server
-      #   versions >=2.8.
       #
       # @option options [ Integer ] :batch_size The batch size for results
       #   returned from the listIndexes command.
+      # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+      #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+      #   iteration).
+      # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+      #   Must a positive integer. The default value is unset which means infinite.
       #
       # @since 2.0.0
       def initialize(collection, options = {})
         @collection = collection
+        @operation_timeout_ms = options.delete(:timeout_ms)
+
+        validate_timeout_mode!(options)
+
         @batch_size = options[:batch_size]
         @options = options
+      end
+
+      # The timeout_ms value to use for this operation; either specified as an
+      # option to the view, or inherited from the collection.
+      #
+      # @return [ Integer | nil ] the timeout_ms for this operation
+      def timeout_ms
+        operation_timeout_ms || collection.timeout_ms
+      end
+
+      # @return [ Hash ] timeout_ms value set on the operation level (if any),
+      #   and/or timeout_ms that is set on collection/database/client level (if any).
+      #
+      # @api private
+      def operation_timeouts(opts = {})
+        {}.tap do |result|
+          if opts[:timeout_ms] || operation_timeout_ms
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || operation_timeout_ms
+          else
+            result[:inherited_timeout_ms] = collection.timeout_ms
+          end
+        end
       end
 
       private

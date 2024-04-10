@@ -290,8 +290,10 @@ module Mongo
     # the server.
     #
     # @return [ nil ] Always nil.
-    def close
+    def close(opts = {})
       return if closed?
+
+      ctx = context ? context.refresh(timeout_ms: opts[:timeout_ms]) : fresh_context(opts)
 
       unregister
       read_with_one_retry do
@@ -301,7 +303,7 @@ module Mongo
           cursor_ids: [id],
         }
         op = Operation::KillCursors.new(spec)
-        execute_operation(op)
+        execute_operation(op, context: ctx)
       end
 
       nil
@@ -443,8 +445,6 @@ module Mongo
         to_return: to_return
       }
 
-      set_timeouts_for_get_more(spec)
-
       if view.respond_to?(:options) && view.options.is_a?(Hash)
         spec[:comment] = view.options[:comment] unless view.options[:comment].nil?
       end
@@ -496,8 +496,8 @@ module Mongo
       cluster.unregister_cursor(@cursor_id)
     end
 
-    def execute_operation(op)
-      op.execute(@server, context: possibly_refreshed_context)
+    def execute_operation(op, context: nil)
+      op.execute(@server, context: context || possibly_refreshed_context)
     end
 
     # Considers the timeout mode and will either return the cursor's
@@ -528,51 +528,12 @@ module Mongo
 
     # Returns a newly instantiated operation context based on the
     # default values from the view.
-    def fresh_context
+    def fresh_context(opts = {})
       Operation::Context.new(client: view.client,
                              session: @session,
                              connection_global_id: connection_global_id_for_context,
-                             operation_timeouts: view.operation_timeouts)
-    end
-
-    # Sets zero or one of :max_time_ms and :timeout_ms on the given
-    # command spec, considering the timeout_mode and cursor_type, as
-    # specified in the CSOT spec.
-    #
-    # @param [ Hash ] spec the getMore command specification
-    def set_timeouts_for_get_more(spec)
-      case view.cursor_type
-      when nil then # non-tailable
-        if view.timeout_mode == :cursor_lifetime
-          # When executing next calls on the cursor, drivers MUST use the remaining
-          # timeout as the timeoutMS value for the operation but MUST NOT append a
-          # maxTimeMS field to getMore commands.
-          spec[:timeout_ms] = context&.remaining_timeout_ms
-        else # :iterable
-          spec[:timeout_ms] = context&.timeout_ms
-        end
-
-      when :tailable then
-        # If timeoutMS is set, drivers MUST apply it separately to the original
-        # operation and to all next calls on the resulting cursor but MUST NOT
-        # append a maxTimeMS field to any commands.
-        spec[:timeout_ms] = context&.timeout_ms
-
-      when :tailable_await then
-        # If timeoutMS is set, drivers MUST apply it to the original operation.
-        # Drivers MUST also apply the original timeoutMS value to each next
-        # call on the resulting cursor but MUST NOT use it to derive a
-        # maxTimeMS value for getMore commands. Helpers for operations that
-        # create tailable awaitData cursors MUST also support the
-        # maxAwaitTimeMS option. Drivers MUST error if this option is set,
-        # timeoutMS is set to a non-zero value, and maxAwaitTimeMS is greater
-        # than or equal to timeoutMS. If this option is set, drivers MUST use
-        # it as the maxTimeMS field on getMore commands.
-        spec[:timeout_ms] = context&.timeout_ms
-
-        max_await_time_ms = view.respond_to?(:max_await_time_ms) && view.max_await_time_ms
-        spec[:max_time_ms] = max_await_time_ms if max_await_time_ms
-      end
+                             operation_timeouts: view.operation_timeouts(opts),
+                             view: view)
     end
 
     # Because a context must not have a connection_global_id if the session

@@ -136,7 +136,7 @@ module Mongo
     #
     # @since 2.0.0
     def collection_names(options = {})
-      View.new(self).collection_names(options)
+      View.new(self, options).collection_names(options)
     end
 
     # Get info on all the non-system collections in the database.
@@ -165,7 +165,7 @@ module Mongo
     #
     # @since 2.0.5
     def list_collections(options = {})
-      View.new(self).list_collections(options)
+      View.new(self, options).list_collections(options)
     end
 
     # Get all the non-system collections that belong to this database.
@@ -397,7 +397,7 @@ module Mongo
     #
     # @since 2.10.0
     def aggregate(pipeline, options = {})
-      View.new(self).aggregate(pipeline, options)
+      View.new(self, options).aggregate(pipeline, options)
     end
 
     # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported

@@ -18,6 +18,36 @@ module Mongo
   class Error
     # Raised when a Client Side Operation Timeout times out.
     class TimeoutError < Error
+      # Returns a new TimeoutError with its `original_error` attribute set
+      # to the given error.
+      #
+      # @params [ Exception ] error the original error object
+      #
+      # @return [ Mongo::Error::TimeoutError ] a new TimeoutError instance.
+      def self.wrap(error)
+        new.tap { |e| e.original_error = error }
+      end
+
+      # "...drivers MUST expose the underlying error returned from the task
+      # from this new error type. The stringified version of the new error type
+      # MUST include the stringified version of the underlying error as a
+      # substring."
+      attr_accessor :original_error
+
+      # Returns the stringified version of the error message. If the
+      # `original_error` attribute is set, the description of that error will
+      # be appended to this one.
+      #
+      # @return [ String ] the string representation of the error
+      def to_s
+        description = super
+
+        if original_error
+          description += " (#{original_error})"
+        end
+
+        description
+      end
     end
   end
 end
