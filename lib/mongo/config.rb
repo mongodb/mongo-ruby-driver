@@ -16,7 +16,7 @@ module Mongo
 
     # When this flag is off, an aggregation done on a view will be executed over
     # the documents included in that view, instead of all documents in the
-    # collection. When this flag is on, the view fiter is ignored.
+    # collection. When this flag is on, the view filter is ignored.
     option :broken_view_aggregate, default: true
 
     # When this flag is set to false, the view options will be correctly
@@ -24,7 +24,7 @@ module Mongo
     option :broken_view_options, default: true
 
     # When this flag is set to true, the update and replace methods will
-    # validate the paramters and raise an error if they are invalid.
+    # validate the parameters and raise an error if they are invalid.
     option :validate_update_replace, default: false
 
     # Set the configuration options.
