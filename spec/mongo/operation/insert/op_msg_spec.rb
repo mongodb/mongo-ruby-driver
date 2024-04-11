@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Insert::OpMsg do
-
+  let(:context) { Mongo::Operation::Context.new }
   let(:documents) { [{ :_id => 1, :foo => 1 }] }
   let(:session) { nil }
   let(:spec) do
@@ -88,14 +88,14 @@ describe Mongo::Operation::Insert::OpMsg do
       end
 
       it 'does not include write concern in the selector' do
-        expect(op.send(:command, connection)[:writeConcern]).to be_nil
+        expect(op.send(:command, connection, context)[:writeConcern]).to be_nil
       end
     end
 
     context 'when write concern is specified' do
 
       it 'includes write concern in the selector' do
-        expect(op.send(:command, connection)[:writeConcern]).to eq(BSON::Document.new(write_concern.options))
+        expect(op.send(:command, connection, context)[:writeConcern]).to eq(BSON::Document.new(write_concern.options))
       end
     end
   end
@@ -146,7 +146,7 @@ describe Mongo::Operation::Insert::OpMsg do
                                                                {},
                                                                expected_global_args,
                                                                expected_payload_1)
-            op.send(:message, connection)
+            op.send(:message, connection, context)
           end
         end
       end
@@ -166,7 +166,7 @@ describe Mongo::Operation::Insert::OpMsg do
                                                                {},
                                                                expected_global_args,
                                                                expected_payload_1)
-            op.send(:message, connection)
+            op.send(:message, connection, context)
           end
         end
 
@@ -193,7 +193,7 @@ describe Mongo::Operation::Insert::OpMsg do
                                                                  {},
                                                                  expected_global_args,
                                                                  expected_payload_1)
-              op.send(:message, connection)
+              op.send(:message, connection, context)
             end
           end
         end
@@ -232,7 +232,7 @@ describe Mongo::Operation::Insert::OpMsg do
                                                                    {},
                                                                    expected_global_args,
                                                                    expected_payload_1)
-                op.send(:message, connection)
+                op.send(:message, connection, context)
               end
             end
           end
@@ -254,7 +254,7 @@ describe Mongo::Operation::Insert::OpMsg do
                                                                    {},
                                                                    expected_global_args,
                                                                    expected_payload_1)
-                op.send(:message, connection)
+                op.send(:message, connection, context)
               end
             end
           end
@@ -286,7 +286,7 @@ describe Mongo::Operation::Insert::OpMsg do
                                                                  {},
                                                                  expected_global_args,
                                                                  expected_payload_1)
-              op.send(:message, connection)
+              op.send(:message, connection, context)
             end
           end
         end

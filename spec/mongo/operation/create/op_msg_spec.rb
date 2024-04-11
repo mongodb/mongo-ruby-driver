@@ -4,6 +4,7 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Create::OpMsg do
+  let(:context) { Mongo::Operation::Context.new }
 
   let(:write_concern) do
     Mongo::WriteConcern.get(w: :majority)
@@ -78,7 +79,7 @@ describe Mongo::Operation::Create::OpMsg do
     it 'does not mutate user input' do
       user_input = IceNine.deep_freeze(spec.dup)
       expect do
-        described_class.new(user_input).send(:selector, connection)
+        described_class.new(user_input).send(:selector, connection, context)
       end.not_to raise_error
     end
   end
@@ -113,7 +114,7 @@ describe Mongo::Operation::Create::OpMsg do
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args)
-          op.send(:message, connection)
+          op.send(:message, connection, context)
         end
       end
 
@@ -128,7 +129,7 @@ describe Mongo::Operation::Create::OpMsg do
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args)
-          op.send(:message, connection)
+          op.send(:message, connection, context)
         end
 
         context 'when an implicit session is created and the topology is then updated and the server does not support sessions' do
@@ -154,7 +155,7 @@ describe Mongo::Operation::Create::OpMsg do
 
               expect(expected_global_args[:session]).to be nil
               expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args)
-              op.send(:message, connection)
+              op.send(:message, connection, context)
             end
           end
         end
@@ -189,7 +190,7 @@ describe Mongo::Operation::Create::OpMsg do
             it 'does not send a session id in the command' do
               authorized_client.command(ping:1)
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args)
-              op.send(:message, connection)
+              op.send(:message, connection, context)
             end
           end
 
@@ -206,7 +207,7 @@ describe Mongo::Operation::Create::OpMsg do
             it 'creates the correct OP_MSG message' do
               authorized_client.command(ping:1)
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args)
-              op.send(:message, connection)
+              op.send(:message, connection, context)
             end
           end
         end
@@ -234,7 +235,7 @@ describe Mongo::Operation::Create::OpMsg do
             authorized_client.command(ping:1)
             RSpec::Mocks.with_temporary_scope do
               expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args)
-              op.send(:message, connection)
+              op.send(:message, connection, context)
             end
           end
         end

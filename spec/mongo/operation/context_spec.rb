@@ -66,7 +66,7 @@ describe Mongo::Operation::Context do
 
     context 'when timeout_ms is positive' do
       before do
-        allow(Mongo::Utils).to receive(:monotonic_time).ordered.and_return(100.0, 105.0)
+        allow(Mongo::Utils).to receive(:monotonic_time).and_return(100.0, 105.0)
       end
 
       let(:timeout_ms) { 10_000 }
