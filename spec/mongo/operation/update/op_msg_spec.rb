@@ -2,8 +2,11 @@
 # rubocop:todo all
 
 require 'spec_helper'
+require_relative '../shared/csot/examples'
 
 describe Mongo::Operation::Update::OpMsg do
+  include CSOT::Examples
+
   let(:context) { Mongo::Operation::Context.new }
   let(:updates) { [{:q => { :foo => 1 },
                     :u => { :$set => { :bar => 1 } },
@@ -269,4 +272,6 @@ describe Mongo::Operation::Update::OpMsg do
       end
     end
   end
+
+  it_behaves_like 'a CSOT-compliant OpMsg subclass'
 end

@@ -42,9 +42,7 @@ module Mongo
       def to_s
         description = super
 
-        if original_error
-          description += " (#{original_error})"
-        end
+        description += " (#{original_error})" if original_error
 
         description
       end

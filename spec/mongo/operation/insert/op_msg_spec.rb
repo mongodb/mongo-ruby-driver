@@ -2,8 +2,11 @@
 # rubocop:todo all
 
 require 'spec_helper'
+require_relative '../shared/csot/examples'
 
 describe Mongo::Operation::Insert::OpMsg do
+  include CSOT::Examples
+
   let(:context) { Mongo::Operation::Context.new }
   let(:documents) { [{ :_id => 1, :foo => 1 }] }
   let(:session) { nil }
@@ -293,4 +296,6 @@ describe Mongo::Operation::Insert::OpMsg do
       end
     end
   end
+
+  it_behaves_like 'a CSOT-compliant OpMsg subclass'
 end

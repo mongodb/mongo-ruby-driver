@@ -71,6 +71,6 @@ module Mongo
       # if no timeout_mode was set initially.
       @timeout_mode = timeout_mode
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics
   end
 end

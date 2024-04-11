@@ -729,8 +729,7 @@ module Mongo
 
       # @api private
       def ok?
-        config[Operation::Result::OK] &&
-          config[Operation::Result::OK] == 1 || false
+        config[Operation::Result::OK] == 1
       end
 
       # Get the range of supported wire versions for the server.
