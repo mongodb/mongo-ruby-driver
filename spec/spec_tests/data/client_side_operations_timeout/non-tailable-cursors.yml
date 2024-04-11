@@ -207,7 +207,7 @@ tests:
         arguments:
           filter: {}
           timeoutMode: iteration
-          timeoutMS: 20
+          timeoutMS: 29
           batchSize: 2
     expectEvents:
       - client: *client

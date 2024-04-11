@@ -55,7 +55,7 @@ module Mongo
             tailable_cursor: 'tailable',
           ).freeze
 
-          module_function def selector(spec, connection)
+          module_function def selector(spec, connection, context)
             if spec[:collation] && !connection.features.collation_enabled?
               raise Error::UnsupportedCollation
             end

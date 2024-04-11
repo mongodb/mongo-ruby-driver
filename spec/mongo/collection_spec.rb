@@ -821,20 +821,18 @@ describe Mongo::Collection do
       require_topology :replica_set
 
       context 'when setting the max_await_time_ms' do
-
         let(:change_stream) do
           authorized_collection.watch([], max_await_time_ms: 3000)
         end
 
         let(:enum) { change_stream.to_enum }
 
+        let(:get_more) { subscriber.started_events.detect { |e| e.command['getMore'] }.command }
+
         it 'sets the option correctly' do
-          expect(change_stream.instance_variable_get(:@cursor)).to receive(:get_more_operation).once.and_wrap_original do |m, *args, &block|
-            m.call(*args).tap do |op|
-              expect(op.max_time_ms).to eq(3000)
-            end
-          end
-          enum.next
+          enum.try_next
+          expect(get_more).not_to be_nil
+          expect(get_more['maxTimeMS']).to be == 3000
         end
 
         it "waits the appropriate amount of time" do

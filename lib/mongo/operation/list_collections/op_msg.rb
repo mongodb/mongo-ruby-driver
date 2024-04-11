@@ -30,7 +30,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           (spec[SELECTOR] || {}).merge({
             listCollections: 1,
             comment: spec[:comment]

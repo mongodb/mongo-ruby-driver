@@ -60,6 +60,10 @@ module Mongo
         # @since 2.5.0
         attr_reader :options
 
+        # @return [ Cursor ] the underlying cursor for this operation
+        # @api private
+        attr_reader :cursor
+
         # Initialize the change stream for the provided collection view, pipeline
         # and options.
         #

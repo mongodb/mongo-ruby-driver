@@ -30,7 +30,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           {
             killCursors: coll_name,
             cursors: int64_cursor_ids,

@@ -29,7 +29,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           spec[:selector].merge(
             collation: spec[:collation],
             comment: spec[:comment],

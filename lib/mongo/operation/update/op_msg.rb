@@ -33,7 +33,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           {
             update: coll_name,
             ordered: ordered?,
@@ -42,10 +42,14 @@ module Mongo
           }.compact
         end
 
-        def message(connection)
+        def message(connection, context)
           updates = validate_updates(connection, send(IDENTIFIER))
           section = Protocol::Msg::Section1.new(IDENTIFIER, updates)
-          Protocol::Msg.new(flags, {}, command(connection), section)
+
+          cmd = command(connection, context)
+          cmd = apply_relevant_timeouts_to(cmd, connection, context)
+
+          Protocol::Msg.new(flags, {}, cmd, section)
         end
       end
     end

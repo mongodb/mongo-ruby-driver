@@ -29,7 +29,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           { :createUser => user.name }.merge(user.spec)
         end
       end

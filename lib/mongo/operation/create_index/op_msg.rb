@@ -29,7 +29,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           {
             createIndexes: coll_name,
             indexes: indexes,

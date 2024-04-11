@@ -506,7 +506,7 @@ module Mongo
     # @return [ Operation::Context ] the (possibly-refreshed) context.
     def possibly_refreshed_context
       return context if view.timeout_mode == :cursor_lifetime
-      context.refresh
+      context.refresh(view: view)
     end
 
     # Sets @cursor_id from the operation result.

@@ -125,14 +125,14 @@ module Mongo
         session.validate_read_preference!(selector) if read_command?(selector)
       end
 
-      def command(connection)
+      def command(connection, context)
         if Lint.enabled?
           unless connection.is_a?(Server::Connection)
             raise Error::LintError, "Connection is not a Connection instance: #{connection}"
           end
         end
 
-        sel = BSON::Document.new(selector(connection))
+        sel = BSON::Document.new(selector(connection, context))
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
 

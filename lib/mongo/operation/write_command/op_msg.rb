@@ -27,7 +27,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           super.tap do |selector|
             if selector.key?(:findAndModify)
               validate_find_options(connection, selector)

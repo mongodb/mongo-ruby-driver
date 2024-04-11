@@ -26,7 +26,7 @@ module Mongo
 
       private
 
-      def command(connection)
+      def command(connection, context)
         if Lint.enabled?
           unless connection.is_a?(Server::Connection)
             raise Error::LintError, "Connection is not a Connection instance: #{connection}"

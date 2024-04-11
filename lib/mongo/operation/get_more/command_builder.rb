@@ -24,7 +24,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           {
             getMore: BSON::Int64.new(spec.fetch(:cursor_id)),
             collection: spec.fetch(:coll_name),

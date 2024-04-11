@@ -386,11 +386,13 @@ module Mongo
       #
       # @param [ Server::Connection ] connection The connection that the
       #   operation will be executed on.
+      # @param [ Operation::Context ] context The context for the current
+      #   operation.
       #
       # @return [ Hash ] The selector spec.
       #
       # @since 2.0.0
-      def selector(connection)
+      def selector(_connection, _context)
         spec[SELECTOR]
       end
 
@@ -528,11 +530,16 @@ module Mongo
 
       # The command.
       #
+      # @param [ Server::Connection ] connection The connection that the
+      #   operation will be executed on.
+      # @param [ Operation::Context ] context The context for the current
+      #   operation.
+      #
       # @return [ Hash ] The command.
       #
       # @since 2.5.2
-      def command(connection)
-        selector(connection)
+      def command(connection, context)
+        selector(connection, context)
       end
 
       # The array filters.

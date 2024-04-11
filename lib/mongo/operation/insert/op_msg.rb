@@ -38,7 +38,7 @@ module Mongo
           Result.new(*dispatch_message(connection, context), @ids)
         end
 
-        def selector(connection)
+        def selector(connection, context)
           {
             insert: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
@@ -47,9 +47,13 @@ module Mongo
           }.compact
         end
 
-        def message(connection)
+        def message(connection, context)
           section = Protocol::Msg::Section1.new(IDENTIFIER, send(IDENTIFIER))
-          Protocol::Msg.new(flags, {}, command(connection), section)
+
+          cmd = command(connection, context)
+          cmd = apply_relevant_timeouts_to(cmd, connection, context)
+
+          Protocol::Msg.new(flags, {}, cmd, section)
         end
       end
     end

@@ -29,7 +29,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           # Collation is always supported on 3.6+ servers that would use OP_MSG.
           spec[:selector].merge(
             collation: spec[:collation],

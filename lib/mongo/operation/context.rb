@@ -77,7 +77,7 @@ module Mongo
       # and relative to the current moment.
       #
       # @return [ Operation::Context ] the refreshed context
-      def refresh(connection_global_id: @connection_global_id, timeout_ms: nil)
+      def refresh(connection_global_id: @connection_global_id, timeout_ms: nil, view: nil)
         operation_timeouts = @operation_timeouts
         operation_timeouts = operation_timeouts.merge(operation_timeout_ms: timeout_ms) if timeout_ms
 
@@ -85,7 +85,7 @@ module Mongo
                        session: session,
                        connection_global_id: connection_global_id,
                        operation_timeouts: operation_timeouts,
-                       view: view,
+                       view: view || self.view,
                        options: options)
       end
 

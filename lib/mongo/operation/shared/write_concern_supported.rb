@@ -28,7 +28,7 @@ module Mongo
 
       def write_concern_supported?(connection); true; end
 
-      def command(connection)
+      def command(connection, context)
         add_write_concern!(super, connection)
       end
 

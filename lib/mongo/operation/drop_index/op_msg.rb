@@ -29,7 +29,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(connection, context)
           {
             :dropIndexes => coll_name,
             :index => index_name,

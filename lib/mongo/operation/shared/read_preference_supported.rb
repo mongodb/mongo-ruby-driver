@@ -74,7 +74,7 @@ module Mongo
         end
       end
 
-      def command(connection)
+      def command(connection, context)
         sel = super
         add_read_preference_legacy(sel, connection)
       end

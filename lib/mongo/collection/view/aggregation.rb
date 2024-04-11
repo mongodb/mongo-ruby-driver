@@ -99,13 +99,13 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(view, pipeline, options = {})
+          @view = view
           @pipeline = pipeline.dup
           @timeout_ms = options.delete(:timeout_ms)
           @options = BSON::Document.new(options).freeze
 
           validate_timeout_mode!(options)
 
-          @view = view
           unless Mongo.broken_view_aggregate || view.filter.empty?
             @pipeline.unshift(:$match => view.filter)
           end
@@ -152,9 +152,7 @@ module Mongo
             pipeline,
             view,
             options.merge(session: session, read_preference: read_preference)
-          ).specification.tap do |spec|
-            set_timeouts_for_initial_op(spec)
-          end
+          ).specification
         end
 
         def new(options)
