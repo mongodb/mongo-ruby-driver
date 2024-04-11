@@ -174,6 +174,7 @@ module Mongo
       # @api private
       def legacy_write_with_retry(server = nil, context:)
         session = context.session
+        context.check_timeout!
 
         # This is the pre-session retry logic, and is not subject to
         # current retryable write specifications.

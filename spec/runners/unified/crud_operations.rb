@@ -288,6 +288,9 @@ module Unified
         if let = args.use('let')
           opts[:let] = let
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         collection.bulk_write(requests, **opts)
       end
     end

@@ -118,7 +118,7 @@ module Mongo
         elsif session&.retry_reads?
           modern_read_with_retry(session, server_selector, context, &block)
         elsif client.max_read_retries > 0
-          legacy_read_with_retry(session, server_selector, &block)
+          legacy_read_with_retry(session, server_selector, context, &block)
         else
           read_without_retry(session, server_selector, &block)
         end
@@ -216,10 +216,13 @@ module Mongo
       #   being run on.
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
+      # @param [ Mongo::Operation::Context | nil ] context Context for the
+      #   read operation.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def legacy_read_with_retry(session, server_selector, &block)
+      def legacy_read_with_retry(session, server_selector, context = nil, &block)
+        context&.check_timeout!
         attempt = attempt ? attempt + 1 : 1
         yield select_server(cluster, server_selector, session)
       rescue *retryable_exceptions, Error::OperationFailure, Error::PoolError => e
