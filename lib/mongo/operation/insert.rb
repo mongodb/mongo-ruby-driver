@@ -35,7 +35,7 @@ module Mongo
 
       IDENTIFIER = 'documents'.freeze
 
-      def validate!(connection)
+      def validate!(connection, context)
       end
     end
   end

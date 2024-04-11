@@ -546,12 +546,14 @@ module Mongo
       #
       # @param [ Server::Connection ] connection The connection that the
       #   operation will be executed on.
+      # @param [ Operation::Context ] context The context for the current
+      #   operation.
       #
       # @return [ Hash | nil ] The array filters.
       #
       # @since 2.5.2
-      def array_filters(connection)
-        sel = selector(connection)
+      def array_filters(connection, context)
+        sel = selector(connection, context)
         sel[Operation::ARRAY_FILTERS] if sel
       end
 

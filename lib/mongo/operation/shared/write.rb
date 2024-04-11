@@ -52,7 +52,7 @@ module Mongo
       #
       # @return [ Mongo::Operation::Result ] The operation result.
       def execute_with_connection(connection, context:)
-        validate!(connection)
+        validate!(connection, context)
         op = self.class::OpMsg.new(spec)
 
         result = op.execute(connection, context: context)
@@ -82,13 +82,13 @@ module Mongo
 
       private
 
-      def validate!(connection)
+      def validate!(connection, context)
         if !acknowledged_write?
           if collation
             raise Error::UnsupportedCollation.new(
                 Error::UnsupportedCollation::UNACKNOWLEDGED_WRITES_MESSAGE)
           end
-          if array_filters(connection)
+          if array_filters(connection, context)
             raise Error::UnsupportedArrayFilters.new(
                 Error::UnsupportedArrayFilters::UNACKNOWLEDGED_WRITES_MESSAGE)
           end
