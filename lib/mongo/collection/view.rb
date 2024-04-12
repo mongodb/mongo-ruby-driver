@@ -226,7 +226,7 @@ module Mongo
       def operation_timeouts(opts = {})
         {}.tap do |result|
           if opts[:timeout_ms] || operation_timeout_ms
-            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || operation_timeout_ms
+            result[:operation_timeout_ms] = opts[:timeout_ms] || operation_timeout_ms
           else
             result[:inherited_timeout_ms] = collection.timeout_ms
           end

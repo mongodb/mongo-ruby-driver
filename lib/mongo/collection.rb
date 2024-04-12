@@ -873,8 +873,9 @@ module Mongo
     # @option options [ true | false ] :ordered Whether the operations
     #   should be executed in order.
     # @option options [ Session ] :session The session to use for the operation.
-    # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
-    #   Must a positive integer. The default value is unset which means infinite.
+    # @option options [ Integer ] :timeout_ms The timeout in milliseconds for the
+    #   complete operation. Must a positive integer. The default value is unset
+    #   which means infinite.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
@@ -903,7 +904,7 @@ module Mongo
     # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Session ] :session The session to use for the set of operations.
-    # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+    # @option options [ Integer ] :timeout_ms The timeout in milliseconds for all the operations.
     #   Must a positive integer. The default value is unset which means infinite.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.

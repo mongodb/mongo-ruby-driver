@@ -61,9 +61,20 @@ module Mongo
       operations = op_combiner.combine
       validate_requests!
 
-      client.send(:with_session, @options) do |session|
-        context = Operation::Context.new(client: client, session: session)
+      client.with_session(@options) do |session|
         operations.each do |operation|
+          op_timeout_ms = if @deadline
+            if @deadline == 0
+              0
+            else
+              ((@deadline - Utils.monotonic_time) * 1_000).to_i
+            end
+          end
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: { operation_timeout_ms: op_timeout_ms }
+          )
           if single_statement?(operation)
             write_concern = write_concern(session)
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
@@ -124,6 +135,16 @@ module Mongo
       @collection = collection
       @requests = requests
       @options = options || {}
+      if @options[:timeout_ms]
+        @timeout_ms = @options[:timeout_ms]
+        if @timeout_ms > 0
+          @deadline = Utils.monotonic_time + ( @timeout_ms / 1_000.0 )
+        elsif @timeout_ms == 0
+          @deadline = 0
+        else
+          raise ArgumentError, "timeout_ms options must be non-negative integer"
+        end
+      end
     end
 
     # Is the bulk write ordered?

@@ -107,6 +107,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         collection.find_one_and_update(filter, update, **opts)
       end
     end
@@ -124,6 +127,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         collection.find_one_and_replace(filter, update, **opts)
       end
     end
@@ -139,6 +145,9 @@ module Unified
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
+        end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
         end
         collection.find_one_and_delete(filter, **opts)
       end
@@ -169,6 +178,9 @@ module Unified
         end
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
+        end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
         end
         collection.insert_many(args.use!('documents'), **opts)
       end
@@ -258,6 +270,9 @@ module Unified
         end
         if let = args.use('let')
           opts[:let] = let
+        end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
         end
         collection.bulk_write(requests, **opts)
       end

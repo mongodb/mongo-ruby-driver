@@ -28,7 +28,7 @@ describe Mongo::Operation::Context do
       let(:timeout_ms) { 0 }
 
       it 'returns nil' do
-        expect(context.deadline).to be_nil
+        expect(context.deadline).to eq(0)
       end
     end
 

@@ -108,7 +108,7 @@ module Mongo
         session = context.session
         server = select_server(cluster, ServerSelector.primary, session)
         options = session&.client&.options || {}
-        
+
         if options[:retry_writes]
           begin
             server.with_connection(connection_global_id: context.connection_global_id) do |connection|
@@ -174,6 +174,7 @@ module Mongo
       # @api private
       def legacy_write_with_retry(server = nil, context:)
         session = context.session
+        context.check_timeout!
 
         # This is the pre-session retry logic, and is not subject to
         # current retryable write specifications.
@@ -231,7 +232,7 @@ module Mongo
       def modern_write_with_retry(session, server, context, &block)
         txn_num = nil
         connection_succeeded = false
-        
+
         server.with_connection(
           connection_global_id: context.connection_global_id,
           context: context
@@ -271,6 +272,8 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def retry_write(original_error, txn_num, context:, failed_server: nil, &block)
+        context&.check_timeout!
+
         session = context.session
 
         # We do not request a scan of the cluster here, because error handling
@@ -285,7 +288,7 @@ module Mongo
           failed_server,
           timeout: context.remaining_timeout_sec
         )
-        
+
         unless server.retry_writes?
           # Do not need to add "modern retry" here, it should already be on
           # the first exception.
@@ -299,15 +302,22 @@ module Mongo
           # special marker class to bypass the ordinarily applicable rescues.
           raise Error::RaiseOriginalError
         end
-        
+
+        attempt = attempt ? attempt + 1 : 2
         log_retry(original_error, message: 'Write retry')
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
         end
+      rescue Mongo::Error::TimeoutError
+        raise
       rescue *retryable_exceptions, Error::PoolError => e
-        fail_on_retryable!(e, original_error)
+        maybe_fail_on_retryable(e, original_error, context, attempt)
+        failed_server = server
+        retry
       rescue Error::OperationFailure => e
-        fail_on_operation_failure!(e, original_error)
+        maybe_fail_on_operation_failure(e, original_error, context, attempt)
+        failed_server = server
+        retry
       rescue Error, Error::AuthError => e
         fail_on_other_error!(e, original_error)
       rescue Error::RaiseOriginalError
@@ -353,10 +363,10 @@ module Mongo
 
       # Raise either e, or original_error, depending on whether e is
       # write_retryable.
-      def fail_on_retryable!(e, original_error)
+      def maybe_fail_on_retryable(e, original_error, context, attempt)
         if e.write_retryable?
-          e.add_notes('modern retry', 'attempt 2')
-          raise e
+          e.add_notes('modern retry', "attempt #{attempt}")
+          raise e unless context&.deadline
         else
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error
@@ -365,11 +375,11 @@ module Mongo
 
       # Raise either e, or original_error, depending on whether e is
       # appropriately labeled.
-      def fail_on_operation_failure!(e, original_error)
+      def maybe_fail_on_operation_failure(e, original_error, context, attempt)
         e.add_note('modern retry')
         if e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed')
-          e.add_note('attempt 2')
-          raise e
+          e.add_note("attempt #{attempt}")
+          raise e unless context&.deadline
         else
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error

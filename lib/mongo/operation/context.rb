@@ -63,6 +63,7 @@ module Mongo
         @connection_global_id = connection_global_id
         @deadline = calculate_deadline(operation_timeouts, session)
         @operation_timeouts = operation_timeouts
+        @timeout_sec = if @deadline then @deadline - Utils.monotonic_time end
         @options = options
       end
 
@@ -70,6 +71,7 @@ module Mongo
       attr_reader :session
       attr_reader :view
       attr_reader :deadline
+      attr_reader :timeout_sec
       attr_reader :options
       attr_reader :operation_timeouts
 
@@ -168,12 +170,29 @@ module Mongo
         end
       end
 
+      # @return [ true | false ] Whether CSOT is enabled for the operation
+      def csot?
+        !deadline.nil?
+      end
+
+      # @return [ true | false ] Returns false if CSOT is not enabled, or if
+      #   CSOT is set to 0 (means unlimited), otherwise true.
+      def has_timeout?
+        ![nil, 0].include?(@deadline)
+      end
+
+      # @return [ Float | nil ] Returns the remaining seconds of the timeout
+      #   set for the operation; if no timeout is set, or the timeout is 0
+      #   (means unlimited) returns nil.
       def remaining_timeout_sec
-        return nil if @deadline.nil?
+        return nil unless has_timeout?
 
         deadline - Utils.monotonic_time
       end
 
+      # @return [ Integer | nil ] Returns the remaining milliseconds of the timeout
+      #   set for the operation; if no timeout is set, or the timeout is 0
+      #   (means unlimited) returns nil.
       def remaining_timeout_ms
         seconds = remaining_timeout_sec
         return nil if seconds.nil?
@@ -183,6 +202,26 @@ module Mongo
 
       def inspect
         "#<#{self.class} connection_global_id=#{connection_global_id.inspect} deadline=#{deadline.inspect} options=#{options.inspect} operation_timeouts=#{operation_timeouts.inspect}>"
+      end
+
+      # @return [ true | false ] Whether the timeout for the operation expired.
+      #   If no timeout set, this method returns false.
+      def timeout_expired?
+        if has_timeout?
+          Utils.monotonic_time >= deadline
+        else
+          false
+        end
+      end
+
+      # Check whether the operation timeout expired, and raises an appropriate
+      # error if yes.
+      #
+      # @raise [ Error::TimeoutError ]
+      def check_timeout!
+        if timeout_expired?
+          raise Error::TimeoutError, "Operation took more than #{timeout_sec} seconds"
+        end
       end
 
       private
@@ -197,13 +236,17 @@ module Mongo
         elsif operation_timeout_ms = opts[:operation_timeout_ms]
           if operation_timeout_ms > 0
             Utils.monotonic_time + (operation_timeout_ms / 1_000.0)
+          elsif operation_timeout_ms == 0
+            0
           elsif operation_timeout_ms < 0
             raise ArgumentError, /must be a non-negative integer/
           end
-        elsif opts[:inherited_timeout_ms] && opts[:inherited_timeout_ms] > 0
-          Utils.monotonic_time + (opts[:inherited_timeout_ms] / 1_000.0)
-        else
-          nil
+        elsif inherited_timeout_ms = opts[:inherited_timeout_ms]
+          if inherited_timeout_ms > 0
+            Utils.monotonic_time + (inherited_timeout_ms / 1_000.0)
+          elsif inherited_timeout_ms == 0
+            0
+          end
         end
       end
     end
