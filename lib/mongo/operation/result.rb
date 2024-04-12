@@ -356,6 +356,15 @@ module Mongo
             server_message: parser.server_message,
           )
 
+          # https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/client-side-operations-timeout.md#error-transformations
+          # "When using the new timeout error type, drivers MUST transform timeout
+          # errors from external sources into the new error. One such error is
+          # the MaxTimeMSExpired server error. When checking for this error,
+          # drivers MUST only check that the error code is 50 and MUST NOT check
+          # the code name or error message. This error can be present in a top-
+          # level response document where the ok value is 0, as part of an
+          # error in the writeErrors array, or in a nested writeConcernError
+          # document."
           if error.code == 50 # MaxTimeMSExpired
             Error::TimeoutError.wrap(error)
           else

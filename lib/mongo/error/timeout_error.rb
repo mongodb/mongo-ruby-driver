@@ -25,7 +25,10 @@ module Mongo
       #
       # @return [ Mongo::Error::TimeoutError ] a new TimeoutError instance.
       def self.wrap(error)
-        new.tap { |e| e.original_error = error }
+        new.tap do |e|
+          e.original_error = error
+          error.labels.each { |label| e.add_label(label) }
+        end
       end
 
       # "...drivers MUST expose the underlying error returned from the task
@@ -33,6 +36,16 @@ module Mongo
       # MUST include the stringified version of the underlying error as a
       # substring."
       attr_accessor :original_error
+
+      # Delegates the decision of whether this error is resumable by a change
+      # stream, to the original error. If there is no original error, returns
+      # falsey.
+      #
+      # @return [ truthy | falsey ] Whether a change stream can resume from
+      #   this error.
+      def change_stream_resumable?
+        original_error&.change_stream_resumable?
+      end
 
       # Returns the stringified version of the error message. If the
       # `original_error` attribute is set, the description of that error will
