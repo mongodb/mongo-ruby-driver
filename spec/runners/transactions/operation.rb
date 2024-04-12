@@ -35,14 +35,30 @@ module Mongo
           raise "Unknown operation #{name}"
         end
         result = send(op_name, target, context, *args)
-        if result
-          if result.is_a?(Hash)
-            result = result.dup
-            result['error'] = false
-          end
+        if result.is_a?(Hash)
+          result = result.dup
+          result['error'] = false
         end
 
         result
+      rescue Mongo::Error::TimeoutError => e
+        if e.original_error
+          {
+            'errorCode' => e.original_error.code,
+            'errorCodeName' => e.original_error.code_name,
+            'errorContains' => e.original_error.message,
+            'errorLabels' => e.original_error.labels,
+            'exception' => e.original_error,
+            'error' => true,
+          }
+        else
+          {
+            'errorContains' => e.message,
+            'errorLabels' => e.labels,
+            'exception' => e,
+            'error' => true,
+          }
+        end
       rescue Mongo::Error::OperationFailure => e
         result = e.instance_variable_get(:@result)
         if result.nil?

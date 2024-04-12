@@ -246,6 +246,13 @@ module Mongo
           # it later for the retry as well.
           yield connection, txn_num, context.dup
         end
+      rescue Mongo::Error::TimeoutError => e
+        raise unless e.original_error.is_a?(Error::OperationFailure)
+
+        e.add_notes('modern retry', 'attempt 1')
+        ensure_retryable!(e.original_error)
+        retry_write(e.original_error, txn_num, context: context.with(is_retry: true), failed_server: server, &block)
+
       rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure => e
         e.add_notes('modern retry', 'attempt 1')
 

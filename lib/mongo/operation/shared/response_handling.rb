@@ -65,6 +65,12 @@ module Mongo
       rescue Mongo::Error::SocketTimeoutError => e
         maybe_add_retryable_write_error_label!(e, connection, context)
         raise e
+      rescue Mongo::Error::TimeoutError => e
+        if context.committing_transaction? && e.original_error.is_a?(Mongo::Error::OperationFailure) && e.original_error.max_time_ms_expired?
+          e.original_error.add_label('UnknownTransactionCommitResult')
+        end
+
+        raise e
       rescue Mongo::Error::OperationFailure => e
         if context.committing_transaction?
           if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
