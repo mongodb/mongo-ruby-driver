@@ -21,7 +21,7 @@ module Unified
 
         opts = extract_options(args, 'let', 'comment',
           'allowDiskUse', 'returnKey', 'projection',
-          'skip', 'hint', 'max', 'maxTimeMS', 'timeoutMS', 'min',
+          'skip', 'hint', 'maxTimeMS', 'timeoutMS',
           'collation', 'noCursorTimeout', 'oplogReplay', 'allowPartialResults',
           'timeoutMode',
           { 'showRecordId' => :show_disk_loc, 'max' => :max_value, 'min' => :min_value },
