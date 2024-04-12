@@ -61,7 +61,7 @@ module Mongo
       operations = op_combiner.combine
       validate_requests!
 
-      client.send(:with_session, @options) do |session|
+      client.with_session(@options) do |session|
         operations.each do |operation|
           op_timeout_ms = if @deadline
             if @deadline == 0
