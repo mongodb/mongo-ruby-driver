@@ -66,7 +66,9 @@ module Mongo
 
           when :tailable_await
             # The server supports the maxTimeMS option for the original command.
-            spec[:maxTimeMS] = timeout_ms || view.options[:max_time_ms]
+            if timeout_ms || view.options[:max_time_ms]
+              spec[:maxTimeMS] = timeout_ms || view.options[:max_time_ms]
+            end
           end
 
           spec

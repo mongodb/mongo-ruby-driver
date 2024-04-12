@@ -6,13 +6,14 @@ require 'spec_helper'
 describe 'Command' do
 
   let(:subscriber) { Mrss::EventSubscriber.new }
+  let(:context) { Mongo::Operation::Context.new }
 
   describe 'payload' do
     let(:server) { authorized_client.cluster.next_primary }
 
     let(:payload) do
       server.with_connection do |connection|
-        command.send(:final_operation).send(:message, connection).payload.dup.tap do |payload|
+        command.send(:final_operation).send(:message, connection, context).payload.dup.tap do |payload|
           if payload['request_id'].is_a?(Integer)
             payload['request_id'] = 42
           end
