@@ -528,7 +528,7 @@ module Mongo
           if indexes_view.get(index_spec).nil?
             indexes_view.create_one(index_spec, options)
           end
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           # proceed with index creation if a NamespaceNotFound error is thrown
           if e.code == 26
             indexes_view.create_one(index_spec, options)

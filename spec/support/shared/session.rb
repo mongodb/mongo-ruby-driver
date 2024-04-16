@@ -110,8 +110,8 @@ shared_examples 'a failed operation using a session' do
     end
 
     it 'raises an error' do
-      expect([Mongo::Error::OperationFailure,
-              Mongo::Error::BulkWriteError]).to include(operation_result.class)
+      expect([Mongo::Error::OperationFailure::Family,
+              Mongo::Error::BulkWriteError].any? { |e| e === operation_result }).to be true
     end
 
     it 'updates the last use value' do

@@ -201,7 +201,7 @@ module Mongo
           timeout: context&.remaining_timeout_sec
         )
         yield server
-      rescue *retryable_exceptions, Error::OperationFailure, Auth::Unauthorized, Error::PoolError => e
+      rescue *retryable_exceptions, Error::OperationFailure::Family, Auth::Unauthorized, Error::PoolError => e
         e.add_notes('modern retry', 'attempt 1')
         raise e if session.in_transaction?
         raise e if !is_retryable_exception?(e) && !e.write_retryable?
@@ -225,7 +225,7 @@ module Mongo
         context&.check_timeout!
         attempt = attempt ? attempt + 1 : 1
         yield select_server(cluster, server_selector, session)
-      rescue *retryable_exceptions, Error::OperationFailure, Error::PoolError => e
+      rescue *retryable_exceptions, Error::OperationFailure::Family, Error::PoolError => e
         e.add_notes('legacy retry', "attempt #{attempt}")
 
         if is_retryable_exception?(e)
@@ -256,7 +256,7 @@ module Mongo
 
         begin
           yield server
-        rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure => e
+        rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
           e.add_note('retries disabled')
           raise e
         end
@@ -297,7 +297,7 @@ module Mongo
           else
             raise e
           end
-        rescue Error::OperationFailure, Error::PoolError => e
+        rescue Error::OperationFailure::Family, Error::PoolError => e
           e.add_note('modern retry')
           if e.write_retryable?
             e.add_note("attempt #{attempt}")
