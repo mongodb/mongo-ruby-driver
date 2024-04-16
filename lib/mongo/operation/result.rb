@@ -100,9 +100,13 @@ module Mongo
       # @param [ Integer ] connection_global_id
       #   Global id of the connection on which the operation that
       #   this result is for was performed.
+      # @param [ Operation::Context | nil ] context the context that was active
+      #   when this result was produced.
       #
       # @api private
-      def initialize(replies, connection_description = nil, connection_global_id = nil)
+      def initialize(replies, connection_description = nil, connection_global_id = nil, context: nil)
+        @context = context
+
         if replies
           if replies.is_a?(Array)
             if replies.length != 1
@@ -137,6 +141,12 @@ module Mongo
       #
       # @api private
       attr_reader :connection_global_id
+
+      # @return [ Operation::Context | nil ] the operation context (if any)
+      #   that was active when this result was produced.
+      #
+      # @api private
+      attr_reader :context
 
       # @api private
       def_delegators :parser,
@@ -454,7 +464,7 @@ module Mongo
       private
 
       def operation_failure_class
-        if parser.code == 50
+        if context&.csot? && parser.code == 50
           Error::ServerTimeoutError
         else
           Error::OperationFailure
