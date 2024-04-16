@@ -10,13 +10,7 @@ set_env_vars
 set_env_python
 set_env_ruby
 
-# Try to source local Drivers Secrets
-if [ -f ./secrets-export.sh ]; then
-  echo "Sourcing secrets"
-  source ./secrets-export.sh
-else
-  echo "Not sourcing secrets"
-fi
+source ${DRIVERS_TOOLS}/.evergreen/serverless/secrets-export.sh
 
 bundle_install
 
