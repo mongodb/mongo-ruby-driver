@@ -330,16 +330,16 @@ module Mongo
         !successful? ? raise_operation_failure : self
       end
 
-      # The exception instance (of the Error::OperationFailure class)
+      # The exception instance (of Error::OperationFailure::Family)
       # that would be raised during processing of this result.
       #
       # This method should only be called when result is not successful.
       #
-      # @return [ Error::OperationFailure ] The exception.
+      # @return [ Error::OperationFailure::Family ] The exception.
       #
       # @api private
       def error
-        @error ||= Error::OperationFailure.new(
+        @error ||= operation_failure_class.new(
           parser.message,
           self,
           code: parser.code,
@@ -452,6 +452,14 @@ module Mongo
       end
 
       private
+
+      def operation_failure_class
+        if parser.code == 50
+          Error::ServerTimeoutError
+        else
+          Error::OperationFailure
+        end
+      end
 
       def aggregate_returned_count
         replies.reduce(0) do |n, reply|
