@@ -240,7 +240,8 @@ module Unified
           comment: args.use('comment'),
           upsert: args.use('upsert'),
           let: args.use('let'),
-          hint: args.use('hint')
+          hint: args.use('hint'),
+          timeout_ms: args.use('timeout_ms')
         )
       end
     end
