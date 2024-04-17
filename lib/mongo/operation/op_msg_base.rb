@@ -22,11 +22,13 @@ module Mongo
       include Specifiable
       include Executable
       include SessionsSupported
+      include Timed
 
       private
 
       def message(connection)
-        Protocol::Msg.new(flags, options(connection), command(connection))
+        cmd = apply_relevant_timeouts_to(command(connection), connection)
+        Protocol::Msg.new(flags, options(connection), cmd)
       end
     end
   end
