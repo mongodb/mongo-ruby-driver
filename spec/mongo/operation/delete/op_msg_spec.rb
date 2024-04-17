@@ -2,8 +2,12 @@
 # rubocop:todo all
 
 require 'spec_helper'
+require_relative '../shared/csot/examples'
 
 describe Mongo::Operation::Delete::OpMsg do
+  include CSOT::Examples
+
+  let(:context) { Mongo::Operation::Context.new }
 
   let(:write_concern) do
     Mongo::WriteConcern.get(w: :majority)
@@ -125,7 +129,6 @@ describe Mongo::Operation::Delete::OpMsg do
       end
 
       context 'when the topology is replica set or sharded' do
-        min_server_fcv '3.6'
         require_topology :replica_set, :sharded
 
         let(:expected_global_args) do
@@ -140,7 +143,6 @@ describe Mongo::Operation::Delete::OpMsg do
       end
 
       context 'when the topology is standalone' do
-        min_server_fcv '3.6'
         require_topology :single
 
         let(:expected_global_args) do
@@ -198,7 +200,6 @@ describe Mongo::Operation::Delete::OpMsg do
           end
 
           context 'when the topology is replica set or sharded' do
-            min_server_fcv '3.6'
             require_topology :replica_set, :sharded
 
             let(:expected_global_args) do
@@ -216,7 +217,6 @@ describe Mongo::Operation::Delete::OpMsg do
           end
 
           context 'when the topology is standalone' do
-            min_server_fcv '3.6'
             require_topology :single
 
             let(:expected_global_args) do
@@ -234,7 +234,6 @@ describe Mongo::Operation::Delete::OpMsg do
         end
 
         context 'when the session is explicit' do
-          min_server_fcv '3.6'
           require_topology :replica_set, :sharded
 
           let(:session) do
@@ -263,4 +262,6 @@ describe Mongo::Operation::Delete::OpMsg do
       end
     end
   end
+
+  it_behaves_like 'a CSOT-compliant OpMsg subclass'
 end

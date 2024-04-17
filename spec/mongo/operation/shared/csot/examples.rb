@@ -20,6 +20,7 @@ module CSOT
         let(:context) do
           Mongo::Operation::Context.new.tap do |context|
             allow(context).to receive(:remaining_timeout_sec).and_return(remaining_timeout_sec)
+            allow(context).to receive(:has_timeout?).and_return(!remaining_timeout_sec.nil?)
           end
         end
 
