@@ -308,8 +308,6 @@ module Mongo
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
         end
-      rescue Mongo::Error::TimeoutError
-        raise
       rescue *retryable_exceptions, Error::PoolError => e
         maybe_fail_on_retryable(e, original_error, context, attempt)
         failed_server = server
@@ -318,6 +316,8 @@ module Mongo
         maybe_fail_on_operation_failure(e, original_error, context, attempt)
         failed_server = server
         retry
+      rescue Mongo::Error::TimeoutError
+        raise
       rescue Error, Error::AuthError => e
         fail_on_other_error!(e, original_error)
       rescue Error::RaiseOriginalError
