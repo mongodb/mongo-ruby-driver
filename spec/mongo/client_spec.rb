@@ -561,6 +561,74 @@ describe Mongo::Client do
         expect(command['comment']).to eq('comment')
       end
     end
+
+    context 'with timeout_ms' do
+      # To make it easier with failCommand
+      require_topology :single
+
+      before do
+        root_authorized_client.use('admin').command({
+          configureFailPoint: "failCommand",
+          mode: "alwaysOn",
+          data: {
+              failCommands: ["listDatabases"],
+              blockConnection: true,
+              blockTimeMS: 100
+            }
+        })
+      end
+
+      after do
+        root_authorized_client.use('admin').command({
+          configureFailPoint: "failCommand",
+          mode: "off"
+        })
+      end
+
+      context 'when timeout_ms is set on command level' do
+        context 'when there is not enough time' do
+          it 'raises' do
+            expect do
+              monitored_client.database_names({}, timeout_ms: 50)
+            end.to raise_error(Mongo::Error::TimeoutError)
+          end
+        end
+
+        context 'when there is enough time' do
+          it 'does not raise' do
+            expect do
+              monitored_client.database_names({}, timeout_ms: 200)
+            end.not_to raise_error
+          end
+        end
+      end
+
+      context 'when timeout_ms is set on client level' do
+        context 'when there is not enough time' do
+          let(:client) do
+            root_authorized_client.with(timeout_ms: 50)
+          end
+
+          it 'raises' do
+            expect do
+              client.database_names({})
+            end.to raise_error(Mongo::Error::TimeoutError)
+          end
+        end
+
+        context 'when there is enough time' do
+          let(:client) do
+            root_authorized_client.with(timeout_ms: 200)
+          end
+
+          it 'does not raise' do
+            expect do
+              monitored_client.database_names({})
+            end.not_to raise_error
+          end
+        end
+      end
+    end
   end
 
   describe '#list_databases' do
@@ -572,8 +640,6 @@ describe Mongo::Client do
     end
 
     context 'when filter criteria is present' do
-      min_server_fcv '3.6'
-
       include_context 'ensure test db exists'
 
       let(:result) do
@@ -591,8 +657,6 @@ describe Mongo::Client do
     end
 
     context 'when name_only is true' do
-      min_server_fcv '3.6'
-
       let(:command) do
         Utils.get_command_event(root_authorized_client, 'listDatabases') do |client|
           client.list_databases({}, true)
@@ -665,6 +729,74 @@ describe Mongo::Client do
         command = subscriber.command_started_events('listDatabases').last&.command
         expect(command).not_to be_nil
         expect(command['comment']).to eq('comment')
+      end
+    end
+
+    context 'with timeout_ms' do
+      # To make it easier with failCommand
+      require_topology :single
+
+      before do
+        root_authorized_client.use('admin').command({
+          configureFailPoint: "failCommand",
+          mode: "alwaysOn",
+          data: {
+              failCommands: ["listDatabases"],
+              blockConnection: true,
+              blockTimeMS: 100
+            }
+        })
+      end
+
+      after do
+        root_authorized_client.use('admin').command({
+          configureFailPoint: "failCommand",
+          mode: "off"
+        })
+      end
+
+      context 'when timeout_ms is set on command level' do
+        context 'when there is not enough time' do
+          it 'raises' do
+            expect do
+              monitored_client.list_databases({}, false, timeout_ms: 50)
+            end.to raise_error(Mongo::Error::TimeoutError)
+          end
+        end
+
+        context 'when there is enough time' do
+          it 'does not raise' do
+            expect do
+              monitored_client.list_databases({}, false, timeout_ms: 200)
+            end.not_to raise_error
+          end
+        end
+      end
+
+      context 'when timeout_ms is set on client level' do
+        context 'when there is not enough time' do
+          let(:client) do
+            root_authorized_client.with(timeout_ms: 50)
+          end
+
+          it 'raises' do
+            expect do
+              client.list_databases({})
+            end.to raise_error(Mongo::Error::TimeoutError)
+          end
+        end
+
+        context 'when there is enough time' do
+          let(:client) do
+            root_authorized_client.with(timeout_ms: 200)
+          end
+
+          it 'does not raise' do
+            expect do
+              monitored_client.list_databases({})
+            end.not_to raise_error
+          end
+        end
       end
     end
   end

@@ -937,8 +937,10 @@ module Mongo
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
     # @option opts [ Session ] :session The session to use.
-    # @option options [ Object ] :comment A user-provided
+    # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     # @return [ Array<String> ] The names of the databases.
     #
@@ -958,7 +960,11 @@ module Mongo
     #
     # @option opts [ true, false ] :authorized_databases A flag that determines
     #   which databases are returned based on user privileges when access control
-    #   is enabled
+    #   is enabled.
+    # @option opts [ Object ] :comment A user-provided
+    #   comment to attach to this command.
+    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
