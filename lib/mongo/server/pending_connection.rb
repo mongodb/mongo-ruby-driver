@@ -110,6 +110,24 @@ module Mongo
 
       private
 
+      # Sends the hello command to the server, then receive and deserialize
+      # the response.
+      #
+      # This method is extracted to be mocked in the tests.
+      #
+      # @param [ Protocol::Message ] Command that should be sent to a server
+      #   for handshake purposes.
+      #
+      # @return [ Mongo::Protocol::Reply ] Deserialized server response.
+      def get_handshake_response(hello_command)
+        @server.round_trip_time_averager.measure do
+          add_server_diagnostics do
+            socket.write(hello_command.serialize.to_s)
+            Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE)
+          end
+        end
+      end
+
       # @param [ BSON::Document | nil ] speculative_auth_doc The document to
       #   provide in speculativeAuthenticate field of handshake command.
       #
@@ -131,12 +149,7 @@ module Mongo
         doc = nil
         @server.handle_handshake_failure! do
           begin
-            response = @server.round_trip_time_averager.measure do
-              add_server_diagnostics do
-                socket.write(hello_command.serialize.to_s)
-                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE)
-              end
-            end
+            response = get_handshake_response(hello_command)
             result = Operation::Result.new([response])
             result.validate!
             doc = result.documents.first
