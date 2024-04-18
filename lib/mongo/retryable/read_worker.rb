@@ -291,7 +291,7 @@ module Mongo
           yield server, true
         rescue *retryable_exceptions => e
           e.add_notes('modern retry', "attempt #{attempt}")
-          if context&.deadlie
+          if context&.deadline
             failed_server = server
             retry
           else
@@ -301,7 +301,7 @@ module Mongo
           e.add_note('modern retry')
           if e.write_retryable?
             e.add_note("attempt #{attempt}")
-            if context&.deadlie
+            if context&.deadline
               failed_server = server
               retry
             else
