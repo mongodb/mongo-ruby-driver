@@ -114,7 +114,7 @@ module Mongo
             server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, nil, context
             end
-          rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure => e
+          rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
             e.add_note('retries disabled')
             raise e
           end
@@ -195,7 +195,7 @@ module Mongo
             # Legacy retries do not use txn_num
             yield connection, nil, context.dup
           end
-        rescue Error::OperationFailure => e
+        rescue Error::OperationFailure::Family => e
           e.add_note('legacy retry')
           e.add_note("attempt #{attempt}")
           server = nil
@@ -246,10 +246,10 @@ module Mongo
           # it later for the retry as well.
           yield connection, txn_num, context.dup
         end
-      rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure => e
+      rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure::Family => e
         e.add_notes('modern retry', 'attempt 1')
 
-        if e.is_a?(Error::OperationFailure)
+        if e.is_a?(Error::OperationFailure::Family)
           ensure_retryable!(e)
         else
           ensure_labeled_retryable!(e, connection_succeeded, session)
@@ -308,16 +308,16 @@ module Mongo
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
         end
-      rescue Mongo::Error::TimeoutError
-        raise
       rescue *retryable_exceptions, Error::PoolError => e
         maybe_fail_on_retryable(e, original_error, context, attempt)
         failed_server = server
         retry
-      rescue Error::OperationFailure => e
+      rescue Error::OperationFailure::Family => e
         maybe_fail_on_operation_failure(e, original_error, context, attempt)
         failed_server = server
         retry
+      rescue Mongo::Error::TimeoutError
+        raise
       rescue Error, Error::AuthError => e
         fail_on_other_error!(e, original_error)
       rescue Error::RaiseOriginalError

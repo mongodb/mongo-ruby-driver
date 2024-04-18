@@ -188,7 +188,7 @@ module Unified
         begin
           index = collection.indexes.get(args.use!('indexName'))
           raise Error::ResultMismatch, "Index found"
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           if e.code == 26
             # OK
           else

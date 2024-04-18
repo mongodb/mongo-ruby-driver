@@ -304,7 +304,7 @@ module Mongo
               result.n.to_i
             end
           end
-        rescue Error::OperationFailure => exc
+        rescue Error::OperationFailure::Family => exc
           if exc.code == 26
             # NamespaceNotFound
             # This should only happen with the aggregation pipeline path

@@ -28,7 +28,7 @@ class SpecSetup
         # more users to any other databases.
         begin
           create_user(client, SpecConfig.instance.root_user)
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           # When testing a cluster that requires auth, root user is already set up
           # and it is not creatable without auth.
           # Seems like every mongodb version has its own error message
@@ -61,7 +61,7 @@ class SpecSetup
     users = client.use('admin').database.users
     begin
       users.create(user)
-    rescue Mongo::Error::OperationFailure => e
+    rescue Mongo::Error::OperationFailure::Family => e
       if e.message =~ /User.*already exists/
         users.remove(user.name)
         users.create(user)

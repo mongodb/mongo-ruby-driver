@@ -501,7 +501,7 @@ module Mongo
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
               if Utils.monotonic_time >= deadline ||
-                e.is_a?(Error::OperationFailure) && e.max_time_ms_expired?
+                e.is_a?(Error::OperationFailure::Family) && e.max_time_ms_expired?
               then
                 transaction_in_progress = false
                 raise
@@ -542,7 +542,7 @@ module Mongo
         log_warn('with_transaction callback broke out of with_transaction loop, aborting transaction')
         begin
           abort_transaction
-        rescue Error::OperationFailure, Error::InvalidTransactionOperation
+        rescue Error::OperationFailure::Family, Error::InvalidTransactionOperation
         end
       end
       @with_transaction_deadline = nil

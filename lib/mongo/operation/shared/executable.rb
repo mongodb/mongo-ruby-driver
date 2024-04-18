@@ -93,7 +93,7 @@ module Mongo
       end
 
       def get_result(connection, context, options = {})
-        result_class.new(*dispatch_message(connection, context, options))
+        result_class.new(*dispatch_message(connection, context, options), context: context)
       end
 
       # Returns a Protocol::Message or nil as reply.

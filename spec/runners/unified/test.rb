@@ -329,7 +329,7 @@ module Unified
         begin
           collection.create(create_options)
         rescue Mongo::Error => e
-          if Mongo::Error::OperationFailure === e && (
+          if Mongo::Error::OperationFailure::Family === e && (
               e.code == 48 || e.message =~ /collection already exists/
           )
             # Already exists
@@ -419,7 +419,7 @@ module Unified
             if expected_error.use('isClientError')
               # isClientError doesn't actually mean a client error.
               # It means anything other than OperationFailure. DRIVERS-1799
-              if Mongo::Error::OperationFailure === e
+              if Mongo::Error::OperationFailure::Family === e
                 raise Error::ErrorMismatch, %Q,Expected not OperationFailure ("isClientError") but got #{e},
               end
             end
@@ -541,7 +541,7 @@ module Unified
         root_authorized_client.command(
           killAllSessions: [],
         )
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure::Family => e
         if e.code == 11601
           # operation was interrupted, ignore. SERVER-38335
         elsif e.code == 13

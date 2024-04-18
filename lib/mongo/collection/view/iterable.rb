@@ -100,7 +100,7 @@ module Mongo
         #
         # @return [ nil ] Always nil.
         #
-        # @raise [ Error::OperationFailure ] If the server cursor close fails.
+        # @raise [ Error::OperationFailure::Family ] If the server cursor close fails.
         #
         # @since 2.1.0
         def close_query

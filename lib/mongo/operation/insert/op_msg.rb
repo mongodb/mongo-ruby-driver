@@ -35,7 +35,7 @@ module Mongo
 
         def get_result(connection, context, options = {})
           # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(connection, context), @ids)
+          Result.new(*dispatch_message(connection, context), @ids, context: context)
         end
 
         def selector(connection)
