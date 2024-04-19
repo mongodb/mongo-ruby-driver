@@ -1210,6 +1210,10 @@ module Mongo
       name.start_with?('system.')
     end
 
+    # @return [ Integer | nil ] Operation timeout that is for this database or
+    #   for the corresponding client.
+    #
+    # @api private
     def timeout_ms
       @timeout_ms || database.timeout_ms
     end
