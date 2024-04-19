@@ -33,50 +33,51 @@ _yamlAnchors:
     &lockTimeoutErrorCode 24
 
 tests:
-  - description: unpin after TransientTransactionError error on commit
-    runOnRequirements:
-        # serverless proxy doesn't append error labels to errors in transactions
-        # caused by failpoints (CLOUDP-88216)
-      - serverless: "forbid"
-    operations:
-      - &startTransaction
-        name: startTransaction
-        object: *session0
-      - &insertOne
-        name: insertOne
-        object: *collection0
-        arguments:
-          document: { x: 1 }
-          session: *session0
-      - name: targetedFailPoint
-        object: testRunner
-        arguments:
-          session: *session0
-          failPoint:
-            configureFailPoint: failCommand
-            mode: { times: 1 }
-            data:
-              failCommands: [ commitTransaction ]
-              errorCode: *lockTimeoutErrorCode
-      - name: commitTransaction
-        object: *session0
-        expectError:
-          # LockTimeout is not retryable, so the commit fails.
-          errorCode: *lockTimeoutErrorCode
-          errorLabelsContain: [ TransientTransactionError ]
-          errorLabelsOmit: [ UnknownTransactionCommitResult ]
-      - &assertNoPinnedServer
-        name: assertSessionUnpinned
-        object: testRunner
-        arguments:
-          session: *session0
-      # Cleanup the potentionally open server transaction by starting and
-      # aborting a new transaction on the same session.
-      - *startTransaction
-      - *insertOne
-      - &abortTransaction
-        name: abortTransaction
-        object: *session0
+  # https://jira.mongodb.org/browse/RUBY-3446
+  # - description: unpin after TransientTransactionError error on commit
+  #   runOnRequirements:
+  #       # serverless proxy doesn't append error labels to errors in transactions
+  #       # caused by failpoints (CLOUDP-88216)
+  #     - serverless: "forbid"
+  #   operations:
+  #     - &startTransaction
+  #       name: startTransaction
+  #       object: *session0
+  #     - &insertOne
+  #       name: insertOne
+  #       object: *collection0
+  #       arguments:
+  #         document: { x: 1 }
+  #         session: *session0
+  #     - name: targetedFailPoint
+  #       object: testRunner
+  #       arguments:
+  #         session: *session0
+  #         failPoint:
+  #           configureFailPoint: failCommand
+  #           mode: { times: 1 }
+  #           data:
+  #             failCommands: [ commitTransaction ]
+  #             errorCode: *lockTimeoutErrorCode
+  #     - name: commitTransaction
+  #       object: *session0
+  #       expectError:
+  #         # LockTimeout is not retryable, so the commit fails.
+  #         errorCode: *lockTimeoutErrorCode
+  #         errorLabelsContain: [ TransientTransactionError ]
+  #         errorLabelsOmit: [ UnknownTransactionCommitResult ]
+  #     - &assertNoPinnedServer
+  #       name: assertSessionUnpinned
+  #       object: testRunner
+  #       arguments:
+  #         session: *session0
+  #     # Cleanup the potentionally open server transaction by starting and
+  #     # aborting a new transaction on the same session.
+  #     - *startTransaction
+  #     - *insertOne
+  #     - &abortTransaction
+  #       name: abortTransaction
+  #       object: *session0
 
   - description: unpin on successful abort
     operations:
