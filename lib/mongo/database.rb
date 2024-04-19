@@ -245,6 +245,10 @@ module Mongo
     #
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
+    # @option opts [ Object ] :comment A user-provided
+    #   comment to attach to this command.
+    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     # @return [ Hash ] The result of the command execution.
     # @api private
@@ -258,15 +262,20 @@ module Mongo
       Lint.validate_underscore_read_preference(txn_read_pref)
       preference = ServerSelector.get(txn_read_pref)
 
-      client.send(:with_session, opts) do |session|
-        read_with_retry(session, preference) do |server|
+      client.with_session(opts) do |session|
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          operation_timeouts: operation_timeouts(opts)
+        )
+        read_with_retry(session, preference, context) do |server|
           Operation::Command.new(
             selector: operation.dup,
             db_name: name,
             read: preference,
             session: session,
             comment: opts[:comment],
-          ).execute(server, context: Operation::Context.new(client: client, session: session))
+          ).execute(server, context: context)
         end
       end
     end
@@ -279,14 +288,16 @@ module Mongo
     # @param [ Hash ] options The options for the operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
-    # @option opts [ Hash ] :write_concern The write concern options.
+    # @option options [ Hash ] :write_concern The write concern options.
+    # @option options [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
     def drop(options = {})
       operation = { :dropDatabase => 1 }
-      client.send(:with_session, options) do |session|
+      client.with_session(options) do |session|
         write_concern = if options[:write_concern]
           WriteConcern.get(options[:write_concern])
         else
@@ -297,7 +308,14 @@ module Mongo
           db_name: name,
           write_concern: write_concern,
           session: session
-        }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
+        }).execute(
+          next_primary(nil, session),
+          context: Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(options)
+          )
+        )
       end
     end
 
@@ -498,8 +516,27 @@ module Mongo
       client.instance_variable_set(:@database, database)
     end
 
+    # @return [ Integer | nil ] Operation timeout that is for this database or
+    #   for the corresponding client.
+    #
+    # @api private
     def timeout_ms
       options[:timeout_ms] || client.timeout_ms
+    end
+
+    # @return [ Hash ] timeout_ms value set on the operation level (if any),
+    #   and/or timeout_ms that is set on collection/database/client level (if any).
+    #
+    # @api private
+    def operation_timeouts(opts)
+      # TODO: We should re-evaluate if we need two timeouts separately.
+      {}.tap do |result|
+        if opts[:timeout_ms].nil?
+          result[:inherited_timeout_ms] = timeout_ms
+        else
+          result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+        end
+      end
     end
   end
 end
