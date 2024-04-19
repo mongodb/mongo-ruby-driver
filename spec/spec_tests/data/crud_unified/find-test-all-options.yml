@@ -179,7 +179,7 @@ tests:
               command:
                 find: *collection0Name
                 filter: *filter
-                timeoutMS: { $$type: [ int ] }
+                maxTimeMS: { $$type: [ int ] }
               commandName: find
               databaseName: *database0Name
 
