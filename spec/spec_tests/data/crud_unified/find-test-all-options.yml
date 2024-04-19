@@ -1,3 +1,6 @@
+# This spec is specific to the ruby driver, and is not part of the general
+# `specifications` repo.
+
 description: "find options"
 
 schemaVersion: "1.0"
@@ -162,11 +165,30 @@ tests:
               commandName: find
               databaseName: *database0Name
 
+  - description: "timeoutMS"
+    operations:
+      - name: find
+        arguments:
+          filter: *filter
+          timeoutMS: &timeoutMS 1000
+        object: *collection0
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                find: *collection0Name
+                filter: *filter
+                timeoutMS: { $$type: [ int ] }
+              commandName: find
+              databaseName: *database0Name
+
   - description: "max"
     operations:
       - name: find
         arguments:
           filter: *filter
+          hint: { _id: 1 }
           max: &max { _id: 10 }
         object: *collection0
     expectEvents:
@@ -182,6 +204,11 @@ tests:
 
   - description: "min"
     operations:
+      - name: createIndex
+        object: *collection0
+        arguments:
+          name: "name_1"
+          keys: { name: 1 }
       - name: find
         arguments:
           filter: *filter
@@ -191,6 +218,8 @@ tests:
     expectEvents:
       - client: *client0
         events:
+          - commandStartedEvent:
+              commandName: createIndexes
           - commandStartedEvent:
               command:
                 find: *collection0Name

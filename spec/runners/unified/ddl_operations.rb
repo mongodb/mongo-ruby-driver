@@ -65,13 +65,13 @@ module Unified
     def list_colls(op, name_only: false)
       database = entities.get(:database, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = extract_options(args, 'filter', 'timeoutMode', allow_extra: true)
+        symbolize_options!(opts, :timeout_mode)
+
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
-        if filter = args.use('filter')
-          opts[:filter] = filter
-        end
+
         database.list_collections(**opts.merge(name_only: name_only))
       end
     end
@@ -126,7 +126,7 @@ module Unified
     def list_indexes(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = extract_options(args, 'timeoutMode', allow_extra: true)
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end

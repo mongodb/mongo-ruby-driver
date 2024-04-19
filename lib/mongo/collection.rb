@@ -165,6 +165,7 @@ module Mongo
       @database = database
       @name = name.to_s.freeze
       @options = options.dup
+      @timeout_ms = options.delete(:timeout_ms)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
         # Cache the instance so that we do not needlessly reconstruct it.
@@ -504,6 +505,9 @@ module Mongo
     # @option options [ Integer ] :skip The number of docs to skip before returning results.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
     # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
     #    Must a positive integer. The default value is unset which means infinite.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
@@ -538,10 +542,6 @@ module Mongo
     #   See the server documentation for details.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in
     #   milliseconds to allow the aggregation to run.
-    # @option options [ true | false ] :use_cursor Indicates whether the command
-    #   will request that the server provide results using a cursor. Note that
-    #   as of server version 3.6, aggregations always provide results using a
-    #   cursor and this option is therefore not valid.
     # @option options [ Session ] :session The session to use.
     # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
     #   Must a positive integer. The default value is unset which means infinite.
@@ -612,6 +612,11 @@ module Mongo
     #   events included with this flag set are: createIndexes, dropIndexes,
     #   modify, create, shardCollection, reshardCollection,
     #   refineCollectionShardKey.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
+    # @option options [ Integer ] :timeout_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with
@@ -622,7 +627,7 @@ module Mongo
     # @since 2.5.0
     def watch(pipeline = [], options = {})
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] = :tailable_await if options[:max_await_time_ms]
       View::ChangeStream.new(View.new(self, {}, view_options), pipeline, nil, options)
     end
 
@@ -966,12 +971,17 @@ module Mongo
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
     #   to run in milliseconds.
     # @option options [ Session ] :session The session to use.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
+    # @option options [ Integer ] :timeout_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds.
     #
     # @return [ Array<Cursor> ] An array of cursors.
     #
     # @since 2.1
     def parallel_scan(cursor_count, options = {})
-      find({}, options).send(:parallel_scan, cursor_count, options)
+      find({}, options).parallel_scan(cursor_count, options)
     end
 
     # Replaces a single document in the collection with the new document.
@@ -1201,14 +1211,14 @@ module Mongo
     end
 
     def timeout_ms
-      options[:timeout_ms] || database.timeout_ms
+      @timeout_ms || database.timeout_ms
     end
 
     # @return [ Hash ] timeout_ms value set on the operation level (if any),
     #   and/or timeout_ms that is set on collection/database/client level (if any).
     #
     # @api private
-    def operation_timeouts(opts)
+    def operation_timeouts(opts = {})
       # TODO: We should re-evaluate if we need two timeouts separately.
       {}.tap do |result|
         if opts[:timeout_ms].nil?

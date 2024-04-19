@@ -113,15 +113,9 @@ module Mongo
               command[:readConcern] = Options::Mapper.transform_values_to_strings(
                 read_concern)
             end
-            command[:cursor] = cursor if cursor
+            command[:cursor] = batch_size_doc
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
-          end
-
-          def cursor
-            if options[:use_cursor] == true || options[:use_cursor].nil?
-              batch_size_doc
-            end
           end
 
           def batch_size_doc

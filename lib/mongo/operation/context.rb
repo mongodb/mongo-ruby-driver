@@ -40,6 +40,7 @@ module Mongo
         session: nil,
         connection_global_id: nil,
         operation_timeouts: {},
+        view: nil,
         options: nil
       )
         if options
@@ -58,17 +59,42 @@ module Mongo
 
         @client = client
         @session = session
+        @view = view
         @connection_global_id = connection_global_id
         @deadline = calculate_deadline(operation_timeouts, session)
+        @operation_timeouts = operation_timeouts
         @timeout_sec = if @deadline then @deadline - Utils.monotonic_time end
         @options = options
       end
 
       attr_reader :client
       attr_reader :session
+      attr_reader :view
       attr_reader :deadline
       attr_reader :timeout_sec
       attr_reader :options
+      attr_reader :operation_timeouts
+
+      # Returns a new Operation::Context with the deadline refreshed
+      # and relative to the current moment.
+      #
+      # @return [ Operation::Context ] the refreshed context
+      def refresh(connection_global_id: @connection_global_id, timeout_ms: nil, view: nil)
+        operation_timeouts = @operation_timeouts
+        operation_timeouts = operation_timeouts.merge(operation_timeout_ms: timeout_ms) if timeout_ms
+
+        self.class.new(client: client,
+                       session: session,
+                       connection_global_id: connection_global_id,
+                       operation_timeouts: operation_timeouts,
+                       view: view || self.view,
+                       options: options)
+      end
+
+      def timeout_ms
+        @operation_timeouts[:inherited_timeout_ms] ||
+          @operation_timeouts[:operation_timeout_ms]
+      end
 
       def connection_global_id
         @connection_global_id || session&.pinned_connection_global_id
@@ -172,6 +198,10 @@ module Mongo
         return nil if seconds.nil?
 
         (seconds * 1_000).to_i
+      end
+
+      def inspect
+        "#<#{self.class} connection_global_id=#{connection_global_id.inspect} deadline=#{deadline.inspect} options=#{options.inspect} operation_timeouts=#{operation_timeouts.inspect}>"
       end
 
       # @return [ true | false ] Whether the timeout for the operation expired.

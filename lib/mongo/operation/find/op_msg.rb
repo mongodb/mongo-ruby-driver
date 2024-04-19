@@ -31,6 +31,49 @@ module Mongo
 
         private
 
+        # Applies the relevant CSOT timeouts for a find command.
+        # Considers the cursor type and timeout mode and will add (or omit) a
+        # maxTimeMS field accordingly.
+        def apply_relevant_timeouts_to(spec, connection)
+          with_max_time(connection) do |max_time_sec|
+            timeout_ms = max_time_sec ? (max_time_sec * 1_000).to_i : nil
+            apply_find_timeouts_to(spec, timeout_ms)
+          end
+        end
+
+        def apply_find_timeouts_to(spec, timeout_ms)
+          view = context&.view
+          return spec unless view
+
+          case view.cursor_type
+          when nil # non-tailable
+            if view.timeout_mode == :cursor_lifetime
+              spec[:maxTimeMS] = timeout_ms || view.options[:max_time_ms]
+            else # timeout_mode == :iterable
+              # drivers MUST honor the timeoutMS option for the initial command
+              # but MUST NOT append a maxTimeMS field to the command sent to the
+              # server
+              if !timeout_ms && view.options[:max_time_ms]
+                spec[:maxTimeMS] = view.options[:max_time_ms]
+              end
+            end
+
+          when :tailable
+            # If timeoutMS is set, drivers...MUST NOT append a maxTimeMS field to any commands.
+            if !timeout_ms && view.options[:max_time_ms]
+              spec[:maxTimeMS] = view.options[:max_time_ms]
+            end
+
+          when :tailable_await
+            # The server supports the maxTimeMS option for the original command.
+            if timeout_ms || view.options[:max_time_ms]
+              spec[:maxTimeMS] = timeout_ms || view.options[:max_time_ms]
+            end
+          end
+
+          spec
+        end
+
         def selector(connection)
           # The mappings are BSON::Documents and as such store keys as
           # strings, the spec here has symbol keys.
