@@ -6,6 +6,7 @@ require 'spec_helper'
 describe 'Server' do
   let(:client) { authorized_client }
 
+  let(:context) { Mongo::Operation::Context.new }
   let(:server) { client.cluster.next_primary }
 
   let(:collection) { client['collection'] }
@@ -15,7 +16,7 @@ describe 'Server' do
     context 'it performs read operations and receives the correct result type' do
       context 'normal server' do
         it 'can be used for reads' do
-          result = view.send(:send_initial_query, server)
+          result = view.send(:send_initial_query, server, context)
           expect(result).to be_a(Mongo::Operation::Find::Result)
         end
       end
@@ -35,7 +36,7 @@ describe 'Server' do
 
         it 'can be used for reads' do
           # See also RUBY-3102.
-          result = view.send(:send_initial_query, server)
+          result = view.send(:send_initial_query, server, context)
           expect(result).to be_a(Mongo::Operation::Find::Result)
         end
       end
@@ -57,7 +58,7 @@ describe 'Server' do
         it 'is unusable' do
           # See also RUBY-3102.
           lambda do
-            view.send(:send_initial_query, server)
+            view.send(:send_initial_query, server, context)
           end.should raise_error(Mongo::Error::ServerNotUsable)
         end
       end
