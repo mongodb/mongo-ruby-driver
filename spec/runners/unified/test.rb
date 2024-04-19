@@ -487,7 +487,7 @@ module Unified
             if result.nil? && expected_result.keys == ["$$unsetOrMatches"]
               return
             elsif result.nil? && !expected_result.empty?
-              raise Error::ResultMismatch, "#{msg}: expected #{expected} but got nil"
+              raise Error::ResultMismatch, "expected #{expected} but got nil"
             elsif Array === expected_result
               assert_documents_match(result, expected_result)
             else
