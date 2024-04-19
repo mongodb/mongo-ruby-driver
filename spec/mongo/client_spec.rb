@@ -565,6 +565,7 @@ describe Mongo::Client do
     context 'with timeout_ms' do
       # To make it easier with failCommand
       require_topology :single
+      min_server_version '4.4'
 
       before do
         root_authorized_client.use('admin').command({
@@ -735,6 +736,7 @@ describe Mongo::Client do
     context 'with timeout_ms' do
       # To make it easier with failCommand
       require_topology :single
+      min_server_version '4.4'
 
       before do
         root_authorized_client.use('admin').command({
