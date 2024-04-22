@@ -91,11 +91,6 @@ module Mongo
                        options: options)
       end
 
-      def timeout_ms
-        @operation_timeouts[:inherited_timeout_ms] ||
-          @operation_timeouts[:operation_timeout_ms]
-      end
-
       def connection_global_id
         @connection_global_id || session&.pinned_connection_global_id
       end
