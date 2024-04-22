@@ -14,11 +14,24 @@ module CSOT
 
         let(:body) { message.documents.first }
 
+        let(:cursor_type) { nil }
+        let(:timeout_mode) { nil }
         let(:remaining_timeout_sec) { nil }
         let(:minimum_round_trip_time) { 0 }
+        let(:view_options) { {} }
+        let(:max_await_time_ms) { nil }
+
+        let(:view) do
+          instance_double(Mongo::Collection::View).tap do |view|
+            allow(view).to receive(:cursor_type).and_return(cursor_type)
+            allow(view).to receive(:timeout_mode).and_return(timeout_mode)
+            allow(view).to receive(:options).and_return(view_options)
+            allow(view).to receive(:max_await_time_ms).and_return(max_await_time_ms)
+          end
+        end
 
         let(:context) do
-          Mongo::Operation::Context.new.tap do |context|
+          Mongo::Operation::Context.new(view: view).tap do |context|
             allow(context).to receive(:remaining_timeout_sec).and_return(remaining_timeout_sec)
             allow(context).to receive(:has_timeout?).and_return(!remaining_timeout_sec.nil?)
           end

@@ -136,7 +136,7 @@ module Mongo
     #
     # @since 2.0.0
     def collection_names(options = {})
-      View.new(self).collection_names(options)
+      View.new(self, options).collection_names(options)
     end
 
     # Get info on all the non-system collections in the database.
@@ -165,7 +165,7 @@ module Mongo
     #
     # @since 2.0.5
     def list_collections(options = {})
-      View.new(self).list_collections(options)
+      View.new(self, options).list_collections(options)
     end
 
     # Get all the non-system collections that belong to this database.
@@ -409,17 +409,13 @@ module Mongo
     # @option options [ String ] :hint The index to use for the aggregation.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in
     #   milliseconds to allow the aggregation to run.
-    # @option options [ true, false ] :use_cursor Indicates whether the command
-    #   will request that the server provide results using a cursor. Note that
-    #   as of server version 3.6, aggregations always provide results using a
-    #   cursor and this option is therefore not valid.
     # @option options [ Session ] :session The session to use.
     #
     # @return [ Collection::View::Aggregation ] The aggregation object.
     #
     # @since 2.10.0
     def aggregate(pipeline, options = {})
-      View.new(self).aggregate(pipeline, options)
+      View.new(self, options).aggregate(pipeline, options)
     end
 
     # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
@@ -489,7 +485,7 @@ module Mongo
     # @since 2.6.0
     def watch(pipeline = [], options = {})
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] = :tailable_await if options[:max_await_time_ms]
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(collection("#{COMMAND}.aggregate"), {}, view_options),

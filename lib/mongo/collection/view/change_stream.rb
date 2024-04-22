@@ -60,6 +60,10 @@ module Mongo
         # @since 2.5.0
         attr_reader :options
 
+        # @return [ Cursor ] the underlying cursor for this operation
+        # @api private
+        attr_reader :cursor
+
         # Initialize the change stream for the provided collection view, pipeline
         # and options.
         #
@@ -231,13 +235,16 @@ module Mongo
         #   This method ignores any errors that occur when closing the
         #   server-side cursor.
         #
+        # @params [ Hash ] opts Options to be passed to the cursor close
+        #   command.
+        #
         # @return [ nil ] Always nil.
         #
         # @since 2.5.0
-        def close
+        def close(opts = {})
           unless closed?
             begin
-              @cursor.close
+              @cursor.close(opts)
             rescue Error::OperationFailure::Family, Error::SocketError, Error::SocketTimeoutError, Error::MissingConnection
               # ignore
             end
@@ -303,14 +310,16 @@ module Mongo
           # (rolling upgrades)
           @start_at_operation_time_supported = nil
 
-          session = client.send(:get_session, @options)
+          session = client.get_session(@options)
+          context = Operation::Context.new(client: client, session: session, operation_timeouts: operation_timeouts)
+
           start_at_operation_time = nil
           start_at_operation_time_supported = nil
-          @cursor = read_with_retry_cursor(session, server_selector, view) do |server|
+          @cursor = read_with_retry_cursor(session, server_selector, view, context: context) do |server|
             server.with_connection do |connection|
               start_at_operation_time_supported = connection.description.server_version_gte?('4.0')
 
-              result = send_initial_query(connection, session)
+              result = send_initial_query(connection, context)
               if doc = result.replies.first && result.replies.first.documents.first
                 start_at_operation_time = doc['operationTime']
               else
@@ -390,11 +399,11 @@ module Mongo
           end
         end
 
-        def send_initial_query(connection, session)
-          initial_query_op(session, view.read_preference)
+        def send_initial_query(connection, context)
+          initial_query_op(context.session, view.read_preference)
             .execute_with_connection(
               connection,
-              context: Operation::Context.new(client: client, session: session),
+              context: context,
             )
         end
 

@@ -60,19 +60,21 @@ module Mongo
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
       # @param [ CollectionView ] view The +CollectionView+ defining the query.
+      # @param [ Operation::Context | nil ] context the operation context to use
+      #   with the cursor.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Cursor ] The cursor for the result set.
-      def read_with_retry_cursor(session, server_selector, view, &block)
+      def read_with_retry_cursor(session, server_selector, view, context: nil, &block)
         read_with_retry(session, server_selector) do |server|
           result = yield server
 
           # RUBY-2367: This will be updated to allow the query cache to
           # cache cursors with multi-batch results.
           if QueryCache.enabled? && !view.collection.system_collection?
-            CachingCursor.new(view, result, server, session: session)
+            CachingCursor.new(view, result, server, session: session, context: context)
           else
-            Cursor.new(view, result, server, session: session)
+            Cursor.new(view, result, server, session: session, context: context)
           end
         end
       end

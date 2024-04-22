@@ -37,7 +37,7 @@ module Mongo
         attr_reader :pipeline
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster
+        def_delegators :view, :collection, :read, :cluster, :cursor_type
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database, :client
@@ -87,11 +87,10 @@ module Mongo
         #   See the server documentation for details.
         # @option options [ Integer ] :max_time_ms The maximum amount of time in
         #   milliseconds to allow the aggregation to run.
-        # @option options [ true, false ] :use_cursor Indicates whether the command
-        #   will request that the server provide results using a cursor. Note that
-        #   as of server version 3.6, aggregations always provide results using a
-        #   cursor and this option is therefore not valid.
         # @option options [ Session ] :session The session to use.
+        # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+        #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+        #   iteration).
         # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
         #   Must a positive integer. The default value is unset which means infinite.
         #
@@ -99,10 +98,23 @@ module Mongo
         def initialize(view, pipeline, options = {})
           @view = view
           @pipeline = pipeline.dup
+
+          @timeout_ms = options.delete(:timeout_ms)
+          @options = BSON::Document.new(options).freeze
+
+          validate_timeout_mode!(options)
+
           unless Mongo.broken_view_aggregate || view.filter.empty?
             @pipeline.unshift(:$match => view.filter)
           end
-          @options = BSON::Document.new(options).freeze
+        end
+
+        # @return [ Integer | nil ] the timeout_ms value that was passed as
+        #   an option to this object, or which was inherited from the view.
+        #
+        # @api private
+        def timeout_ms
+          @timeout_ms || view.timeout_ms
         end
 
         # Get the explain plan for the aggregation.
@@ -182,15 +194,10 @@ module Mongo
 
         end
 
-        def send_initial_query(server, session)
-          context = Operation::Context.new(
-            client: client,
-            session: session,
-            operation_timeouts: operation_timeouts(options)
-          )
+        def send_initial_query(server, context)
           server.with_connection do |connection|
             initial_query_op(
-              session,
+              context.session,
               effective_read_preference(connection)
             ).execute_with_connection(
               connection,
@@ -214,16 +221,16 @@ module Mongo
           }
         end
 
-      # @return [ Hash ] timeout_ms value set on the operation level (if any),
-      #   and/or timeout_ms that is set on collection/database/client level (if any).
-      #
-      # @api private
-        def operation_timeouts(opts)
+        # @return [ Hash ] timeout_ms value set on the operation level (if any),
+        #   and/or timeout_ms that is set on collection/database/client level (if any).
+        #
+        # @api private
+        def operation_timeouts(opts = {})
           {}.tap do |result|
-            if opts[:timeout_ms].nil?
-              result[:inherited_timeout_ms] = collection.timeout_ms
+            if opts[:timeout_ms] || @timeout_ms
+              result[:operation_timeout_ms] = opts.delete(:timeout_ms) || @timeout_ms
             else
-              result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+              result[:inherited_timeout_ms] = view.timeout_ms
             end
           end
         end
