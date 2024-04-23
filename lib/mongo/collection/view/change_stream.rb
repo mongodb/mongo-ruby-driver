@@ -331,6 +331,7 @@ module Mongo
               start_at_operation_time_supported = connection.description.server_version_gte?('4.0')
 
               result = send_initial_query(connection, context)
+
               if doc = result.replies.first && result.replies.first.documents.first
                 start_at_operation_time = doc['operationTime']
               else

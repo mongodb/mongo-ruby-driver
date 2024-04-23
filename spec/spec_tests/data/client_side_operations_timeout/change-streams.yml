@@ -142,19 +142,24 @@ tests:
             data:
               failCommands: ["aggregate", "getMore"]
               blockConnection: true
-              blockTimeMS: 15
+              # was 15, changed to 30 to account for jruby driver latency.
+              blockTimeMS: 30
       - name: createChangeStream
         object: *collection
         arguments:
           pipeline: []
-          # was 20, changed to 29 to account for driver latency. The idea for
-          # this test is that each operation is delayed by 15ms (by failpoint).
-          # the timeout for each operation is set to (originally) 20ms, because
-          # if timeoutMS was not refreshed for getMore, it would timeout.
+          # was 20, changed to 29 to account for native ruby driver latency.
+          # Changed again to 59 to account for additional jruby driver latency.
+          # The idea for this test is that each operation is delayed by 15ms
+          # (by failpoint). the timeout for each operation is set to (originally)
+          # 20ms, because if timeoutMS was not refreshed for getMore, it would timeout.
           # However, we're tickling the 20ms timeout because the driver itself
-          # is taking more than 5ms to do its thing. Bumping the timeout to
-          # 29ms (less than 2*15ms) should give us the same effect in the test.
-          timeoutMS: 29
+          # is taking more than 5ms to do its thing.
+          #
+          # Changing the blockTimeMS in the failpoint to 30ms, and then bumping
+          # the timeout to almost twice that (59ms) should give us the same
+          # effect in the test.
+          timeoutMS: 59
           batchSize: 2
           maxAwaitTimeMS: 1
         saveResultAsEntity: &changeStream changeStream
@@ -189,10 +194,12 @@ tests:
           pipeline: []
           # Originally set to 20, but the Ruby driver was too-often taking
           # that much time, and causing the timing of the test to fail. Instead,
-          # we'll bump the timout to 23ms, which is just less than twice the
-          # blockTimeMS for the failpoint. This tests the same thing, but gives
-          # the Ruby driver a bit more breathing space.
-          timeoutMS: 23
+          # bumped the timout to 23ms, which is just less than twice the
+          # blockTimeMS for the failpoint. It still failed on jruby, so the
+          # timeout (and blockTimeMS) were drastically increased to accomodate
+          # JRuby. This tests the same thing, but gives the driver a bit more
+          # breathing space.
+          timeoutMS: 99
         saveResultAsEntity: &changeStream changeStream
       - name: failPoint
         object: testRunner
@@ -204,7 +211,9 @@ tests:
             data:
               failCommands: ["getMore", "aggregate"]
               blockConnection: true
-              blockTimeMS: 12
+              # Originally 12, bumped it to 50 to give the jruby driver a bit
+              # more breathing room.
+              blockTimeMS: 50
               errorCode: 7 # HostNotFound - resumable but does not require an SDAM state change.
               # failCommand doesn't correctly add the ResumableChangeStreamError by default. It needs to be specified
               # manually here so the error is considered resumable. The failGetMoreAfterCursorCheckout fail point
