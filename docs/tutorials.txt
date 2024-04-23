@@ -13,7 +13,7 @@ operations available in the Ruby driver.
 .. toctree::
   :titlesonly:
 
-  tutorials/quick-start
+  Quick Start <tutorials/quick-start>
   tutorials/common-errors
   tutorials/bson
 
