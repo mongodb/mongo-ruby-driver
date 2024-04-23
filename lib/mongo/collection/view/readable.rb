@@ -187,7 +187,7 @@ module Mongo
               session: session,
               operation_timeouts: operation_timeouts(opts)
             )
-            read_with_retry(session, selector) do |server|
+            read_with_retry(session, selector, context) do |server|
               Operation::Count.new(
                 selector: cmd,
                 db_name: database.name,
@@ -237,7 +237,7 @@ module Mongo
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
           pipeline << { :'$group' => { _id: 1, n: { :'$sum' => 1 } } }
 
-          opts = opts.slice(:hint, :max_time_ms, :read, :collation, :session, :comment)
+          opts = opts.slice(:hint, :max_time_ms, :read, :collation, :session, :comment, :timeout_ms)
           opts[:collation] ||= collation
 
           first = aggregate(pipeline, opts).first
@@ -279,12 +279,12 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            read_with_retry(session, selector) do |server|
-              context = Operation::Context.new(
-                client: client,
-                session: session,
-                operation_timeouts: operation_timeouts(opts)
-              )
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              operation_timeouts: operation_timeouts(opts)
+            )
+            read_with_retry(session, selector, context) do |server|
               cmd = { count: collection.name }
               cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
               if read_concern
@@ -347,7 +347,12 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            read_with_retry(session, selector) do |server|
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              operation_timeouts: operation_timeouts(opts)
+            )
+            read_with_retry(session, selector, context) do |server|
               Operation::Distinct.new(
                 selector: cmd,
                 db_name: database.name,
@@ -360,11 +365,7 @@ module Mongo
                 collation: opts[:collation] || opts['collation'] || collation,
               ).execute(
                 server,
-                context: Operation::Context.new(
-                  client: client,
-                  session: session,
-                  operation_timeouts: operation_timeouts(opts)
-                )
+                context: context
               )
             end.first['values']
           end

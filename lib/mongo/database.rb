@@ -128,6 +128,8 @@ module Mongo
     #   required privilege to run the command when access control is enforced
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -156,6 +158,8 @@ module Mongo
     #   required privilege to run the command when access control is enforced.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -181,6 +185,8 @@ module Mongo
     #   required privilege to run the command when access control is enforced.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.

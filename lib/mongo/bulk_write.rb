@@ -60,20 +60,14 @@ module Mongo
       result_combiner = ResultCombiner.new
       operations = op_combiner.combine
       validate_requests!
+      deadline = calculate_deadline
 
       client.with_session(@options) do |session|
         operations.each do |operation|
-          op_timeout_ms = if @deadline
-            if @deadline == 0
-              0
-            else
-              ((@deadline - Utils.monotonic_time) * 1_000).to_i
-            end
-          end
           context = Operation::Context.new(
             client: client,
             session: session,
-            operation_timeouts: { operation_timeout_ms: op_timeout_ms }
+            operation_timeouts: { operation_timeout_ms: op_timeout_ms(deadline) }
           )
           if single_statement?(operation)
             write_concern = write_concern(session)
@@ -135,15 +129,8 @@ module Mongo
       @collection = collection
       @requests = requests
       @options = options || {}
-      if @options[:timeout_ms]
-        @timeout_ms = @options[:timeout_ms]
-        if @timeout_ms > 0
-          @deadline = Utils.monotonic_time + ( @timeout_ms / 1_000.0 )
-        elsif @timeout_ms == 0
-          @deadline = 0
-        else
-          raise ArgumentError, "timeout_ms options must be non-negative integer"
-        end
+      if @options[:timeout_ms] && @options[:timeout_ms] < 0
+        raise ArgumentError, "timeout_ms options must be non-negative integer"
       end
     end
 
@@ -182,6 +169,31 @@ module Mongo
     SINGLE_STATEMENT_OPS = [ :delete_one,
                              :update_one,
                              :insert_one ].freeze
+
+    # @return [ Float | nil ] Deadline for the batch of operations, if set.
+    def calculate_deadline
+      timeout_ms = @options[:timeout_ms] || collection.timeout_ms
+      return nil if timeout_ms.nil?
+
+      if timeout_ms == 0
+        0
+      else
+        Utils.monotonic_time + (timeout_ms / 1_000.0)
+      end
+    end
+
+    # @param [ Float | nil ] deadline Deadline for the batch of operations.
+    #
+    # @return [ Integer | nil ] Timeout in milliseconds for the next operation.
+    def op_timeout_ms(deadline)
+      return nil if deadline.nil?
+
+      if deadline == 0
+        0
+      else
+        ((deadline - Utils.monotonic_time) * 1_000).to_i
+      end
+    end
 
     def single_statement?(operation)
       SINGLE_STATEMENT_OPS.include?(operation.keys.first)

@@ -60,6 +60,8 @@ module Mongo
       #   to run the command when access control is enforced.
       # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
+      # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must a positive integer. The default value is unset which means infinite.
       #
       #   See https://mongodb.com/docs/manual/reference/command/listCollections/
       #   for more information and usage.
@@ -70,9 +72,14 @@ module Mongo
       # @since 2.0.0
       def collection_names(options = {})
         @batch_size = options[:batch_size]
-        session = client.send(:get_session, options)
-        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          send_initial_query(server, session, options.merge(name_only: true))
+        session = client.get_session(options)
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          operation_timeouts: operation_timeouts(options)
+        )
+        cursor = read_with_retry_cursor(session, ServerSelector.primary, self, context: context) do |server|
+          send_initial_query(server, session, context, options.merge(name_only: true))
         end
         cursor.map do |info|
           if cursor.initial_result.connection_description.features.list_collections_enabled?
@@ -198,11 +205,16 @@ module Mongo
 
       def collections_info(session, server_selector, options = {}, &block)
         description = nil
-        cursor = read_with_retry_cursor(session, server_selector, self) do |server|
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          operation_timeouts: operation_timeouts(options)
+        )
+        cursor = read_with_retry_cursor(session, server_selector, self, context: context) do |server|
           # TODO take description from the connection used to send the query
           # once https://jira.mongodb.org/browse/RUBY-1601 is fixed.
           description = server.description
-          send_initial_query(server, session, options)
+          send_initial_query(server, session, context, options)
         end
         # On 3.0+ servers, we get just the collection names.
         # On 2.6 server, we get collection names prefixed with the database
@@ -266,7 +278,7 @@ module Mongo
       #   types (where possible).
       #
       # @return [ Operation::Result ] Result of the query.
-      def send_initial_query(server, session, options = {})
+      def send_initial_query(server, session, context, options = {})
         opts = options.dup
         execution_opts = {}
         if opts.key?(:deserialize_as_bson)
@@ -274,7 +286,7 @@ module Mongo
         end
         initial_query_op(session, opts).execute(
           server,
-          context: Operation::Context.new(client: client, session: session, operation_timeouts: operation_timeouts(opts)),
+          context: context,
           options: execution_opts
         )
       end

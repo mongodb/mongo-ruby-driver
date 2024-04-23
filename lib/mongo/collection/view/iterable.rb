@@ -99,7 +99,7 @@ module Mongo
               Cursor.new(view, result, server, session: session, context: context)
             end
           else
-            read_with_retry_cursor(session, server_selector, view) do |server|
+            read_with_retry_cursor(session, server_selector, view, context: context) do |server|
               send_initial_query(server, context)
             end
           end
