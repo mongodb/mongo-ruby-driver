@@ -507,7 +507,7 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       it 'includes the max_await_time value in the formatted string' do
-        expect(change_stream.inspect).to include({ max_await_time_ms: 10 }.to_s)
+        expect(change_stream.inspect).to include({ 'max_await_time_ms' => 10 }.to_s)
       end
     end
 
@@ -518,7 +518,7 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       it 'includes the batch_size value in the formatted string' do
-        expect(change_stream.inspect).to include({ batch_size: 5 }.to_s)
+        expect(change_stream.inspect).to include({ 'batch_size' => 5 }.to_s)
       end
     end
 
@@ -529,7 +529,7 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       it 'includes the collation value in the formatted string' do
-        expect(change_stream.inspect).to include({ 'collation' => { locale: 'en_US', strength: 2 } }.to_s)
+        expect(change_stream.inspect).to include({ 'collation' => { 'locale' => 'en_US', 'strength' => 2 } }.to_s)
       end
     end
 

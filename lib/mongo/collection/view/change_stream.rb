@@ -199,8 +199,13 @@ module Mongo
             # "If a next call fails with a timeout error, drivers MUST NOT
             # invalidate the change stream. The subsequent next call MUST
             # perform a resume attempt to establish a new change stream on the
-            # server...""
-            @timed_out = e.is_a?(Mongo::Error::TimeoutError)
+            # server..."
+            #
+            # However, SocketTimeoutErrors are TimeoutErrors, but are also
+            # change-stream-resumable. To preserve existing (specified) behavior,
+            # We only count timeouts when the error is not also
+            # change-stream-resumable.
+            @timed_out = e.is_a?(Mongo::Error::TimeoutError) && !e.change_stream_resumable?
 
             raise unless @timed_out || e.change_stream_resumable?
 
