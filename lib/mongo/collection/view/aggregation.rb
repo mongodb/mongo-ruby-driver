@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection/view/aggregation/behavior'
+
 module Mongo
   class Collection
     class View
@@ -23,45 +25,10 @@ module Mongo
       #
       # @since 2.0.0
       class Aggregation
-        extend Forwardable
-        include Enumerable
-        include Immutable
-        include Iterable
-        include Explainable
-        include Loggable
-        include Retryable
+        include Behavior
 
-        # @return [ View ] view The collection view.
-        attr_reader :view
         # @return [ Array<Hash> ] pipeline The aggregation pipeline.
         attr_reader :pipeline
-
-        # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster, :cursor_type
-
-        # Delegate necessary operations to the collection.
-        def_delegators :collection, :database, :client
-
-        # The reroute message.
-        #
-        # @since 2.1.0
-        # @deprecated
-        REROUTE = 'Rerouting the Aggregation operation to the primary server.'.freeze
-
-        # Set to true if disk usage is allowed during the aggregation.
-        #
-        # @example Set disk usage flag.
-        #   aggregation.allow_disk_use(true)
-        #
-        # @param [ true, false ] value The flag value.
-        #
-        # @return [ true, false, Aggregation ] The aggregation if a value was
-        #   set or the value if used as a getter.
-        #
-        # @since 2.0.0
-        def allow_disk_use(value = nil)
-          configure(:allow_disk_use, value)
-        end
 
         # Initialize the aggregation for the provided collection view, pipeline
         # and options.
@@ -96,62 +63,15 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(view, pipeline, options = {})
-          @view = view
-          @pipeline = pipeline.dup
-
-          @timeout_ms = options.delete(:timeout_ms)
-          @options = BSON::Document.new(options).freeze
-
-          validate_timeout_mode!(options)
-
-          unless Mongo.broken_view_aggregate || view.filter.empty?
-            @pipeline.unshift(:$match => view.filter)
+          perform_setup(view, options) do
+            @pipeline = pipeline.dup
+            unless Mongo.broken_view_aggregate || view.filter.empty?
+              @pipeline.unshift(:$match => view.filter)
+            end
           end
         end
 
-        # @return [ Integer | nil ] the timeout_ms value that was passed as
-        #   an option to this object, or which was inherited from the view.
-        #
-        # @api private
-        def timeout_ms
-          @timeout_ms || view.timeout_ms
-        end
-
-        # Get the explain plan for the aggregation.
-        #
-        # @example Get the explain plan for the aggregation.
-        #   aggregation.explain
-        #
-        # @return [ Hash ] The explain plan.
-        #
-        # @since 2.0.0
-        def explain
-          self.class.new(view, pipeline, options.merge(explain: true)).first
-        end
-
-        # Whether this aggregation will write its result to a database collection.
-        #
-        # @return [ Boolean ] Whether the aggregation will write its result
-        #   to a collection.
-        #
-        # @api private
-        def write?
-          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) || op.key?('$merge') || op.key?(:$merge) }
-        end
-
         private
-
-        def server_selector
-          @view.send(:server_selector)
-        end
-
-        def aggregate_spec(session, read_preference)
-          Builder::Aggregation.new(
-            pipeline,
-            view,
-            options.merge(session: session, read_preference: read_preference)
-          ).specification
-        end
 
         def new(options)
           Aggregation.new(view, pipeline, options)
@@ -203,35 +123,6 @@ module Mongo
               connection,
               context: context
             )
-          end
-        end
-
-        # Skip, sort, limit, projection are specified as pipeline stages
-        # rather than as options.
-        def cache_options
-          {
-            namespace: collection.namespace,
-            selector: pipeline,
-            read_concern: view.read_concern,
-            read_preference: view.read_preference,
-            collation: options[:collation],
-            # Aggregations can read documents from more than one collection,
-            # so they will be cleared on every write operation.
-            multi_collection: true,
-          }
-        end
-
-        # @return [ Hash ] timeout_ms value set on the operation level (if any),
-        #   and/or timeout_ms that is set on collection/database/client level (if any).
-        #
-        # @api private
-        def operation_timeouts(opts = {})
-          {}.tap do |result|
-            if opts[:timeout_ms] || @timeout_ms
-              result[:operation_timeout_ms] = opts.delete(:timeout_ms) || @timeout_ms
-            else
-              result[:inherited_timeout_ms] = view.timeout_ms
-            end
           end
         end
       end

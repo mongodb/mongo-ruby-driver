@@ -24,13 +24,19 @@ module Mongo
     # have been given.
     #
     # @param [ Hash ] options The options to inspect.
+    # @param [ Array<Symbol> ] forbid The list of options to forbid for this
+    #   class.
     #
     # @raise [ ArgumentError ] if inconsistent or incompatible options are
     #   detected.
     #
     # @api private
     # rubocop:disable Metrics
-    def validate_timeout_mode!(options)
+    def validate_timeout_mode!(options, forbid: [])
+      forbid.each do |key|
+        raise ArgumentError, "#{key} is not allowed here" if options.key?(key)
+      end
+
       cursor_type = options[:cursor_type]
       timeout_mode = options[:timeout_mode]
 
