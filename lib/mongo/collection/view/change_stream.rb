@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection/view/aggregation/behavior'
 require 'mongo/collection/view/change_stream/retryable'
 
 module Mongo
@@ -35,7 +36,8 @@ module Mongo
       #
       #
       # @since 2.5.0
-      class ChangeStream < Aggregation
+      class ChangeStream
+        include Aggregation::Behavior
         include Retryable
 
         # @return [ String ] The fullDocument option default value.
@@ -129,11 +131,13 @@ module Mongo
         #
         # @since 2.5.0
         def initialize(view, pipeline, changes_for, options = {})
-          @view = view
-          @changes_for = changes_for
-          @change_stream_filters = pipeline && pipeline.dup
-          @options = options && options.dup.freeze
-          @start_after = @options[:start_after]
+          # change stream cursors can only be :iterable, so we don't allow
+          # timeout_mode to be specified.
+          perform_setup(view, options, forbid: %i[ timeout_mode ]) do
+            @changes_for = changes_for
+            @change_stream_filters = pipeline && pipeline.dup
+            @start_after = @options[:start_after]
+          end
 
           # The resume token tracked by the change stream, used only
           # when there is no cursor, or no cursor resume token
@@ -185,24 +189,30 @@ module Mongo
         # @return [ BSON::Document | nil ] A change stream document.
         # @since 2.6.0
         def try_next
+          recreate_cursor! if @timed_out
+
           raise StopIteration.new if closed?
+
           begin
             doc = @cursor.try_next
           rescue Mongo::Error => e
-            if !e.change_stream_resumable?
-              raise
-            end
+            # "If a next call fails with a timeout error, drivers MUST NOT
+            # invalidate the change stream. The subsequent next call MUST
+            # perform a resume attempt to establish a new change stream on the
+            # server..."
+            #
+            # However, SocketTimeoutErrors are TimeoutErrors, but are also
+            # change-stream-resumable. To preserve existing (specified) behavior,
+            # We only count timeouts when the error is not also
+            # change-stream-resumable.
+            @timed_out = e.is_a?(Mongo::Error::TimeoutError) && !e.change_stream_resumable?
 
-            # Rerun initial aggregation.
-            # Any errors here will stop iteration and break out of this
-            # method.
+            raise unless @timed_out || e.change_stream_resumable?
 
-            # Save cursor's resume token so we can use it
-            # to create a new cursor
             @resume_token = @cursor.resume_token
+            raise e if @timed_out
 
-            close
-            create_cursor!
+            recreate_cursor!(@cursor.context)
             retry
           end
 
@@ -305,21 +315,23 @@ module Mongo
           !for_cluster? && !for_database?
         end
 
-        def create_cursor!
+        def create_cursor!(timeout_ms = nil)
           # clear the cache because we may get a newer or an older server
           # (rolling upgrades)
           @start_at_operation_time_supported = nil
 
           session = client.get_session(@options)
-          context = Operation::Context.new(client: client, session: session, operation_timeouts: operation_timeouts)
+          context = Operation::Context.new(client: client, session: session, operation_timeouts: timeout_ms ? { operation_timeout_ms: timeout_ms } : operation_timeouts)
 
           start_at_operation_time = nil
           start_at_operation_time_supported = nil
+
           @cursor = read_with_retry_cursor(session, server_selector, view, context: context) do |server|
             server.with_connection do |connection|
               start_at_operation_time_supported = connection.description.server_version_gte?('4.0')
 
               result = send_initial_query(connection, context)
+
               if doc = result.replies.first && result.replies.first.documents.first
                 start_at_operation_time = doc['operationTime']
               else
@@ -333,6 +345,7 @@ module Mongo
               result
             end
           end
+
           @start_at_operation_time = start_at_operation_time
           @start_at_operation_time_supported = start_at_operation_time_supported
         end
@@ -420,6 +433,15 @@ module Mongo
 
         def resuming?
           !!@resuming
+        end
+
+        # Recreates the current cursor (typically as a consequence of attempting
+        # to resume the change stream)
+        def recreate_cursor!(context = nil)
+          @timed_out = false
+
+          close
+          create_cursor!(context&.remaining_timeout_ms)
         end
       end
     end

@@ -66,7 +66,7 @@ module Mongo
       #
       # @return [ Cursor ] The cursor for the result set.
       def read_with_retry_cursor(session, server_selector, view, context: nil, &block)
-        read_with_retry(session, server_selector) do |server|
+        read_with_retry(session, server_selector, context) do |server|
           result = yield server
 
           # RUBY-2367: This will be updated to allow the query cache to

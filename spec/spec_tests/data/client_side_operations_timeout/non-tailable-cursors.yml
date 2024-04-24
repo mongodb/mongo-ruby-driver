@@ -53,11 +53,14 @@ tests:
             data:
               failCommands: ["find"]
               blockConnection: true
-              blockTimeMS: 15
+              # changed to 30ms to accommodate jruby latencies
+              blockTimeMS: 30
       - name: find
         object: *collection
         arguments:
           filter: {}
+          # added as a 25ms timeout to accommodate jruby latencies
+          timeoutMS: 25
           timeoutMode: cursorLifetime
         expectError:
           isTimeoutError: true
@@ -86,14 +89,16 @@ tests:
             data:
               failCommands: ["find", "getMore"]
               blockConnection: true
-              blockTimeMS: 20
+              # bumped to 50 to accommodate jruby latencies
+              blockTimeMS: 50
       # Run a find with timeoutMS=39 and batchSize=1 to force two batches, which will cause a find and a getMore to be
       # sent. Both will block for 20ms so together they will go over the timeout.
       - name: find
         object: *collection
         arguments:
           filter: {}
-          timeoutMS: 39
+          # bumped to 99 to accommodate jruby latencies
+          timeoutMS: 99
           batchSize: 2
         expectError:
           isTimeoutError: true
