@@ -71,7 +71,9 @@ module Mongo
             end
           end
 
-          spec
+          spec.tap do |spc|
+            spc.delete(:maxTimeMS) if spc[:maxTimeMS].nil?
+          end
         end
 
         def selector(connection)

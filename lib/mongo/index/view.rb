@@ -273,9 +273,15 @@ module Mongo
       #
       # @since 2.0.0
       def each(&block)
-        session = client.send(:get_session, @options)
-        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          send_initial_query(server, session)
+        session = client.get_session(@options)
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          operation_timeouts: operation_timeouts(@options)
+        )
+
+        cursor = read_with_retry_cursor(session, ServerSelector.primary, self, context: context) do |server|
+          send_initial_query(server, session, context)
         end
         if block_given?
           cursor.each do |doc|
@@ -386,8 +392,8 @@ module Mongo
         end
       end
 
-      def send_initial_query(server, session)
-        initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
+      def send_initial_query(server, session, context)
+        initial_query_op(session).execute(server, context: context)
       end
     end
   end

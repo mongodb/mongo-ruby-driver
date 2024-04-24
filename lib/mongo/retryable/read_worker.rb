@@ -280,8 +280,6 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def retry_read(original_error, session, server_selector, context: nil, failed_server: nil, &block)
-        context&.check_timeout!
-
         server = select_server_for_retry(
           original_error, session, server_selector, context, failed_server
         )
@@ -289,11 +287,14 @@ module Mongo
         log_retry(original_error, message: 'Read retry')
 
         begin
+          context&.check_timeout!
           attempt = attempt ? attempt + 1 : 2
           yield server, true
+        rescue Error::TimeoutError
+          raise
         rescue *retryable_exceptions => e
           e.add_notes('modern retry', "attempt #{attempt}")
-          if context&.deadline
+          if context&.csot?
             failed_server = server
             retry
           else
@@ -303,7 +304,7 @@ module Mongo
           e.add_note('modern retry')
           if e.write_retryable?
             e.add_note("attempt #{attempt}")
-            if context&.deadline
+            if context&.csot?
               failed_server = server
               retry
             else
