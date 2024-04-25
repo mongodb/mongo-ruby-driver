@@ -272,7 +272,7 @@ module Mongo
       uri_option 'localThresholdMS', :local_threshold, type: :ms
       uri_option 'heartbeatFrequencyMS', :heartbeat_frequency, type: :ms
       uri_option 'maxIdleTimeMS', :max_idle_time, type: :ms
-      uri_option 'timeoutMS', :timeout_ms
+      uri_option 'timeoutMS', :timeout_ms, type: :integer
 
       # Write Options
       uri_option 'w', :w, group: :write_concern, type: :w

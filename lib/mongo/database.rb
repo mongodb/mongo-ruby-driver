@@ -229,7 +229,7 @@ module Mongo
       Lint.validate_underscore_read_preference(txn_read_pref)
       selector = ServerSelector.get(txn_read_pref)
 
-      client.send(:with_session, opts) do |session|
+      client.with_session(opts) do |session|
         server = selector.select_server(cluster, nil, session)
         op = Operation::Command.new(
           :selector => operation,
@@ -239,7 +239,11 @@ module Mongo
         )
 
         op.execute(server,
-          context: Operation::Context.new(client: client, session: session),
+          context: Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(opts)
+          ),
           options: execution_opts)
       end
     end
