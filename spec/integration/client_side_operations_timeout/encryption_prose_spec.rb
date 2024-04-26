@@ -16,7 +16,7 @@ describe 'CSOT for encryption' do
       Process.spawn(
         'mongocryptd',
         '--pidfilepath=bypass-spawning-mongocryptd.pid', '--port=23000', '--idleShutdownTimeoutSecs=60',
-        [:out, :err] => '/dev/null'
+        %i[ out err ] => '/dev/null'
       )
     end
 
@@ -38,6 +38,87 @@ describe 'CSOT for encryption' do
       end.to raise_error(Mongo::Error::OperationFailure)
 
       expect(ping_command).not_to have_key('maxTimeMS')
+    end
+  end
+
+  describe 'ClientEncryption' do
+    let(:key_vault_client) do
+      ClientRegistry.instance.new_local_client(
+        SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(timeout_ms: 20)
+      )
+    end
+
+    let(:client_encryption) do
+      Mongo::ClientEncryption.new(
+        key_vault_client,
+        key_vault_namespace: key_vault_namespace,
+        kms_providers: local_kms_providers
+      )
+    end
+
+    context 'createDataKey' do
+      before do
+        authorized_client.use(key_vault_db)[key_vault_coll].drop
+        authorized_client.use(key_vault_db)[key_vault_coll].create
+        authorized_client.use(:admin).command({
+          configureFailPoint: "failCommand",
+          mode: {
+            times: 1
+          },
+          data: {
+            failCommands: ["insert"],
+            blockConnection: true,
+            blockTimeMS: 30
+          }
+        })
+      end
+
+      after do
+        authorized_client.use(:admin).command({
+          configureFailPoint: "failCommand",
+          mode: "off",
+        })
+      end
+
+      it 'fails with timeout error' do
+        expect do
+          client_encryption.create_data_key('local')
+        end.to raise_error(Mongo::Error::TimeoutError)
+      end
+    end
+
+    context 'encrypt' do
+      let!(:data_key_id) do
+        client_encryption.create_data_key('local')
+      end
+
+      before do
+        authorized_client.use(:admin).command({
+          configureFailPoint: "failCommand",
+          mode: {
+            times: 1
+          },
+          data: {
+            failCommands: ["find"],
+            blockConnection: true,
+            blockTimeMS: 30
+          }
+        })
+      end
+
+      after do
+        authorized_client.use(:admin).command({
+          configureFailPoint: "failCommand",
+          mode: "off",
+        })
+      end
+
+      it 'fails with timeout error' do
+        expect do
+          client_encryption.encrypt('hello', key_id: data_key_id, algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+        end.to raise_error(Mongo::Error::TimeoutError)
+      end
     end
   end
 end
