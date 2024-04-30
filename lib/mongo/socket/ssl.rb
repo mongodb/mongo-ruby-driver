@@ -146,6 +146,7 @@ module Mongo
         connect_timeout = options[:connect_timeout]
         map_exceptions do
           if connect_timeout && connect_timeout != 0
+            deadline = Utils.monotonic_time + connect_timeout
             if BSON::Environment.jruby?
               # We encounter some strange problems with connect_nonblock for
               # ssl sockets on JRuby. Therefore, we use the old +Timeout.timeout+
@@ -158,12 +159,15 @@ module Mongo
             else
               connect_with_timeout(sockaddr, connect_timeout)
             end
+            remaining_timeout = deadline - Utils.monotonic_time
+            verify_certificate!(@socket)
+            verify_ocsp_endpoint!(@socket, remaining_timeout)
           else
             connect_without_timeout(sockaddr)
+            verify_certificate!(@socket)
+            verify_ocsp_endpoint!(@socket)
           end
         end
-        verify_certificate!(@socket)
-        verify_ocsp_endpoint!(@socket)
         self
       rescue
         @socket&.close
@@ -450,7 +454,7 @@ module Mongo
         end
       end
 
-      def verify_ocsp_endpoint!(socket)
+      def verify_ocsp_endpoint!(socket, timeout = nil)
         unless verify_ocsp_endpoint?
           return
         end
@@ -459,7 +463,7 @@ module Mongo
         ca_cert = socket.peer_cert_chain.last
 
         verifier = OcspVerifier.new(@host_name, cert, ca_cert, context.cert_store,
-          **Utils.shallow_symbolize_keys(options))
+          **Utils.shallow_symbolize_keys(options).merge(timeout: timeout))
         verifier.verify_with_cache
       end
 
