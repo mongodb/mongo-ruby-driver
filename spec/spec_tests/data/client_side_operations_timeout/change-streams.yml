@@ -324,12 +324,16 @@ tests:
             data:
               failCommands: ["getMore"]
               blockConnection: true
-              blockTimeMS: 15
+              # blockTimeMS: 15
+              # Increase timeout
+              blockTimeMS: 30
       - name: createChangeStream
         object: *collection
         arguments:
           pipeline: []
-          timeoutMS: 10
+          # timeoutMS: 10
+          # Increase timeout
+          timeoutMS: 20
         saveResultAsEntity: &changeStream changeStream
       # The first iteration should do a getMore
       - name: iterateUntilDocumentOrError
