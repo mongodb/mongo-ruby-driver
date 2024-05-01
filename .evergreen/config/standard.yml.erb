@@ -142,6 +142,16 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: CSOT
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      mongodb-version: <%= latest_stable_mdb %>
+      topology: replica-set-single-node
+      os: rhel8
+    display_name: CSOT
+    tasks:
+      - name: test-csot
+
   - matrix_name: "no-retry-reads"
     matrix_spec:
       retry-reads: no-retry-reads
@@ -180,7 +190,7 @@ buildvariants:
       lint: on
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
-      topology: '*'
+      topology: <%= topologies %>
       os: rhel8
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:

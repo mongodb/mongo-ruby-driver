@@ -65,6 +65,7 @@ fi
 
 calculate_server_args
 launch_ocsp_mock
+
 launch_server "$dbdir"
 
 uri_options="$URI_OPTIONS"
@@ -89,6 +90,9 @@ elif test "$TOPOLOGY" = replica-set; then
   # To set FCV we use mongo shell, it needs to be placed in replica set topology
   # or it can try to send the commands to secondaries.
   hosts=localhost:27017,localhost:27018
+  uri_options="$uri_options&replicaSet=test-rs"
+elif test "$TOPOLOGY" = replica-set-single-node; then
+  hosts=localhost:27017
   uri_options="$uri_options&replicaSet=test-rs"
 else
   hosts=localhost:27017
@@ -283,7 +287,7 @@ fi
 
 set_fcv
 
-if test "$TOPOLOGY" = replica-set && ! echo "$MONGODB_VERSION" |fgrep -q 2.6; then
+if test "$TOPOLOGY" = replica-set || test "$TOPOLOGY" = replica-set-single-node; then
   ruby -Ilib -I.evergreen/lib -rbundler/setup -rserver_setup -e ServerSetup.new.setup_tags
 fi
 

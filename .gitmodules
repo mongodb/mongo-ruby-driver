@@ -3,4 +3,6 @@
 	url = https://github.com/mongodb-labs/drivers-evergreen-tools
 [submodule "spec/shared"]
 	path = spec/shared
-	url = git@github.com:mongodb-labs/mongo-ruby-spec-shared.git
+        url = git@github.com:jamis/mongo-ruby-spec-shared.git
+        branch = rs-single-node
+        # url = git@github.com:mongodb-labs/mongo-ruby-spec-shared.git

@@ -168,6 +168,24 @@ functions:
 
           EOT
 
+  "run CSOT tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
+          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+            .evergreen/run-tests.sh
+
   "export FLE credentials":
     - command: shell.exec
       type: test
@@ -728,6 +746,9 @@ tasks:
   - name: "test-kerberos"
     commands:
       - func: "run Kerberos unit tests"
+  - name: "test-csot"
+    commands:
+      - func: "run CSOT tests"
   - name: "test-fle"
     commands:
       - func: "export FLE credentials"
@@ -920,6 +941,10 @@ axes:
         display_name: Replica Set
         variables:
           TOPOLOGY: replica-set
+      - id: "replica-set-single-node"
+        display_name: Replica Set (Single Node)
+        variables:
+          TOPOLOGY: replica-set-single-node
       - id: "sharded-cluster"
         display_name: Sharded
         variables:
@@ -1352,6 +1377,16 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: CSOT
+    matrix_spec:
+      ruby: "ruby-3.2"
+      mongodb-version: "7.0"
+      topology: replica-set-single-node
+      os: rhel8
+    display_name: CSOT
+    tasks:
+      - name: test-csot
+
   - matrix_name: "no-retry-reads"
     matrix_spec:
       retry-reads: no-retry-reads
@@ -1390,7 +1425,7 @@ buildvariants:
       lint: on
       ruby: "ruby-3.2"
       mongodb-version: "7.0"
-      topology: '*'
+      topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:
