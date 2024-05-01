@@ -32,6 +32,10 @@ describe 'CSOT for encryption' do
       end&.command
     end
 
+    after do
+      client.close
+    end
+
     it 'does not set maxTimeMS for commands sent to mongocryptd' do
       expect do
         client.use('admin').command(ping: 1)
@@ -79,6 +83,7 @@ describe 'CSOT for encryption' do
           configureFailPoint: "failCommand",
           mode: "off",
         })
+        key_vault_client.close
       end
 
       it 'fails with timeout error' do
