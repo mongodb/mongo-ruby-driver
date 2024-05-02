@@ -183,6 +183,7 @@ functions:
             export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
             export AWS_DEFAULT_REGION="${fle_aws_region}"
           fi
+          export CSOT_SPEC_TESTS=1
           TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
             .evergreen/run-tests.sh
 
