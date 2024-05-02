@@ -33,6 +33,8 @@
 
   recent_mdb = %w( 6.0 5.3 )
   latest_5x_mdb = "5.3".inspect # so it gets quoted as a string
+
+  all_dbs = %w(latest 7.0 6.0 5.3 5.0 4.4 4.2 4.0 3.6)
 %>
 
 buildvariants:
@@ -145,10 +147,10 @@ buildvariants:
   - matrix_name: CSOT
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= all_dbs %>
       topology: replica-set-single-node
       os: rhel8
-    display_name: CSOT
+    display_name: "CSOT - ${mongodb-version}"
     tasks:
       - name: test-csot
 
