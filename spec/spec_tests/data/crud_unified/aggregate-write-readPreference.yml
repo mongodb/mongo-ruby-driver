@@ -5,9 +5,9 @@ schemaVersion: '1.4'
 runOnRequirements:
   # 3.6+ non-standalone is needed to utilize $readPreference in OP_MSG
   - minServerVersion: "3.6"
-    # RUBY-3464: failures against latest server necessitate adding this for now
-    maxServerVersion: "7.99.99"
     topologies: [ replicaset, sharded, load-balanced ]
+    # SERVER-90047: failures against latest server necessitate adding this for now
+    maxServerVersion: "8.0.0"
 
 _yamlAnchors:
   readConcern: &readConcern
