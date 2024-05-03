@@ -147,7 +147,7 @@ buildvariants:
   - matrix_name: CSOT
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= all_dbs %>
+      mongodb-version: <%= latest_stable_mdb %>
       topology: replica-set-single-node
       os: rhel8
     display_name: "CSOT - ${mongodb-version}"
