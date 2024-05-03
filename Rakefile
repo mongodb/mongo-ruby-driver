@@ -26,12 +26,12 @@ CLASSIFIERS = [
   [%r,^spec_tests,, :spec],
 ]
 
-RUN_PRIORITY = %i(
+RUN_PRIORITY = (ENV['RUN_PRIORITY'] || %(
   tx_examples
   unit unit_server
   integration sdam_integration cursor_reaping query_cache
   spec spec_sdam_integration
-)
+)).split.map(&:to_sym)
 
 tasks = Rake.application.instance_variable_get('@tasks')
 tasks['release:do'] = tasks.delete('release')

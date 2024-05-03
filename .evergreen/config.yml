@@ -864,6 +864,7 @@ tasks:
             AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
             AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
             LAMBDA_STACK_NAME: "dbx-ruby-lambda"
+            CLUSTER_PREFIX: "dbx-ruby-lambda"
             RVM_RUBY: ruby-3.2
             MONGODB_URI: ${MONGODB_URI}
 axes:
