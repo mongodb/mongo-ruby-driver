@@ -75,14 +75,14 @@ module Mongo
         #   of credentials.
         # @raise Auth::Aws::CredentialsNotFound if credentials could not be
         #   retrieved from any source.
-        def credentials
+        def credentials(context = nil)
           credentials = credentials_from_user(user)
           return credentials unless credentials.nil?
 
           credentials = credentials_from_environment
           return credentials unless credentials.nil?
 
-          credentials = @credentials_cache.fetch { obtain_credentials_from_endpoints }
+          credentials = @credentials_cache.fetch { obtain_credentials_from_endpoints(context) }
           return credentials unless credentials.nil?
 
           raise Auth::Aws::CredentialsNotFound
@@ -132,12 +132,12 @@ module Mongo
         #
         # @raise Auth::InvalidConfiguration if a source contains an invalid set
         #   of credentials.
-        def obtain_credentials_from_endpoints
-          if (credentials = web_identity_credentials) && credentials_valid?(credentials, 'Web identity token')
+        def obtain_credentials_from_endpoints(context = nil)
+          if (credentials = web_identity_credentials(context)) && credentials_valid?(credentials, 'Web identity token')
             credentials
-          elsif (credentials = ecs_metadata_credentials) && credentials_valid?(credentials, 'ECS task metadata')
+          elsif (credentials = ecs_metadata_credentials(context)) && credentials_valid?(credentials, 'ECS task metadata')
             credentials
-          elsif (credentials = ec2_metadata_credentials) && credentials_valid?(credentials, 'EC2 instance metadata')
+          elsif (credentials = ec2_metadata_credentials(context)) && credentials_valid?(credentials, 'EC2 instance metadata')
             credentials
           end
         end
@@ -147,19 +147,20 @@ module Mongo
         #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
-        def ec2_metadata_credentials
+        def ec2_metadata_credentials(context = nil)
+          context&.check_timeout!
           http = Net::HTTP.new('169.254.169.254')
           req = Net::HTTP::Put.new('/latest/api/token',
             # The TTL is required in order to obtain the metadata token.
             {'x-aws-ec2-metadata-token-ttl-seconds' => '30'})
-          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+          resp = with_timeout(context) do
             http.request(req)
           end
           if resp.code != '200'
             return nil
           end
           metadata_token = resp.body
-          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+          resp = with_timeout(context) do
             http_get(http, '/latest/meta-data/iam/security-credentials', metadata_token)
           end
           if resp.code != '200'
@@ -167,7 +168,7 @@ module Mongo
           end
           role_name = resp.body
           escaped_role_name = CGI.escape(role_name).gsub('+', '%20')
-          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+          resp = with_timeout(context) do
             http_get(http, "/latest/meta-data/iam/security-credentials/#{escaped_role_name}", metadata_token)
           end
           if resp.code != '200'
@@ -189,7 +190,8 @@ module Mongo
           return nil
         end
 
-        def ecs_metadata_credentials
+        def ecs_metadata_credentials(context = nil)
+          context&.check_timeout!
           relative_uri = ENV['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
           if relative_uri.nil? || relative_uri.empty?
             return nil
@@ -203,7 +205,7 @@ module Mongo
           # a leading slash must be added by the driver, but this is not
           # in fact needed.
           req = Net::HTTP::Get.new(relative_uri)
-          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+          resp = with_timeout(context) do
             http.request(req)
           end
           if resp.code != '200'
@@ -227,11 +229,11 @@ module Mongo
         #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
-        def web_identity_credentials
+        def web_identity_credentials(context = nil)
           web_identity_token, role_arn, role_session_name = prepare_web_identity_inputs
           return nil if web_identity_token.nil?
           response = request_web_identity_credentials(
-            web_identity_token, role_arn, role_session_name
+            web_identity_token, role_arn, role_session_name, context
           )
           return if response.nil?
           credentials_from_web_identity_response(response)
@@ -269,7 +271,8 @@ module Mongo
         #
         # @return [ Net::HTTPResponse | nil ] AWS API response if successful,
         #   otherwise nil.
-        def request_web_identity_credentials(token, role_arn, role_session_name)
+        def request_web_identity_credentials(token, role_arn, role_session_name, context)
+          context&.check_timeout!
           uri = URI('https://sts.amazonaws.com/')
           params = {
             'Action' => 'AssumeRoleWithWebIdentity',
@@ -281,8 +284,10 @@ module Mongo
           uri.query = ::URI.encode_www_form(params)
           req = Net::HTTP::Post.new(uri)
           req['Accept'] = 'application/json'
-          resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |https|
-            https.request(req)
+          resp = with_timeout(context) do
+            Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |https|
+              https.request(req)
+            end
           end
           if resp.code != '200'
             return nil
@@ -350,6 +355,19 @@ module Mongo
           end
 
           true
+        end
+
+        def with_timeout(context)
+          context&.check_timeout!
+          timeout = context&.remaining_timeout_sec || METADATA_TIMEOUT
+          exception_class = if context&.csot?
+                              Error::TimeoutError
+                            else
+                              nil
+                            end
+          ::Timeout.timeout(timeout, exception_class) do
+            yield
+          end
         end
       end
     end

@@ -120,7 +120,7 @@ module Mongo
           when :need_kms_credentials
             Binding.ctx_provide_kms_providers(
               self,
-              retrieve_kms_credentials.to_document
+              retrieve_kms_credentials(context).to_document
             )
           else
             raise Error::CryptError.new(
@@ -151,11 +151,11 @@ module Mongo
       #
       # @return [ Crypt::KMS::Credentials ] Credentials for the configured
       #   KMS providers.
-      def retrieve_kms_credentials
+      def retrieve_kms_credentials(context)
         providers = {}
         if kms_providers.aws&.empty?
           begin
-            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials
+            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials(context)
           rescue Auth::Aws::CredentialsNotFound
             raise Error::CryptError.new(
               "Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)"
