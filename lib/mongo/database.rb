@@ -208,6 +208,8 @@ module Mongo
     #
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     # @option opts :execution_options [ Hash ] Options to pass to the code that
     #   executes this command. This is an internal option and is subject to
     #   change.

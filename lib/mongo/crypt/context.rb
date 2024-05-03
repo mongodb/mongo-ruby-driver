@@ -75,8 +75,10 @@ module Mongo
       #
       # This method is not currently unit tested. It is integration tested
       # in spec/integration/explicit_encryption_spec.rb
-      def run_state_machine
+      def run_state_machine(context)
         while true
+          context.check_timeout!
+          timeout_ms = context.remaining_timeout_ms
           case state
           when :error
             Binding.check_ctx_status(self)
@@ -88,7 +90,7 @@ module Mongo
           when :need_mongo_keys
             filter = Binding.ctx_mongo_op(self)
 
-            @encryption_io.find_keys(filter).each do |key|
+            @encryption_io.find_keys(filter, timeout_ms: timeout_ms).each do |key|
               mongocrypt_feed(key) if key
             end
 
@@ -96,14 +98,14 @@ module Mongo
           when :need_mongo_collinfo
             filter = Binding.ctx_mongo_op(self)
 
-            result = @encryption_io.collection_info(@db_name, filter)
+            result = @encryption_io.collection_info(@db_name, filter, timeout_ms: timeout_ms)
             mongocrypt_feed(result) if result
 
             mongocrypt_done
           when :need_mongo_markings
             cmd = Binding.ctx_mongo_op(self)
 
-            result = @encryption_io.mark_command(cmd)
+            result = @encryption_io.mark_command(cmd, timeout_ms: timeout_ms)
             mongocrypt_feed(result)
 
             mongocrypt_done
