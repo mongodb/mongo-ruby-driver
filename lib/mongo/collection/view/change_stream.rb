@@ -301,6 +301,28 @@ module Mongo
           cursor_resume_token || @resume_token
         end
 
+        # "change streams are an abstraction around tailable-awaitData cursors..."
+        #
+        # @return :tailable_await
+        def cursor_type
+          :tailable_await
+        end
+
+        # "change streams...implicitly use ITERATION mode"
+        #
+        # @return :iteration
+        def timeout_mode
+          :iteration
+        end
+
+        # Returns the value of the max_await_time_ms option that was
+        # passed to this change stream.
+        #
+        # @return [ Integer | nil ] the max_await_time_ms value
+        def max_await_time_ms
+          options[:max_await_time_ms]
+        end
+
         private
 
         def for_cluster?
@@ -321,12 +343,12 @@ module Mongo
           @start_at_operation_time_supported = nil
 
           session = client.get_session(@options)
-          context = Operation::Context.new(client: client, session: session, operation_timeouts: timeout_ms ? { operation_timeout_ms: timeout_ms } : operation_timeouts)
+          context = Operation::Context.new(client: client, session: session, view: self, operation_timeouts: timeout_ms ? { operation_timeout_ms: timeout_ms } : operation_timeouts)
 
           start_at_operation_time = nil
           start_at_operation_time_supported = nil
 
-          @cursor = read_with_retry_cursor(session, server_selector, view, context: context) do |server|
+          @cursor = read_with_retry_cursor(session, server_selector, self, context: context) do |server|
             server.with_connection do |connection|
               start_at_operation_time_supported = connection.description.server_version_gte?('4.0')
 
