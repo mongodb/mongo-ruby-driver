@@ -58,6 +58,8 @@ describe Mongo::Crypt::AutoEncrypter do
     )
   end
 
+  let(:context) { Mongo::Operation::Context.new }
+
   shared_context 'with jsonSchema validator' do
     before do
       users_collection = client.use(db_name)[collection_name]
@@ -81,14 +83,14 @@ describe Mongo::Crypt::AutoEncrypter do
   shared_examples 'a functioning auto encrypter' do
     describe '#encrypt' do
       it 'replaces the ssn field with a BSON::Binary' do
-        result = auto_encrypter.encrypt(db_name, command)
+        result = auto_encrypter.encrypt(db_name, command, context)
         expect(result).to eq(encrypted_command)
       end
     end
 
     describe '#decrypt' do
       it 'returns the unencrypted document' do
-        result = auto_encrypter.decrypt(encrypted_command)
+        result = auto_encrypter.decrypt(encrypted_command, context)
         expect(result).to eq(command)
       end
     end
@@ -329,14 +331,14 @@ describe Mongo::Crypt::AutoEncrypter do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = auto_encrypter.encrypt(db_name, command)
+          result = auto_encrypter.encrypt(db_name, command, context)
           expect(result).to eq(command)
         end
       end
 
       describe '#decrypt' do
         it 'still performs decryption' do
-          result = auto_encrypter.decrypt(encrypted_command)
+          result = auto_encrypter.decrypt(encrypted_command, context)
           expect(result).to eq(command)
         end
       end
@@ -347,14 +349,14 @@ describe Mongo::Crypt::AutoEncrypter do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = auto_encrypter.encrypt(db_name, command)
+          result = auto_encrypter.encrypt(db_name, command, context)
           expect(result).to eq(command)
         end
       end
 
       describe '#decrypt' do
         it 'still performs decryption' do
-          result = auto_encrypter.decrypt(encrypted_command)
+          result = auto_encrypter.decrypt(encrypted_command, context)
           expect(result).to eq(command)
         end
       end
@@ -365,14 +367,14 @@ describe Mongo::Crypt::AutoEncrypter do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = auto_encrypter.encrypt(db_name, command)
+          result = auto_encrypter.encrypt(db_name, command, context)
           expect(result).to eq(command)
         end
       end
 
       describe '#decrypt' do
         it 'still performs decryption' do
-          result = auto_encrypter.decrypt(encrypted_command)
+          result = auto_encrypter.decrypt(encrypted_command, context)
           expect(result).to eq(command)
         end
       end
@@ -383,14 +385,14 @@ describe Mongo::Crypt::AutoEncrypter do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = auto_encrypter.encrypt(db_name, command)
+          result = auto_encrypter.encrypt(db_name, command, context)
           expect(result).to eq(command)
         end
       end
 
       describe '#decrypt' do
         it 'still performs decryption' do
-          result = auto_encrypter.decrypt(encrypted_command)
+          result = auto_encrypter.decrypt(encrypted_command, context)
           expect(result).to eq(command)
         end
       end
@@ -401,14 +403,14 @@ describe Mongo::Crypt::AutoEncrypter do
 
       describe '#encrypt' do
         it 'does not perform encryption' do
-          result = auto_encrypter.encrypt(db_name, command)
+          result = auto_encrypter.encrypt(db_name, command, context)
           expect(result).to eq(command)
         end
       end
 
       describe '#decrypt' do
         it 'still performs decryption' do
-          result = auto_encrypter.decrypt(encrypted_command)
+          result = auto_encrypter.decrypt(encrypted_command, context)
           expect(result).to eq(command)
         end
       end

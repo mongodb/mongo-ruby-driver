@@ -136,8 +136,10 @@ describe Mongo::Crypt::DataKeyContext do
         )
       end
 
+      let(:context) { Mongo::Operation::Context.new }
+
       it 'creates a data key' do
-        expect(context.run_state_machine).to be_a_kind_of(Hash)
+        expect(context.run_state_machine(context)).to be_a_kind_of(Hash)
       end
     end
   end
