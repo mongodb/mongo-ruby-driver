@@ -19,7 +19,7 @@ module Mongo
           attr_reader :view
 
           # Delegate necessary operations to the view.
-          def_delegators :view, :collection, :read, :cluster, :cursor_type
+          def_delegators :view, :collection, :read, :cluster, :cursor_type, :limit, :batch_size
 
           # Delegate necessary operations to the collection.
           def_delegators :collection, :database, :client
