@@ -236,9 +236,12 @@ module Mongo
       # Returns all keys in the key vault collection.
       #
       # @return [ Collection::View ] Keys in the key vault collection.
+      # rubocop:disable Naming/AccessorMethodName
+      # Name of this method is defined in the FLE spec
       def get_keys
         @encryption_io.get_keys(timeout_ms: @timeout_ms)
       end
+      # rubocop:enable Naming/AccessorMethodName
 
       # Removes a key_alt_name from a key in the key vault collection with the given id.
       #

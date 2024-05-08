@@ -62,28 +62,28 @@ describe 'CSOT for encryption' do
       )
     end
 
-    context 'createDataKey' do
+    describe '#createDataKey' do
       before do
         authorized_client.use(key_vault_db)[key_vault_coll].drop
         authorized_client.use(key_vault_db)[key_vault_coll].create
         authorized_client.use(:admin).command({
-          configureFailPoint: "failCommand",
-          mode: {
-            times: 1
-          },
-          data: {
-            failCommands: ["insert"],
-            blockConnection: true,
-            blockTimeMS: 30
-          }
-        })
+                                                configureFailPoint: 'failCommand',
+                                                mode: {
+                                                  times: 1
+                                                },
+                                                data: {
+                                                  failCommands: [ 'insert' ],
+                                                  blockConnection: true,
+                                                  blockTimeMS: 30
+                                                }
+                                              })
       end
 
       after do
         authorized_client.use(:admin).command({
-          configureFailPoint: "failCommand",
-          mode: "off",
-        })
+                                                configureFailPoint: 'failCommand',
+                                                mode: 'off',
+                                              })
         key_vault_client.close
       end
 
@@ -94,35 +94,36 @@ describe 'CSOT for encryption' do
       end
     end
 
-    context 'encrypt' do
+    describe '#encrypt' do
       let!(:data_key_id) do
         client_encryption.create_data_key('local')
       end
 
       before do
         authorized_client.use(:admin).command({
-          configureFailPoint: "failCommand",
-          mode: {
-            times: 1
-          },
-          data: {
-            failCommands: ["find"],
-            blockConnection: true,
-            blockTimeMS: 30
-          }
-        })
+                                                configureFailPoint: 'failCommand',
+                                                mode: {
+                                                  times: 1
+                                                },
+                                                data: {
+                                                  failCommands: [ 'find' ],
+                                                  blockConnection: true,
+                                                  blockTimeMS: 30
+                                                }
+                                              })
       end
 
       after do
         authorized_client.use(:admin).command({
-          configureFailPoint: "failCommand",
-          mode: "off",
-        })
+                                                configureFailPoint: 'failCommand',
+                                                mode: 'off',
+                                              })
       end
 
       it 'fails with timeout error' do
         expect do
-          client_encryption.encrypt('hello', key_id: data_key_id, algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+          client_encryption.encrypt('hello', key_id: data_key_id,
+                                             algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
         end.to raise_error(Mongo::Error::TimeoutError)
       end
     end
