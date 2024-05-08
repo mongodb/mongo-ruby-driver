@@ -69,12 +69,17 @@ module Mongo
         # Retrieves a valid set of credentials, if possible, or raises
         # Auth::InvalidConfiguration.
         #
+        # @param [ Operation::Context | nil ] context Context of the operation
+        #   credentials are retrieved for.
+        #
         # @return [ Auth::Aws::Credentials ] A valid set of credentials.
         #
         # @raise Auth::InvalidConfiguration if a source contains an invalid set
         #   of credentials.
         # @raise Auth::Aws::CredentialsNotFound if credentials could not be
         #   retrieved from any source.
+        # @raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
         def credentials(context = nil)
           credentials = credentials_from_user(user)
           return credentials unless credentials.nil?
@@ -127,11 +132,16 @@ module Mongo
 
         # Returns credentials from the AWS metadata endpoints.
         #
+        # @param [ Operation::Context | nil ] context Context of the operation
+        #   credentials are retrieved for.
+        #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed or the obtained credentials are invalid.
         #
         # @raise Auth::InvalidConfiguration if a source contains an invalid set
         #   of credentials.
+        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
         def obtain_credentials_from_endpoints(context = nil)
           if (credentials = web_identity_credentials(context)) && credentials_valid?(credentials, 'Web identity token')
             credentials
@@ -145,8 +155,13 @@ module Mongo
         # Returns credentials from the EC2 metadata endpoint. The credentials
         # could be empty, partial or invalid.
         #
+        # @param [ Operation::Context | nil ] context Context of the operation
+        #   credentials are retrieved for.
+        #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
+        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
         def ec2_metadata_credentials(context = nil)
           context&.check_timeout!
           http = Net::HTTP.new('169.254.169.254')
@@ -190,6 +205,16 @@ module Mongo
           return nil
         end
 
+        # Returns credentials from the ECS metadata endpoint. The credentials
+        # could be empty, partial or invalid.
+        #
+        # @param [ Operation::Context | nil ] context Context of the operation
+        #   credentials are retrieved for.
+        #
+        # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
+        #   if retrieval failed.
+        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
         def ecs_metadata_credentials(context = nil)
           context&.check_timeout!
           relative_uri = ENV['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
@@ -226,6 +251,9 @@ module Mongo
         # stored in a file. This authentication mechanism is used to authenticate
         # inside EKS. See https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
         # for further details.
+        #
+        # @param [ Operation::Context | nil ] context Context of the operation
+        #   credentials are retrieved for.
         #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
@@ -268,9 +296,14 @@ module Mongo
         #   that the caller is assuming.
         # @param [ String ] role_session_name An identifier for the assumed
         #   role session.
+        # @param [ Operation::Context | nil ] context Context of the operation
+        #   credentials are retrieved for.
         #
         # @return [ Net::HTTPResponse | nil ] AWS API response if successful,
         #   otherwise nil.
+        #
+        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
         def request_web_identity_credentials(token, role_arn, role_session_name, context)
           context&.check_timeout!
           uri = URI('https://sts.amazonaws.com/')
@@ -357,6 +390,15 @@ module Mongo
           true
         end
 
+        # Execute the given block considering the timeout defined on the context,
+        # or the default timeout value.
+        #
+        # We use +Timeout.timeout+ here because there is no other acceptable easy
+        # way to time limit http requests.
+        #
+        # @param [ Operation::Context | nil ] context Context of the operation
+        #
+        # @ raise Error::TimeoutError if deadline exceeded.
         def with_timeout(context)
           context&.check_timeout!
           timeout = context&.remaining_timeout_sec || METADATA_TIMEOUT

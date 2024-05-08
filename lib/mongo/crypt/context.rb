@@ -64,7 +64,10 @@ module Mongo
       end
 
       # Runs the mongocrypt_ctx_t state machine and handles
-      # all I/O on behalf of libmongocrypt
+      # all I/O on behalf of
+      #
+      # @param [ Operation::Context ] context Context of the operation the state
+      #   machine is run for.
       #
       # @return [ BSON::Document ] A BSON document representing the outcome
       #   of the state machine. Contents can differ depending on how the
@@ -148,6 +151,9 @@ module Mongo
 
       # Retrieves KMS credentials for providers that are configured
       # for automatic credentials retrieval.
+      #
+      # @param [ Operation::Context ] context Context of the operation credentials
+      #   are retrieved for.
       #
       # @return [ Crypt::KMS::Credentials ] Credentials for the configured
       #   KMS providers.
