@@ -29,6 +29,15 @@ module Mongo
 
           DEFAULT_HOST = 'metadata.google.internal'
 
+          # Fetch GCP access token.
+          #
+          # @param [ Operation::Context ] context Context of the operation the access
+          #   token is fetched for.
+          #
+          # @return [ String ] GCP access token.
+          #
+          # @raise [ KMS::CredentialsNotFound ]
+          # @raise [ Error::TimeoutError ]
           def self.fetch_access_token(context = nil)
             host = ENV.fetch(METADATA_HOST_ENV) { DEFAULT_HOST }
             uri = URI("http://#{host}/computeMetadata/v1/instance/service-accounts/default/token")
@@ -53,18 +62,20 @@ module Mongo
             context&.check_timeout!
             if context&.has_timeout?
               ::Timeout.timeout(context.remaining_timeout_sec, Error:TimeoutError) do
-                Net::HTTP.start(uri.hostname, uri.port, use_ssl: false) do |http|
-                  http.request(req)
-                end
+                do_fetch(uri, req)
               end
             else
-              Net::HTTP.start(uri.hostname, uri.port, use_ssl: false) do |http|
-                http.request(req)
-              end
+              do_fetch(uri, req)
             end
           end
           private_class_method :fetch_response
 
+          def self.do_fetch(uri, req)
+            Net::HTTP.start(uri.hostname, uri.port, use_ssl: false) do |http|
+              http.request(req)
+            end
+          end
+          private_class_method :do_fetch
         end
       end
     end
