@@ -206,13 +206,17 @@ tests:
             data:
               failCommands: ["find", "getMore"]
               blockConnection: true
-              blockTimeMS: 15
+              # blockTimeMS: 15
+              # Increase timeout
+              blockTimeMS: 20
       - name: find
         object: *collection
         arguments:
           filter: {}
           timeoutMode: iteration
-          timeoutMS: 29
+          # timeoutMS: 29
+          # Increase timeout
+          timeoutMS: 39
           batchSize: 2
     expectEvents:
       - client: *client

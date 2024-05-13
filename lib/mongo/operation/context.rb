@@ -153,8 +153,16 @@ module Mongo
         client&.encrypter&.encrypt? || false
       end
 
+      def encrypt(db_name, cmd)
+        encrypter.encrypt(db_name, cmd, self)
+      end
+
       def decrypt?
         !!client&.encrypter
+      end
+
+      def decrypt(cmd)
+        encrypter.decrypt(cmd, self)
       end
 
       def encrypter

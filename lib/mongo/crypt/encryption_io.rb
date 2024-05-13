@@ -73,47 +73,58 @@ module Mongo
       # filter
       #
       # @param [ Hash ] filter
+      # @param [ Integer | nil ] :timeout_ms
       #
       # @return [ Array<BSON::Document> ] The query results
-      def find_keys(filter)
-        key_vault_collection.find(filter).to_a
+      def find_keys(filter, timeout_ms: nil)
+        key_vault_collection.find(filter, timeout_ms: timeout_ms).to_a
       end
 
       # Insert a document into the key vault collection
       #
       # @param [ Hash ] document
+      # @param [ Integer | nil ] :timeout_ms
       #
       # @return [ Mongo::Operation::Insert::Result ] The insertion result
-      def insert_data_key(document)
-        key_vault_collection.insert_one(document)
+      def insert_data_key(document, timeout_ms: nil)
+        key_vault_collection.insert_one(document, timeout_ms: timeout_ms)
       end
 
       # Get collection info for a collection matching the provided filter
       #
       # @param [ Hash ] filter
+      # @param [ Integer | nil ] :timeout_ms
       #
       # @return [ Hash ] The collection information
-      def collection_info(db_name, filter)
+      def collection_info(db_name, filter, timeout_ms: nil)
         unless @metadata_client
           raise ArgumentError, 'collection_info requires metadata_client to have been passed to the constructor, but it was not'
         end
 
-        @metadata_client.use(db_name).database.list_collections(filter: filter, deserialize_as_bson: true).first
+        @metadata_client
+          .use(db_name)
+          .database
+          .list_collections(filter: filter, deserialize_as_bson: true, timeout_ms: timeout_ms)
+          .first
       end
 
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings
       #
       # @param [ Hash ] cmd
+      # @param [ Integer | nil ] :timeout_ms
       #
       # @return [ Hash ] The marked command
-      def mark_command(cmd)
+      def mark_command(cmd, timeout_ms: nil)
         unless @mongocryptd_client
           raise ArgumentError, 'mark_command requires mongocryptd_client to have been passed to the constructor, but it was not'
         end
 
         # Ensure the response from mongocryptd is deserialized with { mode: :bson }
         # to prevent losing type information in commands
-        options = { execution_options: { deserialize_as_bson: true } }
+        options = {
+          execution_options: { deserialize_as_bson: true },
+          timeout_ms: timeout_ms
+        }
 
         begin
           response = @mongocryptd_client.database.command(cmd, options)
@@ -136,9 +147,10 @@ module Mongo
       #   to send on that connection.
       # @param [ Hash ] tls_options. TLS options to connect to KMS provider.
       #   The options are same as for Mongo::Client.
-      def feed_kms(kms_context, tls_options)
+      # @param [ Integer | nil ] :timeout_ms
+      def feed_kms(kms_context, tls_options, timeout_ms: nil)
         with_ssl_socket(kms_context.endpoint, tls_options) do |ssl_socket|
-          Timeout.timeout(SOCKET_TIMEOUT, Error::SocketTimeoutError,
+          Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
             'Socket write operation timed out'
           ) do
             ssl_socket.syswrite(kms_context.message)
@@ -146,7 +158,7 @@ module Mongo
 
           bytes_needed = kms_context.bytes_needed
           while bytes_needed > 0 do
-            bytes = Timeout.timeout(SOCKET_TIMEOUT, Error::SocketTimeoutError,
+            bytes = Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
               'Socket read operation timed out'
             ) do
               ssl_socket.sysread(bytes_needed)
@@ -160,38 +172,39 @@ module Mongo
 
       # Adds a key_alt_name to the key_alt_names array of the key document
       # in the key vault collection with the given id.
-      def add_key_alt_name(id, key_alt_name)
+      def add_key_alt_name(id, key_alt_name, timeout_ms: nil)
         key_vault_collection.find_one_and_update(
           { _id: id },
           { '$addToSet' => { keyAltNames: key_alt_name } },
+          timeout_ms: timeout_ms
         )
       end
 
       # Removes the key document with the given id
       # from the key vault collection.
-      def delete_key(id)
-        key_vault_collection.delete_one(_id: id)
+      def delete_key(id, timeout_ms: nil)
+        key_vault_collection.delete_one(_id: id, timeout_ms: timeout_ms)
       end
 
       # Finds a single key document with the given id.
-      def get_key(id)
-        key_vault_collection.find(_id: id).first
+      def get_key(id, timeout_ms: nil)
+        key_vault_collection.find(_id: id, timeout_ms: timeout_ms).first
       end
 
       # Returns a key document in the key vault collection with
       # the given key_alt_name.
-      def get_key_by_alt_name(key_alt_name)
-        key_vault_collection.find(keyAltNames: key_alt_name).first
+      def get_key_by_alt_name(key_alt_name, timeout_ms: nil)
+        key_vault_collection.find(keyAltNames: key_alt_name, timeout_ms: timeout_ms).first
       end
 
       # Finds all documents in the key vault collection.
-      def get_keys
-        key_vault_collection.find
+      def get_keys(timeout_ms: nil)
+        key_vault_collection.find(nil, timeout_ms: timeout_ms)
       end
 
       # Removes a key_alt_name from the key_alt_names array of the key document
       # in the key vault collection with the given id.
-      def remove_key_alt_name(id, key_alt_name)
+      def remove_key_alt_name(id, key_alt_name, timeout_ms: nil)
         key_vault_collection.find_one_and_update(
           { _id: id },
           [
@@ -211,7 +224,8 @@ module Mongo
                 }
               }
             }
-          ]
+          ],
+          timeout_ms: timeout_ms
         )
       end
 
@@ -220,8 +234,8 @@ module Mongo
       # @param [ Array<Hash> ] requests The bulk write requests.
       #
       # @return [ BulkWrite::Result ] The result of the operation.
-      def update_data_keys(updates)
-        key_vault_collection.bulk_write(updates)
+      def update_data_keys(updates, timeout_ms: nil)
+        key_vault_collection.bulk_write(updates, timeout_ms: timeout_ms)
       end
 
       private
@@ -322,15 +336,21 @@ module Mongo
       #
       # @note The socket is always closed when the provided block has finished
       #   executing
-      def with_ssl_socket(endpoint, tls_options)
+      def with_ssl_socket(endpoint, tls_options, timeout_ms: nil)
+        csot = !timeout_ms.nil?
         address = begin
           host, port = endpoint.split(':')
           port ||= 443 # All supported KMS APIs use this port by default.
           Address.new([host, port].join(':'))
         end
+        socket_options = { ssl: true, csot: csot }.tap do |opts|
+          if csot
+            opts[:connect_timeout] = (timeout_ms / 1_000.0)
+          end
+        end
         mongo_socket = address.socket(
           SOCKET_TIMEOUT,
-          tls_options.merge(ssl: true)
+          tls_options.merge(socket_options)
         )
         yield(mongo_socket.socket)
       rescue => e

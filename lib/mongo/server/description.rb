@@ -807,6 +807,14 @@ module Mongo
         !!(address.to_s.downcase != me.downcase if me)
       end
 
+      # Whether this description is from a mongocryptd server.
+      #
+      # @return [ true, false ] Whether this description is from a mongocryptd
+      #   server.
+      def mongocryptd?
+        ok? && config['iscryptd'] == true
+      end
+
       # opTime in lastWrite subdocument of the hello response.
       #
       # @return [ BSON::Timestamp ] The timestamp.

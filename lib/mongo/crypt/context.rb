@@ -64,7 +64,10 @@ module Mongo
       end
 
       # Runs the mongocrypt_ctx_t state machine and handles
-      # all I/O on behalf of libmongocrypt
+      # all I/O on behalf of
+      #
+      # @param [ Operation::Context ] context Context of the operation the state
+      #   machine is run for.
       #
       # @return [ BSON::Document ] A BSON document representing the outcome
       #   of the state machine. Contents can differ depending on how the
@@ -75,8 +78,10 @@ module Mongo
       #
       # This method is not currently unit tested. It is integration tested
       # in spec/integration/explicit_encryption_spec.rb
-      def run_state_machine
+      def run_state_machine(context)
         while true
+          context.check_timeout!
+          timeout_ms = context.remaining_timeout_ms
           case state
           when :error
             Binding.check_ctx_status(self)
@@ -88,7 +93,7 @@ module Mongo
           when :need_mongo_keys
             filter = Binding.ctx_mongo_op(self)
 
-            @encryption_io.find_keys(filter).each do |key|
+            @encryption_io.find_keys(filter, timeout_ms: timeout_ms).each do |key|
               mongocrypt_feed(key) if key
             end
 
@@ -96,14 +101,14 @@ module Mongo
           when :need_mongo_collinfo
             filter = Binding.ctx_mongo_op(self)
 
-            result = @encryption_io.collection_info(@db_name, filter)
+            result = @encryption_io.collection_info(@db_name, filter, timeout_ms: timeout_ms)
             mongocrypt_feed(result) if result
 
             mongocrypt_done
           when :need_mongo_markings
             cmd = Binding.ctx_mongo_op(self)
 
-            result = @encryption_io.mark_command(cmd)
+            result = @encryption_io.mark_command(cmd, timeout_ms: timeout_ms)
             mongocrypt_feed(result)
 
             mongocrypt_done
@@ -118,7 +123,7 @@ module Mongo
           when :need_kms_credentials
             Binding.ctx_provide_kms_providers(
               self,
-              retrieve_kms_credentials.to_document
+              retrieve_kms_credentials(context).to_document
             )
           else
             raise Error::CryptError.new(
@@ -147,13 +152,16 @@ module Mongo
       # Retrieves KMS credentials for providers that are configured
       # for automatic credentials retrieval.
       #
+      # @param [ Operation::Context ] context Context of the operation credentials
+      #   are retrieved for.
+      #
       # @return [ Crypt::KMS::Credentials ] Credentials for the configured
       #   KMS providers.
-      def retrieve_kms_credentials
+      def retrieve_kms_credentials(context)
         providers = {}
         if kms_providers.aws&.empty?
           begin
-            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials
+            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials(context)
           rescue Auth::Aws::CredentialsNotFound
             raise Error::CryptError.new(
               "Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)"

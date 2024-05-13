@@ -29,14 +29,21 @@ module Mongo
 
           DEFAULT_HOST = 'metadata.google.internal'
 
-          def self.fetch_access_token
+          # Fetch GCP access token.
+          #
+          # @param [ Operation::Context ] context Context of the operation the access
+          #   token is fetched for.
+          #
+          # @return [ String ] GCP access token.
+          #
+          # @raise [ KMS::CredentialsNotFound ]
+          # @raise [ Error::TimeoutError ]
+          def self.fetch_access_token(context = nil)
             host = ENV.fetch(METADATA_HOST_ENV) { DEFAULT_HOST }
             uri = URI("http://#{host}/computeMetadata/v1/instance/service-accounts/default/token")
             req = Net::HTTP::Get.new(uri)
             req['Metadata-Flavor'] = 'Google'
-            resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: false) do |http|
-              http.request(req)
-            end
+            resp = fetch_response(uri, req, context)
             if resp.code != '200'
               raise KMS::CredentialsNotFound,
                 "GCE metadata host responded with code #{resp.code}"
@@ -50,6 +57,25 @@ module Mongo
               raise KMS::CredentialsNotFound,
                     "Could not receive GCP metadata response; #{e.class}: #{e.message}"
           end
+
+          def self.fetch_response(uri, req, context)
+            context&.check_timeout!
+            if context&.has_timeout?
+              ::Timeout.timeout(context.remaining_timeout_sec, Error:TimeoutError) do
+                do_fetch(uri, req)
+              end
+            else
+              do_fetch(uri, req)
+            end
+          end
+          private_class_method :fetch_response
+
+          def self.do_fetch(uri, req)
+            Net::HTTP.start(uri.hostname, uri.port, use_ssl: false) do |http|
+              http.request(req)
+            end
+          end
+          private_class_method :do_fetch
         end
       end
     end

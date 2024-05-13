@@ -204,7 +204,7 @@ module Mongo
 
         timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
 
-        server_selection_timeout = if csot_timeout
+        server_selection_timeout = if csot_timeout && csot_timeout > 0
                                      [timeout, csot_timeout].min
                                    else
                                      timeout

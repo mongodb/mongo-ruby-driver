@@ -40,6 +40,8 @@ module Mongo
     #   should be hashes of TLS connection options. The options are equivalent
     #   to TLS connection options of Mongo::Client.
     #   @see Mongo::Client#initialize for list of TLS options.
+    # @option options [ Integer ] :timeout_ms Timeout that will be applied to all
+    #   operations on this instance.
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
     #   formatted.
