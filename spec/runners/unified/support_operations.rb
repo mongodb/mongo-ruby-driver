@@ -20,6 +20,9 @@ module Unified
         if read_preference = args.use('readPreference')
           opts[:read] = ::Utils.snakeize_hash(read_preference)
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
 
         database.command(cmd, **opts)
       end

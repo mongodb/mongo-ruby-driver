@@ -936,7 +936,7 @@ module Mongo
     #
     # @since 2.6.0
     # @api private
-    def add_txn_opts!(command, read)
+    def add_txn_opts!(command, read, context)
       command.tap do |c|
         # The read concern should be added to any command that starts a transaction.
         if starting_transaction?
@@ -990,6 +990,14 @@ module Mongo
         if c[:writeConcern] && c[:writeConcern][:w] && c[:writeConcern][:w].is_a?(Symbol)
           c[:writeConcern][:w] = c[:writeConcern][:w].to_s
         end
+
+        # Ignore wtimeout if csot
+        if context&.csot?
+          c[:writeConcern]&.delete(:wtimeout)
+        end
+
+        # We must not send an empty (server default) write concern.
+        c.delete(:writeConcern) if c[:writeConcern]&.empty?
       end
     end
 
