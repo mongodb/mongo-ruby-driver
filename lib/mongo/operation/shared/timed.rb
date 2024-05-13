@@ -22,6 +22,7 @@ module Mongo
       def apply_relevant_timeouts_to(spec, connection)
         with_max_time(connection) do |max_time_sec|
           return spec if max_time_sec.nil?
+          return spec if connection.description.mongocryptd?
 
           spec.tap { spec[:maxTimeMS] = (max_time_sec * 1_000).to_i }
         end

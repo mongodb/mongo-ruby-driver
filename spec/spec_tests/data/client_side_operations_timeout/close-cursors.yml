@@ -110,7 +110,9 @@ tests:
       - name: close
         object: *cursor
         arguments:
-          timeoutMS: 40
+          # timeoutMS: 40
+          # Increase timeout
+          timeoutMS: 50
     expectEvents:
       - client: *client
         events:

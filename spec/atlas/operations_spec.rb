@@ -10,6 +10,10 @@ describe 'Operations' do
   require_atlas
 
   describe 'ping' do
+    after do
+      client.close
+    end
+
     it 'works' do
       expect do
         client.database.command(ping: 1)

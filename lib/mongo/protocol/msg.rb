@@ -226,7 +226,7 @@ module Mongo
 
           db_name = @main_document[DATABASE_IDENTIFIER]
           cmd = merge_sections
-          enc_cmd = context.encrypter.encrypt(db_name, cmd)
+          enc_cmd = context.encrypt(db_name, cmd)
           if cmd.key?('$db') && !enc_cmd.key?('$db')
             enc_cmd['$db'] = cmd['$db']
           end
@@ -251,7 +251,7 @@ module Mongo
       def maybe_decrypt(context)
         if context.decrypt?
           cmd = merge_sections
-          enc_cmd = context.encrypter.decrypt(cmd)
+          enc_cmd = context.decrypt(cmd)
           Msg.new(@flags, @options, enc_cmd)
         else
           self

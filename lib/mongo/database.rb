@@ -208,6 +208,8 @@ module Mongo
     #
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     # @option opts :execution_options [ Hash ] Options to pass to the code that
     #   executes this command. This is an internal option and is subject to
     #   change.
@@ -229,7 +231,7 @@ module Mongo
       Lint.validate_underscore_read_preference(txn_read_pref)
       selector = ServerSelector.get(txn_read_pref)
 
-      client.send(:with_session, opts) do |session|
+      client.with_session(opts) do |session|
         server = selector.select_server(cluster, nil, session)
         op = Operation::Command.new(
           :selector => operation,
@@ -239,7 +241,11 @@ module Mongo
         )
 
         op.execute(server,
-          context: Operation::Context.new(client: client, session: session),
+          context: Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(opts)
+          ),
           options: execution_opts)
       end
     end

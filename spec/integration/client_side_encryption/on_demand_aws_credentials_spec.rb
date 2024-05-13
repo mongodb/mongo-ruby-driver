@@ -37,7 +37,7 @@ describe 'On-demand AWS Credentials' do
     it 'raises an error' do
       expect_any_instance_of(
         Mongo::Auth::Aws::CredentialsRetriever
-      ).to receive(:credentials).with(no_args).once.and_raise(
+      ).to receive(:credentials).with(kind_of(Mongo::Operation::Context)).once.and_raise(
         Mongo::Auth::Aws::CredentialsNotFound
       )
 
