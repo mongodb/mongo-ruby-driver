@@ -34,17 +34,16 @@ module Mongo
           #   request. This is used for testing.
           # @param [String | nil] metadata_host Azure metadata host. This
           #   is used for testing.
-          # @param [ Operation::Context | nil ] context Context of the operation
-          #   access token is fetched for.
+          # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
           #
           # @return [ KMS::Azure::AccessToken ] Azure access token.
           #
           # @raise [KMS::CredentialsNotFound] If credentials could not be found.
           # @raise Error::TimeoutError if credentials cannot be retrieved within
-          #   the timeout defined on the operation context.
-          def self.fetch_access_token(extra_headers: {}, metadata_host: nil, context: nil)
+          #   the timeout.
+          def self.fetch_access_token(extra_headers: {}, metadata_host: nil, timeout_holder: nil)
             uri, req = prepare_request(extra_headers, metadata_host)
-            parsed_response = fetch_response(uri, req, context)
+            parsed_response = fetch_response(uri, req, timeout_holder)
             Azure::AccessToken.new(
               parsed_response.fetch('access_token'),
               Integer(parsed_response.fetch('expires_in'))
@@ -82,17 +81,16 @@ module Mongo
           #
           # @param [URI] uri URI to Azure metadata host.
           # @param [Net::HTTP::Get] req Request object.
-          # @param [ Operation::Context | nil ] context Context of the operation
-          #   access token is fetched for.
+          # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
           #
           # @return [Hash] Parsed response.
           #
           # @raise [KMS::CredentialsNotFound] If cannot fetch response or
           #   response is invalid.
           # @raise Error::TimeoutError if credentials cannot be retrieved within
-          #   the timeout defined on the operation context.
-          def self.fetch_response(uri, req, context)
-            resp = do_request(uri, req, context)
+          #   the timeout.
+          def self.fetch_response(uri, req, timeout_holder)
+            resp = do_request(uri, req, timeout_holder)
             if resp.code != '200'
               raise KMS::CredentialsNotFound,
                     "Azure metadata host responded with code #{resp.code}"
@@ -108,18 +106,17 @@ module Mongo
           #
           # @param [URI] uri URI to Azure metadata host.
           # @param [Net::HTTP::Get] req Request object.
-          # @param [ Operation::Context | nil ] context Context of the operation
-          #   access token is fetched for.
+          # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
           #
           # @return [Net::HTTPResponse] Response object.
           #
           # @raise [KMS::CredentialsNotFound] If cannot execute request.
           # @raise Error::TimeoutError if credentials cannot be retrieved within
-          #   the timeout defined on the operation context.
-          def self.do_request(uri, req, context)
-            context&.check_timeout!
-            timeout = context&.remaining_timeout_sec || 10
-            exception_class = if context&.csot?
+          #   the timeout.
+          def self.do_request(uri, req, timeout_holder)
+            timeout_holder&.check_timeout!
+            timeout = timeout_holder&.remaining_timeout_sec || 10
+            exception_class = if timeout_holder&.csot?
                                 Error::TimeoutError
                               else
                                 nil

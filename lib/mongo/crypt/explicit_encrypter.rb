@@ -339,8 +339,8 @@ module Mongo
         end
       end
 
-      def context
-        Operation::Context.new(
+      def timeout_holder
+        CsotTimeoutHolder.new(
           operation_timeouts: {
             operation_timeout_ms: @timeout_ms
           }

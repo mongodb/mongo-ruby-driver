@@ -187,13 +187,13 @@ module Mongo
       # @param [ Hash ] command The command to be encrypted.
       #
       # @return [ BSON::Document ] The encrypted command.
-      def encrypt(database_name, command, context)
+      def encrypt(database_name, command, timeout_holder)
         AutoEncryptionContext.new(
           @crypt_handle,
           @encryption_io,
           database_name,
           command
-        ).run_state_machine(context)
+        ).run_state_machine(timeout_holder)
       end
 
       # Decrypt a database command.
@@ -201,12 +201,12 @@ module Mongo
       # @param [ Hash ] command The command with encrypted fields.
       #
       # @return [ BSON::Document ] The decrypted command.
-      def decrypt(command, context)
+      def decrypt(command, timeout_holder)
         AutoDecryptionContext.new(
           @crypt_handle,
           @encryption_io,
           command
-        ).run_state_machine(context)
+        ).run_state_machine(timeout_holder)
       end
 
       # Close the resources created by the AutoEncrypter.
