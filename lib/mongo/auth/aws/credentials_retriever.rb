@@ -158,7 +158,7 @@ module Mongo
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
         # @ raise Error::TimeoutError if credentials cannot be retrieved within
-        #   the timeout defined on the operation context.
+        #   the timeout.
         def ec2_metadata_credentials(timeout_holder = nil)
           timeout_holder&.check_timeout!
           http = Net::HTTP.new('169.254.169.254')
@@ -180,7 +180,7 @@ module Mongo
           end
           role_name = resp.body
           escaped_role_name = CGI.escape(role_name).gsub('+', '%20')
-          resp = with_timeout(context) do
+          resp = with_timeout(timeout_holder) do
             http_get(http, "/latest/meta-data/iam/security-credentials/#{escaped_role_name}", metadata_token)
           end
           if resp.code != '200'
