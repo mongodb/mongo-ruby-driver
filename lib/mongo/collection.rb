@@ -441,12 +441,14 @@ module Mongo
     # @option opts [ Hash ] :write_concern The write concern options.
     # @option opts [ Hash | nil ] :encrypted_fields Encrypted fields hash that
     #   was provided to `create` collection helper.
+    # @option opts [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+    #   Must a positive integer. The default value is unset which means infinite.
     #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
     def drop(opts = {})
-      client.send(:with_session, opts) do |session|
+      client.with_session(opts) do |session|
         maybe_drop_emm_collections(opts[:encrypted_fields], client, session) do
           temp_write_concern = write_concern
           write_concern = if opts[:write_concern]
@@ -454,7 +456,11 @@ module Mongo
           else
             temp_write_concern
           end
-          context = Operation::Context.new(client: client, session: session)
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(opts)
+          )
           operation = Operation::Drop.new({
             selector: { :drop => name },
             db_name: database.name,

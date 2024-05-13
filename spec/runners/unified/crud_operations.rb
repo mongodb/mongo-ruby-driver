@@ -5,7 +5,7 @@ module Unified
 
   module CrudOperations
 
-    def find(op)
+    def crud_find(op)
       get_find_view(op).to_a
     end
 

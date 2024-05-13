@@ -2,6 +2,7 @@
 # rubocop:todo all
 
 require 'runners/crud/requirement'
+require 'runners/unified/ambiguous_operations'
 require 'runners/unified/client_side_encryption_operations'
 require 'runners/unified/crud_operations'
 require 'runners/unified/grid_fs_operations'
@@ -17,6 +18,7 @@ require 'support/crypt'
 module Unified
 
   class Test
+    include AmbiguousOperations
     include ClientSideEncryptionOperations
     include CrudOperations
     include GridFsOperations
@@ -413,6 +415,7 @@ module Unified
           rescue Mongo::Error, bson_error, Mongo::Auth::Unauthorized, ArgumentError => e
             if expected_error.use('isTimeoutError')
               unless Mongo::Error::TimeoutError === e
+                raise e
                 raise Error::ErrorMismatch, %Q,Expected TimeoutError ("isTimeoutError") but got #{e},
               end
             end
