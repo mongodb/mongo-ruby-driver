@@ -94,7 +94,7 @@ module Mongo
       return session&.with_transaction_deadline if session&.with_transaction_deadline
 
       if (operation_timeout_ms = opts[:operation_timeout_ms])
-        calculate_deadline_from_opertation_timeout(operation_timeout_ms)
+        calculate_deadline_from_timeout_ms(operation_timeout_ms)
       elsif (inherited_timeout_ms = opts[:inherited_timeout_ms])
         calculate_deadline_from_timeout_ms(inherited_timeout_ms)
       end
