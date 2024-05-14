@@ -2,11 +2,10 @@
 
 module Unified
   module AmbiguousOperations
-
     def find(op)
       entities.get(:collection, op['object'])
       crud_find(op)
-    rescue Unified::Error::EntityMissing => e
+    rescue Unified::Error::EntityMissing
       entities.get(:bucket, op['object'])
       gridfs_find(op)
     end

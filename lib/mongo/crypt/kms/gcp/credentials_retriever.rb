@@ -59,7 +59,7 @@ module Mongo
 
           def self.fetch_response(uri, req, timeout_holder)
             timeout_holder&.check_timeout!
-            if timeout_holder&.has_timeout?
+            if timeout_holder&.timeout?
               ::Timeout.timeout(timeout_holder.remaining_timeout_sec, Error:TimeoutError) do
                 do_fetch(uri, req)
               end

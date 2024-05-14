@@ -15,16 +15,17 @@
 # limitations under the License.
 
 module Mongo
+  # This class stores operation timeout and provides corresponding helper methods.
+  #
+  # @api private
   class CsotTimeoutHolder
     def initialize(session: nil, operation_timeouts: {})
       @deadline = calculate_deadline(operation_timeouts, session)
       @operation_timeouts = operation_timeouts
-      @timeout_sec = if @deadline then @deadline - Utils.monotonic_time end
+      @timeout_sec = (@deadline - Utils.monotonic_time if @deadline)
     end
 
-    attr_reader :deadline
-    attr_reader :timeout_sec
-    attr_reader :operation_timeouts
+    attr_reader :deadline, :timeout_sec, :operation_timeouts
 
     # @return [ true | false ] Whether CSOT is enabled for the operation
     def csot?
@@ -33,15 +34,15 @@ module Mongo
 
     # @return [ true | false ] Returns false if CSOT is not enabled, or if
     #   CSOT is set to 0 (means unlimited), otherwise true.
-    def has_timeout?
-      ![nil, 0].include?(@deadline)
+    def timeout?
+      ![ nil, 0 ].include?(@deadline)
     end
 
     # @return [ Float | nil ] Returns the remaining seconds of the timeout
     #   set for the operation; if no timeout is set, or the timeout is 0
     #   (means unlimited) returns nil.
     def remaining_timeout_sec
-      return nil unless has_timeout?
+      return nil unless timeout?
 
       deadline - Utils.monotonic_time
     end
@@ -69,7 +70,7 @@ module Mongo
     # @return [ true | false ] Whether the timeout for the operation expired.
     #   If no timeout set, this method returns false.
     def timeout_expired?
-      if has_timeout?
+      if timeout?
         Utils.monotonic_time >= deadline
       else
         false
@@ -81,34 +82,37 @@ module Mongo
     #
     # @raise [ Error::TimeoutError ]
     def check_timeout!
-      if timeout_expired?
-        raise Error::TimeoutError, "Operation took more than #{timeout_sec} seconds"
-      end
+      return unless timeout_expired?
+
+      raise Error::TimeoutError, "Operation took more than #{timeout_sec} seconds"
     end
 
     private
 
     def calculate_deadline(opts = {}, session = nil)
-      if opts[:operation_timeout_ms] && session&.with_transaction_deadline
-        raise ArgumentError, 'Cannot override timeout_ms inside with_transaction block'
-      end
+      check_no_override_inside_transaction!(opts, session)
+      return session&.with_transaction_deadline if session&.with_transaction_deadline
 
-      if session&.with_transaction_deadline
-        session&.with_transaction_deadline
-      elsif operation_timeout_ms = opts[:operation_timeout_ms]
-        if operation_timeout_ms > 0
-          Utils.monotonic_time + (operation_timeout_ms / 1_000.0)
-        elsif operation_timeout_ms == 0
-          0
-        elsif operation_timeout_ms < 0
-          raise ArgumentError, "timeout_ms must be a non-negative integer but #{operation_timeout_ms} given"
-        end
-      elsif inherited_timeout_ms = opts[:inherited_timeout_ms]
-        if inherited_timeout_ms > 0
-          Utils.monotonic_time + (inherited_timeout_ms / 1_000.0)
-        elsif inherited_timeout_ms == 0
-          0
-        end
+      if (operation_timeout_ms = opts[:operation_timeout_ms])
+        calculate_deadline_from_opertation_timeout(operation_timeout_ms)
+      elsif (inherited_timeout_ms = opts[:inherited_timeout_ms])
+        calculate_deadline_from_timeout_ms(inherited_timeout_ms)
+      end
+    end
+
+    def check_no_override_inside_transaction!(opts, session)
+      return unless opts[:operation_timeout_ms] && session&.with_transaction_deadline
+
+      raise ArgumentError, 'Cannot override timeout_ms inside with_transaction block'
+    end
+
+    def calculate_deadline_from_timeout_ms(operation_timeout_ms)
+      if operation_timeout_ms.positive?
+        Utils.monotonic_time + (operation_timeout_ms / 1_000.0)
+      elsif operation_timeout_ms.zero?
+        0
+      elsif operation_timeout_ms.negative?
+        raise ArgumentError, "timeout_ms must be a non-negative integer but #{operation_timeout_ms} given"
       end
     end
   end
