@@ -415,7 +415,6 @@ module Unified
           rescue Mongo::Error, bson_error, Mongo::Auth::Unauthorized, ArgumentError => e
             if expected_error.use('isTimeoutError')
               unless Mongo::Error::TimeoutError === e
-                raise e
                 raise Error::ErrorMismatch, %Q,Expected TimeoutError ("isTimeoutError") but got #{e},
               end
             end
