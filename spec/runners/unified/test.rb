@@ -2,6 +2,7 @@
 # rubocop:todo all
 
 require 'runners/crud/requirement'
+require 'runners/unified/ambiguous_operations'
 require 'runners/unified/client_side_encryption_operations'
 require 'runners/unified/crud_operations'
 require 'runners/unified/grid_fs_operations'
@@ -17,6 +18,7 @@ require 'support/crypt'
 module Unified
 
   class Test
+    include AmbiguousOperations
     include ClientSideEncryptionOperations
     include CrudOperations
     include GridFsOperations

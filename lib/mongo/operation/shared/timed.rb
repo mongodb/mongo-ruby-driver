@@ -38,7 +38,7 @@ module Mongo
       # @return [ Hash ] the result of yielding to the block (which must be
       #   a Hash)
       def with_max_time(connection)
-        if context&.has_timeout?
+        if context&.timeout?
           max_time_sec = context.remaining_timeout_sec - connection.server.minimum_round_trip_time
           raise Mongo::Error::TimeoutError if max_time_sec <= 0
 

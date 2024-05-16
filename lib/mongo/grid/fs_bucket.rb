@@ -201,8 +201,8 @@ module Mongo
       # @return [ Result ] The result of the remove.
       #
       # @since 2.0.0
-      def delete_one(file)
-        delete(file.id)
+      def delete_one(file, opts = {})
+        delete(file.id, opts)
       end
 
       # Remove a single file, identified by its id from the GridFS.
@@ -217,9 +217,14 @@ module Mongo
       # @raise [ Error::FileNotFound ] If the file is not found.
       #
       # @since 2.1.0
-      def delete(id)
-        result = files_collection.find({ :_id => id }, @options).delete_one
-        chunks_collection.find({ :files_id => id }, @options).delete_many
+      def delete(id, opts = {})
+        timeout_holder = CsotTimeoutHolder.new(operation_timeouts: operation_timeouts(opts))
+        result = files_collection
+          .find({ :_id => id }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
+          .delete_one(timeout_ms: timeout_holder.remaining_timeout_ms)
+        chunks_collection
+          .find({ :files_id => id }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
+          .delete_many(timeout_ms: timeout_holder.remaining_timeout_ms)
         raise Error::FileNotFound.new(id, :id) if result.n == 0
         result
       end
@@ -485,9 +490,10 @@ module Mongo
       end
 
       # Drop the collections that implement this bucket.
-      def drop
-        files_collection.drop
-        chunks_collection.drop
+      def drop(opts = {})
+        context = Operation::Context.new(operation_timeouts: operation_timeouts(opts))
+        files_collection.drop(timeout_ms: context.remaining_timeout_ms)
+        chunks_collection.drop(timeout_ms: context.remaining_timeout_ms)
       end
 
       private
@@ -512,12 +518,24 @@ module Mongo
         "#{prefix}.#{Grid::File::Info::COLLECTION}"
       end
 
-      def ensure_indexes!
-        if files_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
+      def ensure_indexes!(timeout_holder = nil)
+        fc_idx = files_collection.find(
+          {},
+          limit: 1,
+          projection: { _id: 1 },
+          timeout_ms: timeout_holder&.remaining_timeout_ms
+        ).first
+        if fc_idx.nil?
           create_index_if_missing!(files_collection, FSBucket::FILES_INDEX)
         end
 
-        if chunks_collection.find({}, limit: 1, projection: { _id: 1 }).first.nil?
+        cc_idx = chunks_collection.find(
+          {},
+          limit: 1,
+          projection: { _id: 1 },
+          timeout_ms: timeout_holder&.remaining_timeout_ms
+        ).first
+        if cc_idx.nil?
           create_index_if_missing!(chunks_collection, FSBucket::CHUNKS_INDEX, :unique => true)
         end
       end
@@ -534,6 +552,21 @@ module Mongo
             indexes_view.create_one(index_spec, options)
           else
             raise
+          end
+        end
+      end
+
+      # @return [ Hash ] timeout_ms value set on the operation level (if any),
+      #   and/or timeout_ms that is set on collection/database/client level (if any).
+      #
+      # @api private
+      def operation_timeouts(opts = {})
+        # TODO: We should re-evaluate if we need two timeouts separately.
+        {}.tap do |result|
+          if opts[:timeout_ms].nil?
+            result[:inherited_timeout_ms] = database.timeout_ms
+          else
+            result[:operation_timeout_ms] = opts[:timeout_ms]
           end
         end
       end

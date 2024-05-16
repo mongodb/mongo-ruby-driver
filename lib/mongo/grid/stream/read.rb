@@ -59,6 +59,12 @@ module Mongo
             @file_id = @options.delete(:file_id)
             @options.freeze
             @open = true
+            @timeout_holder = CsotTimeoutHolder.new(
+              operation_timeouts: {
+                operation_timeout_ms: options[:timeout_ms],
+                inherited_timeout_ms: fs.database.timeout_ms
+              }
+            )
           end
 
           # Iterate through chunk data streamed from the FSBucket.
@@ -178,7 +184,11 @@ module Mongo
           # @since 2.1.0
           def file_info
             @file_info ||= begin
-              doc = options[:file_info_doc] || fs.files_collection.find(_id: file_id).first
+              doc = options[:file_info_doc] ||
+                fs.files_collection.find(
+                  { _id: file_id },
+                  { timeout_ms: @timeout_holder.remaining_timeout_ms! }
+                ).first
               if doc
                 File::Info.new(Options::Mapper.transform(doc, File::Info::MAPPINGS.invert))
               else
@@ -208,6 +218,10 @@ module Mongo
                 options.merge(read: read_preference)
               else
                 options
+              end
+              if @timeout_holder.csot?
+                opts[:timeout_ms] = @timeout_holder.remaining_timeout_ms!
+                opts[:timeout_mode] = :cursor_lifetime
               end
 
               fs.chunks_collection.find({ :files_id => file_id }, opts).sort(:n => 1)

@@ -66,8 +66,8 @@ module Mongo
       # Runs the mongocrypt_ctx_t state machine and handles
       # all I/O on behalf of
       #
-      # @param [ Operation::Context ] context Context of the operation the state
-      #   machine is run for.
+      # @param [ CsotTimeoutHolder ] timeout_holder CSOT timeouts for the
+      #   operation the state.
       #
       # @return [ BSON::Document ] A BSON document representing the outcome
       #   of the state machine. Contents can differ depending on how the
@@ -78,10 +78,9 @@ module Mongo
       #
       # This method is not currently unit tested. It is integration tested
       # in spec/integration/explicit_encryption_spec.rb
-      def run_state_machine(context)
+      def run_state_machine(timeout_holder)
         while true
-          context.check_timeout!
-          timeout_ms = context.remaining_timeout_ms
+          timeout_ms = timeout_holder.remaining_timeout_ms!
           case state
           when :error
             Binding.check_ctx_status(self)
@@ -123,7 +122,7 @@ module Mongo
           when :need_kms_credentials
             Binding.ctx_provide_kms_providers(
               self,
-              retrieve_kms_credentials(context).to_document
+              retrieve_kms_credentials(timeout_holder).to_document
             )
           else
             raise Error::CryptError.new(
@@ -152,16 +151,15 @@ module Mongo
       # Retrieves KMS credentials for providers that are configured
       # for automatic credentials retrieval.
       #
-      # @param [ Operation::Context ] context Context of the operation credentials
-      #   are retrieved for.
+      # @param [ CsotTimeoutHolder ] timeout_holder CSOT timeout.
       #
       # @return [ Crypt::KMS::Credentials ] Credentials for the configured
       #   KMS providers.
-      def retrieve_kms_credentials(context)
+      def retrieve_kms_credentials(timeout_holder)
         providers = {}
         if kms_providers.aws&.empty?
           begin
-            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials(context)
+            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials(timeout_holder)
           rescue Auth::Aws::CredentialsNotFound
             raise Error::CryptError.new(
               "Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)"
@@ -170,10 +168,10 @@ module Mongo
           providers[:aws] = aws_credentials.to_h
         end
         if kms_providers.gcp&.empty?
-          providers[:gcp] = { access_token: gcp_access_token }
+          providers[:gcp] = { access_token: gcp_access_token(timeout_holder) }
         end
         if kms_providers.azure&.empty?
-          providers[:azure] = { access_token: azure_access_token }
+          providers[:azure] = { access_token: azure_access_token(timeout_holder) }
         end
         KMS::Credentials.new(providers)
       end
@@ -183,8 +181,8 @@ module Mongo
       # @return [ String ] A GCP access token.
       #
       # @raise [ Error::CryptError ] If the GCP access token could not be
-      def gcp_access_token
-        KMS::GCP::CredentialsRetriever.fetch_access_token
+      def gcp_access_token(timeout_holder)
+        KMS::GCP::CredentialsRetriever.fetch_access_token(timeout_holder)
       rescue KMS::CredentialsNotFound => e
         raise Error::CryptError.new(
           "Could not locate GCP credentials: #{e.class}: #{e.message}"
@@ -197,9 +195,9 @@ module Mongo
       #
       # @raise [ Error::CryptError ] If the Azure access token could not be
       #   retrieved.
-      def azure_access_token
+      def azure_access_token(timeout_holder)
         if @cached_azure_token.nil? || @cached_azure_token.expired?
-          @cached_azure_token = KMS::Azure::CredentialsRetriever.fetch_access_token
+          @cached_azure_token = KMS::Azure::CredentialsRetriever.fetch_access_token(timeout_holder: timeout_holder)
         end
         @cached_azure_token.access_token
       rescue KMS::CredentialsNotFound => e

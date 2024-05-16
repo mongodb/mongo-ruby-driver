@@ -74,10 +74,10 @@ module Mongo
           master_key_document,
           key_alt_names,
           key_material
-        ).run_state_machine(context)
+        ).run_state_machine(timeout_holder)
 
         @encryption_io.insert_data_key(
-          data_key_document, timeout_ms: context.remaining_timeout_ms
+          data_key_document, timeout_ms: timeout_holder.remaining_timeout_ms!
         ).inserted_id
       end
 
@@ -116,7 +116,7 @@ module Mongo
           @encryption_io,
           { v: value },
           options
-        ).run_state_machine(context)['v']
+        ).run_state_machine(timeout_holder)['v']
       end
 
       # Encrypts a Match Expression or Aggregate Expression to query a range index.
@@ -175,7 +175,7 @@ module Mongo
           @encryption_io,
           { v: expression },
           options
-        ).run_state_machine(context)['v']
+        ).run_state_machine(timeout_holder)['v']
       end
 
       # Decrypts a value that has already been encrypted
@@ -189,7 +189,7 @@ module Mongo
           @crypt_handle,
           @encryption_io,
           { v: value }
-        ).run_state_machine(context)['v']
+        ).run_state_machine(timeout_holder)['v']
       end
 
       # Adds a key_alt_name for the key in the key vault collection with the given id.
@@ -275,7 +275,7 @@ module Mongo
           @encryption_io,
           filter,
           master_key_document
-        ).run_state_machine(context)
+        ).run_state_machine(timeout_holder)
 
         return RewrapManyDataKeyResult.new(nil) if rewrap_result.nil?
 
@@ -339,8 +339,8 @@ module Mongo
         end
       end
 
-      def context
-        Operation::Context.new(
+      def timeout_holder
+        CsotTimeoutHolder.new(
           operation_timeouts: {
             operation_timeout_ms: @timeout_ms
           }
