@@ -102,7 +102,7 @@ tests:
                 tailable: true
                 awaitData: true
                 maxTimeMS: { $$exists: true }
-  
+
   # If maxAwaitTimeMS is not set, timeoutMS should be refreshed for the getMore and the getMore should not have a
   # maxTimeMS field.
   - description: "timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set"
@@ -123,7 +123,7 @@ tests:
         arguments:
           filter: {}
           cursorType: tailableAwait
-          timeoutMS: 20
+          timeoutMS: 29
           batchSize: 1
         saveResultAsEntity: &tailableCursor tailableCursor
       # Iterate twice to force a getMore. The first iteration will return the document from the first batch and the
@@ -171,7 +171,7 @@ tests:
         arguments:
           filter: {}
           cursorType: tailableAwait
-          timeoutMS: 20
+          timeoutMS: 29
           batchSize: 1
           maxAwaitTimeMS: 1
         saveResultAsEntity: &tailableCursor tailableCursor
