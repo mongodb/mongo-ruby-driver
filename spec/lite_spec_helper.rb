@@ -168,6 +168,9 @@ RSpec.configure do |config|
     end
   end
 
+=begin
+  Interrupting with Timeout.timeout is brutal, and may lead to live background threads.
+
   if SpecConfig.instance.ci? && !%w(1 true yes).include?(ENV['INTERACTIVE']&.downcase)
     # Tests should take under 10 seconds ideally but it seems
     # we have some that run for more than 10 seconds in CI.
@@ -177,6 +180,7 @@ RSpec.configure do |config|
       end
     end
   end
+=end
 
   if SpecConfig.instance.ci?
     if defined?(Rfc::Rif)
