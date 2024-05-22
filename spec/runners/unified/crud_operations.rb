@@ -23,10 +23,10 @@ module Unified
           'allowDiskUse', 'returnKey', 'projection',
           'skip', 'hint', 'maxTimeMS', 'timeoutMS',
           'collation', 'noCursorTimeout', 'oplogReplay', 'allowPartialResults',
-          'timeoutMode',
+          'timeoutMode', 'maxAwaitTimeMS', 'cursorType', 'timeoutMode',
           { 'showRecordId' => :show_disk_loc, 'max' => :max_value, 'min' => :min_value },
           allow_extra: true)
-        symbolize_options!(opts, :timeout_mode)
+        symbolize_options!(opts, :timeout_mode, :cursor_type)
 
         opts[:session] = entities.get(:session, session) if session
 
@@ -315,7 +315,7 @@ module Unified
       args = op.use!('arguments')
 
       filter = args.use('filter')
-      opts = extract_options(args, 'batchSize', 'timeoutMS')
+      opts = extract_options(args, 'batchSize', 'timeoutMS', 'cursorType', 'maxAwaitTimeMS')
 
       view = obj.find(filter, opts)
       view.each # to initialize the cursor

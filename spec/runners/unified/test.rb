@@ -89,6 +89,8 @@ module Unified
     end
 
     def generate_entities(es)
+      return if es.nil?
+
       es.each do |entity_spec|
         unless entity_spec.keys.length == 1
           raise NotImplementedError, "Entity must have exactly one key"

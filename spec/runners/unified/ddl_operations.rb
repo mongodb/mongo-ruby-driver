@@ -53,6 +53,15 @@ module Unified
         if pipeline = args.use('pipeline')
           collection_opts[:pipeline] = pipeline
         end
+        if capped = args.use('capped')
+          collection_opts[:capped] = capped
+        end
+        if size = args.use('size')
+          collection_opts[:size] = size
+        end
+        if max = args.use('max')
+          collection_opts[:max] = max
+        end
         database[args.use!('collection'), collection_opts].create(**opts)
       end
     end
@@ -178,7 +187,7 @@ module Unified
     def drop_index(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = extract_options(args, 'maxTimeMS', 'timeoutMS', allow_extra: true)
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
