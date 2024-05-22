@@ -316,6 +316,7 @@ module Unified
 
       filter = args.use('filter')
       opts = extract_options(args, 'batchSize', 'timeoutMS', 'cursorType', 'maxAwaitTimeMS')
+      symbolize_options!(opts, :cursor_type)
 
       view = obj.find(filter, opts)
       view.each # to initialize the cursor
