@@ -44,12 +44,14 @@ module Unified
       if req = @spec['group_runOnRequirements']
         @group_reqs = req.map { |r| Mongo::CRUD::Requirement.new(r) }
       end
-      mongoses = @spec['createEntities'].select do |spec|
-        spec['client']
-      end.map do |spec|
-        spec['client']['useMultipleMongoses']
-      end.compact.uniq
-      @multiple_mongoses = mongoses.any? { |v| v }
+      if @spec['createEntities']
+        mongoses = @spec['createEntities'].select do |spec|
+          spec['client']
+        end.map do |spec|
+          spec['client']['useMultipleMongoses']
+        end.compact.uniq
+        @multiple_mongoses = mongoses.any? { |v| v }
+      end
       @test_spec.freeze
       @subscribers = {}
       @observe_sensitive = {}
@@ -87,6 +89,8 @@ module Unified
     end
 
     def generate_entities(es)
+      return if es.nil?
+
       es.each do |entity_spec|
         unless entity_spec.keys.length == 1
           raise NotImplementedError, "Entity must have exactly one key"
@@ -415,6 +419,7 @@ module Unified
           rescue Mongo::Error, bson_error, Mongo::Auth::Unauthorized, ArgumentError => e
             if expected_error.use('isTimeoutError')
               unless Mongo::Error::TimeoutError === e
+                raise e
                 raise Error::ErrorMismatch, %Q,Expected TimeoutError ("isTimeoutError") but got #{e},
               end
             end

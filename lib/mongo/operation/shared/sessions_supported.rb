@@ -114,7 +114,7 @@ module Mongo
       end
 
       def apply_txn_opts!(selector)
-        session.add_txn_opts!(selector, read_command?(selector))
+        session.add_txn_opts!(selector, read_command?(selector), context)
       end
 
       def suppress_read_write_concern!(selector)

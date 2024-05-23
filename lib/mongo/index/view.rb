@@ -100,7 +100,7 @@ module Mongo
       # @since 2.0.0
       def drop_one(name, options = {})
         raise Error::MultiIndexDrop.new if name == Index::ALL
-        drop_by_name(name, comment: options[:comment])
+        drop_by_name(name, options)
       end
 
       # Drop all indexes on the collection.
@@ -117,7 +117,7 @@ module Mongo
       #
       # @since 2.0.0
       def drop_all(options = {})
-        drop_by_name(Index::ALL, comment: options[:comment])
+        drop_by_name(Index::ALL, options)
       end
 
       # Creates an index on the collection.
@@ -171,7 +171,7 @@ module Mongo
         if session = @options[:session]
           create_options[:session] = session
         end
-        %i(commit_quorum session comment).each do |key|
+        %i(commit_quorum session comment timeout_ms max_time_ms).each do |key|
           if value = options.delete(key)
             create_options[key] = value
           end
@@ -220,7 +220,7 @@ module Mongo
           options = models.pop
         end
 
-        client.send(:with_session, @options.merge(options)) do |session|
+        client.with_session(@options.merge(options)) do |session|
           server = next_primary(nil, session)
 
           indexes = normalize_models(models, server)
@@ -239,8 +239,12 @@ module Mongo
             write_concern: write_concern,
             comment: options[:comment],
           }
-
-          Operation::CreateIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(options)
+          )
+          Operation::CreateIndex.new(spec).execute(server, context: context)
         end
       end
 
@@ -343,7 +347,7 @@ module Mongo
 
       private
 
-      def drop_by_name(name, comment: nil)
+      def drop_by_name(name, opts = {})
         client.send(:with_session, @options) do |session|
           spec = {
             db_name: database.name,
@@ -352,9 +356,14 @@ module Mongo
             session: session,
             write_concern: write_concern,
           }
-          spec[:comment] = comment unless comment.nil?
+          spec[:comment] = opts[:comment] unless opts[:comment].nil?
           server = next_primary(nil, session)
-          Operation::DropIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(opts)
+          )
+          Operation::DropIndex.new(spec).execute(server, context: context)
         end
       end
 
