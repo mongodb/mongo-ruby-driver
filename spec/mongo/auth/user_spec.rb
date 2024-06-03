@@ -50,7 +50,7 @@ describe Mongo::Auth::User do
       it 'raises ArgumentError' do
         expect do
           user
-        end.to raise_error(Mongo::Auth::InvalidMechanism, ":invalid is invalid, please use one of the following mechanisms: :aws, :gssapi, :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256")
+        end.to raise_error(Mongo::Auth::InvalidMechanism, ":invalid is invalid, please use one of the following mechanisms: :aws, :gssapi, :mongodb_cr, :mongodb_oidc, :mongodb_x509, :plain, :scram, :scram256")
       end
     end
 

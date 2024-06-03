@@ -7,6 +7,21 @@ describe Mongo::Auth do
 
   describe '#get' do
 
+    context 'when a mongodb_oidc user is provided' do
+
+      let(:user) do
+        Mongo::Auth::User.new(auth_mech: :mongodb_oidc, auth_mech_properties: { environment: 'test' })
+      end
+
+      let(:oidc) do
+        described_class.get(user, double('connection'))
+      end
+
+      it 'returns Oidc' do
+        expect(oidc).to be_a(Mongo::Auth::Oidc)
+      end
+    end
+
     context 'when a mongodb_cr user is provided' do
 
       let(:user) do
