@@ -50,6 +50,14 @@ module Mongo
       # @since 2.5.0
       def client_options
         opts = @txt_options.merge(ssl: true)
+        # There is a special case with MONGODB-OIDC where the TXT records for each host can set
+        # an authSource of admin because SCRAM is also enabled on the Atlas cluster to handle
+        # cluster admin. We want to ensure in this case that if the URI option for auth mech
+        # is MONGODB-OIDC that the auth source is not getting overriden to be admin and we allow
+        # the proper default of $external later in the mongo client constructor.
+        if uri_options['auth_mech'] == :mongodb_oidc
+          opts.delete(:auth_source)
+        end
         opts = opts.merge(uri_options).merge(:database => database)
         @user ? opts.merge(credentials) : opts
       end

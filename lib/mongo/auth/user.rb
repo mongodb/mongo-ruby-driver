@@ -212,7 +212,7 @@ module Mongo
       # @api private
       def self.default_auth_source(options)
         case options[:auth_mech]
-        when :aws, :gssapi, :mongodb_x509
+        when :aws, :gssapi, :mongodb_x509, :mongodb_oidc
           '$external'
         when :plain
           options[:database] || '$external'

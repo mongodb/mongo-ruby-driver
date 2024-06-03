@@ -154,6 +154,13 @@ RSpec.configure do |config|
     end
   end
 
+  def require_oidc(environment)
+    env = ENV['ENVIRONMENT']
+    before do
+      skip "Set ENVIRONMENT in the environment to #{environment} to run the OIDC #{environment} tests" if env != environment
+    end
+  end
+
   if SpecConfig.instance.ci?
     SdamFormatterIntegration.subscribe
     config.add_formatter(JsonExtFormatter, File.join(File.dirname(__FILE__), '../tmp/rspec.json'))

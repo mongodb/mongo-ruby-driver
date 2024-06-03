@@ -27,6 +27,7 @@ require 'mongo/auth/aws'
 require 'mongo/auth/cr'
 require 'mongo/auth/gssapi'
 require 'mongo/auth/ldap'
+require 'mongo/auth/oidc'
 require 'mongo/auth/scram'
 require 'mongo/auth/scram256'
 require 'mongo/auth/x509'
@@ -70,6 +71,7 @@ module Mongo
       aws: Aws,
       gssapi: Gssapi,
       mongodb_cr: CR,
+      mongodb_oidc: Oidc,
       mongodb_x509: X509,
       plain: LDAP,
       scram: Scram,
@@ -89,7 +91,7 @@ module Mongo
     #   value of speculativeAuthenticate field of hello response of
     #   the handshake on the specified connection.
     #
-    # @return [ Auth::Aws | Auth::CR | Auth::Gssapi | Auth::LDAP |
+    # @return [ Auth::Aws | Auth::CR | Auth::Gssapi | Auth::LDAP | Auth::Oidc
     #   Auth::Scram | Auth::Scram256 | Auth::X509 ] The authenticator.
     #
     # @since 2.0.0

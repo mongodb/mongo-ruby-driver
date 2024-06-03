@@ -172,8 +172,14 @@ class SpecConfig
     !!ENV['SERVERLESS']
   end
 
+  def oidc?
+    !!ENV['ENVIRONMENT']
+  end
+
   def kill_all_server_sessions?
-    !serverless? && # Serverless instances do not support killAllSessions command.
+    # Serverless instances do not support killAllSessions command and OIDC
+    # does not use SCRAM for the command and the tests do not need it.
+    !serverless? && !oidc? && 
       ClusterConfig.instance.fcv_ish >= '3.6'
   end
 

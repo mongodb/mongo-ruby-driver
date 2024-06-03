@@ -848,7 +848,9 @@ module Mongo
       def hash_extractor(name, value)
         h = {}
         value.split(',').each do |tag|
-          k, v = tag.split(':')
+          # Auth mech properties can have a : in them with the introduction of OIDC,
+          # so ensure here to split only into 2 strings.
+          k, v = tag.split(':', 2)
           if v.nil?
             log_warn("Invalid hash value for #{name}: key `#{k}` does not have a value: #{value}")
             next

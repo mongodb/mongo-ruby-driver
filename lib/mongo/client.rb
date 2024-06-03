@@ -526,6 +526,7 @@ module Mongo
         @srv_records = nil
       end
 
+
       options = self.class.canonicalize_ruby_options(options)
 
       # The server API version is specified to be a string.
@@ -1515,23 +1516,57 @@ module Mongo
         raise Mongo::Auth::InvalidMechanism.new(auth_mech)
       end
 
-      if user.nil? && !%i(aws mongodb_x509).include?(auth_mech)
+      if user.nil? && !%i(aws mongodb_x509 mongodb_oidc).include?(auth_mech)
         raise Mongo::Auth::InvalidConfiguration, "Username is required for auth mechanism #{auth_mech}"
       end
 
-      if password.nil? && !%i(aws gssapi mongodb_x509).include?(auth_mech)
+      if password.nil? && !%i(aws gssapi mongodb_oidc mongodb_x509).include?(auth_mech)
         raise Mongo::Auth::InvalidConfiguration, "Password is required for auth mechanism #{auth_mech}"
       end
 
-      if password && auth_mech == :mongodb_x509
-        raise Mongo::Auth::InvalidConfiguration, 'Password is not supported for :mongodb_x509 auth mechanism'
+      if password && (auth_mech == :mongodb_x509 || auth_mech == :mongodb_oidc)
+        raise Mongo::Auth::InvalidConfiguration, "Password is not supported for #{auth_mech} auth mechanism"
       end
 
       if auth_mech == :aws && user && !password
         raise Mongo::Auth::InvalidConfiguration, 'Username is provided but password is not provided for :aws auth mechanism'
       end
 
-      if %i(aws gssapi mongodb_x509).include?(auth_mech)
+      if auth_mech == :mongodb_oidc
+        if mech_properties
+          if mech_properties[:environment].nil? && mech_properties[:oidc_callback].nil?
+            raise Mongo::Auth::InvalidConfiguration, 'An OIDC callback or environment must be provided in the auth mechanism properties for OIDC authentication.'
+          end
+
+          if %w(azure gcp).include?(mech_properties[:environment]) && mech_properties[:token_resource].nil?
+            raise Mongo::Auth::InvalidConfiguration, "Token resource is required when using OIDC machine workflow: #{mech_properties[:environment]}"
+          end
+
+          if mech_properties[:environment] && mech_properties[:oidc_callback]
+            raise Mongo::Auth::InvalidConfiguration, 'Cannot supply both an oidc callback and environment for OIDC authentication.'
+          end
+
+          mech_properties.each_pair do |property, value|
+            if !%w(oidc_callback environment token_resource).include?(property)
+              raise Mongo::Auth::InvalidConfiguration, "Auth mechanism property #{property} is not supported with OIDC authentication."
+            end
+
+            if property === 'environment'
+              if !%w(azure gcp test).include?(value)
+                raise Mongo::Auth::InvalidConfiguration, "Auth mechanism property #{property} must be one of azure or gcp, got #{value}"
+              end
+
+              if value === 'test' && user
+                raise Mongo::Auth::InvalidConfiguration, 'Username cannot be provided for test machine workflow with OIDC authentication.'
+              end
+            end
+          end
+        else
+          raise Mongo::Auth::InvalidConfiguration, 'An OIDC callback or environment must be provided in the auth mechanism properties for OIDC authentication.'
+        end
+      end
+
+      if %i(aws gssapi mongodb_x509 mongodb_oidc).include?(auth_mech)
         if !['$external', nil].include?(auth_source)
           raise Mongo::Auth::InvalidConfiguration, "#{auth_source} is an invalid auth source for #{auth_mech}; valid options are $external and nil"
         end
@@ -1542,7 +1577,7 @@ module Mongo
         end
       end
 
-      if mech_properties && !%i(aws gssapi).include?(auth_mech)
+      if mech_properties && !%i(aws gssapi mongodb_oidc).include?(auth_mech)
         raise Mongo::Auth::InvalidConfiguration, ":mechanism_properties are not supported for auth mechanism #{auth_mech}"
       end
     end

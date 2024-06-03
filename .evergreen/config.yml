@@ -454,6 +454,48 @@ functions:
 
           CRYPT_SHARED_LIB_PATH="${CRYPT_SHARED_LIB_PATH}" SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
 
+  "run oidc vm tests":
+    - command: subprocess.exec
+      type: test
+      params:
+        working_dir: src
+        binary: bash
+        env:
+          DRIVERS_TOOLS: ${DRIVERS_TOOLS}
+          PROJECT_DIRECTORY: ${PROJECT_DIRECTORY}
+          RVM_RUBY: ${RVM_RUBY}
+          TEST_SCRIPT: ${TEST_SCRIPT}
+        args:
+          - .evergreen/${RUN_SCRIPT}
+
+  "run oidc prose tests":
+    - command: subprocess.exec
+      type: test
+      params:
+        working_dir: src
+        binary: bash
+        env:
+          DRIVERS_TOOLS: ${DRIVERS_TOOLS}
+          PROJECT_DIRECTORY: ${PROJECT_DIRECTORY}
+          ENVIRONMENT: ${ENVIRONMENT}
+          RVM_RUBY: ${RVM_RUBY}
+        args:
+          - .evergreen/run-tests-oidc-prose.sh
+
+  "run oidc unified tests":
+    - command: subprocess.exec
+      type: test
+      params:
+        working_dir: src
+        binary: bash
+        env:
+          DRIVERS_TOOLS: ${DRIVERS_TOOLS}
+          PROJECT_DIRECTORY: ${PROJECT_DIRECTORY}
+          ENVIRONMENT: ${ENVIRONMENT}
+          RVM_RUBY: ${RVM_RUBY}
+        args:
+          - .evergreen/run-tests-oidc-unified.sh
+
 pre:
   - func: "fetch source"
   - func: "create expansions"
@@ -721,6 +763,77 @@ task_groups:
     tasks:
       - testazurekms-task
 
+  - name: test_oidc_task_group
+    setup_group:
+      - func: fetch source
+      - func: create expansions
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
+      - command: subprocess.exec
+        params:
+          binary: bash
+          include_expansions_in_env:
+            - AWS_ACCESS_KEY_ID
+            - AWS_SECRET_ACCESS_KEY
+            - AWS_SESSION_TOKEN
+          env:
+            MONGODB_VERSION: '8.0'
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/setup.sh
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    tasks:
+      - oidc-auth-test-latest
+
+  - name: test_oidc_azure_task_group
+    setup_group:
+      - func: fetch source
+      - func: create expansions
+      - command: shell.exec
+        params:
+          shell: bash
+          script: |-
+            set -o errexit
+            ${PREPARE_SHELL}
+            export AZUREOIDC_VMNAME_PREFIX="RUBY_DRIVER"
+            $DRIVERS_TOOLS/.evergreen/auth_oidc/azure/setup.sh
+    teardown_task:
+      - command: shell.exec
+        params:
+          shell: bash
+          script: |-
+            ${PREPARE_SHELL}
+            $DRIVERS_TOOLS/.evergreen/auth_oidc/azure/teardown.sh
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    tasks:
+      - oidc-auth-test-azure-latest
+
+  - name: test_oidc_gcp_task_group
+    setup_group:
+      - func: fetch source
+      - func: create expansions
+      - command: shell.exec
+        params:
+          shell: bash
+          script: |-
+            set -o errexit
+            ${PREPARE_SHELL}
+            export GCPOIDC_VMNAME_PREFIX="RUBY_DRIVER"
+            $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/setup.sh
+    teardown_task:
+      - command: shell.exec
+        params:
+          shell: bash
+          script: |-
+            ${PREPARE_SHELL}
+            $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/teardown.sh
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    tasks:
+      - oidc-auth-test-gcp-latest
+
 tasks:
   - name: "test-atlas"
     commands:
@@ -865,8 +978,41 @@ tasks:
             LAMBDA_STACK_NAME: "dbx-ruby-lambda"
             RVM_RUBY: ruby-3.2
             MONGODB_URI: ${MONGODB_URI}
-axes:
 
+  - name: oidc-auth-test-latest
+    commands:
+      - func: "run oidc vm tests"
+        vars:
+          TEST_SCRIPT: run-tests-oidc-prose.sh
+          RUN_SCRIPT: run-tests-oidc-test.sh
+      - func: "run oidc vm tests"
+        vars:
+          TEST_SCRIPT: run-tests-oidc-unified.sh
+          RUN_SCRIPT: run-tests-oidc-test.sh
+
+  - name: oidc-auth-test-azure-latest
+    commands:
+      - func: "run oidc vm tests"
+        vars:
+          TEST_SCRIPT: run-tests-oidc-prose.sh
+          RUN_SCRIPT: run-tests-oidc-azure.sh
+      - func: "run oidc vm tests"
+        vars:
+          TEST_SCRIPT: run-tests-oidc-unified.sh
+          RUN_SCRIPT: run-tests-oidc-azure.sh
+
+  - name: oidc-auth-test-gcp-latest
+    commands:
+      - func: "run oidc vm tests"
+        vars:
+          TEST_SCRIPT: run-tests-oidc-prose.sh
+          RUN_SCRIPT: run-tests-oidc-gcp.sh
+      - func: "run oidc vm tests"
+        vars:
+          TEST_SCRIPT: run-tests-oidc-unified.sh
+          RUN_SCRIPT: run-tests-oidc-gcp.sh
+
+axes:
   - id: preload
     display_name: Preload server
     values:
@@ -1856,3 +2002,16 @@ buildvariants:
     display_name: "AWS Lambda"
     tasks:
        - name: test_aws_lambda_task_group
+
+  - matrix_name: test-oidc-variant
+    matrix_spec:
+      ruby: "ruby-3.2"
+      fle: helper
+      topology: standalone
+      os: ubuntu2204
+      mongodb-version: latest
+    display_name: "OIDC auth tests: latest ruby-3.2"
+    tasks:
+      - test_oidc_task_group
+      - test_oidc_azure_task_group
+      - test_oidc_gcp_task_group
