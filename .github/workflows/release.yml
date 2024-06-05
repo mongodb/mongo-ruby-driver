@@ -48,6 +48,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: debug
+        shell: bash
+        run: |
+          echo "AWS_REGION_NAME is '${{ vars.AWS_REGION_NAME }}'"
+
       - name: setup
         uses: mongodb-labs/drivers-github-tools/setup@v2
         with:
