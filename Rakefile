@@ -33,9 +33,6 @@ RUN_PRIORITY = %i(
   spec spec_sdam_integration
 )
 
-tasks = Rake.application.instance_variable_get('@tasks')
-tasks['release:do'] = tasks.delete('release')
-
 RSpec::Core::RakeTask.new(:spec) do |t|
   #t.rspec_opts = "--profile 5" if ENV['CI']
 end
@@ -108,16 +105,6 @@ namespace :spec do
     end
   end
 end
-
-namespace :release do
-  task :check_private_key do
-    unless File.exist?('gem-private_key.pem')
-      raise "No private key present, cannot release"
-    end
-  end
-end
-
-task :release => ['release:check_private_key', 'release:do']
 
 desc 'Build and validate the evergreen config'
 task eg: %w[ eg:build eg:validate ]

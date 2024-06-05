@@ -24,13 +24,6 @@ Gem::Specification.new do |s|
     'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
   }
 
-  if File.exist?('gem-private_key.pem')
-    s.signing_key     = 'gem-private_key.pem'
-    s.cert_chain      = ['gem-public_cert.pem']
-  else
-    warn "[#{s.name}] Warning: No private key present, creating unsigned gem."
-  end
-
   s.files             = Dir.glob('{bin,lib,spec}/**/*')
   s.files             += %w[mongo.gemspec LICENSE README.md CONTRIBUTING.md Rakefile]
   s.test_files        = Dir.glob('spec/**/*')

@@ -1,0 +1,114 @@
+name: "Driver Release"
+run-name: "Ruby Driver Release ${{ github.ref_name }}"
+
+on: workflow_dispatch
+
+env:
+  GIT_AUTHOR_NAME: "DBX Ruby Release Bot"
+  GIT_AUTHOR_EMAIL: "dbx-ruby@mongodb.com"
+  RELEASE_MESSAGE_TEMPLATE: |
+    Version {0} of the [MongoDB Ruby Driver](https://rubygems.org/gems/mongo) is now available.
+
+    **Release Highlights**
+
+    TODO: one or more paragraphs describing important changes in this release
+
+    **Documentation**
+
+    Documentation is available at [MongoDB.com](https://www.mongodb.com/docs/ruby-driver/current/).
+
+    **Installation**
+
+    You may install this version via RubyGems, with:
+
+    ```
+    gem install --version {0} mongo
+    ```
+
+jobs:
+  release:
+    name: "Driver Release"
+    runs-on: 'ubuntu-latest'
+
+    permissions:
+      # required for all workflows
+      security-events: write
+
+      # required to fetch internal or private CodeQL packs
+      packages: read
+
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+
+      # required by the mongodb/drivers-github-tools/setup@v2 step
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: setup
+        uses: mongodb/drivers-github-tools/setup@v2
+        with:
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws_region_name: ${{ vars.AWS_REGION_NAME }}
+          aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
+
+      - name: Get the driver version
+        shell: bash
+        run: |
+          echo "DRIVER_VERSION=$(ruby -Ilib -rmongo -e 'puts Mongo::VERSION')" >> "$GITHUB_ENV"
+
+      - name: Set output gem file name
+        shell: bash
+        run: |
+          echo "GEM_FILE_NAME=mongo-${{ env.DRIVER_VERSION }}.gem" >> "$GITHUB_ENV"
+
+      - name: Build the gem
+        shell: bash
+        run: |
+          gem build --output=${{ env.GEM_FILE_NAME }} mongo.gemspec
+
+      - name: Sign the gem
+        uses: mongodb/drivers-github-tools/gpg-sign@v2
+        with:
+          filenames: '${{ env.GEM_FILE_NAME }}'
+
+      - name: Set git author information
+        shell: bash
+        run: |
+          git config user.name "${GIT_AUTHOR_NAME}"
+          git config user.email "${GIT_AUTHOR_EMAIL}"
+
+      - name: Create and sign the tag
+        uses: mongodb-labs/drivers-github-tools/garasign/git-sign@v2
+        with:
+          command: "git tag -u ${{ env.GPG_KEY_ID }} -m 'Release tag for v${{ env.DRIVER_VERSION }}' v${{ env.DRIVER_VERSION }}"
+
+      - name: Create a new release
+        shell: bash
+        run: gh release create ${{ env.DRIVER_VERSION }} --target v${{ env.DRIVER_VERSION }} --generate-notes --draft
+
+      - name: Capture the changelog
+        shell: bash
+        run: gh release view ${{ env.DRIVER_VERSION }} --json body --template '{{ .body }}' >> changelog
+
+      - name: Prepare release message
+        shell: bash
+        run: |
+          echo "${{ format(env.RELEASE_MESSAGE_TEMPLATE, env.DRIVER_VERSION) }}" > release-message
+          cat changelog >> release-message
+
+      - name: Update release information
+        shell: bash
+        run: |
+          echo "RELEASE_URL=$(gh release edit ${{ env.DRIVER_VERSION }} --notes-file release-message)" >> "$GITHUB_ENV"
+
+      - name: Upload release artifacts
+        run: gh release upload v${{ env.DRIVER_VERSION }} ${{ env.GEM_FILE_NAME }} ${{ env.GEM_FILE_NAME }}.sig
+
+      - name: Publish the gem
+        shell: bash
+        run: |
+          echo "if this were real, the gem would be pushed to rubygems here"
