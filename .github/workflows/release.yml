@@ -82,7 +82,7 @@ jobs:
           git config user.email "${GIT_AUTHOR_EMAIL}"
 
       - name: Create and sign the tag
-        uses: mongodb-labs/drivers-github-tools/garasign/git-sign@v2
+        uses: mongodb-labs/drivers-github-tools/git-sign@v2
         with:
           command: "git tag -u ${{ env.GPG_KEY_ID }} -m 'Release tag for v${{ env.DRIVER_VERSION }}' v${{ env.DRIVER_VERSION }}"
 
