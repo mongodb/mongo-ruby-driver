@@ -60,13 +60,6 @@ jobs:
         with:
           token: ${{ env.GH_TOKEN }}
 
-      - name: "Create temporary app token"
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: setup
         uses: mongodb-labs/drivers-github-tools/setup@v2
         with:
