@@ -48,23 +48,14 @@ task :build do
   WARNING
 end
 
-# overrides the default Bundler-provided `release` task, which also
-# builds the gem. Our release process assumes the gem has already
-# been built (and signed via GPG), so we just need `rake release` to
-# push the gem to rubygems.
+# overrides the default Bundler-provided `release` task to indicate that
+# releasing a gem must be done via the 'Driver Release' action.
 task :release do
-  require 'mongo/version'
-
-  if ENV['GITHUB_ACTION'].nil?
-    abort <<~WARNING
-      `rake release` must be invoked from a GitHub action, and must not
-      be invoked locally.
-
-      mongo-#{Mongo::VERSION}.gem was NOT pushed to RubyGems.
-    WARNING
-  end
-
-  system 'gem', 'push', "mongo-#{Mongo::VERSION}.gem"
+  abort <<~WARNING
+    `rake release` does nothing in this project. The gem must be released via
+    the `Driver Release` action on GitHub, which is triggered manually when
+    a new release is ready.
+  WARNING
 end
 
 task :mongo do

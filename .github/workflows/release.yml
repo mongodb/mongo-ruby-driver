@@ -122,4 +122,4 @@ jobs:
       - name: Publish the gem
         shell: bash
         run: |
-          echo "if this were real, the gem would be pushed to rubygems here"
+          gem push ${{ env.GEM_FILE_NAME }}
