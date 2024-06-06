@@ -41,6 +41,7 @@ jobs:
       contents: write
 
       # required by the mongodb-labs/drivers-github-tools/setup@v2 step
+      # also required by `rubygems/release-gem`
       id-token: write
 
     steps:
@@ -120,6 +121,4 @@ jobs:
         run: gh release upload v${{ env.DRIVER_VERSION }} ${{ env.GEM_FILE_NAME }} ${{ env.RELEASE_ASSETS }}/${{ env.GEM_FILE_NAME }}.sig
 
       - name: Publish the gem
-        shell: bash
-        run: |
-          gem push ${{ env.GEM_FILE_NAME }}
+        uses: rubygems/release-gem@v1
