@@ -59,7 +59,13 @@ jobs:
         with:
           token: ${{ env.GH_TOKEN }}
 
-      - name: setup
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Setup GitHub tooling for DBX Drivers
         uses: mongodb-labs/drivers-github-tools/setup@v2
         with:
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
