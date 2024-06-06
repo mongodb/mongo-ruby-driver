@@ -2,10 +2,7 @@
 # rubocop:todo all
 
 require 'bundler'
-require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
-# TODO move the mongo require into the individual tasks that actually need it
-require 'mongo'
 
 ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
 
@@ -39,9 +36,44 @@ end
 
 task :default => ['spec:prepare', :spec]
 
+# stands in for the Bundler-provided `build` task, which builds the
+# gem for this project. Our release process builds the gems in a
+# particular way, in a GitHub action. This task is just to help remind
+# developers of that fact.
+task :build do
+  abort <<~WARNING
+    `rake build` does nothing in this project. The gem must be built via
+    the `Driver Release` action on GitHub, which is triggered manually when
+    a new release is ready.
+  WARNING
+end
+
+# overrides the default Bundler-provided `release` task, which also
+# builds the gem. Our release process assumes the gem has already
+# been built (and signed via GPG), so we just need `rake release` to
+# push the gem to rubygems.
+task :release do
+  require 'mongo/version'
+
+  if ENV['GITHUB_ACTION'].nil?
+    abort <<~WARNING
+      `rake release` must be invoked from a GitHub action, and must not
+      be invoked locally.
+
+      mongo-#{Mongo::VERSION}.gem was NOT pushed to RubyGems.
+    WARNING
+  end
+
+  system 'gem', 'push', "mongo-#{Mongo::VERSION}.gem"
+end
+
+task :mongo do
+  require 'mongo'
+end
+
 namespace :spec do
   desc 'Creates necessary user accounts in the cluster'
-  task :prepare do
+  task prepare: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     require 'support/utils'
@@ -50,7 +82,7 @@ namespace :spec do
   end
 
   desc 'Waits for sessions to be available in the deployment'
-  task :wait_for_sessions do
+  task wait_for_sessions: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     require 'support/utils'
@@ -74,7 +106,7 @@ namespace :spec do
   end
 
   desc 'Prints configuration used by the test suite'
-  task :config do
+  task config: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     # Since this task is usually used for troubleshooting of test suite
