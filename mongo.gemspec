@@ -6,21 +6,25 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'mongo/version'
 
 Gem::Specification.new do |s|
-  s.name              = 'mogno'
+  s.name              = 'mongo'
   s.version           = Mongo::VERSION
   s.platform          = Gem::Platform::RUBY
-  s.authors           = ["The MongoDB Ruby Team"]
-  s.email             = "dbx-ruby@mongodb.com"
+  s.authors           = [ 'The MongoDB Ruby Team' ]
+  s.email             = 'dbx-ruby@mongodb.com'
   s.homepage          = 'https://mongodb.com/docs/ruby-driver/'
-  s.summary           = 'A dummy instance of the Ruby driver for MongoDB, for testing gem deployment'
-  s.description       = 'A dummy instance of the Ruby driver for MongoDB, for testing gem deployment'
+  s.summary           = 'Ruby driver for MongoDB'
   s.license           = 'Apache-2.0'
+  s.description       = <<~DESC
+    A pure-Ruby driver for connecting to, querying, and manipulating MongoDB
+    databases. Officially developed and supported by MongoDB, with love for
+    the Ruby community.
+  DESC
 
   s.metadata = {
     'bug_tracker_uri' => 'https://jira.mongodb.org/projects/RUBY',
     'changelog_uri' => 'https://github.com/mongodb/mongo-ruby-driver/releases',
-    'documentation_uri' => 'https://mongodb.com/docs/ruby-driver/',
     'homepage_uri' => 'https://mongodb.com/docs/ruby-driver/',
+    'documentation_uri' => 'https://mongodb.com/docs/ruby-driver/current/tutorials/quick-start/',
     'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
   }
 
