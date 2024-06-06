@@ -126,3 +126,5 @@ jobs:
 
       - name: Publish the gem
         uses: rubygems/release-gem@v1
+        with:
+          await-release: false
