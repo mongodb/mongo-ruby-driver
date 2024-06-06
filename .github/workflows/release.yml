@@ -92,6 +92,11 @@ jobs:
         with:
           command: "git tag -u ${{ env.GPG_KEY_ID }} -m 'Release tag for v${{ env.DRIVER_VERSION }}' v${{ env.DRIVER_VERSION }}"
 
+      - name: Push the tag to the repository
+        shell: bash
+        run: |
+          git push origin v${{ env.DRIVER_VERSION }}
+
       - name: Create a new release
         shell: bash
         run: gh release create ${{ env.DRIVER_VERSION }} --target v${{ env.DRIVER_VERSION }} --generate-notes --draft
