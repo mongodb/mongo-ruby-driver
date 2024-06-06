@@ -117,7 +117,7 @@ jobs:
           echo "RELEASE_URL=$(gh release edit v${{ env.DRIVER_VERSION }} --notes-file release-message)" >> "$GITHUB_ENV"
 
       - name: Upload release artifacts
-        run: gh release upload v${{ env.DRIVER_VERSION }} ${{ env.GEM_FILE_NAME }} ${{ env.GEM_FILE_NAME }}.sig
+        run: gh release upload v${{ env.DRIVER_VERSION }} ${{ env.GEM_FILE_NAME }} ${{ env.RELEASE_ASSETS }}/${{ env.GEM_FILE_NAME }}.sig
 
       - name: Publish the gem
         shell: bash
