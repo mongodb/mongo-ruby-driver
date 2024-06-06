@@ -19,9 +19,7 @@ env:
 
     You may install this version via RubyGems, with:
 
-    ```
     gem install --version {0} mongo
-    ```
 
 jobs:
   release:
