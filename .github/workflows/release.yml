@@ -70,7 +70,7 @@ jobs:
       - name: Get the driver version
         shell: bash
         run: |
-          echo "DRIVER_VERSION=$(ruby -Ilib -rmongo -e 'puts Mongo::VERSION')" >> "$GITHUB_ENV"
+          echo "DRIVER_VERSION=$(ruby -Ilib -rmongo/version -e 'puts Mongo::VERSION')" >> "$GITHUB_ENV"
 
       - name: Set output gem file name
         shell: bash
