@@ -99,11 +99,11 @@ jobs:
 
       - name: Create a new release
         shell: bash
-        run: gh release create ${{ env.DRIVER_VERSION }} --target v${{ env.DRIVER_VERSION }} --generate-notes --draft
+        run: gh release create v${{ env.DRIVER_VERSION }} --title ${{ env.DRIVER_VERSION }} --generate-notes --draft
 
       - name: Capture the changelog
         shell: bash
-        run: gh release view ${{ env.DRIVER_VERSION }} --json body --template '{{ .body }}' >> changelog
+        run: gh release view v${{ env.DRIVER_VERSION }} --json body --template '{{ .body }}' >> changelog
 
       - name: Prepare release message
         shell: bash
@@ -114,7 +114,7 @@ jobs:
       - name: Update release information
         shell: bash
         run: |
-          echo "RELEASE_URL=$(gh release edit ${{ env.DRIVER_VERSION }} --notes-file release-message)" >> "$GITHUB_ENV"
+          echo "RELEASE_URL=$(gh release edit v${{ env.DRIVER_VERSION }} --notes-file release-message)" >> "$GITHUB_ENV"
 
       - name: Upload release artifacts
         run: gh release upload v${{ env.DRIVER_VERSION }} ${{ env.GEM_FILE_NAME }} ${{ env.GEM_FILE_NAME }}.sig
