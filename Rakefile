@@ -8,8 +8,6 @@ ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
 
 $: << File.join(ROOT, 'spec/shared/lib')
 
-require 'mrss/spec_organizer'
-
 CLASSIFIERS = [
   [%r,^mongo/server,, :unit_server],
   [%r,^mongo,, :unit],
@@ -119,6 +117,8 @@ namespace :spec do
   end
 
   def spec_organizer
+    require 'mrss/spec_organizer'
+
     Mrss::SpecOrganizer.new(
       root: ROOT,
       classifiers: CLASSIFIERS,
