@@ -55,8 +55,13 @@ task :release do
 
   if ENV['GITHUB_ACTION'].nil?
     abort <<~WARNING
-      `rake release` must be invoked from a GitHub action, and must not
-      be invoked locally.
+      `rake release` must be invoked from the `Driver Release` GitHub action,
+      and must not be invoked locally. This ensures the gem is properly signed
+      and distributed by the appropriate user.
+
+      Note that it is the `rubygems/release-gem@v1` step in the `Driver Release`
+      action that invokes this task. Do not rename or remove this task, or the
+      release-gem step will fail. Reimplement this task with caution.
 
       mongo-#{Mongo::VERSION}.gem was NOT pushed to RubyGems.
     WARNING
