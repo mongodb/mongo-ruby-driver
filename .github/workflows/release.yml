@@ -1,0 +1,130 @@
+name: "Driver Release"
+run-name: "Ruby Driver Release ${{ github.ref_name }}"
+
+on: workflow_dispatch
+
+env:
+  RELEASE_MESSAGE_TEMPLATE: |
+    Version {0} of the [MongoDB Ruby Driver](https://rubygems.org/gems/mongo) is now available.
+
+    **Release Highlights**
+
+    TODO: one or more paragraphs describing important changes in this release
+
+    **Documentation**
+
+    Documentation is available at [MongoDB.com](https://www.mongodb.com/docs/ruby-driver/current/).
+
+    **Installation**
+
+    You may install this version via RubyGems, with:
+
+    gem install --version {0} mongo
+
+jobs:
+  release:
+    name: "Driver Release"
+    environment: release
+    runs-on: 'ubuntu-latest'
+
+    permissions:
+      # required for all workflows
+      security-events: write
+
+      # required to fetch internal or private CodeQL packs
+      packages: read
+
+      # only required for workflows in private repositories
+      actions: read
+      contents: write
+
+      # required by the mongodb-labs/drivers-github-tools/setup@v2 step
+      # also required by `rubygems/release-gem`
+      id-token: write
+
+    steps:
+      - name: "Create temporary app token"
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: "Store GitHub token in environment"
+        run: echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ env.GH_TOKEN }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Setup GitHub tooling for DBX Drivers
+        uses: mongodb-labs/drivers-github-tools/setup@v2
+        with:
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws_region_name: ${{ vars.AWS_REGION_NAME }}
+          aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
+
+      - name: Get the driver version
+        shell: bash
+        run: |
+          echo "DRIVER_VERSION=$(ruby -Ilib -rmongo/version -e 'puts Mongo::VERSION')" >> "$GITHUB_ENV"
+
+      - name: Set output gem file name
+        shell: bash
+        run: |
+          echo "GEM_FILE_NAME=mongo-${{ env.DRIVER_VERSION }}.gem" >> "$GITHUB_ENV"
+
+      - name: Build the gem
+        shell: bash
+        run: |
+          gem build --output=${{ env.GEM_FILE_NAME }} mongo.gemspec
+
+      - name: Sign the gem
+        uses: mongodb-labs/drivers-github-tools/gpg-sign@v2
+        with:
+          filenames: '${{ env.GEM_FILE_NAME }}'
+
+      - name: Create and sign the tag
+        uses: mongodb-labs/drivers-github-tools/git-sign@v2
+        with:
+          command: "git tag -u ${{ env.GPG_KEY_ID }} -m 'Release tag for v${{ env.DRIVER_VERSION }}' v${{ env.DRIVER_VERSION }}"
+
+      - name: Push the tag to the repository
+        shell: bash
+        run: |
+          git push origin v${{ env.DRIVER_VERSION }}
+
+      - name: Create a new release
+        shell: bash
+        run: gh release create v${{ env.DRIVER_VERSION }} --title ${{ env.DRIVER_VERSION }} --generate-notes --draft
+
+      - name: Capture the changelog
+        shell: bash
+        run: gh release view v${{ env.DRIVER_VERSION }} --json body --template '{{ .body }}' >> changelog
+
+      - name: Prepare release message
+        shell: bash
+        run: |
+          echo "${{ format(env.RELEASE_MESSAGE_TEMPLATE, env.DRIVER_VERSION) }}" > release-message
+          cat changelog >> release-message
+
+      - name: Update release information
+        shell: bash
+        run: |
+          echo "RELEASE_URL=$(gh release edit v${{ env.DRIVER_VERSION }} --notes-file release-message)" >> "$GITHUB_ENV"
+
+      - name: Upload release artifacts
+        run: gh release upload v${{ env.DRIVER_VERSION }} ${{ env.GEM_FILE_NAME }} ${{ env.RELEASE_ASSETS }}/${{ env.GEM_FILE_NAME }}.sig
+
+      - name: Publish the gem
+        uses: rubygems/release-gem@v1
+        with:
+          await-release: false
