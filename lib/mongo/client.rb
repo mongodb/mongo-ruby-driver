@@ -1353,6 +1353,13 @@ module Mongo
         end
         _options
       end
+
+      unless !opts[:compressors]&.empty? ||
+             opts[:warn_compression_disabled] == false ||
+             @@warned_compression_disabled
+        log_warn("Compression is disabled. Refer to: https://www.mongodb.com/docs/ruby-driver/current/reference/create-client/#compression. You may silence this warning by setting :warn_compression_disabled = false.")
+        @@warned_compression_disabled = true
+      end
     end
 
     # Validates all options after they are set on the client.
