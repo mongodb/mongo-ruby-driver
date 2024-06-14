@@ -1,0 +1,58 @@
+name: "Dry-Run Cleanup"
+description: Cleans up assets and tags created from a prior dry run
+inputs:
+  confirm:
+    description: Indicate whether you want this workflow to run (must be "true")
+    required: true
+  tag:
+    description: The name of the tag (and release) to clean up
+    required: true
+
+on: workflow_dispatch
+
+jobs:
+  release:
+    name: "Dry-Run Cleanup"
+    environment: release
+    runs-on: 'ubuntu-latest'
+    if: ${{ inputs.confirm == 'true' }}
+
+    permissions:
+      # required for all workflows
+      security-events: write
+
+      # required to fetch internal or private CodeQL packs
+      packages: read
+
+      # only required for workflows in private repositories
+      actions: read
+      contents: write
+
+      # required by the mongodb-labs/drivers-github-tools/setup@v2 step
+      # also required by `rubygems/release-gem`
+      id-token: write
+
+    steps:
+      - name: "Create temporary app token"
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: "Store GitHub token in environment"
+        run: echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ env.GH_TOKEN }}
+
+      - name: Delete the release
+        shell: bash
+        run: "gh release delete ${{ inputs.tag }}"
+
+      - name: Delete the tag
+        shell: bash
+        run: "git push --delete origin ${{ inputs.tag }}"
