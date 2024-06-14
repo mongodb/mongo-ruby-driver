@@ -1,11 +1,13 @@
 name: "Driver Release"
 run-name: "Driver Release for ${{ github.ref }}"
-inputs:
-  dry_run:
-    description: "Whether this is a dry run or not"
-    required: true
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Whether this is a dry run or not"
+        required: true
+        type: string
 
 env:
   SILK_ASSET_GROUP: mongodb-ruby-driver
