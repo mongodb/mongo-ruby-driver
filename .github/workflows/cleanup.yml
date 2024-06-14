@@ -1,5 +1,5 @@
 name: "Dry-Run Cleanup"
-description: Cleans up assets and tags created from a prior dry run
+run-name: "Dry Run Cleanup for ${{ github.ref }}"
 inputs:
   confirm:
     description: Indicate whether you want this workflow to run (must be "true")

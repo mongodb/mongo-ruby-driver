@@ -1,5 +1,5 @@
 name: "Driver Release"
-description: Build and publish the gem and related deliverables for the MongoDB Ruby driver.
+run-name: "Driver Release for ${{ github.ref }}"
 inputs:
   dry_run:
     description: "Whether this is a dry run or not"
