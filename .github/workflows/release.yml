@@ -107,6 +107,7 @@ jobs:
           token: ${{ env.GH_TOKEN }}
 
       - uses: mongodb-labs/drivers-github-tools/sbom@v2
+        if: ${{ env.SBOM_ENABLED }}
         with:
           silk_asset_group: ${{ env.SILK_ASSET_GROUP }}
 
