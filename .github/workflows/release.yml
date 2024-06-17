@@ -10,7 +10,8 @@ on:
         type: string
 
 env:
-  SILK_ASSET_GROUP: mongodb-ruby-driver
+  #SILK_ASSET_GROUP: mongodb-ruby-driver
+  SILK_ASSET_GROUP: bson-ruby
   RELEASE_MESSAGE_TEMPLATE: |
     Version {0} of the [MongoDB Ruby Driver](https://rubygems.org/gems/mongo) is now available.
 
@@ -154,6 +155,7 @@ jobs:
       - name: Upload S3 assets
         uses: mongodb-labs/drivers-github-tools/upload-s3-assets@v2
         with:
+          # and....something about ruby-driver-release-assets ???
           version: ${{ env.DRIVER_VERSION }}
           product_name: mongodb-ruby-driver
           dry_run: ${{ inputs.dry_run }}
