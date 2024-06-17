@@ -114,6 +114,8 @@ jobs:
 
       - name: Generate Sarif Report
         uses: mongodb-labs/drivers-github-tools/code-scanning-export@v2
+        with:
+          output-file: ${{ env.S3_ASSETS }}/code-scanning-alerts.json
 
       - name: Generate Compliance Report
         uses: mongodb-labs/drivers-github-tools/compliance-report@v2
@@ -158,7 +160,7 @@ jobs:
           # and....something about ruby-driver-release-assets ???
           version: ${{ env.DRIVER_VERSION }}
           product_name: mongodb-ruby-driver
-          dry_run: ${{ inputs.dry_run }}
+          # dry_run: ${{ inputs.dry_run }}
 
       - name: Publish the gem
         uses: rubygems/release-gem@v1
