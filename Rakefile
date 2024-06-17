@@ -2,16 +2,11 @@
 # rubocop:todo all
 
 require 'bundler'
-require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
-# TODO move the mongo require into the individual tasks that actually need it
-require 'mongo'
 
 ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
 
 $: << File.join(ROOT, 'spec/shared/lib')
-
-require 'mrss/spec_organizer'
 
 CLASSIFIERS = [
   [%r,^mongo/server,, :unit_server],
@@ -33,18 +28,55 @@ RUN_PRIORITY = (ENV['RUN_PRIORITY'] || %(
   spec spec_sdam_integration
 )).split.map(&:to_sym)
 
-tasks = Rake.application.instance_variable_get('@tasks')
-tasks['release:do'] = tasks.delete('release')
-
 RSpec::Core::RakeTask.new(:spec) do |t|
   #t.rspec_opts = "--profile 5" if ENV['CI']
 end
 
 task :default => ['spec:prepare', :spec]
 
+# stands in for the Bundler-provided `build` task, which builds the
+# gem for this project. Our release process builds the gems in a
+# particular way, in a GitHub action. This task is just to help remind
+# developers of that fact.
+task :build do
+  abort <<~WARNING
+    `rake build` does nothing in this project. The gem must be built via
+    the `Driver Release` action on GitHub, which is triggered manually when
+    a new release is ready.
+  WARNING
+end
+
+# overrides the default Bundler-provided `release` task, which also
+# builds the gem. Our release process assumes the gem has already
+# been built (and signed via GPG), so we just need `rake release` to
+# push the gem to rubygems.
+task :release do
+  require 'mongo/version'
+
+  if ENV['GITHUB_ACTION'].nil?
+    abort <<~WARNING
+      `rake release` must be invoked from the `Driver Release` GitHub action,
+      and must not be invoked locally. This ensures the gem is properly signed
+      and distributed by the appropriate user.
+
+      Note that it is the `rubygems/release-gem@v1` step in the `Driver Release`
+      action that invokes this task. Do not rename or remove this task, or the
+      release-gem step will fail. Reimplement this task with caution.
+
+      mongo-#{Mongo::VERSION}.gem was NOT pushed to RubyGems.
+    WARNING
+  end
+
+  system 'gem', 'push', "mongo-#{Mongo::VERSION}.gem"
+end
+
+task :mongo do
+  require 'mongo'
+end
+
 namespace :spec do
   desc 'Creates necessary user accounts in the cluster'
-  task :prepare do
+  task prepare: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     require 'support/utils'
@@ -53,7 +85,7 @@ namespace :spec do
   end
 
   desc 'Waits for sessions to be available in the deployment'
-  task :wait_for_sessions do
+  task wait_for_sessions: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     require 'support/utils'
@@ -77,7 +109,7 @@ namespace :spec do
   end
 
   desc 'Prints configuration used by the test suite'
-  task :config do
+  task config: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     # Since this task is usually used for troubleshooting of test suite
@@ -90,6 +122,8 @@ namespace :spec do
   end
 
   def spec_organizer
+    require 'mrss/spec_organizer'
+
     Mrss::SpecOrganizer.new(
       root: ROOT,
       classifiers: CLASSIFIERS,
@@ -108,16 +142,6 @@ namespace :spec do
     end
   end
 end
-
-namespace :release do
-  task :check_private_key do
-    unless File.exist?('gem-private_key.pem')
-      raise "No private key present, cannot release"
-    end
-  end
-end
-
-task :release => ['release:check_private_key', 'release:do']
 
 desc 'Build and validate the evergreen config'
 task eg: %w[ eg:build eg:validate ]
