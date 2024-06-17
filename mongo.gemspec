@@ -9,27 +9,24 @@ Gem::Specification.new do |s|
   s.name              = 'mongo'
   s.version           = Mongo::VERSION
   s.platform          = Gem::Platform::RUBY
-  s.authors           = ["The MongoDB Ruby Team"]
-  s.email             = "dbx-ruby@mongodb.com"
+  s.authors           = [ 'The MongoDB Ruby Team' ]
+  s.email             = 'dbx-ruby@mongodb.com'
   s.homepage          = 'https://mongodb.com/docs/ruby-driver/'
   s.summary           = 'Ruby driver for MongoDB'
-  s.description       = 'A Ruby driver for MongoDB'
   s.license           = 'Apache-2.0'
+  s.description       = <<~DESC
+    A pure-Ruby driver for connecting to, querying, and manipulating MongoDB
+    databases. Officially developed and supported by MongoDB, with love for
+    the Ruby community.
+  DESC
 
   s.metadata = {
     'bug_tracker_uri' => 'https://jira.mongodb.org/projects/RUBY',
     'changelog_uri' => 'https://github.com/mongodb/mongo-ruby-driver/releases',
-    'documentation_uri' => 'https://mongodb.com/docs/ruby-driver/',
     'homepage_uri' => 'https://mongodb.com/docs/ruby-driver/',
+    'documentation_uri' => 'https://mongodb.com/docs/ruby-driver/current/tutorials/quick-start/',
     'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
   }
-
-  if File.exist?('gem-private_key.pem')
-    s.signing_key     = 'gem-private_key.pem'
-    s.cert_chain      = ['gem-public_cert.pem']
-  else
-    warn "[#{s.name}] Warning: No private key present, creating unsigned gem."
-  end
 
   s.files             = Dir.glob('{bin,lib,spec}/**/*')
   s.files             += %w[mongo.gemspec LICENSE README.md CONTRIBUTING.md Rakefile]

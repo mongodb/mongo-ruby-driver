@@ -287,7 +287,7 @@ module Mongo
         # for instance, if there is no newline between two certificates
         # this code will extract them both but OpenSSL fails in this situation.
         if cert_text
-          certs = cert_text.scan(/-----BEGIN CERTIFICATE-----(?:.|\n)+?-----END CERTIFICATE-----/)
+          certs = extract_certs(cert_text)
           if certs.length > 1
             context.cert = OpenSSL::X509::Certificate.new(certs.shift)
             context.extra_chain_cert = certs.map do |cert|
@@ -388,6 +388,27 @@ module Mongo
       def run_tls_context_hooks
         Mongo.tls_context_hooks.each do |hook|
           hook.call(@context)
+        end
+      end
+
+      BEGIN_CERT = "-----BEGIN CERTIFICATE-----"
+      END_CERT = "-----END CERTIFICATE-----"
+
+      # This was originally a scan + regex, but the regex was particularly
+      # inefficient and was flagged as a concern by static analysis.
+      def extract_certs(text)
+        [].tap do |list|
+          pos = 0
+
+          while (begin_idx = text.index(BEGIN_CERT, pos))
+            end_idx = text.index(END_CERT, begin_idx)
+            break unless end_idx
+
+            end_idx += END_CERT.length
+            list.push(text[begin_idx...end_idx])
+
+            pos = end_idx
+          end
         end
       end
     end
