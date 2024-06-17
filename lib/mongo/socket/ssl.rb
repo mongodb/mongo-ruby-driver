@@ -368,7 +368,9 @@ module Mongo
         end
 
         cert = socket.peer_cert
-        ca_cert = socket.peer_cert_chain.last
+        # In the case where the leaf certificate and CA are the same, the chain may only contain one certificate.
+        # If the chain has multiple certificates, the one directly after the leaf should be the issuer.
+        ca_cert = socket.peer_cert_chain.length > 1 ? socket.peer_cert_chain[1] : cert
 
         verifier = OcspVerifier.new(@host_name, cert, ca_cert, context.cert_store,
           **Utils.shallow_symbolize_keys(options))
