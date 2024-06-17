@@ -10,6 +10,8 @@ set_env_vars
 set_env_python
 set_env_ruby
 
+source ${DRIVERS_TOOLS}/.evergreen/serverless/secrets-export.sh
+
 bundle_install
 
 export MONGODB_URI=`echo ${SERVERLESS_URI} | sed -r 's/mongodb\+srv:\/\//mongodb\+srv:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`

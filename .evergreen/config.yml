@@ -1816,27 +1816,27 @@ buildvariants:
        - name: test-atlas
 
 # Commented out, pending RUBY-3414
-#  - matrix_name: "serverless"
-#    matrix_spec:
-#      # https://jira.mongodb.org/browse/RUBY-3217
-#      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
-#      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7"]
-#      fle: path
-#      os: rhel8
-#    display_name: "Atlas serverless ${ruby}"
-#    tasks:
-#       - name: serverless_task_group
-#
-#  - matrix_name: "serverless-next"
-#    matrix_spec:
-#      # https://jira.mongodb.org/browse/RUBY-3217
-#      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
-#      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7"]
-#      fle: path
-#      os: rhel8
-#    display_name: "Atlas serverless-next ${ruby}"
-#    tasks:
-#       - name: serverless_next_task_group
+  - matrix_name: "serverless"
+    matrix_spec:
+      # https://jira.mongodb.org/browse/RUBY-3217
+      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7"]
+      fle: path
+      os: rhel8
+    display_name: "Atlas serverless ${ruby}"
+    tasks:
+       - name: serverless_task_group
+
+  - matrix_name: "serverless-next"
+    matrix_spec:
+      # https://jira.mongodb.org/browse/RUBY-3217
+      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
+      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7"]
+      fle: path
+      os: rhel8
+    display_name: "Atlas serverless-next ${ruby}"
+    tasks:
+       - name: serverless_next_task_group
 
   - matrix_name: "aws-lambda"
     matrix_spec:
