@@ -199,6 +199,7 @@ module Mongo
       # MONGODB-CR is deprecated and will be removed in driver version 3.0
       'MONGODB-CR'   => :mongodb_cr,
       'MONGODB-X509' => :mongodb_x509,
+      'MONGODB-OIDC' => :mongodb_oidc,
       'PLAIN'        => :plain,
       'SCRAM-SHA-1'  => :scram,
       'SCRAM-SHA-256' => :scram256,
