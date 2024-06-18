@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: "Run the cleanup action"
-        uses: jamis/drivers-github-tools/ruby/cleanup@ruby-actions"
+        uses: jamis/drivers-github-tools/ruby/cleanup@ruby-actions
         with:
           app_id: ${{ vars.APP_ID }}
           app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
