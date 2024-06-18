@@ -36,26 +36,9 @@ jobs:
       id-token: write
 
     steps:
-      - name: "Create temporary app token"
-        uses: actions/create-github-app-token@v1
-        id: app-token
+      - name: "Run the cleanup action"
+        uses: jamis/drivers-github-tools/ruby/cleanup@ruby-actions"
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
-      - name: "Store GitHub token in environment"
-        run: echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
-        shell: bash
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ env.GH_TOKEN }}
-
-      - name: Delete the release
-        shell: bash
-        run: "gh release delete ${{ inputs.tag }}"
-
-      - name: Delete the tag
-        shell: bash
-        run: "git push --delete origin ${{ inputs.tag }}"
+          app_id: ${{ vars.APP_ID }}
+          app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          tag: ${{ inputs.tag }}

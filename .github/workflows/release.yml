@@ -50,118 +50,17 @@ jobs:
       id-token: write
 
     steps:
-      - name: "Create temporary app token"
-        uses: actions/create-github-app-token@v1
-        id: app-token
+      - name: "Run the publish action"
+        uses: jamis/drivers-github-tools/ruby/publish@ruby-actions"
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
-      - name: "Store GitHub token in environment"
-        run: echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
-        shell: bash
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ env.GH_TOKEN }}
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-
-      - name: Setup GitHub tooling for DBX Drivers
-        uses: mongodb-labs/drivers-github-tools/setup@v2
-        with:
+          app_id: ${{ vars.APP_ID }}
+          app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-
-      - name: Get the driver version
-        shell: bash
-        run: |
-          echo "DRIVER_VERSION=$(ruby -Ilib -rmongo/version -e 'puts Mongo::VERSION')" >> "$GITHUB_ENV"
-
-      - name: Set output gem file name
-        shell: bash
-        run: |
-          echo "GEM_FILE_NAME=mongo-${{ env.DRIVER_VERSION }}.gem" >> "$GITHUB_ENV"
-
-      - name: Build the gem
-        shell: bash
-        run: |
-          gem build --output=${{ env.GEM_FILE_NAME }} mongo.gemspec
-
-      - name: Sign the gem
-        uses: mongodb-labs/drivers-github-tools/gpg-sign@v2
-        with:
-          filenames: '${{ env.GEM_FILE_NAME }}'
-
-      - uses: mongodb-labs/drivers-github-tools/authorized-pub@v2
-        with:
-          product_name: Ruby Driver
-          release_version: ${{ env.DRIVER_VERSION }}
-          filenames: ${{ env.GEM_FILE_NAME }}
-          token: ${{ env.GH_TOKEN }}
-
-      - uses: mongodb-labs/drivers-github-tools/sbom@v2
-        if: ${{ env.SBOM_ENABLED }}
-        with:
-          silk_asset_group: ${{ env.SILK_ASSET_GROUP }}
-
-      - name: Generate Sarif Report
-        uses: mongodb-labs/drivers-github-tools/code-scanning-export@v2
-        with:
-          output-file: ${{ env.S3_ASSETS }}/code-scanning-alerts.json
-
-      - name: Generate Compliance Report
-        uses: mongodb-labs/drivers-github-tools/compliance-report@v2
-        with:
-          token: ${{ env.GH_TOKEN }}
-
-      - name: Create and sign the tag
-        uses: mongodb-labs/drivers-github-tools/git-sign@v2
-        with:
-          command: "git tag -u ${{ env.GPG_KEY_ID }} -m 'Release tag for v${{ env.DRIVER_VERSION }}' v${{ env.DRIVER_VERSION }}"
-
-      - name: Push the tag to the repository
-        shell: bash
-        run: |
-          git push origin v${{ env.DRIVER_VERSION }}
-
-      - name: Create a new release
-        shell: bash
-        run: gh release create v${{ env.DRIVER_VERSION }} --title ${{ env.DRIVER_VERSION }} --generate-notes --draft
-
-      - name: Capture the changelog
-        shell: bash
-        run: gh release view v${{ env.DRIVER_VERSION }} --json body --template '{{ .body }}' >> changelog
-
-      - name: Prepare release message
-        shell: bash
-        run: |
-          echo "${{ format(env.RELEASE_MESSAGE_TEMPLATE, env.DRIVER_VERSION) }}" > release-message
-          cat changelog >> release-message
-
-      - name: Update release information
-        shell: bash
-        run: |
-          echo "RELEASE_URL=$(gh release edit v${{ env.DRIVER_VERSION }} --notes-file release-message)" >> "$GITHUB_ENV"
-
-      - name: Upload release artifacts
-        run: gh release upload v${{ env.DRIVER_VERSION }} ${{ env.GEM_FILE_NAME }} ${{ env.RELEASE_ASSETS }}/${{ env.GEM_FILE_NAME }}.sig
-
-      - name: Upload S3 assets
-        uses: mongodb-labs/drivers-github-tools/upload-s3-assets@v2
-        with:
-          version: ${{ env.DRIVER_VERSION }}
-          product_name: mongodb-ruby-driver
           dry_run: ${{ inputs.dry_run }}
-
-      - name: Publish the gem
-        uses: rubygems/release-gem@v1
-        if: inputs.dry_run == 'false'
-        with:
-          await-release: false
+          gem_name: mongo
+          product_name: Ruby Driver
+          product_id: mongodb-ruby-driver
+          release_message_template: ${{ env.RELEASE_MESSAGE_TEMPLATE }}
+          silk_asset_group: ${{ env.SILK_ASSET_GROUP }}
