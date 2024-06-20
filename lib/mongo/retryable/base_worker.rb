@@ -49,7 +49,7 @@ module Mongo
 
       private
 
-      # Indicate which exception classes that are generally retryable. 
+      # Indicate which exception classes that are generally retryable.
       #
       # @return [ Array<Mongo:Error> ] Array of exception classes that are
       #   considered retryable.
@@ -58,7 +58,8 @@ module Mongo
           Error::ConnectionPerished,
           Error::ServerNotUsable,
           Error::SocketError,
-          Error::SocketTimeoutError
+          Error::SocketTimeoutError,
+          Error::PoolError,
         ].freeze
       end
 
