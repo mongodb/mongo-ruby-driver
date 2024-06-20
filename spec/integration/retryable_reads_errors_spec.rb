@@ -106,7 +106,7 @@ describe 'Retryable reads errors tests' do
 
     context 'legacy read retries' do
 
-      let(:client) { authorized_client.with(options.merge(retry_reads: false)) }
+      let(:client) { authorized_client.with(options.merge(retry_reads: false, max_read_retries: 1)) }
 
       it_behaves_like 'retries on PoolClearedError'
     end
