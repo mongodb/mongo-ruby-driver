@@ -60,6 +60,7 @@ module Mongo
           Error::SocketError,
           Error::SocketTimeoutError,
           Error::PoolClearedError,
+          Error::PoolPausedError,
         ].freeze
       end
 
