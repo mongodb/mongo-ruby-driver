@@ -59,7 +59,7 @@ module Mongo
           Error::ServerNotUsable,
           Error::SocketError,
           Error::SocketTimeoutError,
-          Error::PoolError,
+          Error::PoolClearedError,
         ].freeze
       end
 
