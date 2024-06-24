@@ -10,8 +10,6 @@ set_env_vars
 set_env_python
 set_env_ruby
 
-source ${DRIVERS_TOOLS}/.evergreen/serverless/secrets-export.sh
-
 bundle_install
 
 ATLAS_URI=$MONGODB_URI \
