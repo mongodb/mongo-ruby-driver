@@ -498,7 +498,7 @@ buildvariants:
       os: rhel8
     display_name: "Atlas (Full)"
     tasks:
-      - name: testatlas_task_group
+      - name: testatlas_full_task_group
 
   - matrix_name: "atlas"
     matrix_spec:
@@ -506,7 +506,7 @@ buildvariants:
       os: rhel8
     display_name: "Atlas tests ${ruby}"
     tasks:
-       - name: test-atlas
+       - name: testatlas_task_group
 
 # Commented out, pending RUBY-3414
 #  - matrix_name: "serverless"
