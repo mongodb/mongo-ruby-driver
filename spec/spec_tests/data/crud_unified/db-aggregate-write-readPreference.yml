@@ -7,8 +7,8 @@ runOnRequirements:
   # Serverless does not support $listLocalSessions and $currentOp stages, and
   # mongos does not allow combining them with $out or $merge.
   - minServerVersion: "3.6"
-  # https://jira.mongodb.org/browse/DRIVERS-291
-  - maxServerVersion: "7.99"
+    # https://jira.mongodb.org/browse/DRIVERS-291
+    maxServerVersion: "7.99"
     topologies: [ replicaset ]
     serverless: forbid
 
