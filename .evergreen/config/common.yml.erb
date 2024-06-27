@@ -644,6 +644,8 @@ task_groups:
               task_id="${task_id}" \
               execution="${execution}" \
               $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
+
+              echo "MONGODB_URI=${MONGODB_URI}"
       - command: expansions.update
         params:
           file: src/atlas-expansion.yml
@@ -872,6 +874,7 @@ tasks:
           script: |
             ${PREPARE_SHELL}
             export MONGODB_URI=${MONGODB_URI}
+            export FUNCTION_NAME="ruby-driver-lambda"
             .evergreen/run-tests-deployed-lambda.sh
           env:
             TEST_LAMBDA_DIRECTORY: ${PROJECT_DIRECTORY}/spec/faas/ruby-sam-app

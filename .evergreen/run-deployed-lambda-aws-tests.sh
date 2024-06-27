@@ -21,6 +21,7 @@ DRIVERS_ATLAS_LAMBDA_PASSWORD
 DRIVERS_ATLAS_GROUP_ID
 LAMBDA_STACK_NAME
 AWS_REGION
+FUNCTION_NAME
 )
 
 # Ensure that all variables required to run the test are set, otherwise throw
