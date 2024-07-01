@@ -35,6 +35,7 @@ module Mongo
         @last_round_trip_time = nil
         @average_round_trip_time = nil
         @minimum_round_trip_time = 0
+        @lock = Mutex.new
         @rtts = []
       end
 
@@ -60,8 +61,10 @@ module Mongo
         # but we must not update the round trip time recorded in the server.
         unless exc
           @last_round_trip_time = last_rtt
-          update_average_round_trip_time
-          update_minimum_round_trip_time
+          @lock.synchronize do
+            update_average_round_trip_time
+            update_minimum_round_trip_time
+          end
         end
 
         if exc
