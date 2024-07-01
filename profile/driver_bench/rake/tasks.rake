@@ -30,7 +30,7 @@ namespace :driver_bench do
   end
 
   desc 'Runs the DriverBench benchmark suite'
-  task run: 'driver_bench:initialize' do
+  task :run do
     require_relative '../suite'
 
     Mongo::DriverBench::Suite.run!
