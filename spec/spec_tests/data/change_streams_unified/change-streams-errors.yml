@@ -3,7 +3,9 @@ description: "change-streams-errors"
 schemaVersion: "1.7"
 
 runOnRequirements:
-  - serverless: forbid
+    # TODO(DRIVERS-2323): Run all possible tests against sharded clusters once we know the
+    # cause of unexpected command monitoring events.
+  - topologies: [ replicaset ]
 
 createEntities:
   - client:

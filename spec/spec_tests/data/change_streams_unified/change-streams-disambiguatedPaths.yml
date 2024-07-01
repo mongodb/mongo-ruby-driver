@@ -1,5 +1,9 @@
 description: "disambiguatedPaths"
 schemaVersion: "1.4"
+runOnRequirements:
+    # TODO(DRIVERS-2323): Run all possible tests against sharded clusters once we know the
+    # cause of unexpected command monitoring events.
+  - topologies: [ replicaset ]
 createEntities:
   - client:
       id: &client0 client0
