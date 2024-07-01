@@ -4,7 +4,7 @@
 
 require 'tmpdir'
 
-host = 'freecluster-shard-00-00-oztdp.mongodb-dev.net'
+host = 'ac-ulwcmzm-shard-00-00.g6fyiaq.mongodb-dev.net'
 
 output = `openssl s_client -showcerts -servername #{host} -connect #{host}:27017 </dev/null`
 

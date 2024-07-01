@@ -7,8 +7,7 @@ require 'spec_helper'
 # rubocop:disable RSpec/ExampleLength
 describe 'Range Explicit Encryption' do
   min_server_version '7.0.0-rc0'
-
-  # TODO: RUBY-3423
+  # https://jira.mongodb.org/browse/RUBY-3457
   max_server_version '7.99.99'
 
   require_libmongocrypt

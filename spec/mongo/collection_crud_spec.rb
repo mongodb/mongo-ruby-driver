@@ -4,6 +4,7 @@
 require 'spec_helper'
 
 describe Mongo::Collection do
+  retry_test
 
   let(:subscriber) { Mrss::EventSubscriber.new }
 
