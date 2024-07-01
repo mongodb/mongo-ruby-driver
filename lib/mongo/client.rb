@@ -414,7 +414,7 @@ module Mongo
     # @option options [ true, false ] :ssl_verify_hostname Whether to perform peer hostname
     #   validation. This setting overrides :ssl_verify with respect to whether hostname validation
     #   is performed.
-    # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must a positive integer. The default value is unset which means infinite.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
