@@ -5,6 +5,8 @@ schemaVersion: '1.4'
 runOnRequirements:
   # 3.6+ non-standalone is needed to utilize $readPreference in OP_MSG
   - minServerVersion: "3.6"
+    # https://jira.mongodb.org/browse/DRIVERS-291
+    maxServerVersion: "7.99"
     topologies: [ replicaset, sharded, load-balanced ]
 
 _yamlAnchors:

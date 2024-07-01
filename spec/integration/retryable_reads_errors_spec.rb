@@ -4,6 +4,7 @@
 require 'spec_helper'
 
 describe 'Retryable reads errors tests' do
+  retry_test
 
   let(:client) { authorized_client.with(options.merge(retry_reads: true)) }
 
