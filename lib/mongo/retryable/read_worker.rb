@@ -198,7 +198,7 @@ module Mongo
         raise e if !is_retryable_exception?(e) && !e.write_retryable?
         retry_read(e, session, server_selector, failed_server: server, &block)
       end
-  
+
       # Attempts to do a "legacy" read with retry. The operation will be
       # attempted multiple times, up to the client's `max_read_retries`
       # setting.
@@ -213,17 +213,18 @@ module Mongo
       def legacy_read_with_retry(session, server_selector, &block)
         attempt = attempt ? attempt + 1 : 1
         yield select_server(cluster, server_selector, session)
-      rescue *retryable_exceptions, Error::OperationFailure, Error::PoolError => e
+      rescue *legacy_retryable_exceptions, Error::OperationFailure => e
         e.add_notes('legacy retry', "attempt #{attempt}")
-        
-        if is_retryable_exception?(e)
+
+        if is_legacy_retryable_exception?(e)
+
           raise e if attempt > client.max_read_retries || session&.in_transaction?
         elsif e.retryable? && !session&.in_transaction?
           raise e if attempt > client.max_read_retries
         else
           raise e
         end
-        
+
         log_retry(e, message: 'Legacy read retry')
         sleep(client.read_retry_interval) unless is_retryable_exception?(e)
         retry
@@ -261,7 +262,7 @@ module Mongo
       # @param [ Mongo::Server ] failed_server The server on which the original
       #   operation failed.
       # @param [ Proc ] block The block to execute.
-      # 
+      #
       # @return [ Result ] The result of the operation.
       def retry_read(original_error, session, server_selector, failed_server: nil, &block)
         begin
@@ -270,9 +271,9 @@ module Mongo
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error
         end
-  
+
         log_retry(original_error, message: 'Read retry')
-  
+
         begin
           yield server, true
         rescue *retryable_exceptions => e
