@@ -6,7 +6,7 @@ require 'spec_helper'
 describe 'Server' do
   let(:client) { authorized_client }
 
-  let(:context) { Mongo::Operation::Context.new }
+  let(:context) { Mongo::Operation::Context.new(client: client) }
   let(:server) { client.cluster.next_primary }
 
   let(:collection) { client['collection'] }
