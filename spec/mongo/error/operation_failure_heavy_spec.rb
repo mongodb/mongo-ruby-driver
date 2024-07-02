@@ -39,7 +39,7 @@ describe Mongo::Error::OperationFailure do
 
       begin
         authorized_client['foo'].insert_one(test: 1)
-      rescue Mongo::Error::OperationFailure => exc
+      rescue Mongo::Error::OperationFailure::Family => exc
         expect(exc.details).to eq(exc.document['writeConcernError']['errInfo'])
         expect(exc.server_message).to eq(exc.document['writeConcernError']['errmsg'])
         expect(exc.code).to eq(exc.document['writeConcernError']['code'])
@@ -90,7 +90,7 @@ describe Mongo::Error::OperationFailure do
       it 'succeeds and prints the error' do
         begin
           collection.insert_one({x: 1})
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           insert_events = subscriber.succeeded_events.select { |e| e.command_name == "insert" }
           expect(insert_events.length).to eq 1
           expect(e.message).to match(/\[#{e.code}(:.*)?\].+ -- .+/)

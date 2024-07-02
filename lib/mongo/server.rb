@@ -80,7 +80,7 @@ module Mongo
         include Id
       end
       @scan_semaphore = DistinguishingSemaphore.new
-      @round_trip_time_averager = RoundTripTimeAverager.new
+      @round_trip_time_calculator = RoundTripTimeCalculator.new
       @description = Description.new(address, {},
         load_balancer: !!@options[:load_balancer],
         force_load_balancer: force_load_balancer?,
@@ -197,6 +197,7 @@ module Mongo
                    :max_message_size,
                    :tags,
                    :average_round_trip_time,
+                   :minimum_round_trip_time,
                    :mongos?,
                    :other?,
                    :primary?,
@@ -228,9 +229,9 @@ module Mongo
     # @api private
     attr_reader :scan_semaphore
 
-    # @return [ RoundTripTimeAverager ] Round trip time averager object.
+    # @return [ RoundTripTimeCalculator ] Round trip time calculator object.
     # @api private
-    attr_reader :round_trip_time_averager
+    attr_reader :round_trip_time_calculator
 
     # Is this server equal to another?
     #
@@ -490,8 +491,12 @@ module Mongo
     # @return [ Object ] The result of the block execution.
     #
     # @since 2.3.0
-    def with_connection(connection_global_id: nil, &block)
-      pool.with_connection(connection_global_id: connection_global_id, &block)
+    def with_connection(connection_global_id: nil, context: nil, &block)
+      pool.with_connection(
+        connection_global_id: connection_global_id,
+        context: context,
+        &block
+      )
     end
 
     # Handle handshake failure.
@@ -697,5 +702,5 @@ require 'mongo/server/connection'
 require 'mongo/server/connection_pool'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
-require 'mongo/server/round_trip_time_averager'
+require 'mongo/server/round_trip_time_calculator'
 require 'mongo/server/push_monitor'

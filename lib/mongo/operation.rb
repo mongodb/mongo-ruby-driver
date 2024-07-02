@@ -22,6 +22,7 @@ require 'mongo/operation/shared/specifiable'
 require 'mongo/operation/shared/validatable'
 require 'mongo/operation/shared/object_id_generator'
 require 'mongo/operation/shared/op_msg_executable'
+require 'mongo/operation/shared/timed'
 
 require 'mongo/operation/op_msg_base'
 require 'mongo/operation/command'

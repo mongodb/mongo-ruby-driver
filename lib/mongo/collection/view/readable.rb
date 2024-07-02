@@ -48,11 +48,9 @@ module Mongo
         #   See the server documentation for details.
         # @option options [ Integer ] :max_time_ms The maximum amount of time in
         #   milliseconds to allow the aggregation to run.
-        # @option options [ true, false ] :use_cursor Indicates whether the command
-        #   will request that the server provide results using a cursor. Note that
-        #   as of server version 3.6, aggregations always provide results using a
-        #   cursor and this option is therefore not valid.
         # @option options [ Session ] :session The session to use.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @return [ Aggregation ] The aggregation object.
         #
@@ -157,6 +155,8 @@ module Mongo
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @return [ Integer ] The document count.
         #
@@ -182,7 +182,12 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            read_with_retry(session, selector) do |server|
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              operation_timeouts: operation_timeouts(opts)
+            )
+            read_with_retry(session, selector, context) do |server|
               Operation::Count.new(
                 selector: cmd,
                 db_name: database.name,
@@ -193,7 +198,10 @@ module Mongo
                 # string key. Note that this isn't documented as valid usage.
                 collation: opts[:collation] || opts['collation'] || collation,
                 comment: opts[:comment],
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
+              ).execute(
+                server,
+                context: context
+              )
             end.n.to_i
           end
         end
@@ -216,6 +224,8 @@ module Mongo
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
         # @option ops [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @return [ Integer ] The document count.
         #
@@ -227,7 +237,7 @@ module Mongo
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
           pipeline << { :'$group' => { _id: 1, n: { :'$sum' => 1 } } }
 
-          opts = opts.slice(:hint, :max_time_ms, :read, :collation, :session, :comment)
+          opts = opts.slice(:hint, :max_time_ms, :read, :collation, :session, :comment, :timeout_ms)
           opts[:collation] ||= collation
 
           first = aggregate(pipeline, opts).first
@@ -247,6 +257,8 @@ module Mongo
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
+        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
+        #   Must a positive integer. The default value is unset which means infinite.
         #
         # @return [ Integer ] The document count.
         #
@@ -267,8 +279,12 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            read_with_retry(session, selector) do |server|
-              context = Operation::Context.new(client: client, session: session)
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              operation_timeouts: operation_timeouts(opts)
+            )
+            read_with_retry(session, selector, context) do |server|
               cmd = { count: collection.name }
               cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
               if read_concern
@@ -284,7 +300,7 @@ module Mongo
               result.n.to_i
             end
           end
-        rescue Error::OperationFailure => exc
+        rescue Error::OperationFailure::Family => exc
           if exc.code == 26
             # NamespaceNotFound
             # This should only happen with the aggregation pipeline path
@@ -331,7 +347,12 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            read_with_retry(session, selector) do |server|
+            context = Operation::Context.new(
+              client: client,
+              session: session,
+              operation_timeouts: operation_timeouts(opts)
+            )
+            read_with_retry(session, selector, context) do |server|
               Operation::Distinct.new(
                 selector: cmd,
                 db_name: database.name,
@@ -342,7 +363,10 @@ module Mongo
                 # For some reason collation was historically accepted as a
                 # string key. Note that this isn't documented as valid usage.
                 collation: opts[:collation] || opts['collation'] || collation,
-              ).execute(server, context: Operation::Context.new(client: client, session: session))
+              ).execute(
+                server,
+                context: context
+              )
             end.first['values']
           end
         end
@@ -627,6 +651,15 @@ module Mongo
           configure(:cursor_type, type)
         end
 
+        # The per-operation timeout in milliseconds. Must a positive integer.
+        #
+        # @param [ Integer ] timeout_ms Timeout value.
+        #
+        # @return [ Integer, View ] Either the timeout_ms value or a new +View+.
+        def timeout_ms(timeout_ms = nil)
+          configure(:timeout_ms, timeout_ms)
+        end
+
         # @api private
         def read_concern
           if options[:session] && options[:session].in_transaction?
@@ -656,24 +689,10 @@ module Mongo
           end
         end
 
-        private
-
-        def collation(doc = nil)
-          configure(:collation, doc)
-        end
-
-        def server_selector
-          @server_selector ||= if options[:session] && options[:session].in_transaction?
-            ServerSelector.get(read_preference || client.server_selector)
-          else
-            ServerSelector.get(read_preference || collection.server_selector)
-          end
-        end
-
         def parallel_scan(cursor_count, options = {})
           if options[:session]
             # The session would be overwritten by the one in +options+ later.
-            session = client.send(:get_session, @options)
+            session = client.get_session(@options)
           else
             session = nil
           end
@@ -709,6 +728,20 @@ module Mongo
             )
             result = op.execute(server, context: context)
             Cursor.new(self, result, server, session: session)
+          end
+        end
+
+        private
+
+        def collation(doc = nil)
+          configure(:collation, doc)
+        end
+
+        def server_selector
+          @server_selector ||= if options[:session] && options[:session].in_transaction?
+            ServerSelector.get(read_preference || client.server_selector)
+          else
+            ServerSelector.get(read_preference || collection.server_selector)
           end
         end
 

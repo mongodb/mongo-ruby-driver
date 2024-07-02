@@ -85,7 +85,7 @@ module Mongo
           if successful?
             self
           else
-            raise Error::OperationFailure.new(
+            raise operation_failure_class.new(
               parser.message,
               self,
               code: parser.code,

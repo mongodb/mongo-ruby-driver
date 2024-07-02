@@ -20,6 +20,9 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         client.list_databases(args.use('filter') || {}, name_only, **opts)
       end
     end
@@ -50,6 +53,15 @@ module Unified
         if pipeline = args.use('pipeline')
           collection_opts[:pipeline] = pipeline
         end
+        if capped = args.use('capped')
+          collection_opts[:capped] = capped
+        end
+        if size = args.use('size')
+          collection_opts[:size] = size
+        end
+        if max = args.use('max')
+          collection_opts[:max] = max
+        end
         database[args.use!('collection'), collection_opts].create(**opts)
       end
     end
@@ -65,13 +77,16 @@ module Unified
     def list_colls(op, name_only: false)
       database = entities.get(:database, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = extract_options(args, 'filter', 'timeoutMode', allow_extra: true)
+        symbolize_options!(opts, :timeout_mode)
+
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
-        if filter = args.use('filter')
-          opts[:filter] = filter
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
         end
+
         database.list_collections(**opts.merge(name_only: name_only))
       end
     end
@@ -126,11 +141,22 @@ module Unified
     def list_indexes(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = extract_options(args, 'timeoutMode', allow_extra: true)
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         collection.indexes(**opts).to_a
+      end
+    end
+
+    def drop_indexes(op)
+      collection = entities.get(:collection, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = extract_options(args, 'maxTimeMS', 'timeoutMS', allow_extra: true)
+        collection.indexes.drop_all(**opts)
       end
     end
 
@@ -144,7 +170,12 @@ module Unified
         if args.key?('unique')
           opts[:unique] = args.use('unique')
         end
-
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
+        if max_time_ms = args.use('maxTimeMS')
+          opts[:max_time_ms] = max_time_ms
+        end
         collection.indexes.create_one(
           args.use!('keys'),
           name: args.use('name'),
@@ -156,7 +187,7 @@ module Unified
     def drop_index(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        opts = {}
+        opts = extract_options(args, 'maxTimeMS', 'timeoutMS', allow_extra: true)
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -188,7 +219,7 @@ module Unified
         begin
           index = collection.indexes.get(args.use!('indexName'))
           raise Error::ResultMismatch, "Index found"
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           if e.code == 26
             # OK
           else

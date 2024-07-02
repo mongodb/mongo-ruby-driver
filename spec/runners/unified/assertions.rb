@@ -379,6 +379,10 @@ module Unified
           unless actual == result
             raise Error::ResultMismatch, "Actual value #{actual} does not match entity #{expected_v} with value #{result}"
           end
+        when '$$lte'
+          if actual.nil? || actual >= expected_v
+            raise Error::ResultMismatch, "Actual value #{actual} should be less than #{expected_v}"
+          end
         else
           raise NotImplementedError, "Unknown operator #{operator}"
         end

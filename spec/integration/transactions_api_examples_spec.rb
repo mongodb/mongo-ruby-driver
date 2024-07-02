@@ -58,5 +58,7 @@ describe 'Transactions API examples' do
 
     # End Transactions withTxn API Example 1
 
+    # Do not leak clients.
+    client.close
   end
 end

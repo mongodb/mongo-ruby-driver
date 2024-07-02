@@ -33,11 +33,11 @@ module Mongo
       #
       # @option options [ Integer ] :local_threshold The local threshold boundary for
       #  nearest selection in seconds.
-      # @option options [ Integer ] max_staleness The maximum replication lag,
+      # @option options [ Integer ] :max_staleness The maximum replication lag,
       #   in seconds, that a secondary can suffer and still be eligible for a read.
       #   A value of -1 is treated identically to nil, which is to not
       #   have a maximum staleness.
-      # @option options [ Hash | nil ] hedge A Hash specifying whether to enable hedged
+      # @option options [ Hash | nil ] :hedge A Hash specifying whether to enable hedged
       #   reads on the server. Hedged reads are not enabled by default. When
       #   specifying this option, it must be in the format: { enabled: true },
       #   where the value of the :enabled key is a boolean value.
@@ -168,6 +168,8 @@ module Mongo
       #   be selected from only if no other servers are available. This is
       #   used to avoid selecting the same server twice in a row when
       #   retrying a command.
+      # @param [ Float | nil ] :timeout Timeout in seconds for the operation,
+      #   if any.
       #
       # @return [ Mongo::Server ] A server matching the server preference.
       #
@@ -178,21 +180,35 @@ module Mongo
       #   lint mode is enabled.
       #
       # @since 2.0.0
-      def select_server(cluster, ping = nil, session = nil, write_aggregation: false, deprioritized: [])
-        select_server_impl(cluster, ping, session, write_aggregation, deprioritized).tap do |server|
+      def select_server(
+        cluster,
+        ping = nil,
+        session = nil,
+        write_aggregation: false,
+        deprioritized: [],
+        timeout: nil
+      )
+        select_server_impl(cluster, ping, session, write_aggregation, deprioritized, timeout).tap do |server|
           if Lint.enabled? && !server.pool.ready?
             raise Error::LintError, 'Server selector returning a server with a pool which is not ready'
           end
         end
       end
 
-      # Parameters and return values are the same as for select_server.
-      private def select_server_impl(cluster, ping, session, write_aggregation, deprioritized)
+      # Parameters and return values are the same as for select_server, only
+      # the +timeout+ param is renamed to +csot_timeout+.
+      private def select_server_impl(cluster, ping, session, write_aggregation, deprioritized, csot_timeout)
         if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
           return cluster.servers.first
         end
 
-        server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+        timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+
+        server_selection_timeout = if csot_timeout && csot_timeout > 0
+                                     [timeout, csot_timeout].min
+                                   else
+                                     timeout
+                                   end
 
         # Special handling for zero timeout: if we have to select a server,
         # and the timeout is zero, fail immediately (since server selection
@@ -638,9 +654,9 @@ module Mongo
       # state resulting from SDAM will immediately wake up this method and
       # cause it to return.
       #
-      # If the cluster des not have a server selection semaphore, waits
+      # If the cluster does not have a server selection semaphore, waits
       # the smaller of 0.25 seconds and the specified remaining time.
-      # This functionality is provided for backwards compatibilty only for
+      # This functionality is provided for backwards compatibility only for
       # applications directly invoking the server selection process.
       # If lint mode is enabled and the cluster does not have a server
       # selection semaphore, Error::LintError will be raised.

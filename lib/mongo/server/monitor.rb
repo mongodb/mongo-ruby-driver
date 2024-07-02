@@ -237,8 +237,11 @@ module Mongo
         @sdam_mutex.synchronize do
           old_description = server.description
 
-          new_description = Description.new(server.address, result,
-            average_round_trip_time: server.round_trip_time_averager.average_round_trip_time
+          new_description = Description.new(
+            server.address,
+            result,
+            average_round_trip_time: server.round_trip_time_calculator.average_round_trip_time,
+            minimum_round_trip_time: server.round_trip_time_calculator.minimum_round_trip_time
           )
 
           server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited, scan_error: scan_error)
@@ -306,7 +309,7 @@ module Mongo
         end
 
         if @connection
-          result = server.round_trip_time_averager.measure do
+          result = server.round_trip_time_calculator.measure do
             begin
               doc = @connection.check_document
               cmd = Protocol::Query.new(
@@ -323,7 +326,7 @@ module Mongo
         else
           connection = Connection.new(server.address, options)
           connection.connect!
-          result = server.round_trip_time_averager.measure do
+          result = server.round_trip_time_calculator.measure do
             connection.handshake!
           end
           @connection = connection

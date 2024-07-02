@@ -83,7 +83,7 @@ describe 'Failing retryable operations' do
 
         begin
           collection.find(a: 1).to_a
-        rescue Mongo::Error::OperationFailure => exception
+        rescue Mongo::Error::OperationFailure::Family => exception
         else
           fail('Expected operation to fail')
         end
@@ -128,7 +128,7 @@ describe 'Failing retryable operations' do
 
         begin
           collection.insert_one(a: 1)
-        rescue Mongo::Error::OperationFailure => exception
+        rescue Mongo::Error::OperationFailure::Family => exception
         else
           fail('Expected operation to fail')
         end

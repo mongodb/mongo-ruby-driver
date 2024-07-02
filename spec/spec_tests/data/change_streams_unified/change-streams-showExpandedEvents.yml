@@ -2,7 +2,7 @@ description: "change-streams-showExpandedEvents"
 schemaVersion: "1.7"
 runOnRequirements:
   - minServerVersion: "6.0.0"
-    topologies: [ replicaset, sharded ]
+    topologies: [ replicaset ]
     serverless: forbid
 createEntities:
   - client:

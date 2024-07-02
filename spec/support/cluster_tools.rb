@@ -98,7 +98,7 @@ class ClusterTools
   def step_down
     admin_client.database.command(
       replSetStepDown: 4, secondaryCatchUpPeriodSecs: 2)
-  rescue Mongo::Error::OperationFailure => e
+  rescue Mongo::Error::OperationFailure::Family => e
     # While waiting for secondaries to catch up before stepping down, this node decided to step down for other reasons (189)
     if e.code == 189
       # success
@@ -118,7 +118,7 @@ class ClusterTools
       begin
         client.database.command(replSetStepUp: 1)
         break
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure::Family => e
         # Election failed. (125)
         if e.code == 125
           # Possible reason is the node we are trying to elect has deny-listed
@@ -261,7 +261,7 @@ class ClusterTools
   def unfreeze_server(address)
     begin
       direct_client(address).use('admin').database.command(replSetFreeze: 0)
-    rescue Mongo::Error::OperationFailure => e
+    rescue Mongo::Error::OperationFailure::Family => e
       # Mongo::Error::OperationFailure: cannot freeze node when primary or running for election. state: Primary (95)
       if e.code == 95
         # The server we want to become primary may have already become the

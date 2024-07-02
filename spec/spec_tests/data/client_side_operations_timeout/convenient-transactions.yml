@@ -1,0 +1,113 @@
+description: "timeoutMS behaves correctly for the withTransaction API"
+
+schemaVersion: "1.9"
+
+runOnRequirements:
+  - minServerVersion: "4.4"
+    topologies: ["replicaset", "sharded"]
+
+createEntities:
+  - client:
+      id: &failPointClient failPointClient
+      useMultipleMongoses: false
+  - client:
+      id: &client client
+      uriOptions:
+        timeoutMS: 50
+      useMultipleMongoses: false
+      observeEvents:
+        - commandStartedEvent
+  - database:
+      id: &database database
+      client: *client
+      databaseName: &databaseName test
+  - collection:
+      id: &collection collection
+      database: *database
+      collectionName: &collectionName coll
+  - session:
+      id: &session session
+      client: *client
+
+initialData:
+  - collectionName: *collectionName
+    databaseName: *databaseName
+    documents: []
+
+tests:
+  - description: "withTransaction raises a client-side error if timeoutMS is overridden inside the callback"
+    operations:
+      - name: withTransaction
+        object: *session
+        arguments:
+          callback:
+            - name: insertOne
+              object: *collection
+              arguments:
+                document: { _id: 1 }
+                session: *session
+                timeoutMS: 100
+              expectError:
+                isClientError: true
+    expectEvents:
+      # The only operation run fails with a client-side error, so there should be no events for the client.
+      - client: *client
+        events: []
+
+  - description: "timeoutMS is not refreshed for each operation in the callback"
+    operations:
+      - name: failPoint
+        object: testRunner
+        arguments:
+          client: *failPointClient
+          failPoint:
+            configureFailPoint: failCommand
+            mode: { times: 2 }
+            data:
+              failCommands: ["insert"]
+              blockConnection: true
+              # Was 30, but JRuby was taking too long in preparing and issuing
+              # the operation. We now specify the timeoutMS below, and set this
+              # value to just more than half of it (so that two inserts will
+              # exceed the timeout, but one won't--or shouldn't).
+              blockTimeMS: 51
+      - name: withTransaction
+        object: *session
+        arguments:
+          # Was originally not specified here, inheriting the client value of 50ms.
+          # That wasn't giving JRuby enough time, so we specify a larger value
+          # here.
+          timeoutMS: 100
+          callback:
+            - name: insertOne
+              object: *collection
+              arguments:
+                document: { _id: 1 }
+                session: *session
+            - name: insertOne
+              object: *collection
+              arguments:
+                document: { _id: 2 }
+                session: *session
+              expectError:
+                isTimeoutError: true
+        expectError:
+          isTimeoutError: true
+    expectEvents:
+      - client: *client
+        events:
+          # Because the second insert expects an error and gets an error, it technically succeeds, so withTransaction
+          # will try to run commitTransaction. This will fail client-side, though, because the timeout has already
+          # expired, so no command is sent.
+          - commandStartedEvent:
+              commandName: insert
+              databaseName: *databaseName
+              command:
+                insert: *collectionName
+                maxTimeMS: { $$type: ["int", "long"] }
+          - commandStartedEvent:
+              commandName: insert
+              databaseName: *databaseName
+              command:
+                insert: *collectionName
+                maxTimeMS: { $$type: ["int", "long"] }

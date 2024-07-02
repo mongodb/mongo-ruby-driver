@@ -76,6 +76,7 @@ class ModernRetryableTestConsumer < LegacyRetryableTestConsumer
       allow(session).to receive(:pinned_connection_global_id)
       allow(session).to receive(:starting_transaction?).and_return(false)
       allow(session).to receive(:materialize)
+      allow(session).to receive(:with_transaction_deadline).and_return(nil)
     end
   end
 

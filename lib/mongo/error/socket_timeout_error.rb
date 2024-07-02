@@ -15,13 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/error/timeout_error'
+
 module Mongo
   class Error
 
     # Raised when a socket connection times out.
     #
     # @since 2.0.0
-    class SocketTimeoutError < Error
+    class SocketTimeoutError < TimeoutError
       include WriteRetryable
       include ChangeStreamResumable
     end

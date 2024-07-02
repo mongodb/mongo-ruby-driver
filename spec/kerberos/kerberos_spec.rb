@@ -20,6 +20,10 @@ describe 'kerberos authentication' do
     end
   end
 
+  after do
+    client&.close
+  end
+
   let(:user) do
    "#{require_env_value('SASL_USER')}%40#{realm}"
   end

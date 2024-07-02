@@ -10,6 +10,10 @@ describe 'Atlas connectivity' do
   require_atlas
 
   describe 'connection to Atlas' do
+    after do
+      client.close
+    end
+
     it 'runs ismaster successfully' do
       expect { client.database.command(:hello => 1) }
         .not_to raise_error

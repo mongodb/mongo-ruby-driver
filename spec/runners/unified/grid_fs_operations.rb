@@ -5,17 +5,38 @@ module Unified
 
   module GridFsOperations
 
+    def gridfs_find(op)
+      bucket = entities.get(:bucket, op.use!('object'))
+      use_arguments(op) do |args|
+        filter = args.use!('filter')
+
+        opts = extract_options(args, 'allowDiskUse',
+          'skip', 'hint','timeoutMS',
+          'noCursorTimeout', 'sort', 'limit')
+
+        bucket.find(filter,opts).to_a
+      end
+    end
+
     def delete(op)
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
-        bucket.delete(args.use!('id'))
+        opts = {}
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
+        bucket.delete(args.use!('id'), opts)
       end
     end
 
     def download(op)
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
-        stream = bucket.open_download_stream(args.use!('id'))
+        opts = {}
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
+        stream = bucket.open_download_stream(args.use!('id'), opts)
         stream.read
       end
     end
@@ -48,6 +69,9 @@ module Unified
         if disable_md5 = args.use('disableMD5')
           opts[:disable_md5] = disable_md5
         end
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
         contents = transform_contents(args.use!('source'))
         file_id = nil
         bucket.open_upload_stream(args.use!('filename'), **opts) do |stream|
@@ -55,6 +79,17 @@ module Unified
           file_id = stream.file_id
         end
         file_id
+      end
+    end
+
+    def drop(op)
+      bucket = entities.get(:bucket, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = {}
+        if timeout_ms = args.use('timeoutMS')
+          opts[:timeout_ms] = timeout_ms
+        end
+        bucket.drop(opts)
       end
     end
 

@@ -34,8 +34,15 @@ module Mongo
     # operations.
     #
     # @api private
-    class Context
-      def initialize(client: nil, session: nil, connection_global_id: nil, options: nil)
+    class Context < CsotTimeoutHolder
+      def initialize(
+        client: nil,
+        session: nil,
+        connection_global_id: nil,
+        operation_timeouts: {},
+        view: nil,
+        options: nil
+      )
         if options
           if client
             raise ArgumentError, 'Client and options cannot both be specified'
@@ -52,13 +59,32 @@ module Mongo
 
         @client = client
         @session = session
+        @view = view
         @connection_global_id = connection_global_id
         @options = options
+        super(session: session, operation_timeouts: operation_timeouts)
       end
 
       attr_reader :client
       attr_reader :session
+      attr_reader :view
       attr_reader :options
+
+      # Returns a new Operation::Context with the deadline refreshed
+      # and relative to the current moment.
+      #
+      # @return [ Operation::Context ] the refreshed context
+      def refresh(connection_global_id: @connection_global_id, timeout_ms: nil, view: nil)
+        operation_timeouts = @operation_timeouts
+        operation_timeouts = operation_timeouts.merge(operation_timeout_ms: timeout_ms) if timeout_ms
+
+        self.class.new(client: client,
+                       session: session,
+                       connection_global_id: connection_global_id,
+                       operation_timeouts: operation_timeouts,
+                       view: view || self.view,
+                       options: options)
+      end
 
       def connection_global_id
         @connection_global_id || session&.pinned_connection_global_id
@@ -122,8 +148,16 @@ module Mongo
         client&.encrypter&.encrypt? || false
       end
 
+      def encrypt(db_name, cmd)
+        encrypter.encrypt(db_name, cmd, self)
+      end
+
       def decrypt?
         !!client&.encrypter
+      end
+
+      def decrypt(cmd)
+        encrypter.decrypt(cmd, self)
       end
 
       def encrypter
@@ -132,6 +166,10 @@ module Mongo
         else
           raise Error::InternalDriverError, 'Encrypter should only be accessed when encryption is to be performed'
         end
+      end
+
+      def inspect
+        "#<#{self.class} connection_global_id=#{connection_global_id.inspect} deadline=#{deadline.inspect} options=#{options.inspect} operation_timeouts=#{operation_timeouts.inspect}>"
       end
     end
   end

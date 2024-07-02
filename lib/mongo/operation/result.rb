@@ -100,9 +100,13 @@ module Mongo
       # @param [ Integer ] connection_global_id
       #   Global id of the connection on which the operation that
       #   this result is for was performed.
+      # @param [ Operation::Context | nil ] context the context that was active
+      #   when this result was produced.
       #
       # @api private
-      def initialize(replies, connection_description = nil, connection_global_id = nil)
+      def initialize(replies, connection_description = nil, connection_global_id = nil, context: nil)
+        @context = context
+
         if replies
           if replies.is_a?(Array)
             if replies.length != 1
@@ -137,6 +141,12 @@ module Mongo
       #
       # @api private
       attr_reader :connection_global_id
+
+      # @return [ Operation::Context | nil ] the operation context (if any)
+      #   that was active when this result was produced.
+      #
+      # @api private
+      attr_reader :context
 
       # @api private
       def_delegators :parser,
@@ -320,7 +330,7 @@ module Mongo
       # @example Validate the result.
       #   result.validate!
       #
-      # @raise [ Error::OperationFailure ] If an error is in the result.
+      # @raise [ Error::OperationFailure::Family ] If an error is in the result.
       #
       # @return [ Result ] The result if verification passed.
       #
@@ -330,16 +340,16 @@ module Mongo
         !successful? ? raise_operation_failure : self
       end
 
-      # The exception instance (of the Error::OperationFailure class)
+      # The exception instance (of Error::OperationFailure::Family)
       # that would be raised during processing of this result.
       #
       # This method should only be called when result is not successful.
       #
-      # @return [ Error::OperationFailure ] The exception.
+      # @return [ Error::OperationFailure::Family ] The exception.
       #
       # @api private
       def error
-        @error ||= Error::OperationFailure.new(
+        @error ||= operation_failure_class.new(
           parser.message,
           self,
           code: parser.code,
@@ -452,6 +462,14 @@ module Mongo
       end
 
       private
+
+      def operation_failure_class
+        if context&.csot? && parser.code == 50
+          Error::ServerTimeoutError
+        else
+          Error::OperationFailure
+        end
+      end
 
       def aggregate_returned_count
         replies.reduce(0) do |n, reply|

@@ -42,7 +42,7 @@ module Mongo
       # Adds error labels to exceptions raised in the yielded to block,
       # which should perform MongoDB operations and raise Mongo::Errors on
       # failure. This method handles network errors (Error::SocketError)
-      # and server-side errors (Error::OperationFailure); it does not
+      # and server-side errors (Error::OperationFailure::Family); it does not
       # handle server selection errors (Error::NoServerAvailable), for which
       # labels are added in the server selection code.
       #
@@ -65,7 +65,7 @@ module Mongo
       rescue Mongo::Error::SocketTimeoutError => e
         maybe_add_retryable_write_error_label!(e, connection, context)
         raise e
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure::Family => e
         if context.committing_transaction?
           if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
               !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code)
@@ -104,7 +104,7 @@ module Mongo
       # raised during execution of operations on servers.
       def add_server_diagnostics(connection)
         yield
-      rescue Error::SocketError, Error::SocketTimeoutError
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::TimeoutError
         # Diagnostics should have already been added by the connection code,
         # do not add them again.
         raise

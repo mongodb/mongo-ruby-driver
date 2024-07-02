@@ -32,7 +32,10 @@ module Mongo
       #
       # @return [ Mongo::Operation::Result ] The operation result.
       def execute(server, context:, options: {})
-        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+        server.with_connection(
+          connection_global_id: context.connection_global_id,
+          context: context
+        ) do |connection|
           execute_with_connection(connection, context: context, options: options)
         end
       end

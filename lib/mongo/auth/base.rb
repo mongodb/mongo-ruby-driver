@@ -117,7 +117,7 @@ module Mongo
         else
           nil
         end
-        result = Operation::Result.new(reply, connection.description, connection_global_id)
+        result = Operation::Result.new(reply, connection.description, connection_global_id, context: context)
         connection.update_cluster_time(result)
         reply_document
       end

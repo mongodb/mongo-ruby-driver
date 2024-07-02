@@ -17,6 +17,8 @@ describe 'Clean exit' do
     it 'exits cleanly' do
       client = Mongo::Client.new(uri)
       client.database.collection_names.to_a
+    ensure
+      client.close
     end
   end
 end

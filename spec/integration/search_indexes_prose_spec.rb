@@ -87,6 +87,10 @@ describe 'Mongo::Collection#search_indexes prose tests' do
   let(:definition) { { 'mappings' => { 'dynamic' => false } } }
   let(:create_index) { helper.collection.search_indexes.create_one(definition, name: name) }
 
+  after do
+    client.close
+  end
+
   # Case 1: Driver can successfully create and list search indexes
   context 'when creating and listing search indexes' do
     let(:index) { helper.wait_for(name).first }

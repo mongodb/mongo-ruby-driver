@@ -45,7 +45,8 @@ module Mongo
         def message(connection)
           updates = validate_updates(connection, send(IDENTIFIER))
           section = Protocol::Msg::Section1.new(IDENTIFIER, updates)
-          Protocol::Msg.new(flags, {}, command(connection), section)
+          cmd = apply_relevant_timeouts_to(command(connection), connection)
+          Protocol::Msg.new(flags, {}, cmd, section)
         end
       end
     end

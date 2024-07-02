@@ -21,12 +21,12 @@ CLASSIFIERS = [
   [%r,^spec_tests,, :spec],
 ]
 
-RUN_PRIORITY = %i(
+RUN_PRIORITY = (ENV['RUN_PRIORITY'] || %(
   tx_examples
   unit unit_server
   integration sdam_integration cursor_reaping query_cache
   spec spec_sdam_integration
-)
+)).split.map(&:to_sym)
 
 RSpec::Core::RakeTask.new(:spec) do |t|
   #t.rspec_opts = "--profile 5" if ENV['CI']

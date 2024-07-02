@@ -111,6 +111,7 @@ module Mongo
       :ssl_verify_certificate,
       :ssl_verify_hostname,
       :ssl_verify_ocsp_endpoint,
+      :timeout_ms,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
@@ -413,6 +414,8 @@ module Mongo
     # @option options [ true, false ] :ssl_verify_hostname Whether to perform peer hostname
     #   validation. This setting overrides :ssl_verify with respect to whether hostname validation
     #   is performed.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
     # @option options [ String ] :user The user name.
@@ -934,8 +937,10 @@ module Mongo
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
     # @option opts [ Session ] :session The session to use.
-    # @option options [ Object ] :comment A user-provided
+    # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     # @return [ Array<String> ] The names of the databases.
     #
@@ -955,7 +960,11 @@ module Mongo
     #
     # @option opts [ true, false ] :authorized_databases A flag that determines
     #   which databases are returned based on user privileges when access control
-    #   is enabled
+    #   is enabled.
+    # @option opts [ Object ] :comment A user-provided
+    #   comment to attach to this command.
+    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
+    #    Must a positive integer. The default value is unset which means infinite.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
@@ -1095,7 +1104,7 @@ module Mongo
       return use(Database::ADMIN).watch(pipeline, options) unless database.name == Database::ADMIN
 
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] = :tailable_await if options[:max_await_time_ms]
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"], {}, view_options),
@@ -1185,6 +1194,22 @@ module Mongo
       @encrypted_fields_map ||= @options.fetch(:auto_encryption_options, {})[:encrypted_fields_map]
     end
 
+    # @return [ Integer | nil ] Value of timeout_ms option if set.
+    # @api private
+    def timeout_ms
+      @options[:timeout_ms]
+    end
+
+    # @return [ Float | nil ] Value of timeout_ms option converted to seconds.
+    # @api private
+    def timeout_sec
+      if timeout_ms.nil?
+        nil
+      else
+        timeout_ms / 1_000.0
+      end
+    end
+
     private
 
     # Create a new encrypter object using the client's auto encryption options
@@ -1230,6 +1255,8 @@ module Mongo
     # @option options [ true | false ] :implicit When no session is passed in,
     #   whether to create an implicit session.
     # @option options [ Session ] :session The session to validate and return.
+    # @option options [ Operation::Context | nil ] :context Context of the
+    #   operation the session is used for.
     #
     # @return [ Session ] A session object.
     #
@@ -1242,7 +1269,7 @@ module Mongo
         return options[:session].validate!(self)
       end
 
-      cluster.validate_session_support!
+      cluster.validate_session_support!(timeout: timeout_sec)
 
       options = {implicit: true}.update(options)
 

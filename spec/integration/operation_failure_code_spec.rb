@@ -17,7 +17,7 @@ describe 'OperationFailure code' do
         collection.insert_one(_id: 1)
         collection.insert_one(_id: 1)
         fail('Should have raised')
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure::Family => e
         expect(e.code).to eq(11000)
         # 4.0 and 4.2 sharded clusters set code name.
         # 4.0 and 4.2 replica sets and standalones do not,

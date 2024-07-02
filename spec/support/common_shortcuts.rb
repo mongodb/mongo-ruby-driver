@@ -176,7 +176,7 @@ module CommonShortcuts
         ClientRegistry.instance.global_client('root_authorized').command(killAllSessions: [])
       # killAllSessions also kills the implicit session which the driver uses
       # to send this command, as a result it always fails
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure::Family => e
         # "operation was interrupted"
         unless e.code == 11601
           raise
@@ -396,7 +396,7 @@ module CommonShortcuts
         client.start_session(snapshot: true) do |session|
           client[collection].aggregate([{'$match': {any: true}}], session: session).to_a
         end
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure::Family => e
         # Retry them as the server demands...
         if e.code == 246 # SnapshotUnavailable
           if Mongo::Utils.monotonic_time < start_time + 10

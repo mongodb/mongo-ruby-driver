@@ -49,6 +49,9 @@ module Mongo
     # @api private
     attr_reader :resume_token
 
+    # @return [ Operation::Context ] context the context for this cursor
+    attr_reader :context
+
     # Creates a +Cursor+ object.
     #
     # @example Instantiate the cursor.
@@ -59,6 +62,8 @@ module Mongo
     # @param [ Server ] server The server this cursor is locked to.
     # @param [ Hash ] options The cursor options.
     #
+    # @option options [ Operation::Context ] :context The operation context
+    #   for this cursor.
     # @option options [ true, false ] :disable_retry Whether to disable
     #   retrying on error when sending getMore operations (deprecated, getMore
     #   operations are no longer retried)
@@ -80,9 +85,10 @@ module Mongo
       if @cursor_id.nil?
         raise ArgumentError, 'Cursor id must be present in the result'
       end
-      @connection_global_id = result.connection_global_id
       @options = options
       @session = @options[:session]
+      @connection_global_id = result.connection_global_id
+      @context = @options[:context]&.with(connection_global_id: connection_global_id_for_context) || fresh_context
       @explicitly_closed = false
       @lock = Mutex.new
       unless closed?
@@ -284,8 +290,10 @@ module Mongo
     # the server.
     #
     # @return [ nil ] Always nil.
-    def close
+    def close(opts = {})
       return if closed?
+
+      ctx = context ? context.refresh(timeout_ms: opts[:timeout_ms]) : fresh_context(opts)
 
       unregister
       read_with_one_retry do
@@ -295,11 +303,11 @@ module Mongo
           cursor_ids: [id],
         }
         op = Operation::KillCursors.new(spec)
-        execute_operation(op)
+        execute_operation(op, context: ctx)
       end
 
       nil
-    rescue Error::OperationFailure, Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable
+    rescue Error::OperationFailure::Family, Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable
       # Errors are swallowed since there is noting can be done by handling them.
     ensure
       end_session
@@ -434,15 +442,7 @@ module Mongo
         # 3.2+ servers use batch_size, 3.0- servers use to_return.
         # TODO should to_return be calculated in the operation layer?
         batch_size: batch_size_for_get_more,
-        to_return: to_return,
-        max_time_ms: if view.respond_to?(:max_await_time_ms) &&
-          view.max_await_time_ms &&
-          view.options[:await_data]
-        then
-          view.max_await_time_ms
-        else
-          nil
-        end,
+        to_return: to_return
       }
       if view.respond_to?(:options) && view.options.is_a?(Hash)
         spec[:comment] = view.options[:comment] unless view.options[:comment].nil?
@@ -495,13 +495,17 @@ module Mongo
       cluster.unregister_cursor(@cursor_id)
     end
 
-    def execute_operation(op)
-      context = Operation::Context.new(
-        client: client,
-        session: @session,
-        connection_global_id: @connection_global_id,
-      )
-      op.execute(@server, context: context)
+    def execute_operation(op, context: nil)
+      op.execute(@server, context: context || possibly_refreshed_context)
+    end
+
+    # Considers the timeout mode and will either return the cursor's
+    # context directly, or will return a new (refreshed) context.
+    #
+    # @return [ Operation::Context ] the (possibly-refreshed) context.
+    def possibly_refreshed_context
+      return context if view.timeout_mode == :cursor_lifetime
+      context.refresh(view: view)
     end
 
     # Sets @cursor_id from the operation result.
@@ -521,6 +525,26 @@ module Mongo
                    end
     end
 
+    # Returns a newly instantiated operation context based on the
+    # default values from the view.
+    def fresh_context(opts = {})
+      Operation::Context.new(client: view.client,
+                             session: @session,
+                             connection_global_id: connection_global_id_for_context,
+                             operation_timeouts: view.operation_timeouts(opts),
+                             view: view)
+    end
+
+    # Because a context must not have a connection_global_id if the session
+    # is already pinned to one, this method checks to see whether or not there's
+    # pinned connection_global_id on the session and returns nil if so.
+    def connection_global_id_for_context
+      if @session&.pinned_connection_global_id
+        nil
+      else
+        @connection_global_id
+      end
+    end
   end
 end
 

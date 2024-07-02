@@ -46,8 +46,14 @@ module Mongo
     # @api private
     #
     # @return [ Mongo::Server ] A server matching the server preference.
-    def select_server(cluster, server_selector, session, failed_server = nil)
-      server_selector.select_server(cluster, nil, session, deprioritized: [failed_server].compact)
+    def select_server(cluster, server_selector, session, failed_server = nil, timeout: nil)
+      server_selector.select_server(
+        cluster,
+        nil,
+        session,
+        deprioritized: [failed_server].compact,
+        timeout: timeout
+      )
     end
 
     # Returns the read worker for handling retryable reads.

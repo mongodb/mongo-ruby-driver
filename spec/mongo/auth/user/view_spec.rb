@@ -526,7 +526,7 @@ describe Mongo::Auth::User::View do
       it "raises and reports the write concern error correctly" do
         begin
           view.send(method, input)
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           expect(e.write_concern_error?).to be true
           expect(e.write_concern_error_document).to eq(
             "code" => 64,
