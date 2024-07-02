@@ -1,6 +1,5 @@
 description: "change-streams-clusterTime"
 schemaVersion: "1.4"
-  - topologies: [ replicaset ]
 createEntities:
   - client:
       id: &client0 client0
