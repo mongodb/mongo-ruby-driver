@@ -49,7 +49,8 @@ module Mongo
 
       private
 
-      # Indicate which exception classes that are generally retryable. 
+      # Indicate which exception classes that are generally retryable
+      # when using modern retries mechanism.
       #
       # @return [ Array<Mongo:Error> ] Array of exception classes that are
       #   considered retryable.
@@ -58,18 +59,42 @@ module Mongo
           Error::ConnectionPerished,
           Error::ServerNotUsable,
           Error::SocketError,
-          Error::SocketTimeoutError
+          Error::SocketTimeoutError,
         ].freeze
       end
 
+      # Indicate which exception classes that are generally retryable
+      # when using legacy retries mechanism.
+      #
+      # @return [ Array<Mongo:Error> ] Array of exception classes that are
+      #   considered retryable.
+      def legacy_retryable_exceptions
+        [
+          Error::ConnectionPerished,
+          Error::ServerNotUsable,
+          Error::SocketError,
+          Error::SocketTimeoutError,
+          Error::PoolClearedError,
+          Error::PoolPausedError,
+        ].freeze
+      end
+
+
       # Tests to see if the given exception instance is of a type that can
-      # be retried.
+      # be retried with modern retry mechanism.
       #
       # @return [ true | false ] true if the exception is retryable.
       def is_retryable_exception?(e)
         retryable_exceptions.any? { |klass| klass === e }
       end
 
+      # Tests to see if the given exception instance is of a type that can
+      # be retried with legacy retry mechanism.
+      #
+      # @return [ true | false ] true if the exception is retryable.
+      def is_legacy_retryable_exception?(e)
+        legacy_retryable_exceptions.any? { |klass| klass === e }
+      end
       # Logs the given deprecation warning the first time it is called for a
       # given key; after that, it does nothing when given the same key.
       def deprecation_warning(key, warning)

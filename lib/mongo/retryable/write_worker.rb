@@ -104,7 +104,7 @@ module Mongo
         session = context.session
         server = select_server(cluster, ServerSelector.primary, session)
         options = session&.client&.options || {}
-        
+
         if options[:retry_writes]
           begin
             server.with_connection(connection_global_id: context.connection_global_id) do |connection|
@@ -219,7 +219,7 @@ module Mongo
       def modern_write_with_retry(session, server, context, &block)
         txn_num = nil
         connection_succeeded = false
-        
+
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           connection_succeeded = true
 
@@ -264,7 +264,7 @@ module Mongo
         # a socket error or a not master error should have marked the respective
         # server unknown). Here we just need to wait for server selection.
         server = select_server(cluster, ServerSelector.primary, session, failed_server)
-        
+
         unless server.retry_writes?
           # Do not need to add "modern retry" here, it should already be on
           # the first exception.
@@ -278,7 +278,7 @@ module Mongo
           # special marker class to bypass the ordinarily applicable rescues.
           raise Error::RaiseOriginalError
         end
-        
+
         log_retry(original_error, message: 'Write retry')
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
