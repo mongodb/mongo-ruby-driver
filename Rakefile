@@ -46,6 +46,18 @@ task :build do
   WARNING
 end
 
+# `rake version` is used by the deployment system so get the release version
+# of the product beng deployed. It must do nothing more than just print the
+# product version number.
+# 
+# See the mongodb-labs/driver-github-tools/ruby/publish Github action.
+desc "Print the current value of Mongo::VERSION"
+task :version do
+  require 'mongo/version'
+
+  puts Mongo::VERSION
+end
+
 # overrides the default Bundler-provided `release` task, which also
 # builds the gem. Our release process assumes the gem has already
 # been built (and signed via GPG), so we just need `rake release` to

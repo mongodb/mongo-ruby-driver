@@ -227,10 +227,10 @@ module Mongo
         context&.check_timeout!
         attempt = attempt ? attempt + 1 : 1
         yield select_server(cluster, server_selector, session)
-      rescue *retryable_exceptions, Error::OperationFailure::Family, Error::PoolError => e
+      rescue *legacy_retryable_exceptions, Error::OperationFailure::Family => e
         e.add_notes('legacy retry', "attempt #{attempt}")
 
-        if is_retryable_exception?(e)
+        if is_legacy_retryable_exception?(e)
           raise e if attempt > client.max_read_retries || session&.in_transaction?
         elsif e.retryable? && !session&.in_transaction?
           raise e if attempt > client.max_read_retries
