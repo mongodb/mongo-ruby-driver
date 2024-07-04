@@ -129,7 +129,8 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -159,7 +160,8 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -186,7 +188,8 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -209,7 +212,8 @@ module Mongo
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     # @option opts :execution_options [ Hash ] Options to pass to the code that
     #   executes this command. This is an internal option and is subject to
     #   change.
@@ -259,8 +263,9 @@ module Mongo
     # @option opts :session [ Session ] The session to use for this command.
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
-    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     # @return [ Hash ] The result of the command execution.
     # @api private
@@ -301,8 +306,9 @@ module Mongo
     #
     # @option options [ Session ] :session The session to use for the operation.
     # @option options [ Hash ] :write_concern The write concern options.
-    # @option options [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     # @return [ Result ] The result of the command.
     #
