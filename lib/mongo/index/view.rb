@@ -309,8 +309,10 @@ module Mongo
       # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
       #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
       #   iteration).
-      # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
-      #   Must a positive integer. The default value is unset which means infinite.
+      # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    The default value is unset which means the value is inherited from
+      #    the collection or the database or the client.
       #
       # @since 2.0.0
       def initialize(collection, options = {})
