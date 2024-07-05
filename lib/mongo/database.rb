@@ -130,7 +130,8 @@ module Mongo
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must a non-negative integer. An explicit value of 0 means infinite.
-    #    The default value is unset which means the feature is not enabled.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -161,7 +162,8 @@ module Mongo
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must a non-negative integer. An explicit value of 0 means infinite.
-    #    The default value is unset which means the feature is not enabled.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -189,7 +191,8 @@ module Mongo
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must a non-negative integer. An explicit value of 0 means infinite.
-    #    The default value is unset which means the feature is not enabled.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -213,7 +216,8 @@ module Mongo
     # @option opts :session [ Session ] The session to use for this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must a non-negative integer. An explicit value of 0 means infinite.
-    #    The default value is unset which means the feature is not enabled.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     # @option opts :execution_options [ Hash ] Options to pass to the code that
     #   executes this command. This is an internal option and is subject to
     #   change.
@@ -265,7 +269,8 @@ module Mongo
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must a non-negative integer. An explicit value of 0 means infinite.
-    #    The default value is unset which means the feature is not enabled.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     # @return [ Hash ] The result of the command execution.
     # @api private
@@ -308,7 +313,8 @@ module Mongo
     # @option options [ Hash ] :write_concern The write concern options.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must a non-negative integer. An explicit value of 0 means infinite.
-    #    The default value is unset which means the feature is not enabled.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     # @return [ Result ] The result of the command.
     #
@@ -345,6 +351,10 @@ module Mongo
     # @param [ Mongo::Client ] client The driver client.
     # @param [ String, Symbol ] name The name of the database.
     # @param [ Hash ] options The options.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the client.
     #
     # @raise [ Mongo::Database::InvalidName ] If the name is nil.
     #

@@ -942,8 +942,9 @@ module Mongo
     # @option opts [ Session ] :session The session to use.
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
-    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     # @return [ Array<String> ] The names of the databases.
     #
@@ -966,8 +967,9 @@ module Mongo
     #   is enabled.
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
-    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.

@@ -73,7 +73,9 @@ module Mongo
       # filter
       #
       # @param [ Hash ] filter
-      # @param [ Integer | nil ] :timeout_ms
+      # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Array<BSON::Document> ] The query results
       def find_keys(filter, timeout_ms: nil)
@@ -83,7 +85,9 @@ module Mongo
       # Insert a document into the key vault collection
       #
       # @param [ Hash ] document
-      # @param [ Integer | nil ] :timeout_ms
+      # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Mongo::Operation::Insert::Result ] The insertion result
       def insert_data_key(document, timeout_ms: nil)
@@ -93,7 +97,9 @@ module Mongo
       # Get collection info for a collection matching the provided filter
       #
       # @param [ Hash ] filter
-      # @param [ Integer | nil ] :timeout_ms
+      # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Hash ] The collection information
       def collection_info(db_name, filter, timeout_ms: nil)
@@ -111,7 +117,9 @@ module Mongo
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings
       #
       # @param [ Hash ] cmd
-      # @param [ Integer | nil ] :timeout_ms
+      # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Hash ] The marked command
       def mark_command(cmd, timeout_ms: nil)
@@ -147,7 +155,9 @@ module Mongo
       #   to send on that connection.
       # @param [ Hash ] tls_options. TLS options to connect to KMS provider.
       #   The options are same as for Mongo::Client.
-      # @param [ Integer | nil ] :timeout_ms
+      # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    The default value is unset which means the feature is not enabled.
       def feed_kms(kms_context, tls_options, timeout_ms: nil)
         with_ssl_socket(kms_context.endpoint, tls_options) do |ssl_socket|
           Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
