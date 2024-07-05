@@ -560,6 +560,7 @@ module Mongo
     #
     # @option options [ Integer ] :max_commit_time_ms The maximum amount of
     #   time to allow a single commitTransaction command to run, in milliseconds.
+    #   This options is deprecated, use :timeout_ms instead.
     # @option options [ Hash ] :read_concern The read concern options hash,
     #   with the following optional keys:
     #   - *:level* -- the read preference level as a symbol; valid values
