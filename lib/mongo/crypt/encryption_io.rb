@@ -74,7 +74,7 @@ module Mongo
       #
       # @param [ Hash ] filter
       # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
-      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Array<BSON::Document> ] The query results
@@ -86,7 +86,7 @@ module Mongo
       #
       # @param [ Hash ] document
       # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
-      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Mongo::Operation::Insert::Result ] The insertion result
@@ -98,7 +98,7 @@ module Mongo
       #
       # @param [ Hash ] filter
       # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
-      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Hash ] The collection information
@@ -118,7 +118,7 @@ module Mongo
       #
       # @param [ Hash ] cmd
       # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
-      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Hash ] The marked command
@@ -156,7 +156,7 @@ module Mongo
       # @param [ Hash ] tls_options. TLS options to connect to KMS provider.
       #   The options are same as for Mongo::Client.
       # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
-      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       def feed_kms(kms_context, tls_options, timeout_ms: nil)
         with_ssl_socket(kms_context.endpoint, tls_options) do |ssl_socket|

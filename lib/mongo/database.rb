@@ -129,7 +129,7 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the database or the client.
     #
@@ -161,7 +161,7 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the database or the client.
     #
@@ -190,7 +190,7 @@ module Mongo
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the database or the client.
     #
@@ -215,7 +215,7 @@ module Mongo
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the database or the client.
     # @option opts :execution_options [ Hash ] Options to pass to the code that
@@ -268,7 +268,7 @@ module Mongo
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the database or the client.
     #
@@ -312,7 +312,7 @@ module Mongo
     # @option options [ Session ] :session The session to use for the operation.
     # @option options [ Hash ] :write_concern The write concern options.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the database or the client.
     #
@@ -352,7 +352,7 @@ module Mongo
     # @param [ String, Symbol ] name The name of the database.
     # @param [ Hash ] options The options.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the client.
     #

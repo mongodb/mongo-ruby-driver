@@ -571,7 +571,7 @@ module Mongo
     #   - *:mode* -- read preference specified as a symbol; the only valid value is
     #     *:primary*.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the client.
     #
@@ -637,7 +637,7 @@ module Mongo
     # @option options :write_concern [ nil | WriteConcern::Base ] The write
     #   concern to use for this operation.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the client.
     #
@@ -719,7 +719,7 @@ module Mongo
     #   session.abort_transaction
     #
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the client.
     #

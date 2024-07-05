@@ -50,7 +50,7 @@ module Mongo
         #   milliseconds to allow the aggregation to run.
         # @option options [ Session ] :session The session to use.
         # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-        #    Must a non-negative integer. An explicit value of 0 means infinite.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
         #    The default value is unset which means the value is inherited from
         #    the collection or the database or the client.
         #
@@ -158,7 +158,7 @@ module Mongo
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
         # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-        #    Must a non-negative integer. An explicit value of 0 means infinite.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
         #    The default value is unset which means the value is inherited from
         #    the collection or the database or the client.
         #
@@ -229,7 +229,7 @@ module Mongo
         # @option ops [ Object ] :comment A user-provided
         #   comment to attach to this command.
         # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-        #    Must a non-negative integer. An explicit value of 0 means infinite.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
         #    The default value is unset which means the value is inherited from
         #    the collection or the database or the client.
         #
@@ -264,7 +264,7 @@ module Mongo
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
         # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-        #    Must a non-negative integer. An explicit value of 0 means infinite.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
         #    The default value is unset which means the value is inherited from
         #    the collection or the database or the client.
         #

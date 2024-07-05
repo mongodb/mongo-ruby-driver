@@ -416,7 +416,7 @@ module Mongo
     #   validation. This setting overrides :ssl_verify with respect to whether hostname validation
     #   is performed.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the feature is not enabled.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
@@ -943,7 +943,7 @@ module Mongo
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the feature is not enabled.
     #
     # @return [ Array<String> ] The names of the databases.
@@ -968,7 +968,7 @@ module Mongo
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the feature is not enabled.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/

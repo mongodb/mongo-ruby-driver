@@ -61,7 +61,7 @@ module Mongo
       # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the value is inherited from
       #    the database or the client.
       #
@@ -141,7 +141,7 @@ module Mongo
       #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
       #   iteration).
       # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-      #    Must a non-negative integer. An explicit value of 0 means infinite.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the value is inherited from
       #    the database or the client.
       #

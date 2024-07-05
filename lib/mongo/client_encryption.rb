@@ -41,7 +41,7 @@ module Mongo
     #   to TLS connection options of Mongo::Client.
     #   @see Mongo::Client#initialize for list of TLS options.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a non-negative integer. An explicit value of 0 means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the feature is disabled.
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
