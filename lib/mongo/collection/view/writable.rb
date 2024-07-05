@@ -38,7 +38,8 @@ module Mongo
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
-        #   to run in milliseconds.
+        #   to run in milliseconds. This option is deprecated, use
+        #   :timeout_ms instead.
         # @option opts [ Hash ] :projection The fields to include or exclude in the returned doc.
         # @option opts [ Hash ] :sort The key and direction pairs by which the result set
         #   will be sorted.
@@ -149,7 +150,8 @@ module Mongo
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
-        #   to run in milliseconds.
+        #   to run in milliseconds. This option is deprecated, use
+        #   :timeout_ms instead.
         # @option opts [ Hash ] :projection The fields to include or exclude in the returned doc.
         # @option opts [ Hash ] :sort The key and direction pairs by which the result set
         #   will be sorted.

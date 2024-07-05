@@ -500,8 +500,9 @@ module Mongo
     #   this command.
     # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
     # @option options [ Integer ] :limit The max number of docs to return from the query.
-    # @option options [ Integer ] :max_time_ms
-    #   The maximum amount of time to allow the query to run, in milliseconds.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
     #   output or behavior of a query.
     # @option options [ true | false ] :no_cursor_timeout The server normally times out idle
@@ -552,8 +553,9 @@ module Mongo
     # @option options [ String ] :hint The index to use for the aggregation.
     # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
     #   See the server documentation for details.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time in
-    #   milliseconds to allow the aggregation to run.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Session ] :session The session to use.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must be a non-negative integer. An explicit value of 0 means infinite.
@@ -657,7 +659,9 @@ module Mongo
     #
     # @option options [ Hash ] :hint The index to use.
     # @option options [ Integer ] :limit The maximum number of documents to count.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Integer ] :skip The number of documents to skip before counting.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
@@ -750,7 +754,9 @@ module Mongo
     # @param [ Hash ] filter The documents from which to retrieve the distinct values.
     # @param [ Hash ] options The distinct command options.
     #
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
@@ -1001,8 +1007,9 @@ module Mongo
     # @param [ Integer ] cursor_count The max number of cursors to return.
     # @param [ Hash ] options The parallel scan command options.
     #
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
-    #   to run in milliseconds.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Session ] :session The session to use.
     # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
     #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
@@ -1125,8 +1132,9 @@ module Mongo
     # @param [ Hash ] filter The filter to use.
     # @param [ Hash ] options The options.
     #
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
-    #   to run in milliseconds.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.

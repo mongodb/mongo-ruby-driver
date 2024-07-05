@@ -434,9 +434,14 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     # @option options [ String ] :hint The index to use for the aggregation.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time in
-    #   milliseconds to allow the aggregation to run.
     # @option options [ Session ] :session The session to use.
     #
     # @return [ Collection::View::Aggregation ] The aggregation object.
