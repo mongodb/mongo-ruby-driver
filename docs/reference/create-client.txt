@@ -1276,7 +1276,7 @@ default. An explicit value of 0 means infinite.
 If this option is set and the timeout expires, the driver aborts all blocking
 work and return control to the user with an error ``Mongo::Error::TimeoutError``.
 
-If this option is set, the driver ignore any deprecated timeout option -
+If this option is set, the driver will ignore any deprecated timeout option -
 ``socket_timeout``, ``wait_queue_timeout``, ``wtimeout``, ``max_time_ms``.
 
 ``wtimeout``
