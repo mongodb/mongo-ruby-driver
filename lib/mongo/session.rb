@@ -560,6 +560,7 @@ module Mongo
     #
     # @option options [ Integer ] :max_commit_time_ms The maximum amount of
     #   time to allow a single commitTransaction command to run, in milliseconds.
+    #   This options is deprecated, use :timeout_ms instead.
     # @option options [ Hash ] :read_concern The read concern options hash,
     #   with the following optional keys:
     #   - *:level* -- the read preference level as a symbol; valid values
@@ -570,8 +571,10 @@ module Mongo
     #   items:
     #   - *:mode* -- read preference specified as a symbol; the only valid value is
     #     *:primary*.
-    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds
-    #   that is applied to the whole transaction. Must a positive integer.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the client.
     #
     # @raise [ Error::InvalidTransactionOperation ] If a transaction is already in
     #   progress or if the write concern is unacknowledged.
@@ -635,7 +638,9 @@ module Mongo
     # @option options :write_concern [ nil | WriteConcern::Base ] The write
     #   concern to use for this operation.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #   Must a positive integer.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the client.
     #
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
@@ -715,7 +720,9 @@ module Mongo
     #   session.abort_transaction
     #
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #   Must a positive integer.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the client.
     #
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #

@@ -47,10 +47,13 @@ module Mongo
         # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
         #   See the server documentation for details.
         # @option options [ Integer ] :max_time_ms The maximum amount of time in
-        #   milliseconds to allow the aggregation to run.
+        #   milliseconds to allow the aggregation to run. This option is deprecated, use
+        #   :timeout_ms instead.
         # @option options [ Session ] :session The session to use.
-        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
-        #   Must a positive integer. The default value is unset which means infinite.
+        # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
+        #    The default value is unset which means the value is inherited from
+        #    the collection or the database or the client.
         #
         # @return [ Aggregation ] The aggregation object.
         #
@@ -155,8 +158,10 @@ module Mongo
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
-        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
-        #   Must a positive integer. The default value is unset which means infinite.
+        # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
+        #    The default value is unset which means the value is inherited from
+        #    the collection or the database or the client.
         #
         # @return [ Integer ] The document count.
         #
@@ -218,14 +223,17 @@ module Mongo
         #   MongoDB to use a specific index for the query. Requires server version 3.6+.
         # @option opts :limit [ Integer ] Max number of docs to count.
         # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
-        #   command to run.
+        #   command to run. This option is deprecated, use
+        #   :timeout_ms instead.
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
         # @option ops [ Object ] :comment A user-provided
         #   comment to attach to this command.
-        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
-        #   Must a positive integer. The default value is unset which means infinite.
+        # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
+        #    The default value is unset which means the value is inherited from
+        #    the collection or the database or the client.
         #
         # @return [ Integer ] The document count.
         #
@@ -257,8 +265,10 @@ module Mongo
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
-        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
-        #   Must a positive integer. The default value is unset which means infinite.
+        # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
+        #    The default value is unset which means the value is inherited from
+        #    the collection or the database or the client.
         #
         # @return [ Integer ] The document count.
         #

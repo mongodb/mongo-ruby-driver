@@ -350,7 +350,8 @@ module Mongo
     # @option options [ Integer ] :server_selection_timeout The timeout in seconds
     #   for selecting a server for an operation.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
-    #   execute operations on a socket.
+    #   execute operations on a socket. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Integer ] :srv_max_hosts The maximum number of mongoses
     #   that the driver will communicate with for sharded topologies. If this
     #   option is 0, then there will be no maximum number of mongoses. If the
@@ -415,12 +416,14 @@ module Mongo
     #   validation. This setting overrides :ssl_verify with respect to whether hostname validation
     #   is performed.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
     # @option options [ String ] :user The user name.
     # @option options [ Float ] :wait_queue_timeout The time to wait, in
     #   seconds, in the connection pool for a connection to be checked in.
+    #   This option is deprecated, use :timeout_ms instead.
     # @option options [ Array<Hash> ] :wrapping_libraries Information about
     #   libraries such as ODMs that are wrapping the driver, to be added to
     #    metadata sent to the server. Specify the lower level libraries first.
@@ -428,7 +431,7 @@ module Mongo
     # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
     #   option.
     # @option options [ Hash ] :write_concern The write concern options.
-    #   Can be :w => Integer|String, :wtimeout => Integer (in milliseconds),
+    #   Can be :w => Integer|String, :wtimeout => Integer (in milliseconds, deprecated),
     #   :j => Boolean, :fsync => Boolean.
     # @option options [ Integer ] :zlib_compression_level The Zlib compression level to use, if using compression.
     #   See Ruby's Zlib module for valid levels.
@@ -939,8 +942,9 @@ module Mongo
     # @option opts [ Session ] :session The session to use.
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
-    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     # @return [ Array<String> ] The names of the databases.
     #
@@ -963,8 +967,9 @@ module Mongo
     #   is enabled.
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
-    # @option opts [ Integer | nil ] :timeout_ms Operation timeout in milliseconds.
-    #    Must a positive integer. The default value is unset which means infinite.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.

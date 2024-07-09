@@ -53,13 +53,16 @@ module Mongo
         # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
         #   See the server documentation for details.
         # @option options [ Integer ] :max_time_ms The maximum amount of time in
-        #   milliseconds to allow the aggregation to run.
+        #   milliseconds to allow the aggregation to run. This option is deprecated, use
+        #   :timeout_ms instead.
         # @option options [ Session ] :session The session to use.
         # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
         #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
         #   iteration).
-        # @option options [ Integer ] :timeout_ms The per-operation timeout in milliseconds.
-        #   Must a positive integer. The default value is unset which means infinite.
+        # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+        #    Must be a non-negative integer. An explicit value of 0 means infinite.
+        #    The default value is unset which means the value is inherited from
+        #    the collection or the database or the client.
         #
         # @since 2.0.0
         def initialize(view, pipeline, options = {})

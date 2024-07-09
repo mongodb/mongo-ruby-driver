@@ -729,7 +729,8 @@ Ruby Options
      - 30
 
    * - ``:socket_timeout``
-     - The number of seconds to wait for an operation to execute on a
+     - **Deprecated. Use :timeout_ms instead.**
+       The number of seconds to wait for an operation to execute on a
        socket before raising an exception. ``nil`` and ``0`` mean no timeout.
        Client creation will fail with an error if an invalid timeout value
        is passed (such as a negative value or a non-numeric value).
@@ -878,6 +879,14 @@ Ruby Options
      - ``Boolean``
      - true
 
+   * - ``:timeout_ms``
+     - Per-operation timeout value in milliseconds. This option specifies
+       the best-effort maximum amount of time a single operation can take
+       before control is returned to the application. An explicit value of 0
+       means infinite.
+     - ``Integer``
+     - none
+
    * - ``:truncate_logs``
      - Whether to truncate the logs at the default 250 characters.
      - ``Boolean``
@@ -889,7 +898,8 @@ Ruby Options
      - none
 
    * - ``:wait_queue_timeout``
-     - The number of seconds to wait for a connection in the connection
+     - **Deprecated. Use :timeout_ms instead.**
+       The number of seconds to wait for a connection in the connection
        pool to become available.
      - ``Float``
      - 10
@@ -912,6 +922,7 @@ Ruby Options
      - Specifies write concern options as a ``Hash``.
        Keys in the hash can be ``:w``, ``:wtimeout``, ``:j``, ``:fsync``.
        Note that ``:wtimeout`` is specified in milliseconds, not seconds.
+       ``:wtimeout`` is deprecates, use ``timeout_ms`` instead.
 
        .. code-block:: ruby
 
@@ -1085,6 +1096,9 @@ URI options are explained in detail in the :manual:`Connection URI reference
    * - ssl=Boolean
      - ``:ssl => true|false``
 
+   * - timeoutMS=Integer
+     - ``:timeout_ms => Integer ``
+
    * - tls=Boolean
      - ``:ssl => boolean``
 
@@ -1185,6 +1199,7 @@ provide quicker failure when the server is not running.
 ``socket_timeout``
 ------------------
 
+**Deprecated. Use timeout_ms instead.**
 The number of seconds to wait for a socket read or write to complete on
 regular (non-monitoring) connections. Default is no timeout.
 
@@ -1226,8 +1241,9 @@ DNS lookups. Note that the timeout applies per lookup; due to DNS suffix search
 lists, multiple lookups may be performed as part of a single name resolution.
 
 ``wait_queue_timeout``
-``````````````````````
+----------------------
 
+**Deprecated. Use timeout_ms instead.**
 The number of seconds to wait for a connection in the connection pool to
 become available. Defaults to 10.
 
@@ -1239,6 +1255,8 @@ round trips.
 ``max_time_ms``
 ---------------
 
+**Deprecated. Use timeout_ms instead.**
+The number of seconds to wait for a connection in the connection pool to
 Specified as an option on a particular operation, the number of milliseconds
 to allow the operation to execute for on the server. Not set by default.
 
@@ -1246,9 +1264,25 @@ Consider using this option instead of a ``socket_timeout`` for potentially
 long running operations to be interrupted on the server when they take too
 long.
 
+``timeout_ms``
+--------------
+
+The per-operation timeout value in milliseconds. The option specifies the
+best-effort maximum amount of time a single operation can take before control
+is returned to the application. This option is configurable at the level of
+a ``Mongo::Client``, database, collection, or of a single operation. Not set by
+default. An explicit value of 0 means infinite.
+
+If this option is set and the timeout expires, the driver aborts all blocking
+work and return control to the user with an error ``Mongo::Error::TimeoutError``.
+
+If this option is set, the driver will ignore any deprecated timeout option -
+``socket_timeout``, ``wait_queue_timeout``, ``wtimeout``, ``max_time_ms``.
+
 ``wtimeout``
 ------------
 
+**Deprecated. Use timeout_ms instead.**
 The number of milliseconds to wait for a write to be acknowledged by the
 number of servers specified in the write concern. Not set by default, which
 instructs the server to apply its default. This option can be set globally
