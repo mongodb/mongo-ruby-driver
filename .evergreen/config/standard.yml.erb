@@ -521,17 +521,6 @@ buildvariants:
     tasks:
        - name: serverless_task_group
 
-  - matrix_name: "serverless-next"
-    matrix_spec:
-      # https://jira.mongodb.org/browse/RUBY-3217
-      # ruby: <%= supported_rubies %>
-      ruby: <%= supported_mri_rubies %>
-      fle: path
-      os: rhel8
-    display_name: "Atlas serverless-next ${ruby}"
-    tasks:
-       - name: serverless_next_task_group
-
   - matrix_name: "aws-lambda"
     matrix_spec:
       ruby: <%= latest_ruby %>
