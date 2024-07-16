@@ -54,7 +54,7 @@ To build API documentation for the master branch, check out the
 repository locally and run `rake docs`.
 
 High-level driver documentation including tutorials and the reference that were in the docs folder can now be found
-[here](https://github.com/mongodb/docs-ruby/tree/master/source)
+at the docs-ruby repository, [here](https://github.com/mongodb/docs-ruby)
 
 ## Support
 
