@@ -1,6 +1,5 @@
 runOn:
   - minServerVersion: "4.4"
-    topology: [ "replicaset", "sharded", "load-balanced" ]
 database_name: &database_name "cse-timeouts-db"
 collection_name: &collection_name "cse-timeouts-coll"
 
