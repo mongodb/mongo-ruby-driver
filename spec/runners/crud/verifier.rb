@@ -134,7 +134,7 @@ EOT
           expect(actual).not_to be nil
         when Hash
           if actual.is_a?(Hash) && actual['error'] &&
-            !expected.keys.any? { |key| key.start_with?('error') }
+            !expected.keys.any? { |key| key.start_with?('error') || key == 'isTimeoutError' }
           then
             raise RSpec::Expectations::ExpectationNotMetError.new,
               "Expected operation not to fail but it failed: #{actual.inspect}"
@@ -143,6 +143,8 @@ EOT
 
           expected.each do |k, v|
             case k
+            when 'isTimeoutError'
+              expect(actual['errorContains']).to eq('Mongo::Error::TimeoutError')
             when 'errorContains'
               expect(actual['errorContains'].downcase).to include(v.downcase)
             when 'errorLabelsContain'
