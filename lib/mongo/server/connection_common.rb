@@ -36,6 +36,11 @@ module Mongo
       # @return [ String | nil ] The compressor.
       attr_reader :compressor
 
+      # The access token associated with the connection. Will be nil
+      # until the authentication workflow has completed.
+      # @api private
+      attr_accessor :access_token
+
       # Determine if the connection is currently connected.
       #
       # @example Is the connection connected?

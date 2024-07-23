@@ -182,6 +182,7 @@ module Mongo
       # @param [ BSON::Document | nil ] speculative_auth_result The
       #   value of speculativeAuthenticate field of hello response of
       #   the handshake on this connection.
+      # @todo: durran: auth providers must sit on the cluster.
       def authenticate!(
         speculative_auth_client_nonce: nil,
         speculative_auth_mech: nil,
