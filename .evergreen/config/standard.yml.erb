@@ -524,11 +524,9 @@ buildvariants:
 
   - matrix_name: "serverless"
     matrix_spec:
-      # https://jira.mongodb.org/browse/RUBY-3217
-      # ruby: <%= supported_rubies %>
-      ruby: <%= supported_mri_rubies %>
+      ruby: <%= latest_ruby %>
       fle: path
-      os: rhel8
+      os: ubuntu2204
     display_name: "Atlas serverless ${ruby}"
     tasks:
        - name: serverless_task_group
