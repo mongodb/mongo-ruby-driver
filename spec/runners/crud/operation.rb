@@ -355,7 +355,7 @@ module Mongo
           if coll.indexes.map { |doc| doc['name'] }.include?(ixn = arguments.fetch('index'))
             raise "Index #{ixn} exists in collection #{cn} in database #{dn}, but must not"
           end
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           if e.to_s =~ /ns does not exist/
             # Success.
           else

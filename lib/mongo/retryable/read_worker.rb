@@ -60,19 +60,21 @@ module Mongo
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
       # @param [ CollectionView ] view The +CollectionView+ defining the query.
+      # @param [ Operation::Context | nil ] context the operation context to use
+      #   with the cursor.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Cursor ] The cursor for the result set.
-      def read_with_retry_cursor(session, server_selector, view, &block)
-        read_with_retry(session, server_selector) do |server|
+      def read_with_retry_cursor(session, server_selector, view, context: nil, &block)
+        read_with_retry(session, server_selector, context) do |server|
           result = yield server
 
           # RUBY-2367: This will be updated to allow the query cache to
           # cache cursors with multi-batch results.
           if QueryCache.enabled? && !view.collection.system_collection?
-            CachingCursor.new(view, result, server, session: session)
+            CachingCursor.new(view, result, server, session: session, context: context)
           else
-            Cursor.new(view, result, server, session: session)
+            Cursor.new(view, result, server, session: session, context: context)
           end
         end
       end
@@ -107,16 +109,18 @@ module Mongo
       #   is being run on.
       # @param [ Mongo::ServerSelector::Selectable | nil ] server_selector
       #   Server selector for the operation.
+      # @param [ Mongo::Operation::Context | nil ] context Context for the
+      #   read operation.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def read_with_retry(session = nil, server_selector = nil, &block)
+      def read_with_retry(session = nil, server_selector = nil, context = nil, &block)
         if session.nil? && server_selector.nil?
           deprecated_legacy_read_with_retry(&block)
         elsif session&.retry_reads?
-          modern_read_with_retry(session, server_selector, &block)
+          modern_read_with_retry(session, server_selector, context, &block)
         elsif client.max_read_retries > 0
-          legacy_read_with_retry(session, server_selector, &block)
+          legacy_read_with_retry(session, server_selector, context, &block)
         else
           read_without_retry(session, server_selector, &block)
         end
@@ -186,17 +190,24 @@ module Mongo
       #   being run on.
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
+      # @param [ Mongo::Operation::Context ] context Context for the
+      #   read operation.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def modern_read_with_retry(session, server_selector, &block)
-        server = select_server(cluster, server_selector, session)
+      def modern_read_with_retry(session, server_selector, context, &block)
+        server = select_server(
+          cluster,
+          server_selector,
+          session,
+          timeout: context&.remaining_timeout_sec
+        )
         yield server
-      rescue *retryable_exceptions, Error::OperationFailure, Auth::Unauthorized, Error::PoolError => e
+      rescue *retryable_exceptions, Error::OperationFailure::Family, Auth::Unauthorized, Error::PoolError => e
         e.add_notes('modern retry', 'attempt 1')
         raise e if session.in_transaction?
         raise e if !is_retryable_exception?(e) && !e.write_retryable?
-        retry_read(e, session, server_selector, failed_server: server, &block)
+        retry_read(e, session, server_selector, context: context, failed_server: server, &block)
       end
 
       # Attempts to do a "legacy" read with retry. The operation will be
@@ -207,17 +218,19 @@ module Mongo
       #   being run on.
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
+      # @param [ Mongo::Operation::Context | nil ] context Context for the
+      #   read operation.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def legacy_read_with_retry(session, server_selector, &block)
+      def legacy_read_with_retry(session, server_selector, context = nil, &block)
+        context&.check_timeout!
         attempt = attempt ? attempt + 1 : 1
         yield select_server(cluster, server_selector, session)
-      rescue *legacy_retryable_exceptions, Error::OperationFailure => e
+      rescue *legacy_retryable_exceptions, Error::OperationFailure::Family => e
         e.add_notes('legacy retry', "attempt #{attempt}")
 
         if is_legacy_retryable_exception?(e)
-
           raise e if attempt > client.max_read_retries || session&.in_transaction?
         elsif e.retryable? && !session&.in_transaction?
           raise e if attempt > client.max_read_retries
@@ -245,7 +258,7 @@ module Mongo
 
         begin
           yield server
-        rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure => e
+        rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
           e.add_note('retries disabled')
           raise e
         end
@@ -259,39 +272,66 @@ module Mongo
       #   being run on.
       # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
       #   selector for the operation.
-      # @param [ Mongo::Server ] failed_server The server on which the original
+      # @param [ Mongo::Operation::Context | nil ] :context Context for the
+      #   read operation.
+      # @param [ Mongo::Server | nil ] :failed_server The server on which the original
       #   operation failed.
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def retry_read(original_error, session, server_selector, failed_server: nil, &block)
-        begin
-          server = select_server(cluster, server_selector, session, failed_server)
-        rescue Error, Error::AuthError => e
-          original_error.add_note("later retry failed: #{e.class}: #{e}")
-          raise original_error
-        end
+      def retry_read(original_error, session, server_selector, context: nil, failed_server: nil, &block)
+        server = select_server_for_retry(
+          original_error, session, server_selector, context, failed_server
+        )
 
         log_retry(original_error, message: 'Read retry')
 
         begin
+          context&.check_timeout!
+          attempt = attempt ? attempt + 1 : 2
           yield server, true
+        rescue Error::TimeoutError
+          raise
         rescue *retryable_exceptions => e
-          e.add_notes('modern retry', 'attempt 2')
-          raise e
-        rescue Error::OperationFailure, Error::PoolError => e
+          e.add_notes('modern retry', "attempt #{attempt}")
+          if context&.csot?
+            failed_server = server
+            retry
+          else
+            raise e
+          end
+        rescue Error::OperationFailure::Family, Error::PoolError => e
           e.add_note('modern retry')
-          unless e.write_retryable?
+          if e.write_retryable?
+            e.add_note("attempt #{attempt}")
+            if context&.csot?
+              failed_server = server
+              retry
+            else
+              raise e
+            end
+          else
             original_error.add_note("later retry failed: #{e.class}: #{e}")
             raise original_error
           end
-          e.add_note("attempt 2")
-          raise e
         rescue Error, Error::AuthError => e
           e.add_note('modern retry')
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error
         end
+      end
+
+      def select_server_for_retry(original_error, session, server_selector, context, failed_server)
+        select_server(
+          cluster,
+          server_selector,
+          session,
+          failed_server,
+          timeout: context&.remaining_timeout_sec
+        )
+      rescue Error, Error::AuthError => e
+        original_error.add_note("later retry failed: #{e.class}: #{e}")
+        raise original_error
       end
     end
   end

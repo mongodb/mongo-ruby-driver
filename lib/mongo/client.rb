@@ -111,6 +111,7 @@ module Mongo
       :ssl_verify_certificate,
       :ssl_verify_hostname,
       :ssl_verify_ocsp_endpoint,
+      :timeout_ms,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
@@ -349,7 +350,8 @@ module Mongo
     # @option options [ Integer ] :server_selection_timeout The timeout in seconds
     #   for selecting a server for an operation.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
-    #   execute operations on a socket.
+    #   execute operations on a socket. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Integer ] :srv_max_hosts The maximum number of mongoses
     #   that the driver will communicate with for sharded topologies. If this
     #   option is 0, then there will be no maximum number of mongoses. If the
@@ -413,11 +415,15 @@ module Mongo
     # @option options [ true, false ] :ssl_verify_hostname Whether to perform peer hostname
     #   validation. This setting overrides :ssl_verify with respect to whether hostname validation
     #   is performed.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
     # @option options [ String ] :user The user name.
     # @option options [ Float ] :wait_queue_timeout The time to wait, in
     #   seconds, in the connection pool for a connection to be checked in.
+    #   This option is deprecated, use :timeout_ms instead.
     # @option options [ Array<Hash> ] :wrapping_libraries Information about
     #   libraries such as ODMs that are wrapping the driver, to be added to
     #    metadata sent to the server. Specify the lower level libraries first.
@@ -425,7 +431,7 @@ module Mongo
     # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
     #   option.
     # @option options [ Hash ] :write_concern The write concern options.
-    #   Can be :w => Integer|String, :wtimeout => Integer (in milliseconds),
+    #   Can be :w => Integer|String, :wtimeout => Integer (in milliseconds, deprecated),
     #   :j => Boolean, :fsync => Boolean.
     # @option options [ Integer ] :zlib_compression_level The Zlib compression level to use, if using compression.
     #   See Ruby's Zlib module for valid levels.
@@ -934,8 +940,11 @@ module Mongo
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
     # @option opts [ Session ] :session The session to use.
-    # @option options [ Object ] :comment A user-provided
+    # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     # @return [ Array<String> ] The names of the databases.
     #
@@ -955,7 +964,12 @@ module Mongo
     #
     # @option opts [ true, false ] :authorized_databases A flag that determines
     #   which databases are returned based on user privileges when access control
-    #   is enabled
+    #   is enabled.
+    # @option opts [ Object ] :comment A user-provided
+    #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
@@ -1095,7 +1109,7 @@ module Mongo
       return use(Database::ADMIN).watch(pipeline, options) unless database.name == Database::ADMIN
 
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] = :tailable_await if options[:max_await_time_ms]
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"], {}, view_options),
@@ -1185,6 +1199,22 @@ module Mongo
       @encrypted_fields_map ||= @options.fetch(:auto_encryption_options, {})[:encrypted_fields_map]
     end
 
+    # @return [ Integer | nil ] Value of timeout_ms option if set.
+    # @api private
+    def timeout_ms
+      @options[:timeout_ms]
+    end
+
+    # @return [ Float | nil ] Value of timeout_ms option converted to seconds.
+    # @api private
+    def timeout_sec
+      if timeout_ms.nil?
+        nil
+      else
+        timeout_ms / 1_000.0
+      end
+    end
+
     private
 
     # Create a new encrypter object using the client's auto encryption options
@@ -1230,6 +1260,8 @@ module Mongo
     # @option options [ true | false ] :implicit When no session is passed in,
     #   whether to create an implicit session.
     # @option options [ Session ] :session The session to validate and return.
+    # @option options [ Operation::Context | nil ] :context Context of the
+    #   operation the session is used for.
     #
     # @return [ Session ] A session object.
     #
@@ -1242,7 +1274,7 @@ module Mongo
         return options[:session].validate!(self)
       end
 
-      cluster.validate_session_support!
+      cluster.validate_session_support!(timeout: timeout_sec)
 
       options = {implicit: true}.update(options)
 

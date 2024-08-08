@@ -47,11 +47,13 @@ module Mongo
         #   Global id of the connection on which the operation that
         #   this result is for was performed.
         # @param [ Array<Object> ] ids The ids of the inserted documents.
+        # @param [ Operation::Context | nil ] context the operation context that
+        #   was active when this result was produced.
         #
         # @since 2.0.0
         # @api private
-        def initialize(replies, connection_description, connection_global_id, ids)
-          super(replies, connection_description, connection_global_id)
+        def initialize(replies, connection_description, connection_global_id, ids, context: nil)
+          super(replies, connection_description, connection_global_id, context: context)
           @inserted_ids = ids
         end
 

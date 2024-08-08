@@ -22,7 +22,9 @@ CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort.select 
   !defined?(JRUBY_VERSION) || !f.include?('pool-checkout-minPoolSize-connection-maxConnecting.yml')
 end
 AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
-CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort
+CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort.delete_if do |spec|
+  ![ 1, '1', 'yes', 'true' ].include?(ENV['CSOT_SPEC_TESTS']) && spec =~ /.*timeoutMS.yml$/
+end
 
 # Disable output buffering: https://www.rubyguides.com/2019/02/ruby-io/
 STDOUT.sync = true

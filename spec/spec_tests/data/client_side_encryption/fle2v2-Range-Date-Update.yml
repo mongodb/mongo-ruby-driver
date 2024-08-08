@@ -6,6 +6,8 @@ runOn:
     # Skip QEv2 (also referred to as FLE2v2) tests on Serverless. Unskip once Serverless enables the QEv2 protocol.
     # FLE 2 Encrypted collections are not supported on standalone.
     topology: [ "replicaset", "sharded", "load-balanced" ]
+    # TODO: RUBY-3423
+    maxServerVersion: "7.99.99"
 database_name: &database_name "default"
 collection_name: &collection_name "default"
 data: []
@@ -123,7 +125,7 @@ tests:
                         escCollection: "enxcol_.default.esc"
                         ecocCollection: "enxcol_.default.ecoc"
                         <<: *encrypted_fields
-            "$db": "default"        
+            "$db": "default"
 
     outcome:
       collection:

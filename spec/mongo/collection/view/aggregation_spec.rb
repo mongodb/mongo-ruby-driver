@@ -156,8 +156,6 @@ describe Mongo::Collection::View::Aggregation do
     end
 
     context 'when the initial response has no results but an active cursor' do
-      min_server_fcv '3.2'
-
       let(:documents) do
         [
             { city: 'a'*6000000 },
@@ -166,7 +164,7 @@ describe Mongo::Collection::View::Aggregation do
       end
 
       let(:options) do
-        { :use_cursor => true }
+        {}
       end
 
       let(:pipeline) do
@@ -486,48 +484,25 @@ describe Mongo::Collection::View::Aggregation do
       end
     end
 
-    context 'when use_cursor is set' do
+    context 'when batch_size is set' do
 
-      context 'when use_cursor is true' do
-
-        context 'when batch_size is set' do
-
-          let(:options) do
-            { :use_cursor => true,
-              :batch_size => 10
-            }
-          end
-
-          it 'sets a batch size document in the spec' do
-            expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
-          end
-        end
-
-        context 'when batch_size is not set' do
-
-          let(:options) do
-            { :use_cursor => true }
-          end
-
-          it 'sets an empty document in the spec' do
-            expect(aggregation_spec[:selector][:cursor]).to eq({})
-          end
-        end
-
+      let(:options) do
+        { :batch_size => 10 }
       end
 
-      context 'when use_cursor is false' do
+      it 'sets a batch size document in the spec' do
+        expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+      end
+    end
 
-        let(:options) do
-          { :use_cursor => false }
-        end
+    context 'when batch_size is not set' do
 
-        context 'when batch_size is set' do
+      let(:options) do
+        {}
+      end
 
-          it 'does not set the cursor option in the spec' do
-            expect(aggregation_spec[:selector][:cursor]).to be_nil
-          end
-        end
+      it 'sets an empty document in the spec' do
+        expect(aggregation_spec[:selector][:cursor]).to eq({})
       end
     end
   end

@@ -779,12 +779,19 @@ module Mongo
     #   Deprecated and ignored.
     # @param [ Session | nil ] session Optional session to take into account
     #   for mongos pinning.
+    # @param [ Float | nil ] :timeout Timeout in seconds for the operation,
+    #   if any.
     #
     # @return [ Mongo::Server ] A primary server.
     #
     # @since 2.0.0
-    def next_primary(ping = nil, session = nil)
-      ServerSelector.primary.select_server(self, nil, session)
+    def next_primary(ping = nil, session = nil, timeout: nil)
+      ServerSelector.primary.select_server(
+        self,
+        nil,
+        session,
+        timeout: timeout
+      )
     end
 
     # Get the connection pool for the server.
@@ -974,8 +981,11 @@ module Mongo
     #   any servers and doesn't find any servers for the duration of
     #   server selection timeout.
     #
+    # @param [ Float | nil ] :timeout Timeout for the validation. Since the
+    #   validation process involves server selection,
+    #
     # @api private
-    def validate_session_support!
+    def validate_session_support!(timeout: nil)
       if topology.is_a?(Topology::LoadBalanced)
         return
       end
@@ -993,7 +1003,7 @@ module Mongo
       # No data bearing servers known - perform server selection to try to
       # get a response from at least one of them, to return an accurate
       # assessment of whether sessions are currently supported.
-      ServerSelector.get(mode: :primary_preferred).select_server(self)
+      ServerSelector.get(mode: :primary_preferred).select_server(self, timeout: timeout)
       @state_change_lock.synchronize do
         @sdam_flow_lock.synchronize do
           unless topology.logical_session_timeout

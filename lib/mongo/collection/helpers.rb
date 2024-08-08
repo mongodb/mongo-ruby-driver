@@ -30,7 +30,7 @@ module Mongo
       # @return [ Result ] The result of the execution.
       def do_drop(operation, session, context)
         operation.execute(next_primary(nil, session), context: context)
-      rescue Error::OperationFailure => ex
+      rescue Error::OperationFailure::Family => ex
         # NamespaceNotFound
         if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
           false

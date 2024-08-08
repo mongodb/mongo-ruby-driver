@@ -134,8 +134,12 @@ module Mongo
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
     #   - *:local_threshold*.
-    # @option opts [ Session ] :session The session to use for the operation.
-    # @option opts [ Integer ] :size The size of the capped collection.
+    # @option options [ Session ] :session The session to use for the operation.
+    # @option options [ Integer ] :size The size of the capped collection.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     # @option opts [ Hash ] :time_series Create a time-series collection.
     #   The hash may have the following items:
     #   - *:timeField* -- The name of the field which contains the date in each
@@ -163,6 +167,7 @@ module Mongo
       @database = database
       @name = name.to_s.freeze
       @options = options.dup
+      @timeout_ms = options.delete(:timeout_ms)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
         # Cache the instance so that we do not needlessly reconstruct it.
@@ -401,7 +406,10 @@ module Mongo
           self.write_concern
         end
 
-        context = Operation::Context.new(client: client, session: session)
+        context = Operation::Context.new(
+          client: client,
+          session: session
+        )
         maybe_create_qe_collections(opts[:encrypted_fields], client, session) do |encrypted_fields|
           Operation::Create.new(
             selector: operation,
@@ -413,7 +421,10 @@ module Mongo
             collation: options[:collation] || options['collation'],
             encrypted_fields: encrypted_fields,
             validator: options[:validator],
-          ).execute(next_primary(nil, session), context: context)
+          ).execute(
+            next_primary(nil, session),
+            context: context
+          )
         end
       end
     end
@@ -432,12 +443,16 @@ module Mongo
     # @option opts [ Hash ] :write_concern The write concern options.
     # @option opts [ Hash | nil ] :encrypted_fields Encrypted fields hash that
     #   was provided to `create` collection helper.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
     def drop(opts = {})
-      client.send(:with_session, opts) do |session|
+      client.with_session(opts) do |session|
         maybe_drop_emm_collections(opts[:encrypted_fields], client, session) do
           temp_write_concern = write_concern
           write_concern = if opts[:write_concern]
@@ -445,7 +460,11 @@ module Mongo
           else
             temp_write_concern
           end
-          context = Operation::Context.new(client: client, session: session)
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(opts)
+          )
           operation = Operation::Drop.new({
             selector: { :drop => name },
             db_name: database.name,
@@ -481,8 +500,9 @@ module Mongo
     #   this command.
     # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
     # @option options [ Integer ] :limit The max number of docs to return from the query.
-    # @option options [ Integer ] :max_time_ms
-    #   The maximum amount of time to allow the query to run, in milliseconds.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
     #   output or behavior of a query.
     # @option options [ true | false ] :no_cursor_timeout The server normally times out idle
@@ -496,6 +516,13 @@ module Mongo
     # @option options [ Integer ] :skip The number of docs to skip before returning results.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
@@ -526,13 +553,14 @@ module Mongo
     # @option options [ String ] :hint The index to use for the aggregation.
     # @option options [ Hash ] :let Mapping of variables to use in the pipeline.
     #   See the server documentation for details.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time in
-    #   milliseconds to allow the aggregation to run.
-    # @option options [ true | false ] :use_cursor Indicates whether the command
-    #   will request that the server provide results using a cursor. Note that
-    #   as of server version 3.6, aggregations always provide results using a
-    #   cursor and this option is therefore not valid.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @return [ View::Aggregation ] The aggregation object.
     #
@@ -600,6 +628,13 @@ module Mongo
     #   events included with this flag set are: createIndexes, dropIndexes,
     #   modify, create, shardCollection, reshardCollection,
     #   refineCollectionShardKey.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with
@@ -610,7 +645,7 @@ module Mongo
     # @since 2.5.0
     def watch(pipeline = [], options = {})
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] = :tailable_await if options[:max_await_time_ms]
       View::ChangeStream.new(View.new(self, {}, view_options), pipeline, nil, options)
     end
 
@@ -624,13 +659,19 @@ module Mongo
     #
     # @option options [ Hash ] :hint The index to use.
     # @option options [ Integer ] :limit The maximum number of documents to count.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Integer ] :skip The number of documents to skip before counting.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @return [ Integer ] The document count.
     #
@@ -667,6 +708,10 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @return [ Integer ] The document count.
     #
@@ -688,6 +733,10 @@ module Mongo
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @return [ Integer ] The document count.
     #
@@ -705,10 +754,16 @@ module Mongo
     # @param [ Hash ] filter The documents from which to retrieve the distinct values.
     # @param [ Hash ] options The distinct command options.
     #
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @return [ Array<Object> ] The list of distinct values.
     #
@@ -781,6 +836,10 @@ module Mongo
     # @option opts [ Object ] :comment A user-provided comment to attach to
     #   this command.
     # @option opts [ Session ] :session The session to use for the operation.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option opts [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
@@ -801,7 +860,11 @@ module Mongo
           raise ArgumentError, "Document to be inserted cannot be nil"
         end
 
-        context = Operation::Context.new(client: client, session: session)
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          operation_timeouts: operation_timeouts(opts)
+          )
         write_with_retry(write_concern, context: context) do |connection, txn_num, context|
           Operation::Insert.new(
             :documents => [ document ],
@@ -834,6 +897,10 @@ module Mongo
     # @option options [ true | false ] :ordered Whether the operations
     #   should be executed in order.
     # @option options [ Session ] :session The session to use for the operation.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
@@ -862,6 +929,10 @@ module Mongo
     # @option options [ true | false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Session ] :session The session to use for the set of operations.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
@@ -884,6 +955,10 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
@@ -906,6 +981,10 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
@@ -928,15 +1007,23 @@ module Mongo
     # @param [ Integer ] cursor_count The max number of cursors to return.
     # @param [ Hash ] options The parallel scan command options.
     #
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
-    #   to run in milliseconds.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Session ] :session The session to use.
+    # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+    #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+    #   iteration).
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @return [ Array<Cursor> ] An array of cursors.
     #
     # @since 2.1
     def parallel_scan(cursor_count, options = {})
-      find({}, options).send(:parallel_scan, cursor_count, options)
+      find({}, options).parallel_scan(cursor_count, options)
     end
 
     # Replaces a single document in the collection with the new document.
@@ -954,6 +1041,10 @@ module Mongo
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     # @option options [ Hash ] :let Mapping of variables to use in the command.
@@ -983,6 +1074,10 @@ module Mongo
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     # @option options [ Hash ] :let Mapping of variables to use in the command.
@@ -1012,6 +1107,10 @@ module Mongo
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     # @option options [ Hash ] :let Mapping of variables to use in the command.
@@ -1033,8 +1132,9 @@ module Mongo
     # @param [ Hash ] filter The filter to use.
     # @param [ Hash ] options The options.
     #
-    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
-    #   to run in milliseconds.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
@@ -1042,6 +1142,10 @@ module Mongo
     #   Defaults to the collection's write concern.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     # @option options [ Hash ] :let Mapping of variables to use in the command.
@@ -1086,6 +1190,10 @@ module Mongo
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -1122,6 +1230,10 @@ module Mongo
     # @option options [ Session ] :session The session to use.
     # @option options [ Hash | String ] :hint The index to use for this operation.
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the collection or the database or the client.
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
@@ -1151,6 +1263,29 @@ module Mongo
     # @api private
     def system_collection?
       name.start_with?('system.')
+    end
+
+    # @return [ Integer | nil ] Operation timeout that is for this database or
+    #   for the corresponding client.
+    #
+    # @api private
+    def timeout_ms
+      @timeout_ms || database.timeout_ms
+    end
+
+    # @return [ Hash ] timeout_ms value set on the operation level (if any),
+    #   and/or timeout_ms that is set on collection/database/client level (if any).
+    #
+    # @api private
+    def operation_timeouts(opts = {})
+      # TODO: We should re-evaluate if we need two timeouts separately.
+      {}.tap do |result|
+        if opts[:timeout_ms].nil?
+          result[:inherited_timeout_ms] = timeout_ms
+        else
+          result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+        end
+      end
     end
   end
 end

@@ -74,7 +74,11 @@ module Mongo
         # If we are here, session is not nil. A session being nil would have
         # failed retry_write_allowed? check.
 
-        server = select_server(cluster, ServerSelector.primary, session)
+        server = select_server(
+          cluster, ServerSelector.primary,
+          session,
+          timeout: context.remaining_timeout_sec
+        )
 
         unless ending_transaction || server.retry_writes?
           return legacy_write_with_retry(server, context: context, &block)
@@ -110,7 +114,7 @@ module Mongo
             server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, nil, context
             end
-          rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure => e
+          rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
             e.add_note('retries disabled')
             raise e
           end
@@ -170,6 +174,7 @@ module Mongo
       # @api private
       def legacy_write_with_retry(server = nil, context:)
         session = context.session
+        context.check_timeout!
 
         # This is the pre-session retry logic, and is not subject to
         # current retryable write specifications.
@@ -177,12 +182,20 @@ module Mongo
         attempt = 0
         begin
           attempt += 1
-          server ||= select_server(cluster, ServerSelector.primary, session)
-          server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+          server ||= select_server(
+            cluster,
+            ServerSelector.primary,
+            session,
+            timeout: context.remaining_timeout_sec
+          )
+          server.with_connection(
+            connection_global_id: context.connection_global_id,
+            context: context
+          ) do |connection|
             # Legacy retries do not use txn_num
             yield connection, nil, context.dup
           end
-        rescue Error::OperationFailure => e
+        rescue Error::OperationFailure::Family => e
           e.add_note('legacy retry')
           e.add_note("attempt #{attempt}")
           server = nil
@@ -220,7 +233,10 @@ module Mongo
         txn_num = nil
         connection_succeeded = false
 
-        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+        server.with_connection(
+          connection_global_id: context.connection_global_id,
+          context: context
+        ) do |connection|
           connection_succeeded = true
 
           session.materialize_if_needed
@@ -230,10 +246,10 @@ module Mongo
           # it later for the retry as well.
           yield connection, txn_num, context.dup
         end
-      rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure => e
+      rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure::Family => e
         e.add_notes('modern retry', 'attempt 1')
 
-        if e.is_a?(Error::OperationFailure)
+        if e.is_a?(Error::OperationFailure::Family)
           ensure_retryable!(e)
         else
           ensure_labeled_retryable!(e, connection_succeeded, session)
@@ -256,6 +272,8 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def retry_write(original_error, txn_num, context:, failed_server: nil, &block)
+        context&.check_timeout!
+
         session = context.session
 
         # We do not request a scan of the cluster here, because error handling
@@ -263,7 +281,13 @@ module Mongo
         # server description and/or topology as necessary (specifically,
         # a socket error or a not master error should have marked the respective
         # server unknown). Here we just need to wait for server selection.
-        server = select_server(cluster, ServerSelector.primary, session, failed_server)
+        server = select_server(
+          cluster,
+          ServerSelector.primary,
+          session,
+          failed_server,
+          timeout: context.remaining_timeout_sec
+        )
 
         unless server.retry_writes?
           # Do not need to add "modern retry" here, it should already be on
@@ -279,14 +303,21 @@ module Mongo
           raise Error::RaiseOriginalError
         end
 
+        attempt = attempt ? attempt + 1 : 2
         log_retry(original_error, message: 'Write retry')
         server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
         end
       rescue *retryable_exceptions, Error::PoolError => e
-        fail_on_retryable!(e, original_error)
-      rescue Error::OperationFailure => e
-        fail_on_operation_failure!(e, original_error)
+        maybe_fail_on_retryable(e, original_error, context, attempt)
+        failed_server = server
+        retry
+      rescue Error::OperationFailure::Family => e
+        maybe_fail_on_operation_failure(e, original_error, context, attempt)
+        failed_server = server
+        retry
+      rescue Mongo::Error::TimeoutError
+        raise
       rescue Error, Error::AuthError => e
         fail_on_other_error!(e, original_error)
       rescue Error::RaiseOriginalError
@@ -332,10 +363,10 @@ module Mongo
 
       # Raise either e, or original_error, depending on whether e is
       # write_retryable.
-      def fail_on_retryable!(e, original_error)
+      def maybe_fail_on_retryable(e, original_error, context, attempt)
         if e.write_retryable?
-          e.add_notes('modern retry', 'attempt 2')
-          raise e
+          e.add_notes('modern retry', "attempt #{attempt}")
+          raise e unless context&.deadline
         else
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error
@@ -344,11 +375,11 @@ module Mongo
 
       # Raise either e, or original_error, depending on whether e is
       # appropriately labeled.
-      def fail_on_operation_failure!(e, original_error)
+      def maybe_fail_on_operation_failure(e, original_error, context, attempt)
         e.add_note('modern retry')
         if e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed')
-          e.add_note('attempt 2')
-          raise e
+          e.add_note("attempt #{attempt}")
+          raise e unless context&.deadline
         else
           original_error.add_note("later retry failed: #{e.class}: #{e}")
           raise original_error

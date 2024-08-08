@@ -330,8 +330,10 @@ module Utils
       when 'long'
         expected_class = BSON::Int64
         expected_key = '$numberLong'
+      when %w[int long]
+        return actual.is_a?(Numeric) || actual.is_a?(BSON::Int32) || actual.is_a?(BSON::Int64)
       else
-        raise "Tests do not currently support matching against $$type #{v['$$type']}"
+        raise "Tests do not currently support matching against $$type #{expected['$$type']}"
       end
 
       actual.is_a?(expected_class) || actual.key?(expected_key)

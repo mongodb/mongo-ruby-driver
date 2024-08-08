@@ -111,7 +111,7 @@ module Mongo
       def run
         change_stream = begin
           @target.watch(@pipeline, ::Utils.snakeize_hash(@options))
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           return {
             result: {
               error: {
@@ -146,7 +146,7 @@ module Mongo
         begin
           change = enum.next
           changes << change
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           return {
             result: {
               error: {

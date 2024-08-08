@@ -83,6 +83,12 @@ module Mongo
             @options.freeze
             @filename = @options[:filename]
             @open = true
+            @timeout_holder = CsotTimeoutHolder.new(
+              operation_timeouts: {
+                operation_timeout_ms: options[:timeout_ms],
+                inherited_timeout_ms: fs.database.timeout_ms
+              }
+            )
           end
 
           # Write to the GridFS bucket from the source stream or a string.
@@ -107,7 +113,12 @@ module Mongo
             end
             chunks = File::Chunk.split(io, file_info, @n)
             @n += chunks.size
-            chunks_collection.insert_many(chunks) unless chunks.empty?
+            unless chunks.empty?
+              chunks_collection.insert_many(
+                chunks,
+                timeout_ms: @timeout_holder.remaining_timeout_ms!
+              )
+            end
             self
           end
 
@@ -124,7 +135,10 @@ module Mongo
           def close
             ensure_open!
             update_length
-            files_collection.insert_one(file_info, @options)
+            files_collection.insert_one(
+              file_info,
+              @options.merge(timeout_ms: @timeout_holder.remaining_timeout_ms!)
+            )
             @open = false
             file_id
           end
@@ -166,7 +180,10 @@ module Mongo
           #
           # @since 2.1.0
           def abort
-            fs.chunks_collection.find({ :files_id => file_id }, @options).delete_many
+            fs.chunks_collection.find(
+              { :files_id => file_id },
+              @options.merge(timeout_ms: @timeout_holder.remaining_timeout_ms!)
+            ).delete_many
             (@open = false) || true
           end
 
@@ -200,7 +217,7 @@ module Mongo
           end
 
           def ensure_indexes!
-            fs.send(:ensure_indexes!)
+            fs.send(:ensure_indexes!, @timeout_holder)
           end
 
           def ensure_open!

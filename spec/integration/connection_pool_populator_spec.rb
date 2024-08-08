@@ -26,6 +26,8 @@ describe 'Connection pool populator integration' do
 
   declare_topology_double
 
+  retry_test
+
   let(:app_metadata) do
     Mongo::Server::AppMetadata.new(options)
   end

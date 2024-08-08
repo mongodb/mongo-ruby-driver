@@ -128,6 +128,10 @@ module Mongo
     #   required privilege to run the command when access control is enforced
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -136,7 +140,7 @@ module Mongo
     #
     # @since 2.0.0
     def collection_names(options = {})
-      View.new(self).collection_names(options)
+      View.new(self, options).collection_names(options)
     end
 
     # Get info on all the non-system collections in the database.
@@ -156,6 +160,10 @@ module Mongo
     #   required privilege to run the command when access control is enforced.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -165,7 +173,7 @@ module Mongo
     #
     # @since 2.0.5
     def list_collections(options = {})
-      View.new(self).list_collections(options)
+      View.new(self, options).list_collections(options)
     end
 
     # Get all the non-system collections that belong to this database.
@@ -181,6 +189,10 @@ module Mongo
     #   required privilege to run the command when access control is enforced.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listCollections/
     #   for more information and usage.
@@ -202,6 +214,10 @@ module Mongo
     #
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     # @option opts :execution_options [ Hash ] Options to pass to the code that
     #   executes this command. This is an internal option and is subject to
     #   change.
@@ -223,7 +239,7 @@ module Mongo
       Lint.validate_underscore_read_preference(txn_read_pref)
       selector = ServerSelector.get(txn_read_pref)
 
-      client.send(:with_session, opts) do |session|
+      client.with_session(opts) do |session|
         server = selector.select_server(cluster, nil, session)
         op = Operation::Command.new(
           :selector => operation,
@@ -233,7 +249,11 @@ module Mongo
         )
 
         op.execute(server,
-          context: Operation::Context.new(client: client, session: session),
+          context: Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(opts)
+          ),
           options: execution_opts)
       end
     end
@@ -245,6 +265,12 @@ module Mongo
     #
     # @option opts :read [ Hash ] The read preference for this command.
     # @option opts :session [ Session ] The session to use for this command.
+    # @option opts [ Object ] :comment A user-provided
+    #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     # @return [ Hash ] The result of the command execution.
     # @api private
@@ -258,15 +284,20 @@ module Mongo
       Lint.validate_underscore_read_preference(txn_read_pref)
       preference = ServerSelector.get(txn_read_pref)
 
-      client.send(:with_session, opts) do |session|
-        read_with_retry(session, preference) do |server|
+      client.with_session(opts) do |session|
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          operation_timeouts: operation_timeouts(opts)
+        )
+        read_with_retry(session, preference, context) do |server|
           Operation::Command.new(
             selector: operation.dup,
             db_name: name,
             read: preference,
             session: session,
             comment: opts[:comment],
-          ).execute(server, context: Operation::Context.new(client: client, session: session))
+          ).execute(server, context: context)
         end
       end
     end
@@ -279,14 +310,18 @@ module Mongo
     # @param [ Hash ] options The options for the operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
-    # @option opts [ Hash ] :write_concern The write concern options.
+    # @option options [ Hash ] :write_concern The write concern options.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
     def drop(options = {})
       operation = { :dropDatabase => 1 }
-      client.send(:with_session, options) do |session|
+      client.with_session(options) do |session|
         write_concern = if options[:write_concern]
           WriteConcern.get(options[:write_concern])
         else
@@ -297,7 +332,14 @@ module Mongo
           db_name: name,
           write_concern: write_concern,
           session: session
-        }).execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
+        }).execute(
+          next_primary(nil, session),
+          context: Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(options)
+          )
+        )
       end
     end
 
@@ -309,6 +351,10 @@ module Mongo
     # @param [ Mongo::Client ] client The driver client.
     # @param [ String, Symbol ] name The name of the database.
     # @param [ Hash ] options The options.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the client.
     #
     # @raise [ Mongo::Database::InvalidName ] If the name is nil.
     #
@@ -388,20 +434,21 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to
+    #   allow the query to run, in milliseconds. This option is deprecated, use
+    #   :timeout_ms instead.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the value is inherited from
+    #    the database or the client.
     # @option options [ String ] :hint The index to use for the aggregation.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time in
-    #   milliseconds to allow the aggregation to run.
-    # @option options [ true, false ] :use_cursor Indicates whether the command
-    #   will request that the server provide results using a cursor. Note that
-    #   as of server version 3.6, aggregations always provide results using a
-    #   cursor and this option is therefore not valid.
     # @option options [ Session ] :session The session to use.
     #
     # @return [ Collection::View::Aggregation ] The aggregation object.
     #
     # @since 2.10.0
     def aggregate(pipeline, options = {})
-      View.new(self).aggregate(pipeline, options)
+      View.new(self, options).aggregate(pipeline, options)
     end
 
     # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
@@ -471,7 +518,7 @@ module Mongo
     # @since 2.6.0
     def watch(pipeline = [], options = {})
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] = :tailable_await if options[:max_await_time_ms]
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(collection("#{COMMAND}.aggregate"), {}, view_options),
@@ -496,6 +543,29 @@ module Mongo
     def self.create(client)
       database = Database.new(client, client.options[:database], client.options)
       client.instance_variable_set(:@database, database)
+    end
+
+    # @return [ Integer | nil ] Operation timeout that is for this database or
+    #   for the corresponding client.
+    #
+    # @api private
+    def timeout_ms
+      options[:timeout_ms] || client.timeout_ms
+    end
+
+    # @return [ Hash ] timeout_ms value set on the operation level (if any),
+    #   and/or timeout_ms that is set on collection/database/client level (if any).
+    #
+    # @api private
+    def operation_timeouts(opts)
+      # TODO: We should re-evaluate if we need two timeouts separately.
+      {}.tap do |result|
+        if opts[:timeout_ms].nil?
+          result[:inherited_timeout_ms] = timeout_ms
+        else
+          result[:operation_timeout_ms] = opts.delete(:timeout_ms)
+        end
+      end
     end
   end
 end

@@ -11,6 +11,8 @@ runOnRequirements:
     maxServerVersion: "7.99"
     topologies: [ replicaset ]
     serverless: forbid
+    # SERVER-90047: failures against latest server necessitate adding this for now
+    maxServerVersion: "8.0.0"
 
 _yamlAnchors:
   readConcern: &readConcern

@@ -69,20 +69,24 @@ module Mongo
         # Retrieves a valid set of credentials, if possible, or raises
         # Auth::InvalidConfiguration.
         #
+        # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout, if any.
+        #
         # @return [ Auth::Aws::Credentials ] A valid set of credentials.
         #
         # @raise Auth::InvalidConfiguration if a source contains an invalid set
         #   of credentials.
         # @raise Auth::Aws::CredentialsNotFound if credentials could not be
         #   retrieved from any source.
-        def credentials
+        # @raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
+        def credentials(timeout_holder = nil)
           credentials = credentials_from_user(user)
           return credentials unless credentials.nil?
 
           credentials = credentials_from_environment
           return credentials unless credentials.nil?
 
-          credentials = @credentials_cache.fetch { obtain_credentials_from_endpoints }
+          credentials = @credentials_cache.fetch { obtain_credentials_from_endpoints(timeout_holder) }
           return credentials unless credentials.nil?
 
           raise Auth::Aws::CredentialsNotFound
@@ -127,17 +131,21 @@ module Mongo
 
         # Returns credentials from the AWS metadata endpoints.
         #
+        # @param [ CsotTimeoutHolder ] timeout_holder CSOT timeout.
+        #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed or the obtained credentials are invalid.
         #
         # @raise Auth::InvalidConfiguration if a source contains an invalid set
         #   of credentials.
-        def obtain_credentials_from_endpoints
-          if (credentials = web_identity_credentials) && credentials_valid?(credentials, 'Web identity token')
+        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
+        def obtain_credentials_from_endpoints(timeout_holder = nil)
+          if (credentials = web_identity_credentials(timeout_holder)) && credentials_valid?(credentials, 'Web identity token')
             credentials
-          elsif (credentials = ecs_metadata_credentials) && credentials_valid?(credentials, 'ECS task metadata')
+          elsif (credentials = ecs_metadata_credentials(timeout_holder)) && credentials_valid?(credentials, 'ECS task metadata')
             credentials
-          elsif (credentials = ec2_metadata_credentials) && credentials_valid?(credentials, 'EC2 instance metadata')
+          elsif (credentials = ec2_metadata_credentials(timeout_holder)) && credentials_valid?(credentials, 'EC2 instance metadata')
             credentials
           end
         end
@@ -145,21 +153,26 @@ module Mongo
         # Returns credentials from the EC2 metadata endpoint. The credentials
         # could be empty, partial or invalid.
         #
+        # @param [ CsotTimeoutHolder ] timeout_holder CSOT timeout.
+        #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
-        def ec2_metadata_credentials
+        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout.
+        def ec2_metadata_credentials(timeout_holder = nil)
+          timeout_holder&.check_timeout!
           http = Net::HTTP.new('169.254.169.254')
           req = Net::HTTP::Put.new('/latest/api/token',
             # The TTL is required in order to obtain the metadata token.
             {'x-aws-ec2-metadata-token-ttl-seconds' => '30'})
-          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+          resp = with_timeout(timeout_holder) do
             http.request(req)
           end
           if resp.code != '200'
             return nil
           end
           metadata_token = resp.body
-          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+          resp = with_timeout(timeout_holder) do
             http_get(http, '/latest/meta-data/iam/security-credentials', metadata_token)
           end
           if resp.code != '200'
@@ -167,7 +180,7 @@ module Mongo
           end
           role_name = resp.body
           escaped_role_name = CGI.escape(role_name).gsub('+', '%20')
-          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+          resp = with_timeout(timeout_holder) do
             http_get(http, "/latest/meta-data/iam/security-credentials/#{escaped_role_name}", metadata_token)
           end
           if resp.code != '200'
@@ -189,7 +202,17 @@ module Mongo
           return nil
         end
 
-        def ecs_metadata_credentials
+        # Returns credentials from the ECS metadata endpoint. The credentials
+        # could be empty, partial or invalid.
+        #
+        # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
+        #
+        # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
+        #   if retrieval failed.
+        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
+        def ecs_metadata_credentials(timeout_holder = nil)
+          timeout_holder&.check_timeout!
           relative_uri = ENV['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
           if relative_uri.nil? || relative_uri.empty?
             return nil
@@ -203,7 +226,7 @@ module Mongo
           # a leading slash must be added by the driver, but this is not
           # in fact needed.
           req = Net::HTTP::Get.new(relative_uri)
-          resp = ::Timeout.timeout(METADATA_TIMEOUT) do
+          resp = with_timeout(timeout_holder) do
             http.request(req)
           end
           if resp.code != '200'
@@ -225,13 +248,15 @@ module Mongo
         # inside EKS. See https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
         # for further details.
         #
+        # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
+        #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
-        def web_identity_credentials
+        def web_identity_credentials(timeout_holder = nil)
           web_identity_token, role_arn, role_session_name = prepare_web_identity_inputs
           return nil if web_identity_token.nil?
           response = request_web_identity_credentials(
-            web_identity_token, role_arn, role_session_name
+            web_identity_token, role_arn, role_session_name, timeout_holder
           )
           return if response.nil?
           credentials_from_web_identity_response(response)
@@ -266,10 +291,15 @@ module Mongo
         #   that the caller is assuming.
         # @param [ String ] role_session_name An identifier for the assumed
         #   role session.
+        # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
         #
         # @return [ Net::HTTPResponse | nil ] AWS API response if successful,
         #   otherwise nil.
-        def request_web_identity_credentials(token, role_arn, role_session_name)
+        #
+        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        #   the timeout defined on the operation context.
+        def request_web_identity_credentials(token, role_arn, role_session_name, timeout_holder)
+          timeout_holder&.check_timeout!
           uri = URI('https://sts.amazonaws.com/')
           params = {
             'Action' => 'AssumeRoleWithWebIdentity',
@@ -281,8 +311,10 @@ module Mongo
           uri.query = ::URI.encode_www_form(params)
           req = Net::HTTP::Post.new(uri)
           req['Accept'] = 'application/json'
-          resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |https|
-            https.request(req)
+          resp = with_timeout(timeout_holder) do
+            Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |https|
+              https.request(req)
+            end
           end
           if resp.code != '200'
             return nil
@@ -350,6 +382,27 @@ module Mongo
           end
 
           true
+        end
+
+        # Execute the given block considering the timeout defined on the context,
+        # or the default timeout value.
+        #
+        # We use +Timeout.timeout+ here because there is no other acceptable easy
+        # way to time limit http requests.
+        #
+        # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
+        #
+        # @ raise Error::TimeoutError if deadline exceeded.
+        def with_timeout(timeout_holder)
+          timeout = timeout_holder&.remaining_timeout_sec! || METADATA_TIMEOUT
+          exception_class = if timeout_holder&.csot?
+                              Error::TimeoutError
+                            else
+                              nil
+                            end
+          ::Timeout.timeout(timeout, exception_class) do
+            yield
+          end
         end
       end
     end

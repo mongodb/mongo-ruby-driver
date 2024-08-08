@@ -108,7 +108,7 @@ module Mongo
         # @example Validate the result.
         #   result.validate!
         #
-        # @raise [ Error::OperationFailure ] If an error is in the result.
+        # @raise [ Error::OperationFailure::Family ] If an error is in the result.
         #
         # @return [ Result ] The result if verification passed.
         #
