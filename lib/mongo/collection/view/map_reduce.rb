@@ -73,8 +73,15 @@ module Mongo
           session = client.get_session(@options)
           server = cluster.next_primary(nil, session)
           context = Operation::Context.new(client: client, session: session, operation_timeouts: view.operation_timeouts)
-          result = send_initial_query(server, context)
-          result = send_fetch_query(server, session) unless inline?
+          if server.load_balancer?
+            # Connection will be checked in when cursor is drained.
+            connection = server.pool.check_out(context: context)
+            result = send_initial_query_with_connection(connection, context.session, context: context)
+            result = send_fetch_query_with_connection(connection, session) unless inline?
+          else
+            result = send_initial_query(server, context)
+            result = send_fetch_query(server, session) unless inline?
+          end
           @cursor = Cursor.new(view, result, server, session: session)
           if block_given?
             @cursor.each do |doc|
@@ -306,7 +313,7 @@ module Mongo
           Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
         end
 
-        def fetch_query_op(server, session)
+        def fetch_query_op(session)
           spec = {
             coll_name: out_collection_name,
             db_name: out_database_name,
@@ -319,8 +326,17 @@ module Mongo
           Operation::Find.new(spec)
         end
 
-        def send_fetch_query(server, session)
-          fetch_query_op(server, session).execute(server, context: Operation::Context.new(client: client, session: session))
+        def send_fetch_query(session)
+          fetch_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
+        end
+
+        def send_fetch_query_with_connection(connection, session)
+          fetch_query_op(
+            session
+          ).execute_with_connection(
+            connection,
+            context: Operation::Context.new(client: client, session: session)
+          )
         end
       end
     end

@@ -104,7 +104,7 @@ module Mongo
       #   when this result was produced.
       #
       # @api private
-      def initialize(replies, connection_description = nil, connection_global_id = nil, context: nil)
+      def initialize(replies, connection_description = nil, connection_global_id = nil, context: nil, connection: nil)
         @context = context
 
         if replies
@@ -122,6 +122,7 @@ module Mongo
           @replies = [ reply ]
           @connection_description = connection_description
           @connection_global_id = connection_global_id
+          @connection = connection
         end
       end
 
@@ -147,6 +148,8 @@ module Mongo
       #
       # @api private
       attr_reader :context
+
+      attr_reader :connection
 
       # @api private
       def_delegators :parser,

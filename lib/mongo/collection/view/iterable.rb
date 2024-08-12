@@ -168,7 +168,14 @@ module Mongo
         end
 
         def send_initial_query(server, context)
-          initial_query_op(context.session).execute(server, context: context)
+          operation = initial_query_op(context.session)
+          if server.load_balancer?
+            # Connection will be checked in when cursor is drained.
+            connection = server.pool.check_out(context: context)
+            operation.execute_with_connection(connection, context: context)
+          else
+            operation.execute(server, context: context)
+          end
         end
 
         def use_query_cache?

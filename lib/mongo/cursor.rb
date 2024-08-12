@@ -91,7 +91,14 @@ module Mongo
       @context = @options[:context]&.with(connection_global_id: connection_global_id_for_context) || fresh_context
       @explicitly_closed = false
       @lock = Mutex.new
-      unless closed?
+      if server.load_balancer?
+        # We need the connection in the cursor only in load balanced topology;
+        # we do not need an additional reference to it otherwise.
+        @connection = @initial_result.connection
+      end
+      if closed?
+        check_in_connection
+      else
         register
         ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec(@connection_global_id),
           cluster))
@@ -315,6 +322,7 @@ module Mongo
       @lock.synchronize do
         @explicitly_closed = true
       end
+      check_in_connection
     end
 
     # Get the parsed collection name.
@@ -464,7 +472,10 @@ module Mongo
       # the @cursor_id may be zero (all results fit in the first batch).
       # Thus we need to check both @cursor_id and the cursor_id of the result
       # prior to calling unregister here.
-      unregister if !closed? && result.cursor_id == 0
+      if !closed? && result.cursor_id == 0
+        unregister
+        check_in_connection
+      end
       @cursor_id = set_cursor_id(result)
 
       if result.respond_to?(:post_batch_resume_token)
@@ -496,7 +507,12 @@ module Mongo
     end
 
     def execute_operation(op, context: nil)
-      op.execute(@server, context: context || possibly_refreshed_context)
+      op_context = context || possibly_refreshed_context
+      if @connection.nil?
+        op.execute(@server, context: op_context)
+      else
+        op.execute_with_connection(@connection, context: op_context)
+      end
     end
 
     # Considers the timeout mode and will either return the cursor's
@@ -544,6 +560,22 @@ module Mongo
       else
         @connection_global_id
       end
+    end
+
+    # Returns the connection that was used to create the cursor back to the
+    # corresponding connection pool.
+    #
+    # In a load balanced topology cursors must use the same connection for the
+    # initial and all subsequent operations. Therefore, the connection is not
+    # checked into the pool after the initial operation is completed, but
+    # only when the cursor is drained.
+    def check_in_connection
+      # Connection nil means the connection has been already checked in.
+      return if @connection.nil?
+      return unless @connection.server.load_balancer?
+
+      @connection.connection_pool.check_in(@connection)
+      @connection = nil
     end
   end
 end
