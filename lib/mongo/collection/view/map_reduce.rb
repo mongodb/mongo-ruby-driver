@@ -80,7 +80,7 @@ module Mongo
             result = send_fetch_query_with_connection(connection, session) unless inline?
           else
             result = send_initial_query(server, context)
-            result = send_fetch_query(session) unless inline?
+            result = send_fetch_query(server, session) unless inline?
           end
           @cursor = Cursor.new(view, result, server, session: session)
           if block_given?
@@ -326,7 +326,7 @@ module Mongo
           Operation::Find.new(spec)
         end
 
-        def send_fetch_query(session)
+        def send_fetch_query(server, session)
           fetch_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
         end
 
