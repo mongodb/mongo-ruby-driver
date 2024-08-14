@@ -100,8 +100,10 @@ module Mongo
         check_in_connection
       else
         register
-        ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec(@connection_global_id),
-          cluster))
+        ObjectSpace.define_finalizer(
+          self,
+          self.class.finalize(kill_spec(@connection_global_id), cluster)
+        )
       end
     end
 
@@ -406,6 +408,7 @@ module Mongo
         connection_global_id: connection_global_id,
         server_address: server.address,
         session: @session,
+        connection: @connection
       )
     end
 
