@@ -908,6 +908,10 @@ axes:
         variables:
           MONGODB_VERSION: "latest"
           CRYPT_SHARED_VERSION: "latest"
+      - id: "8.0"
+        display_name: "8.0"
+        variables:
+          MONGODB_VERSION: "8.0"
       - id: "7.0"
         display_name: "7.0"
         variables:
@@ -1308,7 +1312,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-3.2"
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: ["latest", "8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: rhel8
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
@@ -1318,7 +1322,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.4"]
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: ["latest", "8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ['rhel8']
       # There is no latest for ubuntu2204, so we can't test it here.
@@ -1330,7 +1334,7 @@ buildvariants:
   - matrix_name: "mongo-recent-arm"
     matrix_spec:
       ruby: "ruby-3.2"
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: ["latest", "8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: 'rhel8-arm'
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1491,7 +1495,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: "ruby-3.2"
-      mongodb-version: ["6.0", "5.3"]
+      mongodb-version: ["7.0", "6.0"]
       topology: replica-set
       os: rhel8
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
