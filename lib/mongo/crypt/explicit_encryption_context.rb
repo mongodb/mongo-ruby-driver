@@ -39,27 +39,28 @@ module Mongo
       #   that will be used to encrypt the value.
       # @option options [ String ] :algorithm The algorithm used to encrypt the
       #   value. Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic",
-      #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed", "RangePreview".
+      #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed", "Range".
       # @option options [ Integer | nil ] :contention_factor Contention factor
       #   to be applied if encryption algorithm is set to "Indexed". If not
       #   provided, it defaults to a value of 0. Contention factor should be set
       #   only if encryption algorithm is set to "Indexed".
       # @option options [ String | nil ] query_type Query type to be applied
-      #   if encryption algorithm is set to "Indexed" or "RangePreview".
-      #   Allowed values are "equality" and "rangePreview".
+      #   if encryption algorithm is set to "Indexed" or "Range".
+      #   Allowed values are "equality" and "range".
       # @option options [ Hash | nil ] :range_opts Specifies index options for
-      #   a Queryable Encryption field supporting "rangePreview" queries.
+      #   a Queryable Encryption field supporting "range" queries.
       #   Allowed options are:
       #   - :min
       #   - :max
+      #   - :trim_factor
       #   - :sparsity
       #   - :precision
-      #   min, max, sparsity, and range must match the values set in
+      #   min, max, trim_factor, sparsity, and precision must match the values set in
       #   the encryptedFields of the destination collection.
       #   For double and decimal128, min/max/precision must all be set,
       #   or all be unset.
       #
-      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # @note The Range algorithm is experimental only. It is not intended for
       # public use.
       #
       # @raise [ ArgumentError|Mongo::Error::CryptError ] If invalid options are provided
@@ -116,7 +117,7 @@ module Mongo
 
       def set_algorithm_opts(options)
         Binding.ctx_setopt_algorithm(self, options[:algorithm])
-        if %w(Indexed RangePreview).include?(options[:algorithm])
+        if %w(Indexed Range).include?(options[:algorithm])
           if options[:contention_factor]
             Binding.ctx_setopt_contention_factor(self, options[:contention_factor])
           end
@@ -125,13 +126,13 @@ module Mongo
           end
         else
           if options[:contention_factor]
-            raise ArgumentError.new(':contention_factor is allowed only for "Indexed" or "RangePreview" algorithms')
+            raise ArgumentError.new(':contention_factor is allowed only for "Indexed" or "Range" algorithms')
           end
           if options[:query_type]
-            raise ArgumentError.new(':query_type is allowed only for "Indexed" or "RangePreview" algorithms')
+            raise ArgumentError.new(':query_type is allowed only for "Indexed" or "Range" algorithms')
           end
         end
-        if options[:algorithm] == 'RangePreview'
+        if options[:algorithm] == 'Range'
           Binding.ctx_setopt_algorithm_range(self, convert_range_opts(options[:range_opts]))
         end
       end

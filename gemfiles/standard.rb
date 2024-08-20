@@ -67,6 +67,6 @@ def standard_dependencies
     gem 'solargraph', platforms: :mri
   end
 
-  gem 'libmongocrypt-helper', '~> 1.8.0' if ENV['FLE'] == 'helper'
+  gem 'libmongocrypt-helper', '~> 1.11.0' if ENV['FLE'] == 'helper'
 end
 # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength

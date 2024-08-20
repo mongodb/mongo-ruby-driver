@@ -10,7 +10,7 @@
       "path": "encryptedDecimalPrecision",
       "bsonType": "decimal",
       "queries": {
-        "queryType": "rangePreview",
+        "queryType": "range",
         "sparsity": {
           "$numberInt": "1"
         },
