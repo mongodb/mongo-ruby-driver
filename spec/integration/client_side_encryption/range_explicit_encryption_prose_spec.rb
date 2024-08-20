@@ -533,5 +533,51 @@ describe 'Range Explicit Encryption' do
 
     include_examples 'common cases'
   end
+
+  describe 'Range Explicit Encryption applies defaults' do
+    let(:payload_defaults) do
+      client_encryption.encrypt(
+        123,
+        key_id: key1_id,
+        algorithm: 'Range',
+        contention_factor: 0,
+        range_opts: {
+          min: 0,
+          max: 1000
+        }
+      )
+    end
+
+    it 'uses libmongocrypt default' do
+      payload = client_encryption.encrypt(
+        123,
+        key_id: key1_id,
+        algorithm: 'Range',
+        contention_factor: 0,
+        range_opts: {
+          min: 0,
+          max: 1000,
+          sparsity: 2,
+          trim_factor: 6
+        }
+      )
+      expect(payload.to_s.size).to eq(payload_defaults.to_s.size)
+    end
+
+    it 'accepts trim_factor 0' do
+      payload = client_encryption.encrypt(
+        123,
+        key_id: key1_id,
+        algorithm: 'Range',
+        contention_factor: 0,
+        range_opts: {
+          min: 0,
+          max: 1000,
+          trim_factor: 0
+        }
+      )
+      expect(payload.to_s.size).to eq(payload_defaults.to_s.size)
+    end
+  end
 end
 # rubocop:enable RSpec/ExampleLength

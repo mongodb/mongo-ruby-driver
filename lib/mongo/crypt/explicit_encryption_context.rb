@@ -139,7 +139,12 @@ module Mongo
 
       def convert_range_opts(range_opts)
         range_opts.dup.tap do |opts|
-          opts[:sparsity] = BSON::Int64.new(opts[:sparsity]) unless opts[:sparsity].is_a?(BSON::Int64)
+          if opts[:sparsity] && !opts[:sparsity].is_a?(BSON::Int64)
+            opts[:sparsity] = BSON::Int64.new(opts[:sparsity])
+          end
+          if opts[:trim_factor]
+            opts[:trimFactor] = opts.delete(:trim_factor)
+          end
         end
       end
     end
