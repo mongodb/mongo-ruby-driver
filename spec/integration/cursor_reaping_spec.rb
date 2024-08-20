@@ -24,7 +24,7 @@ describe 'Cursor reaping' do
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
-    authorized_client.tap do |client|
+    authorized_client.with(max_pool_size: 10).tap do |client|
       client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
   end

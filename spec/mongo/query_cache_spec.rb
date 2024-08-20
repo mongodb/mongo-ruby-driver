@@ -168,257 +168,268 @@ describe Mongo::QueryCache do
       allow(view).to receive(:limit) { nil }
     end
 
-    context 'when there is no entry in the cache' do
-      it 'returns nil' do
-        expect(Mongo::QueryCache.get(**options)).to be_nil
-      end
-    end
-
-    context 'when there is an entry in the cache' do
-      before do
-        Mongo::QueryCache.set(caching_cursor, **caching_cursor_options)
-      end
-
-      context 'when that entry has no limit' do
-        let(:caching_cursor_options) do
-          {
-            namespace: 'db.coll',
-            selector: { field: 'value' },
-          }
-        end
-
-        let(:query_options) do
-          caching_cursor_options.merge(limit: limit)
-        end
-
-        context 'when the query has a limit' do
-          let(:limit) { 5 }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-
-        context 'when the query has a limit but negative' do
-          let(:limit) { -5 }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-
-        context 'when the query has no limit' do
-          let(:limit) { nil }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-
-        context 'when the query has a 0 limit' do
-          let(:limit) { 0 }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-      end
-
-      context 'when that entry has a 0 limit' do
-        let(:caching_cursor_options) do
-          {
-            namespace: 'db.coll',
-            selector: { field: 'value' },
-            limit: 0,
-          }
-        end
-
-        let(:query_options) do
-          caching_cursor_options.merge(limit: limit)
-        end
-
+    [true, false].each do |load_balancer|
+      context "when load_balancer is #{load_balancer}" do
         before do
-          allow(view).to receive(:limit) { 0 }
-        end
-
-        context 'when the query has a limit' do
-          let(:limit) { 5 }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+          allow(server).to receive(:load_balancer?) { load_balancer }
+          if load_balancer
+            allow(result).to receive(:connection) { nil }
           end
         end
 
-        context 'when the query has a limit but negative' do
-          let(:limit) { -5 }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-
-
-        context 'when the query has no limit' do
-          let(:limit) { nil }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-
-        context 'when the query has a 0 limit' do
-          let(:limit) { 0 }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-      end
-
-      context 'when that entry has a limit' do
-        let(:caching_cursor_options) do
-          {
-            namespace: 'db.coll',
-            selector: { field: 'value' },
-            limit: 5,
-          }
-        end
-
-        let(:query_options) do
-          caching_cursor_options.merge(limit: limit)
-        end
-
-        before do
-          allow(view).to receive(:limit) { 5 }
-        end
-
-        context 'and the new query has a smaller limit' do
-          let(:limit) { 4 }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-
-        context 'and the new query has a smaller limit but negative' do
-          let(:limit) { -4 }
-
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
-
-        context 'and the new query has a larger limit' do
-          let(:limit) { 6 }
-
+        context 'when there is no entry in the cache' do
           it 'returns nil' do
-            expect(Mongo::QueryCache.get(**query_options)).to be_nil
+            expect(Mongo::QueryCache.get(**options)).to be_nil
           end
         end
 
-        context 'and the new query has a larger limit but negative' do
-          let(:limit) { -6 }
-
-          it 'returns nil' do
-            expect(Mongo::QueryCache.get(**query_options)).to be_nil
+        context 'when there is an entry in the cache' do
+          before do
+            Mongo::QueryCache.set(caching_cursor, **caching_cursor_options)
           end
-        end
 
-        context 'and the new query has the same limit' do
-          let(:limit) { 5 }
+          context 'when that entry has no limit' do
+            let(:caching_cursor_options) do
+              {
+                namespace: 'db.coll',
+                selector: { field: 'value' },
+              }
+            end
 
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+            let(:query_options) do
+              caching_cursor_options.merge(limit: limit)
+            end
+
+            context 'when the query has a limit' do
+              let(:limit) { 5 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'when the query has a limit but negative' do
+              let(:limit) { -5 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'when the query has no limit' do
+              let(:limit) { nil }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'when the query has a 0 limit' do
+              let(:limit) { 0 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
           end
-        end
 
-        context 'and the new query has the same limit but negative' do
-          let(:limit) { -5 }
+          context 'when that entry has a 0 limit' do
+            let(:caching_cursor_options) do
+              {
+                namespace: 'db.coll',
+                selector: { field: 'value' },
+                limit: 0,
+              }
+            end
 
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+            let(:query_options) do
+              caching_cursor_options.merge(limit: limit)
+            end
+
+            before do
+              allow(view).to receive(:limit) { 0 }
+            end
+
+            context 'when the query has a limit' do
+              let(:limit) { 5 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'when the query has a limit but negative' do
+              let(:limit) { -5 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+
+            context 'when the query has no limit' do
+              let(:limit) { nil }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'when the query has a 0 limit' do
+              let(:limit) { 0 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
           end
-        end
 
-        context 'and the new query has no limit' do
-          let(:limit) { nil }
+          context 'when that entry has a limit' do
+            let(:caching_cursor_options) do
+              {
+                namespace: 'db.coll',
+                selector: { field: 'value' },
+                limit: 5,
+              }
+            end
 
-          it 'returns nil' do
-            expect(Mongo::QueryCache.get(**query_options)).to be_nil
+            let(:query_options) do
+              caching_cursor_options.merge(limit: limit)
+            end
+
+            before do
+              allow(view).to receive(:limit) { 5 }
+            end
+
+            context 'and the new query has a smaller limit' do
+              let(:limit) { 4 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'and the new query has a smaller limit but negative' do
+              let(:limit) { -4 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'and the new query has a larger limit' do
+              let(:limit) { 6 }
+
+              it 'returns nil' do
+                expect(Mongo::QueryCache.get(**query_options)).to be_nil
+              end
+            end
+
+            context 'and the new query has a larger limit but negative' do
+              let(:limit) { -6 }
+
+              it 'returns nil' do
+                expect(Mongo::QueryCache.get(**query_options)).to be_nil
+              end
+            end
+
+            context 'and the new query has the same limit' do
+              let(:limit) { 5 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'and the new query has the same limit but negative' do
+              let(:limit) { -5 }
+
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
+
+            context 'and the new query has no limit' do
+              let(:limit) { nil }
+
+              it 'returns nil' do
+                expect(Mongo::QueryCache.get(**query_options)).to be_nil
+              end
+            end
+
+            context 'and the new query has a 0 limit' do
+              let(:limit) { 0 }
+
+              it 'returns nil' do
+                expect(Mongo::QueryCache.get(**query_options)).to be_nil
+              end
+            end
           end
-        end
 
-        context 'and the new query has a 0 limit' do
-          let(:limit) { 0 }
+          context 'when that entry has a negative limit' do
+            let(:caching_cursor_options) do
+              {
+                namespace: 'db.coll',
+                selector: { field: 'value' },
+                limit: -5,
+              }
+            end
 
-          it 'returns nil' do
-            expect(Mongo::QueryCache.get(**query_options)).to be_nil
-          end
-        end
-      end
+            let(:query_options) do
+              caching_cursor_options.merge(limit: limit)
+            end
 
-      context 'when that entry has a negative limit' do
-        let(:caching_cursor_options) do
-          {
-            namespace: 'db.coll',
-            selector: { field: 'value' },
-            limit: -5,
-          }
-        end
+            before do
+              allow(view).to receive(:limit) { -5 }
+            end
 
-        let(:query_options) do
-          caching_cursor_options.merge(limit: limit)
-        end
+            context 'and the new query has a smaller limit' do
+              let(:limit) { 4 }
 
-        before do
-          allow(view).to receive(:limit) { -5 }
-        end
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
 
-        context 'and the new query has a smaller limit' do
-          let(:limit) { 4 }
+            context 'and the new query has a larger limit' do
+              let(:limit) { 6 }
 
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
+              it 'returns nil' do
+                expect(Mongo::QueryCache.get(**query_options)).to be_nil
+              end
+            end
 
-        context 'and the new query has a larger limit' do
-          let(:limit) { 6 }
+            context 'and the new query has the same negative limit' do
+              let(:limit) { -5 }
 
-          it 'returns nil' do
-            expect(Mongo::QueryCache.get(**query_options)).to be_nil
-          end
-        end
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
 
-        context 'and the new query has the same negative limit' do
-          let(:limit) { -5 }
+            context 'and the new query has the same positive limit' do
+              let(:limit) { 5 }
 
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
+              it 'returns the caching cursor' do
+                expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
+              end
+            end
 
-        context 'and the new query has the same positive limit' do
-          let(:limit) { 5 }
+            context 'and the new query has no limit' do
+              let(:limit) { nil }
 
-          it 'returns the caching cursor' do
-            expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
-          end
-        end
+              it 'returns nil' do
+                expect(Mongo::QueryCache.get(**query_options)).to be_nil
+              end
+            end
 
-        context 'and the new query has no limit' do
-          let(:limit) { nil }
+            context 'and the new query has a 0 limit' do
+              let(:limit) { 0 }
 
-          it 'returns nil' do
-            expect(Mongo::QueryCache.get(**query_options)).to be_nil
-          end
-        end
-
-        context 'and the new query has a 0 limit' do
-          let(:limit) { 0 }
-
-          it 'returns nil' do
-            expect(Mongo::QueryCache.get(**query_options)).to be_nil
+              it 'returns nil' do
+                expect(Mongo::QueryCache.get(**query_options)).to be_nil
+              end
+            end
           end
         end
       end

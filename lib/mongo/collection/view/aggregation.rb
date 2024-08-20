@@ -118,7 +118,9 @@ module Mongo
         end
 
         def send_initial_query(server, context)
-          server.with_connection do |connection|
+          if server.load_balancer?
+            # Connection will be checked in when cursor is drained.
+            connection = server.pool.check_out(context: context)
             initial_query_op(
               context.session,
               effective_read_preference(connection)
@@ -126,6 +128,16 @@ module Mongo
               connection,
               context: context
             )
+          else
+            server.with_connection do |connection|
+              initial_query_op(
+                context.session,
+                effective_read_preference(connection)
+              ).execute_with_connection(
+                connection,
+                context: context
+              )
+            end
           end
         end
       end

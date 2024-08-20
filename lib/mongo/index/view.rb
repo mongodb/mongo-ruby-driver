@@ -404,7 +404,12 @@ module Mongo
       end
 
       def send_initial_query(server, session, context)
-        initial_query_op(session).execute(server, context: context)
+        if server.load_balancer?
+          connection = server.pool.check_out(context: context)
+          initial_query_op(session).execute_with_connection(connection, context: context)
+        else
+          initial_query_op(session).execute(server, context: context)
+        end
       end
     end
   end
