@@ -289,7 +289,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(Mongo::Error::KmsError, /SocketError/)
+          end.to raise_error(Mongo::Error::KmsError, /Socket(?:::Resolution)?Error/)
         end
       end
 
