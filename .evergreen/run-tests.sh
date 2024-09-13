@@ -53,6 +53,10 @@ if [ "$FLE" = "helper" ]; then
   install_cmake
 fi
 
+if test "$TOPOLOGY" = load-balanced; then
+  install_haproxy
+fi
+
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
 # makes its log available through log collecting machinery
 
