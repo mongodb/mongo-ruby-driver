@@ -1903,17 +1903,18 @@ buildvariants:
     tasks:
       - name: test-mlaunch
 
-  - matrix_name: testgcpkms-variant
-    matrix_spec:
-      ruby: "ruby-3.2"
-      fle: helper
-      topology: standalone
-      os: ubuntu2204
-      mongodb-version: "7.0"
-    display_name: "GCP KMS"
-    tasks:
-      - name: testgcpkms_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+  # https://jira.mongodb.org/browse/RUBY-3540
+  #- matrix_name: testgcpkms-variant
+  #  matrix_spec:
+  #    ruby: "ruby-3.2"
+  #    fle: helper
+  #    topology: standalone
+  #    os: ubuntu2204
+  #    mongodb-version: "7.0"
+  #  display_name: "GCP KMS"
+  #  tasks:
+  #    - name: testgcpkms_task_group
+  #      batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
   - matrix_name: testazurekms-variant
     matrix_spec:
