@@ -188,7 +188,7 @@ describe Mongo::Crypt::Handle do
         end
 
         it 'raises an exception' do
-          expect { handle }.to raise_error(Mongo::Error::CryptError, 'local key must be 96 bytes (libmongocrypt error code 1)')
+          expect { handle }.to raise_error(Mongo::Error::CryptError, /local key must be 96 bytes \(libmongocrypt error code 1\)/)
         end
       end
 

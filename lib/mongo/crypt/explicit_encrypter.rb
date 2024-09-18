@@ -130,7 +130,7 @@ module Mongo
       #     {'$and' =>  [{'$gt' => ['$field', 10]}, {'$lt' => ['$field', 20]}}
       #   )
       #   {$and: [{$gt: [<fieldpath>, <value1>]}, {$lt: [<fieldpath>, <value2>]}]
-      # Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
+      # Only supported when queryType is "range" and algorithm is "Range".
       # @note: The Range algorithm is experimental only. It is not intended
       #   for public use. It is subject to breaking changes.
       #
@@ -142,24 +142,25 @@ module Mongo
       # @option options [ String ] :key_alt_name The alternate name for the
       #   encryption key.
       # @option options [ String ] :algorithm The algorithm used to encrypt the
-      #   expression. The only allowed value is "RangePreview"
+      #   expression. The only allowed value is "Range"
       # @option options [ Integer | nil ] :contention_factor Contention factor
       #   to be applied If not  provided, it defaults to a value of 0.
       # @option options [ String | nil ] query_type Query type to be applied.
-      #   The only allowed value is "rangePreview".
+      #   The only allowed value is "range".
       # @option options [ Hash | nil ] :range_opts Specifies index options for
-      #   a Queryable Encryption field supporting "rangePreview" queries.
+      #   a Queryable Encryption field supporting "range" queries.
       #   Allowed options are:
       #   - :min
       #   - :max
+      #   - :trim_factor
       #   - :sparsity
       #   - :precision
-      #   min, max, sparsity, and range must match the values set in
+      #   min, max, trim_factor, sparsity, and precision must match the values set in
       #   the encryptedFields of the destination collection.
       #   For double and decimal128, min/max/precision must all be set,
       #   or all be unset.
       #
-      # @note The RangePreview algorithm is experimental only. It is not
+      # @note The Range algorithm is experimental only. It is not
       # intended for public use.
       #
       # @note The :key_id and :key_alt_name options are mutually exclusive. Only
