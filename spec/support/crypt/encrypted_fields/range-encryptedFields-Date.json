@@ -10,7 +10,7 @@
         "path": "encryptedDate",
         "bsonType": "date",
         "queries": {
-          "queryType": "rangePreview",
+          "queryType": "range",
           "sparsity": {
             "$numberLong": "1"
           },

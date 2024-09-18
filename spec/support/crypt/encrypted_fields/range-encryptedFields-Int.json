@@ -10,7 +10,7 @@
         "path": "encryptedInt",
         "bsonType": "int",
         "queries": {
-          "queryType": "rangePreview",
+          "queryType": "range",
           "sparsity": {
             "$numberLong": "1"
           },
