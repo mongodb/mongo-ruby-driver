@@ -288,11 +288,20 @@ module Mongo
         if opts.key?(:deserialize_as_bson)
           execution_opts[:deserialize_as_bson] = opts.delete(:deserialize_as_bson)
         end
-        initial_query_op(session, opts).execute(
-          server,
-          context: context,
-          options: execution_opts
-        )
+        if server.load_balancer?
+          connection = server.pool.check_out(context: context)
+          initial_query_op(session, opts).execute_with_connection(
+            connection,
+            context: context,
+            options: execution_opts
+          )
+        else
+          initial_query_op(session, opts).execute(
+            server,
+            context: context,
+            options: execution_opts
+          )
+        end
       end
     end
   end

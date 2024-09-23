@@ -65,8 +65,9 @@ def standard_dependencies
     gem 'tilt'
     # solargraph depends on rbs, which won't build on jruby for some reason
     gem 'solargraph', platforms: :mri
+    gem 'ruby-lsp', platforms: :mri
   end
 
-  gem 'libmongocrypt-helper', '~> 1.8.0' if ENV['FLE'] == 'helper'
+  gem 'libmongocrypt-helper', '~> 1.11.0' if ENV['FLE'] == 'helper'
 end
 # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength

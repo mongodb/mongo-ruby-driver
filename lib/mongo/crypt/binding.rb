@@ -1699,9 +1699,9 @@ module Mongo
       # @!method self.mongocrypt_ctx_setopt_algorithm_range(ctx, opts)
       #   @api private
       #
-      # Set options for explicit encryption with the "rangePreview" algorithm.
+      # Set options for explicit encryption with the "range" algorithm.
       #
-      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # @note The Range algorithm is experimental only. It is not intended for
       # public use.
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
@@ -1718,9 +1718,9 @@ module Mongo
         :bool
       )
 
-      # Set options for explicit encryption with the "rangePreview" algorithm.
+      # Set options for explicit encryption with the "range" algorithm.
       #
-      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # @note The Range algorithm is experimental only. It is not intended for
       # public use.
       #
       # @param [ Mongo::Crypt::Context ] context

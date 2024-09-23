@@ -52,73 +52,28 @@ describe 'Cursor pinning' do
   context 'lb' do
     require_topology :load_balanced
 
-    # In load-balanced topology, we cannot create new connections to a
-    # particular service.
-
-    context 'when no connection is available' do
-
-      it 'raises ConnectionCheckOutTimeout' do
-        server.pool.size.should == 0
-
-        enum = collection.find({}, batch_size: 1).to_enum
-        # Still zero because we haven't iterated
-        server.pool.size.should == 0
-
-        enum.next
-        server.pool.size.should == 1
-
-        # Grab the connection that was used
-        server.with_connection do
-          # This requires a new connection, but we cannot make one.
-          lambda do
-            enum.next
-          end.should raise_error(Mongo::Error::ConnectionCheckOutTimeout)
-
-          server.pool.size.should == 1
-        end
-      end
-    end
+    # In load-balanced topology, a cursor retains the connection used to create
+    # it until the cursor is closed.
 
     context 'when connection is available' do
       require_multi_mongos
 
-      let(:client) { authorized_client.with(max_pool_size: 4) }
+      let(:client) { authorized_client.with(max_pool_size: 2) }
 
-      it 'uses the available connection' do
-        server.pool.size.should == 0
+      it 'does not return connection to the pool if cursor not drained' do
+        expect(server.pool).not_to receive(:check_in)
+        enum = collection.find({}, batch_size: 1).to_enum
+        # Get the first element only; cursor is not drained, so there should
+        # be no check_in of the connection.
+        enum.next
+      end
 
-        # Create 4 connections.
-
-        enums = []
-        connections = []
-        connection_ids = []
-
-        4.times do
-          view = collection.find({}, batch_size: 1)
-          enum = view.to_enum
-
-          enum.next
-
-          enums << enum
-          connection_ids << view.cursor.initial_result.connection_global_id
-          connections << server.pool.check_out
-        end
-
-        connection_ids.uniq.length.should be > 1
-
-        server.pool.size.should == 4
-
-        connections.each do |c|
-          server.pool.check_in(c)
-        end
-
-        # At this point, in theory, all connections are equally likely to
-        # be chosen, but we have cursors referencing more than one
-        # distinct service.
-        # Iterate each cursor to ensure they all continue to work.
-        enums.each do |enum|
-          enum.next
-        end
+      it 'returns connection to the pool when cursor is drained' do
+        view = collection.find({}, batch_size: 1)
+        enum = view.to_enum
+        expect_any_instance_of(Mongo::Cursor).to receive(:check_in_connection)
+        # Drain the cursor
+        enum.each { |it| it.nil? }
       end
     end
   end

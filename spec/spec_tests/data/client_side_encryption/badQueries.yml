@@ -1,5 +1,6 @@
 runOn:
   - minServerVersion: "4.1.10"
+    topology: [ "replicaset", "sharded" ]
 database_name: &database_name "default"
 collection_name: &collection_name "default"
 

@@ -6,9 +6,7 @@ require 'spec_helper'
 # be revisited if these tests ever need to be significantly modified.
 # rubocop:disable RSpec/ExampleLength
 describe 'Range Explicit Encryption' do
-  min_server_version '7.0.0-rc0'
-  # https://jira.mongodb.org/browse/RUBY-3457
-  max_server_version '7.99.99'
+  min_server_version '8.0.0-rc18'
 
   require_libmongocrypt
   include_context 'define shared FLE helpers'
@@ -56,7 +54,7 @@ describe 'Range Explicit Encryption' do
         value,
         {
           key_id: key1_id,
-          algorithm: 'RangePreview',
+          algorithm: 'Range',
           contention_factor: 0,
           range_opts: range_opts
         }
@@ -76,8 +74,8 @@ describe 'Range Explicit Encryption' do
         expr,
         {
           key_id: key1_id,
-          algorithm: 'RangePreview',
-          query_type: 'rangePreview',
+          algorithm: 'Range',
+          query_type: 'range',
           contention_factor: 0,
           range_opts: range_opts
         }
@@ -100,8 +98,8 @@ describe 'Range Explicit Encryption' do
         expr,
         {
           key_id: key1_id,
-          algorithm: 'RangePreview',
-          query_type: 'rangePreview',
+          algorithm: 'Range',
+          query_type: 'range',
           contention_factor: 0,
           range_opts: range_opts
         }
@@ -123,8 +121,8 @@ describe 'Range Explicit Encryption' do
         expr,
         {
           key_id: key1_id,
-          algorithm: 'RangePreview',
-          query_type: 'rangePreview',
+          algorithm: 'Range',
+          query_type: 'range',
           contention_factor: 0,
           range_opts: range_opts
         }
@@ -140,8 +138,8 @@ describe 'Range Explicit Encryption' do
         expr,
         {
           key_id: key1_id,
-          algorithm: 'RangePreview',
-          query_type: 'rangePreview',
+          algorithm: 'Range',
+          query_type: 'range',
           contention_factor: 0,
           range_opts: range_opts
         }
@@ -163,7 +161,7 @@ describe 'Range Explicit Encryption' do
           value_converter.call(201),
           {
             key_id: key1_id,
-            algorithm: 'RangePreview',
+            algorithm: 'Range',
             contention_factor: 0,
             range_opts: range_opts
           }
@@ -183,7 +181,7 @@ describe 'Range Explicit Encryption' do
           value,
           {
             key_id: key1_id,
-            algorithm: 'RangePreview',
+            algorithm: 'Range',
             contention_factor: 0,
             range_opts: range_opts
           }
@@ -198,7 +196,7 @@ describe 'Range Explicit Encryption' do
           value_converter.call(6),
           {
             key_id: key1_id,
-            algorithm: 'RangePreview',
+            algorithm: 'Range',
             contention_factor: 0,
             range_opts: {
               min: value_converter.call(0),
@@ -244,7 +242,7 @@ describe 'Range Explicit Encryption' do
         insert_payload = client_encryption.encrypt(
           num,
           key_id: key1_id,
-          algorithm: 'RangePreview',
+          algorithm: 'Range',
           contention_factor: 0,
           range_opts: range_opts
         )
@@ -290,7 +288,7 @@ describe 'Range Explicit Encryption' do
         insert_payload = client_encryption.encrypt(
           BSON::Int64.new(num),
           key_id: key1_id,
-          algorithm: 'RangePreview',
+          algorithm: 'Range',
           contention_factor: 0,
           range_opts: range_opts
         )
@@ -337,7 +335,7 @@ describe 'Range Explicit Encryption' do
         insert_payload = client_encryption.encrypt(
           num,
           key_id: key1_id,
-          algorithm: 'RangePreview',
+          algorithm: 'Range',
           contention_factor: 0,
           range_opts: range_opts
         )
@@ -381,7 +379,7 @@ describe 'Range Explicit Encryption' do
         insert_payload = client_encryption.encrypt(
           num,
           key_id: key1_id,
-          algorithm: 'RangePreview',
+          algorithm: 'Range',
           contention_factor: 0,
           range_opts: range_opts
         )
@@ -427,7 +425,7 @@ describe 'Range Explicit Encryption' do
         insert_payload = client_encryption.encrypt(
           Time.new(num),
           key_id: key1_id,
-          algorithm: 'RangePreview',
+          algorithm: 'Range',
           contention_factor: 0,
           range_opts: range_opts
         )
@@ -476,7 +474,7 @@ describe 'Range Explicit Encryption' do
         insert_payload = client_encryption.encrypt(
           BSON::Decimal128.new(num),
           key_id: key1_id,
-          algorithm: 'RangePreview',
+          algorithm: 'Range',
           contention_factor: 0,
           range_opts: range_opts
         )
@@ -522,7 +520,7 @@ describe 'Range Explicit Encryption' do
         insert_payload = client_encryption.encrypt(
           BSON::Decimal128.new(num),
           key_id: key1_id,
-          algorithm: 'RangePreview',
+          algorithm: 'Range',
           contention_factor: 0,
           range_opts: range_opts
         )
@@ -534,6 +532,52 @@ describe 'Range Explicit Encryption' do
     end
 
     include_examples 'common cases'
+  end
+
+  describe 'Range Explicit Encryption applies defaults' do
+    let(:payload_defaults) do
+      client_encryption.encrypt(
+        123,
+        key_id: key1_id,
+        algorithm: 'Range',
+        contention_factor: 0,
+        range_opts: {
+          min: 0,
+          max: 1000
+        }
+      )
+    end
+
+    it 'uses libmongocrypt default' do
+      payload = client_encryption.encrypt(
+        123,
+        key_id: key1_id,
+        algorithm: 'Range',
+        contention_factor: 0,
+        range_opts: {
+          min: 0,
+          max: 1000,
+          sparsity: 2,
+          trim_factor: 6
+        }
+      )
+      expect(payload.to_s.size).to eq(payload_defaults.to_s.size)
+    end
+
+    it 'accepts trim_factor 0' do
+      payload = client_encryption.encrypt(
+        123,
+        key_id: key1_id,
+        algorithm: 'Range',
+        contention_factor: 0,
+        range_opts: {
+          min: 0,
+          max: 1000,
+          trim_factor: 0
+        }
+      )
+      expect(payload.to_s.size).to eq(payload_defaults.to_s.size)
+    end
   end
 end
 # rubocop:enable RSpec/ExampleLength
