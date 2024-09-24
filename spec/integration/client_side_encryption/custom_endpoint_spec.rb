@@ -123,7 +123,8 @@ describe 'Client-Side Encryption' do
       end
 
       let(:error_regex) do
-        /SocketError: getaddrinfo:/
+        # Ruby 3.3+ raises Socket::ResolutionError here, instead of a bare SocketError
+        /Socket(?:::Resolution)?Error: getaddrinfo:/
       end
 
       it_behaves_like 'raising a KMS error'
