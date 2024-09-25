@@ -1,9 +1,13 @@
-description: "createSearchIndexes"
+description: "search index operations ignore read and write concern"
 schemaVersion: "1.4"
 createEntities:
   - client:
       id: &client0 client0
       useMultipleMongoses: false
+      # Set a non-default read and write concern.
+      uriOptions:
+        readConcernLevel: local
+        w: 1
       observeEvents:
         - commandStartedEvent
   - database:
@@ -16,22 +20,40 @@ createEntities:
       collectionName: *collection0
 
 runOnRequirements:
-  # Skip server versions without fix of SERVER-83107 to avoid error message "BSON field 'createSearchIndexes.indexes.type' is an unknown field."
-  # SERVER-83107 was not backported to 7.1.
-  - minServerVersion: "7.0.5"
-    maxServerVersion: "7.0.99"
-    topologies: [ replicaset, load-balanced, sharded ]
-    serverless: forbid
-  - minServerVersion: "7.2.0"
+  - minServerVersion: "7.0.0"
     topologies: [ replicaset, load-balanced, sharded ]
     serverless: forbid
 
 tests:
-  - description: "empty index definition array"
+  - description: "createSearchIndex ignores read and write concern"
+    operations:
+      - name: createSearchIndex
+        object: *collection0
+        arguments:
+          model: { definition: &definition { mappings: { dynamic: true } } }
+        expectError:
+          # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting
+          # that the driver constructs and sends the correct command.
+          # The expected error message was changed in SERVER-83003. Check for the substring "Atlas" shared by both error messages.
+          isError: true
+          errorContains: Atlas
+    expectEvents:
+      - client: *client0
+        events:
+          - commandStartedEvent:
+              command:
+                createSearchIndexes: *collection0
+                indexes: [ { definition: *definition } ]
+                $db: *database0
+                # Expect no writeConcern or readConcern to be sent.
+                writeConcern: { $$exists: false }
+                readConcern: { $$exists: false }
+
+  - description: "createSearchIndexes ignores read and write concern"
     operations:
       - name: createSearchIndexes
         object: *collection0
-        arguments: 
+        arguments:
           models: []
         expectError:
           # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting
@@ -47,14 +69,16 @@ tests:
                 createSearchIndexes: *collection0
                 indexes: []
                 $db: *database0
+                # Expect no writeConcern or readConcern to be sent.
+                writeConcern: { $$exists: false }
+                readConcern: { $$exists: false }
 
-
-  - description: "no name provided for an index definition"
+  - description: "dropSearchIndex ignores read and write concern"
     operations:
-      - name: createSearchIndexes
+      - name: dropSearchIndex
         object: *collection0
         arguments:
-          models: [ { definition: &definition { mappings: { dynamic: true } } , type: 'search' } ]
+          name: &indexName 'test index'
         expectError:
           # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting
           # that the driver constructs and sends the correct command.
@@ -66,16 +90,17 @@ tests:
         events:
           - commandStartedEvent:
               command:
-                createSearchIndexes: *collection0
-                indexes: [ { definition: *definition, type: 'search'} ]
+                dropSearchIndex: *collection0
+                name: *indexName
                 $db: *database0
+                # Expect no writeConcern or readConcern to be sent.
+                writeConcern: { $$exists: false }
+                readConcern: { $$exists: false }
 
-  - description: "name provided for an index definition"
+  - description: "listSearchIndexes ignores read and write concern"
     operations:
-      - name: createSearchIndexes
+      - name: listSearchIndexes
         object: *collection0
-        arguments: 
-          models: [ { definition: &definition { mappings: { dynamic: true } } , name: 'test index' , type: 'search' } ]
         expectError:
           # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting
           # that the driver constructs and sends the correct command.
@@ -87,17 +112,20 @@ tests:
         events:
           - commandStartedEvent:
               command:
-                createSearchIndexes: *collection0
-                indexes: [ { definition: *definition, name: 'test index', type: 'search' } ]
-                $db: *database0
+                aggregate: *collection0
+                pipeline:
+                  - $listSearchIndexes: {}
+                # Expect no writeConcern or readConcern to be sent.
+                writeConcern: { $$exists: false }
+                readConcern: { $$exists: false }
 
-  - description: "create a vector search index"
+  - description: "updateSearchIndex ignores the read and write concern"
     operations:
-      - name: createSearchIndexes
+      - name: updateSearchIndex
         object: *collection0
         arguments:
-          models: [ { definition: &definition { fields: [ {"type": "vector", "path": "plot_embedding", "numDimensions": 1536, "similarity": "euclidean"} ] },
-                                                name: 'test index' , type: 'vectorSearch' } ]
+          name: &indexName 'test index'
+          definition: &definition {}
         expectError:
           # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting
           # that the driver constructs and sends the correct command.
@@ -109,6 +137,11 @@ tests:
         events:
           - commandStartedEvent:
               command:
-                createSearchIndexes: *collection0
-                indexes: [ { definition: *definition, name: 'test index', type: 'vectorSearch' } ]
+                updateSearchIndex: *collection0
+                name: *indexName
+                definition: *definition
                 $db: *database0
+                # Expect no writeConcern or readConcern to be sent.
+                writeConcern: { $$exists: false }
+                readConcern: { $$exists: false }
+
