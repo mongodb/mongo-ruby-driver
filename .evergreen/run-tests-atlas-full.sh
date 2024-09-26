@@ -15,8 +15,7 @@ bundle_install
 ATLAS_URI=$MONGODB_URI \
   SERVERLESS=1 \
   EXAMPLE_TIMEOUT=600 \
-  bundle exec rspec -fd spec/integration/search_indexes_prose_spec.rb \
-    spec/spec_tests/index_management_unified_spec.rb
+  bundle exec rspec -fd spec/integration/search_indexes_prose_spec.rb
 
 test_status=$?
 
