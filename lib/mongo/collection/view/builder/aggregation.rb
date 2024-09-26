@@ -111,7 +111,7 @@ module Mongo
             command[:pipeline] = pipeline
             if read_concern = view.read_concern
               command[:readConcern] = Options::Mapper.transform_values_to_strings(
-                read_concern) unless read_concern.empty?
+                read_concern)
             end
             command[:cursor] = batch_size_doc
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
