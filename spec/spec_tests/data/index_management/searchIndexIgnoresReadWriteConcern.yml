@@ -97,27 +97,28 @@ tests:
                 writeConcern: { $$exists: false }
                 readConcern: { $$exists: false }
 
-  - description: "listSearchIndexes ignores read and write concern"
-    operations:
-      - name: listSearchIndexes
-        object: *collection0
-        expectError:
-          # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting
-          # that the driver constructs and sends the correct command.
-          # The expected error message was changed in SERVER-83003. Check for the substring "Atlas" shared by both error messages.
-          isError: true
-          errorContains: Atlas
-    expectEvents:
-      - client: *client0
-        events:
-          - commandStartedEvent:
-              command:
-                aggregate: *collection0
-                pipeline:
-                  - $listSearchIndexes: {}
-                # Expect no writeConcern or readConcern to be sent.
-                writeConcern: { $$exists: false }
-                readConcern: { $$exists: false }
+  # https://jira.mongodb.org/browse/RUBY-3351
+  #- description: "listSearchIndexes ignores read and write concern"
+  #  operations:
+  #    - name: listSearchIndexes
+  #      object: *collection0
+  #      expectError:
+  #        # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting
+  #        # that the driver constructs and sends the correct command.
+  #        # The expected error message was changed in SERVER-83003. Check for the substring "Atlas" shared by both error messages.
+  #        isError: true
+  #        errorContains: Atlas
+  #  expectEvents:
+  #    - client: *client0
+  #      events:
+  #        - commandStartedEvent:
+  #            command:
+  #              aggregate: *collection0
+  #              pipeline:
+  #                - $listSearchIndexes: {}
+  #              # Expect no writeConcern or readConcern to be sent.
+  #              writeConcern: { $$exists: false }
+  #              readConcern: { $$exists: false }
 
   - description: "updateSearchIndex ignores the read and write concern"
     operations:
