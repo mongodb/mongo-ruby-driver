@@ -1309,7 +1309,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: "7.0"
       topology: standalone
-    run_on: ubuntu2204
+      os: ubuntu2204
     display_name: DriverBench
     tasks:
       - name: "driver-bench"
