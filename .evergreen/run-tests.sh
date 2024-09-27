@@ -353,7 +353,7 @@ elif test "$SOLO" = 1; then
     fi
   done
 else
-  bundle exec rake spec
+  bundle exec rake spec:ci
 fi
 
 test_status=$?
