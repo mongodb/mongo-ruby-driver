@@ -353,6 +353,7 @@ elif test "$SOLO" = 1; then
     fi
   done
 else
+  export JRUBY_OPTS=-J-Xmx2g
   bundle exec rake spec
 fi
 
