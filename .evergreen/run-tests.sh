@@ -354,7 +354,7 @@ elif test "$SOLO" = 1; then
   done
 else
   export JRUBY_OPTS=-J-Xmx2g
-  bundle exec rake spec
+  bundle exec rake spec:ci
 fi
 
 test_status=$?
