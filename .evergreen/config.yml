@@ -535,6 +535,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
@@ -556,6 +557,7 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -583,6 +585,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
@@ -604,6 +607,7 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -631,6 +635,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
@@ -652,6 +657,7 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -881,6 +887,7 @@ tasks:
             DRIVERS_ATLAS_LAMBDA_USER: ${DRIVERS_ATLAS_LAMBDA_USER}
             DRIVERS_ATLAS_LAMBDA_PASSWORD: ${DRIVERS_ATLAS_LAMBDA_PASSWORD}
             DRIVERS_ATLAS_GROUP_ID: ${DRIVERS_ATLAS_GROUP_ID}
+            DRIVERS_ATLAS_BASE_URL: ${DRIVERS_ATLAS_BASE_URL}
             AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
             AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
             AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
