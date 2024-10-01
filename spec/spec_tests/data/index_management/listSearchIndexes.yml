@@ -15,6 +15,12 @@ createEntities:
       database: *database0
       collectionName: *collection0
 
+initialData:
+  - collectionName: *collection0
+    databaseName: *database0
+    documents:
+      - x: 1
+
 runOnRequirements:
   - minServerVersion: "7.0.0"
     topologies: [ replicaset, load-balanced, sharded ]
@@ -22,7 +28,6 @@ runOnRequirements:
 
 tests:
   - description: "when no name is provided, it does not populate the filter"
-    skipReason: https://jira.mongodb.org/browse/DRIVERS-2794
     operations:
       - name: listSearchIndexes
         object: *collection0
@@ -42,11 +47,10 @@ tests:
                   - $listSearchIndexes: {}
 
   - description: "when a name is provided, it is present in the filter"
-    skipReason: https://jira.mongodb.org/browse/DRIVERS-2794
     operations:
       - name: listSearchIndexes
         object: *collection0
-        arguments:
+        arguments: 
           name: &indexName "test index"
         expectError:
           # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting
@@ -65,13 +69,12 @@ tests:
                 $db: *database0
 
   - description: aggregation cursor options are supported
-    skipReason: https://jira.mongodb.org/browse/DRIVERS-2794
     operations:
       - name: listSearchIndexes
         object: *collection0
-        arguments:
+        arguments: 
           name: &indexName "test index"
-          aggregationOptions:
+          aggregationOptions: 
             batchSize: 10
         expectError:
           # This test always errors in a non-Atlas environment.  The test functions as a unit test  by asserting

@@ -48,8 +48,8 @@ module Mongo
       # @param [ nil | String ] name The name to give the new search index.
       #
       # @return [ String ] the name of the new search index.
-      def create_one(definition, name: nil)
-        create_many([ { name: name, definition: definition } ]).first
+      def create_one(definition, name: nil, type: 'search')
+        create_many([ { name: name, definition: definition, type: type } ]).first
       end
 
       # Create multiple search indexes with a single command.
@@ -99,7 +99,7 @@ module Mongo
             s[:name] = requested_index_name if requested_index_name
           end
 
-          collection.aggregate(
+          collection.with(read_concern: {}).aggregate(
             [ { '$listSearchIndexes' => spec } ],
             aggregate_options
           )
@@ -200,7 +200,7 @@ module Mongo
       #
       # @raise [ ArgumentError ] if the list contains any invalid keys
       def validate_search_index_keys!(keys)
-        extras = keys - [ 'name', 'definition', :name, :definition ]
+        extras = keys - [ 'name', 'definition', 'type', :name, :definition, :type ]
 
         raise ArgumentError, "invalid keys in search index creation: #{extras.inspect}" if extras.any?
       end

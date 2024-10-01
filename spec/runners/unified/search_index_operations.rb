@@ -11,7 +11,8 @@ module Unified
         model = args.use('model')
         name = model.use('name')
         definition = model.use('definition')
-        collection.search_indexes.create_one(definition, name: name)
+        type = model.use('type')
+        collection.search_indexes.create_one(definition, name: name, type: type)
       end
     end
 
