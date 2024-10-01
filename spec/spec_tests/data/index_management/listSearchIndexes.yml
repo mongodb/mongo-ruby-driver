@@ -15,6 +15,12 @@ createEntities:
       database: *database0
       collectionName: *collection0
 
+initialData:
+  - collectionName: *collection0
+    databaseName: *database0
+    documents:
+      - x: 1
+
 runOnRequirements:
   - minServerVersion: "7.0.0"
     topologies: [ replicaset, load-balanced, sharded ]
