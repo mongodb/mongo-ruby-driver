@@ -294,7 +294,7 @@ module Mongo
     def create_data_keys(encrypted_fields, kms_provider, master_key)
       encrypted_fields = encrypted_fields.dup
       # We must return the partially formed encrypted_fields hash if an error
-      # occurs - https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#create-encrypted-collection-helper
+      # occurs - https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.md#create-encrypted-collection-helper
       # Thefore, we do this in a loop instead of using #map.
       encrypted_fields[:fields].size.times do |i|
         field = encrypted_fields[:fields][i]

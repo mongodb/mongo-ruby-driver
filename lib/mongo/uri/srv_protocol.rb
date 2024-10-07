@@ -28,7 +28,7 @@ module Mongo
     #
     # Please refer to the Initial DNS Seedlist Discovery spec for details.
     #
-    # https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery
+    # https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery/initial-dns-seedlist-discovery.md
     #
     # @example Use the uri string to make a client connection.
     #   client = Mongo::Client.new('mongodb+srv://test6.test.build.10gen.cc/')

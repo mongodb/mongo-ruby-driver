@@ -68,7 +68,7 @@ class Mongo::Cluster
         if server.address == updated_desc.address
           # SDAM flow must be run when topology version in the new description
           # is equal to the current topology version, per the example in
-          # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#what-is-the-purpose-of-topologyversion
+          # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md#what-is-the-purpose-of-topologyversion
           unless updated_desc.topology_version_gte?(server.description)
             return false
           end

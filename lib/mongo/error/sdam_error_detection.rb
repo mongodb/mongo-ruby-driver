@@ -22,7 +22,7 @@ module Mongo
 
       # Whether the error is a "not master" error, or one of its variants.
       #
-      # See https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#not-master-and-node-is-recovering.
+      # See https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md#not-writable-primary-and-node-is-recovering
       #
       # @return [ true | false ] Whether the error is a not master.
       #
@@ -45,7 +45,7 @@ module Mongo
 
       # Whether the error is a "node is recovering" error, or one of its variants.
       #
-      # See https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#not-master-and-node-is-recovering.
+      # See https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md#not-writable-primary-and-node-is-recovering
       #
       # @return [ true | false ] Whether the error is a node is recovering.
       #
@@ -66,7 +66,7 @@ module Mongo
 
       # Whether the error is a "node is shutting down" type error.
       #
-      # See https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#not-master-and-node-is-recovering.
+      # See https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md#not-writable-primary-and-node-is-recovering
       #
       # @return [ true | false ] Whether the error is a node is shutting down.
       #

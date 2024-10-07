@@ -359,7 +359,7 @@ module Mongo
 
       # Encapsulates a type 1 OP_MSG section.
       #
-      # @see https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.rst#sections
+      # @see https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.md#sections
       #
       # @api private
       class Section1

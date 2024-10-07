@@ -143,7 +143,7 @@ tests:
       # This test assumes that the single topology contains a standalone server;
       # however, it is possible for a single topology to contain a direct
       # connection to another server type.
-      # See: https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
+      # See: https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.md#topology-type-single
       - topologies: [ single ]
     operations:
       - name: runCommand

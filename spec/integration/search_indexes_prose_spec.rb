@@ -8,7 +8,7 @@ class SearchIndexHelper
   def initialize(client)
     @client = client
 
-    # https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.rst#id4
+    # https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.md#search-index-management-helpers
     # "...each test uses a randomly generated collection name.  Drivers may
     # generate this collection name however they like, but a suggested
     # implementation is a hex representation of an ObjectId..."
@@ -68,7 +68,7 @@ class SearchIndexHelper
 end
 
 describe 'Mongo::Collection#search_indexes prose tests' do
-  # https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.rst#id5
+  # https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.md#setup
   # "These tests must run against an Atlas cluster with a 7.0+ server."
   require_atlas
 

@@ -17,7 +17,7 @@
 RSpec::Matchers.define :have_blank_credentials do
   match do |client|
     # The "null credential" definition in auth spec tests readme at
-    # https://github.com/mongodb/specifications/blob/master/source/auth/tests/README.rst
+    # https://github.com/mongodb/specifications/blob/master/source/auth/tests/README.md
     # is as follows:
     #
     # credential: If null, the credential must not be considered configured
