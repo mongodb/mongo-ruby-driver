@@ -221,7 +221,7 @@ described in `.evergreen/README.md`.
 
 OCSP connectivity tests are in `spec/integration/ocsp_connectivity.rb`.
 These test the combinations described
-[here](https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.rst#integration-tests-permutations-to-be-tested).
+[here](https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.md#integration-tests-permutations-to-be-tested).
 To run these tests, set `OCSP_CONNECTIVITY=pass` environment variable if
 the tests are expected to connect successfully or `OCSP_CONNECTIVITY=fail` if
 the tests are expected to not connect.

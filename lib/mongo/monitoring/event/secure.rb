@@ -58,7 +58,7 @@ module Mongo
             # According to Command Monitoring spec,for hello/legacy hello commands
             # when speculativeAuthenticate is present, their commands AND replies
             # MUST be redacted from the events.
-            # See https://github.com/mongodb/specifications/blob/master/source/command-logging-and-monitoring/command-logging-and-monitoring.rst#security
+            # See https://github.com/mongodb/specifications/blob/master/source/command-logging-and-monitoring/command-logging-and-monitoring.md#security
             true
           else
             false

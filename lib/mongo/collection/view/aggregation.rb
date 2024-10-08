@@ -92,7 +92,7 @@ module Mongo
         # aggregation will be routed to primary. Otherwise return the original
         # read preference.
         #
-        # See https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst#read-preferences-and-server-selection
+        # See https://github.com/mongodb/specifications/blob/master/source/crud/crud.md#read-preferences-and-server-selection
         #
         # @param [ Server::Connection ] connection The connection which
         #   will be used for the operation.

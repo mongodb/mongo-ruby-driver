@@ -104,7 +104,7 @@ module Mongo
         # include topology version. In this case we need to keep our existing
         # topology version so that we can resume monitoring.
         # The spec does not appear to directly address this case but
-        # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-monitoring.rst#streaming-ismaster
+        # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-monitoring.md#streamable-hello-or-legacy-hello-command
         # says that topologyVersion should only be updated from successful
         # hello responses.
         if new_description.topology_version

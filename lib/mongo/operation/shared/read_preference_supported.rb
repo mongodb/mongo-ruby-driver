@@ -57,7 +57,7 @@ module Mongo
       #
       # @return [ true | false ] Whether the :secondary_ok flag should be added.
       def add_secondary_ok_flag?(connection)
-        # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
+        # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.md#topology-type-single
         if connection.description.standalone?
           # Read preference is never sent to standalones.
           false
@@ -83,7 +83,7 @@ module Mongo
       #
       # $readPreference is only sent when the server is a mongos,
       # following the rules described in
-      # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#passing-read-preference-to-mongos.
+      # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.md#passing-read-preference-to-mongos.
       # The topology does not matter for figuring out whether to send
       # $readPreference since the decision is always made based on
       # server type.

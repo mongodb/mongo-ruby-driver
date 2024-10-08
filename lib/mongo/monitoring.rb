@@ -319,7 +319,7 @@ module Mongo
       # the time spent on the entire heartbeat. This could include time
       # to connect the socket (including TLS handshake), not just time
       # spent on hello call itself.
-      # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst
+      # The spec at https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-logging-and-monitoring.md
       # requires that the duration exposed here start from "sending the
       # message" (hello). This requirement does not make sense if,
       # for example, we were never able to connect to the server at all

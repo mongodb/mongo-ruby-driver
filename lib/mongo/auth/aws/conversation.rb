@@ -22,7 +22,7 @@ module Mongo
       # Defines behavior around a single MONGODB-AWS conversation between the
       # client and server.
       #
-      # @see https://github.com/mongodb/specifications/blob/master/source/auth/auth.rst#mongodb-aws
+      # @see https://github.com/mongodb/specifications/blob/master/source/auth/auth.md#mongodb-aws
       #
       # @api private
       class Conversation < SaslConversationBase

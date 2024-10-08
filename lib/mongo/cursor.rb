@@ -395,7 +395,7 @@ module Mongo
       # Legacy retryable read logic used to retry getMores, but since
       # doing so may result in silent data loss, the driver no longer retries
       # getMore operations in any circumstance.
-      # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
+      # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.md#qa
       process(execute_operation(get_more_operation))
     end
 

@@ -19,7 +19,7 @@ module Mongo
     class ServerSession
       # Functionality for manipulating and querying a session's
       # "dirty" state, per the last paragraph at
-      # https://github.com/mongodb/specifications/blob/master/source/sessions/driver-sessions.rst#server-session-pool
+      # https://github.com/mongodb/specifications/blob/master/source/sessions/driver-sessions.md#server-session-pool
       #
       #   If a driver has a server session pool and a network error is
       #   encountered when executing any command with a ClientSession, the
