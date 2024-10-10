@@ -228,8 +228,8 @@ describe 'Mongo::Crypt::Binding' do
         it 'returns a BSON document' do
           expect(result).to be true
 
-          data = Mongo::Crypt::Binding.mongocrypt_binary_data(out_binary)
-          len = Mongo::Crypt::Binding.mongocrypt_binary_len(out_binary)
+          data = Mongo::Crypt::Binding.get_binary_data_direct(out_binary)
+          len = Mongo::Crypt::Binding.get_binary_len_direct(out_binary)
 
           response = data.get_array_of_uint8(0, len).pack('C*')
           expect(response).to be_a_kind_of(String)

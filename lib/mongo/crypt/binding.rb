@@ -178,6 +178,14 @@ module Mongo
       #   @return [ Integer ] The length of the data array.
       attach_function :mongocrypt_binary_len, [:pointer], :int
 
+      def self.get_binary_data_direct(mongocrypt_binary_t)
+        mongocrypt_binary_t.get_pointer(0)
+      end
+
+      def self.get_binary_len_direct(mongocrypt_binary_t)
+        mongocrypt_binary_t.get_uint32(FFI::NativeType::POINTER.size)
+      end
+
       # @!method self.mongocrypt_binary_destroy(binary)
       #   @api private
       #

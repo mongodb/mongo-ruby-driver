@@ -108,13 +108,13 @@ module Mongo
 
         # Cannot write a string that's longer than the space currently allocated
         # by the mongocrypt_binary_t object
-        str_p = Binding.mongocrypt_binary_data(ref)
-        len = Binding.mongocrypt_binary_len(ref)
+        str_p = Binding.get_binary_data_direct(ref)
+        len = Binding.get_binary_len_direct(ref)
 
         if len < data.bytesize
           raise ArgumentError.new(
             "Cannot write #{data.bytesize} bytes of data to a Binary object " +
-            "that was initialized with #{Binding.mongocrypt_binary_len(@bin)} bytes."
+            "that was initialized with #{Binding.get_binary_len_direct(@bin)} bytes."
           )
         end
 
@@ -127,8 +127,8 @@ module Mongo
       #
       # @return [ String ] Data stored in the mongocrypt_binary_t as a string
       def to_s
-        str_p = Binding.mongocrypt_binary_data(ref)
-        len = Binding.mongocrypt_binary_len(ref)
+        str_p = Binding.get_binary_data_direct(ref)
+        len = Binding.get_binary_len_direct(ref)
         str_p.read_string(len)
       end
 
