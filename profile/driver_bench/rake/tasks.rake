@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+$LOAD_PATH.unshift File.expand_path('../../../lib', __dir__)
+
 task driver_bench: %i[ driver_bench:data driver_bench:run ]
 
 SPECS_REPO_URI = 'git@github.com:mongodb/specifications.git'
 SPECS_PATH = File.expand_path('../../../specifications', __dir__)
 DRIVER_BENCH_DATA = File.expand_path('../../data/driver_bench', __dir__)
 
+# rubocop:disable Metrics/BlockLength
 namespace :driver_bench do
   desc 'Downloads the DriverBench data files, if necessary'
   task :data do
@@ -35,4 +38,12 @@ namespace :driver_bench do
 
     Mongo::DriverBench::Suite.run!
   end
+
+  desc 'Runs the crypto benchmark'
+  task :crypto do
+    require_relative '../crypto/decrypt'
+
+    Mongo::DriverBench::Crypto::Decrypt.new.run
+  end
 end
+# rubocop:enable Metrics/BlockLength
