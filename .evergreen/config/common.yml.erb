@@ -11,7 +11,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-exec_timeout_secs: 3600
+exec_timeout_secs: 5400
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
 timeout:
@@ -343,7 +343,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/tmp/rspec.xml
+        file: ./src/rspec.xml
 
   "delete private environment":
     - command: shell.exec
@@ -479,7 +479,7 @@ post:
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
-  #- func: "upload test results"
+  # - func: "upload test results"
   - func: "upload test results to s3"
 
 task_groups:
