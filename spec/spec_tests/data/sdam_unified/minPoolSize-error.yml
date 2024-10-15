@@ -1,11 +1,11 @@
 ---
 description: minPoolSize-error
 
-schemaVersion: "1.10"
+schemaVersion: "1.4"
 
 runOnRequirements:
-    # failCommand appName requirements
-  - minServerVersion: "4.9"
+  # Require SERVER-49336 for failCommand + appName on the initial handshake.
+  - minServerVersion: "4.4.7"
     serverless: forbid
     topologies:
       - single
