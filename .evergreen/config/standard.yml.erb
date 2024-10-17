@@ -3,13 +3,13 @@
 
   # latest_ruby = the most recently released, stable version of Ruby
   #    (make sure this version is being built by 10gen/mongo-ruby-toolchain)
-  latest_ruby = "ruby-3.2".inspect # so it gets quoted as a string
+  latest_ruby = "ruby-3.3".inspect # so it gets quoted as a string
 
   # these are used for testing against a few recent ruby versions
-  recent_rubies = %w( ruby-3.2 ruby-3.1 jruby-9.4 )
+  recent_rubies = %w( ruby-3.3 ruby-3.2 jruby-9.4 )
 
   # this is a list of the most most recent 3.x and 2.x MRI ruby versions
-  sample_mri_rubies = %w( ruby-3.2 ruby-2.7 )
+  sample_mri_rubies = %w( ruby-3.3 ruby-2.7 )
 
   # as above, but including the most recent JRuby release
   sample_rubies = sample_mri_rubies + %w( jruby-9.4 )
@@ -20,9 +20,9 @@
   # all supported JRuby versions provided by 10gen/mongo-ruby-toolchain
   jrubies = %w( jruby-9.4 jruby-9.3 )
 
-  supported_mri_rubies_3 = %w( ruby-3.2 ruby-3.1 ruby-3.0 )
+  supported_mri_rubies_3 = %w( ruby-3.3 ruby-3.2 ruby-3.1 ruby-3.0 )
 
-  supported_mri_rubies_3_ubuntu = %w( ruby-3.2 ruby-3.1 )
+  supported_mri_rubies_3_ubuntu = %w( ruby-3.3 ruby-3.2 ruby-3.1 )
 
   supported_mri_ruby_2 = "ruby-2.7".inspect
 
@@ -542,7 +542,7 @@ buildvariants:
 
   - matrix_name: "aws-lambda"
     matrix_spec:
-      ruby: <%= latest_ruby %>
+      ruby: 'ruby-3.2'
       os: ubuntu2204
     display_name: "AWS Lambda"
     tasks:
