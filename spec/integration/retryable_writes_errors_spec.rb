@@ -93,7 +93,7 @@ describe 'Retryable writes errors tests' do
   end
 
   context "PoolClearedError retryability test" do
-    require_topology :single, :replica_set, :sharded
+    require_topology :single, :sharded
     require_no_multi_mongos
     require_fail_command
     require_retry_writes
@@ -162,8 +162,8 @@ describe 'Retryable writes errors tests' do
       # be rescanned and the pool to be unpaused, allowing the second checkout
       # to succeed (when it should fail). Therefore we want the second insert's
       # check out to win the race. This gives the check out a little head start.
-      allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:ready).and_wrap_original do |m, *args, &block|
-        ::Utils.wait_for_condition(5) do
+      allow(collection.cluster.next_primary.pool).to receive(:ready).and_wrap_original do |m, *args, &block|
+        ::Utils.wait_for_condition(3) do
           # check_out_results should contain:
           # - insert1 connection check out successful
           # - pool cleared

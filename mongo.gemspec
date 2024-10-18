@@ -38,5 +38,6 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 2.5"
 
+  s.add_dependency 'base64'
   s.add_dependency 'bson', '>=4.14.1', '<6.0.0'
 end
