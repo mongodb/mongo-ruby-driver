@@ -337,52 +337,41 @@ module CommonShortcuts
       [:tcp, "0.0.0.0", 5300],
     ]
 
+    # A signal class for a DNS server to stop
+    class TerminateDNSServer < RuntimeError; end
+
+    def run_dns_server(config, semaphore)
+      server = RubyDNS::run_server(DNS_INTERFACES) do
+        config.each do |(query, type, *answers)|
+          resource_cls = Resolv::DNS::Resource::IN.const_get(type.to_s.upcase)
+          resources = answers.map do |answer|
+            resource_cls.new(*answer)
+          end
+
+          match(query, resource_cls) do |req|
+            req.add(resources)
+          end
+        end
+
+        semaphore.signal
+      end
+    rescue TerminateDNSServer
+      server&.stop
+    end
+
     def mock_dns(config)
       semaphore = Mongo::Semaphore.new
+      thread = Thread.new { run_dns_server(config, semaphore) }
 
-      thread = Thread.new do
-        RubyDNS::run_server(DNS_INTERFACES) do
-          config.each do |(query, type, *answers)|
-
-            resource_cls = Resolv::DNS::Resource::IN.const_get(type.to_s.upcase)
-            resources = answers.map do |answer|
-              resource_cls.new(*answer)
-            end
-            match(query, resource_cls) do |req|
-              req.add(resources)
-            end
-          end
-
-          semaphore.signal
-        end
-      end
-
+      # wait for the server to spin up
       semaphore.wait
 
-      begin
-        yield
-      ensure
-        10.times do
-          if $last_async_task
-            break
-          end
-          sleep 0.5
-        end
+      yield
+    ensure
+      return unless thread
 
-        # Hack to stop the server - https://github.com/socketry/rubydns/issues/75
-        if $last_async_task.nil?
-          STDERR.puts "No async task - server never started?"
-        else
-          begin
-            $last_async_task.stop
-          rescue NoMethodError => e
-            STDERR.puts "Error stopping async task: #{e}"
-          end
-        end
-
-        thread.kill
-        thread.join
-      end
+      thread.raise(TerminateDNSServer)
+      thread.join
     end
 
     # Wait for snapshot reads to become available to prevent this error:
