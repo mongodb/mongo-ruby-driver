@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # rubocop:todo all
 
+require 'rubydns'
+
 module CommonShortcuts
   module ClassMethods
     # Declares a topology double, which is configured to accept summary
