@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 # rubocop:todo all
 
-require 'rubydns'
-
 module CommonShortcuts
   module ClassMethods
     # Declares a topology double, which is configured to accept summary
@@ -339,11 +337,10 @@ module CommonShortcuts
       [:tcp, "0.0.0.0", 5300],
     ]
 
-    # A signal class for a DNS server to stop
-    class TerminateDNSServer < RuntimeError; end
-
-    def run_dns_server(config, semaphore)
-      server = RubyDNS::run_server(DNS_INTERFACES) do
+    # Starts the DNS server and returns it; should be run from within an
+    # Async block. Prefer #mock_dns instead, which does the setup for you.
+    def start_dns_server(config)
+      RubyDNS::run_server(DNS_INTERFACES) do
         config.each do |(query, type, *answers)|
           resource_cls = Resolv::DNS::Resource::IN.const_get(type.to_s.upcase)
           resources = answers.map do |answer|
@@ -354,26 +351,20 @@ module CommonShortcuts
             req.add(resources)
           end
         end
-
-        semaphore.signal
       end
-    rescue TerminateDNSServer
-      server&.stop
     end
 
+    # Starts and runs a DNS server, then yields to the attached block.
     def mock_dns(config)
-      semaphore = Mongo::Semaphore.new
-      thread = Thread.new { run_dns_server(config, semaphore) }
+      # only require rubydns when we need it; it's MRI-only.
+      require 'rubydns'
 
-      # wait for the server to spin up
-      semaphore.wait
-
-      yield
-    ensure
-      return unless thread
-
-      thread.raise(TerminateDNSServer)
-      thread.join
+      Async do |task|
+        server = start_dns_server(config)
+        yield
+      ensure
+        server.stop
+      end
     end
 
     # Wait for snapshot reads to become available to prevent this error:
