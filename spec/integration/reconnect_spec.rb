@@ -111,6 +111,8 @@ describe 'Client after reconnect' do
       # thread.kill should've similarly failed, but it doesn't.
       fails_on_jruby
 
+      minimum_mri_version '3.0.0'
+
       it 'recreates SRV monitor' do
         wait_for_discovery
 
@@ -181,8 +183,6 @@ describe 'Client after reconnect' do
       end
 
       around do |example|
-        require 'support/dns'
-
         rules = [
           ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
             [0, 0, 2799, 'localhost.test.build.10gen.cc'],

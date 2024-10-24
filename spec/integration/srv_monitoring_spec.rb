@@ -76,9 +76,7 @@ describe 'SRV Monitoring' do
     # NotImplementedError: recvmsg_nonblock is not implemented
     fails_on_jruby
 
-    before(:all) do
-      require 'support/dns'
-    end
+    minimum_mri_version '3.0.0'
 
     around do |example|
       # Speed up the tests by listening on the fake ports we are using.
