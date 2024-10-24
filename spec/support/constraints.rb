@@ -17,6 +17,16 @@ module Constraints
     end
   end
 
+  def minimum_mri_version(version)
+    require_mri
+
+    before(:all) do
+      if RUBY_VERSION < version
+        skip "Ruby #{version} or greater is required"
+      end
+    end
+  end
+
   def forbid_x509_auth
     before(:all) do
       skip 'X.509 auth not allowed' if SpecConfig.instance.x509_auth?
