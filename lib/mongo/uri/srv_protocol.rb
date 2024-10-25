@@ -147,6 +147,8 @@ module Mongo
         validate_srv_hostname(hostname)
         @query_hostname = hostname
 
+        log_debug "attempting to resolve #{hostname}"
+
         @srv_result = resolver.get_records(hostname, uri_options[:srv_service_name], uri_options[:srv_max_hosts])
         if srv_result.empty?
           raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname)

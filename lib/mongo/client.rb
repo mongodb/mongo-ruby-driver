@@ -502,35 +502,15 @@ module Mongo
     def initialize(addresses_or_uri, options = nil)
       options = options ? options.dup : {}
 
-      srv_uri = nil
-      if addresses_or_uri.is_a?(::String)
-        uri = URI.get(addresses_or_uri, options)
-        if uri.is_a?(URI::SRVProtocol)
-          # If the URI is an SRV URI, note this so that we can start
-          # SRV polling if the topology is a sharded cluster.
-          srv_uri = uri
-        end
-        addresses = uri.servers
-        uri_options = uri.client_options.dup
-        # Special handing for :write and :write_concern: allow client Ruby
-        # options to override URI options, even when the Ruby option uses the
-        # deprecated :write key and the URI option uses the current
-        # :write_concern key
-        if options[:write]
-          uri_options.delete(:write_concern)
-        end
-        options = uri_options.merge(options)
-        @srv_records = uri.srv_records
-      else
-        addresses = addresses_or_uri
-        addresses.each do |addr|
-          if addr =~ /\Amongodb(\+srv)?:\/\//i
-            raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
-          end
-        end
+      processed = process_addresses(addresses_or_uri, options)
 
-        @srv_records = nil
-      end
+      uri = processed[:uri]
+      addresses = processed[:addresses]
+      options = processed[:options]
+
+      # If the URI is an SRV URI, note this so that we can start
+      # SRV polling if the topology is a sharded cluster.
+      srv_uri = uri if uri.is_a?(URI::SRVProtocol)
 
       options = self.class.canonicalize_ruby_options(options)
 
@@ -1216,6 +1196,49 @@ module Mongo
     end
 
     private
+
+    def process_addresses(addresses, options)
+      if addresses.is_a?(String)
+        process_addresses_string(addresses, options)
+      else
+        process_addresses_array(addresses, options)
+      end
+    end
+
+    def process_addresses_string(addresses, options)
+      {}.tap do |processed|
+        processed[:uri] = uri = URI.get(addresses, options)
+        processed[:addresses] = uri.servers
+
+        uri_options = uri.client_options.dup
+        # Special handing for :write and :write_concern: allow client Ruby
+        # options to override URI options, even when the Ruby option uses the
+        # deprecated :write key and the URI option uses the current
+        # :write_concern key
+        if options[:write]
+          uri_options.delete(:write_concern)
+        end
+
+        processed[:options] = uri_options.merge(options)
+
+        @srv_records = uri.srv_records
+      end
+    end
+
+    def process_addresses_array(addresses, options)
+      {}.tap do |processed|
+        processed[:addresses] = addresses
+        processed[:options] = options
+
+        addresses.each do |addr|
+          if addr =~ /\Amongodb(\+srv)?:\/\//i
+            raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
+          end
+        end
+
+        @srv_records = nil
+      end
+    end
 
     # Create a new encrypter object using the client's auto encryption options
     def build_encrypter

@@ -2,6 +2,7 @@
 # rubocop:todo all
 
 require 'lite_spec_helper'
+require 'support/recording_logger'
 
 describe Mongo::URI::SRVProtocol do
   require_external_connectivity
@@ -18,6 +19,18 @@ describe Mongo::URI::SRVProtocol do
   shared_examples "roundtrips string" do
     it "returns the correct string for the uri" do
       expect(uri.to_s).to eq(URI::DEFAULT_PARSER.unescape(string))
+    end
+  end
+
+  describe 'logging' do
+    let(:logger) { RecordingLogger.new }
+    let(:uri) { described_class.new(string, logger: logger) }
+    let(:host) { 'test5.test.build.10gen.cc' }
+    let(:string) { "#{scheme}#{host}" }
+
+    it 'logs when resolving the address' do
+      expect { uri }.not_to raise_error
+      expect(logger.contents).to include("attempting to resolve #{host}")
     end
   end
 
@@ -228,7 +241,6 @@ describe Mongo::URI::SRVProtocol do
   end
 
   describe 'valid uris' do
-    require_external_connectivity
 
     describe 'invalid query results' do
 
