@@ -1197,6 +1197,14 @@ module Mongo
 
     private
 
+    # Attempts to parse the given list of addresses, using the provided options.
+    #
+    # @param [ String | Array<String> ] addresses the list of addresses
+    # @param [ Hash ] options the options that may drive how the list is
+    #   processed.
+    #
+    # @return [ Hash<:uri, :addresses, :options> ] the results of processing the
+    #   list of addresses.
     def process_addresses(addresses, options)
       if addresses.is_a?(String)
         process_addresses_string(addresses, options)
@@ -1205,6 +1213,14 @@ module Mongo
       end
     end
 
+    # Attempts to parse the given list of addresses, using the provided options.
+    #
+    # @param [ String ] addresses the list of addresses
+    # @param [ Hash ] options the options that may drive how the list is
+    #   processed.
+    #
+    # @return [ Hash<:uri, :addresses, :options> ] the results of processing the
+    #   list of addresses.
     def process_addresses_string(addresses, options)
       {}.tap do |processed|
         processed[:uri] = uri = URI.get(addresses, options)
@@ -1225,6 +1241,14 @@ module Mongo
       end
     end
 
+    # Attempts to parse the given list of addresses, using the provided options.
+    #
+    # @param [ Array<String> ] addresses the list of addresses
+    # @param [ Hash ] options the options that may drive how the list is
+    #   processed.
+    #
+    # @return [ Hash<:uri, :addresses, :options> ] the results of processing the
+    #   list of addresses.
     def process_addresses_array(addresses, options)
       {}.tap do |processed|
         processed[:addresses] = addresses
