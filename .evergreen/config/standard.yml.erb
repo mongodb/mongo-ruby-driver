@@ -247,10 +247,10 @@ buildvariants:
   - matrix_name: "x509-tests"
     matrix_spec:
       auth-and-ssl: "x509"
-      ruby: 'ruby-3.1'
+      ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: standalone
-      os: ubuntu1804
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
