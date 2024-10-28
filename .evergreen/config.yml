@@ -927,11 +927,6 @@ axes:
         display_name: "6.0"
         variables:
           MONGODB_VERSION: "6.0"
-      - id: "5.3"
-        display_name: "5.3"
-        variables:
-          MONGODB_VERSION: "5.3"
-          CRYPT_SHARED_VERSION: "6.0.5"
       - id: "5.0"
         display_name: "5.0"
         variables:
@@ -1363,7 +1358,7 @@ buildvariants:
   - matrix_name: "mongo-5.x"
     matrix_spec:
       ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
-      mongodb-version: ['5.3']
+      mongodb-version: ['5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"

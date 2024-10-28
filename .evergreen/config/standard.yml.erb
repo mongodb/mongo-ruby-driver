@@ -38,7 +38,7 @@
 
   recent_mdb = %w( 8.0 7.0 )
 
-  all_dbs = %w(latest 8.0 7.0 6.0 5.3 5.0 4.4 4.2 4.0 3.6)
+  all_dbs = %w(latest 8.0 7.0 6.0 5.0 4.4 4.2 4.0 3.6)
 %>
 
 buildvariants:
@@ -86,7 +86,7 @@ buildvariants:
   - matrix_name: "mongo-5.x"
     matrix_spec:
       ruby: <%= recent_rubies %>
-      mongodb-version: ['5.3']
+      mongodb-version: ['5.0']
       topology: <%= topologies %>
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
