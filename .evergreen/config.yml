@@ -1717,7 +1717,7 @@ buildvariants:
       ruby: "ruby-3.3"
       topology: standalone
       mongodb-version: "7.0"
-      os: ubuntu1804
+      os: ubuntu2204
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"
