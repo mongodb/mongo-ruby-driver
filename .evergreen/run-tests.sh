@@ -118,7 +118,7 @@ elif test "$AUTH" = x509; then
 EOT
   `"
 
-  "$BINDIR"/mongo --tls \
+  "$BINDIR"/mongosh --tls \
     --tlsCAFile spec/support/certificates/ca.crt \
     --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
     -u bootstrap -p bootstrap \
@@ -286,7 +286,7 @@ fi
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
 if echo "$AUTH" |grep -q ^aws-assume-role; then
-  $BINDIR/mongo "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' |wc
+  $BINDIR/mongosh "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' | wc
 fi
 
 set_fcv

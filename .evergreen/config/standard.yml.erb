@@ -37,7 +37,6 @@
   actual_and_upcoming_mdb = %w( latest 8.0 7.0 )
 
   recent_mdb = %w( 8.0 7.0 )
-  latest_5x_mdb = "5.3".inspect # so it gets quoted as a string
 
   all_dbs = %w(latest 8.0 7.0 6.0 5.3 5.0 4.4 4.2 4.0 3.6)
 %>
@@ -249,12 +248,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "x509"
       ruby: 'ruby-3.1'
-      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-      # the server for certain auth mechanisms. Once run-tests.sh is made smart
-      # enough to install mongosh, and then use either mongo or mongosh
-      # (depending on server version and what's available), we can bump this to
-      # the latest stable db version.
-      mongodb-version: <%= latest_5x_mdb %>
+      mongodb-version: <%= latest_stable_mdb %>
       topology: standalone
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -390,12 +384,7 @@ buildvariants:
       auth-and-ssl: [ aws-regular, aws-assume-role, aws-ecs, aws-web-identity ]
       ruby: <%= latest_ruby %>
       topology: standalone
-      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-      # the server for certain auth mechanisms. Once run-tests.sh is made smart
-      # enough to install mongosh, and then use either mongo or mongosh
-      # (depending on server version and what's available), we can bump this to
-      # the latest stable db version.
-      mongodb-version: <%= latest_5x_mdb %>
+      mongodb-version: <%= latest_stable_mdb %>
       os: ubuntu1804
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
