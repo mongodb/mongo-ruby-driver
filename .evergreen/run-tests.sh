@@ -22,6 +22,10 @@ else
   set -x
 fi
 
+if test -z "$PROJECT_DIRECTORY"; then
+  PROJECT_DIRECTORY=`realpath $(dirname $0)/..`
+fi
+
 MRSS_ROOT=`dirname "$0"`/../spec/shared
 
 . $MRSS_ROOT/shlib/distro.sh
