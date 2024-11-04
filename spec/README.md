@@ -292,7 +292,7 @@ to a variable as follows:
 
 Use the MongoDB shell to execute this command:
 
-    mongo --tls \
+    mongosh --tls \
       --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
       --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
       -u bootstrap -p bootstrap \
@@ -301,14 +301,14 @@ Use the MongoDB shell to execute this command:
 Verify that authentication is required by running the following command, which
 should fail:
 
-    mongo --tls \
+    mongosh --tls \
       --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
       --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
       --eval 'db.serverStatus()'
 
 Verify that X.509 authentication works by running the following command:
 
-    mongo --tls \
+    mongosh --tls \
       --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
       --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
       --authenticationDatabase '$external' \

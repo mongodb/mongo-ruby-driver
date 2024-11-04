@@ -24,7 +24,7 @@ AWS authentication, and add a bootstrap user:
 
 Then connect as the bootstrap user and create AWS-mapped users:
 
-    mongo mongodb://root:toor@localhost:27017
+    mongosh mongodb://root:toor@localhost:27017
     
     # In the mongo shell:
     use $external
@@ -41,7 +41,7 @@ With the server user created, it is possible to authenticate using AWS.
 The following example uses regular user credentials for an IAM user
 created as described in the next section;
 
-    mongo 'mongodb://AKIAAAAAAAAAAAA:t9t2mawssecretkey@localhost:27017/?authMechanism=MONGODB-AWS&authsource=$external'
+    mongosh 'mongodb://AKIAAAAAAAAAAAA:t9t2mawssecretkey@localhost:27017/?authMechanism=MONGODB-AWS&authsource=$external'
 
 To authenticate, provide the IAM user's access key id as the username and
 secret access key as the password. Note that the username and the password

@@ -81,9 +81,9 @@ To sum up, openssl's command line tools appear to only handle certificate
 chains provided by the client when the server is verifying them, not the
 other way around and not when trying to standalone verify the chain.
 
-## Manual Testing - mongo
+## Manual Testing - mongosh
 
-When it comes to `mongod` and `mongo`, certificate chains are supported in
+When it comes to `mongod` and `mongosh`, certificate chains are supported in
 both directions:
 
     mongod --sslMode requireSSL \
@@ -91,16 +91,16 @@ both directions:
         --sslPEMKeyFile server-second-level-bundle.pem \
         --sslClientCertificate client.pem
 
-    mongo --host localhost --ssl \
+    mongosh --host localhost --ssl \
         --sslCAFile ca.crt \
         --sslPEMKeyFile client-second-level-bundle.pem
 
-The `--host` option needs to be given to `mongo` because the certificates here
+The `--host` option needs to be given to `mongosh` because the certificates here
 do not include 127.0.0.1 in subject alternate name.
 
 If the intermediate certificate is not provided, the connection should fail.
 
     # Expected to fail
-    mongo --host localhost --ssl \
+    mongosh --host localhost --ssl \
         --sslCAFile ca.crt \
         --sslPEMKeyFile client-second-level.pem
