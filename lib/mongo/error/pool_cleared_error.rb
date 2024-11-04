@@ -31,6 +31,7 @@ module Mongo
       #
       # @api private
       def initialize(address, pool)
+        add_label('TransientTransactionError')
         super(address, pool,
           "Connection to #{address} interrupted due to server monitor timeout " +
             "(for pool 0x#{pool.object_id})")
