@@ -927,11 +927,6 @@ axes:
         display_name: "6.0"
         variables:
           MONGODB_VERSION: "6.0"
-      - id: "5.3"
-        display_name: "5.3"
-        variables:
-          MONGODB_VERSION: "5.3"
-          CRYPT_SHARED_VERSION: "6.0.5"
       - id: "5.0"
         display_name: "5.0"
         variables:
@@ -1363,7 +1358,7 @@ buildvariants:
   - matrix_name: "mongo-5.x"
     matrix_spec:
       ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
-      mongodb-version: ['5.3']
+      mongodb-version: ['5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1524,15 +1519,10 @@ buildvariants:
   - matrix_name: "x509-tests"
     matrix_spec:
       auth-and-ssl: "x509"
-      ruby: 'ruby-3.1'
-      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-      # the server for certain auth mechanisms. Once run-tests.sh is made smart
-      # enough to install mongosh, and then use either mongo or mongosh
-      # (depending on server version and what's available), we can bump this to
-      # the latest stable db version.
-      mongodb-version: "5.3"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: standalone
-      os: ubuntu1804
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1721,13 +1711,8 @@ buildvariants:
       auth-and-ssl: [ aws-regular, aws-assume-role, aws-ecs, aws-web-identity ]
       ruby: "ruby-3.3"
       topology: standalone
-      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-      # the server for certain auth mechanisms. Once run-tests.sh is made smart
-      # enough to install mongosh, and then use either mongo or mongosh
-      # (depending on server version and what's available), we can bump this to
-      # the latest stable db version.
-      mongodb-version: "5.3"
-      os: ubuntu1804
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"
