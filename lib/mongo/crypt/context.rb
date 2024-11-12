@@ -49,7 +49,6 @@ module Mongo
           Binding.mongocrypt_ctx_new(@mongocrypt_handle.ref),
           Binding.method(:mongocrypt_ctx_destroy)
         )
-
         @encryption_io = io
         @cached_azure_token = nil
       end
@@ -90,35 +89,13 @@ module Mongo
           when :done
             return nil
           when :need_mongo_keys
-            filter = Binding.ctx_mongo_op(self)
-
-            @encryption_io.find_keys(filter, timeout_ms: timeout_ms).each do |key|
-              mongocrypt_feed(key) if key
-            end
-
-            mongocrypt_done
+            provide_keys(timeout_ms)
           when :need_mongo_collinfo
-            filter = Binding.ctx_mongo_op(self)
-
-            result = @encryption_io.collection_info(@db_name, filter, timeout_ms: timeout_ms)
-            mongocrypt_feed(result) if result
-
-            mongocrypt_done
+            provide_collection_info(timeout_ms)
           when :need_mongo_markings
-            cmd = Binding.ctx_mongo_op(self)
-
-            result = @encryption_io.mark_command(cmd, timeout_ms: timeout_ms)
-            mongocrypt_feed(result)
-
-            mongocrypt_done
+            provide_markings(timeout_ms)
           when :need_kms
-            while kms_context = Binding.ctx_next_kms_ctx(self) do
-              provider = Binding.kms_ctx_get_kms_provider(kms_context)
-              tls_options = @mongocrypt_handle.kms_tls_options(provider)
-              @encryption_io.feed_kms(kms_context, tls_options)
-            end
-
-            Binding.ctx_kms_done(self)
+            feed_kms
           when :need_kms_credentials
             Binding.ctx_provide_kms_providers(
               self,
@@ -133,6 +110,57 @@ module Mongo
       end
 
       private
+
+      def provide_markings(timeout_ms)
+        cmd = Binding.ctx_mongo_op(self)
+
+        result = @encryption_io.mark_command(cmd, timeout_ms: timeout_ms)
+        mongocrypt_feed(result)
+
+        mongocrypt_done
+      end
+
+      def provide_collection_info(timeout_ms)
+        filter = Binding.ctx_mongo_op(self)
+
+        result = @encryption_io.collection_info(@db_name, filter, timeout_ms: timeout_ms)
+        mongocrypt_feed(result) if result
+
+        mongocrypt_done
+      end
+
+      def provide_keys(timeout_ms)
+        filter = Binding.ctx_mongo_op(self)
+
+        @encryption_io.find_keys(filter, timeout_ms: timeout_ms).each do |key|
+          mongocrypt_feed(key) if key
+        end
+
+        mongocrypt_done
+      end
+
+      def feed_kms
+        while (kms_context = Binding.ctx_next_kms_ctx(self)) do
+          begin
+            delay = Binding.kms_ctx_usleep(kms_context)
+            sleep(delay / 1_000_000) unless delay.nil?
+            provider = Binding.kms_ctx_get_kms_provider(kms_context)
+            tls_options = @mongocrypt_handle.kms_tls_options(provider)
+            @encryption_io.feed_kms(kms_context, tls_options)
+          rescue Error::KmsError => e
+            if e.network_error?
+              if Binding.kms_ctx_fail(kms_context)
+                next
+              else
+                raise
+              end
+            else
+              raise
+            end
+          end
+        end
+        Binding.ctx_kms_done(self)
+      end
 
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt
       def mongocrypt_done

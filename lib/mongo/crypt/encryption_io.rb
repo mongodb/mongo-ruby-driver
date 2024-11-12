@@ -363,8 +363,10 @@ module Mongo
           tls_options.merge(socket_options)
         )
         yield(mongo_socket.socket)
+      rescue EOFError => e
+        raise Error::KmsError.new("Error when connecting to KMS provider: #{e.class}: #{e.message}", network_error: true)
       rescue => e
-        raise Error::KmsError, "Error when connecting to KMS provider: #{e.class}: #{e.message}"
+        raise Error::KmsError.new("Error when connecting to KMS provider: #{e.class}: #{e.message}")
       ensure
         mongo_socket&.close
       end

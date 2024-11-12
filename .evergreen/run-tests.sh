@@ -219,6 +219,7 @@ if test -n "$FLE"; then
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
   python3 -u .evergreen/csfle/kms_kmip_server.py &
   python3 -u .evergreen/csfle/fake_azure.py &
+  python3 -u .evergreen/csfle/kms_failpoint_server.py --port 9003 &
 
   # Obtain temporary AWS credentials
   PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh

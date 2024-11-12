@@ -71,7 +71,7 @@ module Mongo
           Binding.mongocrypt_new,
           Binding.method(:mongocrypt_destroy)
         )
-
+        Binding.kms_ctx_setopt_retry_kms(self, true)
         @kms_providers = kms_providers
         @kms_tls_options =  kms_tls_options
 
