@@ -312,8 +312,6 @@ module Mongo
             context.options = context.options | OpenSSL::SSL::OP_NO_RENEGOTIATION
           end
 
-          context.options |= OpenSSL::SSL::OP_IGNORE_UNEXPECTED_EOF
-
           if context.respond_to?(:renegotiation_cb=)
             # Disable renegotiation for older Ruby versions per the sample code at
             # https://rubydocs.org/d/ruby-2-6-0/classes/OpenSSL/SSL/SSLContext.html
