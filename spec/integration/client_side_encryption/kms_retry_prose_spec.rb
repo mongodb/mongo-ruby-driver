@@ -51,67 +51,65 @@ describe 'KMS Retry Prose Spec' do
       simulate_failure('network')
       data_key_id = client_encryption.create_data_key(kms_provider, master_key: master_key)
       simulate_failure('network')
-      expect {
+      expect do
         client_encryption.encrypt(123, key_id: data_key_id, algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-      }.not_to raise_error
+      end.not_to raise_error
     end
 
     it 'createDataKey and encrypt with HTTP retry' do
       simulate_failure('http')
       data_key_id = client_encryption.create_data_key(kms_provider, master_key: master_key)
       simulate_failure('http')
-      expect {
+      expect do
         client_encryption.encrypt(123, key_id: data_key_id, algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-      }.not_to raise_error
+      end.not_to raise_error
     end
 
     it 'createDataKey fails after too many retries' do
       simulate_failure('network', 4)
-      expect {
+      expect do
         client_encryption.create_data_key(kms_provider, master_key: master_key)
-      }.to raise_error(Mongo::Error::KmsError)
+      end.to raise_error(Mongo::Error::KmsError)
     end
   end
 
-  context 'aws' do
+  context 'with AWS KMS provider' do
     let(:kms_provider) { 'aws' }
 
     let(:master_key) do
       {
-        region: "foo",
-        key: "bar",
-        endpoint: "127.0.0.1:9003",
+        region: 'foo',
+        key: 'bar',
+        endpoint: '127.0.0.1:9003',
       }
     end
 
     include_examples 'kms_retry prose spec'
   end
 
-  # For some reason libmongocrypt ignores custom endpoints for Azure and CGP
-  xcontext 'gcp' do
+  context 'with GCP KMS provider', skip: 'For some reason libmongocrypt ignores custom endpoints for Azure and CGP' do
     let(:kms_provider) { 'gcp' }
 
     let(:master_key) do
       {
-        project_id: "foo",
-        location: "bar",
-        key_ring: "baz",
-        key_name: "qux",
-        endpoint: "127.0.0.1:9003"
+        project_id: 'foo',
+        location: 'bar',
+        key_ring: 'baz',
+        key_name: 'qux',
+        endpoint: '127.0.0.1:9003'
       }
     end
 
     include_examples 'kms_retry prose spec'
   end
 
-  # For some reason libmongocrypt ignores custom endpoints for Azure and CGP
-  xcontext 'azure' do
+  context 'with Azure KMS provider', skip: 'For some reason libmongocrypt ignores custom endpoints for Azure and CGP' do
     let(:kms_provider) { 'azure' }
 
     let(:master_key) do
       {
-        key_vault_endpoint: "127.0.0.1:9003",
-        key_name: "foo",
+        key_vault_endpoint: '127.0.0.1:9003',
+        key_name: 'foo',
       }
     end
 

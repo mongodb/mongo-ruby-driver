@@ -110,3 +110,6 @@ Style/TrailingCommaInArrayLiteral:
 
 Style/TrailingCommaInHashLiteral:
   Enabled: false
+
+RSpec/ExampleLength:
+  Max: 10
