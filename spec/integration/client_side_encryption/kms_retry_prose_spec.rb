@@ -3,20 +3,14 @@
 require 'spec_helper'
 
 def simulate_failure(type, times = 1)
-  # Define the URL and the data
   url = URI.parse("https://localhost:9003/set_failpoint/#{type}")
   data = { count: times }.to_json
-  # Create a new HTTP object
   http = Net::HTTP.new(url.host, url.port)
-  # Enable SSL/TLS
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-  # Load the CA certificate
   http.ca_file = '.evergreen/x509gen/ca.pem'
-  # Create a new POST request
   request = Net::HTTP::Post.new(url.path, { 'Content-Type' => 'application/json' })
   request.body = data
-  # Execute the request
   http.request(request)
 end
 
