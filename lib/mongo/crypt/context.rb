@@ -143,7 +143,7 @@ module Mongo
         while (kms_context = Binding.ctx_next_kms_ctx(self)) do
           begin
             delay = Binding.kms_ctx_usleep(kms_context)
-            sleep(delay / 1_000_000) unless delay.nil?
+            sleep(delay / 1_000_000.0) unless delay.nil?
             provider = Binding.kms_ctx_get_kms_provider(kms_context)
             tls_options = @mongocrypt_handle.kms_tls_options(provider)
             @encryption_io.feed_kms(kms_context, tls_options)
