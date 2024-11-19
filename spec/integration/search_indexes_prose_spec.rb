@@ -147,7 +147,6 @@ describe 'Mongo::Collection#search_indexes prose tests' do
         .first
     end
 
-    # rubocop:disable RSpec/ExampleLength
     it 'succeeds' do
       expect(create_index).to be == name
       helper.wait_for(name)
@@ -158,7 +157,6 @@ describe 'Mongo::Collection#search_indexes prose tests' do
 
       expect(index['latestDefinition']).to be == new_definition
     end
-    # rubocop:enable RSpec/ExampleLength
   end
 
   # Case 5: dropSearchIndex suppresses namespace not found errors

@@ -20,6 +20,15 @@ module Mongo
 
     # A KMS-related error during client-side encryption.
     class KmsError < CryptError
+      def initialize(message, code: nil, network_error: nil)
+        @network_error = network_error
+        super(message, code: code)
+      end
+    end
+
+    # @return [ true, false ] whether this error was caused by a network error.
+    def network_error?
+      @network_error == true
     end
   end
 end
