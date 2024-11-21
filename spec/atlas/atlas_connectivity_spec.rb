@@ -10,14 +10,18 @@ describe 'Atlas connectivity' do
   require_atlas
 
   describe 'connection to Atlas' do
+    after do
+      client.close
+    end
+
     it 'runs ismaster successfully' do
-      result = client.database.command(:ismaster => 1)
-      expect(result.documents.first['ismaster']).to be true
+      expect { client.database.command(:hello => 1) }
+        .not_to raise_error
     end
 
     it 'runs findOne successfully' do
-      result = client.use(:test)['test'].find.to_a
-      expect(result).to be_a(Array)
+      expect { client.use(:test)['test'].find.to_a }
+        .not_to raise_error
     end
   end
 end

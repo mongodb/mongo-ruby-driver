@@ -51,7 +51,7 @@ module Mongo
         attr_reader :reduce_function
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster
+        def_delegators :view, :collection, :read, :cluster, :timeout_ms
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database, :client
@@ -70,10 +70,18 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          session = client.send(:get_session, @options)
+          session = client.get_session(@options)
           server = cluster.next_primary(nil, session)
-          result = send_initial_query(server, session, context: Operation::Context.new(client: client, session: session))
-          result = send_fetch_query(server, session) unless inline?
+          context = Operation::Context.new(client: client, session: session, operation_timeouts: view.operation_timeouts)
+          if server.load_balancer?
+            # Connection will be checked in when cursor is drained.
+            connection = server.pool.check_out(context: context)
+            result = send_initial_query_with_connection(connection, context.session, context: context)
+            result = send_fetch_query_with_connection(connection, session) unless inline?
+          else
+            result = send_initial_query(server, context)
+            result = send_fetch_query(server, session) unless inline?
+          end
           @cursor = Cursor.new(view, result, server, session: session)
           if block_given?
             @cursor.each do |doc|
@@ -279,9 +287,9 @@ module Mongo
           out.respond_to?(:keys) && out.keys.first.to_s.downcase == INLINE
         end
 
-        def send_initial_query(server, session, context:)
+        def send_initial_query(server, context)
           server.with_connection do |connection|
-            send_initial_query_with_connection(connection, session, context: context)
+            send_initial_query_with_connection(connection, context.session, context: context)
           end
         end
 
@@ -305,7 +313,7 @@ module Mongo
           Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
         end
 
-        def fetch_query_op(server, session)
+        def fetch_query_op(session)
           spec = {
             coll_name: out_collection_name,
             db_name: out_database_name,
@@ -319,7 +327,16 @@ module Mongo
         end
 
         def send_fetch_query(server, session)
-          fetch_query_op(server, session).execute(server, context: Operation::Context.new(client: client, session: session))
+          fetch_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
+        end
+
+        def send_fetch_query_with_connection(connection, session)
+          fetch_query_op(
+            session
+          ).execute_with_connection(
+            connection,
+            context: Operation::Context.new(client: client, session: session)
+          )
         end
       end
     end

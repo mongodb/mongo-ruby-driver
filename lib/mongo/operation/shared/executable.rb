@@ -28,7 +28,18 @@ module Mongo
 
       include ResponseHandling
 
+      # @return [ Operation::Context | nil ] the operation context used to
+      #   execute this operation.
+      attr_accessor :context
+
       def do_execute(connection, context, options = {})
+        # Save the context on the instance, to avoid having to pass it as a
+        # parameter to every single method. There are many legacy methods that
+        # still accept it as a parameter, which are left as-is for now to
+        # minimize the impact of this change. Moving forward, it may be
+        # reasonable to refactor things so this saved reference is used instead.
+        @context = context
+
         session&.materialize_if_needed
         unpin_maybe(session, connection) do
           add_error_labels(connection, context) do
@@ -93,7 +104,7 @@ module Mongo
       end
 
       def get_result(connection, context, options = {})
-        result_class.new(*dispatch_message(connection, context, options))
+        result_class.new(*dispatch_message(connection, context, options), context: context, connection: connection)
       end
 
       # Returns a Protocol::Message or nil as reply.

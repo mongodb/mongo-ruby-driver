@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,9 +15,6 @@
 # limitations under the License.
 
 module Mongo
-
   # The current version of the driver.
-  #
-  # @since 2.0.0
-  VERSION = '2.19.1'.freeze
+  VERSION = '2.21.0'
 end

@@ -63,16 +63,22 @@ module Mongo
                      :client,
                      :cluster,
                      :database,
+                     :nro_write_with_retry,
                      :read_with_retry,
                      :read_with_retry_cursor,
                      :write_with_retry,
-                     :nro_write_with_retry,
                      :write_concern_with_session
 
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
 
       alias :selector :filter
+
+      # @return [ Integer | nil | The timeout_ms value that was passed as an
+      #   option to the view.
+      #
+      # @api private
+      attr_reader :operation_timeout_ms
 
       # Compare two +View+ objects.
       #
@@ -151,14 +157,25 @@ module Mongo
       #   document more than once. Deprecated as of MongoDB server version 4.0.
       # @option options [ Hash ] :sort The key and direction pairs used to sort
       #   the results.
+      # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+      #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+      #   iteration).
+      # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
+      #    The default value is unset which means the value is inherited from
+      #    the collection or the database or the client.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
         validate_doc!(filter)
-        @collection = collection
 
         filter = BSON::Document.new(filter)
         options = BSON::Document.new(options)
+
+        @collection = collection
+        @operation_timeout_ms = options.delete(:timeout_ms)
+
+        validate_timeout_mode!(options)
 
         # This is when users pass $query in filter and other modifiers
         # alongside?
@@ -169,6 +186,14 @@ module Mongo
         modifiers = filter.merge(options.delete(:modifiers) || {})
         @filter = (query || filter).freeze
         @options = Operation::Find::Builder::Modifiers.map_driver_options(modifiers).merge!(options).freeze
+      end
+
+      # The timeout_ms value to use for this operation; either specified as an
+      # option to the view, or inherited from the collection.
+      #
+      # @return [ Integer | nil ] the timeout_ms for this operation
+      def timeout_ms
+        operation_timeout_ms || collection.timeout_ms
       end
 
       # Get a human-readable string representation of +View+.
@@ -196,6 +221,20 @@ module Mongo
         WriteConcern.get(options[:write_concern] || options[:write] || collection.write_concern)
       end
 
+      # @return [ Hash ] timeout_ms value set on the operation level (if any),
+      #   and/or timeout_ms that is set on collection/database/client level (if any).
+      #
+      # @api private
+      def operation_timeouts(opts = {})
+        {}.tap do |result|
+          if opts[:timeout_ms] || operation_timeout_ms
+            result[:operation_timeout_ms] = opts[:timeout_ms] || operation_timeout_ms
+          else
+            result[:inherited_timeout_ms] = collection.timeout_ms
+          end
+        end
+      end
+
       private
 
       def initialize_copy(other)
@@ -205,13 +244,14 @@ module Mongo
       end
 
       def new(options)
+        options = options.merge(timeout_ms: operation_timeout_ms) if operation_timeout_ms
         View.new(collection, filter, options)
       end
 
       def view; self; end
 
       def with_session(opts = {}, &block)
-        client.send(:with_session, @options.merge(opts), &block)
+        client.with_session(@options.merge(opts), &block)
       end
     end
   end

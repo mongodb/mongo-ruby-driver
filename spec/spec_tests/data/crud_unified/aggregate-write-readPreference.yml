@@ -5,7 +5,11 @@ schemaVersion: '1.4'
 runOnRequirements:
   # 3.6+ non-standalone is needed to utilize $readPreference in OP_MSG
   - minServerVersion: "3.6"
+    # https://jira.mongodb.org/browse/DRIVERS-291
+    maxServerVersion: "7.99"
     topologies: [ replicaset, sharded, load-balanced ]
+    # SERVER-90047: failures against latest server necessitate adding this for now
+    maxServerVersion: "8.0.0"
 
 _yamlAnchors:
   readConcern: &readConcern
@@ -59,6 +63,8 @@ tests:
   - description: "Aggregate with $out includes read preference for 5.0+ server"
     runOnRequirements:
       - minServerVersion: "5.0"
+        # https://jira.mongodb.org/browse/RUBY-3539
+        maxServerVersion: "7.99"
         serverless: "forbid"
     operations:
       - object: *collection0

@@ -30,14 +30,14 @@ module MongoCryptSpecHelper
   private
 
   def string_from_binary(binary_p)
-    str_p = Mongo::Crypt::Binding.mongocrypt_binary_data(binary_p)
-    len = Mongo::Crypt::Binding.mongocrypt_binary_len(binary_p)
+    str_p = Mongo::Crypt::Binding.get_binary_data_direct(binary_p)
+    len = Mongo::Crypt::Binding.get_binary_len_direct(binary_p)
     str_p.read_string(len)
   end
   module_function :string_from_binary
 
   def write_to_binary(binary_p, data)
-    str_p = Mongo::Crypt::Binding.mongocrypt_binary_data(binary_p)
+    str_p = Mongo::Crypt::Binding.get_binary_data_direct(binary_p)
     str_p.put_bytes(0, data)
   end
   module_function :write_to_binary

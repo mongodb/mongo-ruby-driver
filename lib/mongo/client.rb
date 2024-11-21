@@ -111,6 +111,7 @@ module Mongo
       :ssl_verify_certificate,
       :ssl_verify_hostname,
       :ssl_verify_ocsp_endpoint,
+      :timeout_ms,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
@@ -349,7 +350,8 @@ module Mongo
     # @option options [ Integer ] :server_selection_timeout The timeout in seconds
     #   for selecting a server for an operation.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
-    #   execute operations on a socket.
+    #   execute operations on a socket. This option is deprecated, use
+    #   :timeout_ms instead.
     # @option options [ Integer ] :srv_max_hosts The maximum number of mongoses
     #   that the driver will communicate with for sharded topologies. If this
     #   option is 0, then there will be no maximum number of mongoses. If the
@@ -413,11 +415,15 @@ module Mongo
     # @option options [ true, false ] :ssl_verify_hostname Whether to perform peer hostname
     #   validation. This setting overrides :ssl_verify with respect to whether hostname validation
     #   is performed.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
     # @option options [ String ] :user The user name.
     # @option options [ Float ] :wait_queue_timeout The time to wait, in
     #   seconds, in the connection pool for a connection to be checked in.
+    #   This option is deprecated, use :timeout_ms instead.
     # @option options [ Array<Hash> ] :wrapping_libraries Information about
     #   libraries such as ODMs that are wrapping the driver, to be added to
     #    metadata sent to the server. Specify the lower level libraries first.
@@ -425,7 +431,7 @@ module Mongo
     # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
     #   option.
     # @option options [ Hash ] :write_concern The write concern options.
-    #   Can be :w => Integer|String, :wtimeout => Integer (in milliseconds),
+    #   Can be :w => Integer|String, :wtimeout => Integer (in milliseconds, deprecated),
     #   :j => Boolean, :fsync => Boolean.
     # @option options [ Integer ] :zlib_compression_level The Zlib compression level to use, if using compression.
     #   See Ruby's Zlib module for valid levels.
@@ -496,35 +502,15 @@ module Mongo
     def initialize(addresses_or_uri, options = nil)
       options = options ? options.dup : {}
 
-      srv_uri = nil
-      if addresses_or_uri.is_a?(::String)
-        uri = URI.get(addresses_or_uri, options)
-        if uri.is_a?(URI::SRVProtocol)
-          # If the URI is an SRV URI, note this so that we can start
-          # SRV polling if the topology is a sharded cluster.
-          srv_uri = uri
-        end
-        addresses = uri.servers
-        uri_options = uri.client_options.dup
-        # Special handing for :write and :write_concern: allow client Ruby
-        # options to override URI options, even when the Ruby option uses the
-        # deprecated :write key and the URI option uses the current
-        # :write_concern key
-        if options[:write]
-          uri_options.delete(:write_concern)
-        end
-        options = uri_options.merge(options)
-        @srv_records = uri.srv_records
-      else
-        addresses = addresses_or_uri
-        addresses.each do |addr|
-          if addr =~ /\Amongodb(\+srv)?:\/\//i
-            raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
-          end
-        end
+      processed = process_addresses(addresses_or_uri, options)
 
-        @srv_records = nil
-      end
+      uri = processed[:uri]
+      addresses = processed[:addresses]
+      options = processed[:options]
+
+      # If the URI is an SRV URI, note this so that we can start
+      # SRV polling if the topology is a sharded cluster.
+      srv_uri = uri if uri.is_a?(URI::SRVProtocol)
 
       options = self.class.canonicalize_ruby_options(options)
 
@@ -934,8 +920,11 @@ module Mongo
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
     # @option opts [ Session ] :session The session to use.
-    # @option options [ Object ] :comment A user-provided
+    # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     # @return [ Array<String> ] The names of the databases.
     #
@@ -955,7 +944,12 @@ module Mongo
     #
     # @option opts [ true, false ] :authorized_databases A flag that determines
     #   which databases are returned based on user privileges when access control
-    #   is enabled
+    #   is enabled.
+    # @option opts [ Object ] :comment A user-provided
+    #   comment to attach to this command.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is not enabled.
     #
     #   See https://mongodb.com/docs/manual/reference/command/listDatabases/
     #   for more information and usage.
@@ -1095,7 +1089,7 @@ module Mongo
       return use(Database::ADMIN).watch(pipeline, options) unless database.name == Database::ADMIN
 
       view_options = options.dup
-      view_options[:await_data] = true if options[:max_await_time_ms]
+      view_options[:cursor_type] = :tailable_await if options[:max_await_time_ms]
 
       Mongo::Collection::View::ChangeStream.new(
         Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"], {}, view_options),
@@ -1185,7 +1179,90 @@ module Mongo
       @encrypted_fields_map ||= @options.fetch(:auto_encryption_options, {})[:encrypted_fields_map]
     end
 
+    # @return [ Integer | nil ] Value of timeout_ms option if set.
+    # @api private
+    def timeout_ms
+      @options[:timeout_ms]
+    end
+
+    # @return [ Float | nil ] Value of timeout_ms option converted to seconds.
+    # @api private
+    def timeout_sec
+      if timeout_ms.nil?
+        nil
+      else
+        timeout_ms / 1_000.0
+      end
+    end
+
     private
+
+    # Attempts to parse the given list of addresses, using the provided options.
+    #
+    # @param [ String | Array<String> ] addresses the list of addresses
+    # @param [ Hash ] options the options that may drive how the list is
+    #   processed.
+    #
+    # @return [ Hash<:uri, :addresses, :options> ] the results of processing the
+    #   list of addresses.
+    def process_addresses(addresses, options)
+      if addresses.is_a?(String)
+        process_addresses_string(addresses, options)
+      else
+        process_addresses_array(addresses, options)
+      end
+    end
+
+    # Attempts to parse the given list of addresses, using the provided options.
+    #
+    # @param [ String ] addresses the list of addresses
+    # @param [ Hash ] options the options that may drive how the list is
+    #   processed.
+    #
+    # @return [ Hash<:uri, :addresses, :options> ] the results of processing the
+    #   list of addresses.
+    def process_addresses_string(addresses, options)
+      {}.tap do |processed|
+        processed[:uri] = uri = URI.get(addresses, options)
+        processed[:addresses] = uri.servers
+
+        uri_options = uri.client_options.dup
+        # Special handing for :write and :write_concern: allow client Ruby
+        # options to override URI options, even when the Ruby option uses the
+        # deprecated :write key and the URI option uses the current
+        # :write_concern key
+        if options[:write]
+          uri_options.delete(:write_concern)
+        end
+
+        processed[:options] = uri_options.merge(options)
+
+        @srv_records = uri.srv_records
+      end
+    end
+
+    # Attempts to parse the given list of addresses, using the provided options.
+    #
+    # @param [ Array<String> ] addresses the list of addresses
+    # @param [ Hash ] options the options that may drive how the list is
+    #   processed.
+    #
+    # @return [ Hash<:uri, :addresses, :options> ] the results of processing the
+    #   list of addresses.
+    def process_addresses_array(addresses, options)
+      {}.tap do |processed|
+        processed[:addresses] = addresses
+        processed[:options] = options
+
+        addresses.each do |addr|
+          if addr =~ /\Amongodb(\+srv)?:\/\//i
+            raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
+          end
+        end
+
+        @srv_records = nil
+      end
+    end
 
     # Create a new encrypter object using the client's auto encryption options
     def build_encrypter
@@ -1230,6 +1307,8 @@ module Mongo
     # @option options [ true | false ] :implicit When no session is passed in,
     #   whether to create an implicit session.
     # @option options [ Session ] :session The session to validate and return.
+    # @option options [ Operation::Context | nil ] :context Context of the
+    #   operation the session is used for.
     #
     # @return [ Session ] A session object.
     #
@@ -1242,7 +1321,7 @@ module Mongo
         return options[:session].validate!(self)
       end
 
-      cluster.validate_session_support!
+      cluster.validate_session_support!(timeout: timeout_sec)
 
       options = {implicit: true}.update(options)
 

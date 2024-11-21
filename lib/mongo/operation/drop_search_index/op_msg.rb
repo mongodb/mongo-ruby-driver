@@ -14,11 +14,11 @@ module Mongo
         # Returns the command to send to the database, describing the
         # desired dropSearchIndex operation.
         #
-        # @param [ Mongo::Server ] _server the server that will receive the
+        # @param [ Connection ] _connection the connection that will receive the
         #   command
         #
         # @return [ Hash ] the selector
-        def selector(_server)
+        def selector(_connection)
           {
             dropSearchIndex: coll_name,
             :$db => db_name,

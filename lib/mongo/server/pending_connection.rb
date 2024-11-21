@@ -110,6 +110,24 @@ module Mongo
 
       private
 
+      # Sends the hello command to the server, then receive and deserialize
+      # the response.
+      #
+      # This method is extracted to be mocked in the tests.
+      #
+      # @param [ Protocol::Message ] Command that should be sent to a server
+      #   for handshake purposes.
+      #
+      # @return [ Mongo::Protocol::Reply ] Deserialized server response.
+      def get_handshake_response(hello_command)
+        @server.round_trip_time_calculator.measure do
+          add_server_diagnostics do
+            socket.write(hello_command.serialize.to_s)
+            Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE)
+          end
+        end
+      end
+
       # @param [ BSON::Document | nil ] speculative_auth_doc The document to
       #   provide in speculativeAuthenticate field of handshake command.
       #
@@ -131,12 +149,7 @@ module Mongo
         doc = nil
         @server.handle_handshake_failure! do
           begin
-            response = @server.round_trip_time_averager.measure do
-              add_server_diagnostics do
-                socket.write(hello_command.serialize.to_s)
-                Protocol::Message.deserialize(socket, Protocol::Message::MAX_MESSAGE_SIZE)
-              end
-            end
+            response = get_handshake_response(hello_command)
             result = Operation::Result.new([response])
             result.validate!
             doc = result.documents.first
@@ -155,7 +168,11 @@ module Mongo
           doc['serviceId'] ||= "fake:#{rand(2**32-1)+1}"
         end
 
-        post_handshake(doc, @server.round_trip_time_averager.average_round_trip_time)
+        post_handshake(
+          doc,
+          @server.round_trip_time_calculator.average_round_trip_time,
+          @server.round_trip_time_calculator.minimum_round_trip_time
+        )
 
         doc
       end
@@ -205,7 +222,7 @@ module Mongo
       #
       # @return [ Server::Description ] The server description calculated from
       #   the handshake response for this particular connection.
-      def post_handshake(response, average_rtt)
+      def post_handshake(response, average_rtt, minimum_rtt)
         if response["ok"] == 1
           # Auth mechanism is entirely dependent on the contents of
           # hello response *for this connection*.

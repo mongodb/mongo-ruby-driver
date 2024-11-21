@@ -35,7 +35,7 @@ module Mongo
 
         def get_result(connection, context, options = {})
           # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(connection, context), @ids)
+          Result.new(*dispatch_message(connection, context), @ids, context: context)
         end
 
         def selector(connection)
@@ -49,7 +49,8 @@ module Mongo
 
         def message(connection)
           section = Protocol::Msg::Section1.new(IDENTIFIER, send(IDENTIFIER))
-          Protocol::Msg.new(flags, {}, command(connection), section)
+          cmd = apply_relevant_timeouts_to(command(connection), connection)
+          Protocol::Msg.new(flags, {}, cmd, section)
         end
       end
     end

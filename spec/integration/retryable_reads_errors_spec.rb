@@ -4,6 +4,7 @@
 require 'spec_helper'
 
 describe 'Retryable reads errors tests' do
+  retry_test
 
   let(:client) { authorized_client.with(options.merge(retry_reads: true)) }
 
@@ -73,31 +74,42 @@ describe 'Retryable reads errors tests' do
       client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
     end
 
-    it "retries on PoolClearedError" do
-      # After the first find fails, the pool is paused and retry is triggered.
-      # Now, a race is started between the second find acquiring a connection,
-      # and the first retrying the read. Now, retry reads cause the cluster to
-      # be rescanned and the pool to be unpaused, allowing the second checkout
-      # to succeed (when it should fail). Therefore we want the second find's
-      # check out to win the race. This gives the check out a little head start.
-      allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:ready).and_wrap_original do |m, *args, &block|
-        ::Utils.wait_for_condition(5) do
-          # check_out_results should contain:
-          # - find1 connection check out successful
-          # - pool cleared
-          # - find2 connection check out failed
-          # We wait here for the third event to happen before we ready the pool.
-          cmap_events.select do |e|
-            event_types.include?(e.class)
-          end.length >= 3
+    shared_examples_for 'retries on PoolClearedError' do
+      it "retries on PoolClearedError" do
+        # After the first find fails, the pool is paused and retry is triggered.
+        # Now, a race is started between the second find acquiring a connection,
+        # and the first retrying the read. Now, retry reads cause the cluster to
+        # be rescanned and the pool to be unpaused, allowing the second checkout
+        # to succeed (when it should fail). Therefore we want the second find's
+        # check out to win the race. This gives the check out a little head start.
+        allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:ready).and_wrap_original do |m, *args, &block|
+          ::Utils.wait_for_condition(5) do
+            # check_out_results should contain:
+            # - find1 connection check out successful
+            # - pool cleared
+            # - find2 connection check out failed
+            # We wait here for the third event to happen before we ready the pool.
+            cmap_events.select do |e|
+              event_types.include?(e.class)
+            end.length >= 3
+          end
+          m.call(*args, &block)
         end
-        m.call(*args, &block)
+        threads.map(&:join)
+        expect(check_out_results[0]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut)
+        expect(check_out_results[1]).to be_a(Mongo::Monitoring::Event::Cmap::PoolCleared)
+        expect(check_out_results[2]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed)
+        expect(find_events.length).to eq(3)
       end
-      threads.map(&:join)
-      expect(check_out_results[0]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut)
-      expect(check_out_results[1]).to be_a(Mongo::Monitoring::Event::Cmap::PoolCleared)
-      expect(check_out_results[2]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed)
-      expect(find_events.length).to eq(3)
+    end
+
+    it_behaves_like 'retries on PoolClearedError'
+
+    context 'legacy read retries' do
+
+      let(:client) { authorized_client.with(options.merge(retry_reads: false, max_read_retries: 1)) }
+
+      it_behaves_like 'retries on PoolClearedError'
     end
 
     after do

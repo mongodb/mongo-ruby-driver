@@ -43,11 +43,27 @@ describe 'Mongo::Crypt::Binding' do
       end
     end
 
+    describe '#get_binary_data_direct' do
+      let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
+
+      it 'returns the pointer to the data' do
+        expect(Mongo::Crypt::Binding.get_binary_data_direct(binary)).to eq(bytes_pointer)
+      end
+    end
+
     describe '#mongocrypt_binary_len' do
       let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
 
       it 'returns the length of the data' do
         expect(Mongo::Crypt::Binding.mongocrypt_binary_len(binary)).to eq(bytes.length)
+      end
+    end
+
+    describe '#get_binary_len_direct' do
+      let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
+
+      it 'returns the length of the data' do
+        expect(Mongo::Crypt::Binding.get_binary_len_direct(binary)).to eq(bytes.length)
       end
     end
   end

@@ -8,6 +8,10 @@ describe Mongo::Cursor do
     authorized_client['cursor_spec_collection']
   end
 
+  let(:context) do
+    Mongo::Operation::Context.new(client: authorized_client)
+  end
+
   before do
     authorized_collection.drop
   end
@@ -18,7 +22,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      view.send(:send_initial_query, server, context)
     end
 
     let(:cursor) do
@@ -118,7 +122,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      view.send(:send_initial_query, server, context)
     end
 
     let(:cursor) do
@@ -170,7 +174,11 @@ describe Mongo::Cursor do
 
           before do
             expect(cursor).to receive(:get_more_operation).and_return(op).ordered
-            expect(op).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
+            if SpecConfig.instance.connect_options[:connect] == :load_balanced
+              expect(op).to receive(:execute_with_connection).and_raise(Mongo::Error::SocketError).ordered
+            else
+              expect(op).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
+            end
           end
 
           it 'raises the error' do
@@ -617,6 +625,9 @@ describe Mongo::Cursor do
         allow(reply).to receive(:connection_description).and_return(conn_desc)
         allow(reply).to receive(:cursor_id).and_return(42)
         allow(reply).to receive(:connection_global_id).and_return(1)
+        if SpecConfig.instance.connect_options[:connect] == :load_balanced
+          allow(reply).to receive(:connection).and_return(nil)
+        end
       end
     end
 
@@ -645,7 +656,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, authorized_primary)
+      view.send(:send_initial_query, authorized_primary, context)
     end
 
     let(:cursor) do
@@ -721,7 +732,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      view.send(:send_initial_query, server, context)
     end
 
     let(:cursor) do
@@ -770,10 +781,16 @@ describe Mongo::Cursor do
 
       it 'does not raise an error' do
         cursor
-        server.with_connection do |conn|
-          expect(conn).to receive(:deliver)
-            .at_least(:once)
-            .and_raise(Mongo::Error::SocketError, "test error")
+        if SpecConfig.instance.connect_options[:connect] == :load_balanced
+          expect(cursor.connection).to receive(:deliver)
+              .at_least(:once)
+              .and_raise(Mongo::Error::SocketError, "test error")
+        else
+          server.with_connection do |conn|
+            expect(conn).to receive(:deliver)
+              .at_least(:once)
+              .and_raise(Mongo::Error::SocketError, "test error")
+          end
         end
         expect do
           cursor.close

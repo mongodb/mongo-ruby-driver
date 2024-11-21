@@ -28,7 +28,7 @@ module Mongo
     #
     # Please refer to the Initial DNS Seedlist Discovery spec for details.
     #
-    # https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery
+    # https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery/initial-dns-seedlist-discovery.md
     #
     # @example Use the uri string to make a client connection.
     #   client = Mongo::Client.new('mongodb+srv://test6.test.build.10gen.cc/')
@@ -146,6 +146,8 @@ module Mongo
         hostname = @servers.first
         validate_srv_hostname(hostname)
         @query_hostname = hostname
+
+        log_debug "attempting to resolve #{hostname}"
 
         @srv_result = resolver.get_records(hostname, uri_options[:srv_service_name], uri_options[:srv_max_hosts])
         if srv_result.empty?

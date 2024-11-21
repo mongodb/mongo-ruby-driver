@@ -40,6 +40,9 @@ module Mongo
     #   should be hashes of TLS connection options. The options are equivalent
     #   to TLS connection options of Mongo::Client.
     #   @see Mongo::Client#initialize for list of TLS options.
+    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    #    Must be a non-negative integer. An explicit value of 0 means infinite.
+    #    The default value is unset which means the feature is disabled.
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
     #   formatted.
@@ -131,7 +134,7 @@ module Mongo
     #     {'$and' =>  [{'$gt' => ['$field', 10]}, {'$lt' => ['$field', 20]}}
     #   )
     #   {$and: [{$gt: [<fieldpath>, <value1>]}, {$lt: [<fieldpath>, <value2>]}]
-    # Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
+    # Only supported when queryType is "range" and algorithm is "Range".
     # @note: The Range algorithm is experimental only. It is not intended
     #   for public use. It is subject to breaking changes.
     #
@@ -143,11 +146,11 @@ module Mongo
     # @option options [ String ] :key_alt_name The alternate name for the
     #   encryption key.
     # @option options [ String ] :algorithm The algorithm used to encrypt the
-    #   expression. The only allowed value is "RangePreview"
+    #   expression. The only allowed value is "Range"
     # @option options [ Integer | nil ] :contention_factor Contention factor
     #   to be applied If not  provided, it defaults to a value of 0.
     # @option options [ String | nil ] query_type Query type to be applied.
-    #   The only allowed value is "rangePreview".
+    #   The only allowed value is "range".
     #
     # @note The :key_id and :key_alt_name options are mutually exclusive. Only
     #   one is required to perform explicit encryption.
@@ -291,7 +294,7 @@ module Mongo
     def create_data_keys(encrypted_fields, kms_provider, master_key)
       encrypted_fields = encrypted_fields.dup
       # We must return the partially formed encrypted_fields hash if an error
-      # occurs - https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#create-encrypted-collection-helper
+      # occurs - https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.md#create-encrypted-collection-helper
       # Thefore, we do this in a loop instead of using #map.
       encrypted_fields[:fields].size.times do |i|
         field = encrypted_fields[:fields][i]

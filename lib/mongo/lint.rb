@@ -57,7 +57,7 @@ module Mongo
 
     # Validates the provided hash as a read concern object, per the
     # read/write concern specification
-    # (https://github.com/mongodb/specifications/blob/master/source/read-write-concern/read-write-concern.rst#read-concern).
+    # (https://github.com/mongodb/specifications/blob/master/source/read-write-concern/read-write-concern.md#read-concern).
     #
     # This method also accepts nil as input for convenience.
     #

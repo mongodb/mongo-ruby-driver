@@ -194,7 +194,12 @@ module Mongo
             server_api: server.options[:server_api],
             connection_global_id: kill_spec.connection_global_id,
           }
-          op.execute(server, context: Operation::Context.new(options: options))
+          if connection = kill_spec.connection
+            op.execute_with_connection(connection, context: Operation::Context.new(options: options))
+            connection.connection_pool.check_in(connection)
+          else
+            op.execute(server, context: Operation::Context.new(options: options))
+          end
 
           if session = kill_spec.session
             if session.implicit?

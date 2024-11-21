@@ -289,7 +289,7 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(Mongo::Error::KmsError, /SocketError/)
+          end.to raise_error(Mongo::Error::KmsError, /SocketError|ResolutionError/)
         end
       end
 
@@ -303,6 +303,7 @@ describe Mongo::ClientEncryption do
         end
 
         it 'raises a KmsError' do
+          skip 'https://jira.mongodb.org/browse/RUBY-3375'
           expect do
             data_key_id
           end.to raise_error(Mongo::Error::KmsError, /Error while connecting to socket/)

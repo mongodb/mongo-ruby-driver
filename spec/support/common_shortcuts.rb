@@ -176,7 +176,7 @@ module CommonShortcuts
         ClientRegistry.instance.global_client('root_authorized').command(killAllSessions: [])
       # killAllSessions also kills the implicit session which the driver uses
       # to send this command, as a result it always fails
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure::Family => e
         # "operation was interrupted"
         unless e.code == 11601
           raise
@@ -337,51 +337,33 @@ module CommonShortcuts
       [:tcp, "0.0.0.0", 5300],
     ]
 
-    def mock_dns(config)
-      semaphore = Mongo::Semaphore.new
-
-      thread = Thread.new do
-        RubyDNS::run_server(DNS_INTERFACES) do
-          config.each do |(query, type, *answers)|
-
-            resource_cls = Resolv::DNS::Resource::IN.const_get(type.to_s.upcase)
-            resources = answers.map do |answer|
-              resource_cls.new(*answer)
-            end
-            match(query, resource_cls) do |req|
-              req.add(resources)
-            end
+    # Starts the DNS server and returns it; should be run from within an
+    # Async block. Prefer #mock_dns instead, which does the setup for you.
+    def start_dns_server(config)
+      RubyDNS::run_server(DNS_INTERFACES) do
+        config.each do |(query, type, *answers)|
+          resource_cls = Resolv::DNS::Resource::IN.const_get(type.to_s.upcase)
+          resources = answers.map do |answer|
+            resource_cls.new(*answer)
           end
 
-          semaphore.signal
+          match(query, resource_cls) do |req|
+            req.add(resources)
+          end
         end
       end
+    end
 
-      semaphore.wait
+    # Starts and runs a DNS server, then yields to the attached block.
+    def mock_dns(config)
+      # only require rubydns when we need it; it's MRI-only.
+      require 'rubydns'
 
-      begin
+      Async do |task|
+        server = start_dns_server(config)
         yield
       ensure
-        10.times do
-          if $last_async_task
-            break
-          end
-          sleep 0.5
-        end
-
-        # Hack to stop the server - https://github.com/socketry/rubydns/issues/75
-        if $last_async_task.nil?
-          STDERR.puts "No async task - server never started?"
-        else
-          begin
-            $last_async_task.stop
-          rescue NoMethodError => e
-            STDERR.puts "Error stopping async task: #{e}"
-          end
-        end
-
-        thread.kill
-        thread.join
+        server.stop
       end
     end
 
@@ -396,7 +378,7 @@ module CommonShortcuts
         client.start_session(snapshot: true) do |session|
           client[collection].aggregate([{'$match': {any: true}}], session: session).to_a
         end
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure::Family => e
         # Retry them as the server demands...
         if e.code == 246 # SnapshotUnavailable
           if Mongo::Utils.monotonic_time < start_time + 10

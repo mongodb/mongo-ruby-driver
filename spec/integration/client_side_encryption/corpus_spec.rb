@@ -188,6 +188,15 @@ describe 'Client-Side Encryption' do
       key_vault_collection.insert_one(kmip_data_key)
     end
 
+    # This method compensates for an API change between BSON 4 and
+    # BSON 5.
+    def normalize_cse_value(a)
+      case a
+      when BSON::Decimal128 then a.to_d
+      else a
+      end
+    end
+
     shared_context 'with jsonSchema collection validator' do
       let(:local_schema_map) { nil }
 
@@ -228,12 +237,11 @@ describe 'Client-Side Encryption' do
           .find(_id: corpus_encrypted_id)
           .first
 
-
         corpus_encrypted_actual.each do |key, value|
           # If it was deterministically encrypted, test the encrypted values
           # for equality.
           if value['algo'] == 'det'
-            expect(value['value']).to eq(corpus_encrypted_expected[key]['value'])
+            expect(normalize_cse_value(value['value'])).to eq(normalize_cse_value(corpus_encrypted_expected[key]['value']))
           else
             # If the document was randomly encrypted, the two encrypted values
             # will not be equal. Ensure that they are equal when decrypted.

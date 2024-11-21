@@ -22,7 +22,9 @@ CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort.select 
   !defined?(JRUBY_VERSION) || !f.include?('pool-checkout-minPoolSize-connection-maxConnecting.yml')
 end
 AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
-CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort
+CLIENT_SIDE_ENCRYPTION_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/client_side_encryption/*.yml").sort.delete_if do |spec|
+  ![ 1, '1', 'yes', 'true' ].include?(ENV['CSOT_SPEC_TESTS']) && spec =~ /.*timeoutMS.yml$/
+end
 
 # Disable output buffering: https://www.rubyguides.com/2019/02/ruby-io/
 STDOUT.sync = true
@@ -164,16 +166,6 @@ RSpec.configure do |config|
         example.run
       ensure
         SdamFormatterIntegration.assign_log_entries(example.id)
-      end
-    end
-  end
-
-  if SpecConfig.instance.ci? && !%w(1 true yes).include?(ENV['INTERACTIVE']&.downcase)
-    # Tests should take under 10 seconds ideally but it seems
-    # we have some that run for more than 10 seconds in CI.
-    config.around(:each) do |example|
-      TimeoutInterrupt.timeout(example_timeout_seconds, ExampleTimeout) do
-        example.run
       end
     end
   end

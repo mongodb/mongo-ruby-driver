@@ -49,6 +49,9 @@ module Mongo
     # @api private
     attr_reader :resume_token
 
+    # @return [ Operation::Context ] context the context for this cursor
+    attr_reader :context
+
     # Creates a +Cursor+ object.
     #
     # @example Instantiate the cursor.
@@ -59,6 +62,8 @@ module Mongo
     # @param [ Server ] server The server this cursor is locked to.
     # @param [ Hash ] options The cursor options.
     #
+    # @option options [ Operation::Context ] :context The operation context
+    #   for this cursor.
     # @option options [ true, false ] :disable_retry Whether to disable
     #   retrying on error when sending getMore operations (deprecated, getMore
     #   operations are no longer retried)
@@ -80,15 +85,25 @@ module Mongo
       if @cursor_id.nil?
         raise ArgumentError, 'Cursor id must be present in the result'
       end
-      @connection_global_id = result.connection_global_id
       @options = options
       @session = @options[:session]
+      @connection_global_id = result.connection_global_id
+      @context = @options[:context]&.with(connection_global_id: connection_global_id_for_context) || fresh_context
       @explicitly_closed = false
       @lock = Mutex.new
-      unless closed?
+      if server.load_balancer?
+        # We need the connection in the cursor only in load balanced topology;
+        # we do not need an additional reference to it otherwise.
+        @connection = @initial_result.connection
+      end
+      if closed?
+        check_in_connection
+      else
         register
-        ObjectSpace.define_finalizer(self, self.class.finalize(kill_spec(@connection_global_id),
-          cluster))
+        ObjectSpace.define_finalizer(
+          self,
+          self.class.finalize(kill_spec(@connection_global_id), cluster)
+        )
       end
     end
 
@@ -97,6 +112,9 @@ module Mongo
 
     # @api private
     attr_reader :initial_result
+
+    # @api private
+    attr_reader :connection
 
     # Finalize the cursor for garbage collection. Schedules this cursor to be included
     # in a killCursors operation executed by the Cluster's CursorReaper.
@@ -284,8 +302,10 @@ module Mongo
     # the server.
     #
     # @return [ nil ] Always nil.
-    def close
+    def close(opts = {})
       return if closed?
+
+      ctx = context ? context.refresh(timeout_ms: opts[:timeout_ms]) : fresh_context(opts)
 
       unregister
       read_with_one_retry do
@@ -295,11 +315,11 @@ module Mongo
           cursor_ids: [id],
         }
         op = Operation::KillCursors.new(spec)
-        execute_operation(op)
+        execute_operation(op, context: ctx)
       end
 
       nil
-    rescue Error::OperationFailure, Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable
+    rescue Error::OperationFailure::Family, Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable
       # Errors are swallowed since there is noting can be done by handling them.
     ensure
       end_session
@@ -307,6 +327,7 @@ module Mongo
       @lock.synchronize do
         @explicitly_closed = true
       end
+      check_in_connection
     end
 
     # Get the parsed collection name.
@@ -374,7 +395,7 @@ module Mongo
       # Legacy retryable read logic used to retry getMores, but since
       # doing so may result in silent data loss, the driver no longer retries
       # getMore operations in any circumstance.
-      # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
+      # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.md#qa
       process(execute_operation(get_more_operation))
     end
 
@@ -387,6 +408,7 @@ module Mongo
         connection_global_id: connection_global_id,
         server_address: server.address,
         session: @session,
+        connection: @connection
       )
     end
 
@@ -434,15 +456,7 @@ module Mongo
         # 3.2+ servers use batch_size, 3.0- servers use to_return.
         # TODO should to_return be calculated in the operation layer?
         batch_size: batch_size_for_get_more,
-        to_return: to_return,
-        max_time_ms: if view.respond_to?(:max_await_time_ms) &&
-          view.max_await_time_ms &&
-          view.options[:await_data]
-        then
-          view.max_await_time_ms
-        else
-          nil
-        end,
+        to_return: to_return
       }
       if view.respond_to?(:options) && view.options.is_a?(Hash)
         spec[:comment] = view.options[:comment] unless view.options[:comment].nil?
@@ -464,7 +478,10 @@ module Mongo
       # the @cursor_id may be zero (all results fit in the first batch).
       # Thus we need to check both @cursor_id and the cursor_id of the result
       # prior to calling unregister here.
-      unregister if !closed? && result.cursor_id == 0
+      if !closed? && result.cursor_id == 0
+        unregister
+        check_in_connection
+      end
       @cursor_id = set_cursor_id(result)
 
       if result.respond_to?(:post_batch_resume_token)
@@ -495,13 +512,22 @@ module Mongo
       cluster.unregister_cursor(@cursor_id)
     end
 
-    def execute_operation(op)
-      context = Operation::Context.new(
-        client: client,
-        session: @session,
-        connection_global_id: @connection_global_id,
-      )
-      op.execute(@server, context: context)
+    def execute_operation(op, context: nil)
+      op_context = context || possibly_refreshed_context
+      if @connection.nil?
+        op.execute(@server, context: op_context)
+      else
+        op.execute_with_connection(@connection, context: op_context)
+      end
+    end
+
+    # Considers the timeout mode and will either return the cursor's
+    # context directly, or will return a new (refreshed) context.
+    #
+    # @return [ Operation::Context ] the (possibly-refreshed) context.
+    def possibly_refreshed_context
+      return context if view.timeout_mode == :cursor_lifetime
+      context.refresh(view: view)
     end
 
     # Sets @cursor_id from the operation result.
@@ -521,6 +547,42 @@ module Mongo
                    end
     end
 
+    # Returns a newly instantiated operation context based on the
+    # default values from the view.
+    def fresh_context(opts = {})
+      Operation::Context.new(client: view.client,
+                             session: @session,
+                             connection_global_id: connection_global_id_for_context,
+                             operation_timeouts: view.operation_timeouts(opts),
+                             view: view)
+    end
+
+    # Because a context must not have a connection_global_id if the session
+    # is already pinned to one, this method checks to see whether or not there's
+    # pinned connection_global_id on the session and returns nil if so.
+    def connection_global_id_for_context
+      if @session&.pinned_connection_global_id
+        nil
+      else
+        @connection_global_id
+      end
+    end
+
+    # Returns the connection that was used to create the cursor back to the
+    # corresponding connection pool.
+    #
+    # In a load balanced topology cursors must use the same connection for the
+    # initial and all subsequent operations. Therefore, the connection is not
+    # checked into the pool after the initial operation is completed, but
+    # only when the cursor is drained.
+    def check_in_connection
+      # Connection nil means the connection has been already checked in.
+      return if @connection.nil?
+      return unless @connection.server.load_balancer?
+
+      @connection.connection_pool.check_in(@connection)
+      @connection = nil
+    end
   end
 end
 

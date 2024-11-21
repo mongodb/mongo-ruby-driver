@@ -68,7 +68,7 @@ class Mongo::Cluster
         if server.address == updated_desc.address
           # SDAM flow must be run when topology version in the new description
           # is equal to the current topology version, per the example in
-          # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#what-is-the-purpose-of-topologyversion
+          # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md#what-is-the-purpose-of-topologyversion
           unless updated_desc.topology_version_gte?(server.description)
             return false
           end
@@ -116,8 +116,12 @@ class Mongo::Cluster
             log_warn(
               "Server #{updated_desc.address.to_s} has an incorrect replica set name '#{updated_desc.replica_set_name}'; expected '#{topology.replica_set_name}'"
             )
-            @updated_desc = ::Mongo::Server::Description.new(updated_desc.address,
-              {}, average_round_trip_time: updated_desc.average_round_trip_time)
+            @updated_desc = ::Mongo::Server::Description.new(
+              updated_desc.address,
+              {},
+              average_round_trip_time: updated_desc.average_round_trip_time,
+              minimum_round_trip_time: updated_desc.minimum_round_trip_time
+            )
             update_server_descriptions
           end
         end
@@ -233,8 +237,12 @@ class Mongo::Cluster
       end
 
       if stale_primary?
-        @updated_desc = ::Mongo::Server::Description.new(updated_desc.address,
-          {}, average_round_trip_time: updated_desc.average_round_trip_time)
+        @updated_desc = ::Mongo::Server::Description.new(
+          updated_desc.address,
+          {},
+          average_round_trip_time: updated_desc.average_round_trip_time,
+          minimum_round_trip_time: updated_desc.minimum_round_trip_time
+        )
         update_server_descriptions
         check_if_has_primary
         return
@@ -270,9 +278,14 @@ class Mongo::Cluster
       servers_list.each do |server|
         if server.address != updated_desc.address
           if server.primary?
-            server.update_description(::Mongo::Server::Description.new(
-              server.address, {},
-              average_round_trip_time: server.description.average_round_trip_time))
+            server.update_description(
+              ::Mongo::Server::Description.new(
+                server.address,
+                {},
+                average_round_trip_time: server.description.average_round_trip_time,
+                minimum_round_trip_time: updated_desc.minimum_round_trip_time
+              )
+            )
           end
         end
       end

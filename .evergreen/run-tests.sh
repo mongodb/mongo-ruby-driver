@@ -22,6 +22,10 @@ else
   set -x
 fi
 
+if test -z "$PROJECT_DIRECTORY"; then
+  PROJECT_DIRECTORY=`realpath $(dirname $0)/..`
+fi
+
 MRSS_ROOT=`dirname "$0"`/../spec/shared
 
 . $MRSS_ROOT/shlib/distro.sh
@@ -41,7 +45,7 @@ set_env_vars
 set_env_python
 set_env_ruby
 
-prepare_server $arch
+prepare_server
 
 if test "$DOCKER_PRELOAD" != 1; then
   install_mlaunch_venv
@@ -51,6 +55,10 @@ fi
 # helper)
 if [ "$FLE" = "helper" ]; then
   install_cmake
+fi
+
+if test "$TOPOLOGY" = load-balanced; then
+  install_haproxy
 fi
 
 # Launching mongod under $MONGO_ORCHESTRATION_HOME
@@ -65,6 +73,7 @@ fi
 
 calculate_server_args
 launch_ocsp_mock
+
 launch_server "$dbdir"
 
 uri_options="$URI_OPTIONS"
@@ -90,6 +99,9 @@ elif test "$TOPOLOGY" = replica-set; then
   # or it can try to send the commands to secondaries.
   hosts=localhost:27017,localhost:27018
   uri_options="$uri_options&replicaSet=test-rs"
+elif test "$TOPOLOGY" = replica-set-single-node; then
+  hosts=localhost:27017
+  uri_options="$uri_options&replicaSet=test-rs"
 else
   hosts=localhost:27017
 fi
@@ -110,7 +122,7 @@ elif test "$AUTH" = x509; then
 EOT
   `"
 
-  "$BINDIR"/mongo --tls \
+  "$BINDIR"/mongosh --tls \
     --tlsCAFile spec/support/certificates/ca.crt \
     --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
     -u bootstrap -p bootstrap \
@@ -207,6 +219,7 @@ if test -n "$FLE"; then
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 8002 --require_client_cert &
   python3 -u .evergreen/csfle/kms_kmip_server.py &
   python3 -u .evergreen/csfle/fake_azure.py &
+  python3 -u .evergreen/csfle/kms_failpoint_server.py --port 9003 &
 
   # Obtain temporary AWS credentials
   PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
@@ -278,12 +291,12 @@ fi
 export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
 if echo "$AUTH" |grep -q ^aws-assume-role; then
-  $BINDIR/mongo "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' |wc
+  $BINDIR/mongosh "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' | wc
 fi
 
 set_fcv
 
-if test "$TOPOLOGY" = replica-set && ! echo "$MONGODB_VERSION" |fgrep -q 2.6; then
+if test "$TOPOLOGY" = replica-set || test "$TOPOLOGY" = replica-set-single-node; then
   ruby -Ilib -I.evergreen/lib -rbundler/setup -rserver_setup -e ServerSetup.new.setup_tags
 fi
 
@@ -345,6 +358,7 @@ elif test "$SOLO" = 1; then
     fi
   done
 else
+  export JRUBY_OPTS=-J-Xmx2g
   bundle exec rake spec:ci
 fi
 
@@ -356,18 +370,18 @@ if test -f tmp/rspec-all.json; then
   mv tmp/rspec-all.json tmp/rspec.json
 fi
 
-kill_jruby
+kill_jruby || true
 
 if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
 fi
 
-python3 -m mtools.mlaunch.mlaunch stop --dir "$dbdir"
+python3 -m mtools.mlaunch.mlaunch stop --dir "$dbdir" || true
 
 if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
   # Terminate all kmip servers... and whatever else happens to be running
   # that is a python script.
-  pkill python3
+  pkill python3 || true
 fi
 
 exit ${test_status}

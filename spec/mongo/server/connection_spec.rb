@@ -583,6 +583,28 @@ describe Mongo::Server::Connection do
       end
     end
 
+    context 'when the server returns unknown saslSupportedMechs' do
+      min_server_version '4.0'
+
+      let(:connection) do
+        described_class.new(server, server.options.merge(connection_pool: pool))
+      end
+
+      before do
+        expect_any_instance_of(Mongo::Server::PendingConnection).to receive(:get_handshake_response).and_wrap_original do |original_method, *args|
+          original_method.call(*args).tap do |result|
+            if result.documents.first.fetch('saslSupportedMechs', nil).is_a?(Array)
+              result.documents.first['saslSupportedMechs'].append('unknownMechanism')
+            end
+          end
+        end
+      end
+
+      it 'does not raise an error' do
+        expect { connection.connect! }.not_to raise_error
+      end
+    end
+
   end
 
   describe '#disconnect!' do

@@ -119,8 +119,6 @@ module Mongo
           @options[:extra_options][:crypt_shared_lib_required]
 
         unless @options[:extra_options][:crypt_shared_lib_required] || @crypt_handle.crypt_shared_lib_available? || @options[:bypass_query_analysis]
-          # Set server selection timeout to 1 to prevent the client waiting for a
-          # long timeout before spawning mongocryptd
           @mongocryptd_client = Client.new(
             @options[:extra_options][:mongocryptd_uri],
             monitoring_io: @options[:client].options[:monitoring_io],
@@ -189,13 +187,13 @@ module Mongo
       # @param [ Hash ] command The command to be encrypted.
       #
       # @return [ BSON::Document ] The encrypted command.
-      def encrypt(database_name, command)
+      def encrypt(database_name, command, timeout_holder)
         AutoEncryptionContext.new(
           @crypt_handle,
           @encryption_io,
           database_name,
           command
-        ).run_state_machine
+        ).run_state_machine(timeout_holder)
       end
 
       # Decrypt a database command.
@@ -203,12 +201,12 @@ module Mongo
       # @param [ Hash ] command The command with encrypted fields.
       #
       # @return [ BSON::Document ] The decrypted command.
-      def decrypt(command)
+      def decrypt(command, timeout_holder)
         AutoDecryptionContext.new(
           @crypt_handle,
           @encryption_io,
           command
-        ).run_state_machine
+        ).run_state_machine(timeout_holder)
       end
 
       # Close the resources created by the AutoEncrypter.

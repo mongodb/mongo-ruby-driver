@@ -2,16 +2,11 @@
 # rubocop:todo all
 
 require 'bundler'
-require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
-# TODO move the mongo require into the individual tasks that actually need it
-require 'mongo'
 
 ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
 
 $: << File.join(ROOT, 'spec/shared/lib')
-
-require 'mrss/spec_organizer'
 
 CLASSIFIERS = [
   [%r,^mongo/server,, :unit_server],
@@ -26,15 +21,12 @@ CLASSIFIERS = [
   [%r,^spec_tests,, :spec],
 ]
 
-RUN_PRIORITY = %i(
+RUN_PRIORITY = (ENV['RUN_PRIORITY'] || %(
   tx_examples
   unit unit_server
   integration sdam_integration cursor_reaping query_cache
   spec spec_sdam_integration
-)
-
-tasks = Rake.application.instance_variable_get('@tasks')
-tasks['release:do'] = tasks.delete('release')
+)).split.map(&:to_sym)
 
 RSpec::Core::RakeTask.new(:spec) do |t|
   #t.rspec_opts = "--profile 5" if ENV['CI']
@@ -42,9 +34,61 @@ end
 
 task :default => ['spec:prepare', :spec]
 
+# stands in for the Bundler-provided `build` task, which builds the
+# gem for this project. Our release process builds the gems in a
+# particular way, in a GitHub action. This task is just to help remind
+# developers of that fact.
+task :build do
+  abort <<~WARNING
+    `rake build` does nothing in this project. The gem must be built via
+    the `Driver Release` action on GitHub, which is triggered manually when
+    a new release is ready.
+  WARNING
+end
+
+# `rake version` is used by the deployment system so get the release version
+# of the product beng deployed. It must do nothing more than just print the
+# product version number.
+# 
+# See the mongodb-labs/driver-github-tools/ruby/publish Github action.
+desc "Print the current value of Mongo::VERSION"
+task :version do
+  require 'mongo/version'
+
+  puts Mongo::VERSION
+end
+
+# overrides the default Bundler-provided `release` task, which also
+# builds the gem. Our release process assumes the gem has already
+# been built (and signed via GPG), so we just need `rake release` to
+# push the gem to rubygems.
+task :release do
+  require 'mongo/version'
+
+  if ENV['GITHUB_ACTION'].nil?
+    abort <<~WARNING
+      `rake release` must be invoked from the `Driver Release` GitHub action,
+      and must not be invoked locally. This ensures the gem is properly signed
+      and distributed by the appropriate user.
+
+      Note that it is the `rubygems/release-gem@v1` step in the `Driver Release`
+      action that invokes this task. Do not rename or remove this task, or the
+      release-gem step will fail. Reimplement this task with caution.
+
+      mongo-#{Mongo::VERSION}.gem was NOT pushed to RubyGems.
+    WARNING
+  end
+
+  system 'gem', 'push', "mongo-#{Mongo::VERSION}.gem"
+end
+
+task :mongo do
+  require 'mongo'
+end
+
 namespace :spec do
   desc 'Creates necessary user accounts in the cluster'
-  task :prepare do
+  task prepare: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     require 'support/utils'
@@ -53,7 +97,7 @@ namespace :spec do
   end
 
   desc 'Waits for sessions to be available in the deployment'
-  task :wait_for_sessions do
+  task wait_for_sessions: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     require 'support/utils'
@@ -77,7 +121,7 @@ namespace :spec do
   end
 
   desc 'Prints configuration used by the test suite'
-  task :config do
+  task config: :mongo do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
     # Since this task is usually used for troubleshooting of test suite
@@ -90,6 +134,8 @@ namespace :spec do
   end
 
   def spec_organizer
+    require 'mrss/spec_organizer'
+
     Mrss::SpecOrganizer.new(
       root: ROOT,
       classifiers: CLASSIFIERS,
@@ -109,15 +155,31 @@ namespace :spec do
   end
 end
 
-namespace :release do
-  task :check_private_key do
-    unless File.exist?('gem-private_key.pem')
-      raise "No private key present, cannot release"
-    end
+desc 'Build and validate the evergreen config'
+task eg: %w[ eg:build eg:validate ]
+
+# 'eg' == 'evergreen', but evergreen is too many letters for convenience
+namespace :eg do
+  desc 'Builds the .evergreen/config.yml file from the templates'
+  task :build do
+    ruby '.evergreen/update-evergreen-configs'
+  end
+
+  desc 'Validates the .evergreen/config.yml file'
+  task :validate do
+    system 'evergreen validate --project mongo-ruby-driver .evergreen/config.yml'
+  end
+
+  desc 'Updates the evergreen executable to the latest available version'
+  task :update do
+    system 'evergreen get-update --install'
+  end
+
+  desc 'Runs the current branch as an evergreen patch'
+  task :patch do
+    system 'evergreen patch --uncommitted --project mongo-ruby-driver --browse --auto-description --yes'
   end
 end
-
-task :release => ['release:check_private_key', 'release:do']
 
 desc "Generate all documentation"
 task :docs => 'docs:yard'
@@ -131,4 +193,4 @@ namespace :docs do
   end
 end
 
-load 'profile/benchmarking/rake/tasks.rake'
+load 'profile/driver_bench/rake/tasks.rake'

@@ -11,6 +11,7 @@ set_env_python
 set_env_ruby
 
 export MONGODB_URI=${MONGODB_URI}
+export CLUSTER_PREFIX="ruby-driver-"
 export TEST_LAMBDA_DIRECTORY=`dirname "$0"`/../spec/faas/ruby-sam-app
 
-. `dirname "$0"`/run-deployed-lambda-aws-tests.sh
+. `dirname "$0"`/aws_lambda/run-deployed-lambda-aws-tests.sh

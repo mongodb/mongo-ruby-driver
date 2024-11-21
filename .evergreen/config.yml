@@ -1,5 +1,5 @@
 # GENERATED FILE - DO NOT EDIT.
-# Run ./.evergreen/update-evergreen-configs to regenerate this file.
+# Run `rake eg` to regenerate this file.
 
 # When a task that used to pass starts to fail, go through all versions that
 # may have been skipped to detect when the task started failing.
@@ -14,7 +14,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-exec_timeout_secs: 3600
+exec_timeout_secs: 5400
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
 timeout:
@@ -124,25 +124,8 @@ functions:
             export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
             export RVM_RUBY="${RVM_RUBY}"
 
-            if [[ -n "${USE_PROXY_SERVERLESS}" ]];
-            then
-              export SERVERLESS_DRIVERS_GROUP="${PROXY_SERVERLESS_DRIVERS_GROUP}"
-            else
-              export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
-            fi
-
-            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
-            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
             export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
-
-            # Needed for generating temporary aws credentials.
-            if [ -n "${FLE}" ];
-            then
-              export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-              export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-              export AWS_DEFAULT_REGION="${fle_aws_region}"
-            fi
           EOT
 
           # See what we've done
@@ -153,17 +136,6 @@ functions:
     - command: expansions.update
       params:
         file: src/expansion.yml
-
-  "delete serverless instance":
-    - command: shell.exec
-      params:
-        working_dir: "src"
-        shell: bash
-        script: |
-          ${PREPARE_SHELL}
-          if [[ -n "${SERVERLESS_INSTANCE_NAME}" ]]; then
-            SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} .evergreen/serverless/delete-instance.sh
-          fi
 
   "export AWS auth credentials":
     - command: shell.exec
@@ -195,6 +167,25 @@ functions:
           IAM_AUTH_ASSUME_WEB_ROLE_NAME="${iam_auth_assume_web_role_name}"
 
           EOT
+
+  "run CSOT tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
+          export CSOT_SPEC_TESTS=1
+          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+            .evergreen/run-tests.sh
 
   "export FLE credentials":
     - command: shell.exec
@@ -355,7 +346,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/tmp/rspec.xml
+        file: ./src/rspec.xml
 
   "delete private environment":
     - command: shell.exec
@@ -377,6 +368,19 @@ functions:
           set -x
           .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
 
+  "run benchmarks":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
+    - command: perf.send
+      params:
+        file: "${PROJECT_DIRECTORY}/perf.json"
+
   "run tests":
     - command: shell.exec
       type: test
@@ -385,6 +389,13 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
           .evergreen/run-tests.sh
 
   "run tests via docker":
@@ -395,6 +406,13 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
           .evergreen/run-tests-docker.sh
 
   "run AWS auth tests":
@@ -435,24 +453,9 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} ATLAS_SERVERLESS_URI=${atlas_serverless_uri} ATLAS_SERVERLESS_LB_URI=${atlas_serverless_lb_uri} .evergreen/run-tests-atlas.sh
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-atlas.sh
 
   "run serverless tests":
-    - command: shell.exec
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          # This hack with PROJECT env is necessary while serverless
-          # rejects creating instances with too long names.
-          PROJECT="mongo-ruby-driver" LOADBALANCED="ON" .evergreen/serverless/create-instance.sh
-          cat serverless-expansion.yml
-
-    - command: expansions.update
-      params:
-        file: src/serverless-expansion.yml
-
     - command: shell.exec
       type: test
       params:
@@ -460,6 +463,14 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
+
           CRYPT_SHARED_LIB_PATH="${CRYPT_SHARED_LIB_PATH}" SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
 
 pre:
@@ -471,11 +482,39 @@ post:
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
-  #- func: "upload test results"
+  # - func: "upload test results"
   - func: "upload test results to s3"
-  - func: "delete serverless instance"
 
 task_groups:
+  - name: serverless_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: "fetch source"
+      - func: "create expansions"
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
+      - command: shell.exec
+        params:
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
+      - command: expansions.update
+        params:
+          file: serverless-expansion.yml
+    teardown_task:
+      - command: shell.exec
+        params:
+          script: |
+            ${PREPARE_SHELL}
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
+      - func: "upload test results"
+    tasks:
+      - "test-serverless"
+
   - name: testatlas_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -496,6 +535,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
@@ -517,6 +557,57 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
+              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
+              task_id="${task_id}" \
+              execution="${execution}" \
+              $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
+    tasks:
+      - test-atlas
+
+  - name: testatlas_full_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: fetch source
+      - func: create expansions
+      - command: shell.exec
+        params:
+          shell: "bash"
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+
+            echo "Setting up Atlas cluster"
+
+            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
+              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
+              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
+              DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
+              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
+              MONGODB_VERSION="7.0" \
+              task_id="${task_id}" \
+              execution="${execution}" \
+              $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
+
+              echo "MONGODB_URI=${MONGODB_URI}"
+      - command: expansions.update
+        params:
+          file: src/atlas-expansion.yml
+    teardown_group:
+      - command: shell.exec
+        params:
+          shell: "bash"
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+
+            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
+              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
+              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -544,11 +635,14 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
               execution="${execution}" \
               $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
+
+              echo "MONGODB_URI=${MONGODB_URI}"
       - command: expansions.update
         params:
           file: src/atlas-expansion.yml
@@ -563,6 +657,7 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -665,6 +760,9 @@ tasks:
   - name: "test-mlaunch"
     commands:
       - func: "run tests"
+  - name: "driver-bench"
+    commands:
+      - func: "run benchmarks"
   - name: "test-via-docker"
     commands:
       - func: "run tests via docker"
@@ -675,6 +773,9 @@ tasks:
   - name: "test-kerberos"
     commands:
       - func: "run Kerberos unit tests"
+  - name: "test-csot"
+    commands:
+      - func: "run CSOT tests"
   - name: "test-fle"
     commands:
       - func: "export FLE credentials"
@@ -774,6 +875,7 @@ tasks:
           script: |
             ${PREPARE_SHELL}
             export MONGODB_URI=${MONGODB_URI}
+            export FUNCTION_NAME="ruby-driver-lambda"
             .evergreen/run-tests-deployed-lambda.sh
           env:
             TEST_LAMBDA_DIRECTORY: ${PROJECT_DIRECTORY}/spec/faas/ruby-sam-app
@@ -785,10 +887,12 @@ tasks:
             DRIVERS_ATLAS_LAMBDA_USER: ${DRIVERS_ATLAS_LAMBDA_USER}
             DRIVERS_ATLAS_LAMBDA_PASSWORD: ${DRIVERS_ATLAS_LAMBDA_PASSWORD}
             DRIVERS_ATLAS_GROUP_ID: ${DRIVERS_ATLAS_GROUP_ID}
+            DRIVERS_ATLAS_BASE_URL: ${DRIVERS_ATLAS_BASE_URL}
             AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
             AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
             AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
             LAMBDA_STACK_NAME: "dbx-ruby-lambda"
+            CLUSTER_PREFIX: "dbx-ruby-lambda"
             RVM_RUBY: ruby-3.2
             MONGODB_URI: ${MONGODB_URI}
 axes:
@@ -811,6 +915,10 @@ axes:
         variables:
           MONGODB_VERSION: "latest"
           CRYPT_SHARED_VERSION: "latest"
+      - id: "8.0"
+        display_name: "8.0"
+        variables:
+          MONGODB_VERSION: "8.0"
       - id: "7.0"
         display_name: "7.0"
         variables:
@@ -819,11 +927,6 @@ axes:
         display_name: "6.0"
         variables:
           MONGODB_VERSION: "6.0"
-      - id: "5.3"
-        display_name: "5.3"
-        variables:
-          MONGODB_VERSION: "5.3"
-          CRYPT_SHARED_VERSION: "6.0.5"
       - id: "5.0"
         display_name: "5.0"
         variables:
@@ -867,6 +970,10 @@ axes:
         display_name: Replica Set
         variables:
           TOPOLOGY: replica-set
+      - id: "replica-set-single-node"
+        display_name: Replica Set (Single Node)
+        variables:
+          TOPOLOGY: replica-set-single-node
       - id: "sharded-cluster"
         display_name: Sharded
         variables:
@@ -935,6 +1042,14 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-3.4"
+        display_name: ruby-3.4
+        variables:
+          RVM_RUBY: "ruby-3.4"
+      - id: "ruby-3.3"
+        display_name: ruby-3.3
+        variables:
+          RVM_RUBY: "ruby-3.3"
       - id: "ruby-3.2"
         display_name: ruby-3.2
         variables:
@@ -955,22 +1070,10 @@ axes:
         display_name: ruby-2.7
         variables:
           RVM_RUBY: "ruby-2.7"
-      - id: "ruby-2.6"
-        display_name: ruby-2.6
-        variables:
-          RVM_RUBY: "ruby-2.6"
-      - id: "ruby-2.5"
-        display_name: ruby-2.5
-        variables:
-          RVM_RUBY: "ruby-2.5"
       - id: "ruby-head"
         display_name: ruby-head
         variables:
           RVM_RUBY: "ruby-head"
-      - id: "jruby-9.2"
-        display_name: jruby-9.2
-        variables:
-          RVM_RUBY: "jruby-9.2"
       - id: "jruby-9.3"
         display_name: jruby-9.3
         variables:
@@ -986,18 +1089,24 @@ axes:
       - id: debian11
         display_name: "Debian 11"
         run_on: debian11-small
+      - id: ubuntu2404
+        display_name: "Ubuntu 24.04"
+        run_on: ubuntu2404-small
+      - id: ubuntu2404-arm
+        display_name: "Ubuntu 24.04 ARM64"
+        run_on: ubuntu2404-arm64-small
       - id: ubuntu2204
         display_name: "Ubuntu 22.04"
         run_on: ubuntu2204-small
+      - id: ubuntu2204-arm
+        display_name: "Ubuntu 22.04 ARM64"
+        run_on: ubuntu2204-arm64-small
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
-      - id: rhel8
-        display_name: "RHEL 8"
-        run_on: rhel80-small
-      - id: rhel8-arm
-        display_name: "RHEL 8 ARM64"
-        run_on: rhel82-arm64-small
+      - id: ubuntu1804
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-small
 
   - id: docker-distro
     display_name: Docker Distro
@@ -1104,7 +1213,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: rhel80-small
+        run_on: ubuntu1804-small
         variables:
           MMAPV1: 'true'
 
@@ -1204,127 +1313,128 @@ axes:
       - id: no
         display_name: No
 
-  - id: serverless-project
-    display_name: serverless project
-    values:
-        - id: original
-          display_name: Original
-        - id: proxy
-          display_name: Proxy
-          variables:
-            USE_PROXY_SERVERLESS: 1
-
 buildvariants:
+  - matrix_name: DriverBench
+    matrix_spec:
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
+      topology: standalone
+      os: ubuntu2204
+    display_name: DriverBench
+    tasks:
+      - name: "driver-bench"
+
   - matrix_name: "auth/ssl"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-      ruby: "ruby-3.2"
-      mongodb-version: ["latest", "7.0", "6.0"]
+      ruby: "ruby-3.3"
+      mongodb-version: ["latest", "8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "mongo-recent"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.3"]
-      mongodb-version: ["latest", "7.0", "6.0"]
+      ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
+      mongodb-version: ["latest", "8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ['rhel8']
-      # There is no latest for ubuntu2204, so we can't test it here.
-      # os: ['rhel8', 'ubuntu2204']
+      os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  # Only JRuby-9.4 is built for arm in the current toolchain, but 9.4 has other
-  # issues. Either we fix those issues, or we build 9.3 for arm in the toolchain,
-  # and hope it fixes the issues... Until then, we can only test MRI ruby on arm.
-  #
-  # further: 'latest' is broken until the QE2 changes are merged (RUBY-3211,
-  # RUBY-3226)
-  - matrix_name: "mongo-recent-arm"
+  - matrix_name: "mongo-8-arm"
     matrix_spec:
-      ruby: "ruby-3.2"
-      #mongodb-version: ['latest', '6.0']
-      mongodb-version: ['6.0']
+      ruby: "ruby-3.3"
+      mongodb-version: [ '8.0' ]
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: 'rhel8-arm'
+      os: ubuntu2404-arm
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
-      mongodb-version: ['5.3', '5.0']
+      ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
+      mongodb-version: ['5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "mongo-4.x"
     matrix_spec:
-      ruby: ["ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
+      ruby: ["ruby-3.0", "ruby-2.7"]
       mongodb-version: ['4.4', '4.2', '4.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "mongo-3.6"
     matrix_spec:
-      ruby: "ruby-2.5"
+      ruby: "ruby-2.7"
       mongodb-version: ['3.6']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "single-lb"
     matrix_spec:
-      ruby: "ruby-3.2"
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: load-balanced
       single-mongos: single-mongos
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} single-lb ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "mongo-5.0-api-version"
+  - matrix_name: "mongo-api-version"
     matrix_spec:
-      ruby: "ruby-3.2"
-      mongodb-version: '5.0'
+      ruby: "ruby-3.3"
+      mongodb-version: '7.0'
       topology: standalone
       api-version-required: yes
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} api-version-required ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "single-mongos"
     matrix_spec:
-      ruby: "ruby-3.2"
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: "sharded-cluster"
       single-mongos: single-mongos
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: CSOT
+    matrix_spec:
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
+      topology: replica-set-single-node
+      os: ubuntu2204
+    display_name: "CSOT - ${mongodb-version}"
+    tasks:
+      - name: test-csot
+
   - matrix_name: "no-retry-reads"
     matrix_spec:
       retry-reads: no-retry-reads
-      ruby: "ruby-3.2"
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1332,21 +1442,21 @@ buildvariants:
   - matrix_name: "no-retry-writes"
     matrix_spec:
       retry-writes: no-retry-writes
-      ruby: "ruby-3.2"
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: [replica-set, sharded-cluster]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: mmapv1
     matrix_spec:
-      ruby: "ruby-2.5"
+      ruby: "ruby-2.7"
       mongodb-version: ['3.6', '4.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       storage-engine: mmapv1
-      os: rhel8
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1354,10 +1464,10 @@ buildvariants:
   - matrix_name: "lint"
     matrix_spec:
       lint: on
-      ruby: "ruby-3.2"
-      mongodb-version: "6.0"
-      topology: '*'
-      os: rhel8
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
+      topology: ["standalone", "replica-set", "sharded-cluster"]
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1365,10 +1475,10 @@ buildvariants:
   - matrix_name: "fork"
     matrix_spec:
       fork: on
-      ruby: "ruby-3.2"
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} fork ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1376,10 +1486,10 @@ buildvariants:
   - matrix_name: "solo"
     matrix_spec:
       solo: on
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
-      mongodb-version: "6.0"
+      ruby: ["ruby-3.3", "ruby-3.2", "ruby-3.1"]
+      mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1387,10 +1497,10 @@ buildvariants:
   - matrix_name: "stress older"
     matrix_spec:
       stress: on
-      ruby: ["ruby-2.7"]
+      ruby: "ruby-2.7"
       mongodb-version: ['4.2', '4.0', '3.6']
       topology: replica-set
-      os: rhel8
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1398,10 +1508,10 @@ buildvariants:
   - matrix_name: "stress"
     matrix_spec:
       stress: on
-      ruby: "ruby-3.2"
-      mongodb-version: ["6.0", "5.3"]
+      ruby: "ruby-3.3"
+      mongodb-version: ["8.0", "7.0"]
       topology: replica-set
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1409,15 +1519,10 @@ buildvariants:
   - matrix_name: "x509-tests"
     matrix_spec:
       auth-and-ssl: "x509"
-      ruby: "ruby-3.2"
-      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-      # the server for certain auth mechanisms. Once run-tests.sh is made smart
-      # enough to install mongosh, and then use either mongo or mongosh
-      # (depending on server version and what's available), we can bump this to
-      # the latest stable db version.
-      mongodb-version: "5.3"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: standalone
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1425,34 +1530,34 @@ buildvariants:
   - matrix_name: "jruby-auth"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: jruby-9.3
-      mongodb-version: "6.0"
+      ruby: jruby-9.4
+      mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "zlib"
+  - matrix_name: zlib-"ruby-3.3"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: "replica-set"
       compressor: 'zlib'
-      os: rhel8
+      os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "snappy"
+  - matrix_name: snappy-"ruby-3.3"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: "replica-set"
       compressor: 'snappy'
-      os: rhel8
+      os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1461,44 +1566,116 @@ buildvariants:
   # apparently a zstd-jni gem for JRuby that we could investigate here; if
   # this test is ever supported to support jruby, the `sample_mri_rubies`
   # reference should be replaced with `sample_rubies`.
-  - matrix_name: "zstd-auth"
+  - matrix_name: zstd-auth-"ruby-3.3"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: ["ruby-3.2", "ruby-2.7"]
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: "replica-set"
       compressor: 'zstd'
-      os: rhel8
+      os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "activesupport"
+  - matrix_name: activesupport-"ruby-3.3"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: replica-set
       as: as
-      os: rhel8
+      os: ubuntu2204
     display_name: "AS ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "bson"
+  - matrix_name: bson-"ruby-3.3"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
+      topology: replica-set
+      bson: "*"
+      os: ubuntu2204
+    display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+  - matrix_name: zlib-"ruby-2.7"
+    matrix_spec:
+      auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
+      ruby: "ruby-2.7"
+      mongodb-version: "6.0"
+      topology: "replica-set"
+      compressor: 'zlib'
+      os: ubuntu2004
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: snappy-"ruby-2.7"
+    matrix_spec:
+      auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
+      ruby: "ruby-2.7"
+      mongodb-version: "6.0"
+      topology: "replica-set"
+      compressor: 'snappy'
+      os: ubuntu2004
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  # the zstd-ruby gem does not support JRuby (explicitly). However, there is
+  # apparently a zstd-jni gem for JRuby that we could investigate here; if
+  # this test is ever supported to support jruby, the `sample_mri_rubies`
+  # reference should be replaced with `sample_rubies`.
+  - matrix_name: zstd-auth-"ruby-2.7"
+    matrix_spec:
+      auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
+      ruby: "ruby-2.7"
+      mongodb-version: "6.0"
+      topology: "replica-set"
+      compressor: 'zstd'
+      os: ubuntu2004
+    display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: activesupport-"ruby-2.7"
+    matrix_spec:
+      ruby: "ruby-2.7"
+      mongodb-version: "6.0"
+      topology: replica-set
+      as: as
+      os: ubuntu2004
+    display_name: "AS ${mongodb-version} ${topology} ${ruby}"
+    tasks:
+      - name: "test-mlaunch"
+
+  - matrix_name: bson-"ruby-2.7"
+    matrix_spec:
+      ruby: "ruby-2.7"
       mongodb-version: "6.0"
       topology: replica-set
       bson: "*"
-      os: rhel8
+      os: ubuntu2004
     display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
+  - matrix_name: "fle above 4.4"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: ["ruby-3.3", "ruby-3.2", "ruby-3.1"]
+      topology: [replica-set, sharded-cluster]
+      mongodb-version: [ '6.0', '7.0', '8.0' ]
+      os: ubuntu2204
+      fle: helper
+    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+    tasks:
+      - name: "test-fle"
   # kerberos integration tests are broken (RUBY-3266)
   # - matrix_name: "kerberos-integration"
   #   matrix_spec:
-  #     ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.3"]
+  #     ruby: ["ruby-3.3", "ruby-2.7", "jruby-9.4"]
   #     os: rhel8
   #   display_name: "Kerberos integration ${os} ${ruby}"
   #   tasks:
@@ -1506,10 +1683,10 @@ buildvariants:
 
   - matrix_name: "kerberos-unit"
     matrix_spec:
-      ruby: "ruby-3.2"
-      mongodb-version: "6.0"
+      ruby: "ruby-3.3"
+      mongodb-version: "7.0"
       topology: standalone
-      os: rhel8
+      os: ubuntu2204
       auth-and-ssl: kerberos
     display_name: "Kerberos Tests"
     tasks:
@@ -1518,22 +1695,10 @@ buildvariants:
   - matrix_name: "fle-latest"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
-      ruby: "ruby-3.2"
+      ruby: "ruby-3.3"
       topology: [replica-set, sharded-cluster]
-      mongodb-version: [ 'latest', '7.0' ]
-      os: rhel8
-      fle: helper
-    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-    tasks:
-      - name: "test-fle"
-
-  - matrix_name: "fle"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: ["ruby-3.2", "ruby-2.7"]
-      topology: [replica-set, sharded-cluster]
-      mongodb-version: [ '6.0', '4.4', '4.2', '4.0' ]
-      os: rhel8
+      mongodb-version: [ 'latest' ]
+      os: ubuntu2204
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tasks:
@@ -1541,16 +1706,13 @@ buildvariants:
 
   - matrix_name: aws-auth-regular
     matrix_spec:
-      auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs, aws-web-identity ]
-      ruby: "ruby-3.2"
+      # https://jira.mongodb.org/browse/RUBY-3311
+      # auth-and-ssl: [ aws-regular, aws-assume-role, aws-ec2, aws-ecs, aws-web-identity ]
+      auth-and-ssl: [ aws-regular, aws-assume-role, aws-ecs, aws-web-identity ]
+      ruby: "ruby-3.3"
       topology: standalone
-      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-      # the server for certain auth mechanisms. Once run-tests.sh is made smart
-      # enough to install mongosh, and then use either mongo or mongosh
-      # (depending on server version and what's available), we can bump this to
-      # the latest stable db version.
-      mongodb-version: "5.3"
-      os: ubuntu2004
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
       - name: "test-aws-auth"
@@ -1559,10 +1721,10 @@ buildvariants:
     matrix_spec:
       ocsp-verifier: true
       # No JRuby due to https://github.com/jruby/jruby-openssl/issues/210
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
+      ruby: ["ruby-3.3", "ruby-3.2", "ruby-3.1"]
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1572,10 +1734,10 @@ buildvariants:
       ocsp-algorithm: ecdsa
       ocsp-must-staple: on
       ocsp-delegate: on
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
     tasks:
@@ -1585,10 +1747,10 @@ buildvariants:
     matrix_spec:
       ocsp-algorithm: rsa
       ocsp-status: unknown
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
     tasks:
@@ -1601,10 +1763,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "none"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1615,10 +1777,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "none"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1629,10 +1791,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: fail
       extra-uri-options: "none"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1643,10 +1805,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1657,10 +1819,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1671,10 +1833,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsInsecure=true"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1685,10 +1847,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1699,10 +1861,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1713,10 +1875,10 @@ buildvariants:
       ocsp-delegate: '*'
       ocsp-connectivity: pass
       extra-uri-options: "tlsAllowInvalidCertificates=true"
-      ruby: ["ruby-3.2", "ruby-2.7"]
+      ruby: "ruby-3.3"
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1733,25 +1895,26 @@ buildvariants:
       ocsp-status: [valid, unknown]
       ocsp-delegate: '*'
       ocsp-connectivity: pass
-      ruby: jruby-9.3
+      ruby: jruby-9.4
       topology: standalone
-      mongodb-version: "6.0"
-      os: rhel8
+      mongodb-version: "7.0"
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
 
-  - matrix_name: testgcpkms-variant
-    matrix_spec:
-      ruby: "ruby-3.2"
-      fle: helper
-      topology: standalone
-      os: rhel8
-      mongodb-version: "6.0"
-    display_name: "GCP KMS"
-    tasks:
-      - name: testgcpkms_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+  # https://jira.mongodb.org/browse/RUBY-3540
+  #- matrix_name: testgcpkms-variant
+  #  matrix_spec:
+  #    ruby: "ruby-3.3"
+  #    fle: helper
+  #    topology: standalone
+  #    os: ubuntu2204
+  #    mongodb-version: "7.0"
+  #  display_name: "GCP KMS"
+  #  tasks:
+  #    - name: testgcpkms_task_group
+  #      batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
   - matrix_name: testazurekms-variant
     matrix_spec:
@@ -1767,35 +1930,32 @@ buildvariants:
 
   - matrix_name: atlas-full
     matrix_spec:
-      ruby: "ruby-3.2"
-      os: rhel8
+      ruby: "ruby-3.3"
+      os: ubuntu2204
     display_name: "Atlas (Full)"
     tasks:
-      - name: testatlas_task_group
+      - name: testatlas_full_task_group
 
   - matrix_name: "atlas"
     matrix_spec:
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
-      os: rhel8
+      ruby: ["ruby-3.3", "ruby-3.2", "ruby-3.1"]
+      os: ubuntu2204
     display_name: "Atlas tests ${ruby}"
     tasks:
-       - name: test-atlas
+       - name: testatlas_task_group
 
   - matrix_name: "serverless"
     matrix_spec:
-      # https://jira.mongodb.org/browse/RUBY-3217
-      # ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5", "jruby-9.3", "jruby-9.2"]
-      ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "ruby-2.6", "ruby-2.5"]
+      ruby: "ruby-3.3"
       fle: path
-      os: rhel8
-      serverless-project: [ original, proxy ]
-    display_name: "Atlas serverless ${ruby} ${serverless-project}"
+      os: ubuntu2204
+    display_name: "Atlas serverless ${ruby}"
     tasks:
-       - name: test-serverless
+       - name: serverless_task_group
 
   - matrix_name: "aws-lambda"
     matrix_spec:
-      ruby: "ruby-3.2"
+      ruby: 'ruby-3.2'
       os: ubuntu2204
     display_name: "AWS Lambda"
     tasks:

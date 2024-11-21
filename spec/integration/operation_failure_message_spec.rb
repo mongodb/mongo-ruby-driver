@@ -22,7 +22,7 @@ describe 'OperationFailure message' do
           begin
             client.command(bogus_command: nil)
             fail('Should have raised')
-          rescue Mongo::Error::OperationFailure => e
+          rescue Mongo::Error::OperationFailure::Family => e
             e.code_name.should == 'CommandNotFound'
             e.message.should =~ %r,\A\[59:CommandNotFound\]: no such (?:command|cmd): '?bogus_command'?,
           end
@@ -36,7 +36,7 @@ describe 'OperationFailure message' do
           begin
             client.command(bogus_command: nil)
             fail('Should have raised')
-          rescue Mongo::Error::OperationFailure => e
+          rescue Mongo::Error::OperationFailure::Family => e
             e.code_name.should be nil
             e.message.should =~ %r,\A\[59\]: no such (?:command|cmd): '?bogus_command'?,
           end
@@ -53,7 +53,7 @@ describe 'OperationFailure message' do
           collection.insert_one(_id: 1)
           collection.insert_one(_id: 1)
           fail('Should have raised')
-        rescue Mongo::Error::OperationFailure => e
+        rescue Mongo::Error::OperationFailure::Family => e
           e.code_name.should be nil
           e.message.should =~ %r,\A\[11000\]: (?:insertDocument :: caused by :: 11000 )?E11000 duplicate key error (?:collection|index):,
         end

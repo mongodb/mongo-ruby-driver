@@ -49,7 +49,6 @@ module Mongo
           Binding.mongocrypt_ctx_new(@mongocrypt_handle.ref),
           Binding.method(:mongocrypt_ctx_destroy)
         )
-
         @encryption_io = io
         @cached_azure_token = nil
       end
@@ -64,7 +63,10 @@ module Mongo
       end
 
       # Runs the mongocrypt_ctx_t state machine and handles
-      # all I/O on behalf of libmongocrypt
+      # all I/O on behalf of
+      #
+      # @param [ CsotTimeoutHolder ] timeout_holder CSOT timeouts for the
+      #   operation the state.
       #
       # @return [ BSON::Document ] A BSON document representing the outcome
       #   of the state machine. Contents can differ depending on how the
@@ -75,8 +77,9 @@ module Mongo
       #
       # This method is not currently unit tested. It is integration tested
       # in spec/integration/explicit_encryption_spec.rb
-      def run_state_machine
+      def run_state_machine(timeout_holder)
         while true
+          timeout_ms = timeout_holder.remaining_timeout_ms!
           case state
           when :error
             Binding.check_ctx_status(self)
@@ -86,39 +89,17 @@ module Mongo
           when :done
             return nil
           when :need_mongo_keys
-            filter = Binding.ctx_mongo_op(self)
-
-            @encryption_io.find_keys(filter).each do |key|
-              mongocrypt_feed(key) if key
-            end
-
-            mongocrypt_done
+            provide_keys(timeout_ms)
           when :need_mongo_collinfo
-            filter = Binding.ctx_mongo_op(self)
-
-            result = @encryption_io.collection_info(@db_name, filter)
-            mongocrypt_feed(result) if result
-
-            mongocrypt_done
+            provide_collection_info(timeout_ms)
           when :need_mongo_markings
-            cmd = Binding.ctx_mongo_op(self)
-
-            result = @encryption_io.mark_command(cmd)
-            mongocrypt_feed(result)
-
-            mongocrypt_done
+            provide_markings(timeout_ms)
           when :need_kms
-            while kms_context = Binding.ctx_next_kms_ctx(self) do
-              provider = Binding.kms_ctx_get_kms_provider(kms_context)
-              tls_options = @mongocrypt_handle.kms_tls_options(provider)
-              @encryption_io.feed_kms(kms_context, tls_options)
-            end
-
-            Binding.ctx_kms_done(self)
+            feed_kms
           when :need_kms_credentials
             Binding.ctx_provide_kms_providers(
               self,
-              retrieve_kms_credentials.to_document
+              retrieve_kms_credentials(timeout_holder).to_document
             )
           else
             raise Error::CryptError.new(
@@ -129,6 +110,57 @@ module Mongo
       end
 
       private
+
+      def provide_markings(timeout_ms)
+        cmd = Binding.ctx_mongo_op(self)
+
+        result = @encryption_io.mark_command(cmd, timeout_ms: timeout_ms)
+        mongocrypt_feed(result)
+
+        mongocrypt_done
+      end
+
+      def provide_collection_info(timeout_ms)
+        filter = Binding.ctx_mongo_op(self)
+
+        result = @encryption_io.collection_info(@db_name, filter, timeout_ms: timeout_ms)
+        mongocrypt_feed(result) if result
+
+        mongocrypt_done
+      end
+
+      def provide_keys(timeout_ms)
+        filter = Binding.ctx_mongo_op(self)
+
+        @encryption_io.find_keys(filter, timeout_ms: timeout_ms).each do |key|
+          mongocrypt_feed(key) if key
+        end
+
+        mongocrypt_done
+      end
+
+      def feed_kms
+        while (kms_context = Binding.ctx_next_kms_ctx(self)) do
+          begin
+            delay = Binding.kms_ctx_usleep(kms_context)
+            sleep(delay / 1_000_000.0) unless delay.nil?
+            provider = Binding.kms_ctx_get_kms_provider(kms_context)
+            tls_options = @mongocrypt_handle.kms_tls_options(provider)
+            @encryption_io.feed_kms(kms_context, tls_options)
+          rescue Error::KmsError => e
+            if e.network_error?
+              if Binding.kms_ctx_fail(kms_context)
+                next
+              else
+                raise
+              end
+            else
+              raise
+            end
+          end
+        end
+        Binding.ctx_kms_done(self)
+      end
 
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt
       def mongocrypt_done
@@ -147,13 +179,15 @@ module Mongo
       # Retrieves KMS credentials for providers that are configured
       # for automatic credentials retrieval.
       #
+      # @param [ CsotTimeoutHolder ] timeout_holder CSOT timeout.
+      #
       # @return [ Crypt::KMS::Credentials ] Credentials for the configured
       #   KMS providers.
-      def retrieve_kms_credentials
+      def retrieve_kms_credentials(timeout_holder)
         providers = {}
         if kms_providers.aws&.empty?
           begin
-            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials
+            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials(timeout_holder)
           rescue Auth::Aws::CredentialsNotFound
             raise Error::CryptError.new(
               "Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)"
@@ -162,10 +196,10 @@ module Mongo
           providers[:aws] = aws_credentials.to_h
         end
         if kms_providers.gcp&.empty?
-          providers[:gcp] = { access_token: gcp_access_token }
+          providers[:gcp] = { access_token: gcp_access_token(timeout_holder) }
         end
         if kms_providers.azure&.empty?
-          providers[:azure] = { access_token: azure_access_token }
+          providers[:azure] = { access_token: azure_access_token(timeout_holder) }
         end
         KMS::Credentials.new(providers)
       end
@@ -175,8 +209,8 @@ module Mongo
       # @return [ String ] A GCP access token.
       #
       # @raise [ Error::CryptError ] If the GCP access token could not be
-      def gcp_access_token
-        KMS::GCP::CredentialsRetriever.fetch_access_token
+      def gcp_access_token(timeout_holder)
+        KMS::GCP::CredentialsRetriever.fetch_access_token(timeout_holder)
       rescue KMS::CredentialsNotFound => e
         raise Error::CryptError.new(
           "Could not locate GCP credentials: #{e.class}: #{e.message}"
@@ -189,9 +223,9 @@ module Mongo
       #
       # @raise [ Error::CryptError ] If the Azure access token could not be
       #   retrieved.
-      def azure_access_token
+      def azure_access_token(timeout_holder)
         if @cached_azure_token.nil? || @cached_azure_token.expired?
-          @cached_azure_token = KMS::Azure::CredentialsRetriever.fetch_access_token
+          @cached_azure_token = KMS::Azure::CredentialsRetriever.fetch_access_token(timeout_holder: timeout_holder)
         end
         @cached_azure_token.access_token
       rescue KMS::CredentialsNotFound => e

@@ -31,7 +31,8 @@ module Mongo
         db_name:,
         connection_global_id:,
         server_address:,
-        session:
+        session:,
+        connection: nil
       )
         @cursor_id = cursor_id
         @coll_name = coll_name
@@ -39,6 +40,7 @@ module Mongo
         @connection_global_id = connection_global_id
         @server_address = server_address
         @session = session
+        @connection = connection
       end
 
       attr_reader :cursor_id,
@@ -46,7 +48,8 @@ module Mongo
       :db_name,
       :connection_global_id,
       :server_address,
-      :session
+      :session,
+      :connection
 
       def ==(other)
         cursor_id == other.cursor_id &&

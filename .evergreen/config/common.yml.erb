@@ -11,7 +11,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-exec_timeout_secs: 3600
+exec_timeout_secs: 5400
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
 timeout:
@@ -121,25 +121,8 @@ functions:
             export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
             export RVM_RUBY="${RVM_RUBY}"
 
-            if [[ -n "${USE_PROXY_SERVERLESS}" ]];
-            then
-              export SERVERLESS_DRIVERS_GROUP="${PROXY_SERVERLESS_DRIVERS_GROUP}"
-            else
-              export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
-            fi
-
-            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
-            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
             export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
-
-            # Needed for generating temporary aws credentials.
-            if [ -n "${FLE}" ];
-            then
-              export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-              export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-              export AWS_DEFAULT_REGION="${fle_aws_region}"
-            fi
           EOT
 
           # See what we've done
@@ -150,17 +133,6 @@ functions:
     - command: expansions.update
       params:
         file: src/expansion.yml
-
-  "delete serverless instance":
-    - command: shell.exec
-      params:
-        working_dir: "src"
-        shell: bash
-        script: |
-          ${PREPARE_SHELL}
-          if [[ -n "${SERVERLESS_INSTANCE_NAME}" ]]; then
-            SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} .evergreen/serverless/delete-instance.sh
-          fi
 
   "export AWS auth credentials":
     - command: shell.exec
@@ -192,6 +164,25 @@ functions:
           IAM_AUTH_ASSUME_WEB_ROLE_NAME="${iam_auth_assume_web_role_name}"
 
           EOT
+
+  "run CSOT tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
+          export CSOT_SPEC_TESTS=1
+          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+            .evergreen/run-tests.sh
 
   "export FLE credentials":
     - command: shell.exec
@@ -352,7 +343,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/tmp/rspec.xml
+        file: ./src/rspec.xml
 
   "delete private environment":
     - command: shell.exec
@@ -374,6 +365,19 @@ functions:
           set -x
           .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
 
+  "run benchmarks":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
+    - command: perf.send
+      params:
+        file: "${PROJECT_DIRECTORY}/perf.json"
+
   "run tests":
     - command: shell.exec
       type: test
@@ -382,6 +386,13 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
           .evergreen/run-tests.sh
 
   "run tests via docker":
@@ -392,6 +403,13 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
           .evergreen/run-tests-docker.sh
 
   "run AWS auth tests":
@@ -432,24 +450,9 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} ATLAS_TLS12_URI=${atlas_tls12_uri} ATLAS_SERVERLESS_URI=${atlas_serverless_uri} ATLAS_SERVERLESS_LB_URI=${atlas_serverless_lb_uri} .evergreen/run-tests-atlas.sh
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-atlas.sh
 
   "run serverless tests":
-    - command: shell.exec
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          # This hack with PROJECT env is necessary while serverless
-          # rejects creating instances with too long names.
-          PROJECT="mongo-ruby-driver" LOADBALANCED="ON" .evergreen/serverless/create-instance.sh
-          cat serverless-expansion.yml
-
-    - command: expansions.update
-      params:
-        file: src/serverless-expansion.yml
-
     - command: shell.exec
       type: test
       params:
@@ -457,6 +460,14 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
+
           CRYPT_SHARED_LIB_PATH="${CRYPT_SHARED_LIB_PATH}" SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
 
 pre:
@@ -468,11 +479,39 @@ post:
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
-  #- func: "upload test results"
+  # - func: "upload test results"
   - func: "upload test results to s3"
-  - func: "delete serverless instance"
 
 task_groups:
+  - name: serverless_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: "fetch source"
+      - func: "create expansions"
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
+      - command: shell.exec
+        params:
+          shell: "bash"
+          script: |
+            ${PREPARE_SHELL}
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
+      - command: expansions.update
+        params:
+          file: serverless-expansion.yml
+    teardown_task:
+      - command: shell.exec
+        params:
+          script: |
+            ${PREPARE_SHELL}
+            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
+      - func: "upload test results"
+    tasks:
+      - "test-serverless"
+
   - name: testatlas_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -493,6 +532,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
@@ -514,6 +554,57 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
+              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
+              task_id="${task_id}" \
+              execution="${execution}" \
+              $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
+    tasks:
+      - test-atlas
+
+  - name: testatlas_full_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800 # 30 minutes
+    setup_group:
+      - func: fetch source
+      - func: create expansions
+      - command: shell.exec
+        params:
+          shell: "bash"
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+
+            echo "Setting up Atlas cluster"
+
+            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
+              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
+              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
+              DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
+              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
+              MONGODB_VERSION="7.0" \
+              task_id="${task_id}" \
+              execution="${execution}" \
+              $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
+
+              echo "MONGODB_URI=${MONGODB_URI}"
+      - command: expansions.update
+        params:
+          file: src/atlas-expansion.yml
+    teardown_group:
+      - command: shell.exec
+        params:
+          shell: "bash"
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+
+            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
+              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
+              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -541,11 +632,14 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
               execution="${execution}" \
               $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
+
+              echo "MONGODB_URI=${MONGODB_URI}"
       - command: expansions.update
         params:
           file: src/atlas-expansion.yml
@@ -560,6 +654,7 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -662,6 +757,9 @@ tasks:
   - name: "test-mlaunch"
     commands:
       - func: "run tests"
+  - name: "driver-bench"
+    commands:
+      - func: "run benchmarks"
   - name: "test-via-docker"
     commands:
       - func: "run tests via docker"
@@ -672,6 +770,9 @@ tasks:
   - name: "test-kerberos"
     commands:
       - func: "run Kerberos unit tests"
+  - name: "test-csot"
+    commands:
+      - func: "run CSOT tests"
   - name: "test-fle"
     commands:
       - func: "export FLE credentials"
@@ -771,6 +872,7 @@ tasks:
           script: |
             ${PREPARE_SHELL}
             export MONGODB_URI=${MONGODB_URI}
+            export FUNCTION_NAME="ruby-driver-lambda"
             .evergreen/run-tests-deployed-lambda.sh
           env:
             TEST_LAMBDA_DIRECTORY: ${PROJECT_DIRECTORY}/spec/faas/ruby-sam-app
@@ -782,9 +884,11 @@ tasks:
             DRIVERS_ATLAS_LAMBDA_USER: ${DRIVERS_ATLAS_LAMBDA_USER}
             DRIVERS_ATLAS_LAMBDA_PASSWORD: ${DRIVERS_ATLAS_LAMBDA_PASSWORD}
             DRIVERS_ATLAS_GROUP_ID: ${DRIVERS_ATLAS_GROUP_ID}
+            DRIVERS_ATLAS_BASE_URL: ${DRIVERS_ATLAS_BASE_URL}
             AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
             AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
             AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
             LAMBDA_STACK_NAME: "dbx-ruby-lambda"
+            CLUSTER_PREFIX: "dbx-ruby-lambda"
             RVM_RUBY: ruby-3.2
             MONGODB_URI: ${MONGODB_URI}

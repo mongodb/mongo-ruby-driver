@@ -1,0 +1,4 @@
+# For configuring how release notes are auto-generated.
+# Requires the use of labels to categorize pull requests.
+#
+# See: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes

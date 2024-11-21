@@ -83,7 +83,7 @@ module Mongo
       # will cause a `LoadError`.
       #
       # @api private
-      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.7.0")
+      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new("1.12.0")
 
       # @!method self.mongocrypt_version(len)
       #   @api private
@@ -177,6 +177,14 @@ module Mongo
       #   @param [ FFI::Pointer ] binary A pointer to a mongocrypt_binary_t object.
       #   @return [ Integer ] The length of the data array.
       attach_function :mongocrypt_binary_len, [:pointer], :int
+
+      def self.get_binary_data_direct(mongocrypt_binary_t)
+        mongocrypt_binary_t.get_pointer(0)
+      end
+
+      def self.get_binary_len_direct(mongocrypt_binary_t)
+        mongocrypt_binary_t.get_uint32(FFI::NativeType::POINTER.size)
+      end
 
       # @!method self.mongocrypt_binary_destroy(binary)
       #   @api private
@@ -1105,6 +1113,62 @@ module Mongo
         end
       end
 
+      # @!method self.mongocrypt_kms_ctx_usleep(ctx)
+      #   @api private
+      #
+      #   Indicates how long to sleep before sending KMS request.
+      #
+      #   @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      #   @return [ int64 ] A 64-bit encoded number of microseconds of how long to sleep.
+      attach_function :mongocrypt_kms_ctx_usleep, [:pointer], :int64
+
+      # Returns number of milliseconds to sleep before sending KMS request
+      # for the given KMS context.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context KMS Context we are going
+      #   to send KMS request for.
+      # @return [ Integer ] A 64-bit encoded number of microseconds to sleep.
+      def self.kms_ctx_usleep(kms_context)
+        mongocrypt_kms_ctx_usleep(kms_context.kms_ctx_p)
+      end
+
+      # @!method self.mongocrypt_kms_ctx_fail(ctx)
+      #   @api private
+      #
+      # Indicate a network-level failure.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @return [ Boolean ] whether the failed request may be retried.
+      attach_function :mongocrypt_kms_ctx_fail, [:pointer], :bool
+
+      # Check whether the last failed request for the KMS context may be retried.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context KMS Context
+      # @return [ true, false ] whether the failed request may be retried.
+      def self.kms_ctx_fail(kms_context)
+        mongocrypt_kms_ctx_fail(kms_context.kms_ctx_p)
+      end
+
+      # @!method self.mongocrypt_setopt_retry_kms(crypt, enable)
+      #   @api private
+      #
+      # Enable or disable KMS retry behavior.
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object
+      # @param [ Boolean ] enable A boolean indicating whether to retry operations.
+      # @return [ Boolean ] indicating success.
+      attach_function :mongocrypt_setopt_retry_kms, [:pointer, :bool], :bool
+
+      # Enable or disable KMS retry behavior.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ true, false ] value whether to retry operations.
+      # @return [ true, fale ] true is the option was set, otherwise false.
+      def self.kms_ctx_setopt_retry_kms(handle, value)
+        mongocrypt_setopt_retry_kms(handle.ref, value)
+      end
+
+
       # @!method self.mongocrypt_kms_ctx_done(ctx)
       #   @api private
       #
@@ -1699,9 +1763,9 @@ module Mongo
       # @!method self.mongocrypt_ctx_setopt_algorithm_range(ctx, opts)
       #   @api private
       #
-      # Set options for explicit encryption with the "rangePreview" algorithm.
+      # Set options for explicit encryption with the "range" algorithm.
       #
-      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # @note The Range algorithm is experimental only. It is not intended for
       # public use.
       #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
@@ -1718,9 +1782,9 @@ module Mongo
         :bool
       )
 
-      # Set options for explicit encryption with the "rangePreview" algorithm.
+      # Set options for explicit encryption with the "range" algorithm.
       #
-      # @note The RangePreview algorithm is experimental only. It is not intended for
+      # @note The Range algorithm is experimental only. It is not intended for
       # public use.
       #
       # @param [ Mongo::Crypt::Context ] context

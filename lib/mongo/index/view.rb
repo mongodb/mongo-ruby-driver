@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/cursor/nontailable'
+
 module Mongo
   module Index
 
@@ -25,6 +27,8 @@ module Mongo
       extend Forwardable
       include Enumerable
       include Retryable
+      include Mongo::CursorHost
+      include Cursor::NonTailable
 
       # @return [ Collection ] collection The indexes collection.
       attr_reader :collection
@@ -32,6 +36,12 @@ module Mongo
       # @return [ Integer ] batch_size The size of the batch of results
       #   when sending the listIndexes command.
       attr_reader :batch_size
+
+      # @return [ Integer | nil | The timeout_ms value that was passed as an
+      #   option to the view.
+      #
+      # @api private
+      attr_reader :operation_timeout_ms
 
       def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
       def_delegators :cluster, :next_primary
@@ -90,7 +100,7 @@ module Mongo
       # @since 2.0.0
       def drop_one(name, options = {})
         raise Error::MultiIndexDrop.new if name == Index::ALL
-        drop_by_name(name, comment: options[:comment])
+        drop_by_name(name, options)
       end
 
       # Drop all indexes on the collection.
@@ -107,7 +117,7 @@ module Mongo
       #
       # @since 2.0.0
       def drop_all(options = {})
-        drop_by_name(Index::ALL, comment: options[:comment])
+        drop_by_name(Index::ALL, options)
       end
 
       # Creates an index on the collection.
@@ -161,7 +171,7 @@ module Mongo
         if session = @options[:session]
           create_options[:session] = session
         end
-        %i(commit_quorum session comment).each do |key|
+        %i(commit_quorum session comment timeout_ms max_time_ms).each do |key|
           if value = options.delete(key)
             create_options[key] = value
           end
@@ -210,7 +220,7 @@ module Mongo
           options = models.pop
         end
 
-        client.send(:with_session, @options.merge(options)) do |session|
+        client.with_session(@options.merge(options)) do |session|
           server = next_primary(nil, session)
 
           indexes = normalize_models(models, server)
@@ -229,8 +239,12 @@ module Mongo
             write_concern: write_concern,
             comment: options[:comment],
           }
-
-          Operation::CreateIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(options)
+          )
+          Operation::CreateIndex.new(spec).execute(server, context: context)
         end
       end
 
@@ -263,9 +277,15 @@ module Mongo
       #
       # @since 2.0.0
       def each(&block)
-        session = client.send(:get_session, @options)
-        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
-          send_initial_query(server, session)
+        session = client.get_session(@options)
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          operation_timeouts: operation_timeouts(@options)
+        )
+
+        cursor = read_with_retry_cursor(session, ServerSelector.primary, self, context: context) do |server|
+          send_initial_query(server, session, context)
         end
         if block_given?
           cursor.each do |doc|
@@ -283,22 +303,53 @@ module Mongo
       #
       # @param [ Collection ] collection The collection.
       # @param [ Hash ] options Options for getting a list of indexes.
-      #   Only relevant for when the listIndexes command is used with server
-      #   versions >=2.8.
       #
       # @option options [ Integer ] :batch_size The batch size for results
       #   returned from the listIndexes command.
+      # @option options [ :cursor_lifetime | :iteration ] :timeout_mode How to interpret
+      #   :timeout_ms (whether it applies to the lifetime of the cursor, or per
+      #   iteration).
+      # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #    Must be a non-negative integer. An explicit value of 0 means infinite.
+      #    The default value is unset which means the value is inherited from
+      #    the collection or the database or the client.
       #
       # @since 2.0.0
       def initialize(collection, options = {})
         @collection = collection
+        @operation_timeout_ms = options.delete(:timeout_ms)
+
+        validate_timeout_mode!(options)
+
         @batch_size = options[:batch_size]
         @options = options
       end
 
+      # The timeout_ms value to use for this operation; either specified as an
+      # option to the view, or inherited from the collection.
+      #
+      # @return [ Integer | nil ] the timeout_ms for this operation
+      def timeout_ms
+        operation_timeout_ms || collection.timeout_ms
+      end
+
+      # @return [ Hash ] timeout_ms value set on the operation level (if any),
+      #   and/or timeout_ms that is set on collection/database/client level (if any).
+      #
+      # @api private
+      def operation_timeouts(opts = {})
+        {}.tap do |result|
+          if opts[:timeout_ms] || operation_timeout_ms
+            result[:operation_timeout_ms] = opts.delete(:timeout_ms) || operation_timeout_ms
+          else
+            result[:inherited_timeout_ms] = collection.timeout_ms
+          end
+        end
+      end
+
       private
 
-      def drop_by_name(name, comment: nil)
+      def drop_by_name(name, opts = {})
         client.send(:with_session, @options) do |session|
           spec = {
             db_name: database.name,
@@ -307,9 +358,14 @@ module Mongo
             session: session,
             write_concern: write_concern,
           }
-          spec[:comment] = comment unless comment.nil?
+          spec[:comment] = opts[:comment] unless opts[:comment].nil?
           server = next_primary(nil, session)
-          Operation::DropIndex.new(spec).execute(server, context: Operation::Context.new(client: client, session: session))
+          context = Operation::Context.new(
+            client: client,
+            session: session,
+            operation_timeouts: operation_timeouts(opts)
+          )
+          Operation::DropIndex.new(spec).execute(server, context: context)
         end
       end
 
@@ -347,8 +403,13 @@ module Mongo
         end
       end
 
-      def send_initial_query(server, session)
-        initial_query_op(session).execute(server, context: Operation::Context.new(client: client, session: session))
+      def send_initial_query(server, session, context)
+        if server.load_balancer?
+          connection = server.pool.check_out(context: context)
+          initial_query_op(session).execute_with_connection(connection, context: context)
+        else
+          initial_query_op(session).execute(server, context: context)
+        end
       end
     end
   end

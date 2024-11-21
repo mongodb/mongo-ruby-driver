@@ -18,6 +18,10 @@ axes:
         variables:
           MONGODB_VERSION: "latest"
           CRYPT_SHARED_VERSION: "latest"
+      - id: "8.0"
+        display_name: "8.0"
+        variables:
+          MONGODB_VERSION: "8.0"
       - id: "7.0"
         display_name: "7.0"
         variables:
@@ -26,11 +30,6 @@ axes:
         display_name: "6.0"
         variables:
           MONGODB_VERSION: "6.0"
-      - id: "5.3"
-        display_name: "5.3"
-        variables:
-          MONGODB_VERSION: "5.3"
-          CRYPT_SHARED_VERSION: "6.0.5"
       - id: "5.0"
         display_name: "5.0"
         variables:
@@ -74,6 +73,10 @@ axes:
         display_name: Replica Set
         variables:
           TOPOLOGY: replica-set
+      - id: "replica-set-single-node"
+        display_name: Replica Set (Single Node)
+        variables:
+          TOPOLOGY: replica-set-single-node
       - id: "sharded-cluster"
         display_name: Sharded
         variables:
@@ -142,6 +145,14 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-3.4"
+        display_name: ruby-3.4
+        variables:
+          RVM_RUBY: "ruby-3.4"
+      - id: "ruby-3.3"
+        display_name: ruby-3.3
+        variables:
+          RVM_RUBY: "ruby-3.3"
       - id: "ruby-3.2"
         display_name: ruby-3.2
         variables:
@@ -162,22 +173,10 @@ axes:
         display_name: ruby-2.7
         variables:
           RVM_RUBY: "ruby-2.7"
-      - id: "ruby-2.6"
-        display_name: ruby-2.6
-        variables:
-          RVM_RUBY: "ruby-2.6"
-      - id: "ruby-2.5"
-        display_name: ruby-2.5
-        variables:
-          RVM_RUBY: "ruby-2.5"
       - id: "ruby-head"
         display_name: ruby-head
         variables:
           RVM_RUBY: "ruby-head"
-      - id: "jruby-9.2"
-        display_name: jruby-9.2
-        variables:
-          RVM_RUBY: "jruby-9.2"
       - id: "jruby-9.3"
         display_name: jruby-9.3
         variables:
@@ -193,18 +192,24 @@ axes:
       - id: debian11
         display_name: "Debian 11"
         run_on: debian11-small
+      - id: ubuntu2404
+        display_name: "Ubuntu 24.04"
+        run_on: ubuntu2404-small
+      - id: ubuntu2404-arm
+        display_name: "Ubuntu 24.04 ARM64"
+        run_on: ubuntu2404-arm64-small
       - id: ubuntu2204
         display_name: "Ubuntu 22.04"
         run_on: ubuntu2204-small
+      - id: ubuntu2204-arm
+        display_name: "Ubuntu 22.04 ARM64"
+        run_on: ubuntu2204-arm64-small
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
-      - id: rhel8
-        display_name: "RHEL 8"
-        run_on: rhel80-small
-      - id: rhel8-arm
-        display_name: "RHEL 8 ARM64"
-        run_on: rhel82-arm64-small
+      - id: ubuntu1804
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-small
 
   - id: docker-distro
     display_name: Docker Distro
@@ -309,7 +314,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: rhel80-small
+        run_on: ubuntu1804-small
         variables:
           MMAPV1: 'true'
 
@@ -405,13 +410,3 @@ axes:
           API_VERSION_REQUIRED: 1
       - id: no
         display_name: No
-
-  - id: serverless-project
-    display_name: serverless project
-    values:
-        - id: original
-          display_name: Original
-        - id: proxy
-          display_name: Proxy
-          variables:
-            USE_PROXY_SERVERLESS: 1

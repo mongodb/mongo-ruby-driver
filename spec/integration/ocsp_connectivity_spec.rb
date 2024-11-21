@@ -4,7 +4,7 @@
 require 'lite_spec_helper'
 
 # These tests test the configurations described in
-# https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.rst#integration-tests-permutations-to-be-tested
+# https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.md#integration-tests-permutations-to-be-tested
 describe 'OCSP connectivity' do
   require_ocsp_connectivity
   clear_ocsp_cache

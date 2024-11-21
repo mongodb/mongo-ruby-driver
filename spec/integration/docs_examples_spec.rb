@@ -9,7 +9,7 @@ describe 'aggregation examples in Ruby' do
     # the tests in this file.
     begin
       ClientRegistry.instance.global_client('authorized')['_placeholder'].create
-    rescue Mongo::Error::OperationFailure => e
+    rescue Mongo::Error::OperationFailure::Family => e
       # Collection already exists
       if e.code != 48
         raise

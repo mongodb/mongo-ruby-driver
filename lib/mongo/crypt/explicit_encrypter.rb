@@ -35,7 +35,9 @@ module Mongo
       #   providers. Keys of the hash should be KSM provider names; values
       #   should be hashes of TLS connection options. The options are equivalent
       #   to TLS connection options of Mongo::Client.
-      def initialize(key_vault_client, key_vault_namespace, kms_providers, kms_tls_options)
+      # @param [ Integer | nil ] timeout_ms Timeout for every operation executed
+      #   on this object.
+      def initialize(key_vault_client, key_vault_namespace, kms_providers, kms_tls_options, timeout_ms = nil)
         Crypt.validate_ffi!
         @crypt_handle = Handle.new(
           kms_providers,
@@ -47,6 +49,7 @@ module Mongo
           metadata_client: nil,
           key_vault_namespace: key_vault_namespace
         )
+        @timeout_ms = timeout_ms
       end
 
       # Generates a data key used for encryption/decryption and stores
@@ -71,9 +74,11 @@ module Mongo
           master_key_document,
           key_alt_names,
           key_material
-        ).run_state_machine
+        ).run_state_machine(timeout_holder)
 
-        @encryption_io.insert_data_key(data_key_document).inserted_id
+        @encryption_io.insert_data_key(
+          data_key_document, timeout_ms: timeout_holder.remaining_timeout_ms!
+        ).inserted_id
       end
 
       # Encrypts a value using the specified encryption key and algorithm
@@ -111,7 +116,7 @@ module Mongo
           @encryption_io,
           { v: value },
           options
-        ).run_state_machine['v']
+        ).run_state_machine(timeout_holder)['v']
       end
 
       # Encrypts a Match Expression or Aggregate Expression to query a range index.
@@ -125,7 +130,7 @@ module Mongo
       #     {'$and' =>  [{'$gt' => ['$field', 10]}, {'$lt' => ['$field', 20]}}
       #   )
       #   {$and: [{$gt: [<fieldpath>, <value1>]}, {$lt: [<fieldpath>, <value2>]}]
-      # Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
+      # Only supported when queryType is "range" and algorithm is "Range".
       # @note: The Range algorithm is experimental only. It is not intended
       #   for public use. It is subject to breaking changes.
       #
@@ -137,24 +142,25 @@ module Mongo
       # @option options [ String ] :key_alt_name The alternate name for the
       #   encryption key.
       # @option options [ String ] :algorithm The algorithm used to encrypt the
-      #   expression. The only allowed value is "RangePreview"
+      #   expression. The only allowed value is "Range"
       # @option options [ Integer | nil ] :contention_factor Contention factor
       #   to be applied If not  provided, it defaults to a value of 0.
       # @option options [ String | nil ] query_type Query type to be applied.
-      #   The only allowed value is "rangePreview".
+      #   The only allowed value is "range".
       # @option options [ Hash | nil ] :range_opts Specifies index options for
-      #   a Queryable Encryption field supporting "rangePreview" queries.
+      #   a Queryable Encryption field supporting "range" queries.
       #   Allowed options are:
       #   - :min
       #   - :max
+      #   - :trim_factor
       #   - :sparsity
       #   - :precision
-      #   min, max, sparsity, and range must match the values set in
+      #   min, max, trim_factor, sparsity, and precision must match the values set in
       #   the encryptedFields of the destination collection.
       #   For double and decimal128, min/max/precision must all be set,
       #   or all be unset.
       #
-      # @note The RangePreview algorithm is experimental only. It is not
+      # @note The Range algorithm is experimental only. It is not
       # intended for public use.
       #
       # @note The :key_id and :key_alt_name options are mutually exclusive. Only
@@ -170,7 +176,7 @@ module Mongo
           @encryption_io,
           { v: expression },
           options
-        ).run_state_machine['v']
+        ).run_state_machine(timeout_holder)['v']
       end
 
       # Decrypts a value that has already been encrypted
@@ -184,7 +190,7 @@ module Mongo
           @crypt_handle,
           @encryption_io,
           { v: value }
-        ).run_state_machine['v']
+        ).run_state_machine(timeout_holder)['v']
       end
 
       # Adds a key_alt_name for the key in the key vault collection with the given id.
@@ -195,7 +201,7 @@ module Mongo
       # @return [ BSON::Document | nil ] Document describing the identified key
       #   before adding the key alt name, or nil if no such key.
       def add_key_alt_name(id, key_alt_name)
-        @encryption_io.add_key_alt_name(id, key_alt_name)
+        @encryption_io.add_key_alt_name(id, key_alt_name, timeout_ms: @timeout_ms)
       end
 
       # Removes the key with the given id from the key vault collection.
@@ -204,7 +210,9 @@ module Mongo
       #
       # @return [ Operation::Result ] The response from the database for the delete_one
       #   operation that deletes the key.
-      def_delegators :@encryption_io, :delete_key
+      def delete_key(id)
+        @encryption_io.delete_key(id, timeout_ms: @timeout_ms)
+      end
 
       # Finds a single key with the given id.
       #
@@ -212,7 +220,9 @@ module Mongo
       #
       # @return [ BSON::Document | nil ] The found key document or nil
       #   if not found.
-      def_delegators :@encryption_io, :get_key
+      def get_key(id)
+        @encryption_io.get_key(id, timeout_ms: @timeout_ms)
+      end
 
       # Returns a key in the key vault collection with the given key_alt_name.
       #
@@ -220,12 +230,19 @@ module Mongo
       #
       # @return [ BSON::Document | nil ] The found key document or nil
       #   if not found.
-      def_delegators :@encryption_io, :get_key_by_alt_name
+      def get_key_by_alt_name(key_alt_name)
+        @encryption_io.get_key_by_alt_name(key_alt_name, timeout_ms: @timeout_ms)
+      end
 
       # Returns all keys in the key vault collection.
       #
       # @return [ Collection::View ] Keys in the key vault collection.
-      def_delegators :@encryption_io, :get_keys
+      # rubocop:disable Naming/AccessorMethodName
+      # Name of this method is defined in the FLE spec
+      def get_keys
+        @encryption_io.get_keys(timeout_ms: @timeout_ms)
+      end
+      # rubocop:enable Naming/AccessorMethodName
 
       # Removes a key_alt_name from a key in the key vault collection with the given id.
       #
@@ -234,7 +251,9 @@ module Mongo
       #
       # @return [ BSON::Document | nil ] Document describing the identified key
       #   before removing the key alt name, or nil if no such key.
-      def_delegators :@encryption_io, :remove_key_alt_name
+      def remove_key_alt_name(id, key_alt_name)
+        @encryption_io.remove_key_alt_name(id, key_alt_name, timeout_ms: @timeout_ms)
+      end
 
       # Decrypts multiple data keys and (re-)encrypts them with a new master_key,
       #   or with their current master_key if a new one is not given.
@@ -257,12 +276,14 @@ module Mongo
           @encryption_io,
           filter,
           master_key_document
-        ).run_state_machine
+        ).run_state_machine(timeout_holder)
 
         return RewrapManyDataKeyResult.new(nil) if rewrap_result.nil?
 
         updates = updates_from_data_key_documents(rewrap_result.fetch('v'))
-        RewrapManyDataKeyResult.new(@encryption_io.update_data_keys(updates))
+        RewrapManyDataKeyResult.new(
+          @encryption_io.update_data_keys(updates, timeout_ms: @timeout_ms)
+        )
       end
 
       private
@@ -317,6 +338,14 @@ module Mongo
             }
           }
         end
+      end
+
+      def timeout_holder
+        CsotTimeoutHolder.new(
+          operation_timeouts: {
+            operation_timeout_ms: @timeout_ms
+          }
+        )
       end
     end
   end

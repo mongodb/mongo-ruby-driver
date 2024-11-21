@@ -221,7 +221,7 @@ described in `.evergreen/README.md`.
 
 OCSP connectivity tests are in `spec/integration/ocsp_connectivity.rb`.
 These test the combinations described
-[here](https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.rst#integration-tests-permutations-to-be-tested).
+[here](https://github.com/mongodb/specifications/blob/master/source/ocsp-support/tests/README.md#integration-tests-permutations-to-be-tested).
 To run these tests, set `OCSP_CONNECTIVITY=pass` environment variable if
 the tests are expected to connect successfully or `OCSP_CONNECTIVITY=fail` if
 the tests are expected to not connect.
@@ -292,7 +292,7 @@ to a variable as follows:
 
 Use the MongoDB shell to execute this command:
 
-    mongo --tls \
+    mongosh --tls \
       --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
       --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
       -u bootstrap -p bootstrap \
@@ -301,14 +301,14 @@ Use the MongoDB shell to execute this command:
 Verify that authentication is required by running the following command, which
 should fail:
 
-    mongo --tls \
+    mongosh --tls \
       --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
       --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
       --eval 'db.serverStatus()'
 
 Verify that X.509 authentication works by running the following command:
 
-    mongo --tls \
+    mongosh --tls \
       --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
       --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
       --authenticationDatabase '$external' \

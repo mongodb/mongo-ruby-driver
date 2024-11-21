@@ -114,7 +114,7 @@ module Mongo
       end
 
       def apply_txn_opts!(selector)
-        session.add_txn_opts!(selector, read_command?(selector))
+        session.add_txn_opts!(selector, read_command?(selector), context)
       end
 
       def suppress_read_write_concern!(selector)
@@ -154,7 +154,7 @@ module Mongo
       #
       # $readPreference is only sent when the server is a mongos,
       # following the rules described in
-      # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#passing-read-preference-to-mongos.
+      # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.md#passing-read-preference-to-mongos.
       # The topology does not matter for figuring out whether to send
       # $readPreference since the decision is always made based on
       # server type.
@@ -167,7 +167,7 @@ module Mongo
       def add_read_preference(sel, connection)
         Lint.assert_type(connection, Server::Connection)
 
-        # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#topology-type-single
+        # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.md#topology-type-single
         read_doc = if connection.description.standalone?
           # Read preference is never sent to standalones.
           nil
