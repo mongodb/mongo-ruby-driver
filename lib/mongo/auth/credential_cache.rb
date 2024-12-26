@@ -24,10 +24,6 @@ module Mongo
     module CredentialCache
       MUTEX = Mutex.new
 
-      class << self
-        attr_reader :store
-      end
-
       module_function def get(key)
         MUTEX.synchronize do
           @store ||= {}
