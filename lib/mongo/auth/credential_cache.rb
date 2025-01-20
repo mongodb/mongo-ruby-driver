@@ -22,6 +22,10 @@ module Mongo
     #
     # @api private
     module CredentialCache
+      class << self
+        attr_reader :store
+      end
+
       MUTEX = Mutex.new
 
       module_function def get(key)
