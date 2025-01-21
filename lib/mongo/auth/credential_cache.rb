@@ -22,19 +22,24 @@ module Mongo
     #
     # @api private
     module CredentialCache
-
       class << self
         attr_reader :store
       end
 
+      MUTEX = Mutex.new
+
       module_function def get(key)
-        @store ||= {}
-        @store[key]
+        MUTEX.synchronize do
+          @store ||= {}
+          @store[key]
+        end
       end
 
       module_function def set(key, value)
-        @store ||= {}
-        @store[key] = value
+        MUTEX.synchronize do
+          @store ||= {}
+          @store[key] = value
+        end
       end
 
       module_function def cache(key)
@@ -47,7 +52,9 @@ module Mongo
       end
 
       module_function def clear
-        @store = {}
+        MUTEX.synchronize do
+          @store = {}
+        end
       end
     end
   end
