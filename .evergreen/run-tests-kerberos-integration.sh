@@ -55,7 +55,7 @@ configure_kerberos_ip_addr
 # To test authentication using the mongo shell, note that the host name
 # must be uppercased when it is used in the username.
 # The following call works when using the docker image:
-# /opt/mongodb/bin/mongo --host $SASL_HOST --authenticationMechanism=GSSAPI \
+# /opt/mongodb/bin/mongosh --host $SASL_HOST --authenticationMechanism=GSSAPI \
 #   --authenticationDatabase='$external' --username $SASL_USER@`echo $SASL_HOST |tr a-z A-Z`
 
 echo "Install dependencies"
