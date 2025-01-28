@@ -10,6 +10,8 @@ set_env_vars
 set_env_python
 set_env_ruby
 
+source ${DRIVERS_TOOLS}/.evergreen/serverless/secrets-export.sh
+
 bundle_install
 
 export MONGODB_URI=`echo ${SERVERLESS_URI} | sed -r 's/mongodb\+srv:\/\//mongodb\+srv:\/\/'"${SERVERLESS_ATLAS_USER}"':'"${SERVERLESS_ATLAS_PASSWORD}@"'/g'`
@@ -23,7 +25,7 @@ else
     python3 -u .evergreen/mongodl.py --component crypt_shared -V ${SERVERLESS_MONGODB_VERSION} --out `pwd`/csfle_lib  --target `host_distro` || true
     if test -f `pwd`/csfle_lib/lib/mongo_crypt_v1.so
     then
-        echo Usinn crypt shared library version ${SERVERLESS_MONGODB_VERSION}
+        echo Using crypt shared library version ${SERVERLESS_MONGODB_VERSION}
         export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=`pwd`/csfle_lib/lib/mongo_crypt_v1.so
     else
         echo Failed to download crypt shared library
@@ -31,8 +33,8 @@ else
     fi
 fi
 
-if ! ( test -f /etc/os-release & grep -q ^ID.*rhel /etc/os-release & grep -q ^VERSION_ID.*8.0 /etc/os-release ); then
-    echo Serverless tests assume rhel80
+if ! ( test -f /etc/os-release & grep -q ^ID.*ubuntu /etc/os-release & grep -q ^VERSION_ID.*22.04 /etc/os-release ); then
+    echo Serverless tests assume ubuntu2204
     echo If this has changed, update .evergreen/run-tests-serverless.sh as necessary
     exit -1
 fi
@@ -41,8 +43,8 @@ mkdir libmongocrypt
 cd libmongocrypt
 curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
 tar xf libmongocrypt-all.tar.gz
-# We assume that serverless tests always use rhel80
-export LIBMONGOCRYPT_PATH=`pwd`/rhel-80-64-bit/nocrypto/lib64/libmongocrypt.so
+# We assume that serverless tests always use ubuntu2204
+export LIBMONGOCRYPT_PATH=`pwd`/ubuntu2204-64/nocrypto/lib/libmongocrypt.so
 cd -
 
 cd .evergreen/csfle

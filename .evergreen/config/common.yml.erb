@@ -11,7 +11,7 @@ pre_error_fails_task: true
 command_type: system
 
 # Protect ourself against rogue test case, or curl gone wild, that runs forever.
-exec_timeout_secs: 3600
+exec_timeout_secs: 5400
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
 timeout:
@@ -164,6 +164,25 @@ functions:
           IAM_AUTH_ASSUME_WEB_ROLE_NAME="${iam_auth_assume_web_role_name}"
 
           EOT
+
+  "run CSOT tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          # Needed for generating temporary aws credentials.
+          if [ -n "${FLE}" ];
+          then
+            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
+            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
+            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          fi
+          export CSOT_SPEC_TESTS=1
+          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+            .evergreen/run-tests.sh
 
   "export FLE credentials":
     - command: shell.exec
@@ -324,7 +343,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/tmp/rspec.xml
+        file: ./src/rspec.xml
 
   "delete private environment":
     - command: shell.exec
@@ -460,7 +479,7 @@ post:
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
-  #- func: "upload test results"
+  # - func: "upload test results"
   - func: "upload test results to s3"
 
 task_groups:
@@ -493,36 +512,6 @@ task_groups:
     tasks:
       - "test-serverless"
 
-  - name: serverless_next_task_group
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800 # 30 minutes
-    setup_group:
-      - func: "fetch source"
-      - func: "create expansions"
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
-      - command: shell.exec
-        params:
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh serverless_next
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
-      - command: expansions.update
-        params:
-          file: serverless-expansion.yml
-    teardown_task:
-      - command: shell.exec
-        params:
-          script: |
-            ${PREPARE_SHELL}
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh serverless_next
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
-      - func: "upload test results"
-    tasks:
-      - "test-serverless"
-
   - name: testatlas_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -543,6 +532,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
@@ -564,6 +554,7 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -591,6 +582,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
@@ -612,6 +604,7 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -639,6 +632,7 @@ task_groups:
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
               DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
               DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               MONGODB_VERSION="7.0" \
               task_id="${task_id}" \
@@ -660,6 +654,7 @@ task_groups:
             DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
               DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
               DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
+              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
               LAMBDA_STACK_NAME="dbx-ruby-lambda" \
               task_id="${task_id}" \
               execution="${execution}" \
@@ -775,6 +770,9 @@ tasks:
   - name: "test-kerberos"
     commands:
       - func: "run Kerberos unit tests"
+  - name: "test-csot"
+    commands:
+      - func: "run CSOT tests"
   - name: "test-fle"
     commands:
       - func: "export FLE credentials"
@@ -886,9 +884,11 @@ tasks:
             DRIVERS_ATLAS_LAMBDA_USER: ${DRIVERS_ATLAS_LAMBDA_USER}
             DRIVERS_ATLAS_LAMBDA_PASSWORD: ${DRIVERS_ATLAS_LAMBDA_PASSWORD}
             DRIVERS_ATLAS_GROUP_ID: ${DRIVERS_ATLAS_GROUP_ID}
+            DRIVERS_ATLAS_BASE_URL: ${DRIVERS_ATLAS_BASE_URL}
             AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
             AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
             AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
             LAMBDA_STACK_NAME: "dbx-ruby-lambda"
+            CLUSTER_PREFIX: "dbx-ruby-lambda"
             RVM_RUBY: ruby-3.2
             MONGODB_URI: ${MONGODB_URI}
