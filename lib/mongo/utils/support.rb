@@ -45,7 +45,7 @@ module Mongo
 
     def normalize_seeds(seeds)
       pairs = Array(seeds)
-      pairs = [ seeds ] if pairs.last.is_a?(Fixnum)
+      pairs = [ seeds ] if pairs.last.is_a?(1.class)
       pairs = pairs.collect do |hostport|
         if hostport.is_a?(String)
           if hostport[0,1] == '['
