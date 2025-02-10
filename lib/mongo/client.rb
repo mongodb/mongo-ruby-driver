@@ -1318,7 +1318,11 @@ module Mongo
     # @api private
     def get_session!(options = {})
       if options[:session]
-        return options[:session].validate!(self)
+        begin
+          return options[:session].validate!(self)
+        rescue Error::SessionClusterMismatched
+          nil # fall through to creating a new session
+        end
       end
 
       cluster.validate_session_support!(timeout: timeout_sec)
