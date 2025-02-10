@@ -1317,7 +1317,7 @@ module Mongo
     #
     # @api private
     def get_session!(options = {})
-      if options[:session]
+      if options[:session] && !Session.escaped?
         return options[:session].validate!(self)
       end
 
