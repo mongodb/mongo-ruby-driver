@@ -28,9 +28,8 @@ Gem::Specification.new do |s|
     'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
   }
 
-  s.files             = Dir.glob('{bin,lib,spec}/**/*')
-  s.files             += %w[mongo.gemspec LICENSE README.md CONTRIBUTING.md Rakefile]
-  s.test_files        = Dir.glob('spec/**/*')
+  s.files             = Dir.glob('{bin,lib}/**/*')
+  s.files             += %w[mongo.gemspec LICENSE README.md CONTRIBUTING.md]
 
   s.executables       = ['mongo_console']
   s.require_paths     = ['lib']
