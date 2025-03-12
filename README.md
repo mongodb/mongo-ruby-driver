@@ -118,7 +118,7 @@ their applications.
 
 ## Running Tests
 
-Please refer to [spec/README.md](spec/README.md) for instructions on how
+Please refer to [spec/README.md](https://github.com/mongodb/mongo-ruby-driver/blob/master/spec/README.md) for instructions on how
 to run the driver's test suite.
 
 ## Release History
