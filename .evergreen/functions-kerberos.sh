@@ -76,8 +76,8 @@ configure_local_kerberos() {
 EOT
   `"
 
-  "$BINDIR"/mongo --eval "$create_user_cmd"
-  "$BINDIR"/mongo --eval 'db.getSiblingDB("kerberos").test.insert({kerberos: true, authenticated: "yeah"})'
+  "$BINDIR"/mongosh --eval "$create_user_cmd"
+  "$BINDIR"/mongosh --eval 'db.getSiblingDB("kerberos").test.insert({kerberos: true, authenticated: "yeah"})'
   pkill mongod
   sleep 1
 
