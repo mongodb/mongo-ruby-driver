@@ -1362,27 +1362,27 @@ module Mongo
     # The argument may contain a subset of options that the client will
     # eventually have; this method validates each of the provided options
     # but does not check for interactions between combinations of options.
-    def validate_new_options!(opts)
-      return Options::Redacted.new unless opts
+    def validate_new_options!(options)
+      return Options::Redacted.new unless options
 
-      validate_read_concern!(opts[:read_concern])
-      validate_server_api!(opts[:server_api])
-      validate_max_min_pool_size!(opts)
-      validate_max_connecting!(opts)
-      validate_read!(opts)
-      validate_compressors!(opts)
-      validate_srv_max_hosts!(opts)
+      Options::Redacted.new(options).tap do |opts|
+        validate_read_concern!(opts[:read_concern])
+        validate_server_api!(opts[:server_api])
+        validate_max_min_pool_size!(opts)
+        validate_max_connecting!(opts)
+        validate_read!(opts)
+        validate_compressors!(opts)
+        validate_srv_max_hosts!(opts)
 
-      invalid_options = opts.keys.map(&:to_sym) - VALID_OPTIONS
-      if invalid_options.any?
-        log_warn("Unsupported client options: #{invalid_options.join(', ')}. These will be ignored.")
-        opts = opts.select { |key,| VALID_OPTIONS.include?(key.to_sym) }
+        invalid_options = opts.keys.map(&:to_sym) - VALID_OPTIONS
+        if invalid_options.any?
+          log_warn("Unsupported client options: #{invalid_options.join(', ')}. These will be ignored.")
+          opts.delete_if { |key,| !VALID_OPTIONS.include?(key.to_sym) }
+        end
+
+        Lint.validate_underscore_read_preference(opts[:read])
+        Lint.validate_read_concern_option(opts[:read_concern])
       end
-
-      Lint.validate_underscore_read_preference(opts[:read])
-      Lint.validate_read_concern_option(opts[:read_concern])
-
-      Options::Redacted.new(opts)
     end
 
     # Validates all options after they are set on the client.
@@ -1645,7 +1645,11 @@ module Mongo
         validate_zstd_compression!
       end
 
-      opts[:compressors] = compressors unless compressors.empty?
+      if compressors.empty?
+        opts.delete(:compressors)
+      else
+        opts[:compressors] = compressors
+      end
     end
 
     def validate_snappy_compression!
