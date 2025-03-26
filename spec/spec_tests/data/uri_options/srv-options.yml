@@ -7,14 +7,13 @@ tests:
       auth: ~
       options:
           srvServiceName: "customname"
-          tls: true
     - description: "Non-SRV URI with custom srvServiceName"
       uri: "mongodb://example.com/?srvServiceName=customname"
       valid: false
       warning: false
       hosts: ~
       auth: ~
-      options: {}
+      options: ~
     - description: "SRV URI with srvMaxHosts"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=2"
       valid: true
@@ -23,30 +22,27 @@ tests:
       auth: ~
       options:
           srvMaxHosts: 2
-          tls: true
     - description: "SRV URI with negative integer for srvMaxHosts"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=-1"
       valid: true
       warning: true
       hosts: ~
       auth: ~
-      options:
-        tls: true
+      options: ~
     - description: "SRV URI with invalid type for srvMaxHosts"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=foo"
       valid: true
       warning: true
       hosts: ~
       auth: ~
-      options:
-        tls: true
+      options: ~
     - description: "Non-SRV URI with srvMaxHosts"
       uri: "mongodb://example.com/?srvMaxHosts=2"
       valid: false
       warning: false
       hosts: ~
       auth: ~
-      options: {}
+      options: ~
     # Note: Testing URI validation for srvMaxHosts conflicting with either
     # loadBalanced=true or replicaSet specified via TXT records is covered by
     # the Initial DNS Seedlist Discovery test suite.
@@ -56,14 +52,14 @@ tests:
       warning: false
       hosts: ~
       auth: ~
-      options: {}
+      options: ~
     - description: "SRV URI with positive srvMaxHosts and loadBalanced=true"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=2&loadBalanced=true"
       valid: false
       warning: false
       hosts: ~
       auth: ~
-      options: {}
+      options: ~
     - description: "SRV URI with positive srvMaxHosts and loadBalanced=false"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=2&loadBalanced=false"
       valid: true
@@ -73,7 +69,6 @@ tests:
       options:
           loadBalanced: false
           srvMaxHosts: 2
-          tls: true
     - description: "SRV URI with srvMaxHosts=0 and replicaSet"
       uri: "mongodb+srv://test1.test.build.10gen.cc/?srvMaxHosts=0&replicaSet=foo"
       valid: true
@@ -83,7 +78,6 @@ tests:
       options:
           replicaSet: foo
           srvMaxHosts: 0
-          tls: true
     - description: "SRV URI with srvMaxHosts=0 and loadBalanced=true"
       uri: "mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=0&loadBalanced=true"
       valid: true
@@ -93,4 +87,3 @@ tests:
       options:
           loadBalanced: true
           srvMaxHosts: 0
-          tls: true

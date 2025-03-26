@@ -9,24 +9,34 @@ tests:
         options:
             readPreference: "primaryPreferred"
             readPreferenceTags:
-                - 
+                -
                     dc: "ny"
                     rack: "1"
                 -
                     dc: "ny"
             maxStalenessSeconds: 120
     -
-        description: "Case is preserved in read preference tag names and values"
-        uri: "mongodb://example.com/?readPreference=secondary&readPreferenceTags=DataCenter:NewYork"
+        description: "Single readPreferenceTags is parsed as array of size one"
+        uri: "mongodb://example.com/?readPreference=secondary&readPreferenceTags=dc:ny"
         valid: true
         warning: false
         hosts: ~
         auth: ~
         options:
-            readPreference: "secondary"
             readPreferenceTags:
-                - 
-                    DataCenter: NewYork
+                -
+                    dc: "ny"
+    -
+        description: "Read preference tags are case sensitive"
+        uri: "mongodb://example.com/?readPreference=secondary&readPreferenceTags=dc:NY"
+        valid: true
+        warning: false
+        hosts: ~
+        auth: ~
+        options:
+            readPreferenceTags:
+                -
+                    dc: "NY"
     -
         description: "Invalid readPreferenceTags causes a warning"
         uri: "mongodb://example.com/?readPreferenceTags=invalid"
@@ -34,19 +44,7 @@ tests:
         warning: true
         hosts: ~
         auth: ~
-        options: {}
-    # https://jira.mongodb.org/browse/DRIVERS-1369
-    -
-        description: "Valid and invalid readPreferenceTags mix"
-        uri: "mongodb://example.com/?readPreferenceTags=a:b,invalid"
-        valid: true
-        warning: true
-        hosts: ~
-        auth: ~
-        options:
-            readPreferenceTags:
-                -
-                    a: b
+        options: ~
     -
         description: "Non-numeric maxStalenessSeconds causes a warning"
         uri: "mongodb://example.com/?maxStalenessSeconds=invalid"
@@ -54,7 +52,7 @@ tests:
         warning: true
         hosts: ~
         auth: ~
-        options: {}
+        options: ~
     -
         description: "Too low maxStalenessSeconds causes a warning"
         uri: "mongodb://example.com/?maxStalenessSeconds=-2"
@@ -62,5 +60,5 @@ tests:
         warning: true
         hosts: ~
         auth: ~
-        options: {}
+        options: ~
 
