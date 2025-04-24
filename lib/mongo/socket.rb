@@ -543,6 +543,7 @@ module Mongo
     def wait_for_socket_to_be_writable(deadline)
       select_timeout = deadline - Utils.monotonic_time
       rv = Kernel.select(nil, [@socket], nil, select_timeout)
+
       if BSON::Environment.jruby?
         # Ignore the return value of Kernel.select.
         # On JRuby, select appears to return nil prior to timeout expiration
@@ -551,11 +552,9 @@ module Mongo
         # Check the deadline ourselves.
         select_timeout = deadline - Utils.monotonic_time
         return select_timeout > 0
-      elsif rv.nil?
-        return false
       end
 
-      true
+      !rv.nil?
     end
 
     def unix_socket?(sock)
