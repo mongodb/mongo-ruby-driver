@@ -491,9 +491,8 @@ module Mongo
         buf = buf.to_s
         i = 0
         while i < buf.length
-          chunk = buf[i...i+WRITE_CHUNK_SIZE]
-          @socket.write(chunk)
-          i += WRITE_CHUNK_SIZE
+          chunk = buf[i, WRITE_CHUNK_SIZE]
+          i += @socket.write(chunk)
         end
       end
     end
