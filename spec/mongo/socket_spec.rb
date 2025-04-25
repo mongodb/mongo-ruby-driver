@@ -160,7 +160,6 @@ describe Mongo::Socket do
           end
 
           it 'eventually writes everything' do
-puts "=== spec begins"
             expect(socket.write(data, timeout: timeout)).
               to be === data.length
           end
