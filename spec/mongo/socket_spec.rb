@@ -68,12 +68,6 @@ describe Mongo::Socket do
 
     let(:raw_socket) { socket.instance_variable_get('@socket') }
 
-    let(:wait_readable_class) do
-      Class.new(Exception) do
-        include IO::WaitReadable
-      end
-    end
-
     context 'timeout' do
       clean_slate_for_all
 
@@ -113,6 +107,63 @@ describe Mongo::Socket do
         end
 
         it_behaves_like 'times out'
+      end
+    end
+  end
+
+  describe '#write' do
+    let(:target_host) do
+      host = ClusterConfig.instance.primary_address_host
+      # Take ipv4 address
+      Socket.getaddrinfo(host, 0).detect { |ai| ai.first == 'AF_INET' }[3]
+    end
+
+    let(:socket) do
+      Mongo::Socket::TCP.new(target_host, ClusterConfig.instance.primary_address_port, 1, Socket::PF_INET)
+    end
+
+    let(:raw_socket) { socket.instance_variable_get('@socket') }
+
+    context 'with timeout' do
+      let(:timeout) { 5_000 }
+
+      context 'data is less than WRITE_CHUNK_SIZE' do
+        let(:data) { "a" * 1024 }
+
+        context 'when a partial write occurs' do
+          before do
+            expect(raw_socket)
+              .to receive(:write_nonblock)
+              .twice
+              .and_return(data.length / 2)
+          end
+
+          it 'eventually writes everything' do
+            expect(socket.write(data, timeout: timeout)).
+              to be === data.length
+          end
+        end
+      end
+
+      context 'data is greater than WRITE_CHUNK_SIZE' do
+        let(:data) { "a" * (2 * Mongo::Socket::WRITE_CHUNK_SIZE + 256) }
+
+        context 'when a partial write occurs' do
+          before do
+            expect(raw_socket)
+              .to receive(:write_nonblock)
+              .exactly(4).times
+              .and_return(Mongo::Socket::WRITE_CHUNK_SIZE,
+                          128,
+                          Mongo::Socket::WRITE_CHUNK_SIZE - 128,
+                          256)
+          end
+
+          it 'eventually writes everything' do
+            expect(socket.write(data, timeout: timeout)).
+              to be === data.length
+          end
+        end
       end
     end
   end

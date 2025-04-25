@@ -491,9 +491,8 @@ module Mongo
         buf = buf.to_s
         i = 0
         while i < buf.length
-          chunk = buf[i...i+WRITE_CHUNK_SIZE]
-          @socket.write(chunk)
-          i += WRITE_CHUNK_SIZE
+          chunk = buf[i, WRITE_CHUNK_SIZE]
+          i += @socket.write(chunk)
         end
       end
     end
@@ -523,30 +522,38 @@ module Mongo
 
     def write_chunk(chunk, timeout)
       deadline = Utils.monotonic_time + timeout
+
       written = 0
-      begin
-        written += @socket.write_nonblock(chunk[written..-1])
-      rescue IO::WaitWritable, Errno::EINTR
-        select_timeout = deadline - Utils.monotonic_time
-        rv = Kernel.select(nil, [@socket], nil, select_timeout)
-        if BSON::Environment.jruby?
-          # Ignore the return value of Kernel.select.
-          # On JRuby, select appears to return nil prior to timeout expiration
-          # (apparently due to a EAGAIN) which then causes us to fail the read
-          # even though we could have retried it.
-          # Check the deadline ourselves.
-          if deadline
-            select_timeout = deadline - Utils.monotonic_time
-            if select_timeout <= 0
-              raise_timeout_error!("Took more than #{timeout} seconds to receive data", true)
-            end
+      while written < chunk.length
+        begin
+          written += @socket.write_nonblock(chunk[written..-1])
+        rescue IO::WaitWritable, Errno::EINTR
+          if !wait_for_socket_to_be_writable(deadline)
+            raise_timeout_error!("Took more than #{timeout} seconds to receive data", true)
           end
-        elsif rv.nil?
-          raise_timeout_error!("Took more than #{timeout} seconds to receive data (select call timed out)", true)
+
+          retry
         end
-        retry
       end
+
       written
+    end
+
+    def wait_for_socket_to_be_writable(deadline)
+      select_timeout = deadline - Utils.monotonic_time
+      rv = Kernel.select(nil, [@socket], nil, select_timeout)
+
+      if BSON::Environment.jruby?
+        # Ignore the return value of Kernel.select.
+        # On JRuby, select appears to return nil prior to timeout expiration
+        # (apparently due to a EAGAIN) which then causes us to fail the read
+        # even though we could have retried it.
+        # Check the deadline ourselves.
+        select_timeout = deadline - Utils.monotonic_time
+        return select_timeout > 0
+      end
+
+      !rv.nil?
     end
 
     def unix_socket?(sock)
