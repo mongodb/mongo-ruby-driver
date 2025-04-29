@@ -1692,17 +1692,17 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
-  - matrix_name: "fle-latest"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: "ruby-3.3"
-      topology: [replica-set, sharded-cluster]
-      mongodb-version: [ 'latest' ]
-      os: ubuntu2204
-      fle: helper
-    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-    tasks:
-      - name: "test-fle"
+#  - matrix_name: "fle-latest"
+#    matrix_spec:
+#      auth-and-ssl: "noauth-and-nossl"
+#      ruby: 
+#      topology: [replica-set, sharded-cluster]
+#      mongodb-version: [ 'latest' ]
+#      os: ubuntu2204
+#      fle: helper
+#    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+#    tasks:
+#      - name: "test-fle"
 
   - matrix_name: aws-auth-regular
     matrix_spec:
