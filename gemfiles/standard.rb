@@ -45,9 +45,7 @@ def standard_dependencies
   group :testing do
     gem 'timecop'
     gem 'ice_nine'
-    if RUBY_VERSION =~ /^3\.1/
-      gem 'async', '2.23.1', platforms: :mri
-    end
+    gem 'async', '2.23.1', platforms: :mri if RUBY_VERSION.match?(/^3\.1/)
     gem 'rubydns', platforms: :mri
     gem 'rspec-retry'
     gem 'rfc', '~> 0.2.0'
