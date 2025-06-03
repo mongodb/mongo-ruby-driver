@@ -45,6 +45,7 @@ def standard_dependencies
   group :testing do
     gem 'timecop'
     gem 'ice_nine'
+    gem 'async', '2.23.1', platforms: :mri if RUBY_VERSION.match?(/^3\.1/)
     gem 'rubydns', platforms: :mri
     gem 'rspec-retry'
     gem 'rfc', '~> 0.2.0'
@@ -64,6 +65,6 @@ def standard_dependencies
     gem 'ruby-lsp', platforms: :mri
   end
 
-  gem 'libmongocrypt-helper', '~> 1.12.0' if ENV['FLE'] == 'helper'
+  gem 'libmongocrypt-helper', '~> 1.14.0' if ENV['FLE'] == 'helper'
 end
 # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength
