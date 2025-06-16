@@ -4,7 +4,9 @@
 require 'bundler'
 require 'rspec/core/rake_task'
 
-load 'spec/shared/lib/tasks/candidate.rake'
+if File.exist?('./spec/shared/lib/tasks/candidate.rake')
+  load 'spec/shared/lib/tasks/candidate.rake'
+end
 
 ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
 
