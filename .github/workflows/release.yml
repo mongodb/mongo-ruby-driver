@@ -2,66 +2,83 @@ name: "Driver Release"
 run-name: "Driver Release for ${{ github.ref }}"
 
 on:
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: Whether this is a dry run or not
-        required: true
-        default: true
-        type: boolean
+  # for auto-deploy when merging a release-candidate PR
+  pull_request:
+    types: [ closed ]
+
+  # for manual release trigger: "/release" in a comment on a merged
+  # release-candidate PR (useful if the auto-deploy fails)
+  #
+  # Note: this is commented out because it may be more effective to
+  # just retry the failed job in the Actions UI.
+  # issue_comment:
+  #   types: [ created ]
 
 env:
   SILK_ASSET_GROUP: mongodb-ruby-driver
-  RELEASE_MESSAGE_TEMPLATE: |
-    Version {0} of the [MongoDB Ruby Driver](https://rubygems.org/gems/mongo) is now available.
 
-    **Release Highlights**
+permissions:
+  # required for all workflows
+  security-events: write
 
-    TODO: one or more paragraphs describing important changes in this release
+  # required to fetch internal or private CodeQL packs
+  packages: read
 
-    **Documentation**
+  # only required for workflows in private repositories
+  actions: read
+  pull-requests: read
+  contents: write
 
-    Documentation is available at [MongoDB.com](https://www.mongodb.com/docs/ruby-driver/current/).
-
-    **Installation**
-
-    You may install this version via RubyGems, with:
-
-    gem install --version {0} mongo
+  # required by the mongodb-labs/drivers-github-tools/setup@v2 step
+  # also required by `rubygems/release-gem`
+  id-token: write
 
 jobs:
-  release:
-    name: "Driver Release"
+  check:
+    name: "Check Release"
+    runs-on: ubuntu-latest
+    outputs:
+      message: ${{ steps.check.outputs.message }}
+      ref: ${{ steps.check.outputs.ref }}
+    steps:
+      - name: "Run the check action"
+        id: check
+        uses: jamis/drivers-github-tools/ruby/pr-check@ruby-3643-update-release-process
+
+  build:
+    name: "Build Gems"
+    needs: check
+    environment: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Run the build action"
+        uses: jamis/drivers-github-tools/ruby/build@ruby-3643-update-release-process
+        with:
+          app_id: ${{ vars.APP_ID }}
+          app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          artifact: mongo-ruby-driver
+          gem_name: mongo
+          ruby_version: 'ruby-3.2'
+          ref: ${{ needs.check.outputs.ref }}
+
+  publish:
+    name: "Publish Gems"
+    needs: [ check, build ]
     environment: release
     runs-on: 'ubuntu-latest'
-
-    permissions:
-      # required for all workflows
-      security-events: write
-
-      # required to fetch internal or private CodeQL packs
-      packages: read
-
-      # only required for workflows in private repositories
-      actions: read
-      contents: write
-
-      # required by the mongodb-labs/drivers-github-tools/setup@v2 step
-      # also required by `rubygems/release-gem`
-      id-token: write
-
     steps:
       - name: "Run the publish action"
-        uses: mongodb-labs/drivers-github-tools/ruby/publish@v2
+        uses: jamis/drivers-github-tools/ruby/publish@ruby-3643-update-release-process
         with:
           app_id: ${{ vars.APP_ID }}
           app_private_key: ${{ secrets.APP_PRIVATE_KEY }}
           aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
           aws_region_name: ${{ vars.AWS_REGION_NAME }}
           aws_secret_id: ${{ secrets.AWS_SECRET_ID }}
-          dry_run: ${{ inputs.dry_run }}
+          dry_run: false
           gem_name: mongo
           product_name: Ruby Driver
           product_id: mongodb-ruby-driver
-          release_message_template: ${{ env.RELEASE_MESSAGE_TEMPLATE }}
+          release_message: ${{ needs.check.outputs.message }}
           silk_asset_group: ${{ env.SILK_ASSET_GROUP }}
+          ref: ${{ needs.check.outputs.ref }}
