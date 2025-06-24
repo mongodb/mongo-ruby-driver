@@ -4,6 +4,10 @@
 require 'bundler'
 require 'rspec/core/rake_task'
 
+if File.exist?('./spec/shared/lib/tasks/candidate.rake')
+  load 'spec/shared/lib/tasks/candidate.rake'
+end
+
 ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
 
 $: << File.join(ROOT, 'spec/shared/lib')
@@ -34,16 +38,12 @@ end
 
 task :default => ['spec:prepare', :spec]
 
-# stands in for the Bundler-provided `build` task, which builds the
-# gem for this project. Our release process builds the gems in a
-# particular way, in a GitHub action. This task is just to help remind
-# developers of that fact.
+desc 'Build the gem'
 task :build do
-  abort <<~WARNING
-    `rake build` does nothing in this project. The gem must be built via
-    the `Driver Release` action on GitHub, which is triggered manually when
-    a new release is ready.
-  WARNING
+  command = %w[ gem build ]
+  command << "--output=#{ENV['GEM_FILE_NAME']}" if ENV['GEM_FILE_NAME']
+  command << (ENV['GEMSPEC'] || 'mongo.gemspec')
+  system(*command)
 end
 
 # `rake version` is used by the deployment system so get the release version
