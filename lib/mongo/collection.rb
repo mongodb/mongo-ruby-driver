@@ -57,6 +57,8 @@ module Mongo
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
 
+    def_delegators :client, :tracer
+
     # Options that can be updated on a new Collection instance via the #with method.
     #
     # @since 2.1.0
@@ -865,19 +867,22 @@ module Mongo
           session: session,
           operation_timeouts: operation_timeouts(opts)
           )
-        write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-          Operation::Insert.new(
-            :documents => [ document ],
-            :db_name => database.name,
-            :coll_name => name,
-            :write_concern => write_concern,
-            :bypass_document_validation => !!opts[:bypass_document_validation],
-            :options => opts,
-            :id_generator => client.options[:id_generator],
-            :session => session,
-            :txn_num => txn_num,
-            :comment => opts[:comment]
-          ).execute_with_connection(connection, context: context)
+        operation = Operation::Insert.new(
+              :documents => [ document ],
+              :db_name => database.name,
+              :coll_name => name,
+              :write_concern => write_concern,
+              :bypass_document_validation => !!opts[:bypass_document_validation],
+              :options => opts,
+              :id_generator => client.options[:id_generator],
+              :session => session,
+              :comment => opts[:comment]
+            )
+        tracer.trace_operation('insert_one', operation, context) do
+          write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+            operation.txn_num = txn_num
+            operation.execute_with_connection(connection, context: context)
+          end
         end
       end
     end

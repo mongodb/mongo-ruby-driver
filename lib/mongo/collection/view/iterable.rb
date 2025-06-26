@@ -88,19 +88,21 @@ module Mongo
             operation_timeouts: operation_timeouts,
             view: self
           )
+          op = initial_query_op(session)
+          tracer.trace_operation('get_more', op, context) do
+            if respond_to?(:write?, true) && write?
+              server = server_selector.select_server(cluster, nil, session, write_aggregation: true)
+              result = send_initial_query(server, context)
 
-          if respond_to?(:write?, true) && write?
-            server = server_selector.select_server(cluster, nil, session, write_aggregation: true)
-            result = send_initial_query(server, context)
-
-            if use_query_cache?
-              CachingCursor.new(view, result, server, session: session, context: context)
+              if use_query_cache?
+                CachingCursor.new(view, result, server, session: session, context: context)
+              else
+                Cursor.new(view, result, server, session: session, context: context)
+              end
             else
-              Cursor.new(view, result, server, session: session, context: context)
-            end
-          else
-            read_with_retry_cursor(session, server_selector, view, context: context) do |server|
-              send_initial_query(server, context)
+              read_with_retry_cursor(session, server_selector, view, context: context) do |server|
+                send_initial_query(server, context)
+              end
             end
           end
         end

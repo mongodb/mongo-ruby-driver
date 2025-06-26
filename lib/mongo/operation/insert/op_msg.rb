@@ -34,8 +34,14 @@ module Mongo
         private
 
         def get_result(connection, context, options = {})
-          # This is a Mongo::Operation::Insert::Result
-          Result.new(*dispatch_message(connection, context), @ids, context: context)
+          message = build_message(connection, context)
+          if (tracer = context.tracer)
+            tracer.trace_command(message, context, connection) do
+              Result.new(*dispatch_message(message, connection, context), @ids, context: context)
+            end
+          else
+            Result.new(*dispatch_message(message, connection, context), @ids, context: context)
+          end
         end
 
         def selector(connection)

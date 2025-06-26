@@ -112,6 +112,7 @@ module Mongo
       :ssl_verify_hostname,
       :ssl_verify_ocsp_endpoint,
       :timeout_ms,
+      :tracing,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
@@ -437,6 +438,20 @@ module Mongo
     #   See Ruby's Zlib module for valid levels.
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
+    # @option options [ Hash ] :tracing OpenTelemetry tracing options.
+    #   - :enabled => Boolean, whether to enable OpenTelemetry tracing. The default
+    #     value is nil that means that the configuration will be taken from the
+    #     OTEL_RUBY_INSTRUMENTATION_MONGODB_ENABLED environment variable.
+    #   - :tracer => OpenTelemetry::Trace::Tracer, the tracer to use for
+    #     tracing. Must be an implementation of OpenTelemetry::Trace::Tracer
+    #     interface.
+    #   - :query_text_max_length => Integer, the maximum length of the query text
+    #     to be included in the span attributes. If the query text exceeds this
+    #     length, it will be truncated. Value 0 means no query text
+    #     will be included in the span attributes. The default value is nil that
+    #     means that the configuration will be taken from the
+    #     OTEL_RUBY_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH environment
+    #     variable.
     # @option options [ Hash ] :auto_encryption_options Auto-encryption related
     #   options.
     #   - :key_vault_client => Client | nil, a client connected to the MongoDB
@@ -1193,6 +1208,15 @@ module Mongo
       else
         timeout_ms / 1_000.0
       end
+    end
+
+    def tracer
+      tracing_opts = @options[:tracing] || {}
+      @tracer ||= Tracing.create_tracer(
+        enabled: tracing_opts[:enabled],
+        query_text_max_length: tracing_opts[:query_text_max_length],
+        otel_tracer: tracing_opts[:tracer],
+      )
     end
 
     private

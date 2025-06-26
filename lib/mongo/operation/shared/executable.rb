@@ -104,12 +104,18 @@ module Mongo
       end
 
       def get_result(connection, context, options = {})
-        result_class.new(*dispatch_message(connection, context, options), context: context, connection: connection)
+        message = build_message(connection, context)
+        if (tracer = context.tracer)
+          tracer.trace_command(message, context, connection) do
+            result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
+          end
+        else
+          result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
+        end
       end
 
       # Returns a Protocol::Message or nil as reply.
-      def dispatch_message(connection, context, options = {})
-        message = build_message(connection, context)
+      def dispatch_message(message, connection, context, options = {})
         message = message.maybe_encrypt(connection, context)
         reply = connection.dispatch([ message ], context, options)
         [reply, connection.description, connection.global_id]

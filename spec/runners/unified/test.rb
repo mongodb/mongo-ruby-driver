@@ -37,6 +37,7 @@ module Unified
       @description = @test_spec.use('description')
       @outcome = @test_spec.use('outcome')
       @expected_events = @test_spec.use('expectEvents')
+      @expected_spans = @test_spec.use('expectSpans')
       @skip_reason = @test_spec.use('skipReason')
       if req = @test_spec.use('runOnRequirements')
         @reqs = req.map { |r| Mongo::CRUD::Requirement.new(r) }
@@ -193,6 +194,14 @@ module Unified
                 end
               end
             end
+          end
+
+          observe_spans = spec.use('observeSpans')
+          if observe_spans
+            opts[:tracing] = {
+              enabled: true,
+              tracer: tracer,
+            }
           end
 
           create_client(**opts).tap do |client|
@@ -601,6 +610,10 @@ module Unified
       BSON::String.const_defined?(:IllegalKey) ?
         BSON::String.const_get(:IllegalKey) :
         BSON::Error
+    end
+
+    def tracer
+      @tracer ||= ::Tracing::Tracer.new
     end
   end
 end
