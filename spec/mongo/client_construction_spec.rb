@@ -10,7 +10,7 @@ SINGLE_CLIENT = [ '127.0.0.1:27017' ].freeze
 # possible future work: re-enable these one at a time and do the hard work of
 # making them right.
 #
-# rubocop:disable RSpec/ExpectInHook, RSpec/MessageSpies, RSpec/ExampleLength
+# rubocop:disable RSpec/ExpectInHook, RSpec/ExampleLength
 # rubocop:disable RSpec/ContextWording, RSpec/RepeatedExampleGroupDescription
 # rubocop:disable RSpec/ExampleWording, Style/BlockComments, RSpec/AnyInstance
 # rubocop:disable RSpec/VerifiedDoubles
@@ -2717,7 +2717,7 @@ describe Mongo::Client do
     it_behaves_like 'duplicated client with reused monitoring'
   end
 end
-# rubocop:enable RSpec/ExpectInHook, RSpec/MessageSpies, RSpec/ExampleLength
+# rubocop:enable RSpec/ExpectInHook, RSpec/ExampleLength
 # rubocop:enable RSpec/ContextWording, RSpec/RepeatedExampleGroupDescription
 # rubocop:enable RSpec/ExampleWording, Style/BlockComments, RSpec/AnyInstance
 # rubocop:enable RSpec/VerifiedDoubles
