@@ -1215,6 +1215,11 @@ describe Mongo::Server::ConnectionPool do
         expect(pool).to be_closed
       end
     end
+
+    it 'closes all pipes' do
+      expect(pool.generation_manager).to receive(:close_all_pipes).and_call_original
+      pool.close
+    end
   end
 
   describe '#inspect' do
