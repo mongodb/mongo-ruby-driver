@@ -494,17 +494,18 @@ buildvariants:
   #    - name: testgcpkms_task_group
   #      batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
-  - matrix_name: testazurekms-variant
-    matrix_spec:
-      ruby: ruby-3.0
-      fle: helper
-      topology: standalone
-      os: debian11 # could eventually look at updating this to rhel80
-      mongodb-version: 6.0
-    display_name: "AZURE KMS"
-    tasks:
-      - name: testazurekms_task_group
-        batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+  # https://jira.mongodb.org/browse/RUBY-3672
+  #- matrix_name: testazurekms-variant
+  #  matrix_spec:
+  #    ruby: ruby-3.0
+  #    fle: helper
+  #    topology: standalone
+  #    os: debian11 # could eventually look at updating this to rhel80
+  #    mongodb-version: 6.0
+  #  display_name: "AZURE KMS"
+  #  tasks:
+  #    - name: testazurekms_task_group
+  #      batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
   - matrix_name: atlas-full
     matrix_spec:
@@ -521,15 +522,6 @@ buildvariants:
     display_name: "Atlas tests ${ruby}"
     tasks:
        - name: testatlas_task_group
-
-  - matrix_name: "serverless"
-    matrix_spec:
-      ruby: <%= latest_ruby %>
-      fle: path
-      os: ubuntu2204
-    display_name: "Atlas serverless ${ruby}"
-    tasks:
-       - name: serverless_task_group
 
   - matrix_name: "aws-lambda"
     matrix_spec:
