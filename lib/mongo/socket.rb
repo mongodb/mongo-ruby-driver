@@ -64,6 +64,9 @@ module Mongo
     #   connection (for non-monitoring connections) that created this socket.
     # @option options [ true | false ] :monitor Whether this socket was
     #   created by a monitoring connection.
+    # @option options :pipe [ IO ] The file descriptor for the read end of the
+    #   pipe to listen on during the select system call when reading from the
+    #   socket.
     #
     # @api private
     def initialize(timeout, options)
@@ -104,6 +107,13 @@ module Mongo
     # @api private
     def monitor?
       !!options[:monitor]
+    end
+
+    # @return [ IO ] The file descriptor for the read end of the pipe to
+    # listen on during the select system call when reading from the
+    # socket.
+    def pipe
+      options[:pipe]
     end
 
     # @return [ String ] Human-readable summary of the socket for debugging.
@@ -161,7 +171,7 @@ module Mongo
       begin
         # Sometimes it seems the close call can hang for a long time
         ::Timeout.timeout(5) do
-          @socket.close
+          @socket&.close
         end
       rescue
         # Silence all errors
@@ -390,7 +400,6 @@ module Mongo
             raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot)
           end
         end
-        pipe = options[:pipe]
         if exc.is_a?(IO::WaitReadable)
           if pipe
             select_args = [[@socket, pipe], nil, [@socket, pipe], select_timeout]

@@ -671,6 +671,7 @@ module Mongo
 
           @max_connecting_cv.broadcast
           @size_cv.broadcast
+          @generation_manager.close_all_pipes
         end
 
         publish_cmap_event(

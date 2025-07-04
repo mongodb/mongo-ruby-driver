@@ -47,13 +47,15 @@ module Mongo
         end
 
         def pipe_fds(service_id: nil)
-          @pipe_fds[service_id][@map[service_id]]
+          @pipe_fds.dig(service_id, @map[service_id])
         end
 
         def remove_pipe_fds(generation, service_id: nil)
           validate_service_id!(service_id)
 
           r, w = @pipe_fds[service_id].delete(generation)
+          return unless r && w
+
           w.close
           # Schedule the read end of the pipe to be closed. We cannot close it
           # immediately since we need to wait for any Kernel#select calls to
@@ -89,7 +91,30 @@ module Mongo
           end
         end
 
+        # Close all pipes in the generation manager.
+        #
+        # This method should be called only when the +ConnectionPool+ that
+        # owns this +GenerationManager+ is closed, to ensure that all
+        # pipes are closed properly.
+        def close_all_pipes
+          @lock.synchronize do
+            close_all_scheduled
+            @pipe_fds.keys.each do |service_id|
+              generations = @pipe_fds.delete(service_id)
+              generations.values.each do |(r, w)|
+                r.close
+                w.close
+              rescue IOError
+                # Ignore any IOError that occurs when closing the
+                # pipe, as there is nothing we can do about it.
+              end
+            end
+          end
+        end
+
+
         private
+
 
         def validate_service_id!(service_id)
           if service_id

@@ -113,3 +113,6 @@ Style/TrailingCommaInHashLiteral:
 
 RSpec/ExampleLength:
   Max: 10
+
+RSpec/MessageSpies:
+  EnforcedStyle: receive
