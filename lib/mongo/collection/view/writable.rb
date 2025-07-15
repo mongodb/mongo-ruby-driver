@@ -410,6 +410,7 @@ module Mongo
               Operation::U => replacement,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
+              sort: opts[:sort] || opts['sort'],
             }.compact
             if opts[:upsert]
               update_doc['upsert'] = true
@@ -570,6 +571,7 @@ module Mongo
               Operation::U => spec,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
+              sort: opts[:sort] || opts['sort'],
             }.compact
             if opts[:upsert]
               update_doc['upsert'] = true
