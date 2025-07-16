@@ -448,20 +448,14 @@ module Mongo
     #
     # @since 2.7.0
     def with_transaction(options = nil)
-      if timeout_ms = (options || {})[:timeout_ms]
-        timeout_sec = timeout_ms / 1_000.0
-        deadline = Utils.monotonic_time + timeout_sec
-        @with_transaction_deadline = deadline
-      elsif default_timeout_ms = @options[:default_timeout_ms]
-        timeout_sec = default_timeout_ms / 1_000.0
-        deadline = Utils.monotonic_time + timeout_sec
-        @with_transaction_deadline = deadline
-      elsif @client.timeout_sec
-        deadline = Utils.monotonic_time + @client.timeout_sec
-        @with_transaction_deadline = deadline
-      else
-        deadline = Utils.monotonic_time + 120
-      end
+      @with_transaction_deadline = calculate_with_transaction_deadline(options)
+      deadline = if @with_transaction_deadline
+                   # CSOT enabled, so we have a customer defined deadline.
+                   @with_transaction_deadline
+                 else
+                    # CSOT not enabled, so we use the default deadline, 120 seconds.
+                   Utils.monotonic_time + 120
+                 end
       transaction_in_progress = false
       loop do
         commit_options = {}
@@ -480,7 +474,7 @@ module Mongo
             transaction_in_progress = false
           end
 
-          if Utils.monotonic_time >= deadline
+          if deadline_expired?(deadline)
             transaction_in_progress = false
             raise
           end
@@ -502,7 +496,7 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
-              if Utils.monotonic_time >= deadline ||
+              if  deadline_expired?(deadline) ||
                 e.is_a?(Error::OperationFailure::Family) && e.max_time_ms_expired?
               then
                 transaction_in_progress = false
@@ -1206,6 +1200,8 @@ module Mongo
     # @api private
     attr_accessor :snapshot_timestamp
 
+    # @return [ Integer | nil ] The deadline for the current transaction, if any.
+    # @api private
     attr_reader :with_transaction_deadline
 
     private
@@ -1299,6 +1295,31 @@ module Mongo
             result[:operation_timeout_ms] = default_timeout_ms
           end
         end
+      end
+    end
+
+    def calculate_with_transaction_deadline(opts)
+      calc = -> (timeout) {
+        if timeout == 0
+          0
+        else
+          Utils.monotonic_time + (timeout / 1000.0)
+        end
+      }
+      if timeout_ms = opts&.dig(:timeout_ms)
+        calc.call(timeout_ms)
+      elsif default_timeout_ms = @options[:default_timeout_ms]
+        calc.call(default_timeout_ms)
+      elsif @client.timeout_ms
+        calc.call(@client.timeout_ms)
+      end
+    end
+
+    def deadline_expired?(deadline)
+      if deadline.zero?
+        false
+      else
+        Utils.monotonic_time >= deadline
       end
     end
   end
