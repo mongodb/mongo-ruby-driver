@@ -61,6 +61,7 @@ Certificate:
             X509v3 Authority Key Identifier: 
                 BB:BC:C3:47:A5:E4:BC:A9:C6:C3:A4:72:0C:10:8D:A2:35:E1:C8:E8
             Authority Information Access: 
+                OCSP - URI:http://r10.o.lencr.org
                 CA Issuers - URI:http://r10.i.lencr.org/
             X509v3 Subject Alternative Name: 
                 DNS:*.g6fyiaq.mesh.mongodb-dev.net, DNS:*.g6fyiaq.mongodb-dev.net
