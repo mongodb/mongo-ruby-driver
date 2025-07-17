@@ -346,6 +346,8 @@ describe Mongo::Socket::OcspVerifier do
     end
 
     before do
+      skip "https://jira.mongodb.org/browse/RUBY-3684 (OCSP verifier needs non-Atlas certs)"
+
       verifier.ocsp_uris.length.should > 0
       URI.parse(verifier.ocsp_uris.first).path.should == ''
     end

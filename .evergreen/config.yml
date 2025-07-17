@@ -124,6 +124,9 @@ functions:
             export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
             export RVM_RUBY="${RVM_RUBY}"
 
+            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
+            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
+            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
             export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
             export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
           EOT
