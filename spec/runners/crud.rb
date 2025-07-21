@@ -224,14 +224,12 @@ def define_spec_tests_with_requirements(spec, &block)
         if req.topologies
           require_topology *req.topologies
         end
-        if SpecConfig.instance.serverless? && req.serverless == :forbid
+
+        # Once `serverless: require` is no longer present in any specs,
+        # this can be removed.
+        if req.serverless == :require
           before(:all) do
-            skip "Serverless forbidden"
-          end
-        end
-        if !SpecConfig.instance.serverless? && req.serverless == :require
-          before(:all) do
-            skip "Serverless required"
+            skip 'Serverless tests are no longer enabled, per RUBY-3652'
           end
         end
 
