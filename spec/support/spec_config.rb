@@ -163,7 +163,8 @@ class SpecConfig
   end
 
   def kill_all_server_sessions?
-    ClusterConfig.instance.fcv_ish >= '3.6'
+    allow = ENV['KILL_ALL_SERVER_SESSIONS'] != '0'
+    allow && ClusterConfig.instance.fcv_ish >= '3.6'
   end
 
   # Test suite configuration
