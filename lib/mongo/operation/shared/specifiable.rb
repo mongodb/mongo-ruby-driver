@@ -526,6 +526,10 @@ module Mongo
         @spec[:txn_num]
       end
 
+      def txn_num=(num)
+        @spec[:txn_num] = num
+      end
+
       # The command.
       #
       # @return [ Hash ] The command.

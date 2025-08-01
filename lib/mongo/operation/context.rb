@@ -69,6 +69,7 @@ module Mongo
       attr_reader :session
       attr_reader :view
       attr_reader :options
+      attr_accessor :tracer
 
       # Returns a new Operation::Context with the deadline refreshed
       # and relative to the current moment.

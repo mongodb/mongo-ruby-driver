@@ -388,6 +388,17 @@ module Mongo
         self
       end
 
+      def transport
+        return nil if @socket.nil?
+
+        case @socket
+        when Mongo::Socket::Unix
+          :unix
+        else
+          :tcp
+        end
+      end
+
       private
 
       def deliver(message, client, options = {})
