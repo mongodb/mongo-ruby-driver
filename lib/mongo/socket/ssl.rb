@@ -505,7 +505,6 @@ module Mongo
       end
 
       # Find the issuer certificate in the chain.
-      # If the issuer is not found, raise an error.
       def find_issuer(cert, cert_chain)
         cert_chain.find { |c| c.subject == cert.issuer }
       end
