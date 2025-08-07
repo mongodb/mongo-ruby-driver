@@ -464,65 +464,6 @@ post:
   - func: "upload test results to s3"
 
 task_groups:
-  - name: serverless_task_group
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800 # 30 minutes
-    setup_group:
-      - func: "fetch source"
-      - func: "create expansions"
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
-      - command: shell.exec
-        params:
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
-      - command: expansions.update
-        params:
-          file: serverless-expansion.yml
-    teardown_task:
-      - command: shell.exec
-        params:
-          script: |
-            ${PREPARE_SHELL}
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
-      - func: "upload test results"
-    tasks:
-      - "test-serverless"
-
-  - name: serverless_next_task_group
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800 # 30 minutes
-    setup_group:
-      - func: "fetch source"
-      - func: "create expansions"
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
-      - command: shell.exec
-        params:
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh serverless_next
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
-      - command: expansions.update
-        params:
-          file: serverless-expansion.yml
-    teardown_task:
-      - command: shell.exec
-        params:
-          script: |
-            ${PREPARE_SHELL}
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh serverless_next
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
-      - func: "upload test results"
-    tasks:
-      - "test-serverless"
-
   - name: testatlas_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -752,26 +693,12 @@ tasks:
   - name: "test-atlas"
     commands:
       - func: "run Atlas tests"
-  - name: "test-serverless"
-    commands:
-      - func: "export FLE credentials"
-      - func: "run serverless tests"
-  - name: "test-docker"
-    commands:
-      - func: "build and test docker image"
   - name: "test-mlaunch"
     commands:
       - func: "run tests"
   - name: "driver-bench"
     commands:
       - func: "run benchmarks"
-  - name: "test-via-docker"
-    commands:
-      - func: "run tests via docker"
-  - name: "test-kerberos-integration"
-    commands:
-      - func: "export Kerberos credentials"
-      - func: "run Kerberos integration tests"
   - name: "test-kerberos"
     commands:
       - func: "run Kerberos unit tests"
@@ -779,10 +706,6 @@ tasks:
     commands:
       - func: "export FLE credentials"
       - func: "run tests"
-  - name: "test-fle-via-docker"
-    commands:
-      - func: "export FLE credentials"
-      - func: "run tests via docker"
   - name: "test-aws-auth"
     commands:
       - func: "export AWS auth credentials"

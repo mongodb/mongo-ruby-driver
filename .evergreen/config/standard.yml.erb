@@ -31,8 +31,8 @@
   # A few of the most recent MongoDB versions
   actual_and_upcoming_mdb = %w( latest 7.0 6.0 )
 
-  recent_mdb = %w( 6.0 5.3 )
-  latest_5x_mdb = "5.3".inspect # so it gets quoted as a string
+  recent_mdb = %w( 6.0 5.0 )
+  latest_5x_mdb = "5.0".inspect # so it gets quoted as a string
 %>
 
 buildvariants:
@@ -80,7 +80,7 @@ buildvariants:
   - matrix_name: "mongo-5.x"
     matrix_spec:
       ruby: <%= sample_rubies %>
-      mongodb-version: ['5.3', '5.0']
+      mongodb-version: '5.0'
       topology: <%= topologies %>
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${ruby}"
@@ -201,7 +201,7 @@ buildvariants:
       ruby: <%= supported_rubies %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -257,7 +257,7 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: "replica-set"
       compressor: 'zlib'
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -269,7 +269,7 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: "replica-set"
       compressor: 'snappy'
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -285,7 +285,7 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: "replica-set"
       compressor: 'zstd'
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -296,7 +296,7 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: replica-set
       as: as
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "AS ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -307,19 +307,10 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: replica-set
       bson: "*"
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
-
-  # kerberos integration tests are broken (RUBY-3266)
-  # - matrix_name: "kerberos-integration"
-  #   matrix_spec:
-  #     ruby: <%= sample_rubies %>
-  #     os: rhel8
-  #   display_name: "Kerberos integration ${os} ${ruby}"
-  #   tasks:
-  #     - name: "test-kerberos-integration"
 
   - matrix_name: "kerberos-unit"
     matrix_spec:
@@ -381,7 +372,7 @@ buildvariants:
       ruby: <%= supported_mri_rubies %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -394,7 +385,7 @@ buildvariants:
       ruby: <%= sample_mri_rubies %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2004
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
     tasks:
@@ -407,7 +398,7 @@ buildvariants:
       ruby: <%= sample_mri_rubies %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2004
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
     tasks:
@@ -437,7 +428,7 @@ buildvariants:
       ruby: <%= sample_mri_rubies %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -498,33 +489,10 @@ buildvariants:
   - matrix_name: "atlas"
     matrix_spec:
       ruby: <%= supported_rubies %>
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "Atlas tests ${ruby}"
     tasks:
        - name: testatlas_task_group
-
-# Commented out, pending RUBY-3414
-#  - matrix_name: "serverless"
-#    matrix_spec:
-#      # https://jira.mongodb.org/browse/RUBY-3217
-#      # ruby: <%= supported_rubies %>
-#      ruby: <%= supported_mri_rubies %>
-#      fle: path
-#      os: rhel8
-#    display_name: "Atlas serverless ${ruby}"
-#    tasks:
-#       - name: serverless_task_group
-#
-#  - matrix_name: "serverless-next"
-#    matrix_spec:
-#      # https://jira.mongodb.org/browse/RUBY-3217
-#      # ruby: <%= supported_rubies %>
-#      ruby: <%= supported_mri_rubies %>
-#      fle: path
-#      os: rhel8
-#    display_name: "Atlas serverless-next ${ruby}"
-#    tasks:
-#       - name: serverless_next_task_group
 
   - matrix_name: "aws-lambda"
     matrix_spec:
