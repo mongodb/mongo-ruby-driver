@@ -111,6 +111,8 @@ describe 'Client after reconnect' do
       # thread.kill should've similarly failed, but it doesn't.
       fails_on_jruby
 
+      minimum_mri_version '3.0.0'
+
       it 'recreates SRV monitor' do
         wait_for_discovery
 

@@ -3,7 +3,7 @@
 # the standalone one.
 
 name: Run Driver Tests
-on: #[push, pull_request]
+on: [ workflow_dispatch ]
 jobs:
   build:
     name: "${{matrix.os}} ruby-${{matrix.ruby}} mongodb-${{matrix.mongodb}} ${{matrix.topology}}"
