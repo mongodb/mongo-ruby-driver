@@ -41,7 +41,7 @@ set_env_vars
 set_env_python
 set_env_ruby
 
-prepare_server $arch
+prepare_server
 
 if test "$DOCKER_PRELOAD" != 1; then
   install_mlaunch_venv
