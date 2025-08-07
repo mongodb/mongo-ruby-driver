@@ -460,7 +460,7 @@ module Mongo
         end
 
         cert = socket.peer_cert
-        ca_cert = socket.peer_cert_chain.last
+        ca_cert = find_issuer(cert, socket.peer_cert_chain)
 
         verifier = OcspVerifier.new(@host_name, cert, ca_cert, context.cert_store,
           **Utils.shallow_symbolize_keys(options).merge(timeout: timeout))
@@ -502,6 +502,11 @@ module Mongo
             pos = end_idx
           end
         end
+      end
+
+      # Find the issuer certificate in the chain.
+      def find_issuer(cert, cert_chain)
+        cert_chain.find { |c| c.subject == cert.issuer }
       end
     end
   end
