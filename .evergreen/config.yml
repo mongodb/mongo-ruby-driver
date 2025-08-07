@@ -1081,15 +1081,15 @@ axes:
       - id: ubuntu2204
         display_name: "Ubuntu 22.04"
         run_on: ubuntu2204-small
+      - id: ubuntu2204-arm
+        display_name: "Ubuntu 22.04 ARM"
+        run_on: ubuntu2204-arm64-small
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
-      - id: rhel8
-        display_name: "RHEL 8"
-        run_on: rhel80-small
-      - id: rhel8-arm
-        display_name: "RHEL 8 ARM64"
-        run_on: rhel82-arm64-small
+      - id: ubuntu1804
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-small
 
   - id: docker-distro
     display_name: Docker Distro
@@ -1196,7 +1196,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: rhel80-small
+        run_on: ubuntu1804-small
         variables:
           MMAPV1: 'true'
 
@@ -1302,7 +1302,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: "7.0"
       topology: standalone
-    run_on: rhel80-large
+      os: ubuntu2204
     display_name: DriverBench
     tasks:
       - name: "driver-bench"
@@ -1313,7 +1313,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: ["latest", "7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
     tasks:
       - name: "test-mlaunch"
@@ -1323,10 +1323,8 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.4"]
       mongodb-version: ["latest", "7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ['rhel8']
-      # There is no latest for ubuntu2204, so we can't test it here.
-      # os: ['rhel8', 'ubuntu2204']
-    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+      os: ubuntu2204
+    display_name: "${mongodb-version} ${os} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1335,8 +1333,8 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: ["latest", "7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: 'rhel8-arm'
-    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+      os: ubuntu2204-arm
+    display_name: "${mongodb-version} ${os} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1345,8 +1343,8 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7", "jruby-9.4"]
       mongodb-version: ['5.3', '5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+      os: ubuntu1804
+    display_name: "${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1355,8 +1353,8 @@ buildvariants:
       ruby: ["ruby-3.0", "ruby-2.7"]
       mongodb-version: ['4.4', '4.2', '4.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+      os: ubuntu1804
+    display_name: "${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1365,8 +1363,8 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: ['3.6']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+      os: ubuntu1804
+    display_name: "${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1376,19 +1374,19 @@ buildvariants:
       mongodb-version: "7.0"
       topology: load-balanced
       single-mongos: single-mongos
-      os: rhel8
-    display_name: "${mongodb-version} ${topology} single-lb ${auth-and-ssl} ${ruby}"
+      os: ubuntu2204
+    display_name: "${mongodb-version} ${topology} single-lb ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "mongo-5.0-api-version"
+  - matrix_name: "mongo-api-version"
     matrix_spec:
       ruby: "ruby-3.2"
-      mongodb-version: '5.0'
+      mongodb-version: '7.0'
       topology: standalone
       api-version-required: yes
-      os: rhel8
-    display_name: "${mongodb-version} api-version-required ${topology} ${auth-and-ssl} ${ruby}"
+      os: ubuntu2204
+    display_name: "${mongodb-version} api-version-required ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1398,8 +1396,8 @@ buildvariants:
       mongodb-version: "7.0"
       topology: "sharded-cluster"
       single-mongos: single-mongos
-      os: rhel8
-    display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
+      os: ubuntu2204
+    display_name: "${mongodb-version} ${topology} single-mongos ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
@@ -1409,7 +1407,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1420,7 +1418,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: "7.0"
       topology: [replica-set, sharded-cluster]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1431,7 +1429,7 @@ buildvariants:
       mongodb-version: ['3.6', '4.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       storage-engine: mmapv1
-      os: rhel8
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1442,7 +1440,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: "7.0"
       topology: '*'
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1453,7 +1451,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} fork ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1464,7 +1462,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
       mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1475,7 +1473,7 @@ buildvariants:
       ruby: ["ruby-2.7"]
       mongodb-version: ['4.2', '4.0', '3.6']
       topology: replica-set
-      os: rhel8
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1486,7 +1484,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: ["6.0", "5.3"]
       topology: replica-set
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1495,14 +1493,9 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: "x509"
       ruby: "ruby-3.2"
-      # needs the latest_5x_mdb because run-tests.sh uses `mongo` to configure
-      # the server for certain auth mechanisms. Once run-tests.sh is made smart
-      # enough to install mongosh, and then use either mongo or mongosh
-      # (depending on server version and what's available), we can bump this to
-      # the latest stable db version.
-      mongodb-version: "5.3"
+      mongodb-version: "7.0"
       topology: standalone
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1513,7 +1506,7 @@ buildvariants:
       ruby: jruby-9.4
       mongodb-version: "7.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1525,7 +1518,7 @@ buildvariants:
       mongodb-version: "7.0"
       topology: "replica-set"
       compressor: 'zlib'
-      os: rhel8
+      os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1537,7 +1530,7 @@ buildvariants:
       mongodb-version: "7.0"
       topology: "replica-set"
       compressor: 'snappy'
-      os: rhel8
+      os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1553,7 +1546,7 @@ buildvariants:
       mongodb-version: "7.0"
       topology: "replica-set"
       compressor: 'zstd'
-      os: rhel8
+      os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1564,7 +1557,7 @@ buildvariants:
       mongodb-version: "7.0"
       topology: replica-set
       as: as
-      os: rhel8
+      os: ubuntu2204
     display_name: "AS ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1575,7 +1568,7 @@ buildvariants:
       mongodb-version: "7.0"
       topology: replica-set
       bson: "*"
-      os: rhel8
+      os: ubuntu2204
     display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1594,7 +1587,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: "7.0"
       topology: standalone
-      os: rhel8
+      os: ubuntu2204
       auth-and-ssl: kerberos
     display_name: "Kerberos Tests"
     tasks:
@@ -1606,7 +1599,7 @@ buildvariants:
       ruby: "ruby-3.2"
       topology: [replica-set, sharded-cluster]
       mongodb-version: [ 'latest', '7.0' ]
-      os: rhel8
+      os: ubuntu2204
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tasks:
@@ -1618,7 +1611,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: [replica-set, sharded-cluster]
       mongodb-version: [ '6.0', '4.4', '4.2', '4.0' ]
-      os: rhel8
+      os: ubuntu1804
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tasks:
@@ -1649,7 +1642,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1662,7 +1655,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
     tasks:
@@ -1675,7 +1668,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
     tasks:
@@ -1691,7 +1684,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1705,7 +1698,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1719,7 +1712,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1733,7 +1726,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1747,7 +1740,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1761,7 +1754,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1775,7 +1768,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1789,7 +1782,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1803,7 +1796,7 @@ buildvariants:
       ruby: ["ruby-3.2", "ruby-2.7"]
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1823,7 +1816,7 @@ buildvariants:
       ruby: jruby-9.4
       topology: standalone
       mongodb-version: "7.0"
-      os: rhel8
+      os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -1833,7 +1826,7 @@ buildvariants:
       ruby: "ruby-3.2"
       fle: helper
       topology: standalone
-      os: rhel8
+      os: ubuntu2204
       mongodb-version: "7.0"
     display_name: "GCP KMS"
     tasks:
@@ -1855,7 +1848,7 @@ buildvariants:
   - matrix_name: atlas-full
     matrix_spec:
       ruby: "ruby-3.2"
-      os: rhel8
+      os: ubuntu2204
     display_name: "Atlas (Full)"
     tasks:
       - name: testatlas_full_task_group
@@ -1863,7 +1856,7 @@ buildvariants:
   - matrix_name: "atlas"
     matrix_spec:
       ruby: ["ruby-3.2", "ruby-3.1", "ruby-3.0", "ruby-2.7", "jruby-9.4", "jruby-9.3"]
-      os: rhel8
+      os: ubuntu2204
     display_name: "Atlas tests ${ruby}"
     tasks:
        - name: testatlas_task_group
@@ -1893,7 +1886,7 @@ buildvariants:
 
   - matrix_name: "aws-lambda"
     matrix_spec:
-      ruby: "ruby-3.2"
+      ruby: 'ruby-3.2'
       os: ubuntu2204
     display_name: "AWS Lambda"
     tasks:
