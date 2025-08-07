@@ -181,8 +181,6 @@ describe 'Client after reconnect' do
       end
 
       around do |example|
-        require 'support/dns'
-
         rules = [
           ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
             [0, 0, 2799, 'localhost.test.build.10gen.cc'],
