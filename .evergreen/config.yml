@@ -1407,7 +1407,7 @@ buildvariants:
       ruby: "ruby-3.2"
       mongodb-version: ["6.0", "5.0"]
       topology: replica-set
-      os: ubuntu2204
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1507,25 +1507,13 @@ buildvariants:
     tasks:
       - name: "test-kerberos"
 
-  - matrix_name: "fle-latest"
+  - matrix_name: "fle"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: "ruby-3.2"
       topology: [replica-set, sharded-cluster]
-      mongodb-version: [ 'latest', '7.0' ]
+      mongodb-version: [ '6.0', '7.0' ]
       os: ubuntu2204
-      fle: helper
-    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-    tasks:
-      - name: "test-fle"
-
-  - matrix_name: "fle"
-    matrix_spec:
-      auth-and-ssl: "noauth-and-nossl"
-      ruby: ["ruby-3.2", "ruby-2.7"]
-      topology: [replica-set, sharded-cluster]
-      mongodb-version: [ '6.0', '4.4', '4.2', '4.0' ]
-      os: ubuntu1804
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tasks:
