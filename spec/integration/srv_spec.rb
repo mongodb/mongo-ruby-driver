@@ -12,10 +12,6 @@ describe 'SRV lookup' do
     # NotImplementedError: recvmsg_nonblock is not implemented
     fails_on_jruby
 
-    before(:all) do
-      require 'support/dns'
-    end
-
     let(:uri) do
       "mongodb+srv://test-fake.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}&tlsInsecure=true"
     end
