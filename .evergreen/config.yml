@@ -1234,7 +1234,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-3.2"
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: ["7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
@@ -1244,7 +1244,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-3.2", "ruby-3.1", "jruby-9.4"]
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: ["7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${ruby}"
@@ -1254,7 +1254,7 @@ buildvariants:
   - matrix_name: "mongo-recent-arm"
     matrix_spec:
       ruby: "ruby-3.2"
-      mongodb-version: ["latest", "7.0", "6.0"]
+      mongodb-version: ["7.0", "6.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204-arm
     display_name: "${mongodb-version} ${os} ${topology} ${ruby}"
