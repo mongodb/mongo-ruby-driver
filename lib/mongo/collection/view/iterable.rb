@@ -89,7 +89,15 @@ module Mongo
             view: self
           )
           op = initial_query_op(session)
-          tracer.trace_operation('get_more', op, context) do
+          op_name = case op
+                    when Mongo::Operation::Find
+                      'find'
+                    when Mongo::Operation::Aggregate
+                      'aggregate'
+                    else
+                      op.class.name.split('::').last.downcase
+                    end
+          tracer.trace_operation(op_name, op, context) do
             if respond_to?(:write?, true) && write?
               server = server_selector.select_server(cluster, nil, session, write_aggregation: true)
               result = send_initial_query(server, context)

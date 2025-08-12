@@ -200,7 +200,7 @@ module Unified
           if observe_spans
             opts[:tracing] = {
               enabled: true,
-              tracer: tracer,
+              # tracer: tracer,
             }
           end
 

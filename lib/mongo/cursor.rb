@@ -514,6 +514,12 @@ module Mongo
     end
 
     def execute_operation(op, context: nil)
+      op_name = case op
+                when Mongo::Operation::GetMore
+                  'get_more'
+                when Mongo::Operation::Close
+                  'close'
+                end
       op_context = context || possibly_refreshed_context
       tracer.trace_operation('find', op, op_context) do
         if @connection.nil?
