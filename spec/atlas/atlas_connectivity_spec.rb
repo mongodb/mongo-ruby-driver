@@ -62,7 +62,7 @@ describe 'Atlas connectivity' do
         end
 
         after do
-          client_cert.unlink if client_cert && client_cert.path
+          client_cert.unlink if client_cert
         end
 
         include_examples 'atlas connectivity test', uri_var
