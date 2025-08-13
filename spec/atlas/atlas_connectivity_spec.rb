@@ -4,11 +4,11 @@ require 'lite_spec_helper'
 require 'base64'
 require 'tempfile'
 
-RSpec.shared_examples 'atlas connectivity test' do |env_var|
-  skip "Environment variable #{env_var} is not set" unless ENV[env_var]
-
+RSpec.shared_examples 'atlas connectivity test' do
   after do
     client.close
+  rescue StandardError
+    # no-op
   end
 
   it 'runs hello successfully' do
@@ -18,6 +18,10 @@ RSpec.shared_examples 'atlas connectivity test' do |env_var|
 end
 
 describe 'Atlas connectivity' do
+  before do
+    skip 'These tests must be run against a live Atlas cluster' unless ENV['ATLAS_TESTING']
+  end
+
   context 'with regular authentication' do
     regular_auth_env_vars = %w[
       ATLAS_REPLICA_SET_URI
@@ -27,12 +31,17 @@ describe 'Atlas connectivity' do
       ATLAS_TLS12_URI
     ]
 
-    regular_auth_env_vars.each do |var|
-      describe "Connecting to #{var}" do
-        let(:uri) { ENV[var] }
+    regular_auth_env_vars.each do |uri_var|
+      describe "Connecting to #{uri_var}" do
+        before do
+          raise "Environment variable #{uri_var} is not set" unless ENV[uri_var]
+        end
+
+        let(:uri) { ENV[uri_var] }
+
         let(:client) { Mongo::Client.new(uri) }
 
-        include_examples 'atlas connectivity test', var
+        include_examples 'atlas connectivity test'
       end
     end
   end
@@ -45,11 +54,15 @@ describe 'Atlas connectivity' do
 
     x509_auth_env_vars.each do |uri_var, cert_var|
       describe "Connecting to #{uri_var} with certificate" do
+        before do
+          raise "Environment variable #{uri_var} is not set" unless ENV[uri_var]
+        end
+
         let(:client_cert) do
           decoded = Base64.strict_decode64(ENV[cert_var])
           cert_file = Tempfile.new([ 'x509-cert', '.pem' ])
           cert_file.write(decoded)
-          File.chmod(0600, cert_file.path)
+          File.chmod(0o600, cert_file.path)
           cert_file.close
           cert_file
         end
@@ -63,10 +76,10 @@ describe 'Atlas connectivity' do
         end
 
         after do
-          client_cert.unlink if client_cert
+          client_cert&.unlink
         end
 
-        include_examples 'atlas connectivity test', uri_var
+        include_examples 'atlas connectivity test'
       end
     end
   end

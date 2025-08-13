@@ -14,4 +14,6 @@ bundle_install
 
 echo "Running specs"
 
+export ATLAS_TESTING=1
+
 bundle exec rspec spec/atlas -fd
