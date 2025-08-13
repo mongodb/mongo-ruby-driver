@@ -49,6 +49,7 @@ describe 'Atlas connectivity' do
           decoded = Base64.strict_decode64(ENV[cert_var])
           cert_file = Tempfile.new([ 'x509-cert', '.pem' ])
           cert_file.write(decoded)
+          File.chmod(0600, cert_file.path)
           cert_file.close
           cert_file
         end
