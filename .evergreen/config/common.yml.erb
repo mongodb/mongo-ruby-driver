@@ -119,6 +119,10 @@ functions:
             export ATLAS_TLS12_URI="${atlas_tls12_uri}"
             export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
             export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
+            export ATLAS_X509_CERT_BASE64="${atlas_x509_cert_base64}"
+            export ATLAS_X509_URI="${atlas_x509}"
+            export ATLAS_X509_DEV_CERT_BASE64="${atlas_x509_dev_cert_base64}"
+            export ATLAS_X509_DEV_URI="${atlas_x509_dev}"
             export RVM_RUBY="${RVM_RUBY}"
 
             export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
@@ -453,7 +457,16 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-atlas.sh
+          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" \
+          ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} \
+          ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} \
+          ATLAS_TLS12_URI=${atlas_tls12_uri} ATLAS_SERVERLESS_URI=${atlas_serverless_uri} \
+          ATLAS_SERVERLESS_LB_URI=${atlas_serverless_lb_uri} \
+          ATLAS_X509_CERT_BASE64="${atlas_x509_cert_base64}" \
+          ATLAS_X509_URI="${atlas_x509}" \
+          ATLAS_X509_DEV_CERT_BASE64="${atlas_x509_dev_cert_base64}" \
+          ATLAS_X509_DEV_URI="${atlas_x509_dev}" \
+          .evergreen/run-tests-atlas.sh
 
   "run serverless tests":
     - command: shell.exec
@@ -514,56 +527,6 @@ task_groups:
       - func: "upload test results"
     tasks:
       - "test-serverless"
-
-  - name: testatlas_task_group
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800 # 30 minutes
-    setup_group:
-      - func: fetch source
-      - func: create expansions
-      - command: shell.exec
-        params:
-          shell: "bash"
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-
-            echo "Setting up Atlas cluster"
-
-            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
-              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
-              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
-              DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
-              DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
-              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
-              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
-              MONGODB_VERSION="7.0" \
-              task_id="${task_id}" \
-              execution="${execution}" \
-              $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
-
-              echo "MONGODB_URI=${MONGODB_URI}"
-      - command: expansions.update
-        params:
-          file: src/atlas-expansion.yml
-    teardown_group:
-      - command: shell.exec
-        params:
-          shell: "bash"
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-
-            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
-              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
-              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
-              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
-              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
-              task_id="${task_id}" \
-              execution="${execution}" \
-              $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
-    tasks:
-      - test-atlas
 
   - name: testatlas_full_task_group
     setup_group_can_fail_task: true
