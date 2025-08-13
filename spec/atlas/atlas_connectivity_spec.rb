@@ -46,7 +46,7 @@ describe 'Atlas connectivity' do
     x509_auth_env_vars.each do |uri_var, cert_var|
       describe "Connecting to #{uri_var} with certificate" do
         let(:client_cert) do
-          decoded = Base64.decode64(ENV[cert_var])
+          decoded = Base64.strict_decode64(ENV[cert_var])
           cert_file = Tempfile.new([ 'x509-cert', '.pem' ])
           cert_file.write(decoded)
           cert_file.close
