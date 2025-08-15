@@ -130,6 +130,8 @@ module Mongo
     # @since 2.5.0
     attr_reader :operation_time
 
+    def_delegators :client, :tracer
+
     # Sets the dirty state to the given value for the underlying server
     # session. If there is no server session, this does nothing.
     #
