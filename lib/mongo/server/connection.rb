@@ -139,6 +139,8 @@ module Mongo
       # across all connections.
       attr_reader :global_id
 
+      def_delegators :server, :tracer
+
       # The connection pool from which this connection was created.
       # May be nil.
       #

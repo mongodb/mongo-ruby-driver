@@ -45,7 +45,7 @@ module Mongo
                                    end
           @otel_tracer = otel_tracer || initialize_tracer
           @operation_tracer = OperationTracer.new(@otel_tracer, self)
-          @command_tracer = CommandTracer.new(@otel_tracer, query_text_max_length: @query_text_max_length)
+          @command_tracer = CommandTracer.new(@otel_tracer, self, query_text_max_length: @query_text_max_length)
         end
 
         # Whether OpenTelemetry is enabled or not.
@@ -55,17 +55,44 @@ module Mongo
           @enabled
         end
 
-        def trace_operation(name, operation, operation_context, &block)
+        def trace_operation(operation, operation_context, &block)
           return yield unless enabled?
 
-          operation_context.tracer = self
-          @operation_tracer.trace_operation(name, operation, operation_context, &block)
+          @operation_tracer.trace_operation(operation, operation_context, &block)
         end
 
         def trace_command(message, operation_context, connection, &block)
           return yield unless enabled?
 
           @command_tracer.trace_command(message, operation_context, connection, &block)
+        end
+
+        def cursor_context_map
+          @cursor_context_map ||= {}
+        end
+
+        def cursor_map_key(session, cursor_id)
+          return if cursor_id.nil? || session.nil?
+
+          "#{session.id}-#{cursor_id}"
+        end
+
+        def parent_context_for(operation_context, cursor_id)
+          if (key = transaction_map_key(operation_context.session))
+            transaction_context_map[key]
+          elsif (key = cursor_map_key(operation_context.session, cursor_id))
+            cursor_context_map[key]
+          end
+        end
+
+        def transaction_context_map
+          @transaction_context_map ||= {}
+        end
+
+        def transaction_map_key(session)
+          return if session.nil? || session.implicit? || !session.in_transaction?
+
+          "#{session.id}-#{session.txn_num}"
         end
 
         private

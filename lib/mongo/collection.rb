@@ -878,7 +878,7 @@ module Mongo
               :session => session,
               :comment => opts[:comment]
             )
-        tracer.trace_operation('insert_one', operation, context) do
+        tracer.trace_operation(operation, context) do
           write_with_retry(write_concern, context: context) do |connection, txn_num, context|
             operation.txn_num = txn_num
             operation.execute_with_connection(connection, context: context)

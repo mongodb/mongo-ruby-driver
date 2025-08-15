@@ -17,24 +17,44 @@
 module Mongo
   module Tracing
     module OpenTelemetry
+      # CommandTracer is responsible for tracing MongoDB server commands using OpenTelemetry.
+      #
+      # @api private
       class CommandTracer
-        def initialize(otel_tracer, query_text_max_length: 0)
+        extend Forwardable
+
+        def_delegators :@parent_tracer,
+          :cursor_context_map,
+          :parent_context_for,
+          :transaction_context_map,
+          :transaction_map_key
+
+        def initialize(otel_tracer, parent_tracer, query_text_max_length: 0)
           @otel_tracer = otel_tracer
+          @parent_tracer = parent_tracer
           @query_text_max_length = query_text_max_length
         end
 
-        def trace_command(message, _operation_context, connection)
-          @otel_tracer.in_span(
+        def trace_command(message, operation_context, connection)
+          parent_context = parent_context_for(operation_context, cursor_id(message))
+          span = @otel_tracer.start_span(
             command_span_name(message),
             attributes: span_attributes(message, connection),
+            with_parent: parent_context,
             kind: :client
-          ) do |span, _context|
+          )
+          ::OpenTelemetry::Trace.with_span(span) do |s, c|
+            # TODO: process cursor context if applicable
             yield.tap do |result|
-              if result.respond_to?(:cursor_id) && result.cursor_id.positive?
-                span.set_attribute('db.mongodb.cursor_id', result.cursor_id)
-              end
+              process_cursor_context(result, cursor_id(message), c, s)
             end
           end
+        rescue Exception => e
+          span&.record_exception(e)
+          span&.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{e.class}")
+          raise e
+        ensure
+          span&.finish
         end
 
         private
@@ -42,33 +62,58 @@ module Mongo
         def span_attributes(message, connection)
           {
             'db.system' => 'mongodb',
-            'db.namespace' => message.documents.first['$db'],
+            'db.namespace' => database(message),
             'db.collection.name' => collection_name(message),
-            'db.operation.name' => message.documents.first.keys.first,
+            'db.command.name' => command_name(message),
             'server.port' => connection.address.port,
             'server.address' => connection.address.host,
             'network.transport' => connection.transport.to_s,
             'db.mongodb.server_connection_id' => connection.server.description.server_connection_id,
             'db.mongodb.driver_connection_id' => connection.id,
+            'db.mongodb.cursor_id' => cursor_id(message),
             'db.query.text' => query_text(message)
           }.compact
         end
 
+        def process_cursor_context(result, cursor_id, context, span)
+          if result.respond_to?(:cursor_id) && result.cursor_id.positive?
+            span.set_attribute('db.mongodb.cursor_id', result.cursor_id)
+          end
+        end
+
         def command_span_name(message)
-          message.documents.first.keys.first
+          if (coll_name = collection_name(message))
+            "#{command_name(message)} #{database(message)}.#{coll_name}"
+          else
+            "#{command_name(message)} #{database(message)}"
+          end
         end
 
         def collection_name(message)
           case message.documents.first.keys.first
           when 'getMore'
-            message.documents.first['collection']
+            message.documents.first['collection'].to_s
           else
-            message.documents.first.values.first
+            message.documents.first.values.first.to_s
           end
+        end
+
+        def command_name(message)
+          message.documents.first.keys.first.to_s
+        end
+
+        def database(message)
+          message.documents.first['$db'].to_s
         end
 
         def query_text?
           @query_text_max_length.positive?
+        end
+
+        def cursor_id(message)
+          if command_name(message) == 'getMore'
+            message.documents.first['getMore'].value
+          end
         end
 
         EXCLUDED_KEYS = %w[lsid $db $clusterTime signature].freeze

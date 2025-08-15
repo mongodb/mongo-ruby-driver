@@ -105,11 +105,7 @@ module Mongo
 
       def get_result(connection, context, options = {})
         message = build_message(connection, context)
-        if (tracer = context.tracer)
-          tracer.trace_command(message, context, connection) do
-            result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
-          end
-        else
+        connection.tracer.trace_command(message, context, connection) do
           result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
         end
       end

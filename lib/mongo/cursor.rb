@@ -39,7 +39,6 @@ module Mongo
     def_delegators :@view, :collection
     def_delegators :collection, :client, :database
     def_delegators :@server, :cluster
-    def_delegators :client, :tracer
 
     # @return [ Collection::View ] view The collection view.
     attr_reader :view
@@ -514,19 +513,11 @@ module Mongo
     end
 
     def execute_operation(op, context: nil)
-      op_name = case op
-                when Mongo::Operation::GetMore
-                  'get_more'
-                when Mongo::Operation::Close
-                  'close'
-                end
       op_context = context || possibly_refreshed_context
-      tracer.trace_operation('find', op, op_context) do
-        if @connection.nil?
-          op.execute(@server, context: op_context)
-        else
-          op.execute_with_connection(@connection, context: op_context)
-        end
+      if @connection.nil?
+        op.execute(@server, context: op_context)
+      else
+        op.execute_with_connection(@connection, context: op_context)
       end
     end
 

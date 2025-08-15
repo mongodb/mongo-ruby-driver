@@ -589,8 +589,12 @@ module Mongo
 
       @connect_lock = Mutex.new
       @connect_lock.synchronize do
-        @cluster = Cluster.new(addresses, @monitoring,
-          cluster_options.merge(srv_uri: srv_uri))
+        @cluster = Cluster.new(
+          addresses,
+          @monitoring,
+          tracer,
+          cluster_options.merge(srv_uri: srv_uri)
+        )
       end
 
       begin

@@ -17,61 +17,79 @@
 module Mongo
   module Tracing
     module OpenTelemetry
-      # OperationTracer is responsible for tracing MongoDB operations using OpenTelemetry.
+      # OperationTracer is responsible for tracing MongoDB driver operations using OpenTelemetry.
       #
-      # It provides methods to trace driven operations.
       # @api private
       class OperationTracer
+        extend Forwardable
+
+        def_delegators :@parent_tracer,
+          :cursor_context_map,
+          :parent_context_for,
+          :transaction_context_map,
+          :transaction_map_key
+
         def initialize(otel_tracer, parent_tracer)
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
         end
 
-        def trace_operation(name, operation, operation_context)
-          @otel_tracer.in_span(
-            operation_span_name(name, operation),
-            attributes: span_attributes(name, operation),
+        def trace_operation(operation, operation_context)
+          parent_context = parent_context_for(operation_context, operation.cursor_id)
+          span = @otel_tracer.start_span(
+            operation_span_name(operation),
+            attributes: span_attributes(operation),
+            with_parent: parent_context,
             kind: :client
-          ) do |span, _context|
-            operation_context.tracer = @parent_tracer
+          )
+          ::OpenTelemetry::Trace.with_span(span) do |s, c|
             yield.tap do |result|
-              if result.is_a?(Cursor) && result.id.positive?
-                span.set_attribute('db.mongodb.cursor_id', result.id)
-              end
+              process_cursor_context(result, operation.cursor_id, c, s)
             end
           end
+        rescue Exception => e
+          span&.record_exception(e)
+          span&.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{e.class}")
+          raise e
         ensure
-          operation_context.tracer = nil
+          span&.finish
         end
 
         private
 
-        # Returns a hash of attributes for the OpenTelemetry span for the operation.
-        #
-        # @param name [String] The name of the operation.
-        # @param operation [Operation] The operation being traced.
-        # @return [Hash] A hash of attributes for the span.
-        def span_attributes(name, operation)
+        def operation_name(operation)
+          operation.class.name.split('::').last
+        end
+
+        def span_attributes(operation)
           {
             'db.system' => 'mongodb',
             'db.namespace' => operation.db_name.to_s,
             'db.collection.name' => operation.coll_name.to_s,
-            'db.operation.name' => name,
-            'db.operation.summary' => operation_span_name(name, operation),
-            'db.cursor.id' => operation.cursor_id,
+            'db.operation.name' => operation_name(operation),
+            'db.operation.summary' => operation_span_name(operation),
+            'db.mongodb.cursor_id' => operation.cursor_id,
           }.compact
         end
 
-        # Returns the name of the span for the operation.
-        #
-        # @param name [String] The name of the operation.
-        # @param operation [Operation] The operation being traced.
-        # # @return [String] The name of the span.
-        def operation_span_name(name, operation)
+        def process_cursor_context(result, cursor_id, context, span)
+          return unless result.is_a?(Cursor)
+
+          if result.id.zero?
+            # If the cursor is closed, remove it from the context map.
+            cursor_context_map.delete(cursor_id)
+          elsif result.id && cursor_id.nil?
+            # New cursor created, store its context.
+            cursor_context_map[result.id] = context
+            span.set_attribute('db.mongodb.cursor_id', result.id)
+          end
+        end
+
+        def operation_span_name(operation)
           if operation.coll_name
-            "#{name} #{operation.db_name}.#{operation.coll_name}"
+            "#{operation_name(operation)} #{operation.db_name}.#{operation.coll_name}"
           else
-            "#{operation.db_name}.#{name}"
+            "#{operation_name(operation)} #{operation.db_name}"
           end
         end
       end
