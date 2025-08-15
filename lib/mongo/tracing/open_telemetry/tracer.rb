@@ -74,14 +74,16 @@ module Mongo
         def cursor_map_key(session, cursor_id)
           return if cursor_id.nil? || session.nil?
 
-          "#{session.id}-#{cursor_id}"
+          "#{session.session_id['id'].to_uuid}-#{cursor_id}"
         end
 
         def parent_context_for(operation_context, cursor_id)
           if (key = transaction_map_key(operation_context.session))
             transaction_context_map[key]
-          elsif (key = cursor_map_key(operation_context.session, cursor_id))
-            cursor_context_map[key]
+          elsif (_key = cursor_map_key(operation_context.session, cursor_id))
+            # We return nil here unless we decide how to nest cursor operations.
+            nil
+            # cursor_context_map[key]
           end
         end
 
@@ -92,7 +94,7 @@ module Mongo
         def transaction_map_key(session)
           return if session.nil? || session.implicit? || !session.in_transaction?
 
-          "#{session.id}-#{session.txn_num}"
+          "#{session.session_id['id'].to_uuid}-#{session.txn_num}"
         end
 
         private
