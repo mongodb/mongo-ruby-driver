@@ -616,7 +616,9 @@ module Mongo
         return
       end
 
-      if options[:generation] && options[:generation] < pool&.generation
+      # NOTE: You cannot use safe navigation here because if pool is nil you end
+      # up trying to evaluate Integer < nil which is invalid.
+      if options[:generation] && pool && options[:generation] < pool.generation
         return
       end
 
