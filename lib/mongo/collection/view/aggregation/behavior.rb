@@ -88,7 +88,7 @@ module Mongo
             @view.send(:server_selector)
           end
 
-          def aggregate_spec(session, read_preference)
+          def aggregate_spec(session, read_preference = nil)
             Builder::Aggregation.new(
               pipeline,
               view,
