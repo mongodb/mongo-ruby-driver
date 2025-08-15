@@ -76,7 +76,7 @@ module Mongo
         end
 
         def process_cursor_context(result, cursor_id, context, span)
-          if result.respond_to?(:cursor_id) && result.cursor_id.positive?
+          if result.has_cursor_id? && result.cursor_id.positive?
             span.set_attribute('db.mongodb.cursor_id', result.cursor_id)
           end
         end
