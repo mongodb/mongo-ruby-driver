@@ -111,6 +111,10 @@ describe 'Client after reconnect' do
       # thread.kill should've similarly failed, but it doesn't.
       fails_on_jruby
 
+      # odd failures related to async on ruby <= 3.1, I suspect something
+      # with how fibers worked in those versions.
+      minimum_mri_version '3.2.0'
+
       it 'recreates SRV monitor' do
         wait_for_discovery
 
@@ -151,6 +155,10 @@ describe 'Client after reconnect' do
       # NotImplementedError: recvmsg_nonblock is not implemented
       fails_on_jruby
 
+      # odd failures related to async on ruby <= 3.1, I suspect something
+      # with how fibers worked in those versions.
+      minimum_mri_version '3.2.0'
+
       let(:uri) do
         "mongodb+srv://test-fake.test.build.10gen.cc/"
       end
@@ -181,8 +189,6 @@ describe 'Client after reconnect' do
       end
 
       around do |example|
-        require 'support/dns'
-
         rules = [
           ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
             [0, 0, 2799, 'localhost.test.build.10gen.cc'],

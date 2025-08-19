@@ -2,7 +2,7 @@
 
 task driver_bench: %i[ driver_bench:data driver_bench:run ]
 
-SPECS_REPO_URI = 'git@github.com:mongodb/specifications.git'
+SPECS_REPO_URI = 'https://github.com/mongodb/specifications'
 SPECS_PATH = File.expand_path('../../../specifications', __dir__)
 DRIVER_BENCH_DATA = File.expand_path('../../data/driver_bench', __dir__)
 
