@@ -184,15 +184,15 @@ axes:
       - id: ubuntu2204
         display_name: "Ubuntu 22.04"
         run_on: ubuntu2204-small
+      - id: ubuntu2204-arm
+        display_name: "Ubuntu 22.04 ARM"
+        run_on: ubuntu2204-arm64-small
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
-      - id: rhel8
-        display_name: "RHEL 8"
-        run_on: rhel80-small
-      - id: rhel8-arm
-        display_name: "RHEL 8 ARM64"
-        run_on: rhel82-arm64-small
+      - id: ubuntu1804
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-small
 
   - id: docker-distro
     display_name: Docker Distro
@@ -297,7 +297,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: rhel80-small
+        run_on: ubuntu1804-small
         variables:
           MMAPV1: 'true'
 

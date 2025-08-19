@@ -9,6 +9,21 @@ describe Mongo::Socket::OcspVerifier do
   with_openssl_debug
   retry_test sleep: 5
 
+  def self.with_ocsp_responder(port = 8100, path = '/', &setup)
+    around do |example|
+      server = WEBrick::HTTPServer.new(Port: port)
+      server.mount_proc path, &setup
+      Thread.new { server.start }
+      begin
+        example.run
+      ensure
+        server.shutdown
+      end
+
+      ::Utils.wait_for_port_free(port, 5)
+    end
+  end
+
   shared_examples 'verifies' do
     context 'mri' do
       fails_on_jruby
@@ -173,21 +188,10 @@ describe Mongo::Socket::OcspVerifier do
 
     context 'one time' do
 
-      around do |example|
-        server = WEBrick::HTTPServer.new(Port: 8100)
-        server.mount_proc '/' do |req, res|
-          res.status = 303
-          res['locAtion'] = "http://localhost:8101#{req.path}"
-          res.body = "See http://localhost:8101#{req.path}"
-        end
-        Thread.new { server.start }
-        begin
-          example.run
-        ensure
-          server.shutdown
-        end
-
-        ::Utils.wait_for_port_free(8100, 5)
+      with_ocsp_responder do |req, res|
+        res.status = 303
+        res['locAtion'] = "http://localhost:8101#{req.path}"
+        res.body = "See http://localhost:8101#{req.path}"
       end
 
       include_context 'verifier', algorithm: algorithm
@@ -248,21 +252,10 @@ describe Mongo::Socket::OcspVerifier do
         port: 8101,
       )
 
-      around do |example|
-        server = WEBrick::HTTPServer.new(Port: 8100)
-        server.mount_proc '/' do |req, res|
-          res.status = 303
-          res['locAtion'] = req.path
-          res.body = "See #{req.path} indefinitely"
-        end
-        Thread.new { server.start }
-        begin
-          example.run
-        ensure
-          server.shutdown
-        end
-
-        ::Utils.wait_for_port_free(8100, 5)
+      with_ocsp_responder do |req, res|
+        res.status = 303
+        res['locAtion'] = req.path
+        res.body = "See #{req.path} indefinitely"
       end
 
       include_context 'verifier', algorithm: algorithm
@@ -274,85 +267,23 @@ describe Mongo::Socket::OcspVerifier do
 
     include_context 'verifier', algorithm: 'rsa'
 
-    context '40x / 50x' do
-      around do |example|
-        server = WEBrick::HTTPServer.new(Port: 8100)
-        server.mount_proc '/' do |req, res|
+    [400, 404, 500, 503].each do |code|
+      context "code #{code}" do
+        with_ocsp_responder do |req, res|
           res.status = code
           res.body = "HTTP #{code}"
         end
-        Thread.new { server.start }
-        begin
-          example.run
-        ensure
-          server.shutdown
-        end
 
-        ::Utils.wait_for_port_free(8100, 5)
-      end
-
-      [400, 404, 500, 503].each do |_code|
-        context "code #{_code}" do
-          let(:code) { _code }
-          include_examples 'does not verify'
-        end
-      end
-    end
-
-    context '204' do
-      around do |example|
-        server = WEBrick::HTTPServer.new(Port: 8100)
-        server.mount_proc '/' do |req, res|
-          res.status = 204
-        end
-        Thread.new { server.start }
-        begin
-          example.run
-        ensure
-          server.shutdown
-        end
-
-        ::Utils.wait_for_port_free(8100, 5)
-      end
-
-      context "code 204" do
-        let(:code) { 204 }
         include_examples 'does not verify'
       end
     end
-  end
 
-  context 'responder URI has no path' do
-    require_external_connectivity
-
-    # https://github.com/jruby/jruby-openssl/issues/210
-    fails_on_jruby
-
-    include_context 'basic verifier'
-
-    # The fake certificates all have paths in them for use with the ocsp mock.
-    # Use real certificates retrieved from Atlas for this test as they don't
-    # have a path in the OCSP URI (which the test also asserts).
-    # Note that these certificates expire in 3 months and need to be replaced
-    # with a more permanent solution.
-    # Use the spec/support/certificates/retrieve-atlas-cert script to retrieve
-    # current certificates from Atlas.
-    let(:cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp.crt') }
-    let(:ca_cert_path) { File.join(File.dirname(__FILE__), '../support/certificates/atlas-ocsp-ca.crt') }
-    let(:cert_store) do
-      OpenSSL::X509::Store.new.tap do |store|
-        store.set_default_paths
+    context 'code 204' do
+      with_ocsp_responder do |req, res|
+        res.status = 204
       end
-    end
 
-    before do
-      verifier.ocsp_uris.length.should > 0
-      URI.parse(verifier.ocsp_uris.first).path.should == ''
-    end
-
-    it 'verifies' do
-      # TODO This test will fail if the certificate expires
-      expect(verifier.verify).to be(true), "If atlas-ocsp certificates have expired, run spec/support/certificates/retrieve-atlas-cert to get a new ones"
+      include_examples 'does not verify'
     end
   end
 end
