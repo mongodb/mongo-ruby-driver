@@ -5,5 +5,5 @@ module Mongo
   #
   # Note that this file is automatically updated via `rake candidate:create`.
   # Manual changes to this file will be overwritten by that rake task.
-  VERSION = '2.20.1'
+  VERSION = '2.20.2'
 end
