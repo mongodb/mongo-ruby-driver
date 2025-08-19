@@ -519,9 +519,9 @@ buildvariants:
     matrix_spec:
       ruby: <%= supported_mri_rubies_3_ubuntu %>
       os: ubuntu2204
-    display_name: "Atlas tests ${ruby}"
+    display_name: "Atlas  connectivity tests ${ruby}"
     tasks:
-       - name: testatlas_task_group
+       - name: test-atlas
 
   - matrix_name: "aws-lambda"
     matrix_spec:
