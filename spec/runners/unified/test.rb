@@ -37,6 +37,7 @@ module Unified
       @description = @test_spec.use('description')
       @outcome = @test_spec.use('outcome')
       @expected_events = @test_spec.use('expectEvents')
+      @expected_tracing_messages = @test_spec.use('expectTracingMessages')
       @expected_spans = @test_spec.use('expectSpans')
       @skip_reason = @test_spec.use('skipReason')
       if req = @test_spec.use('runOnRequirements')
@@ -55,6 +56,7 @@ module Unified
       end
       @test_spec.freeze
       @subscribers = {}
+      @tracers = {}
       @observe_sensitive = {}
       @options = opts
     end
@@ -196,17 +198,24 @@ module Unified
             end
           end
 
-          observe_spans = spec.use('observeSpans')
-          if observe_spans
+          observe_tracing_messages = spec.use('observeTracingMessages')
+          tracer = ::Tracing::Tracer.new
+          if observe_tracing_messages
             opts[:tracing] = {
               enabled: true,
-              # tracer: tracer,
+              tracer: tracer,
             }
+            if observe_tracing_messages['enableCommandPayload']
+              # Set the maximum length of the query text to reasonably high
+              # value so that we can capture the full query text
+              opts[:tracing][:query_text_max_length] = 4096
+            end
           end
 
           create_client(**opts).tap do |client|
             @observe_sensitive[id] = spec.use('observeSensitiveCommands')
             @subscribers[client] ||= subscriber
+            @tracers[client] ||= tracer
           end
         when 'database'
           client = entities.get(:client, spec.use!('client'))
@@ -610,10 +619,6 @@ module Unified
       BSON::String.const_defined?(:IllegalKey) ?
         BSON::String.const_get(:IllegalKey) :
         BSON::Error
-    end
-
-    def tracer
-      @tracer ||= ::Tracing::Tracer.new
     end
   end
 end

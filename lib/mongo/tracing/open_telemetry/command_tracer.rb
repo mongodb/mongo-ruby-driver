@@ -65,6 +65,7 @@ module Mongo
             'db.namespace' => database(message),
             'db.collection.name' => collection_name(message),
             'db.command.name' => command_name(message),
+            'db.query.summary' => command_span_name(message),
             'server.port' => connection.address.port,
             'server.address' => connection.address.host,
             'network.transport' => connection.transport.to_s,

@@ -99,6 +99,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
               test.run
               test.assert_outcome
               test.assert_events
+              test.assert_tracing_messages
               test.cleanup
             end
           end

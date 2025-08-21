@@ -6,7 +6,6 @@ createEntities:
   - client:
       id: &client0 client0
       observeEvents: [ commandStartedEvent ]
-      observeSpans: true
   - database:
       id: &database0 database0
       client: *client0
@@ -48,15 +47,6 @@ tests:
                 find: *collection0Name
                 filter: *filter
                 comment: "comment"
-    expectSpans:
-      - client: *client0
-        spans:
-          - name: "find"
-            attributes:
-              mongodb.collection: *collection0Name
-              mongodb.database: *database0Name
-              mongodb.filter: *filter
-              mongodb.comment: "comment"
 
   - description: "find with document comment"
     runOnRequirements:

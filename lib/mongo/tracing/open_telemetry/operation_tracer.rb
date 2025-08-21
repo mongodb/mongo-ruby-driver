@@ -58,7 +58,7 @@ module Mongo
         private
 
         def operation_name(operation)
-          operation.class.name.split('::').last
+          operation.class.name.split('::').last.downcase
         end
 
         def span_attributes(operation)
