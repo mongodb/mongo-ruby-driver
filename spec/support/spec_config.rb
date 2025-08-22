@@ -162,19 +162,9 @@ class SpecConfig
     ENV.key?('OCSP_CONNECTIVITY') && ENV['OCSP_CONNECTIVITY'] != ''
   end
 
-  # Detect whether specs are running against Mongodb Atlas serverless instance.
-  # This method does not do any magic, it just checks whether environment
-  # variable SERVERLESS is set. This is a recommended way to inform spec runners
-  # that they are running against a serverless instance
-  #
-  # @return [ true | false ] Whether specs are running against a serverless instance.
-  def serverless?
-    !!ENV['SERVERLESS']
-  end
-
   def kill_all_server_sessions?
-    !serverless? && # Serverless instances do not support killAllSessions command.
-      ClusterConfig.instance.fcv_ish >= '3.6'
+    allow = ENV['KILL_ALL_SERVER_SESSIONS'] != '0'
+    allow && ClusterConfig.instance.fcv_ish >= '3.6'
   end
 
   # Test suite configuration
@@ -670,10 +660,6 @@ EOT
 
   # Get the default test user for the suite on versions 2.6 and higher.
   def test_user
-    # When testing against a serverless instance, we are not allowed to create
-    # new users, we just have one user for everyhing.
-    return root_user if serverless?
-
     Mongo::Auth::User.new(
       database: 'admin',
       user: 'ruby-test-user',
@@ -764,4 +750,14 @@ EOT
   def single_mongos?
     %w(1 true yes).include?(ENV['SINGLE_MONGOS'])
   end
+
+  # serverless is deprecated, but it still gets called from some places
+  # (see Mrss::Constraints), etc.
+  module DeprecatedServerless
+    def serverless?
+      false
+    end
+  end
+
+  prepend DeprecatedServerless
 end
