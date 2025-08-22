@@ -13,7 +13,7 @@ set_env_ruby
 bundle_install
 
 ATLAS_URI=$MONGODB_URI \
-  SERVERLESS=1 \
+  KILL_ALL_SERVER_SESSIONS=0 \
   EXAMPLE_TIMEOUT=600 \
   bundle exec rspec -fd spec/integration/search_indexes_prose_spec.rb
 
