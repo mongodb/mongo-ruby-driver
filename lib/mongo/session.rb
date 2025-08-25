@@ -289,14 +289,6 @@ module Mongo
     # @api private
     attr_accessor :recovery_token
 
-    # Error message indicating that the session was retrieved from a client with a different cluster than that of the
-    # client through which it is currently being used.
-    #
-    # @since 2.5.0
-    MISMATCHED_CLUSTER_ERROR_MSG = 'The configuration of the client used to create this session does not match that ' +
-        'of the client owning this operation. Please only use this session for operations through its parent ' +
-        'client.'.freeze
-
     # Error message describing that the session cannot be used because it has already been ended.
     #
     # @since 2.5.0
@@ -1255,9 +1247,7 @@ module Mongo
     end
 
     def check_matching_cluster!(client)
-      if @client.cluster != client.cluster
-        raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
-      end
+      raise Mongo::Error::SessionClusterMismatched.new if @client.cluster != client.cluster
     end
 
     def check_transactions_supported!
