@@ -140,9 +140,14 @@ module Unified
       end
     end
 
-    def assert_document_matches(actual, expected, msg)
-      unless actual == expected
-        raise Error::ResultMismatch, "#{msg} does not match"
+    def assert_document_matches(actual, expected, msg, as_root: false)
+      if !as_root && actual.keys.to_set != expected.keys.to_set
+        raise Error::ResultMismatch, "#{msg} keys do not match: expected #{expected.keys}, actual #{actual.keys}"
+      end
+      expected.each do |key, expected_value|
+        raise Error::ResultMismatch, "#{msg} has no key #{key}" unless actual.key?(key)
+        actual_value = actual[key]
+        assert_value_matches(actual_value, expected_value, "#{msg} key #{key}")
       end
     end
 
@@ -383,6 +388,14 @@ module Unified
           if actual.nil? || actual >= expected_v
             raise Error::ResultMismatch, "Actual value #{actual} should be less than #{expected_v}"
           end
+        when '$$matchAsDocument'
+          actual_v = BSON::ExtJSON.parse(actual)
+          match_as_root = false
+          if expected_v.keys.first == '$$matchAsRoot'
+            expected_v = expected_v.values.first
+            match_as_root = true
+          end
+          assert_document_matches(actual_v, expected_v, msg, as_root: match_as_root)
         else
           raise NotImplementedError, "Unknown operator #{operator}"
         end
@@ -390,6 +403,45 @@ module Unified
         if actual != expected
           raise Error::ResultMismatch, "Mismatch for #{msg}: expected #{expected}, have #{actual}"
         end
+      end
+    end
+
+    def assert_tracing_messages
+      return unless @expected_tracing_messages
+      @expected_tracing_messages.each do |spec|
+        spec = UsingHash[spec]
+        client_id = spec.use!('client')
+        client = entities.get(:client, client_id)
+        tracer = @tracers.fetch(client)
+        expected_spans = spec.use!('spans')
+        ignore_extra_spans = if ignore = spec.use('ignoreExtraSpans')
+          # Ruby treats 0 as truthy, whereas the spec tests use it as falsy.
+          ignore == 0 ? false : ignore
+        else
+          false
+        end
+        actual_spans = tracer.span_hierarchy
+        if (!ignore_extra_spans && actual_spans.length != expected_spans.length) ||
+            (ignore_extra_spans && actual_spans.length < expected_spans.length)
+          raise Error::ResultMismatch, "Span count mismatch: expected #{expected_spans.length}, actual #{actual_spans.length}\nExpected: #{expected_spans}\nActual: #{actual_spans}"
+        end
+        expected_spans.each_with_index do |expected, i|
+          assert_span_matches(actual_spans[i], expected)
+        end
+      end
+    end
+
+    def assert_span_matches(actual, expected)
+      assert_eq(actual.name, expected.use!('name'), 'Span name does not match')
+      expected_attributes = UsingHash[expected.use!('tags')]
+      expected_attributes.each do |key, value|
+        actual_value = actual.attributes[key]
+        assert_value_matches(actual_value, value, "Span attribute #{key}")
+      end
+
+      expected_nested_spans = expected.use('nested') || []
+      expected_nested_spans.each_with_index do |nested_expected, i|
+        assert_span_matches(actual.nested[i], nested_expected)
       end
     end
   end
