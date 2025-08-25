@@ -58,7 +58,13 @@ module Mongo
       def ensure_ids(documents)
         @ids = []
         documents.collect do |doc|
-          doc_with_id = has_id?(doc) ? doc : doc.merge(_id: id_generator.generate)
+          doc_with_id = if has_id?(doc)
+                          doc
+                        else
+                          doc.delete('_id')
+                          doc.merge(_id: id_generator.generate)
+                        end
+
           @ids << id(doc_with_id)
           doc_with_id
         end
