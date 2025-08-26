@@ -32,6 +32,21 @@ Resources:
           Properties:
             Path: /mongodb
             Method: get
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt DeadLetterQueue.Arn
+      KmsKeyArn: "PLACEHOLDER_FOR_YOUR_KMS_KEY_ARN"
+      ReservedConcurrentExecutions: 100
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-xxx
+        SubnetIds:
+          - subnet-xxx
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      KmsMasterKeyId: alias/aws/sqs
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
