@@ -1049,7 +1049,7 @@ module Mongo
     #   May be specified as a Hash (e.g. { _id: 1 }) or a String (e.g. "_id_").
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
-    # @option opts [ Hash ] :sort Specifies which document the operation
+    # @option options [ Hash ] :sort Specifies which document the operation
     #   replaces if the query matches multiple documents. The first document
     #   matched by the sort order will be replaced.
     #   This option is only supported by servers >= 8.0. Older servers will
