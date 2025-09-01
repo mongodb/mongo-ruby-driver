@@ -1,4 +1,4 @@
-description: operation find
+description: operation distinct
 schemaVersion: '1.26'
 createEntities:
   - client:
@@ -7,42 +7,44 @@ createEntities:
       observeTracingMessages:
         enableCommandPayload: true
   - database:
-      id: &database0 database0
+      id: database0
       client: *client0
-      databaseName: operation-find
+      databaseName: operation-distinct
   - collection:
       id: &collection0 collection0
       database: database0
-      collectionName: &collection0Name test
+      collectionName: test
 initialData:
   - collectionName: test
-    databaseName: operation-find
+    databaseName: operation-distinct
     documents: []
 tests:
-  - description: find an element
+  - description: distinct on a field
     operations:
-      - name: find
-        object: *collection0
-        arguments: { filter: { x: 1 } }
+      - object: *collection0
+        name: distinct
+        arguments:
+          fieldName: x
+          filter: {}
 
     expectTracingMessages:
       - client: *client0
         ignoreExtraSpans: false
         spans:
-          - name: find operation-find.test
+          - name: distinct operation-distinct.test
             tags:
               db.system: mongodb
-              db.namespace: operation-find
+              db.namespace: operation-distinct
               db.collection.name: test
-              db.operation.name: find
-              db.operation.summary: find operation-find.test
+              db.operation.name: distinct
+              db.operation.summary: distinct operation-distinct.test
             nested:
-              - name: find operation-find.test
+              - name: distinct operation-distinct.test
                 tags:
                   db.system: mongodb
-                  db.namespace: operation-find
-                  db.collection.name: operation-find.$cmd
-                  db.command.name: find
+                  db.namespace: operation-distinct
+                  db.collection.name: test
+                  db.command.name: distinct
                   network.transport: tcp
                   db.mongodb.cursor_id: { $$exists: false }
                   db.response.status_code: { $$exists: false }
@@ -51,14 +53,13 @@ tests:
                   exception.stacktrace: { $$exists: false }
                   server.address: { $$type: string }
                   server.port: { $$type: ['int', 'long'] }
-                  server.type: { $$type: string }
-                  db.query.summary: find
+                  db.query.summary: distinct
                   db.query.text:
                     $$matchAsDocument:
                       $$matchAsRoot:
-                        find: test
-                        filter:
-                          x: 1
+                        distinct: test
+                        key: x
+                        query: { }
                   db.mongodb.server_connection_id:
                     $$type: [ 'int', 'long' ]
                   db.mongodb.driver_connection_id:

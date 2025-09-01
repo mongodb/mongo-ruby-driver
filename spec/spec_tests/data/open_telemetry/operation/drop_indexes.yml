@@ -1,4 +1,4 @@
-description: operation find
+description: operation drop indexes
 schemaVersion: '1.26'
 createEntities:
   - client:
@@ -9,40 +9,55 @@ createEntities:
   - database:
       id: &database0 database0
       client: *client0
-      databaseName: operation-find
+      databaseName: operation-drop-indexes
   - collection:
       id: &collection0 collection0
-      database: database0
-      collectionName: &collection0Name test
-initialData:
-  - collectionName: test
-    databaseName: operation-find
-    documents: []
+      database: *database0
+      collectionName: test
+  - client:
+      id: &clientWithoutTracing clientWithoutTracing
+      useMultipleMongoses: false
+  - database:
+      id: &databaseWithoutTracing databaseWithoutTracing
+      client: *clientWithoutTracing
+      databaseName: operation-drop-indexes
+  - collection:
+      id: &collectionWithoutTracing collectionWithoutTracing
+      database: *databaseWithoutTracing
+      collectionName: test
+
 tests:
-  - description: find an element
+  - description: drop indexes
     operations:
-      - name: find
+      - name: createIndex
+        object: *collectionWithoutTracing
+        arguments:
+          keys:
+            x: 1
+          name: x_1
+
+      - name: dropIndexes
         object: *collection0
-        arguments: { filter: { x: 1 } }
+
 
     expectTracingMessages:
       - client: *client0
-        ignoreExtraSpans: false
+        ignoreExtraSpans: true
         spans:
-          - name: find operation-find.test
+          - name: dropIndexes operation-drop-indexes.test
             tags:
               db.system: mongodb
-              db.namespace: operation-find
+              db.namespace: operation-drop-indexes
               db.collection.name: test
-              db.operation.name: find
-              db.operation.summary: find operation-find.test
+              db.operation.name: dropIndexes
+              db.operation.summary: dropIndexes operation-drop-indexes.test
             nested:
-              - name: find operation-find.test
+              - name: dropIndexes operation-drop-indexes.test
                 tags:
                   db.system: mongodb
-                  db.namespace: operation-find
-                  db.collection.name: operation-find.$cmd
-                  db.command.name: find
+                  db.namespace: operation-drop-indexes
+                  db.collection.name: test
+                  db.command.name: dropIndexes
                   network.transport: tcp
                   db.mongodb.cursor_id: { $$exists: false }
                   db.response.status_code: { $$exists: false }
@@ -51,14 +66,12 @@ tests:
                   exception.stacktrace: { $$exists: false }
                   server.address: { $$type: string }
                   server.port: { $$type: ['int', 'long'] }
-                  server.type: { $$type: string }
-                  db.query.summary: find
+                  db.query.summary: dropIndexes
                   db.query.text:
                     $$matchAsDocument:
                       $$matchAsRoot:
-                        find: test
-                        filter:
-                          x: 1
+                        dropIndexes: test
+                        index: '*'
                   db.mongodb.server_connection_id:
                     $$type: [ 'int', 'long' ]
                   db.mongodb.driver_connection_id:

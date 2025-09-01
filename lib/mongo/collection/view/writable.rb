@@ -211,22 +211,24 @@ module Mongo
               session: session,
               operation_timeouts: operation_timeouts(opts)
             )
-            write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-              gte_4_4 = connection.server.description.server_version_gte?('4.4')
-              if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            operation = Operation::WriteCommand.new(
+              selector: cmd,
+              db_name: database.name,
+              write_concern: write_concern,
+              session: session,
+            )
+            tracer.trace_operation(operation, context, op_name: 'findOneAndUpdate') do
+              write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+                gte_4_4 = connection.server.description.server_version_gte?('4.4')
+                if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
+                  raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+                end
+                operation.txn_num = txn_num
+                operation.execute_with_connection(connection, context: context)
               end
-
-              Operation::WriteCommand.new(
-                selector: cmd,
-                db_name: database.name,
-                write_concern: write_concern,
-                session: session,
-                txn_num: txn_num,
-              ).execute_with_connection(connection, context: context)
-            end
-          end.first&.fetch('value', nil)
-          value unless value.nil? || value.empty?
+            end.first&.fetch('value', nil)
+            value unless value.nil? || value.empty?
+          end
         end
 
         # Remove documents from the collection.
@@ -275,22 +277,24 @@ module Mongo
               session: session,
               operation_timeouts: operation_timeouts(opts)
             )
-            nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-              gte_4_4 = connection.server.description.server_version_gte?('4.4')
-              if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            operation = Operation::Delete.new(
+              deletes: [ delete_doc ],
+              db_name: collection.database.name,
+              coll_name: collection.name,
+              write_concern: write_concern,
+              bypass_document_validation: !!opts[:bypass_document_validation],
+              session: session,
+              let: opts[:let],
+              comment: opts[:comment],
+            )
+            tracer.trace_operation(operation, context, op_name: 'deleteMany') do
+              nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+                gte_4_4 = connection.server.description.server_version_gte?('4.4')
+                if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
+                  raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+                end
+                operation.execute_with_connection(connection, context: context)
               end
-
-              Operation::Delete.new(
-                deletes: [ delete_doc ],
-                db_name: collection.database.name,
-                coll_name: collection.name,
-                write_concern: write_concern,
-                bypass_document_validation: !!opts[:bypass_document_validation],
-                session: session,
-                let: opts[:let],
-                comment: opts[:comment],
-              ).execute_with_connection(connection, context: context)
             end
           end
         end
@@ -580,23 +584,25 @@ module Mongo
               session: session,
               operation_timeouts: operation_timeouts(opts)
             )
-            write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-              gte_4_2 = connection.server.description.server_version_gte?('4.2')
-              if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+            operation = Operation::Update.new(
+              updates: [ update_doc ],
+              db_name: collection.database.name,
+              coll_name: collection.name,
+              write_concern: write_concern,
+              bypass_document_validation: !!opts[:bypass_document_validation],
+              session: session,
+              let: opts[:let],
+              comment: opts[:comment],
+            )
+            tracer.trace_operation(operation, context) do
+              write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+                gte_4_2 = connection.server.description.server_version_gte?('4.2')
+                if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
+                  raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
+                end
+                operation.txn_num = txn_num
+                operation.execute_with_connection(connection, context: context)
               end
-
-              Operation::Update.new(
-                updates: [ update_doc ],
-                db_name: collection.database.name,
-                coll_name: collection.name,
-                write_concern: write_concern,
-                bypass_document_validation: !!opts[:bypass_document_validation],
-                session: session,
-                txn_num: txn_num,
-                let: opts[:let],
-                comment: opts[:comment],
-              ).execute_with_connection(connection, context: context)
             end
           end
         end

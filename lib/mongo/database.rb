@@ -74,7 +74,8 @@ module Mongo
                    :server_selector,
                    :read_concern,
                    :write_concern,
-                   :encrypted_fields_map
+                   :encrypted_fields_map,
+                   :tracer
 
     # @return [ Mongo::Server ] Get the primary server from the cluster.
     def_delegators :cluster,

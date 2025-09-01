@@ -38,15 +38,15 @@ module Mongo
         def trace_command(message, operation_context, connection)
           parent_context = parent_context_for(operation_context, cursor_id(message))
           span = @otel_tracer.start_span(
-            command_span_name(message),
+            query_summary(message),
             attributes: span_attributes(message, connection),
             with_parent: parent_context,
             kind: :client
           )
           ::OpenTelemetry::Trace.with_span(span) do |s, c|
-            # TODO: process cursor context if applicable
             yield.tap do |result|
               process_cursor_context(result, cursor_id(message), c, s)
+              maybe_trace_error(result, s)
             end
           end
         rescue Exception => e
@@ -65,7 +65,7 @@ module Mongo
             'db.namespace' => database(message),
             'db.collection.name' => collection_name(message),
             'db.command.name' => command_name(message),
-            'db.query.summary' => command_span_name(message),
+            'db.query.summary' => command_name(message),
             'server.port' => connection.address.port,
             'server.address' => connection.address.host,
             'network.transport' => connection.transport.to_s,
@@ -82,7 +82,14 @@ module Mongo
           end
         end
 
-        def command_span_name(message)
+        def maybe_trace_error(result, span)
+          return if result.successful?
+
+          span.set_attribute('db.response.status_code', result.error.code)
+          span.set_attribute('error.type', result.error.class.name)
+        end
+
+        def query_summary(message)
           if (coll_name = collection_name(message))
             "#{command_name(message)} #{database(message)}.#{coll_name}"
           else
@@ -94,6 +101,8 @@ module Mongo
           case message.documents.first.keys.first
           when 'getMore'
             message.documents.first['collection'].to_s
+          when 'listCollections', 'listDatabases'
+            nil
           else
             message.documents.first.values.first.to_s
           end
@@ -124,8 +133,7 @@ module Mongo
           return unless query_text?
 
           text = message
-                 .documents
-                 .first
+                 .payload['command']
                  .reject { |key, _| EXCLUDED_KEYS.include?(key) }
                  .to_json
           if text.length > @query_text_max_length

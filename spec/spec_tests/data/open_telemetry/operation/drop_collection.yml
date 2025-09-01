@@ -1,4 +1,4 @@
-description: operation find
+description: operation drop collection
 schemaVersion: '1.26'
 createEntities:
   - client:
@@ -9,40 +9,38 @@ createEntities:
   - database:
       id: &database0 database0
       client: *client0
-      databaseName: operation-find
+      databaseName: operation-drop-collection
+
   - collection:
-      id: &collection0 collection0
-      database: database0
-      collectionName: &collection0Name test
-initialData:
-  - collectionName: test
-    databaseName: operation-find
-    documents: []
+      id: collection0
+      database: *database0
+      collectionName: &collection_name test
 tests:
-  - description: find an element
+  - description: drop collection
     operations:
-      - name: find
-        object: *collection0
-        arguments: { filter: { x: 1 } }
+      - object: *database0
+        name: dropCollection
+        arguments:
+          collection: *collection_name
 
     expectTracingMessages:
       - client: *client0
         ignoreExtraSpans: false
         spans:
-          - name: find operation-find.test
+          - name: dropCollection operation-drop-collection.test
             tags:
               db.system: mongodb
-              db.namespace: operation-find
+              db.namespace: operation-drop-collection
               db.collection.name: test
-              db.operation.name: find
-              db.operation.summary: find operation-find.test
+              db.operation.name: dropCollection
+              db.operation.summary: dropCollection operation-drop-collection.test
             nested:
-              - name: find operation-find.test
+              - name: drop operation-drop-collection.test
                 tags:
                   db.system: mongodb
-                  db.namespace: operation-find
-                  db.collection.name: operation-find.$cmd
-                  db.command.name: find
+                  db.namespace: operation-drop-collection
+                  db.collection.name: test
+                  db.command.name: drop
                   network.transport: tcp
                   db.mongodb.cursor_id: { $$exists: false }
                   db.response.status_code: { $$exists: false }
@@ -51,14 +49,11 @@ tests:
                   exception.stacktrace: { $$exists: false }
                   server.address: { $$type: string }
                   server.port: { $$type: ['int', 'long'] }
-                  server.type: { $$type: string }
-                  db.query.summary: find
+                  db.query.summary: drop
                   db.query.text:
                     $$matchAsDocument:
                       $$matchAsRoot:
-                        find: test
-                        filter:
-                          x: 1
+                        drop: test
                   db.mongodb.server_connection_id:
                     $$type: [ 'int', 'long' ]
                   db.mongodb.driver_connection_id:

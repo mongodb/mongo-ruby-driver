@@ -145,7 +145,7 @@ module Unified
         raise Error::ResultMismatch, "#{msg} keys do not match: expected #{expected.keys}, actual #{actual.keys}"
       end
       expected.each do |key, expected_value|
-        raise Error::ResultMismatch, "#{msg} has no key #{key}" unless actual.key?(key)
+        raise Error::ResultMismatch, "#{msg} has no key #{key}: #{actual}" unless actual.key?(key)
         actual_value = actual[key]
         assert_value_matches(actual_value, expected_value, "#{msg} key #{key}")
       end
@@ -308,11 +308,11 @@ module Unified
       end
     end
 
-    def assert_type(object, type)
+    def assert_type(object, type, msg = nil)
       ok = [*type].reduce(false) { |acc, x| acc || type_matches?(object, x) }
 
       unless ok
-        raise Error::ResultMismatch, "Object #{object} is not of type #{type}"
+        raise Error::ResultMismatch, (msg || '') + " Object '#{object}' is not of type #{type}"
       end
     end
 
@@ -378,7 +378,7 @@ module Unified
           #  raise Error::ResultMismatch, "Session does not match: wanted #{expected_session}, have #{actual_v}"
           #end
         when '$$type'
-          assert_type(actual, expected_v)
+          assert_type(actual, expected_v, msg)
         when '$$matchesEntity'
           result = entities.get(:result, expected_v)
           unless actual == result
@@ -408,6 +408,7 @@ module Unified
 
     def assert_tracing_messages
       return unless @expected_tracing_messages
+
       @expected_tracing_messages.each do |spec|
         spec = UsingHash[spec]
         client_id = spec.use!('client')
@@ -415,11 +416,11 @@ module Unified
         tracer = @tracers.fetch(client)
         expected_spans = spec.use!('spans')
         ignore_extra_spans = if ignore = spec.use('ignoreExtraSpans')
-          # Ruby treats 0 as truthy, whereas the spec tests use it as falsy.
-          ignore == 0 ? false : ignore
-        else
-          false
-        end
+                               # Ruby treats 0 as truthy, whereas the spec tests use it as falsy.
+                               ignore == 0 ? false : ignore
+                             else
+                               false
+                             end
         actual_spans = tracer.span_hierarchy
         if (!ignore_extra_spans && actual_spans.length != expected_spans.length) ||
             (ignore_extra_spans && actual_spans.length < expected_spans.length)

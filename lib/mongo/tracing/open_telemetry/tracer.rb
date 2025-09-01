@@ -55,10 +55,10 @@ module Mongo
           @enabled
         end
 
-        def trace_operation(operation, operation_context, &block)
+        def trace_operation(operation, operation_context, op_name: nil, &block)
           return yield unless enabled?
 
-          @operation_tracer.trace_operation(operation, operation_context, &block)
+          @operation_tracer.trace_operation(operation, operation_context, op_name: op_name, &block)
         end
 
         def trace_command(message, operation_context, connection, &block)

@@ -28,6 +28,10 @@ module Mongo
     class Create
       include Specifiable
       include OpMsgExecutable
+
+      def encrypted_fields=(value)
+        @spec[:encrypted_fields] = value
+      end
     end
   end
 end

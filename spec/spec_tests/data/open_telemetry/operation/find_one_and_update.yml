@@ -1,4 +1,4 @@
-description: operation find
+description: operation findOneAndUpdate
 schemaVersion: '1.26'
 createEntities:
   - client:
@@ -9,40 +9,42 @@ createEntities:
   - database:
       id: &database0 database0
       client: *client0
-      databaseName: operation-find
+      databaseName: operation-aggregate
   - collection:
       id: &collection0 collection0
-      database: database0
-      collectionName: &collection0Name test
-initialData:
-  - collectionName: test
-    databaseName: operation-find
-    documents: []
+      database: *database0
+      collectionName: test
+
 tests:
-  - description: find an element
+  - description: findOneAndUpdate
     operations:
-      - name: find
+      - name: findOneAndUpdate
         object: *collection0
-        arguments: { filter: { x: 1 } }
+        arguments:
+          filter: &filter
+            _id: 1
+          update: &update
+            - $set: {x: 5 }
+          comment: "comment"
 
     expectTracingMessages:
       - client: *client0
         ignoreExtraSpans: false
         spans:
-          - name: find operation-find.test
+          - name: findOneAndUpdate operation-aggregate.test
             tags:
               db.system: mongodb
-              db.namespace: operation-find
+              db.namespace: operation-aggregate
               db.collection.name: test
-              db.operation.name: find
-              db.operation.summary: find operation-find.test
+              db.operation.name: findOneAndUpdate
+              db.operation.summary: findOneAndUpdate operation-aggregate.test
             nested:
-              - name: find operation-find.test
+              - name: findAndModify operation-aggregate.test
                 tags:
                   db.system: mongodb
-                  db.namespace: operation-find
-                  db.collection.name: operation-find.$cmd
-                  db.command.name: find
+                  db.namespace: operation-aggregate
+                  db.collection.name: test
+                  db.command.name: findAndModify
                   network.transport: tcp
                   db.mongodb.cursor_id: { $$exists: false }
                   db.response.status_code: { $$exists: false }
@@ -51,14 +53,14 @@ tests:
                   exception.stacktrace: { $$exists: false }
                   server.address: { $$type: string }
                   server.port: { $$type: ['int', 'long'] }
-                  server.type: { $$type: string }
-                  db.query.summary: find
+                  db.query.summary: findAndModify
                   db.query.text:
                     $$matchAsDocument:
                       $$matchAsRoot:
-                        find: test
-                        filter:
-                          x: 1
+                        findAndModify: test
+                        query: *filter
+                        update: *update
+                        comment: "comment"
                   db.mongodb.server_connection_id:
                     $$type: [ 'int', 'long' ]
                   db.mongodb.driver_connection_id:

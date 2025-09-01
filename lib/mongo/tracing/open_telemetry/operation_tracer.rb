@@ -34,11 +34,11 @@ module Mongo
           @parent_tracer = parent_tracer
         end
 
-        def trace_operation(operation, operation_context)
+        def trace_operation(operation, operation_context, op_name: nil)
           parent_context = parent_context_for(operation_context, operation.cursor_id)
           span = @otel_tracer.start_span(
-            operation_span_name(operation),
-            attributes: span_attributes(operation),
+            operation_span_name(operation, op_name),
+            attributes: span_attributes(operation, op_name),
             with_parent: parent_context,
             kind: :client
           )
@@ -57,17 +57,21 @@ module Mongo
 
         private
 
-        def operation_name(operation)
-          operation.class.name.split('::').last.downcase
+        def operation_name(operation, op_name = nil)
+          if op_name
+            op_name
+          else
+            operation.class.name.split('::').last.downcase
+          end
         end
 
-        def span_attributes(operation)
+        def span_attributes(operation, op_name)
           {
             'db.system' => 'mongodb',
             'db.namespace' => operation.db_name.to_s,
-            'db.collection.name' => operation.coll_name.to_s,
-            'db.operation.name' => operation_name(operation),
-            'db.operation.summary' => operation_span_name(operation),
+            'db.collection.name' => collection_name(operation),
+            'db.operation.name' => operation_name(operation, op_name),
+            'db.operation.summary' => operation_span_name(operation, op_name),
             'db.mongodb.cursor_id' => operation.cursor_id,
           }.compact
         end
@@ -85,11 +89,33 @@ module Mongo
           end
         end
 
-        def operation_span_name(operation)
-          if operation.coll_name
-            "#{operation_name(operation)} #{operation.db_name}.#{operation.coll_name}"
+        def collection_name(operation)
+          if operation.respond_to?(:coll_name) && operation.coll_name
+            operation.coll_name.to_s
           else
-            "#{operation_name(operation)} #{operation.db_name}"
+            case operation
+            when Operation::Aggregate
+              operation.spec[:selector][:aggregate]
+            when Operation::Count
+              operation.spec[:selector][:count]
+            when Operation::Create
+              operation.spec[:selector][:create]
+            when Operation::Distinct
+              operation.spec[:selector][:distinct]
+            when Operation::Drop
+              operation.spec[:selector][:drop]
+            when Operation::WriteCommand
+              operation.spec[:selector].values.first
+            end.to_s
+          end
+        end
+
+        def operation_span_name(operation, op_name = nil)
+          coll_name = collection_name(operation)
+          if coll_name && !coll_name.empty?
+            "#{operation_name(operation, op_name)} #{operation.db_name}.#{coll_name}"
+          else
+            "#{operation_name(operation, op_name)} #{operation.db_name}"
           end
         end
       end
