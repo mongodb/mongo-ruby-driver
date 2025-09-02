@@ -984,7 +984,10 @@ module Mongo
       cmd[:nameOnly] = !!name_only
       cmd[:filter] = filter unless filter.empty?
       cmd[:authorizedDatabases] = true if opts[:authorized_databases]
-      use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
+      use(Database::ADMIN)
+        .database
+        .read_command(cmd, opts.merge(op_name: 'listDatabases'))
+        .first[Database::DATABASES]
     end
 
     # Returns a list of Mongo::Database objects.

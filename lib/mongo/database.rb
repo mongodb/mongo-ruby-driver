@@ -268,10 +268,12 @@ module Mongo
     # @option opts :session [ Session ] The session to use for this command.
     # @option opts [ Object ] :comment A user-provided
     #   comment to attach to this command.
-    # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
+    # @option opts [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the database or the client.
+    # @option opts :op_name [ String | nil ] The name of the operation for
+    #    tracing purposes.
     #
     # @return [ Hash ] The result of the command execution.
     # @api private
@@ -291,14 +293,18 @@ module Mongo
           session: session,
           operation_timeouts: operation_timeouts(opts)
         )
-        read_with_retry(session, preference, context) do |server|
-          Operation::Command.new(
-            selector: operation.dup,
-            db_name: name,
-            read: preference,
-            session: session,
-            comment: opts[:comment],
-          ).execute(server, context: context)
+        operation = Operation::Command.new(
+          selector: operation.dup,
+          db_name: name,
+          read: preference,
+          session: session,
+          comment: opts[:comment],
+        )
+        op_name = opts[:op_name] || 'command'
+        tracer.trace_operation(operation, context, op_name: op_name) do
+          read_with_retry(session, preference, context) do |server|
+            operation.execute(server, context: context)
+          end
         end
       end
     end

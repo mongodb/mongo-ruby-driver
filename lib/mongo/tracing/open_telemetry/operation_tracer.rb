@@ -111,6 +111,8 @@ module Mongo
         end
 
         def operation_span_name(operation, op_name = nil)
+          return 'listDatabases' if op_name == 'listDatabases'
+
           coll_name = collection_name(operation)
           if coll_name && !coll_name.empty?
             "#{operation_name(operation, op_name)} #{operation.db_name}.#{coll_name}"
