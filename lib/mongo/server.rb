@@ -218,7 +218,8 @@ module Mongo
     # @api private
     def_delegators :cluster,
                    :monitor_app_metadata,
-                   :push_monitor_app_metadata
+                   :push_monitor_app_metadata,
+                   :tracer
 
     def_delegators :features,
                    :check_driver_support!

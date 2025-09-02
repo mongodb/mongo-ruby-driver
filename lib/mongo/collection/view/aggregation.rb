@@ -25,10 +25,13 @@ module Mongo
       #
       # @since 2.0.0
       class Aggregation
+        extend Forwardable
         include Behavior
 
         # @return [ Array<Hash> ] pipeline The aggregation pipeline.
         attr_reader :pipeline
+
+        def_delegators :view, :tracer
 
         # Initialize the aggregation for the provided collection view, pipeline
         # and options.
@@ -80,7 +83,7 @@ module Mongo
           Aggregation.new(view, pipeline, options)
         end
 
-        def initial_query_op(session, read_preference)
+        def initial_query_op(session, read_preference = nil)
           Operation::Aggregate.new(aggregate_spec(session, read_preference))
         end
 

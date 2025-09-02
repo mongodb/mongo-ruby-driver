@@ -1231,7 +1231,7 @@ describe Mongo::Index::View do
       end
 
       let(:models) do
-        view.send(:normalize_models, [ options ], authorized_primary)
+        view.send(:normalize_models, [ options ])
       end
 
       let(:expected) do
@@ -1264,7 +1264,7 @@ describe Mongo::Index::View do
         end
 
         let(:models) do
-          view.send(:normalize_models, [ extended_options ], authorized_primary)
+          view.send(:normalize_models, [ extended_options ])
         end
 
         it 'maps the ruby options to the server options' do
@@ -1280,7 +1280,7 @@ describe Mongo::Index::View do
         end
 
         let(:models) do
-          view.send(:normalize_models, [ extended_options ], authorized_primary)
+          view.send(:normalize_models, [ extended_options ])
         end
 
         let(:extended_expected) do
