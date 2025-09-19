@@ -46,6 +46,8 @@ module Mongo
       #
       # @param [ Hash ] definition The definition of the search index.
       # @param [ nil | String ] name The name to give the new search index.
+      # @param [ String ] type The type of the search index. Possible values
+      #   are 'search' and 'vectorSearch'. The default is 'search'.
       #
       # @return [ String ] the name of the new search index.
       def create_one(definition, name: nil, type: 'search')
@@ -56,7 +58,8 @@ module Mongo
       #
       # @param [ Array<Hash> ] indexes The description of the indexes to
       #   create. Each element of the list must be a hash with a definition
-      #   key, and an optional name key.
+      #   key, an optional name key, and an optional type key. The type key
+      #   must be one of 'search' or 'vectorSearch'. The default is 'search'.
       #
       # @return [ Array<String> ] the names of the new search indexes.
       def create_many(indexes)
