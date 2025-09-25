@@ -100,6 +100,25 @@ describe Mongo::Operation::Insert do
         expect(inserted_ids).to eq(collection_ids)
       end
     end
+
+    context 'when document contains a nil id' do
+
+      let(:documents) do
+        [{ 'field' => 'test', '_id' => nil }]
+      end
+
+      let(:inserted_ids) do
+        insert.execute(authorized_primary, context: context).inserted_ids
+      end
+
+      let(:collection_ids) do
+        authorized_collection.find(field: 'test').collect { |d| d['_id'] }
+      end
+
+      it 'adds an id to the documents' do
+        expect(inserted_ids).to eq(collection_ids)
+      end
+    end
   end
 
   describe '#execute' do
