@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'aws-sdk-s3'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: s3-copy options"
+
+  opts.on("-r", "--region=REGION", "AWS region to use (default us-east-1)") do |v|
+    options[:region] = v
+  end
+
+  opts.on("-p", "--param=KEY=VALUE", "Specify parameter for new files") do |v|
+    options[:params] ||= {}
+    k, v = v.split('=', 2)
+    options[:params][k.to_sym] = v
+  end
+
+  opts.on("-f", "--from=BUCKET:PATH", "Bucket name and key (or path) to copy from") do |v|
+    options[:from] = v
+  end
+
+  opts.on("-t", "--to=BUCKET:PATH", "Bucket name and key (or path) to write to (may be specified more than once)") do |v|
+    options[:to] ||= []
+    options[:to] << v
+  end
+end.parse!
+
+ENV['AWS_REGION'] ||= options[:region] || 'us-east-1'
+
+bucket, key = options.fetch(:from).split(':', 2)
+
+s3 = Aws::S3::Client.new
+
+options.fetch(:to).each do |dest|
+  STDERR.puts "Copying to #{dest}"
+  dbucket, dkey = dest.split(':', 2)
+  s3.copy_object(
+    bucket: dbucket,
+    key: dkey,
+    copy_source: "/#{bucket}/#{key}",
+    **options[:params] || {},
+  )
+end

@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'aws-sdk-s3'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: s3-upload options"
+
+  opts.on("-r", "--region=REGION", "AWS region to use (default us-east-1)") do |v|
+    options[:region] = v
+  end
+
+  opts.on("-p", "--param=KEY=VALUE", "Specify parameter for S3 upload") do |v|
+    options[:params] ||= {}
+    k, v = v.split('=', 2)
+    options[:params][k.to_sym] = v
+  end
+
+  opts.on("-f", "--file=PATH", "Path to the file to upload, - to upload standard input") do |v|
+    options[:file] = v
+  end
+
+  opts.on("-w", "--write=BUCKET:PATH", "Bucket name and key (or path) to upload to") do |v|
+    options[:write] = v
+  end
+
+  opts.on("-c", "--copy=BUCKET:PATH", "Bucket name and key (or path) to copy to (may be specified more than once)") do |v|
+    options[:copy] ||= []
+    options[:copy] << v
+  end
+end.parse!
+
+ENV['AWS_REGION'] ||= options[:region] || 'us-east-1'
+
+def upload(f, options)
+  s3 = Aws::S3::Client.new
+  write = options.fetch(:write)
+  STDERR.puts "Writing #{write}"
+  bucket, key = write.split(':', 2)
+  s3.put_object(
+    body: f.read,
+    bucket: bucket,
+    key: key,
+    **options[:params] || {},
+  )
+  if copy = options[:copy]
+    copy.each do |dest|
+      STDERR.puts "Copying to #{dest}"
+      dbucket, dkey = dest.split(':', 2)
+      s3.copy_object(
+        bucket: dbucket,
+        key: dkey,
+        copy_source: "/#{bucket}/#{key}",
+        **options[:params] || {},
+      )
+    end
+  end
+end
+
+if options[:file] == '-'
+  upload(STDIN, options)
+elsif options[:file]
+  File.open(options[:file]) do |f|
+    upload(f, options)
+  end
+else
+  upload(STDIN, options)
+end

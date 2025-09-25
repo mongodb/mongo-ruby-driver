@@ -1,6 +1,3 @@
 [submodule ".mod/drivers-evergreen-tools"]
 	path = .mod/drivers-evergreen-tools
 	url = https://github.com/mongodb-labs/drivers-evergreen-tools
-[submodule "spec/shared"]
-	path = spec/shared
-        url = https://github.com/mongodb-labs/mongo-ruby-spec-shared

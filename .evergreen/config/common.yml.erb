@@ -112,11 +112,6 @@ functions:
             export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
             export OCSP_VERIFIER="${OCSP_VERIFIER}"
 
-            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
-            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
-            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
-            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
-            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
             export RVM_RUBY="${RVM_RUBY}"
           EOT
 
@@ -129,36 +124,111 @@ functions:
       params:
         file: src/expansion.yml
 
-  "export AWS auth credentials":
+  bootstrap-mongo-orchestration:
     - command: shell.exec
+      params:
+        shell: "bash"
+        script: |
+          set -x
+          ${PREPARE_SHELL}
+
+          MONGODB_VERSION=${VERSION} \
+          TOPOLOGY=${TOPOLOGY} \
+          AUTH=${AUTH} \
+          SSL=${SSL} \
+          ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
+          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
+          LOAD_BALANCER=${LOAD_BALANCER} \
+          sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
+    - command: expansions.update
+      params:
+        file: mo-expansion.yml
+
+  run-valid-ocsp-server:
+    - command: shell.exec
+      params:
+        shell: "bash"
+        background: true
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
+          . ./activate-ocspvenv.sh
+
+          python ocsp_mock.py \
+          --ca_file ${OCSP_ALGORITHM}/ca.pem \
+          --ocsp_responder_cert ${OCSP_ALGORITHM}/ca.crt \
+          --ocsp_responder_key ${OCSP_ALGORITHM}/ca.key \
+          -p 8100 -v
+
+  run-revoked-ocsp-server:
+    - command: shell.exec
+      params:
+        shell: "bash"
+        background: true
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
+          . ./activate-ocspvenv.sh
+
+          python ocsp_mock.py \
+          --ca_file ${OCSP_ALGORITHM}/ca.pem \
+          --ocsp_responder_cert ${OCSP_ALGORITHM}/ca.crt \
+          --ocsp_responder_key ${OCSP_ALGORITHM}/ca.key \
+          -p 8100 \
+          -v \
+          --fault revoked
+
+  run-valid-delegate-ocsp-server:
+    - command: shell.exec
+      params:
+        shell: "bash"
+        background: true
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
+          . ./activate-ocspvenv.sh
+
+          python ocsp_mock.py \
+          --ca_file ${OCSP_ALGORITHM}/ca.pem \
+          --ocsp_responder_cert ${OCSP_ALGORITHM}/ocsp-responder.crt \
+          --ocsp_responder_key ${OCSP_ALGORITHM}/ocsp-responder.key \
+          -p 8100 -v
+
+  run-revoked-delegate-ocsp-server:
+    - command: shell.exec
+      params:
+        shell: "bash"
+        background: true
+        script: |
+          cd ${DRIVERS_TOOLS}/.evergreen/ocsp
+          . ./activate-ocspvenv.sh
+
+          python ocsp_mock.py \
+          --ca_file ${OCSP_ALGORITHM}/ca.pem \
+          --ocsp_responder_cert ${OCSP_ALGORITHM}/ocsp-responder.crt \
+          --ocsp_responder_key ${OCSP_ALGORITHM}/ocsp-responder.key \
+          -p 8100 \
+          -v \
+          --fault revoked
+
+  run-load-balancer:
+    - command: shell.exec
+      params:
+        shell: "bash"
+        script: |
+          DRIVERS_TOOLS=${DRIVERS_TOOLS} MONGODB_URI=${MONGODB_URI} bash ${DRIVERS_TOOLS}/.evergreen/run-load-balancer.sh start
+    - command: expansions.update
+      params:
+        file: lb-expansion.yml
+
+  "export AWS auth credentials":
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
+    - command: subprocess.exec
       type: test
       params:
-        silent: true
-        working_dir: "src"
-        script: |
-          cat <<EOT > .env.private
-          IAM_AUTH_ASSUME_AWS_ACCOUNT="${iam_auth_assume_aws_account}"
-          IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY="${iam_auth_assume_aws_secret_access_key}"
-          IAM_AUTH_ASSUME_ROLE_NAME="${iam_auth_assume_role_name}"
-          IAM_AUTH_EC2_INSTANCE_ACCOUNT="${iam_auth_ec2_instance_account}"
-          IAM_AUTH_EC2_INSTANCE_PROFILE="${iam_auth_ec2_instance_profile}"
-          IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY="${iam_auth_ec2_instance_secret_access_key}"
-          IAM_AUTH_ECS_ACCOUNT="${iam_auth_ecs_account}"
-          IAM_AUTH_ECS_ACCOUNT_ARN="${iam_auth_ecs_account_arn}"
-          IAM_AUTH_ECS_CLUSTER="${iam_auth_ecs_cluster}"
-          IAM_AUTH_ECS_SECRET_ACCESS_KEY="${iam_auth_ecs_secret_access_key}"
-          IAM_AUTH_ECS_SECURITY_GROUP="${iam_auth_ecs_security_group}"
-          IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
-          IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
-          IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition_ubuntu2004}"
-
-          IAM_WEB_IDENTITY_ISSUER="${iam_web_identity_issuer}"
-          IAM_WEB_IDENTITY_JWKS_URI="${iam_web_identity_jwks_uri}"
-          IAM_WEB_IDENTITY_RSA_KEY="${iam_web_identity_rsa_key}"
-          IAM_WEB_IDENTITY_TOKEN_FILE="${iam_web_identity_token_file}"
-          IAM_AUTH_ASSUME_WEB_ROLE_NAME="${iam_auth_assume_web_role_name}"
-
-          EOT
+        include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+        binary: "bash"
+        args:
+          - ${DRIVERS_TOOLS}/.evergreen/auth_aws/setup-secrets.sh
 
   "run CSOT tests":
     - command: shell.exec
@@ -168,45 +238,9 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          # Needed for generating temporary aws credentials.
-          if [ -n "${FLE}" ];
-          then
-            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-            export AWS_DEFAULT_REGION="${fle_aws_region}"
-          fi
           export CSOT_SPEC_TESTS=1
           TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
             .evergreen/run-tests.sh
-
-  "export FLE credentials":
-    - command: shell.exec
-      type: test
-      params:
-        silent: true
-        working_dir: "src"
-        script: |
-          cat <<EOT > .env.private
-          MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
-          MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
-          MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
-          MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
-
-          MONGO_RUBY_DRIVER_AZURE_TENANT_ID="${fle_azure_tenant_id}"
-          MONGO_RUBY_DRIVER_AZURE_CLIENT_ID="${fle_azure_client_id}"
-          MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET="${fle_azure_client_secret}"
-          MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT="${fle_azure_identity_platform_endpoint}"
-          MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT="${fle_azure_key_vault_endpoint}"
-          MONGO_RUBY_DRIVER_AZURE_KEY_NAME="${fle_azure_key_name}"
-
-          MONGO_RUBY_DRIVER_GCP_EMAIL="${fle_gcp_email}"
-          MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY="${fle_gcp_private_key}"
-          MONGO_RUBY_DRIVER_GCP_PROJECT_ID="${fle_gcp_project_id}"
-          MONGO_RUBY_DRIVER_GCP_LOCATION="${fle_gcp_location}"
-          MONGO_RUBY_DRIVER_GCP_KEY_RING="${fle_gcp_key_ring}"
-          MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
-          MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
-          EOT
 
   "export Kerberos credentials":
     - command: shell.exec
@@ -338,7 +372,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/rspec.xml
+        file: ./src/tmp/*.xml
 
   "delete private environment":
     - command: shell.exec
@@ -370,13 +404,6 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          # Needed for generating temporary aws credentials.
-          if [ -n "${FLE}" ];
-          then
-            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-            export AWS_DEFAULT_REGION="${fle_aws_region}"
-          fi
           .evergreen/run-tests.sh
 
   "run AWS auth tests":
@@ -408,14 +435,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" \
-          ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} \
-          ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} \
-          ATLAS_TLS12_URI=${atlas_tls12_uri} ATLAS_SERVERLESS_URI=${atlas_serverless_uri} \
-          ATLAS_SERVERLESS_LB_URI=${atlas_serverless_lb_uri} \
-          ATLAS_X509_CERT_BASE64="${atlas_x509_cert_base64}" \
-          ATLAS_X509_URI="${atlas_x509}" \
-          ATLAS_X509_DEV_CERT_BASE64="${atlas_x509_dev_cert_base64}" \
-          ATLAS_X509_DEV_URI="${atlas_x509_dev}" \
           .evergreen/run-tests-atlas.sh
 
 pre:
@@ -423,11 +442,11 @@ pre:
   - func: "create expansions"
 
 post:
+  - func: "upload test results"
   - func: "delete private environment"
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
-  # - func: "upload test results"
   - func: "upload test results to s3"
 
 task_groups:
@@ -616,24 +635,29 @@ tasks:
   - name: "test-atlas"
     commands:
       - func: "run Atlas tests"
-  - name: "test-mlaunch"
+  - name: "test-main"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run tests"
   - name: "driver-bench"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run benchmarks"
   - name: "test-kerberos"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run Kerberos unit tests"
   - name: "test-csot"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run CSOT tests"
   - name: "test-fle"
     commands:
-      - func: "export FLE credentials"
+      - func: bootstrap-mongo-orchestration
       - func: "run tests"
   - name: "test-aws-auth"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "export AWS auth credentials"
       - func: "run AWS auth tests"
   - name: "test-full-atlas-task"

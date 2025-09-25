@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+desired_version, arch = ARGV
+if arch.nil?
+  STDERR.puts "Usage: get-mongodb-download-url desired-version arch"
+  exit 1
+end
+
+$: << File.join(File.dirname(__FILE__), '../lib')
+require 'mrss/server_version_registry'
+
+begin
+  puts Mrss::ServerVersionRegistry.new(desired_version, arch).download_url
+rescue Mrss::ServerVersionRegistry::Error => exc
+  STDERR.puts "Error: #{exc}"
+  exit 2
+end
