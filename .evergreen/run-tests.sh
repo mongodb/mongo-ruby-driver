@@ -131,21 +131,23 @@ if test "$COMPRESSOR" = zstd; then
 fi
 
 echo "Running tests"
+echo "Running tests with MONGODB_URI: ${MONGODB_URI}"
+
 set +e
 if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 elif test "$FORK" = 1; then
-  bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb
+  MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb
 elif test "$STRESS" = 1; then
-  bundle exec rspec spec/integration/fork*spec.rb spec/stress
+  MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/integration/fork*spec.rb spec/stress
 elif test "$OCSP_VERIFIER" = 1; then
-  bundle exec rspec spec/integration/ocsp_verifier_spec.rb
+  MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/integration/ocsp_verifier_spec.rb
 elif test -n "$OCSP_CONNECTIVITY"; then
-  bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
+  MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
 elif test "$SOLO" = 1; then
   for attempt in `seq 10`; do
     echo "Attempt $attempt"
-    bundle exec rspec spec/solo/clean_exit_spec.rb 2>&1 |tee test.log
+    MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/solo/clean_exit_spec.rb 2>&1 |tee test.log
     if grep -qi 'segmentation fault' test.log; then
       echo 'Test failed - Ruby crashed' 1>&2
       exit 1
@@ -157,7 +159,7 @@ elif test "$SOLO" = 1; then
   done
 else
   export JRUBY_OPTS=-J-Xmx2g
-  bundle exec rake spec:ci
+  MONGODB_URI="${MONGODB_URI}" bundle exec rake spec:ci
 fi
 
 test_status=$?

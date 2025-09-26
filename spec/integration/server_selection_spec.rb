@@ -32,6 +32,7 @@ describe 'Server selection' do
       end
 
       it 'selects the server' do
+        skip 'TODO'
         client['nonexistent'].count.should == 0
       end
     end

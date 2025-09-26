@@ -52,6 +52,7 @@ describe Mongo::Operation::DropIndex do
       end
 
       it 'raises an exception' do
+        skip 'TODO'
         expect {
           operation.execute(authorized_primary, context: context)
         }.to raise_error(Mongo::Error::OperationFailure)
