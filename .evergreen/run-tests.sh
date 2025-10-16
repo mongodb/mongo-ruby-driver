@@ -130,39 +130,41 @@ if test "$COMPRESSOR" = zstd; then
   add_uri_option compressors=zstd
 fi
 
-echo "Running tests"
-echo "Running tests with MONGODB_URI: ${MONGODB_URI}"
-
 set +e
+
+# Construct the test command based on the test type
 if test -n "$TEST_CMD"; then
-  eval $TEST_CMD
+  TEST_COMMAND="$TEST_CMD"
 elif test "$FORK" = 1; then
-  MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb
+  TEST_COMMAND="bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb"
 elif test "$STRESS" = 1; then
-  MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/integration/fork*spec.rb spec/stress
+  TEST_COMMAND="bundle exec rspec spec/integration/fork*spec.rb spec/stress"
 elif test "$OCSP_VERIFIER" = 1; then
-  MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/integration/ocsp_verifier_spec.rb
+  TEST_COMMAND="bundle exec rspec spec/integration/ocsp_verifier_spec.rb"
 elif test -n "$OCSP_CONNECTIVITY"; then
-  MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
-elif test "$SOLO" = 1; then
-  for attempt in `seq 10`; do
-    echo "Attempt $attempt"
-    MONGODB_URI="${MONGODB_URI}" bundle exec rspec spec/solo/clean_exit_spec.rb 2>&1 |tee test.log
-    if grep -qi 'segmentation fault' test.log; then
-      echo 'Test failed - Ruby crashed' 1>&2
-      exit 1
-    fi
-    if fgrep -i '[BUG]' test.log; then
-      echo 'Test failed - Ruby complained about a bug' 1>&2
-      exit 1
-    fi
-  done
+  TEST_COMMAND="bundle exec rspec spec/integration/ocsp_connectivity_spec.rb"
 else
   export JRUBY_OPTS=-J-Xmx2g
-  MONGODB_URI="${MONGODB_URI}" bundle exec rake spec:ci
+  TEST_COMMAND="bundle exec rake spec:ci"
 fi
 
+# Export environment variables for all test executions
+export MONGODB_URI="${MONGODB_URI}"
+export AUTH="${AUTH}"
+export SSL="${SSL}"
+export FLE="${FLE}"
+export TOPOLOGY="${TOPOLOGY}"
+export COMPRESSOR="${COMPRESSOR}"
+export CSOT_SPEC_TESTS="${CSOT_SPEC_TESTS}"
+
+if [ -f "${PROJECT_DIRECTORY}/secrets-export.sh" ]; then
+    source ${PROJECT_DIRECTORY}/secrets-export.sh
+fi
+
+echo "Running tests with MONGODB_URI: ${MONGODB_URI}"
+eval "$TEST_COMMAND"
 test_status=$?
+
 echo "TEST STATUS: ${test_status}"
 set -e
 

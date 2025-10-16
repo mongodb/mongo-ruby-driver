@@ -112,6 +112,8 @@ functions:
             export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
             export OCSP_VERIFIER="${OCSP_VERIFIER}"
 
+            export DRIVER_TOOLS_CA_PEM=".mod/drivers-evergreen-tools/.evergreen/x509gen/ca.pem"
+
             export RVM_RUBY="${RVM_RUBY}"
           EOT
 
@@ -132,13 +134,14 @@ functions:
           set -x
           ${PREPARE_SHELL}
 
-          MONGODB_VERSION=${VERSION} \
+          MONGODB_VERSION=${MONGODB_VERSION} \
           TOPOLOGY=${TOPOLOGY} \
           AUTH=${AUTH} \
           SSL=${SSL} \
           ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           LOAD_BALANCER=${LOAD_BALANCER} \
+          REQUIRE_API_VERSION=${API_VERSION_REQUIRED}
           sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
     - command: expansions.update
       params:
@@ -236,10 +239,10 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        include_expansions_in_env: ["TOPOLOGY", "AUTH", "SSL", "MONGODB_URI"]
         script: |
           ${PREPARE_SHELL}
-          export CSOT_SPEC_TESTS=1
-          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+          CSOT_SPEC_TESTS=1 TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
             .evergreen/run-tests.sh
 
   "export Kerberos credentials":
@@ -389,6 +392,7 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        include_expansions_in_env: ["TOPOLOGY", "AUTH", "SSL", "MONGODB_URI"]
         script: |
           ${PREPARE_SHELL}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
@@ -402,6 +406,7 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        include_expansions_in_env: ["TOPOLOGY", "AUTH", "SSL", "MONGODB_URI"]
         script: |
           ${PREPARE_SHELL}
           .evergreen/run-tests.sh
@@ -427,6 +432,18 @@ functions:
           .evergreen/run-tests-kerberos-unit.sh
 
   "run Atlas tests":
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
+    # This creates secrets-export.sh, which is later sourced by run-tests.sh
+    - command: subprocess.exec
+      params:
+        working_dir: "src"
+        include_expansions_in_env: [AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID, AWS_SESSION_TOKEN]
+        binary: bash
+        args:
+          - -c
+          - ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/atlas_connect
     - command: shell.exec
       type: test
       params:

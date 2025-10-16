@@ -115,6 +115,8 @@ functions:
             export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
             export OCSP_VERIFIER="${OCSP_VERIFIER}"
 
+            export DRIVER_TOOLS_CA_PEM=".mod/drivers-evergreen-tools/.evergreen/x509gen/ca.pem"
+
             export RVM_RUBY="${RVM_RUBY}"
           EOT
 
@@ -135,13 +137,14 @@ functions:
           set -x
           ${PREPARE_SHELL}
 
-          MONGODB_VERSION=${VERSION} \
+          MONGODB_VERSION=${MONGODB_VERSION} \
           TOPOLOGY=${TOPOLOGY} \
           AUTH=${AUTH} \
           SSL=${SSL} \
           ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           LOAD_BALANCER=${LOAD_BALANCER} \
+          REQUIRE_API_VERSION=${API_VERSION_REQUIRED}
           sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
     - command: expansions.update
       params:
@@ -239,10 +242,10 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        include_expansions_in_env: ["TOPOLOGY", "AUTH", "SSL", "MONGODB_URI"]
         script: |
           ${PREPARE_SHELL}
-          export CSOT_SPEC_TESTS=1
-          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+          CSOT_SPEC_TESTS=1 TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
             .evergreen/run-tests.sh
 
   "export Kerberos credentials":
@@ -392,6 +395,7 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        include_expansions_in_env: ["TOPOLOGY", "AUTH", "SSL", "MONGODB_URI"]
         script: |
           ${PREPARE_SHELL}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
@@ -405,6 +409,7 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        include_expansions_in_env: ["TOPOLOGY", "AUTH", "SSL", "MONGODB_URI"]
         script: |
           ${PREPARE_SHELL}
           .evergreen/run-tests.sh
@@ -430,6 +435,18 @@ functions:
           .evergreen/run-tests-kerberos-unit.sh
 
   "run Atlas tests":
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
+    # This creates secrets-export.sh, which is later sourced by run-tests.sh
+    - command: subprocess.exec
+      params:
+        working_dir: "src"
+        include_expansions_in_env: [AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID, AWS_SESSION_TOKEN]
+        binary: bash
+        args:
+          - -c
+          - ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/atlas_connect
     - command: shell.exec
       type: test
       params:
@@ -812,19 +829,6 @@ axes:
         variables:
           MONGODB_VERSION: "4.4"
           CRYPT_SHARED_VERSION: "6.0.5"
-      - id: "4.2"
-        display_name: "4.2"
-        variables:
-          MONGODB_VERSION: "4.2"
-          CRYPT_SHARED_VERSION: "6.0.5"
-      - id: "4.0"
-        display_name: "4.0"
-        variables:
-          MONGODB_VERSION: "4.0"
-      - id: "3.6"
-        display_name: "3.6"
-        variables:
-          MONGODB_VERSION: "3.6"
 
   - id: fcv
     display_name: FCV
@@ -865,7 +869,7 @@ axes:
         display_name: Auth SSL
         variables:
           AUTH: "auth"
-          SSL: "ssl"
+          SSL: "yes"
       - id: "auth-and-nossl"
         display_name: Auth NoSSL
         variables:
@@ -873,14 +877,14 @@ axes:
       - id: "noauth-and-ssl"
         display_name: NoAuth SSL
         variables:
-          SSL: "ssl"
+          SSL: "yes"
       - id: "noauth-and-nossl"
         display_name: NoAuth NoSSL
       - id: "x509"
         display_name: X.509
         variables:
           AUTH: "x509"
-          SSL: "ssl"
+          SSL: "yes"
       - id: kerberos
         display_name: Kerberos
         variables:
@@ -1227,7 +1231,7 @@ buildvariants:
       ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
       mongodb-version: ['5.0']
       topology: ["server", "replica_set", "sharded_cluster"]
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-main"
@@ -1235,17 +1239,7 @@ buildvariants:
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7"]
-      mongodb-version: ['4.4', '4.2', '4.0']
-      topology: ["server", "replica_set", "sharded_cluster"]
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-main"
-
-  - matrix_name: "mongo-3.6"
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6']
+      mongodb-version: ['4.4']
       topology: ["server", "replica_set", "sharded_cluster"]
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1317,17 +1311,6 @@ buildvariants:
     tasks:
       - name: "test-main"
 
-  - matrix_name: mmapv1
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6', '4.0']
-      topology: ["server", "replica_set", "sharded_cluster"]
-      storage-engine: mmapv1
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
-    tasks:
-      - name: "test-main"
-
   - matrix_name: "lint"
     matrix_spec:
       lint: on
@@ -1350,22 +1333,11 @@ buildvariants:
     tasks:
       - name: "test-main"
 
-  - matrix_name: "solo"
-    matrix_spec:
-      solo: on
-      ruby: ["ruby-3.3", "ruby-3.2", "ruby-3.1"]
-      mongodb-version: "8.0"
-      topology: ["server", "replica_set", "sharded_cluster"]
-      os: ubuntu2204
-    display_name: "${mongodb-version} ${topology} solo ${ruby}"
-    tasks:
-      - name: "test-main"
-
   - matrix_name: "stress older"
     matrix_spec:
       stress: on
       ruby: "ruby-2.7"
-      mongodb-version: ['4.2', '4.0', '3.6']
+      mongodb-version: ['4.4']
       topology: replica_set
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"

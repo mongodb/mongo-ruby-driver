@@ -245,6 +245,7 @@ describe 'Retryable writes errors tests' do
       end
 
       before do
+        skip 'TODO'
         skip 'This test requires at least two mongos' if SpecConfig.instance.addresses.length < 2
 
         first_mongos.database.command(

@@ -40,19 +40,6 @@ axes:
         variables:
           MONGODB_VERSION: "4.4"
           CRYPT_SHARED_VERSION: "6.0.5"
-      - id: "4.2"
-        display_name: "4.2"
-        variables:
-          MONGODB_VERSION: "4.2"
-          CRYPT_SHARED_VERSION: "6.0.5"
-      - id: "4.0"
-        display_name: "4.0"
-        variables:
-          MONGODB_VERSION: "4.0"
-      - id: "3.6"
-        display_name: "3.6"
-        variables:
-          MONGODB_VERSION: "3.6"
 
   - id: fcv
     display_name: FCV
@@ -93,7 +80,7 @@ axes:
         display_name: Auth SSL
         variables:
           AUTH: "auth"
-          SSL: "ssl"
+          SSL: "yes"
       - id: "auth-and-nossl"
         display_name: Auth NoSSL
         variables:
@@ -101,14 +88,14 @@ axes:
       - id: "noauth-and-ssl"
         display_name: NoAuth SSL
         variables:
-          SSL: "ssl"
+          SSL: "yes"
       - id: "noauth-and-nossl"
         display_name: NoAuth NoSSL
       - id: "x509"
         display_name: X.509
         variables:
           AUTH: "x509"
-          SSL: "ssl"
+          SSL: "yes"
       - id: kerberos
         display_name: Kerberos
         variables:

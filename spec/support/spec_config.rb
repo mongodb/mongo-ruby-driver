@@ -29,7 +29,7 @@ class SpecConfig
         @connect_options = { connect: :direct }
       end
       if @uri_options[:ssl].nil?
-        @ssl = (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
+        @ssl = (%w[ssl yes].include?(ENV['SSL'])) || (ENV['SSL_ENABLED'] == 'true')
       else
         @ssl = @uri_options[:ssl]
       end
@@ -177,6 +177,10 @@ class SpecConfig
     !!ENV['DRIVERS_TOOLS']
   end
 
+  def drivers_tools
+    ENV['DRIVERS_TOOLS']
+  end
+
   def active_support?
     %w(1 true yes).include?(ENV['WITH_ACTIVE_SUPPORT'])
   end
@@ -277,7 +281,7 @@ EOT
   end
 
   def client_key_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
+    if drivers_tools?
       ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
     else
       local_client_key_path
@@ -289,8 +293,8 @@ EOT
   end
 
   def client_cert_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
-      ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
+    if drivers_tools?
+      "#{drivers_tools}/.evergreen/x509gen/client.pem"
     else
       local_client_cert_path
     end
@@ -305,7 +309,7 @@ EOT
   end
 
   def client_pem_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_CERT_KEY_PEM']
+    if drivers_tools?
       ENV['DRIVER_TOOLS_CLIENT_CERT_KEY_PEM']
     else
       local_client_pem_path
@@ -333,7 +337,7 @@ EOT
   end
 
   def client_encrypted_key_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM']
+    if drivers_tools?
       ENV['DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM']
     else
       local_client_encrypted_key_path
@@ -349,8 +353,8 @@ EOT
   end
 
   def ca_cert_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CA_PEM']
-      ENV['DRIVER_TOOLS_CA_PEM']
+    if drivers_tools?
+      "#{drivers_tools}/.evergreen/x509gen/ca.pem"
     else
       local_ca_cert_path
     end
