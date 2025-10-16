@@ -282,7 +282,7 @@ EOT
 
   def client_key_path
     if drivers_tools?
-      ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
+      "#{drivers_tools}/.evergreen/x509gen/client.pem"
     else
       local_client_key_path
     end
@@ -338,7 +338,7 @@ EOT
 
   def client_encrypted_key_path
     if drivers_tools?
-      ENV['DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM']
+      "#{drivers_tools}/.evergreen/x509gen/client-pkcs8-encrypted.pem"
     else
       local_client_encrypted_key_path
     end

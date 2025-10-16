@@ -23,15 +23,15 @@ describe Mongo::Socket::SSL do
   end
 
   let (:key_string) do
-    File.read(SpecConfig.instance.local_client_key_path)
+    File.read(SpecConfig.instance.client_key_path)
   end
 
   let (:cert_string) do
-    File.read(SpecConfig.instance.local_client_cert_path)
+    File.read(SpecConfig.instance.client_cert_path)
   end
 
   let (:ca_cert_string) do
-    File.read(SpecConfig.instance.local_ca_cert_path)
+    File.read(SpecConfig.instance.ca_cert_path)
   end
 
   let(:key_encrypted_string) do
