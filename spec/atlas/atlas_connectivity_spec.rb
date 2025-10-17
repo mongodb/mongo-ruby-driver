@@ -24,11 +24,16 @@ describe 'Atlas connectivity' do
 
   context 'with regular authentication' do
     regular_auth_env_vars = %w[
-      ATLAS_REPLICA_SET_URI
-      ATLAS_SHARDED_URI
-      ATLAS_FREE_TIER_URI
-      ATLAS_TLS11_URI
-      ATLAS_TLS12_URI
+      ATLAS_FREE
+      ATLAS_SRV_FREE
+      ATLAS_REPL
+      ATLAS_SRV_REPL
+      ATLAS_SHRD
+      ATLAS_SRV_SHRD
+      ATLAS_TLS11
+      ATLAS_SRV_TLS11
+      ATLAS_TLS12
+      ATLAS_SRV_TLS12
     ]
 
     regular_auth_env_vars.each do |uri_var|
@@ -48,8 +53,8 @@ describe 'Atlas connectivity' do
 
   context 'with X.509 authentication' do
     x509_auth_env_vars = [
-      %w[ATLAS_X509_URI ATLAS_X509_CERT_BASE64],
-      %w[ATLAS_X509_DEV_URI ATLAS_X509_DEV_CERT_BASE64]
+      %w[ATLAS_X509 ATLAS_X509_CERT_BASE64],
+      %w[ATLAS_X509_DEV ATLAS_X509_DEV_CERT_BASE64]
     ]
 
     x509_auth_env_vars.each do |uri_var, cert_var|

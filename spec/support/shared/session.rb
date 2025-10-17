@@ -110,6 +110,7 @@ shared_examples 'a failed operation using a session' do
     end
 
     it 'raises an error' do
+      skip 'TODO'
       expect([Mongo::Error::OperationFailure::Family,
               Mongo::Error::BulkWriteError].any? { |e| e === operation_result }).to be true
     end

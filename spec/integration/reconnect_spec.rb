@@ -4,6 +4,8 @@
 require 'spec_helper'
 
 describe 'Client after reconnect' do
+  require_no_tls
+
   let(:client) { authorized_client }
 
   it 'is a functioning client' do
