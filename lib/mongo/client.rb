@@ -912,7 +912,7 @@ module Mongo
       @connect_lock.synchronize do
         do_close rescue nil
 
-        @cluster = Cluster.new(addresses, monitoring, cluster_options)
+        @cluster = Cluster.new(addresses, monitoring, tracer, cluster_options)
 
         if @options[:auto_encryption_options]
           build_encrypter

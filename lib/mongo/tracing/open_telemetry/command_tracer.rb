@@ -24,10 +24,10 @@ module Mongo
         extend Forwardable
 
         def_delegators :@parent_tracer,
-          :cursor_context_map,
-          :parent_context_for,
-          :transaction_context_map,
-          :transaction_map_key
+                       :cursor_context_map,
+                       :parent_context_for,
+                       :transaction_context_map,
+                       :transaction_map_key
 
         def initialize(otel_tracer, parent_tracer, query_text_max_length: 0)
           @otel_tracer = otel_tracer
@@ -35,10 +35,12 @@ module Mongo
           @query_text_max_length = query_text_max_length
         end
 
+        def start_span(message, operation_context, connection); end
+
         def trace_command(message, operation_context, connection)
           parent_context = parent_context_for(operation_context, cursor_id(message))
           span = @otel_tracer.start_span(
-            query_summary(message),
+            command_name(message),
             attributes: span_attributes(message, connection),
             with_parent: parent_context,
             kind: :client
@@ -50,6 +52,7 @@ module Mongo
             end
           end
         rescue Exception => e
+          span&.set_attribute('db.response.status_code', e.code.to_s) if e.is_a?(Mongo::Error::OperationFailure)
           span&.record_exception(e)
           span&.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{e.class}")
           raise e
@@ -65,7 +68,7 @@ module Mongo
             'db.namespace' => database(message),
             'db.collection.name' => collection_name(message),
             'db.command.name' => command_name(message),
-            'db.query.summary' => command_name(message),
+            'db.query.summary' => query_summary(message),
             'server.port' => connection.address.port,
             'server.address' => connection.address.host,
             'network.transport' => connection.transport.to_s,
@@ -76,17 +79,16 @@ module Mongo
           }.compact
         end
 
-        def process_cursor_context(result, cursor_id, context, span)
-          if result.has_cursor_id? && result.cursor_id.positive?
-            span.set_attribute('db.mongodb.cursor_id', result.cursor_id)
-          end
+        def process_cursor_context(result, _cursor_id, _context, span)
+          return unless result.has_cursor_id? && result.cursor_id.positive?
+
+          span.set_attribute('db.mongodb.cursor_id', result.cursor_id)
         end
 
         def maybe_trace_error(result, span)
           return if result.successful?
 
-          span.set_attribute('db.response.status_code', result.error.code)
-          span.set_attribute('error.type', result.error.class.name)
+          span.set_attribute('db.response.status_code', result.error.code.to_s)
         end
 
         def query_summary(message)
@@ -121,9 +123,9 @@ module Mongo
         end
 
         def cursor_id(message)
-          if command_name(message) == 'getMore'
-            message.documents.first['getMore'].value
-          end
+          return unless command_name(message) == 'getMore'
+
+          message.documents.first['getMore'].value
         end
 
         EXCLUDED_KEYS = %w[lsid $db $clusterTime signature].freeze

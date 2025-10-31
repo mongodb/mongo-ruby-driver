@@ -1,5 +1,5 @@
 description: operation create collection
-schemaVersion: '1.26'
+schemaVersion: '1.27'
 createEntities:
   - client:
       id: &client0 client0
@@ -23,15 +23,15 @@ tests:
         ignoreExtraSpans: false
         spans:
           - name: createCollection operation-create-collection.newlyCreatedCollection
-            tags:
+            attributes:
               db.system: mongodb
               db.namespace: *database0Name
               db.collection.name: *collectionName
               db.operation.name: createCollection
               db.operation.summary: createCollection operation-create-collection.newlyCreatedCollection
             nested:
-              - name: create operation-create-collection.newlyCreatedCollection
-                tags:
+              - name: create
+                attributes:
                   db.system: mongodb
                   db.namespace: *database0Name
                   db.collection.name: *collectionName
@@ -43,13 +43,13 @@ tests:
                   exception.type: { $$exists: false }
                   exception.stacktrace: { $$exists: false }
                   server.address: { $$type: string }
-                  server.port: { $$type: ['int', 'long'] }
-                  db.query.summary: create
+                  server.port: { $$type: [int, long] }
+                  db.query.summary: create operation-create-collection.newlyCreatedCollection
                   db.query.text:
                     $$matchAsDocument:
                       $$matchAsRoot:
                         create: newlyCreatedCollection
                   db.mongodb.server_connection_id:
-                    $$type: [ 'int', 'long' ]
+                    $$type: [ int, long ]
                   db.mongodb.driver_connection_id:
-                    $$type: [ 'int', 'long' ]
+                    $$type: [ int, long ]

@@ -36,7 +36,9 @@ module Mongo
         def get_result(connection, context, options = {})
           message = build_message(connection, context)
           connection.tracer.trace_command(message, context, connection) do
-            Result.new(*dispatch_message(message, connection, context), @ids, context: context)
+            result = Result.new(*dispatch_message(message, connection, context), @ids, context: context)
+            yield result
+            validate_result(result, connection, context)
           end
         end
 

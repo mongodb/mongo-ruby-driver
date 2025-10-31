@@ -4,7 +4,6 @@ module Tracing
   Error = Class.new(StandardError)
 
   class Span
-
     attr_reader :tracer, :name, :attributes, :events, :with_parent, :kind, :finished, :nested
 
     attr_accessor :status
@@ -24,31 +23,25 @@ module Tracing
       @attributes[key] = value
     end
 
-    def add_event(name, attributes: {})
-      event_attributes = { 'event.name' => name }
-      event_attributes.merge!(attributes) unless attributes.nil?
-      @events << event_attributes
-    end
-
     def record_exception(exception, attributes: nil)
-      event_attributes = {
-        'exception.type' => exception.class.to_s,
-        'exception.message' => exception.message,
-        'exception.stacktrace' => exception.full_message(highlight: false, order: :top).encode('UTF-8', invalid: :replace, undef: :replace, replace: '�')
-      }
-      event_attributes.merge!(attributes) unless attributes.nil?
-      add_event('exception', attributes: event_attributes)
+      set_attribute('exception.type', exception.class.to_s)
+      set_attribute('exception.message', exception.message)
+      set_attribute(
+        'exception.stacktrace',
+        exception.full_message(highlight: false, order: :top).encode('UTF-8', invalid: :replace, undef: :replace,
+                                                                              replace: '�')
+      )
     end
 
     def finish
       raise Tracing::Error, 'Span already finished' if @finished
+
       @finished = true
       tracer.finish_span(self)
     end
   end
 
   class Tracer
-
     attr_reader :spans
 
     def initialize
@@ -70,6 +63,7 @@ module Tracing
 
     def finish_span(span)
       raise Error, 'Span not found' unless @spans.include?(span)
+
       @stack.pop if @stack.last == span
     end
 

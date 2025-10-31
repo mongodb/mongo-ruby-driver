@@ -1,5 +1,5 @@
 description: operation distinct
-schemaVersion: '1.26'
+schemaVersion: '1.27'
 createEntities:
   - client:
       id: &client0 client0
@@ -32,15 +32,15 @@ tests:
         ignoreExtraSpans: false
         spans:
           - name: distinct operation-distinct.test
-            tags:
+            attributes:
               db.system: mongodb
               db.namespace: operation-distinct
               db.collection.name: test
               db.operation.name: distinct
               db.operation.summary: distinct operation-distinct.test
             nested:
-              - name: distinct operation-distinct.test
-                tags:
+              - name: distinct
+                attributes:
                   db.system: mongodb
                   db.namespace: operation-distinct
                   db.collection.name: test
@@ -52,8 +52,8 @@ tests:
                   exception.type: { $$exists: false }
                   exception.stacktrace: { $$exists: false }
                   server.address: { $$type: string }
-                  server.port: { $$type: ['int', 'long'] }
-                  db.query.summary: distinct
+                  server.port: { $$type: [int, long] }
+                  db.query.summary: distinct operation-distinct.test
                   db.query.text:
                     $$matchAsDocument:
                       $$matchAsRoot:
@@ -61,6 +61,6 @@ tests:
                         key: x
                         query: { }
                   db.mongodb.server_connection_id:
-                    $$type: [ 'int', 'long' ]
+                    $$type: [ int, long ]
                   db.mongodb.driver_connection_id:
-                    $$type: [ 'int', 'long' ]
+                    $$type: [ int, long ]

@@ -1,5 +1,5 @@
-description: operation list indexes
-schemaVersion: '1.26'
+description: operation list_indexes
+schemaVersion: '1.27'
 createEntities:
   - client:
       id: &client0 client0
@@ -17,7 +17,7 @@ createEntities:
 initialData:
   - collectionName: test
     databaseName: operation-list-indexes
-    documents: []
+    documents: [ ]
 tests:
   - description: List indexes
     operations:
@@ -29,33 +29,33 @@ tests:
         ignoreExtraSpans: false
         spans:
           - name: listIndexes operation-list-indexes.test
-            tags:
+            attributes:
               db.system: mongodb
-            db.namespace: operation-list-indexes
-            db.collection.name: test
-            db.operation.name: listIndexes
-            db.operation.summary: listIndexes operation-list-indexes.test
+              db.namespace: operation-list-indexes
+              db.collection.name: test
+              db.operation.name: listIndexes
+              db.operation.summary: listIndexes operation-list-indexes.test
+
             nested:
-              - name: listIndexes operation-list-indexes.test
-                tags:
+              - name: listIndexes
+                attributes:
                   db.system: mongodb
-                db.namespace: operation-list-indexes
-                db.collection.name: test
-                db.command.name: listIndexes
-                network.transport: tcp
-                db.mongodb.cursor_id: { $$exists: false }
-                db.response.status_code: { $$exists: false }
-                exception.message: { $$exists: false }
-                exception.type: { $$exists: false }
-                exception.stacktrace: { $$exists: false }
-                server.address: { $$type: string }
-                server.port: { $$type: ['int', 'long'] }
-                db.query.summary: listIndexes
-                db.query.text:
-                  $$matchAsDocument:
-                    $$matchAsRoot:
-                      listIndexes: test
-                db.mongodb.server_connection_id:
-                  $$type: [ 'int', 'long' ]
-                db.mongodb.driver_connection_id:
-                  $$type: [ 'int', 'long' ]
+                  db.namespace: operation-list-indexes
+                  db.collection.name: test
+                  db.command.name: listIndexes
+                  network.transport: tcp
+                  db.response.status_code: { $$exists: false }
+                  exception.message: { $$exists: false }
+                  exception.type: { $$exists: false }
+                  exception.stacktrace: { $$exists: false }
+                  server.address: { $$type: string }
+                  server.port: { $$type: [ int, long ] }
+                  db.query.summary: listIndexes operation-list-indexes.test
+                  db.query.text:
+                    $$matchAsDocument:
+                      $$matchAsRoot:
+                        listIndexes: test
+                  db.mongodb.server_connection_id:
+                    $$type: [ int, long ]
+                  db.mongodb.driver_connection_id:
+                    $$type: [ int, long ]

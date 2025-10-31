@@ -426,15 +426,23 @@ module Unified
             (ignore_extra_spans && actual_spans.length < expected_spans.length)
           raise Error::ResultMismatch, "Span count mismatch: expected #{expected_spans.length}, actual #{actual_spans.length}\nExpected: #{expected_spans}\nActual: #{actual_spans}"
         end
-        expected_spans.each_with_index do |expected, i|
-          assert_span_matches(actual_spans[i], expected)
+        if ignore_extra_spans
+          expected_spans.each do |expected|
+            actual = actual_spans.find { |s| s.name == expected['name'] }
+            raise Error::ResultMismatch, "Could not find span with name #{expected['name']}" if actual.nil?
+            assert_span_matches(actual, expected)
+          end
+        else
+          expected_spans.each_with_index do |expected, i|
+            assert_span_matches(actual_spans[i], expected)
+          end
         end
       end
     end
 
     def assert_span_matches(actual, expected)
       assert_eq(actual.name, expected.use!('name'), 'Span name does not match')
-      expected_attributes = UsingHash[expected.use!('tags')]
+      expected_attributes = UsingHash[expected.use!('attributes')]
       expected_attributes.each do |key, value|
         actual_value = actual.attributes[key]
         assert_value_matches(actual_value, value, "Span attribute #{key}")

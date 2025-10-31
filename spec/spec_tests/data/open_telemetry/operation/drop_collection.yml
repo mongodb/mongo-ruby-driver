@@ -1,5 +1,9 @@
 description: operation drop collection
-schemaVersion: '1.26'
+schemaVersion: '1.27'
+
+runOnRequirements:
+  - minServerVersion: "7.0"
+
 createEntities:
   - client:
       id: &client0 client0
@@ -28,15 +32,16 @@ tests:
         ignoreExtraSpans: false
         spans:
           - name: dropCollection operation-drop-collection.test
-            tags:
+            attributes:
               db.system: mongodb
               db.namespace: operation-drop-collection
               db.collection.name: test
               db.operation.name: dropCollection
               db.operation.summary: dropCollection operation-drop-collection.test
+
             nested:
-              - name: drop operation-drop-collection.test
-                tags:
+              - name: drop
+                attributes:
                   db.system: mongodb
                   db.namespace: operation-drop-collection
                   db.collection.name: test
@@ -48,13 +53,13 @@ tests:
                   exception.type: { $$exists: false }
                   exception.stacktrace: { $$exists: false }
                   server.address: { $$type: string }
-                  server.port: { $$type: ['int', 'long'] }
-                  db.query.summary: drop
+                  server.port: { $$type: [int, long] }
+                  db.query.summary: drop operation-drop-collection.test
                   db.query.text:
                     $$matchAsDocument:
                       $$matchAsRoot:
                         drop: test
                   db.mongodb.server_connection_id:
-                    $$type: [ 'int', 'long' ]
+                    $$type: [ int, long ]
                   db.mongodb.driver_connection_id:
-                    $$type: [ 'int', 'long' ]
+                    $$type: [ int, long ]

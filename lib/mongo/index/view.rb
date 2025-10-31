@@ -371,7 +371,6 @@ module Mongo
           )
           op = Operation::DropIndex.new(spec)
           op_name = name == Index::ALL ? 'dropIndexes' : 'dropIndex'
-          byebug
           tracer.trace_operation(op, context, op_name: op_name) do
             server = next_primary(nil, session)
             op.execute(server, context: context)

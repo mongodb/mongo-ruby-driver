@@ -45,7 +45,7 @@ module Mongo
           add_error_labels(connection, context) do
             check_for_network_error do
               add_server_diagnostics(connection) do
-                get_result(connection, context, options).tap do |result|
+                get_result(connection, context, options) do |result|
                   if session
                     if session.in_transaction? &&
                       connection.description.load_balancer?
@@ -92,9 +92,7 @@ module Mongo
           end
         end
 
-        do_execute(connection, context, options).tap do |result|
-          validate_result(result, connection, context)
-        end
+        do_execute(connection, context, options)
       end
 
       private
@@ -106,7 +104,9 @@ module Mongo
       def get_result(connection, context, options = {})
         message = build_message(connection, context)
         connection.tracer.trace_command(message, context, connection) do
-          result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
+          result = result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
+          yield result
+          validate_result(result, connection, context)
         end
       end
 
