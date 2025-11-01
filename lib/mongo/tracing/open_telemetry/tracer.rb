@@ -17,6 +17,8 @@
 module Mongo
   module Tracing
     module OpenTelemetry
+      # OpenTelemetry tracer for MongoDB operations and commands.
+      # @api private
       class Tracer
         # @return [ OpenTelemetry::Trace::Tracer ] the OpenTelemetry tracer implementation
         #   used to create spans for MongoDB operations and commands.
@@ -55,12 +57,26 @@ module Mongo
           @enabled
         end
 
+        # Trace a MongoDB operation.
+        #
+        # @param operation [Mongo::Operation] The MongoDB operation to trace.
+        # @param operation_context [Mongo::Operation::Context] The context of the operation.
+        # @param op_name [String, nil] An optional name for the operation.
+        # @yield The block representing the operation to be traced.
+        # @return [Object] The result of the operation.
         def trace_operation(operation, operation_context, op_name: nil, &block)
           return yield unless enabled?
 
           @operation_tracer.trace_operation(operation, operation_context, op_name: op_name, &block)
         end
 
+        # Trace a MongoDB command.
+        #
+        # @param message [Mongo::Protocol::Message] The MongoDB command message to trace.
+        # @param operation_context [Mongo::Operation::Context] The context of the operation.
+        # @param connection [Mongo::Server::Connection] The connection used to send the command
+        # @yield The block representing the command to be traced.
+        # @return [Object] The result of the command.
         def trace_command(message, operation_context, connection, &block)
           return yield unless enabled?
 
@@ -83,7 +99,6 @@ module Mongo
           elsif (_key = cursor_map_key(operation_context.session, cursor_id))
             # We return nil here unless we decide how to nest cursor operations.
             nil
-            # cursor_context_map[key]
           end
         end
 

@@ -24,16 +24,23 @@ module Mongo
         extend Forwardable
 
         def_delegators :@parent_tracer,
-          :cursor_context_map,
-          :parent_context_for,
-          :transaction_context_map,
-          :transaction_map_key
+                       :cursor_context_map,
+                       :parent_context_for,
+                       :transaction_context_map,
+                       :transaction_map_key
 
         def initialize(otel_tracer, parent_tracer)
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
         end
 
+        # Trace a MongoDB operation.
+        #
+        # @param operation [Mongo::Operation] The MongoDB operation to trace.
+        # @param operation_contetxt [Mongo::Operation::Context] The context of the operation.
+        # @param op_name [String, nil] An optional name for the operation.
+        # @yield The block representing the operation to be traced.
+        # @return [Object] The result of the operation.
         def trace_operation(operation, operation_context, op_name: nil)
           parent_context = parent_context_for(operation_context, operation.cursor_id)
           span = @otel_tracer.start_span(
@@ -58,11 +65,7 @@ module Mongo
         private
 
         def operation_name(operation, op_name = nil)
-          if op_name
-            op_name
-          else
-            operation.class.name.split('::').last.downcase
-          end
+          op_name || operation.class.name.split('::').last.downcase
         end
 
         def span_attributes(operation, op_name)
@@ -106,13 +109,13 @@ module Mongo
               operation.spec[:selector][:drop]
             when Operation::WriteCommand
               operation.spec[:selector].values.first
+            else
+              return nil
             end.to_s
           end
         end
 
         def operation_span_name(operation, op_name = nil)
-          return 'listDatabases' if op_name == 'listDatabases'
-
           coll_name = collection_name(operation)
           if coll_name && !coll_name.empty?
             "#{operation_name(operation, op_name)} #{operation.db_name}.#{coll_name}"

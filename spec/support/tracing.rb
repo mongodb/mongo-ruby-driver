@@ -4,7 +4,7 @@ module Tracing
   Error = Class.new(StandardError)
 
   class Span
-    attr_reader :tracer, :name, :attributes, :events, :with_parent, :kind, :finished, :nested
+    attr_reader :tracer, :name, :attributes, :with_parent, :kind, :finished, :nested
 
     attr_accessor :status
 
@@ -12,7 +12,6 @@ module Tracing
       @tracer = tracer
       @name = name
       @attributes = attributes
-      @events = []
       @with_parent = with_parent
       @kind = kind
       @finished = false
@@ -38,6 +37,10 @@ module Tracing
 
       @finished = true
       tracer.finish_span(self)
+    end
+
+    def inspect
+      "#<Tracing::Span name=#{@name.inspect} attributes=#{@attributes.inspect}>"
     end
   end
 
