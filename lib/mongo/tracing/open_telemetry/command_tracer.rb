@@ -49,32 +49,25 @@ module Mongo
         # operation span and is finished when the command completes or fails.
         #
         # @param message [ Mongo::Protocol::Message ] the command message to trace.
-        # @param operation_context [ Mongo::Operation::Context ] the context of the operation.
+        # @param _operation_context [ Mongo::Operation::Context ] the context of the operation.
         # @param connection [ Mongo::Server::Connection ] the connection used to send the command.
         #
         # @yield the block representing the command to be traced.
         #
         # @return [ Object ] the result of the command.
         # rubocop:disable Lint/RescueException
-        def trace_command(message, operation_context, connection)
+        def trace_command(message, _operation_context, connection)
           # Commands should always be nested under their operation span, not directly under
           # the transaction span. Don't pass with_parent to use automatic parent resolution
           # from the currently active span (the operation span).
-          span = @otel_tracer.start_span(
-            command_name(message),
-            attributes: span_attributes(message, connection),
-            kind: :client
-          )
+          span = create_command_span(message, connection)
           ::OpenTelemetry::Trace.with_span(span) do |s, c|
             yield.tap do |result|
-              process_cursor_context(result, cursor_id(message), c, s)
-              maybe_trace_error(result, s)
+              process_command_result(result, cursor_id(message), c, s)
             end
           end
         rescue Exception => e
-          span&.set_attribute('db.response.status_code', e.code.to_s) if e.is_a?(Mongo::Error::OperationFailure)
-          span&.record_exception(e)
-          span&.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{e.class}")
+          handle_command_exception(span, e)
           raise e
         ensure
           span&.finish
@@ -83,6 +76,45 @@ module Mongo
 
         private
 
+        # Creates a span for a command.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        # @param connection [ Mongo::Server::Connection ] the connection.
+        #
+        # @return [ OpenTelemetry::Trace::Span ] the created span.
+        def create_command_span(message, connection)
+          @otel_tracer.start_span(
+            command_name(message),
+            attributes: span_attributes(message, connection),
+            kind: :client
+          )
+        end
+
+        # Processes the command result and updates span attributes.
+        #
+        # @param result [ Object ] the command result.
+        # @param cursor_id [ Integer | nil ] the cursor ID.
+        # @param context [ OpenTelemetry::Context ] the context.
+        # @param span [ OpenTelemetry::Trace::Span ] the current span.
+        def process_command_result(result, cursor_id, context, span)
+          process_cursor_context(result, cursor_id, context, span)
+          maybe_trace_error(result, span)
+        end
+
+        # Handles exceptions that occur during command execution.
+        #
+        # @param span [ OpenTelemetry::Trace::Span | nil ] the span.
+        # @param exception [ Exception ] the exception that occurred.
+        def handle_command_exception(span, exception)
+          return unless span
+
+          if exception.is_a?(Mongo::Error::OperationFailure)
+            span.set_attribute('db.response.status_code', exception.code.to_s)
+          end
+          span.record_exception(exception)
+          span.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{exception.class}")
+        end
+
         # Builds span attributes for the command.
         #
         # @param message [ Mongo::Protocol::Message ] the command message.
@@ -90,22 +122,54 @@ module Mongo
         #
         # @return [ Hash ] OpenTelemetry span attributes following MongoDB semantic conventions.
         def span_attributes(message, connection)
+          base_attributes(message)
+            .merge(connection_attributes(connection))
+            .merge(session_attributes(message))
+            .compact
+        end
+
+        # Returns base database and command attributes.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ Hash ] base span attributes.
+        def base_attributes(message)
           {
             'db.system' => 'mongodb',
             'db.namespace' => database(message),
             'db.collection.name' => collection_name(message),
             'db.command.name' => command_name(message),
             'db.query.summary' => query_summary(message),
+            'db.query.text' => query_text(message)
+          }
+        end
+
+        # Returns connection-related attributes.
+        #
+        # @param connection [ Mongo::Server::Connection ] the connection.
+        #
+        # @return [ Hash ] connection span attributes.
+        def connection_attributes(connection)
+          {
             'server.port' => connection.address.port,
             'server.address' => connection.address.host,
             'network.transport' => connection.transport.to_s,
             'db.mongodb.server_connection_id' => connection.server.description.server_connection_id,
-            'db.mongodb.driver_connection_id' => connection.id,
+            'db.mongodb.driver_connection_id' => connection.id
+          }
+        end
+
+        # Returns session and transaction attributes.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ Hash ] session span attributes.
+        def session_attributes(message)
+          {
             'db.mongodb.cursor_id' => cursor_id(message),
             'db.mongodb.lsid' => lsid(message),
-            'db.mongodb.txn_number' => txn_number(message),
-            'db.query.text' => query_text(message)
-          }.compact
+            'db.mongodb.txn_number' => txn_number(message)
+          }
         end
 
         # Processes cursor context from the command result.
