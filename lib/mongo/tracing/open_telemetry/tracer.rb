@@ -83,6 +83,56 @@ module Mongo
           @command_tracer.trace_command(message, operation_context, connection, &block)
         end
 
+        # Start a transaction span and activate its context.
+        #
+        # @param session [Mongo::Session] The session starting the transaction.
+        def start_transaction_span(session)
+          return unless enabled?
+
+          key = transaction_map_key(session)
+          return unless key
+
+          # Create the transaction span with minimal attributes
+          span = @otel_tracer.start_span(
+            'transaction',
+            attributes: { 'db.system' => 'mongodb' },
+            kind: :client
+          )
+
+          # Create a context containing this span
+          context = ::OpenTelemetry::Trace.context_with_span(span)
+
+          # Activate the context and store the token for later detachment
+          token = ::OpenTelemetry::Context.attach(context)
+
+          # Store span, token, and context for later retrieval
+          transaction_span_map[key] = span
+          transaction_token_map[key] = token
+          transaction_context_map[key] = context
+        end
+
+        # Finish a transaction span and deactivate its context.
+        #
+        # @param session [Mongo::Session] The session finishing the transaction.
+        def finish_transaction_span(session)
+          return unless enabled?
+
+          key = transaction_map_key(session)
+          return unless key
+
+          span = transaction_span_map.delete(key)
+          token = transaction_token_map.delete(key)
+          transaction_context_map.delete(key)
+
+          return unless span && token
+
+          begin
+            span.finish
+          ensure
+            ::OpenTelemetry::Context.detach(token)
+          end
+        end
+
         def cursor_context_map
           @cursor_context_map ||= {}
         end
@@ -104,6 +154,14 @@ module Mongo
 
         def transaction_context_map
           @transaction_context_map ||= {}
+        end
+
+        def transaction_span_map
+          @transaction_span_map ||= {}
+        end
+
+        def transaction_token_map
+          @transaction_token_map ||= {}
         end
 
         def transaction_map_key(session)

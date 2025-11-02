@@ -624,6 +624,7 @@ module Mongo
 
       @state = STARTING_TRANSACTION_STATE
       @already_committed = false
+      tracer.start_transaction_span(self)
 
       # This method has no explicit return value.
       # We could return nil here but true indicates to the user that the
@@ -703,9 +704,14 @@ module Mongo
               txn_num: txn_num,
               write_concern: write_concern,
             }
-            Operation::Command.new(spec).execute_with_connection(connection, context: context)
+            operation = Operation::Command.new(spec)
+            tracer.trace_operation(operation, context, op_name: 'commitTransaction') do
+              operation.execute_with_connection(connection, context: context)
+            end
           end
         end
+        # Finish the transaction span before changing state
+        tracer.finish_transaction_span(self)
       ensure
         @state = TRANSACTION_COMMITTED_STATE
         @committing_transaction = false
@@ -760,24 +766,31 @@ module Mongo
             ending_transaction: true, context: context,
           ) do |connection, txn_num, context|
             begin
-              Operation::Command.new(
+              operation = Operation::Command.new(
                 selector: { abortTransaction: 1 },
                 db_name: 'admin',
                 session: self,
                 txn_num: txn_num
-              ).execute_with_connection(connection, context: context)
+              )
+              tracer.trace_operation(operation, context, op_name: 'abortTransaction') do
+                operation.execute_with_connection(connection, context: context)
+              end
             ensure
               unpin
             end
           end
         end
 
+        # Finish the transaction span before changing state
+        tracer.finish_transaction_span(self)
         @state = TRANSACTION_ABORTED_STATE
       rescue Mongo::Error::InvalidTransactionOperation
         raise
       rescue Mongo::Error
+        tracer.finish_transaction_span(self)
         @state = TRANSACTION_ABORTED_STATE
       rescue Exception
+        tracer.finish_transaction_span(self)
         @state = TRANSACTION_ABORTED_STATE
         raise
       ensure

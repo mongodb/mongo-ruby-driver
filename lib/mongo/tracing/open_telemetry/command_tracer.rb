@@ -21,14 +21,6 @@ module Mongo
       #
       # @api private
       class CommandTracer
-        extend Forwardable
-
-        def_delegators :@parent_tracer,
-                       :cursor_context_map,
-                       :parent_context_for,
-                       :transaction_context_map,
-                       :transaction_map_key
-
         def initialize(otel_tracer, parent_tracer, query_text_max_length: 0)
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
@@ -38,11 +30,12 @@ module Mongo
         def start_span(message, operation_context, connection); end
 
         def trace_command(message, operation_context, connection)
-          parent_context = parent_context_for(operation_context, cursor_id(message))
+          # Commands should always be nested under their operation span, not directly under
+          # the transaction span. Don't pass with_parent to use automatic parent resolution
+          # from the currently active span (the operation span).
           span = @otel_tracer.start_span(
             command_name(message),
             attributes: span_attributes(message, connection),
-            with_parent: parent_context,
             kind: :client
           )
           ::OpenTelemetry::Trace.with_span(span) do |s, c|
@@ -75,6 +68,8 @@ module Mongo
             'db.mongodb.server_connection_id' => connection.server.description.server_connection_id,
             'db.mongodb.driver_connection_id' => connection.id,
             'db.mongodb.cursor_id' => cursor_id(message),
+            'db.mongodb.lsid' => lsid(message),
+            'db.mongodb.txn_number' => txn_number(message),
             'db.query.text' => query_text(message)
           }.compact
         end
@@ -103,10 +98,12 @@ module Mongo
           case message.documents.first.keys.first
           when 'getMore'
             message.documents.first['collection'].to_s
-          when 'listCollections', 'listDatabases'
+          when 'listCollections', 'listDatabases', 'commitTransaction', 'abortTransaction'
             nil
           else
-            message.documents.first.values.first.to_s
+            value = message.documents.first.values.first
+            # Return nil if the value is not a string (e.g., for admin commands that have numeric values)
+            value.is_a?(String) ? value : nil
           end
         end
 
@@ -126,6 +123,20 @@ module Mongo
           return unless command_name(message) == 'getMore'
 
           message.documents.first['getMore'].value
+        end
+
+        def lsid(message)
+          lsid_doc = message.documents.first['lsid']
+          return unless lsid_doc
+
+          lsid_doc['id']
+        end
+
+        def txn_number(message)
+          txn_num = message.documents.first['txnNumber']
+          return unless txn_num
+
+          txn_num.value
         end
 
         EXCLUDED_KEYS = %w[lsid $db $clusterTime signature].freeze
