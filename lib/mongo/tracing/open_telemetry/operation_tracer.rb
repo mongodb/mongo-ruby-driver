@@ -29,6 +29,13 @@ module Mongo
                        :transaction_context_map,
                        :transaction_map_key
 
+        # Initializes a new OperationTracer.
+        #
+        # @param otel_tracer [ OpenTelemetry::Trace::Tracer ] the OpenTelemetry tracer.
+        # @param parent_tracer [ Mongo::Tracing::OpenTelemetry::Tracer ] the parent tracer
+        #   for accessing shared context maps.
+        #
+        # @api private
         def initialize(otel_tracer, parent_tracer)
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
@@ -36,11 +43,21 @@ module Mongo
 
         # Trace a MongoDB operation.
         #
-        # @param operation [Mongo::Operation] The MongoDB operation to trace.
-        # @param operation_contetxt [Mongo::Operation::Context] The context of the operation.
-        # @param op_name [String, nil] An optional name for the operation.
-        # @yield The block representing the operation to be traced.
-        # @return [Object] The result of the operation.
+        # Creates an OpenTelemetry span for the operation, capturing attributes such as
+        # database name, collection name, operation name, and cursor ID. The span is finished
+        # automatically when the operation completes or fails.
+        #
+        # @param operation [ Mongo::Operation ] the MongoDB operation to trace.
+        # @param operation_context [ Mongo::Operation::Context ] the context of the operation.
+        # @param op_name [ String | nil ] an optional name for the operation. If nil, the
+        #   operation class name is used.
+        #
+        # @yield the block representing the operation to be traced.
+        #
+        # @return [ Object ] the result of the operation.
+        #
+        # @api private
+        # rubocop:disable Lint/RescueException
         def trace_operation(operation, operation_context, op_name: nil)
           parent_context = parent_context_for(operation_context, operation.cursor_id)
           span = @otel_tracer.start_span(
@@ -61,13 +78,26 @@ module Mongo
         ensure
           span&.finish
         end
+        # rubocop:enable Lint/RescueException
 
         private
 
+        # Returns the operation name from the provided name or operation class.
+        #
+        # @param operation [ Mongo::Operation ] the operation.
+        # @param op_name [ String | nil ] optional operation name.
+        #
+        # @return [ String ] the operation name in lowercase.
         def operation_name(operation, op_name = nil)
           op_name || operation.class.name.split('::').last.downcase
         end
 
+        # Builds span attributes for the operation.
+        #
+        # @param operation [ Mongo::Operation ] the operation.
+        # @param op_name [ String | nil ] optional operation name.
+        #
+        # @return [ Hash ] OpenTelemetry span attributes following MongoDB semantic conventions.
         def span_attributes(operation, op_name)
           {
             'db.system' => 'mongodb',
@@ -79,6 +109,15 @@ module Mongo
           }.compact
         end
 
+        # Processes cursor context after operation execution.
+        #
+        # Updates the cursor context map based on the result. Removes closed cursors
+        # and stores context for newly created cursors.
+        #
+        # @param result [ Object ] the operation result.
+        # @param cursor_id [ Integer | nil ] the cursor ID before the operation.
+        # @param context [ OpenTelemetry::Context ] the OpenTelemetry context.
+        # @param span [ OpenTelemetry::Trace::Span ] the current span.
         def process_cursor_context(result, cursor_id, context, span)
           return unless result.is_a?(Cursor)
 
@@ -92,6 +131,11 @@ module Mongo
           end
         end
 
+        # Extracts the collection name from the operation.
+        #
+        # @param operation [ Mongo::Operation ] the operation.
+        #
+        # @return [ String | nil ] the collection name, or nil if not applicable.
         def collection_name(operation)
           if operation.respond_to?(:coll_name) && operation.coll_name
             operation.coll_name.to_s
@@ -115,6 +159,12 @@ module Mongo
           end
         end
 
+        # Generates the span name for the operation.
+        #
+        # @param operation [ Mongo::Operation ] the operation.
+        # @param op_name [ String | nil ] optional operation name.
+        #
+        # @return [ String ] span name in format "operation_name db.collection" or "operation_name db".
         def operation_span_name(operation, op_name = nil)
           coll_name = collection_name(operation)
           if coll_name && !coll_name.empty?

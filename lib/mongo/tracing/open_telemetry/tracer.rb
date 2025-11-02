@@ -29,11 +29,16 @@ module Mongo
         # Initializes a new OpenTelemetry tracer.
         #
         # @param enabled [ Boolean | nil ] whether OpenTelemetry is enabled or not.
-        #   If nil, it will check the environment variable
-        #   OTEL_RUBY_INSTRUMENTATION_MONGODB_ENABLED.
+        #   Defaults to nil, which means it will check the environment variable
+        #   OTEL_RUBY_INSTRUMENTATION_MONGODB_ENABLED (values: true/1/yes). If the
+        #   environment variable is not set, OpenTelemetry will be disabled by default.
+        # @param query_text_max_length [ Integer | nil ] maximum length for captured query text.
+        #   Defaults to nil, which means it will check the environment variable
+        #   OTEL_RUBY_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH. If the environment variable is not set,
+        #   the query text will not be captured.
         # @param otel_tracer [ OpenTelemetry::Trace::Tracer | nil ] the OpenTelemetry tracer
-        #   implementation to use. If nil, it will use the default tracer from
-        #   OpenTelemetry's tracer provider.
+        #   implementation to use. Defaults to nil, which means it will use the default tracer
+        #   from OpenTelemetry's tracer provider.
         def initialize(enabled: nil, query_text_max_length: nil, otel_tracer: nil)
           @enabled = if enabled.nil?
                        %w[true 1 yes].include?(ENV['OTEL_RUBY_INSTRUMENTATION_MONGODB_ENABLED']&.downcase)
@@ -133,16 +138,34 @@ module Mongo
           end
         end
 
+        # Returns the cursor context map for tracking cursor-related OpenTelemetry contexts.
+        #
+        # @return [ Hash ] map of cursor IDs to OpenTelemetry contexts.
         def cursor_context_map
           @cursor_context_map ||= {}
         end
 
+        # Generates a unique key for cursor tracking in the context map.
+        #
+        # @param session [ Mongo::Session ] the session associated with the cursor.
+        # @param cursor_id [ Integer ] the cursor ID.
+        #
+        # @return [ String | nil ] unique key combining session ID and cursor ID, or nil if either is nil.
         def cursor_map_key(session, cursor_id)
           return if cursor_id.nil? || session.nil?
 
           "#{session.session_id['id'].to_uuid}-#{cursor_id}"
         end
 
+        # Determines the parent OpenTelemetry context for an operation.
+        #
+        # Returns the transaction context if the operation is part of a transaction,
+        # otherwise returns nil. Cursor-based context nesting is not currently implemented.
+        #
+        # @param operation_context [ Mongo::Operation::Context ] the operation context.
+        # @param cursor_id [ Integer ] the cursor ID, if applicable.
+        #
+        # @return [ OpenTelemetry::Context | nil ] parent context or nil.
         def parent_context_for(operation_context, cursor_id)
           if (key = transaction_map_key(operation_context.session))
             transaction_context_map[key]
@@ -152,18 +175,34 @@ module Mongo
           end
         end
 
+        # Returns the transaction context map for tracking active transaction contexts.
+        #
+        # @return [ Hash ] map of transaction keys to OpenTelemetry contexts.
         def transaction_context_map
           @transaction_context_map ||= {}
         end
 
+        # Returns the transaction span map for tracking active transaction spans.
+        #
+        # @return [ Hash ] map of transaction keys to OpenTelemetry spans.
         def transaction_span_map
           @transaction_span_map ||= {}
         end
 
+        # Returns the transaction token map for tracking context attachment tokens.
+        #
+        # @return [ Hash ] map of transaction keys to OpenTelemetry context tokens.
         def transaction_token_map
           @transaction_token_map ||= {}
         end
 
+        # Generates a unique key for transaction tracking.
+        #
+        # Returns nil for implicit sessions or sessions not in a transaction.
+        #
+        # @param session [ Mongo::Session ] the session.
+        #
+        # @return [ String | nil ] unique key combining session ID and transaction number, or nil.
         def transaction_map_key(session)
           return if session.nil? || session.implicit? || !session.in_transaction?
 

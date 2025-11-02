@@ -21,14 +21,41 @@ module Mongo
       #
       # @api private
       class CommandTracer
+        # Initializes a new CommandTracer.
+        #
+        # @param otel_tracer [ OpenTelemetry::Trace::Tracer ] the OpenTelemetry tracer.
+        # @param parent_tracer [ Mongo::Tracing::OpenTelemetry::Tracer ] the parent tracer
+        #   for accessing shared context maps.
+        # @param query_text_max_length [ Integer ] maximum length for captured query text.
+        #   Defaults to 0 (no query text capture).
         def initialize(otel_tracer, parent_tracer, query_text_max_length: 0)
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
           @query_text_max_length = query_text_max_length
         end
 
+        # Starts a span for a MongoDB command.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        # @param operation_context [ Mongo::Operation::Context ] the operation context.
+        # @param connection [ Mongo::Server::Connection ] the connection.
         def start_span(message, operation_context, connection); end
 
+        # Trace a MongoDB command.
+        #
+        # Creates an OpenTelemetry span for the command, capturing attributes such as
+        # command name, database name, collection name, server address, connection IDs,
+        # and optionally query text. The span is automatically nested under the current
+        # operation span and is finished when the command completes or fails.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message to trace.
+        # @param operation_context [ Mongo::Operation::Context ] the context of the operation.
+        # @param connection [ Mongo::Server::Connection ] the connection used to send the command.
+        #
+        # @yield the block representing the command to be traced.
+        #
+        # @return [ Object ] the result of the command.
+        # rubocop:disable Lint/RescueException
         def trace_command(message, operation_context, connection)
           # Commands should always be nested under their operation span, not directly under
           # the transaction span. Don't pass with_parent to use automatic parent resolution
@@ -52,9 +79,16 @@ module Mongo
         ensure
           span&.finish
         end
+        # rubocop:enable Lint/RescueException
 
         private
 
+        # Builds span attributes for the command.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        # @param connection [ Mongo::Server::Connection ] the connection.
+        #
+        # @return [ Hash ] OpenTelemetry span attributes following MongoDB semantic conventions.
         def span_attributes(message, connection)
           {
             'db.system' => 'mongodb',
@@ -74,18 +108,33 @@ module Mongo
           }.compact
         end
 
+        # Processes cursor context from the command result.
+        #
+        # @param result [ Object ] the command result.
+        # @param _cursor_id [ Integer | nil ] the cursor ID (unused).
+        # @param _context [ OpenTelemetry::Context ] the context (unused).
+        # @param span [ OpenTelemetry::Trace::Span ] the current span.
         def process_cursor_context(result, _cursor_id, _context, span)
           return unless result.has_cursor_id? && result.cursor_id.positive?
 
           span.set_attribute('db.mongodb.cursor_id', result.cursor_id)
         end
 
+        # Records error status code if the command failed.
+        #
+        # @param result [ Object ] the command result.
+        # @param span [ OpenTelemetry::Trace::Span ] the current span.
         def maybe_trace_error(result, span)
           return if result.successful?
 
           span.set_attribute('db.response.status_code', result.error.code.to_s)
         end
 
+        # Generates a summary string for the query.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ String ] summary in format "command_name db.collection" or "command_name db".
         def query_summary(message)
           if (coll_name = collection_name(message))
             "#{command_name(message)} #{database(message)}.#{coll_name}"
@@ -94,6 +143,11 @@ module Mongo
           end
         end
 
+        # Extracts the collection name from the command message.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ String | nil ] the collection name, or nil if not applicable.
         def collection_name(message)
           case message.documents.first.keys.first
           when 'getMore'
@@ -107,24 +161,47 @@ module Mongo
           end
         end
 
+        # Extracts the command name from the message.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ String ] the command name.
         def command_name(message)
           message.documents.first.keys.first.to_s
         end
 
+        # Extracts the database name from the message.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ String ] the database name.
         def database(message)
           message.documents.first['$db'].to_s
         end
 
+        # Checks if query text capture is enabled.
+        #
+        # @return [ Boolean ] true if query text should be captured.
         def query_text?
           @query_text_max_length.positive?
         end
 
+        # Extracts the cursor ID from getMore commands.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ Integer | nil ] the cursor ID, or nil if not a getMore command.
         def cursor_id(message)
           return unless command_name(message) == 'getMore'
 
           message.documents.first['getMore'].value
         end
 
+        # Extracts the logical session ID from the command.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ BSON::Binary | nil ] the session ID, or nil if not present.
         def lsid(message)
           lsid_doc = message.documents.first['lsid']
           return unless lsid_doc
@@ -132,6 +209,11 @@ module Mongo
           lsid_doc['id']
         end
 
+        # Extracts the transaction number from the command.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ Integer | nil ] the transaction number, or nil if not present.
         def txn_number(message)
           txn_num = message.documents.first['txnNumber']
           return unless txn_num
@@ -139,9 +221,17 @@ module Mongo
           txn_num.value
         end
 
+        # Keys to exclude from query text capture.
         EXCLUDED_KEYS = %w[lsid $db $clusterTime signature].freeze
+
+        # Ellipsis for truncated query text.
         ELLIPSES = '...'
 
+        # Extracts and formats the query text from the command.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ String | nil ] JSON representation of the command, truncated if necessary, or nil if disabled.
         def query_text(message)
           return unless query_text?
 
