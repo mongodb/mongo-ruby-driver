@@ -34,8 +34,6 @@ module Mongo
         # @param otel_tracer [ OpenTelemetry::Trace::Tracer ] the OpenTelemetry tracer.
         # @param parent_tracer [ Mongo::Tracing::OpenTelemetry::Tracer ] the parent tracer
         #   for accessing shared context maps.
-        #
-        # @api private
         def initialize(otel_tracer, parent_tracer)
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
@@ -56,24 +54,12 @@ module Mongo
         #
         # @return [ Object ] the result of the operation.
         #
-        # @api private
         # rubocop:disable Lint/RescueException
-        def trace_operation(operation, operation_context, op_name: nil)
-          parent_context = parent_context_for(operation_context, operation.cursor_id)
-          span = @otel_tracer.start_span(
-            operation_span_name(operation, op_name),
-            attributes: span_attributes(operation, op_name),
-            with_parent: parent_context,
-            kind: :client
-          )
-          ::OpenTelemetry::Trace.with_span(span) do |s, c|
-            yield.tap do |result|
-              process_cursor_context(result, operation.cursor_id, c, s)
-            end
-          end
+        def trace_operation(operation, operation_context, op_name: nil, &block)
+          span = create_operation_span(operation, operation_context, op_name)
+          execute_with_span(span, operation, &block)
         rescue Exception => e
-          span&.record_exception(e)
-          span&.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{e.class}")
+          handle_span_exception(span, e)
           raise e
         ensure
           span&.finish
@@ -81,6 +67,52 @@ module Mongo
         # rubocop:enable Lint/RescueException
 
         private
+
+        # Creates an OpenTelemetry span for the operation.
+        #
+        # @param operation [ Mongo::Operation ] the operation.
+        # @param operation_context [ Mongo::Operation::Context ] the operation context.
+        # @param op_name [ String | nil ] optional operation name.
+        #
+        # @return [ OpenTelemetry::Trace::Span ] the created span.
+        def create_operation_span(operation, operation_context, op_name)
+          parent_context = parent_context_for(operation_context, operation.cursor_id)
+          @otel_tracer.start_span(
+            operation_span_name(operation, op_name),
+            attributes: span_attributes(operation, op_name),
+            with_parent: parent_context,
+            kind: :client
+          )
+        end
+
+        # Executes the operation block within the span context.
+        #
+        # @param span [ OpenTelemetry::Trace::Span ] the span.
+        # @param operation [ Mongo::Operation ] the operation.
+        #
+        # @yield the block to execute.
+        #
+        # @return [ Object ] the result of the block.
+        def execute_with_span(span, operation)
+          ::OpenTelemetry::Trace.with_span(span) do |s, c|
+            yield.tap do |result|
+              process_cursor_context(result, operation.cursor_id, c, s)
+            end
+          end
+        end
+
+        # Handles exception for the span.
+        #
+        # @param span [ OpenTelemetry::Trace::Span ] the span.
+        # @param exception [ Exception ] the exception.
+        def handle_span_exception(span, exception)
+          return unless span
+
+          span.record_exception(exception)
+          span.status = ::OpenTelemetry::Trace::Status.error(
+            "Unhandled exception of type: #{exception.class}"
+          )
+        end
 
         # Returns the operation name from the provided name or operation class.
         #
@@ -137,25 +169,41 @@ module Mongo
         #
         # @return [ String | nil ] the collection name, or nil if not applicable.
         def collection_name(operation)
-          if operation.respond_to?(:coll_name) && operation.coll_name
-            operation.coll_name.to_s
-          else
-            case operation
-            when Operation::Aggregate
-              operation.spec[:selector][:aggregate]
-            when Operation::Count
-              operation.spec[:selector][:count]
-            when Operation::Create
-              operation.spec[:selector][:create]
-            when Operation::Distinct
-              operation.spec[:selector][:distinct]
-            when Operation::Drop
-              operation.spec[:selector][:drop]
-            when Operation::WriteCommand
-              operation.spec[:selector].values.first
-            else
-              return nil
-            end.to_s
+          return operation.coll_name.to_s if operation.respond_to?(:coll_name) && operation.coll_name
+
+          extract_collection_from_spec(operation)
+        end
+
+        # Extracts collection name from operation spec based on operation type.
+        #
+        # @param operation [ Mongo::Operation ] the operation.
+        #
+        # @return [ String | nil ] the collection name, or nil if not found.
+        def extract_collection_from_spec(operation)
+          collection_key = collection_key_for_operation(operation)
+          return nil unless collection_key
+
+          value = if collection_key == :first_value
+                    operation.spec[:selector].values.first
+                  else
+                    operation.spec[:selector][collection_key]
+                  end
+          value&.to_s
+        end
+
+        # Returns the collection key for a given operation type.
+        #
+        # @param operation [ Mongo::Operation ] the operation.
+        #
+        # @return [ Symbol | nil ] the collection key symbol or nil.
+        def collection_key_for_operation(operation)
+          case operation
+          when Operation::Aggregate then :aggregate
+          when Operation::Count then :count
+          when Operation::Create then :create
+          when Operation::Distinct then :distinct
+          when Operation::Drop then :drop
+          when Operation::WriteCommand then :first_value
           end
         end
 

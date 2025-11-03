@@ -13,7 +13,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   let(:connection) do
     double('Mongo::Server::Connection',
            id: 123,
-           address: double('Address', host: 'localhost', port: 27017),
+           address: double('Address', host: 'localhost', port: 27_017),
            transport: :tcp,
            server: double('Server',
                           description: double('Description', server_connection_id: 456)))
@@ -21,7 +21,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
   let(:message) do
     double('Mongo::Protocol::Message',
-           documents: [document],
+           documents: [ document ],
            payload: { 'command' => document })
   end
 
@@ -65,7 +65,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
     before do
       allow(otel_tracer).to receive(:start_span).and_return(span)
-      allow(::OpenTelemetry::Trace).to receive(:with_span).and_yield(span, context)
+      allow(OpenTelemetry::Trace).to receive(:with_span).and_yield(span, context)
     end
 
     it 'starts a span with the command name' do
@@ -230,7 +230,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     it 'includes server.port' do
-      expect(subject['server.port']).to eq(27017)
+      expect(subject['server.port']).to eq(27_017)
     end
 
     it 'includes server.address' do

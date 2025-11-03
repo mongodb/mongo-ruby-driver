@@ -93,11 +93,12 @@ module Tracing
         else
           # Find the parent span and add this span to its nested array
           parent = span_map[span.with_parent.object_id]
-          if parent
-            parent.nested << span
-          else
+          unless parent
             raise Error, "Parent span not found for span #{span.name} (parent object_id: #{span.with_parent.object_id})"
           end
+
+          parent.nested << span
+
         end
       end
 
@@ -123,7 +124,7 @@ module Tracing
         # We need to extract it using the OpenTelemetry::Trace API
         begin
           OpenTelemetry::Trace.current_span(with_parent)
-        rescue
+        rescue StandardError
           # Fallback: try to extract from instance variables
           with_parent.instance_variable_get(:@entries)&.values&.first
         end
