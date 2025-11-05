@@ -270,7 +270,7 @@ module Mongo
           lsid_doc = message.documents.first['lsid']
           return unless lsid_doc
 
-          lsid_doc['id']
+          lsid_doc['id'].to_uuid
         end
 
         # Extracts the transaction number from the command.
