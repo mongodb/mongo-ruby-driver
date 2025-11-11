@@ -8,7 +8,7 @@
   # these are used for testing against a few recent ruby versions
   recent_rubies = %w( ruby-3.3 ruby-3.2 jruby-9.4 )
 
-  # this is a list of the most most recent 3.x and 2.x MRI ruby versions
+  # this is a list of the most recent 3.x and 2.x MRI ruby versions
   sample_mri_rubies = %w( ruby-3.3 ruby-2.7 )
 
   # as above, but including the most recent JRuby release
@@ -33,12 +33,8 @@
   # The latest stable version of MongoDB
   latest_stable_mdb = "8.0".inspect # so it gets quoted as a string
 
-  # A few of the most recent MongoDB versions
-  actual_and_upcoming_mdb = %w( latest 8.0 7.0 )
 
   recent_mdb = %w( 8.0 7.0 )
-
-  all_dbs = %w(latest 8.0 7.0 6.0 5.0 4.4 4.2 4.0 3.6)
 %>
 
 buildvariants:
@@ -56,7 +52,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= actual_and_upcoming_mdb %>
+      mongodb-version: <%= recent_mdb %>
       topology: <%= topologies %>
       os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
@@ -66,7 +62,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: <%= recent_rubies %>
-      mongodb-version: <%= actual_and_upcoming_mdb %>
+      mongodb-version: <%= recent_mdb %>
       topology: <%= topologies %>
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -96,7 +92,7 @@ buildvariants:
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: <%= older_rubies %>
-      mongodb-version: ['4.4', '4.2', '4.0']
+      mongodb-version: ['4.4', '4.0']
       topology: <%= topologies %>
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -226,7 +222,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: <%= supported_mri_ruby_2 %>
-      mongodb-version: ['4.2', '4.0', '3.6']
+      mongodb-version: ['4.4', '4.0', '3.6']
       topology: replica-set
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
