@@ -8,6 +8,8 @@
   # these are used for testing against a few recent ruby versions
   recent_rubies = %w( ruby-3.3 ruby-3.2 jruby-9.4 )
 
+  recent_mri_rubies = %w( ruby-3.3 ruby-3.2 )
+
   # this is a list of the most recent 3.x and 2.x MRI ruby versions
   sample_mri_rubies = %w( ruby-3.3 ruby-2.7 )
 
@@ -81,7 +83,7 @@ buildvariants:
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: <%= recent_rubies %>
+      ruby: <%= recent_mri_rubies %>
       mongodb-version: ['5.0']
       topology: <%= topologies %>
       os: ubuntu2004

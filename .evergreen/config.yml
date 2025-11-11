@@ -179,7 +179,7 @@ functions:
             export AWS_DEFAULT_REGION="${fle_aws_region}"
           fi
           export CSOT_SPEC_TESTS=1
-          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
   "export FLE credentials":
@@ -1200,7 +1200,7 @@ buildvariants:
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
+      ruby: ["ruby-3.3", "ruby-3.2"]
       mongodb-version: ['5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
@@ -1211,7 +1211,7 @@ buildvariants:
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7"]
-      mongodb-version: ['4.4', '4.2', '4.0']
+      mongodb-version: ['4.4', '4.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1341,7 +1341,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: "ruby-2.7"
-      mongodb-version: ['4.2', '4.0', '3.6']
+      mongodb-version: ['4.4', '4.0', '3.6']
       topology: replica-set
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
