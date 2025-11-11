@@ -41,6 +41,8 @@ def standard_dependencies
         gem 'ruby-debug-ide'
       end
     end
+
+    gem 'opentelemetry-api'
   end
 
   group :testing do

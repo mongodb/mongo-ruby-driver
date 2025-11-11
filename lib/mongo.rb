@@ -33,7 +33,6 @@ require 'zlib'
 autoload :CGI, 'cgi'
 
 require 'bson'
-require 'opentelemetry-api'
 
 require 'mongo/id'
 require 'mongo/bson'

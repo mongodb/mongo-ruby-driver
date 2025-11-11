@@ -2,9 +2,10 @@
 
 require 'spec_helper'
 
+require 'opentelemetry'
+
 describe Mongo::Tracing::OpenTelemetry::OperationTracer do
   # rubocop:disable RSpec/VerifiedDoubles
-  # OpenTelemetry classes may not be loaded, so we use regular doubles
   let(:otel_tracer) { double('OpenTelemetry::Trace::Tracer') }
   let(:parent_tracer) do
     instance_double(

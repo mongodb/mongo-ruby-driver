@@ -45,6 +45,7 @@ module Mongo
                      else
                        enabled
                      end
+          check_opentelemetry_loaded
           @query_text_max_length = if query_text_max_length.nil?
                                      ENV['OTEL_RUBY_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH'].to_i
                                    else
@@ -211,17 +212,23 @@ module Mongo
 
         private
 
+        def check_opentelemetry_loaded
+          return unless @enabled
+          return if defined?(::OpenTelemetry)
+
+          Logger.logger.warn('OpenTelemetry tracing for MongoDB is enabled, ' \
+                             'but the OpenTelemetry library is not loaded. ' \
+                             'Disabling tracing.')
+          @enabled = false
+        end
+
         def initialize_tracer
-          if enabled?
-            # Obtain the proper tracer from OpenTelemetry's tracer provider.
-            ::OpenTelemetry.tracer_provider.tracer(
-              'mongo-ruby-driver',
-              Mongo::VERSION
-            )
-          else
-            # No-op tracer when OpenTelemetry is not enabled.
-            ::OpenTelemetry::Trace::Tracer.new
-          end
+          return unless enabled?
+
+          ::OpenTelemetry.tracer_provider.tracer(
+            'mongo-ruby-driver',
+            Mongo::VERSION
+          )
         end
       end
     end

@@ -2,6 +2,8 @@
 
 require 'spec_helper'
 
+require 'opentelemetry'
+
 describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   let(:otel_tracer) { double('OpenTelemetry::Trace::Tracer') }
   let(:parent_tracer) { double('Mongo::Tracing::OpenTelemetry::Tracer') }
@@ -9,6 +11,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   let(:command_tracer) do
     described_class.new(otel_tracer, parent_tracer, query_text_max_length: query_text_max_length)
   end
+  let(:lsid_value) { "55dcab94-2c82-445a-a7f2-5ce50213b753" }
 
   let(:connection) do
     double('Mongo::Server::Connection',
@@ -29,7 +32,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     {
       'find' => 'users',
       '$db' => 'test_db',
-      'lsid' => { 'id' => 'session-123' },
+      'lsid' => { 'id' => BSON::Binary.from_uuid(lsid_value) },
       'filter' => { 'name' => 'Alice' }
     }
   end
@@ -250,7 +253,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     it 'includes db.mongodb.lsid' do
-      expect(subject['db.mongodb.lsid']).to eq('session-123')
+      expect(subject['db.mongodb.lsid']).to eq(lsid_value)
     end
 
     it 'does not include nil values' do
@@ -421,10 +424,10 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     subject { command_tracer.send(:lsid, message) }
 
     context 'with lsid present' do
-      let(:document) { { 'find' => 'users', 'lsid' => { 'id' => 'session-123' } } }
+      let(:document) { { 'find' => 'users', 'lsid' => { 'id' => BSON::Binary.from_uuid(lsid_value) } } }
 
       it 'returns the session ID' do
-        expect(subject).to eq('session-123')
+        expect(subject).to eq(lsid_value)
       end
     end
 
@@ -474,7 +477,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
         {
           'find' => 'users',
           '$db' => 'test_db',
-          'lsid' => { 'id' => 'session-123' },
+          'lsid' => { 'id' => BSON::Binary.from_uuid(lsid_value) },
           'filter' => { 'name' => 'Alice' }
         }
       end
