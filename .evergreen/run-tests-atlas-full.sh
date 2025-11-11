@@ -27,7 +27,8 @@ bundle_install
 ATLAS_URI=$MONGODB_URI \
   KILL_ALL_SERVER_SESSIONS=0 \
   EXAMPLE_TIMEOUT=600 \
-  bundle exec rspec -fd spec/integration/search_indexes_prose_spec.rb
+  bundle exec rspec -fd spec/integration/search_indexes_prose_spec.rb \
+  --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 
 test_status=$?
 

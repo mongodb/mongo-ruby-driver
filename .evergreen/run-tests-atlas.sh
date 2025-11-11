@@ -28,4 +28,5 @@ echo "Running specs"
 
 export ATLAS_TESTING=1
 
-bundle exec rspec spec/atlas -fd
+bundle exec rspec spec/atlas \
+  --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml

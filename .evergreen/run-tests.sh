@@ -349,13 +349,17 @@ set +e
 if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 elif test "$FORK" = 1; then
-  bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb
+  bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb \
+    --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 elif test "$STRESS" = 1; then
-  bundle exec rspec spec/integration/fork*spec.rb spec/stress
+  bundle exec rspec spec/integration/fork*spec.rb spec/stress \
+    --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 elif test "$OCSP_VERIFIER" = 1; then
-  bundle exec rspec spec/integration/ocsp_verifier_spec.rb
+  bundle exec rspec spec/integration/ocsp_verifier_spec.rb \
+    --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 elif test -n "$OCSP_CONNECTIVITY"; then
-  bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
+  bundle exec rspec spec/integration/ocsp_connectivity_spec.rb \
+    --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 elif test "$SOLO" = 1; then
   for attempt in `seq 10`; do
     echo "Attempt $attempt"

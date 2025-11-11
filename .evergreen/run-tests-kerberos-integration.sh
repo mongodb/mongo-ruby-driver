@@ -98,5 +98,6 @@ if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 else
   echo "Running tests"
-  bundle exec rspec spec/kerberos
+  bundle exec rspec spec/kerberos \
+	  --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 fi

@@ -41,4 +41,5 @@ bundle exec rspec \
   spec/spec_tests/connection_string_spec.rb \
   spec/mongo/uri/srv_protocol_spec.rb \
   spec/mongo/uri_spec.rb \
-  spec/integration/client_authentication_options_spec.rb
+  spec/integration/client_authentication_options_spec.rb \
+  --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
