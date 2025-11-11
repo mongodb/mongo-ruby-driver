@@ -88,7 +88,7 @@ buildvariants:
       ruby: <%= recent_rubies %>
       mongodb-version: ['5.0']
       topology: <%= topologies %>
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -98,7 +98,7 @@ buildvariants:
       ruby: <%= older_rubies %>
       mongodb-version: ['4.4', '4.2', '4.0']
       topology: <%= topologies %>
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -108,7 +108,7 @@ buildvariants:
       ruby: <%= supported_mri_ruby_2 %>
       mongodb-version: ['3.6']
       topology: <%= topologies %>
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -184,7 +184,7 @@ buildvariants:
       mongodb-version: ['3.6', '4.0']
       topology: <%= topologies %>
       storage-engine: mmapv1
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -228,7 +228,7 @@ buildvariants:
       ruby: <%= supported_mri_ruby_2 %>
       mongodb-version: ['4.2', '4.0', '3.6']
       topology: replica-set
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"

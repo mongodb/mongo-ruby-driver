@@ -430,7 +430,7 @@ post:
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
-  # - func: "upload test results"
+  - func: "upload test results"
   - func: "upload test results to s3"
 
 task_groups:
@@ -955,9 +955,6 @@ axes:
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
-      - id: ubuntu1804
-        display_name: "Ubuntu 18.04"
-        run_on: ubuntu1804-small
 
   - id: docker-distro
     display_name: Docker Distro
@@ -1211,7 +1208,7 @@ buildvariants:
       ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
       mongodb-version: ['5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1221,7 +1218,7 @@ buildvariants:
       ruby: ["ruby-3.0", "ruby-2.7"]
       mongodb-version: ['4.4', '4.2', '4.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1231,7 +1228,7 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: ['3.6']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1307,7 +1304,7 @@ buildvariants:
       mongodb-version: ['3.6', '4.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       storage-engine: mmapv1
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1351,7 +1348,7 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: ['4.2', '4.0', '3.6']
       topology: replica-set
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
