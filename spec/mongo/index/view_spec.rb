@@ -38,6 +38,8 @@ describe Mongo::Index::View do
 
   describe '#drop_one' do
 
+    max_server_version '8.2.99'
+
     let(:spec) do
       { another: -1 }
     end

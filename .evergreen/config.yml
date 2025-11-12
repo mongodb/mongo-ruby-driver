@@ -120,15 +120,7 @@ functions:
             export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
             export ATLAS_TLS11_URI="${atlas_tls11_uri}"
             export ATLAS_TLS12_URI="${atlas_tls12_uri}"
-            export ATLAS_SERVERLESS_URI="${atlas_serverless_uri}"
-            export ATLAS_SERVERLESS_LB_URI="${atlas_serverless_lb_uri}"
             export RVM_RUBY="${RVM_RUBY}"
-
-            export SERVERLESS_DRIVERS_GROUP="${SERVERLESS_DRIVERS_GROUP}"
-            export SERVERLESS_API_PUBLIC_KEY="${SERVERLESS_API_PUBLIC_KEY}"
-            export SERVERLESS_API_PRIVATE_KEY="${SERVERLESS_API_PRIVATE_KEY}"
-            export SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}"
-            export SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}"
           EOT
 
           # See what we've done
@@ -187,7 +179,7 @@ functions:
             export AWS_DEFAULT_REGION="${fle_aws_region}"
           fi
           export CSOT_SPEC_TESTS=1
-          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
   "export FLE credentials":
@@ -349,7 +341,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/rspec.xml
+        file: ./src/tmp/*.xml
 
   "delete private environment":
     - command: shell.exec
@@ -359,17 +351,6 @@ functions:
         working_dir: "src"
         script: |
           rm -f .env.private
-
-  "build and test docker image":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          set -x
-          .evergreen/test-on-docker -d ${os} MONGODB_VERSION=${mongodb-version} TOPOLOGY=${topology} RVM_RUBY=${ruby} -s .evergreen/run-tests.sh TEST_CMD=true ${PRELOAD_ARG}
 
   "run benchmarks":
     - command: shell.exec
@@ -401,23 +382,6 @@ functions:
           fi
           .evergreen/run-tests.sh
 
-  "run tests via docker":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          # Needed for generating temporary aws credentials.
-          if [ -n "${FLE}" ];
-          then
-            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-            export AWS_DEFAULT_REGION="${fle_aws_region}"
-          fi
-          .evergreen/run-tests-docker.sh
-
   "run AWS auth tests":
     - command: shell.exec
       type: test
@@ -438,16 +402,6 @@ functions:
           ${PREPARE_SHELL}
           .evergreen/run-tests-kerberos-unit.sh
 
-  "run Kerberos integration tests":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          .evergreen/run-tests-kerberos-integration.sh
-
   "run Atlas tests":
     - command: shell.exec
       type: test
@@ -456,25 +410,16 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-atlas.sh
-
-  "run serverless tests":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          # Needed for generating temporary aws credentials.
-          if [ -n "${FLE}" ];
-          then
-            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-            export AWS_DEFAULT_REGION="${fle_aws_region}"
-          fi
-
-          CRYPT_SHARED_LIB_PATH="${CRYPT_SHARED_LIB_PATH}" SERVERLESS=1 SSL=ssl RVM_RUBY="${RVM_RUBY}" SINGLE_MONGOS="${SINGLE_MONGOS}" SERVERLESS_URI="${SERVERLESS_URI}" FLE="${FLE}" SERVERLESS_MONGODB_VERSION="${SERVERLESS_MONGODB_VERSION}" .evergreen/run-tests-serverless.sh
+          AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" \
+          ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} \
+          ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} \
+          ATLAS_TLS12_URI=${atlas_tls12_uri} ATLAS_SERVERLESS_URI=${atlas_serverless_uri} \
+          ATLAS_SERVERLESS_LB_URI=${atlas_serverless_lb_uri} \
+          ATLAS_X509_CERT_BASE64="${atlas_x509_cert_base64}" \
+          ATLAS_X509_URI="${atlas_x509}" \
+          ATLAS_X509_DEV_CERT_BASE64="${atlas_x509_dev_cert_base64}" \
+          ATLAS_X509_DEV_URI="${atlas_x509_dev}" \
+          .evergreen/run-tests-atlas.sh
 
 pre:
   - func: "fetch source"
@@ -485,89 +430,10 @@ post:
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
-  # - func: "upload test results"
+  - func: "upload test results"
   - func: "upload test results to s3"
 
 task_groups:
-  - name: serverless_task_group
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800 # 30 minutes
-    setup_group:
-      - func: "fetch source"
-      - func: "create expansions"
-      - command: ec2.assume_role
-        params:
-          role_arn: ${aws_test_secrets_role}
-      - command: shell.exec
-        params:
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
-      - command: expansions.update
-        params:
-          file: serverless-expansion.yml
-    teardown_task:
-      - command: shell.exec
-        params:
-          script: |
-            ${PREPARE_SHELL}
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
-      - func: "upload test results"
-    tasks:
-      - "test-serverless"
-
-  - name: testatlas_task_group
-    setup_group_can_fail_task: true
-    setup_group_timeout_secs: 1800 # 30 minutes
-    setup_group:
-      - func: fetch source
-      - func: create expansions
-      - command: shell.exec
-        params:
-          shell: "bash"
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-
-            echo "Setting up Atlas cluster"
-
-            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
-              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
-              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
-              DRIVERS_ATLAS_LAMBDA_USER="${DRIVERS_ATLAS_LAMBDA_USER}" \
-              DRIVERS_ATLAS_LAMBDA_PASSWORD="${DRIVERS_ATLAS_LAMBDA_PASSWORD}" \
-              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
-              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
-              MONGODB_VERSION="7.0" \
-              task_id="${task_id}" \
-              execution="${execution}" \
-              $DRIVERS_TOOLS/.evergreen/atlas/setup-atlas-cluster.sh
-
-              echo "MONGODB_URI=${MONGODB_URI}"
-      - command: expansions.update
-        params:
-          file: src/atlas-expansion.yml
-    teardown_group:
-      - command: shell.exec
-        params:
-          shell: "bash"
-          working_dir: "src"
-          script: |
-            ${PREPARE_SHELL}
-
-            DRIVERS_ATLAS_PUBLIC_API_KEY="${DRIVERS_ATLAS_PUBLIC_API_KEY}" \
-              DRIVERS_ATLAS_PRIVATE_API_KEY="${DRIVERS_ATLAS_PRIVATE_API_KEY}" \
-              DRIVERS_ATLAS_GROUP_ID="${DRIVERS_ATLAS_GROUP_ID}" \
-              DRIVERS_ATLAS_BASE_URL="${DRIVERS_ATLAS_BASE_URL}" \
-              LAMBDA_STACK_NAME="dbx-ruby-lambda" \
-              task_id="${task_id}" \
-              execution="${execution}" \
-              $DRIVERS_TOOLS/.evergreen/atlas/teardown-atlas-cluster.sh
-    tasks:
-      - test-atlas
-
   - name: testatlas_full_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -753,26 +619,12 @@ tasks:
   - name: "test-atlas"
     commands:
       - func: "run Atlas tests"
-  - name: "test-serverless"
-    commands:
-      - func: "export FLE credentials"
-      - func: "run serverless tests"
-  - name: "test-docker"
-    commands:
-      - func: "build and test docker image"
   - name: "test-mlaunch"
     commands:
       - func: "run tests"
   - name: "driver-bench"
     commands:
       - func: "run benchmarks"
-  - name: "test-via-docker"
-    commands:
-      - func: "run tests via docker"
-  - name: "test-kerberos-integration"
-    commands:
-      - func: "export Kerberos credentials"
-      - func: "run Kerberos integration tests"
   - name: "test-kerberos"
     commands:
       - func: "run Kerberos unit tests"
@@ -783,10 +635,6 @@ tasks:
     commands:
       - func: "export FLE credentials"
       - func: "run tests"
-  - name: "test-fle-via-docker"
-    commands:
-      - func: "export FLE credentials"
-      - func: "run tests via docker"
   - name: "test-aws-auth"
     commands:
       - func: "export AWS auth credentials"
@@ -913,11 +761,6 @@ axes:
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
-      - id: "latest"
-        display_name: "latest"
-        variables:
-          MONGODB_VERSION: "latest"
-          CRYPT_SHARED_VERSION: "latest"
       - id: "8.0"
         display_name: "8.0"
         variables:
@@ -1216,7 +1059,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1804-small
+        run_on: ubuntu2004-small
         variables:
           MMAPV1: 'true'
 
@@ -1331,7 +1174,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-3.3"
-      mongodb-version: ["latest", "8.0", "7.0"]
+      mongodb-version: ["8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
@@ -1341,7 +1184,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
-      mongodb-version: ["latest", "8.0", "7.0"]
+      mongodb-version: ["8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1360,10 +1203,10 @@ buildvariants:
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
+      ruby: ["ruby-3.3", "ruby-3.2"]
       mongodb-version: ['5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1371,17 +1214,7 @@ buildvariants:
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7"]
-      mongodb-version: ['4.4', '4.2', '4.0']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-3.6"
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6']
+      mongodb-version: ['4.4', '4.2']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1453,17 +1286,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: mmapv1
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6', '4.0']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      storage-engine: mmapv1
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
   - matrix_name: "lint"
     matrix_spec:
       lint: on
@@ -1501,7 +1323,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: "ruby-2.7"
-      mongodb-version: ['4.2', '4.0', '3.6']
+      mongodb-version: ['4.4', '4.2']
       topology: replica-set
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
@@ -1946,14 +1768,15 @@ buildvariants:
     matrix_spec:
       ruby: ["ruby-3.3", "ruby-3.2", "ruby-3.1"]
       os: ubuntu2204
-    display_name: "Atlas tests ${ruby}"
+    display_name: "Atlas  connectivity tests ${ruby}"
     tasks:
-       - name: testatlas_task_group
+       - name: test-atlas
 
-  - matrix_name: "aws-lambda"
-    matrix_spec:
-      ruby: 'ruby-3.2'
-      os: ubuntu2204
-    display_name: "AWS Lambda"
-    tasks:
-       - name: test_aws_lambda_task_group
+# https://jira.mongodb.org/browse/RUBY-3311
+#  - matrix_name: "aws-lambda"
+#    matrix_spec:
+#      ruby: 'ruby-3.2'
+#      os: ubuntu2204
+#    display_name: "AWS Lambda"
+#    tasks:
+#       - name: test_aws_lambda_task_group

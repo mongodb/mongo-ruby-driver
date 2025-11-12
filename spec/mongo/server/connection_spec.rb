@@ -260,6 +260,19 @@ describe Mongo::Server::Connection do
         it_behaves_like 'marks server unknown'
         it_behaves_like 'logs a warning'
         it_behaves_like 'adds server diagnostics'
+
+        context 'when the error includes a generation' do
+          let(:exception) do
+            Mongo::Error::SocketError.new.tap do |exc|
+              allow(exc).to receive(:generation).and_return(1234)
+              allow(exc).to receive(:service_id).and_return('fake')
+            end
+          end
+
+          it 'does not fail marking the server unknown' do
+            expect(error).to eq(exception)
+          end
+        end
       end
 
       context 'when #authenticate! raises an exception' do

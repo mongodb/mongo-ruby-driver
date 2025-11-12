@@ -23,6 +23,7 @@ module Mongo
     # @since 2.0.0
     class SSL < Socket
       include OpenSSL
+      include Loggable
 
       # Initializes a new TLS socket.
       #
@@ -455,12 +456,15 @@ module Mongo
       end
 
       def verify_ocsp_endpoint!(socket, timeout = nil)
-        unless verify_ocsp_endpoint?
-          return
-        end
+        return unless verify_ocsp_endpoint?
 
         cert = socket.peer_cert
-        ca_cert = socket.peer_cert_chain.last
+        ca_cert = find_issuer(cert, socket.peer_cert_chain)
+
+        unless ca_cert
+          log_warn("TLS certificate of '#{host_name}' could not be definitively verified via OCSP: issuer certificate not found in the chain.")
+          return
+        end
 
         verifier = OcspVerifier.new(@host_name, cert, ca_cert, context.cert_store,
           **Utils.shallow_symbolize_keys(options).merge(timeout: timeout))
@@ -502,6 +506,11 @@ module Mongo
             pos = end_idx
           end
         end
+      end
+
+      # Find the issuer certificate in the chain.
+      def find_issuer(cert, cert_chain)
+        cert_chain.find { |c| c.subject == cert.issuer }
       end
     end
   end

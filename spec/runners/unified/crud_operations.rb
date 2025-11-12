@@ -194,7 +194,8 @@ module Unified
           hint: args.use('hint'),
           upsert: args.use('upsert'),
           timeout_ms: args.use('timeoutMS'),
-          max_time_ms: args.use('maxTimeMS')
+          max_time_ms: args.use('maxTimeMS'),
+          sort: args.use('sort')
         }
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
@@ -228,7 +229,8 @@ module Unified
           let: args.use('let'),
           hint: args.use('hint'),
           timeout_ms: args.use('timeoutMS'),
-          max_time_ms: args.use('maxTimeMS')
+          max_time_ms: args.use('maxTimeMS'),
+          sort: args.use('sort'),
         )
       end
     end
@@ -357,6 +359,9 @@ module Unified
         }
       else
         raise NotImplementedError, "Unknown operation #{op}"
+      end
+      if %w[ updateOne replaceOne ].include?(op)
+        out[:sort] = spec.use('sort') if spec.key?('sort')
       end
       unless spec.empty?
         raise NotImplementedError, "Unhandled keys: #{spec}"
