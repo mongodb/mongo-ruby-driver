@@ -4,7 +4,7 @@
 require 'spec_helper'
 
 describe 'Versioned API examples' do
-
+  require_mri
   # Until https://jira.mongodb.org/browse/RUBY-1768 is implemented, limit
   # the tests to simple configurations
   require_no_auth
