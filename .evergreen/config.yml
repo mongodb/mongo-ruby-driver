@@ -950,6 +950,9 @@ axes:
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
+      - id: ubuntu1804
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-small
 
   - id: docker-distro
     display_name: Docker Distro
@@ -1211,19 +1214,9 @@ buildvariants:
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7"]
-      mongodb-version: ['4.4', '4.0']
+      mongodb-version: ['4.4', '4.2']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu2004
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-3.6"
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu2004
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1293,17 +1286,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: mmapv1
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6', '4.0']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      storage-engine: mmapv1
-      os: ubuntu2004
-    display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
   - matrix_name: "lint"
     matrix_spec:
       lint: on
@@ -1341,9 +1323,9 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: "ruby-2.7"
-      mongodb-version: ['4.4', '4.0', '3.6']
+      mongodb-version: ['4.4', '4.2']
       topology: replica-set
-      os: ubuntu2004
+      os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1790,10 +1772,11 @@ buildvariants:
     tasks:
        - name: test-atlas
 
-  - matrix_name: "aws-lambda"
-    matrix_spec:
-      ruby: 'ruby-3.2'
-      os: ubuntu2204
-    display_name: "AWS Lambda"
-    tasks:
-       - name: test_aws_lambda_task_group
+# https://jira.mongodb.org/browse/RUBY-3311
+#  - matrix_name: "aws-lambda"
+#    matrix_spec:
+#      ruby: 'ruby-3.2'
+#      os: ubuntu2204
+#    display_name: "AWS Lambda"
+#    tasks:
+#       - name: test_aws_lambda_task_group
