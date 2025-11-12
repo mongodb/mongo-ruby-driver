@@ -117,7 +117,7 @@ module Mongo
     #   - *:deprecation_errors* -- boolean
     #
     # @since 2.0.0
-    def initialize(seeds, monitoring, options = Options::Redacted.new)
+    def initialize(seeds, monitoring, tracer = nil, options = Options::Redacted.new)
       if seeds.nil?
         raise ArgumentError, 'Seeds cannot be nil'
       end
@@ -136,6 +136,7 @@ module Mongo
       @update_lock = Mutex.new
       @servers = []
       @monitoring = monitoring
+      @tracer = tracer
       @event_listeners = Event::Listeners.new
       @app_metadata = Server::AppMetadata.new(@options.merge(purpose: :application))
       @monitor_app_metadata = Server::Monitor::AppMetadata.new(@options.merge(purpose: :monitor))
@@ -308,6 +309,8 @@ module Mongo
 
     # @return [ Monitoring ] monitoring The monitoring.
     attr_reader :monitoring
+
+    attr_reader :tracer
 
     # @return [ Object ] The cluster topology.
     attr_reader :topology
