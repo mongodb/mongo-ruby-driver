@@ -4,6 +4,8 @@
 require 'spec_helper'
 
 describe 'Transaction pinning' do
+  require_mri
+
   let(:client) { authorized_client.with(max_pool_size: 4) }
   let(:collection_name) { 'tx_pinning' }
   let(:collection) { client[collection_name] }

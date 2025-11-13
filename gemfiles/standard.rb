@@ -57,6 +57,7 @@ def standard_dependencies
     gem 'concurrent-ruby', platforms: :jruby
     gem 'dotenv'
     gem 'childprocess'
+    gem 'rspec_junit_formatter'
   end
 
   group :development do

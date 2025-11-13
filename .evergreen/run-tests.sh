@@ -39,7 +39,19 @@ show_local_instructions
 set_home
 set_env_vars
 set_env_python
-set_env_ruby
+
+# Install rbenv and download the requested ruby version
+rm -rf ~/.rbenv
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+rm -rf ~/.rbenv/versions/
+curl --retry 3 -fL http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-toolchain/library/`host_distro`/$RVM_RUBY.tar.xz |tar -xC $HOME/.rbenv/ -Jf -
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init - bash)"
+export FULL_RUBY_VERSION=$(ls ~/.rbenv/versions | head -n1)
+rbenv global $FULL_RUBY_VERSION
+
+export JAVA_HOME=/opt/java/jdk21
+export JAVACMD=$JAVA_HOME/bin/java
 
 prepare_server
 
@@ -324,13 +336,17 @@ set +e
 if test -n "$TEST_CMD"; then
   eval $TEST_CMD
 elif test "$FORK" = 1; then
-  bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb
+  bundle exec rspec spec/integration/fork*spec.rb spec/stress/fork*spec.rb \
+    --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 elif test "$STRESS" = 1; then
-  bundle exec rspec spec/integration/fork*spec.rb spec/stress
+  bundle exec rspec spec/integration/fork*spec.rb spec/stress \
+    --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 elif test "$OCSP_VERIFIER" = 1; then
-  bundle exec rspec spec/integration/ocsp_verifier_spec.rb
+  bundle exec rspec spec/integration/ocsp_verifier_spec.rb \
+    --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 elif test -n "$OCSP_CONNECTIVITY"; then
-  bundle exec rspec spec/integration/ocsp_connectivity_spec.rb
+  bundle exec rspec spec/integration/ocsp_connectivity_spec.rb \
+    --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
 elif test "$SOLO" = 1; then
   for attempt in `seq 10`; do
     echo "Attempt $attempt"

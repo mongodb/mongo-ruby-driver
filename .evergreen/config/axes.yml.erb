@@ -13,11 +13,10 @@ axes:
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
-      - id: "latest"
-        display_name: "latest"
+      - id: "8.0"
+        display_name: "8.0"
         variables:
-          MONGODB_VERSION: "latest"
-          CRYPT_SHARED_VERSION: "latest"
+          MONGODB_VERSION: "8.0"
       - id: "7.0"
         display_name: "7.0"
         variables:
@@ -142,6 +141,10 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-3.3"
+        display_name: ruby-3.3
+        variables:
+          RVM_RUBY: "ruby-3.3"
       - id: "ruby-3.2"
         display_name: ruby-3.2
         variables:
@@ -297,7 +300,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1804-small
+        run_on: ubuntu2004-small
         variables:
           MMAPV1: 'true'
 
