@@ -153,7 +153,7 @@ describe Mongo::Server::Monitor::Connection do
         expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
         lambda do
           connection.connect!
-        end.should raise_error(SocketError, 'Test exception')
+        end.should raise_error(Mongo::Error::SocketError, /SocketError: Test exception/)
       end
     end
   end
