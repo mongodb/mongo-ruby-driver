@@ -237,7 +237,7 @@ module Mongo
         # (multiple identical items in the returned array). It does not make
         # sense to try to connect to the same address more than once, thus
         # eliminate duplicates here.
-        infos = ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
+        infos = getaddrinfo(host, family)
         results = infos.map do |info|
           [info[4], info[3]]
         end.uniq
@@ -276,6 +276,12 @@ module Mongo
 
     private
 
+    # This is a simple wrapper around Socket.getaddrinfo added to
+    # make testing easier.
+    def getaddrinfo(host, family)
+      ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
+    end
+
     def parse_host_port
       address = seed.downcase
       case address
@@ -305,7 +311,7 @@ module Mongo
         else
           raise e
         end
-      rescue IOError, SystemCallError => e
+      rescue IOError, SystemCallError, ::SocketError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
       rescue OpenSSL::SSL::SSLError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{self})"

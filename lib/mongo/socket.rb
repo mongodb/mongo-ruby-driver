@@ -609,7 +609,7 @@ module Mongo
         yield
       rescue Errno::ETIMEDOUT => e
         raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{human_address})"
-      rescue IOError, SystemCallError => e
+      rescue IOError, SystemCallError, ::SocketError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
       rescue OpenSSL::SSL::SSLError => e
         raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
