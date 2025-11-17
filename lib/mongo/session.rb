@@ -451,7 +451,7 @@ module Mongo
                    # CSOT enabled, so we have a custom-defined deadline.
                    @with_transaction_deadline
                  else
-                    # CSOT not enabled, so we use the default deadline, 120 seconds.
+                   # CSOT not enabled, so we use the default deadline, 120 seconds.
                    Utils.monotonic_time + 120
                  end
       transaction_in_progress = false
@@ -494,7 +494,7 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
-              if  deadline_expired?(deadline) ||
+              if deadline_expired?(deadline) ||
                 e.is_a?(Error::OperationFailure::Family) && e.max_time_ms_expired?
               then
                 transaction_in_progress = false
@@ -1185,7 +1185,10 @@ module Mongo
     # @api private
     attr_accessor :snapshot_timestamp
 
-    # @return [ Integer | nil ] The deadline for the current transaction, if any.
+    # @return [ Numeric | nil ] The deadline for the current transaction, if any.
+    #   - nil when CSOT is disabled
+    #   - 0 (Integer) when timeout_ms is set to 0 (representing infinite timeout)
+    #   - Float representing the deadline timestamp when CSOT is enabled with a positive timeout
     # @api private
     attr_reader :with_transaction_deadline
 
