@@ -99,6 +99,7 @@ module Mongo
           d['upsert'] = true if doc[:upsert]
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d['hint'] = doc[:hint] if doc[:hint]
+          d['sort'] = doc[:sort] if doc[:sort]
         end
       }
 
@@ -130,6 +131,7 @@ module Mongo
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
           d['hint'] = doc[:hint] if doc[:hint]
+          d['sort'] = doc[:sort] if doc[:sort]
         end
       }
 

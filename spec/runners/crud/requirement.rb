@@ -4,7 +4,7 @@
 module Mongo
   module CRUD
     class Requirement
-      YAML_KEYS = %w(auth minServerVersion maxServerVersion topology topologies serverParameters serverless csfle).freeze
+      YAML_KEYS = %w(auth minServerVersion maxServerVersion topology topologies serverParameters csfle).freeze
 
       def initialize(spec)
         spec = spec.dup
@@ -38,16 +38,6 @@ module Mongo
           nil
         end
         @server_parameters = spec['serverParameters']
-        @serverless = if serverless = spec['serverless']
-          case spec['serverless']
-          when 'require' then :require
-          when 'forbid' then :forbid
-          when 'allow' then :allow
-          else raise "Unknown serverless requirement: #{serverless}"
-          end
-        else
-          nil
-        end
         @auth = spec['auth']
         @csfle = !!spec['csfle'] if spec['csfle']
       end
@@ -55,7 +45,45 @@ module Mongo
       attr_reader :min_server_version
       attr_reader :max_server_version
       attr_reader :topologies
-      attr_reader :serverless
+
+      # `serverless` is a deprecated field. This module is a crutch to help
+      # us through the transition period where some specs still have it.
+      module DeprecatedServerless
+        def self.prepended(base)
+          new_list = [ *base::YAML_KEYS, 'serverless' ].freeze
+
+          base.send(:remove_const, :YAML_KEYS)
+          base.send(:const_set, :YAML_KEYS, new_list)
+        end
+
+        attr_reader :serverless
+
+        def initialize(spec)
+          super
+          initialize_serverless(spec)
+        end
+
+        private
+
+        def initialize_serverless(spec)
+          @serverless = if serverless = spec['serverless']
+            case spec['serverless']
+            when 'require' then :require
+            when 'forbid' then :forbid
+            when 'allow' then :allow
+            else raise "Unknown serverless requirement: #{serverless}"
+            end
+          else
+            nil
+          end
+
+          if @serverless && @serverless != :forbid
+            warn "The `serverless` requirement is deprecated."
+          end
+        end
+      end
+
+      prepend DeprecatedServerless
 
       def short_min_server_version
         if min_server_version
@@ -99,13 +127,6 @@ module Mongo
                 ok = false
               end
             end
-          end
-        end
-        if @serverless
-          if SpecConfig.instance.serverless?
-            ok = ok && [:allow, :require].include?(serverless)
-          else
-            ok = ok && [:allow, :forbid].include?(serverless)
           end
         end
         if @auth == true

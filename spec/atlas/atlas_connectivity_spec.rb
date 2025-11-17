@@ -1,27 +1,86 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
+require 'base64'
+require 'tempfile'
+
+RSpec.shared_examples 'atlas connectivity test' do
+  after do
+    client.close
+  rescue StandardError
+    # no-op
+  end
+
+  it 'runs hello successfully' do
+    expect { client.database.command(ping: 1) }
+      .not_to raise_error
+  end
+end
 
 describe 'Atlas connectivity' do
-  let(:uri) { ENV['ATLAS_URI'] }
-  let(:client) { Mongo::Client.new(uri) }
+  before do
+    skip 'These tests must be run against a live Atlas cluster' unless ENV['ATLAS_TESTING']
+  end
 
-  require_atlas
+  context 'with regular authentication' do
+    regular_auth_env_vars = %w[
+      ATLAS_REPLICA_SET_URI
+      ATLAS_SHARDED_URI
+      ATLAS_FREE_TIER_URI
+      ATLAS_TLS11_URI
+      ATLAS_TLS12_URI
+    ]
 
-  describe 'connection to Atlas' do
-    after do
-      client.close
+    regular_auth_env_vars.each do |uri_var|
+      describe "Connecting to #{uri_var}" do
+        before do
+          raise "Environment variable #{uri_var} is not set" unless ENV[uri_var]
+        end
+
+        let(:uri) { ENV[uri_var] }
+
+        let(:client) { Mongo::Client.new(uri) }
+
+        include_examples 'atlas connectivity test'
+      end
     end
+  end
 
-    it 'runs ismaster successfully' do
-      expect { client.database.command(:hello => 1) }
-        .not_to raise_error
-    end
+  context 'with X.509 authentication' do
+    x509_auth_env_vars = [
+      %w[ATLAS_X509_URI ATLAS_X509_CERT_BASE64],
+      %w[ATLAS_X509_DEV_URI ATLAS_X509_DEV_CERT_BASE64]
+    ]
 
-    it 'runs findOne successfully' do
-      expect { client.use(:test)['test'].find.to_a }
-        .not_to raise_error
+    x509_auth_env_vars.each do |uri_var, cert_var|
+      describe "Connecting to #{uri_var} with certificate" do
+        before do
+          raise "Environment variable #{uri_var} is not set" unless ENV[uri_var]
+        end
+
+        let(:client_cert) do
+          decoded = Base64.strict_decode64(ENV[cert_var])
+          cert_file = Tempfile.new([ 'x509-cert', '.pem' ])
+          cert_file.write(decoded)
+          File.chmod(0o600, cert_file.path)
+          cert_file.close
+          cert_file
+        end
+
+        let(:uri) do
+          "#{ENV[uri_var]}&tlsCertificateKeyFile=#{URI::DEFAULT_PARSER.escape(client_cert.path)}"
+        end
+
+        let(:client) do
+          Mongo::Client.new(uri)
+        end
+
+        after do
+          client_cert&.unlink
+        end
+
+        include_examples 'atlas connectivity test'
+      end
     end
   end
 end

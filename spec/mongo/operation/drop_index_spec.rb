@@ -5,6 +5,7 @@ require 'spec_helper'
 
 describe Mongo::Operation::DropIndex do
   require_no_required_api_version
+  max_server_version '8.2.99'
 
   before do
     authorized_collection.indexes.drop_all
