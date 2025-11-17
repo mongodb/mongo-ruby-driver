@@ -448,7 +448,7 @@ module Mongo
     def with_transaction(options = nil)
       @with_transaction_deadline = calculate_with_transaction_deadline(options)
       deadline = if @with_transaction_deadline
-                   # CSOT enabled, so we have a customer defined deadline.
+                   # CSOT enabled, so we have a custom-defined deadline.
                    @with_transaction_deadline
                  else
                     # CSOT not enabled, so we use the default deadline, 120 seconds.
