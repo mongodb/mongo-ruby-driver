@@ -238,7 +238,7 @@ describe Mongo::Session do
             end
           end
 
-          it 'does not sent maxTimeMS' do
+          it 'does not send maxTimeMS' do
             session.with_transaction(timeout_ms: 0) do
               collection.insert_one({ a: 1 }, session: session)
             end
