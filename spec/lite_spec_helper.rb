@@ -97,7 +97,7 @@ require 'support/background_thread_registry'
 require 'mrss/session_registry'
 require 'support/local_resource_registry'
 
-if SpecConfig.instance.mri? && !SpecConfig.instance.windows?
+if SpecConfig.instance.mri? && (SpecConfig.instance.linux? || SpecConfig.instance.macos?)
   require 'timeout_interrupt'
 else
   require 'timeout'
