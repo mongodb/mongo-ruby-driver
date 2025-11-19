@@ -10,7 +10,7 @@ pre_error_fails_task: true
 # Actual testing tasks are marked with `type: test`
 command_type: system
 
-# Protect ourself against rogue test case, or curl gone wild, that runs forever.
+# Protect ourselves against rogue test case, or curl gone wild, that runs forever.
 exec_timeout_secs: 5400
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
@@ -21,6 +21,11 @@ timeout:
         true
 
 functions:
+  assume-test-secrets-ec2-role:
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
+
   "fetch source":
     # Executes git clone and applies the submitted patch, if any
     - command: git.get_project
