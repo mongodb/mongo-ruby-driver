@@ -8,8 +8,10 @@
   # these are used for testing against a few recent ruby versions
   recent_rubies = %w( ruby-3.2 ruby-3.1 jruby-9.4 )
 
-  # this is a list of the most most recent 3.x and 2.x MRI ruby versions
-  sample_mri_rubies = %w( ruby-3.2 ruby-2.7 )
+  recent_mri_rubies = %w( ruby-3.3 ruby-3.2 )
+
+  # this is a list of the most recent 3.x and 2.x MRI ruby versions
+  sample_mri_rubies = %w( ruby-3.3 ruby-2.7 )
 
   # as above, but including the most recent JRuby release
   sample_rubies = sample_mri_rubies + %w( jruby-9.4 )
@@ -25,14 +27,15 @@
 
   supported_rubies = supported_mri_rubies + jrubies
 
+  supported_mri_ruby_2 = "ruby-2.7".inspect
+
   # The latest stable version of MongoDB
   latest_stable_mdb = "7.0".inspect # so it gets quoted as a string
 
-  # A few of the most recent MongoDB versions
-  actual_and_upcoming_mdb = %w( 7.0 6.0 )
+  actual_and_upcoming_mdb = %w( 8.0 )
 
-  recent_mdb = %w( 6.0 5.0 )
-  latest_5x_mdb = "5.0".inspect # so it gets quoted as a string
+
+  recent_mdb = %w( 8.0 7.0 )
 %>
 
 buildvariants:
@@ -50,7 +53,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= actual_and_upcoming_mdb %>
+      mongodb-version: <%= recent_mdb %>
       topology: <%= topologies %>
       os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
@@ -60,7 +63,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: <%= recent_rubies %>
-      mongodb-version: <%= actual_and_upcoming_mdb %>
+      mongodb-version: <%= recent_mdb %>
       topology: <%= topologies %>
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${ruby}"
@@ -79,28 +82,18 @@ buildvariants:
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: <%= sample_rubies %>
-      mongodb-version: '5.0'
+      ruby: <%= recent_mri_rubies %>
+      mongodb-version: ['5.0']
       topology: <%= topologies %>
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} ${ruby}"
+      os: ubuntu2004
+    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
 
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: <%= older_rubies %>
-      mongodb-version: ['4.4', '4.2', '4.0']
-      topology: <%= topologies %>
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-3.6"
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6']
+      mongodb-version: ['4.4', '4.2']
       topology: <%= topologies %>
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${ruby}"
@@ -162,17 +155,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: mmapv1
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6', '4.0']
-      topology: <%= topologies %>
-      storage-engine: mmapv1
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
   - matrix_name: "lint"
     matrix_spec:
       lint: on
@@ -209,8 +191,8 @@ buildvariants:
   - matrix_name: "stress older"
     matrix_spec:
       stress: on
-      ruby: ["ruby-2.7"]
-      mongodb-version: ['4.2', '4.0', '3.6']
+      ruby: <%= supported_mri_ruby_2 %>
+      mongodb-version: ['4.4', '4.2']
       topology: replica-set
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
@@ -347,7 +329,7 @@ buildvariants:
       # enough to install mongosh, and then use either mongo or mongosh
       # (depending on server version and what's available), we can bump this to
       # the latest stable db version.
-      mongodb-version: <%= latest_5x_mdb %>
+      mongodb-version: '5.0'
       os: ubuntu2004
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tasks:
@@ -482,10 +464,11 @@ buildvariants:
     tasks:
        - name: testatlas_task_group
 
-  - matrix_name: "aws-lambda"
-    matrix_spec:
-      ruby: 'ruby-3.2'
-      os: ubuntu2204
-    display_name: "AWS Lambda"
-    tasks:
-       - name: test_aws_lambda_task_group
+# https://jira.mongodb.org/browse/RUBY-3311
+#  - matrix_name: "aws-lambda"
+#    matrix_spec:
+#      ruby: 'ruby-3.2'
+#      os: ubuntu2204
+#    display_name: "AWS Lambda"
+#    tasks:
+#       - name: test_aws_lambda_task_group
