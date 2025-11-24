@@ -389,6 +389,11 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option opts [ Hash ] :sort Specifies which document the operation
+        #   replaces if the query matches multiple documents. The first document
+        #   matched by the sort order will be replaced.
+        #   This option is only supported by servers >= 8.0. Older servers will
+        #   report an error for using this option.
         #
         # @return [ Result ] The response from the database.
         #
@@ -410,6 +415,7 @@ module Mongo
               Operation::U => replacement,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
+              sort: opts[:sort] || opts['sort'],
             }.compact
             if opts[:upsert]
               update_doc['upsert'] = true
@@ -549,6 +555,11 @@ module Mongo
         #   document doesn't exist.
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+        # @option opts [ Hash ] :sort Specifies which document the operation
+        #   updates if the query matches multiple documents. The first document
+        #   matched by the sort order will be updated.
+        #   This option is only supported by servers >= 8.0. Older servers will
+        #   report an error for using this option.
         #
         # @return [ Result ] The response from the database.
         #
@@ -570,6 +581,7 @@ module Mongo
               Operation::U => spec,
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
+              sort: opts[:sort] || opts['sort'],
             }.compact
             if opts[:upsert]
               update_doc['upsert'] = true

@@ -179,7 +179,7 @@ functions:
             export AWS_DEFAULT_REGION="${fle_aws_region}"
           fi
           export CSOT_SPEC_TESTS=1
-          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb" \
+          TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
   "export FLE credentials":
@@ -341,7 +341,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/rspec.xml
+        file: ./src/tmp/*.xml
 
   "delete private environment":
     - command: shell.exec
@@ -430,7 +430,7 @@ post:
   # Removed, causing timeouts
   # - func: "upload working dir"
   - func: "upload mo artifacts"
-  # - func: "upload test results"
+  - func: "upload test results"
   - func: "upload test results to s3"
 
 task_groups:
@@ -761,11 +761,6 @@ axes:
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
-      - id: "latest"
-        display_name: "latest"
-        variables:
-          MONGODB_VERSION: "latest"
-          CRYPT_SHARED_VERSION: "latest"
       - id: "8.0"
         display_name: "8.0"
         variables:
@@ -1064,7 +1059,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1804-small
+        run_on: ubuntu2004-small
         variables:
           MMAPV1: 'true'
 
@@ -1179,7 +1174,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-3.3"
-      mongodb-version: ["latest", "8.0", "7.0"]
+      mongodb-version: ["8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
@@ -1189,7 +1184,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
-      mongodb-version: ["latest", "8.0", "7.0"]
+      mongodb-version: ["8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1208,10 +1203,10 @@ buildvariants:
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
-      ruby: ["ruby-3.3", "ruby-3.2", "jruby-9.4"]
+      ruby: ["ruby-3.3", "ruby-3.2"]
       mongodb-version: ['5.0']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -1219,17 +1214,7 @@ buildvariants:
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7"]
-      mongodb-version: ['4.4', '4.2', '4.0']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
-  - matrix_name: "mongo-3.6"
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6']
+      mongodb-version: ['4.4', '4.2']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1301,17 +1286,6 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: mmapv1
-    matrix_spec:
-      ruby: "ruby-2.7"
-      mongodb-version: ['3.6', '4.0']
-      topology: ["standalone", "replica-set", "sharded-cluster"]
-      storage-engine: mmapv1
-      os: ubuntu1804
-    display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
-    tasks:
-      - name: "test-mlaunch"
-
   - matrix_name: "lint"
     matrix_spec:
       lint: on
@@ -1349,7 +1323,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: "ruby-2.7"
-      mongodb-version: ['4.2', '4.0', '3.6']
+      mongodb-version: ['4.4', '4.2']
       topology: replica-set
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
@@ -1798,10 +1772,11 @@ buildvariants:
     tasks:
        - name: test-atlas
 
-  - matrix_name: "aws-lambda"
-    matrix_spec:
-      ruby: 'ruby-3.2'
-      os: ubuntu2204
-    display_name: "AWS Lambda"
-    tasks:
-       - name: test_aws_lambda_task_group
+# https://jira.mongodb.org/browse/RUBY-3311
+#  - matrix_name: "aws-lambda"
+#    matrix_spec:
+#      ruby: 'ruby-3.2'
+#      os: ubuntu2204
+#    display_name: "AWS Lambda"
+#    tasks:
+#       - name: test_aws_lambda_task_group

@@ -53,6 +53,14 @@ describe Mongo::Socket do
         end
       end.to raise_error(Mongo::Error::SocketError, 'OpenSSL::SSL::SSLError: Test error (for fake-address)')
     end
+
+    it 'maps SocketError and preserves message' do
+      expect do
+        socket.send(:map_exceptions) do
+          raise SocketError.new('Test error')
+        end
+      end.to raise_error(Mongo::Error::SocketError, 'SocketError: Test error (for fake-address)')
+    end
   end
 
   describe '#read' do

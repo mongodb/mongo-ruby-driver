@@ -319,6 +319,17 @@ describe Mongo::Address do
         end
       end
     end
+    context 'when a SocketError occurs' do
+      before do
+        allow(address).to receive(:getaddrinfo).and_raise(::SocketError)
+      end
+
+      it 'raises a Mongo::Error::SocketError' do
+        expect {
+          address.socket(0.0)
+        }.to raise_error(Mongo::Error::SocketError)
+      end
+    end
   end
 
   describe '#to_s' do
