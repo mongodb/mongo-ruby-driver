@@ -13,7 +13,7 @@ pre_error_fails_task: true
 # Actual testing tasks are marked with `type: test`
 command_type: system
 
-# Protect ourself against rogue test case, or curl gone wild, that runs forever.
+# Protect ourselves against rogue test case, or curl gone wild, that runs forever.
 exec_timeout_secs: 5400
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
@@ -24,6 +24,11 @@ timeout:
         true
 
 functions:
+  assume-test-secrets-ec2-role:
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
+
   "fetch source":
     # Executes git clone and applies the submitted patch, if any
     - command: git.get_project
@@ -37,7 +42,7 @@ functions:
 
           git submodule update --init --recursive
 
-  "create expansions":
+  setup-system:
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
       params:
@@ -88,6 +93,7 @@ functions:
             export AUTH=${AUTH}
             export SSL=${SSL}
             export TOPOLOGY=${TOPOLOGY}
+            export MLAUNCH_TOPOLOGY=${MLAUNCH_TOPOLOGY}
             export COMPRESSOR=${COMPRESSOR}
             export RVM_RUBY="${RVM_RUBY}"
             export MONGODB_VERSION=${MONGODB_VERSION}
@@ -125,12 +131,30 @@ functions:
 
           # See what we've done
           cat expansion.yml
-
     # Load the expansion file to make an evergreen variable with the current
     # unique version
     - command: expansions.update
       params:
         file: src/expansion.yml
+    - command: subprocess.exec
+      params:
+        binary: bash
+        include_expansions_in_env: ["PROJECT_DIRECTORY"]
+        args:
+          - "${DRIVERS_TOOLS}/.evergreen/setup.sh"
+
+  bootstrap-mongo-orchestration:
+    - command: subprocess.exec
+      params:
+        binary: bash
+        env:
+          MONGODB_VERSION: ${MONGODB_VERSION}
+        include_expansions_in_env: [TOPOLOGY, AUTH, SSL, ORCHESTRATION_FILE,
+            REQUIRE_API_VERSION, LOAD_BALANCER]
+        args: ["${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh"]
+    - command: expansions.update
+      params:
+        file: mo-expansion.yml
 
   "export AWS auth credentials":
     - command: shell.exec
@@ -179,6 +203,8 @@ functions:
             export AWS_DEFAULT_REGION="${fle_aws_region}"
           fi
           export CSOT_SPEC_TESTS=1
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
@@ -255,40 +281,6 @@ functions:
         content_type: ${content_type|application/x-gzip}
         display_name: "mongodb-logs.tar.gz"
 
-  "upload working dir":
-    - command: archive.targz_pack
-      params:
-        target: "working-dir.tar.gz"
-        source_dir: ${PROJECT_DIRECTORY}/
-        include:
-          - "./**"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: working-dir.tar.gz
-        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/artifacts/${task_id}-${execution}-working-dir.tar.gz
-        bucket: mciuploads
-        permissions: public-read
-        content_type: ${content_type|application/x-gzip}
-        display_name: "working-dir.tar.gz"
-    - command: archive.targz_pack
-      params:
-        target: "drivers-dir.tar.gz"
-        source_dir: ${DRIVERS_TOOLS}
-        include:
-          - "./**"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: drivers-dir.tar.gz
-        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/artifacts/${task_id}-${execution}-drivers-dir.tar.gz
-        bucket: mciuploads
-        permissions: public-read
-        content_type: ${content_type|application/x-gzip}
-        display_name: "drivers-dir.tar.gz"
-
   "upload test results to s3":
     - command: s3.put
       params:
@@ -360,11 +352,22 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
     - command: perf.send
       params:
         file: "${PROJECT_DIRECTORY}/perf.json"
 
+  "run tests with orchestration and drivers tools":
+    - command: subprocess.exec
+      type: test
+      params:
+        binary: bash
+        working_dir: "src"
+        include_expansions_in_env: [MONGODB_URI, AUTH, SSL, TOPOLOGY, COMPRESSOR, RVM_RUBY]
+        args:
+          - ".evergreen/run-tests-new.sh"
   "run tests":
     - command: shell.exec
       type: test
@@ -380,6 +383,8 @@ functions:
             export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
             export AWS_DEFAULT_REGION="${fle_aws_region}"
           fi
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests.sh
 
   "run AWS auth tests":
@@ -422,13 +427,12 @@ functions:
           .evergreen/run-tests-atlas.sh
 
 pre:
+  - func: assume-test-secrets-ec2-role
   - func: "fetch source"
-  - func: "create expansions"
+  - func: setup-system
 
 post:
   - func: "delete private environment"
-  # Removed, causing timeouts
-  # - func: "upload working dir"
   - func: "upload mo artifacts"
   - func: "upload test results"
   - func: "upload test results to s3"
@@ -439,7 +443,7 @@ task_groups:
     setup_group_timeout_secs: 1800 # 30 minutes
     setup_group:
       - func: fetch source
-      - func: create expansions
+      - func: setup-system
       - command: shell.exec
         params:
           shell: "bash"
@@ -489,7 +493,7 @@ task_groups:
     setup_group_timeout_secs: 1800 # 30 minutes
     setup_group:
       - func: fetch source
-      - func: create expansions
+      - func: setup-system
       - command: shell.exec
         params:
           shell: "bash"
@@ -539,7 +543,7 @@ task_groups:
     setup_group_timeout_secs: 1800 # 30 minutes
     setup_group:
       - func: fetch source
-      - func: "create expansions"
+      - func: setup-system
       - command: shell.exec
         params:
           shell: "bash"
@@ -576,7 +580,7 @@ task_groups:
     setup_group_timeout_secs: 1800 # 30 minutes
     setup_group:
       - func: fetch source
-      - func: "create expansions"
+      - func: setup-system
       - command: shell.exec
         params:
           shell: "bash"
@@ -616,6 +620,10 @@ task_groups:
       - testazurekms-task
 
 tasks:
+  - name: "run-main-test-suite"
+    commands:
+      - func: bootstrap-mongo-orchestration
+      - func: "run tests with orchestration and drivers tools"
   - name: "test-atlas"
     commands:
       - func: "run Atlas tests"
@@ -747,17 +755,6 @@ tasks:
             RVM_RUBY: ruby-3.2
             MONGODB_URI: ${MONGODB_URI}
 axes:
-
-  - id: preload
-    display_name: Preload server
-    values:
-      - id: nopreload
-        display_name: Do not preload
-      - id: preload
-        display_name: Preload
-        variables:
-          PRELOAD_ARG: -p
-
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
@@ -811,23 +808,29 @@ axes:
       - id: "standalone"
         display_name: Standalone
         variables:
-          TOPOLOGY: standalone
+          TOPOLOGY: server
+          MLAUNCH_TOPOLOGY: standalone
       - id: "replica-set"
         display_name: Replica Set
         variables:
-          TOPOLOGY: replica-set
+          TOPOLOGY: replica_set
+          MLAUNCH_TOPOLOGY: replica-set
       - id: "replica-set-single-node"
         display_name: Replica Set (Single Node)
         variables:
           TOPOLOGY: replica-set-single-node
+          MLAUNCH_TOPOLOGY: replica-set-single-node
       - id: "sharded-cluster"
         display_name: Sharded
         variables:
-          TOPOLOGY: sharded-cluster
+          TOPOLOGY: sharded_cluster
+          MLAUNCH_TOPOLOGY: sharded-cluster
       - id: "load-balanced"
         display_name: Load Balanced
         variables:
-          TOPOLOGY: load-balanced
+          TOPOLOGY: sharded_cluster
+          MLAUNCH_TOPOLOGY: sharded-cluster
+          LOAD_BALANCED: 'true'
 
   - id: "single-mongos"
     display_name: Single Mongos
@@ -844,7 +847,7 @@ axes:
         display_name: Auth SSL
         variables:
           AUTH: "auth"
-          SSL: "ssl"
+          SSL: "yes"
       - id: "auth-and-nossl"
         display_name: Auth NoSSL
         variables:
@@ -852,14 +855,14 @@ axes:
       - id: "noauth-and-ssl"
         display_name: NoAuth SSL
         variables:
-          SSL: "ssl"
+          SSL: "yes"
       - id: "noauth-and-nossl"
         display_name: NoAuth NoSSL
       - id: "x509"
         display_name: X.509
         variables:
           AUTH: "x509"
-          SSL: "ssl"
+          SSL: "yes"
       - id: kerberos
         display_name: Kerberos
         variables:
@@ -888,6 +891,14 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-dev"
+        display_name: ruby-dev
+        variables:
+          RVM_RUBY: "ruby-dev"
+      - id: "ruby-3.5"
+        display_name: ruby-3.5
+        variables:
+          RVM_RUBY: "ruby-3.5"
       - id: "ruby-3.4"
         display_name: ruby-3.4
         variables:
@@ -916,25 +927,22 @@ axes:
         display_name: ruby-2.7
         variables:
           RVM_RUBY: "ruby-2.7"
-      - id: "ruby-head"
-        display_name: ruby-head
+      - id: "jruby-10"
+        display_name: jruby-10
         variables:
-          RVM_RUBY: "ruby-head"
-      - id: "jruby-9.3"
-        display_name: jruby-9.3
-        variables:
-          RVM_RUBY: "jruby-9.3"
+          RVM_RUBY: "jruby-10"
       - id: "jruby-9.4"
         display_name: jruby-9.4
         variables:
           RVM_RUBY: "jruby-9.4"
+      - id: "jruby-9.3"
+        display_name: jruby-9.3
+        variables:
+          RVM_RUBY: "jruby-9.3"
 
   - id: "os"
     display_name: OS
     values:
-      - id: debian11
-        display_name: "Debian 11"
-        run_on: debian11-small
       - id: ubuntu2404
         display_name: "Ubuntu 24.04"
         run_on: ubuntu2404-small
@@ -953,18 +961,9 @@ axes:
       - id: ubuntu1804
         display_name: "Ubuntu 18.04"
         run_on: ubuntu1804-small
-
-  - id: docker-distro
-    display_name: Docker Distro
-    values:
-        - id: debian11
-          display_name: debian11
-          variables:
-            DOCKER_DISTRO: debian11
-        - id: ubuntu2204
-          display_name: ubuntu2204
-          variables:
-            DOCKER_DISTRO: ubuntu2204
+      - id: debian11
+        display_name: "Debian 11"
+        run_on: debian11-small
 
   - id: "compressor"
     display_name: Compressor
@@ -1053,15 +1052,6 @@ axes:
         display_name: min
         variables:
           BSON: min
-
-  - id: storage-engine
-    display_name: Storage Engine
-    values:
-      - id: mmapv1
-        display_name: MMAPv1
-        run_on: ubuntu2004-small
-        variables:
-          MMAPV1: 'true'
 
   - id: "fle"
     display_name: FLE
@@ -1156,6 +1146,7 @@ axes:
         display_name: Yes
         variables:
           API_VERSION_REQUIRED: 1
+          REQUIRE_API_VERSION: 1
       - id: no
         display_name: No
 
@@ -1189,7 +1180,7 @@ buildvariants:
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "mongo-8-arm"
     matrix_spec:
@@ -1199,7 +1190,7 @@ buildvariants:
       os: ubuntu2404-arm
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
@@ -1209,7 +1200,7 @@ buildvariants:
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "mongo-4.x"
     matrix_spec:
@@ -1219,7 +1210,7 @@ buildvariants:
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "single-lb"
     matrix_spec:

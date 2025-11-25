@@ -69,7 +69,7 @@ buildvariants:
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "mongo-8-arm"
     matrix_spec:
@@ -79,7 +79,7 @@ buildvariants:
       os: ubuntu2404-arm
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "mongo-5.x"
     matrix_spec:
@@ -89,7 +89,7 @@ buildvariants:
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "mongo-4.x"
     matrix_spec:
@@ -99,7 +99,7 @@ buildvariants:
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "single-lb"
     matrix_spec:
