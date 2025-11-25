@@ -392,6 +392,8 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests-aws-auth.sh
 
   "run Kerberos unit tests":
