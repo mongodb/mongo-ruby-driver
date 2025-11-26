@@ -27,6 +27,10 @@ module Mongo
     # validate the parameters and raise an error if they are invalid.
     option :validate_update_replace, default: false
 
+    # When this flag is set to true, the CSFLE will use Ruby types for
+    # decryption instead of BSON types.
+    option :fle_use_ruby_types, default: false
+
     # Set the configuration options.
     #
     # @example Set the options.
