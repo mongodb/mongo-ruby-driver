@@ -41,11 +41,11 @@ module Mongo
 
       # Which BSON mode to use when creating documents from the outcome of
       # the state machine. The returned value is based on the
-      # +Mongo::Config.fle_use_ruby_types+ option.
+      # +Mongo::Config.csfle_convert_to_ruby_types+ option.
       #
       # @return [ Symbol, nil ] The BSON mode.
       def bson_mode
-        Mongo::Config.fle_use_ruby_types ? nil : :bson
+        Mongo::Config.csfle_convert_to_ruby_types ? nil : :bson
       end
     end
   end

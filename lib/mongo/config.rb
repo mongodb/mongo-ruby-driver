@@ -29,7 +29,7 @@ module Mongo
 
     # When this flag is set to true, the CSFLE will use Ruby types for
     # decryption instead of BSON types.
-    option :fle_use_ruby_types, default: false
+    option :csfle_convert_to_ruby_types, default: false
 
     # Set the configuration options.
     #
