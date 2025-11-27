@@ -28,7 +28,7 @@ describe 'Explicit Encryption' do
     client.use(key_vault_db)[key_vault_coll].drop
   end
 
-  shared_examples 'an explicit encrypter' do
+  shared_examples 'an explicit encrypter' do |decrypted_value|
     it 'encrypts and decrypts the value using key_id' do
       data_key_id = client_encryption.create_data_key(
         kms_provider_name,
@@ -44,8 +44,13 @@ describe 'Explicit Encryption' do
       )
 
       decrypted = client_encryption.decrypt(encrypted)
-      expect(decrypted).to eq(value)
-      expect(decrypted).to be_a_kind_of(value.class)
+      if decrypted_value.nil?
+        expect(decrypted).to eq(value)
+        expect(decrypted).to be_a_kind_of(value.class)
+      else
+        expect(decrypted).to eq(decrypted_value)
+        expect(decrypted).to be_a_kind_of(decrypted_value.class)
+      end
     end
 
     it 'encrypts and decrypts the value using key_alt_name' do
@@ -63,8 +68,13 @@ describe 'Explicit Encryption' do
       )
 
       decrypted = client_encryption.decrypt(encrypted)
-      expect(decrypted).to eq(value)
-      expect(decrypted).to be_a_kind_of(value.class)
+      if decrypted_value.nil?
+        expect(decrypted).to eq(value)
+        expect(decrypted).to be_a_kind_of(value.class)
+      else
+        expect(decrypted).to eq(decrypted_value)
+        expect(decrypted).to be_a_kind_of(decrypted_value.class)
+      end
     end
   end
 
@@ -137,6 +147,30 @@ describe 'Explicit Encryption' do
       include_context 'with local kms_providers'
 
       it_behaves_like 'an explicit encrypter'
+    end
+  end
+
+  context 'values is a large integer that requires BSON::Int64' do
+    let(:value) { 2**40 }
+
+    context 'when csfle_convert_to_ruby_types is true' do
+      config_override :csfle_convert_to_ruby_types, true
+
+      context 'with local KMS provider' do
+        include_context 'with local kms_providers'
+
+        it_behaves_like 'an explicit encrypter'
+      end
+    end
+
+    context 'when csfle_convert_to_ruby_types is false' do
+      config_override :csfle_convert_to_ruby_types, false
+
+      context 'with local KMS provider' do
+        include_context 'with local kms_providers'
+
+        it_behaves_like 'an explicit encrypter', BSON::Int64.new(2**40)
+      end
     end
   end
 

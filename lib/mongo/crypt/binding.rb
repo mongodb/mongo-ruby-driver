@@ -1216,7 +1216,7 @@ module Mongo
         # TODO since the binary references a C pointer, and ByteBuffer is
         # written in C in MRI, we could omit a copy of the data by making
         # ByteBuffer reference the string that is owned by libmongocrypt.
-        BSON::Document.from_bson(BSON::ByteBuffer.new(binary.to_s), mode: :bson)
+        BSON::Document.from_bson(BSON::ByteBuffer.new(binary.to_s), mode: context.bson_mode)
       end
 
       # @!method self.mongocrypt_ctx_destroy(ctx)

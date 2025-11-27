@@ -38,6 +38,15 @@ module Mongo
         # explicit decryption
         Binding.ctx_explicit_decrypt_init(self, doc)
       end
+
+      # Which BSON mode to use when creating documents from the outcome of
+      # the state machine. The returned value is based on the
+      # +Mongo::Config.csfle_convert_to_ruby_types+ option.
+      #
+      # @return [ Symbol, nil ] The BSON mode.
+      def bson_mode
+        Mongo::Config.csfle_convert_to_ruby_types ? nil : :bson
+      end
     end
   end
 end
