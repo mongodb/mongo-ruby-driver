@@ -12,6 +12,8 @@ if test -f .env.private; then
   . ./.env.private
 fi
 
+export TOPOLOGY=${MLAUNCH_TOPOLOGY}
+
 # The AWS auth-related Evergreen variables are set the same way for most/all
 # drivers. Therefore we don't want to change the variable names in order to
 # transparently benefit from possible updates to these credentials in

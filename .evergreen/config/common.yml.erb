@@ -10,7 +10,7 @@ pre_error_fails_task: true
 # Actual testing tasks are marked with `type: test`
 command_type: system
 
-# Protect ourself against rogue test case, or curl gone wild, that runs forever.
+# Protect ourselves against rogue test case, or curl gone wild, that runs forever.
 exec_timeout_secs: 5400
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
@@ -21,6 +21,11 @@ timeout:
         true
 
 functions:
+  assume-test-secrets-ec2-role:
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
+
   "fetch source":
     # Executes git clone and applies the submitted patch, if any
     - command: git.get_project
@@ -34,7 +39,7 @@ functions:
 
           git submodule update --init --recursive
 
-  "create expansions":
+  setup-system:
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
       params:
@@ -85,6 +90,7 @@ functions:
             export AUTH=${AUTH}
             export SSL=${SSL}
             export TOPOLOGY=${TOPOLOGY}
+            export MLAUNCH_TOPOLOGY=${MLAUNCH_TOPOLOGY}
             export COMPRESSOR=${COMPRESSOR}
             export RVM_RUBY="${RVM_RUBY}"
             export MONGODB_VERSION=${MONGODB_VERSION}
@@ -122,12 +128,30 @@ functions:
 
           # See what we've done
           cat expansion.yml
-
     # Load the expansion file to make an evergreen variable with the current
     # unique version
     - command: expansions.update
       params:
         file: src/expansion.yml
+    - command: subprocess.exec
+      params:
+        binary: bash
+        include_expansions_in_env: ["PROJECT_DIRECTORY"]
+        args:
+          - "${DRIVERS_TOOLS}/.evergreen/setup.sh"
+
+  bootstrap-mongo-orchestration:
+    - command: subprocess.exec
+      params:
+        binary: bash
+        env:
+          MONGODB_VERSION: ${MONGODB_VERSION}
+        include_expansions_in_env: [TOPOLOGY, AUTH, SSL, ORCHESTRATION_FILE,
+            REQUIRE_API_VERSION, LOAD_BALANCER]
+        args: ["${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh"]
+    - command: expansions.update
+      params:
+        file: mo-expansion.yml
 
   "export AWS auth credentials":
     - command: shell.exec
@@ -176,6 +200,8 @@ functions:
             export AWS_DEFAULT_REGION="${fle_aws_region}"
           fi
           export CSOT_SPEC_TESTS=1
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
@@ -252,40 +278,6 @@ functions:
         content_type: ${content_type|application/x-gzip}
         display_name: "mongodb-logs.tar.gz"
 
-  "upload working dir":
-    - command: archive.targz_pack
-      params:
-        target: "working-dir.tar.gz"
-        source_dir: ${PROJECT_DIRECTORY}/
-        include:
-          - "./**"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: working-dir.tar.gz
-        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/artifacts/${task_id}-${execution}-working-dir.tar.gz
-        bucket: mciuploads
-        permissions: public-read
-        content_type: ${content_type|application/x-gzip}
-        display_name: "working-dir.tar.gz"
-    - command: archive.targz_pack
-      params:
-        target: "drivers-dir.tar.gz"
-        source_dir: ${DRIVERS_TOOLS}
-        include:
-          - "./**"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: drivers-dir.tar.gz
-        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/artifacts/${task_id}-${execution}-drivers-dir.tar.gz
-        bucket: mciuploads
-        permissions: public-read
-        content_type: ${content_type|application/x-gzip}
-        display_name: "drivers-dir.tar.gz"
-
   "upload test results to s3":
     - command: s3.put
       params:
@@ -357,11 +349,22 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
     - command: perf.send
       params:
         file: "${PROJECT_DIRECTORY}/perf.json"
 
+  "run tests with orchestration and drivers tools":
+    - command: subprocess.exec
+      type: test
+      params:
+        binary: bash
+        working_dir: "src"
+        include_expansions_in_env: [MONGODB_URI, AUTH, SSL, TOPOLOGY, COMPRESSOR, RVM_RUBY]
+        args:
+          - ".evergreen/run-tests-new.sh"
   "run tests":
     - command: shell.exec
       type: test
@@ -377,6 +380,8 @@ functions:
             export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
             export AWS_DEFAULT_REGION="${fle_aws_region}"
           fi
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests.sh
 
   "run AWS auth tests":
@@ -387,6 +392,8 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests-aws-auth.sh
 
   "run Kerberos unit tests":
@@ -419,13 +426,12 @@ functions:
           .evergreen/run-tests-atlas.sh
 
 pre:
+  - func: assume-test-secrets-ec2-role
   - func: "fetch source"
-  - func: "create expansions"
+  - func: setup-system
 
 post:
   - func: "delete private environment"
-  # Removed, causing timeouts
-  # - func: "upload working dir"
   - func: "upload mo artifacts"
   - func: "upload test results"
   - func: "upload test results to s3"
@@ -436,7 +442,7 @@ task_groups:
     setup_group_timeout_secs: 1800 # 30 minutes
     setup_group:
       - func: fetch source
-      - func: create expansions
+      - func: setup-system
       - command: shell.exec
         params:
           shell: "bash"
@@ -486,7 +492,7 @@ task_groups:
     setup_group_timeout_secs: 1800 # 30 minutes
     setup_group:
       - func: fetch source
-      - func: create expansions
+      - func: setup-system
       - command: shell.exec
         params:
           shell: "bash"
@@ -536,7 +542,7 @@ task_groups:
     setup_group_timeout_secs: 1800 # 30 minutes
     setup_group:
       - func: fetch source
-      - func: "create expansions"
+      - func: setup-system
       - command: shell.exec
         params:
           shell: "bash"
@@ -573,7 +579,7 @@ task_groups:
     setup_group_timeout_secs: 1800 # 30 minutes
     setup_group:
       - func: fetch source
-      - func: "create expansions"
+      - func: setup-system
       - command: shell.exec
         params:
           shell: "bash"
@@ -613,6 +619,10 @@ task_groups:
       - testazurekms-task
 
 tasks:
+  - name: "run-main-test-suite"
+    commands:
+      - func: bootstrap-mongo-orchestration
+      - func: "run tests with orchestration and drivers tools"
   - name: "test-atlas"
     commands:
       - func: "run Atlas tests"
