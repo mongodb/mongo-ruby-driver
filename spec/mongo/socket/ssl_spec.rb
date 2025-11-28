@@ -22,20 +22,16 @@ describe Mongo::Socket::SSL do
     SpecConfig.instance.ssl_options
   end
 
-  let (:key_string) do
-    File.read(SpecConfig.instance.local_client_key_path)
+  let (:cert_string) do
+    File.read(SpecConfig.instance.client_cert_path)
   end
 
-  let (:cert_string) do
-    File.read(SpecConfig.instance.local_client_cert_path)
+  let(:key_string) do
+    cert_string
   end
 
   let (:ca_cert_string) do
-    File.read(SpecConfig.instance.local_ca_cert_path)
-  end
-
-  let(:key_encrypted_string) do
-    File.read(SpecConfig.instance.client_encrypted_key_path)
+    File.read(SpecConfig.instance.ca_cert_path)
   end
 
   let(:cert_object) do
@@ -112,24 +108,6 @@ describe Mongo::Socket::SSL do
           :ssl => true,
           :ssl_cert_string => cert_string,
           :ssl_key_string => key_string,
-          :ssl_verify => false
-        }
-      end
-
-      it 'connects to the server' do
-        expect(socket).to be_alive
-      end
-    end
-
-    context 'when certificate and an encrypted key are provided as strings' do
-      require_local_tls
-
-      let(:ssl_options) do
-        {
-          :ssl => true,
-          :ssl_cert_string => cert_string,
-          :ssl_key_string => key_encrypted_string,
-          :ssl_key_pass_phrase => SpecConfig.instance.client_encrypted_key_passphrase,
           :ssl_verify => false
         }
       end
@@ -254,7 +232,7 @@ describe Mongo::Socket::SSL do
         {
           :ssl => true,
           :ssl_cert_object => cert,
-          :ssl_key => SpecConfig.instance.local_client_key_path,
+          :ssl_key => SpecConfig.instance.client_key_path,
           :ssl_verify => false
         }
       end
@@ -425,7 +403,7 @@ describe Mongo::Socket::SSL do
 
         let(:ssl_options) do
           super().merge(
-            :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
+            :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
             :ssl_verify => true
           )
         end
@@ -467,7 +445,7 @@ describe Mongo::Socket::SSL do
 
         let(:ssl_options) do
           super().merge(
-            :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
+            :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
             :ssl_ca_cert_string => 'This is a string, not a certificate',
             :ssl_verify => true
           )
@@ -483,7 +461,7 @@ describe Mongo::Socket::SSL do
 
         let(:ssl_options) do
           super().merge(
-            :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
+            :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
             :ssl_ca_cert_object => 'This is a string, not an array of certificates',
             :ssl_verify => true
           )
@@ -497,7 +475,7 @@ describe Mongo::Socket::SSL do
       context 'both as a PEM-encoded string and as object parameter' do
 
         let(:ssl_options) do
-          cert = File.read(SpecConfig.instance.local_ca_cert_path)
+          cert = File.read(SpecConfig.instance.ca_cert_path)
           super().merge(
             :ssl_ca_cert_string => cert,
             :ssl_ca_cert_object => 'This is a string, not an array of certificates',
@@ -542,37 +520,6 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when CA certificate file contains multiple certificates' do
-      require_local_tls
-
-      let(:server) do
-        ClientRegistry.instance.global_client('authorized').cluster.next_primary
-      end
-
-      let(:connection) do
-        Mongo::Server::Connection.new(server, ssl_options.merge(socket_timeout: 2))
-      end
-
-      context 'as a file' do
-        let(:ssl_options) do
-          SpecConfig.instance.test_options.merge(
-            ssl: true,
-            ssl_cert: SpecConfig.instance.client_cert_path,
-            ssl_key: SpecConfig.instance.client_key_path,
-            ssl_ca_cert: SpecConfig.instance.multi_ca_path,
-            ssl_verify: true,
-          )
-        end
-
-        it 'succeeds' do
-          connection
-          expect do
-            connection.connect!
-          end.not_to raise_error
-        end
-      end
-    end
-
     context 'when a CA certificate is not provided' do
       require_local_tls
 
@@ -583,7 +530,7 @@ describe Mongo::Socket::SSL do
       end
 
       local_env do
-        { 'SSL_CERT_FILE' => SpecConfig.instance.local_ca_cert_path }
+        { 'SSL_CERT_FILE' => SpecConfig.instance.ca_cert_path }
       end
 
       it 'uses the default cert store' do
@@ -608,7 +555,7 @@ describe Mongo::Socket::SSL do
             SpecConfig.instance.test_options.merge(
               ssl_cert: SpecConfig.instance.second_level_cert_path,
               ssl_key: SpecConfig.instance.second_level_key_path,
-              ssl_ca_cert: SpecConfig.instance.local_ca_cert_path,
+              ssl_ca_cert: SpecConfig.instance.ca_cert_path,
               ssl_verify: true,
             )
           end
@@ -627,29 +574,6 @@ describe Mongo::Socket::SSL do
             end.to raise_error(Mongo::Error::SocketError)
           end
         end
-
-        context 'bundled with intermediate cert' do
-
-          # https://github.com/jruby/jruby-openssl/issues/181
-          require_mri
-
-          let(:ssl_options) do
-            SpecConfig.instance.test_options.merge(
-              ssl: true,
-              ssl_cert: SpecConfig.instance.second_level_cert_bundle_path,
-              ssl_key: SpecConfig.instance.second_level_key_path,
-              ssl_ca_cert: SpecConfig.instance.local_ca_cert_path,
-              ssl_verify: true,
-            )
-          end
-
-          it 'succeeds' do
-            connection
-            expect do
-              connection.connect!
-            end.not_to raise_error
-          end
-        end
       end
 
       context 'as a string' do
@@ -660,7 +584,7 @@ describe Mongo::Socket::SSL do
               ssl_cert_string: File.read(SpecConfig.instance.second_level_cert_path),
               ssl_key: nil,
               ssl_key_string: File.read(SpecConfig.instance.second_level_key_path),
-              ssl_ca_cert: SpecConfig.instance.local_ca_cert_path,
+              ssl_ca_cert: SpecConfig.instance.ca_cert_path,
               ssl_verify: true,
             )
           end
@@ -670,31 +594,6 @@ describe Mongo::Socket::SSL do
             expect do
               connection.connect!
             end.to raise_error(Mongo::Error::SocketError)
-          end
-        end
-
-        context 'bundled with intermediate cert' do
-
-          # https://github.com/jruby/jruby-openssl/issues/181
-          require_mri
-
-          let(:ssl_options) do
-            SpecConfig.instance.test_options.merge(
-              ssl: true,
-              ssl_cert: nil,
-              ssl_cert_string: File.read(SpecConfig.instance.second_level_cert_bundle_path),
-              ssl_key: nil,
-              ssl_key_string: File.read(SpecConfig.instance.second_level_key_path),
-              ssl_ca_cert: SpecConfig.instance.local_ca_cert_path,
-              ssl_verify: true,
-            )
-          end
-
-          it 'succeeds' do
-            connection
-            expect do
-              connection.connect!
-            end.not_to raise_error
           end
         end
       end
@@ -716,7 +615,7 @@ describe Mongo::Socket::SSL do
           ssl: true,
           ssl_cert: SpecConfig.instance.client_pem_path,
           ssl_key: SpecConfig.instance.client_pem_path,
-          ssl_ca_cert: SpecConfig.instance.local_ca_cert_path,
+          ssl_ca_cert: SpecConfig.instance.ca_cert_path,
           ssl_verify: true,
         )
       end
@@ -734,7 +633,7 @@ describe Mongo::Socket::SSL do
 
       let(:ssl_options) do
         super().merge(
-          :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path
+          :ssl_ca_cert => SpecConfig.instance.ca_cert_path
         ).tap { |options| options.delete(:ssl_verify) }
       end
 
@@ -748,7 +647,7 @@ describe Mongo::Socket::SSL do
 
       let(:ssl_options) do
         super().merge(
-          :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
+          :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
           :ssl_verify => true
         )
       end

@@ -376,7 +376,7 @@ functions:
       params:
         binary: bash
         working_dir: "src"
-        include_expansions_in_env: [MONGODB_URI, AUTH, SSL, TOPOLOGY, COMPRESSOR, RVM_RUBY]
+        include_expansions_in_env: [DRIVERS_TOOLS, MONGODB_URI, AUTH, SSL, TOPOLOGY, COMPRESSOR, RVM_RUBY]
         args:
           - ".evergreen/run-tests-new.sh"
   "run tests":

@@ -29,7 +29,7 @@ class SpecConfig
         @connect_options = { connect: :direct }
       end
       if @uri_options[:ssl].nil?
-        @ssl = (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
+        @ssl = (%w(yes ssl).include?(ENV['SSL'])) || (ENV['SSL_ENABLED'] == 'true')
       else
         @ssl = @uri_options[:ssl]
       end
@@ -81,6 +81,7 @@ class SpecConfig
       # Discover deployment topology.
       # TLS options need to be merged for evergreen due to
       # https://github.com/10gen/mongo-orchestration/issues/268
+      pp "Connecting using ssl_options: #{ssl_options}"
       client = Mongo::Client.new(addresses, Mongo::Options::Redacted.new(
         server_selection_timeout: 5.03,
       ).merge(ssl_options).merge(ruby_options))
@@ -266,34 +267,72 @@ EOT
     Pathname.new("#{spec_root}/support/certificates")
   end
 
+  def evergreen_certs_dir
+    Pathname.new("#{spec_root}/../.evergreen/x509gen")
+  end
+
   def ocsp_files_dir
     Pathname.new("#{spec_root}/../.mod/drivers-evergreen-tools/.evergreen/ocsp")
   end
 
-  # TLS certificates & keys
+  # Evergreen cert paths
 
-  def local_client_key_path
-    "#{ssl_certs_dir}/client.key"
+  def evergreen_ca_pem_path
+    "#{evergreen_certs_dir}/ca.pem"
+  end
+
+  def evergreen_client_pem_path
+    "#{evergreen_certs_dir}/client.pem"
+  end
+
+  def evergreen_client_key_path
+    "#{evergreen_certs_dir}/client-private.pem"
+  end
+
+  def evergreen_client_cert_path
+    "#{evergreen_certs_dir}/client-public.pem"
+  end
+
+  def ca_cert_path
+    if drivers_tools?
+      evergreen_ca_pem_path
+    else
+      local_ca_cert_path
+    end
+  end
+
+  def client_cert_path
+    if drivers_tools?
+      evergreen_client_pem_path
+    else
+      local_client_cert_path
+    end
   end
 
   def client_key_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
-      ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
+    if drivers_tools?
+      evergreen_client_key_path
     else
       local_client_key_path
     end
   end
 
-  def local_client_cert_path
-    "#{ssl_certs_dir}/client.crt"
+  def client_pem_path
+    if drivers_tools?
+      evergreen_client_pem_path
+    else
+      local_client_pem_path
+    end
   end
 
-  def client_cert_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
-      ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
-    else
-      local_client_cert_path
-    end
+  # Local TLS certificates & keys
+
+  def local_client_key_path
+    "#{ssl_certs_dir}/client.key"
+  end
+
+  def local_client_cert_path
+    "#{ssl_certs_dir}/client.crt"
   end
 
   def local_client_pem_path
@@ -301,14 +340,6 @@ EOT
       "#{ssl_certs_dir}/client.pem"
     else
       Pathname.new("#{spec_root}/support/ocsp/#{algo}/server.pem")
-    end
-  end
-
-  def client_pem_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_CERT_KEY_PEM']
-      ENV['DRIVER_TOOLS_CLIENT_CERT_KEY_PEM']
-    else
-      local_client_pem_path
     end
   end
 
@@ -346,14 +377,6 @@ EOT
 
   def local_ca_cert_path
     "#{ssl_certs_dir}/ca.crt"
-  end
-
-  def ca_cert_path
-    if drivers_tools? && ENV['DRIVER_TOOLS_CA_PEM']
-      ENV['DRIVER_TOOLS_CA_PEM']
-    else
-      local_ca_cert_path
-    end
   end
 
   def multi_ca_path

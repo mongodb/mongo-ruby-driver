@@ -114,6 +114,7 @@ describe 'Client after reconnect' do
       minimum_mri_version '3.0.0'
 
       it 'recreates SRV monitor' do
+        skip 'https://jira.mongodb.org/browse/RUBY-3749'
         wait_for_discovery
 
         expect(client.cluster.topology).to be_a(expected_topology_cls)

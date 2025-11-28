@@ -1,4 +1,6 @@
 require 'mongo'
+require_relative '../../spec/support/utils'
+require_relative '../../spec/support/spec_setup'
 
 Mongo::Logger.logger.level = :WARN
 
@@ -88,7 +90,12 @@ class ServerSetup
   end
 
   def client
-    @client ||= Mongo::Client.new(ENV.fetch('MONGODB_URI'))
+    @client ||= Mongo::Client.new(
+      SpecConfig.instance.addresses,
+      SpecConfig.instance.all_test_options.merge(
+        socket_timeout: 5, connect_timeout: 5
+      )
+    )
   end
 
   def bootstrap_client
