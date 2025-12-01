@@ -116,7 +116,7 @@ jobs:
 
             ### Verification
             The SBOM was generated using @cyclonedx/cdxgen v11.0.0 with
-            the bundler type.
+            the ruby type.
 
             ### Triggered by
             - Commit: ${{ github.sha }}
