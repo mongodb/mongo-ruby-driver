@@ -50,8 +50,25 @@ jobs:
             --required-only \
             --output sbom.json
 
-          # Prettify the JSON output
-          jq . sbom.json > sbom.tmp.json && mv sbom.tmp.json sbom.json
+          # Post-process SBOM: remove incompatible fields and fix licenses
+          jq '
+            # Remove incompatible fields for silkbomb compatibility
+            del(.metadata.lifecycles) |
+            walk(if type == "object" then del(.evidence) else . end) |
+
+            # Fix missing licenses
+            .components |= map(
+              if .name == "yard-solargraph" and
+                 (.licenses == null or .licenses == []) then
+                . + {licenses: [{license: {
+                  id: "MIT",
+                  url: "https://opensource.org/licenses/MIT"
+                }}]}
+              else
+                .
+              end
+            )
+          ' sbom.json > sbom.tmp.json && mv sbom.tmp.json sbom.json
 
       - name: Download CycloneDX CLI
         run: |
