@@ -13,11 +13,6 @@ axes:
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
-      - id: "latest"
-        display_name: "latest"
-        variables:
-          MONGODB_VERSION: "latest"
-          CRYPT_SHARED_VERSION: "latest"
       - id: "8.0"
         display_name: "8.0"
         variables:
@@ -314,7 +309,7 @@ axes:
     values:
       - id: mmapv1
         display_name: MMAPv1
-        run_on: ubuntu1804-small
+        run_on: ubuntu2004-small
         variables:
           MMAPV1: 'true'
 

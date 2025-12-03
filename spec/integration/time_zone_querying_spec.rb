@@ -4,6 +4,8 @@
 require 'spec_helper'
 
 describe 'Time zone querying' do
+  require_mri
+
   let(:collection) { authorized_client[:time_zone_querying] }
 
   before do
