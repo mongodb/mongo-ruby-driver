@@ -109,6 +109,16 @@ module Mongo
         end
       end
 
+      # Which BSON mode to use when creating documents from the outcome of
+      # the state machine. The default is :bson, which creates BSON::Document
+      # with BSON types. Subclasses may override this method to
+      # change this behavior.
+      #
+      # @return [ Symbol, nil ] The BSON mode.
+      def bson_mode
+        :bson
+      end
+
       private
 
       def provide_markings(timeout_ms)
