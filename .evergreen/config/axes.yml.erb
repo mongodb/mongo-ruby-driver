@@ -1,15 +1,4 @@
 axes:
-
-  - id: preload
-    display_name: Preload server
-    values:
-      - id: nopreload
-        display_name: Do not preload
-      - id: preload
-        display_name: Preload
-        variables:
-          PRELOAD_ARG: -p
-
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
@@ -63,23 +52,29 @@ axes:
       - id: "standalone"
         display_name: Standalone
         variables:
-          TOPOLOGY: standalone
+          TOPOLOGY: server
+          MLAUNCH_TOPOLOGY: standalone
       - id: "replica-set"
         display_name: Replica Set
         variables:
-          TOPOLOGY: replica-set
+          TOPOLOGY: replica_set
+          MLAUNCH_TOPOLOGY: replica-set
       - id: "replica-set-single-node"
         display_name: Replica Set (Single Node)
         variables:
           TOPOLOGY: replica-set-single-node
+          MLAUNCH_TOPOLOGY: replica-set-single-node
       - id: "sharded-cluster"
         display_name: Sharded
         variables:
-          TOPOLOGY: sharded-cluster
+          TOPOLOGY: sharded_cluster
+          MLAUNCH_TOPOLOGY: sharded-cluster
       - id: "load-balanced"
         display_name: Load Balanced
         variables:
-          TOPOLOGY: load-balanced
+          TOPOLOGY: sharded_cluster
+          MLAUNCH_TOPOLOGY: sharded-cluster
+          LOAD_BALANCED: 'true'
 
   - id: "single-mongos"
     display_name: Single Mongos
@@ -96,7 +91,7 @@ axes:
         display_name: Auth SSL
         variables:
           AUTH: "auth"
-          SSL: "ssl"
+          SSL: "yes"
       - id: "auth-and-nossl"
         display_name: Auth NoSSL
         variables:
@@ -104,14 +99,14 @@ axes:
       - id: "noauth-and-ssl"
         display_name: NoAuth SSL
         variables:
-          SSL: "ssl"
+          SSL: "yes"
       - id: "noauth-and-nossl"
         display_name: NoAuth NoSSL
       - id: "x509"
         display_name: X.509
         variables:
           AUTH: "x509"
-          SSL: "ssl"
+          SSL: "yes"
       - id: kerberos
         display_name: Kerberos
         variables:
@@ -140,6 +135,14 @@ axes:
   - id: "ruby"
     display_name: Ruby Version
     values:
+      - id: "ruby-dev"
+        display_name: ruby-dev
+        variables:
+          RVM_RUBY: "ruby-dev"
+      - id: "ruby-3.5"
+        display_name: ruby-3.5
+        variables:
+          RVM_RUBY: "ruby-3.5"
       - id: "ruby-3.4"
         display_name: ruby-3.4
         variables:
@@ -168,25 +171,22 @@ axes:
         display_name: ruby-2.7
         variables:
           RVM_RUBY: "ruby-2.7"
-      - id: "ruby-head"
-        display_name: ruby-head
+      - id: "jruby-10"
+        display_name: jruby-10
         variables:
-          RVM_RUBY: "ruby-head"
-      - id: "jruby-9.3"
-        display_name: jruby-9.3
-        variables:
-          RVM_RUBY: "jruby-9.3"
+          RVM_RUBY: "jruby-10"
       - id: "jruby-9.4"
         display_name: jruby-9.4
         variables:
           RVM_RUBY: "jruby-9.4"
+      - id: "jruby-9.3"
+        display_name: jruby-9.3
+        variables:
+          RVM_RUBY: "jruby-9.3"
 
   - id: "os"
     display_name: OS
     values:
-      - id: debian11
-        display_name: "Debian 11"
-        run_on: debian11-small
       - id: ubuntu2404
         display_name: "Ubuntu 24.04"
         run_on: ubuntu2404-small
@@ -205,16 +205,9 @@ axes:
       - id: ubuntu1804
         display_name: "Ubuntu 18.04"
         run_on: ubuntu1804-small
-
-  - id: docker-distro
-    display_name: Docker Distro
-    values:
-      <% %w(debian11 ubuntu2204).each do |distro| %>
-        - id: <%= distro %>
-          display_name: <%= distro %>
-          variables:
-            DOCKER_DISTRO: <%= distro %>
-      <% end %>
+      - id: debian11
+        display_name: "Debian 11"
+        run_on: debian11-small
 
   - id: "compressor"
     display_name: Compressor
@@ -303,15 +296,6 @@ axes:
         display_name: min
         variables:
           BSON: min
-
-  - id: storage-engine
-    display_name: Storage Engine
-    values:
-      - id: mmapv1
-        display_name: MMAPv1
-        run_on: ubuntu2004-small
-        variables:
-          MMAPV1: 'true'
 
   - id: "fle"
     display_name: FLE
@@ -403,5 +387,6 @@ axes:
         display_name: Yes
         variables:
           API_VERSION_REQUIRED: 1
+          REQUIRE_API_VERSION: 1
       - id: no
         display_name: No

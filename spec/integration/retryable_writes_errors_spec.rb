@@ -210,7 +210,7 @@ describe 'Retryable writes errors tests' do
     end
 
     context 'when another mongos is available' do
-
+      skip "https://jira.mongodb.org/browse/RUBY-3737"
       let(:first_mongos) do
         Mongo::Client.new(
           [SpecConfig.instance.addresses.first],

@@ -5,5 +5,6 @@ description: a pure-Ruby driver for connecting to, querying, and manipulating Mo
 package: mongo
 jira: https://jira.mongodb.org/projects/RUBY
 version:
-  number: 2.21.3
+  number: 2.22.0
   file: lib/mongo/version.rb
+

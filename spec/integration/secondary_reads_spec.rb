@@ -2,6 +2,8 @@
 require 'spec_helper'
 
 describe 'Secondary reads' do
+  require_mri
+
   before do
     root_authorized_client.use('sr')['secondary_reads'].drop
     root_authorized_client.use('sr')['secondary_reads'].insert_one(test: 1)
