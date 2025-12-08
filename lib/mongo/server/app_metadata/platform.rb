@@ -41,6 +41,13 @@ module Mongo
           RUBY_ENGINE == 'ruby'
         end
 
+        # Queries whether the current runtime is JRuby or not.
+        #
+        # @return [ Boolean ] whether the current runtime is JRuby
+        def jruby?
+          RUBY_ENGINE == 'jruby'
+        end
+
         # Returns the list of Ruby versions that identify this runtime.
         #
         # @return [ Array<String> ] the list of ruby versions
