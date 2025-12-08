@@ -113,7 +113,7 @@ shared_examples 'app metadata document' do
         it 'adds empty strings' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\z/
+          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|\z/
         end
       end
 
@@ -125,7 +125,7 @@ shared_examples 'app metadata document' do
         it 'adds the fields' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\z/
+          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|\z/
         end
       end
 
@@ -137,7 +137,7 @@ shared_examples 'app metadata document' do
         it 'adds the fields' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|7.1.2"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|OS9000\z/
+          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|OS9000\z/
         end
       end
     end
@@ -156,7 +156,7 @@ shared_examples 'app metadata document' do
         it 'adds the fields' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid|'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|42|4.0"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\|OS9000\z/
+          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|\|OS9000\z/
         end
       end
 
@@ -171,7 +171,7 @@ shared_examples 'app metadata document' do
         it 'adds the fields' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid|Rails'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|7.1.2|6.0.3"
-          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\|\z/
+          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|\|\z/
         end
       end
     end

@@ -960,7 +960,7 @@ describe Mongo::Client do
 
           let(:platform_string) do
             [
-              "JRuby #{JRUBY_VERSION}",
+              "jruby #{JRUBY_VERSION}",
               "like Ruby #{RUBY_VERSION}",
               RUBY_PLATFORM,
               "JVM #{java.lang.System.get_property('java.version')}",
