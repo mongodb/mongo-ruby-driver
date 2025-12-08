@@ -34,9 +34,9 @@ module Mongo
           @metadata = metadata
         end
 
-        # Queries whether the current runtime is Ruby or not.
+        # Queries whether the current runtime is standard Ruby or not.
         #
-        # @return [ Boolean ] whether the current runtime is Ruby
+        # @return [ Boolean ] whether the current runtime is standard Ruby
         def ruby?
           RUBY_ENGINE == 'ruby'
         end
