@@ -34,21 +34,21 @@ module Mongo
           @metadata = metadata
         end
 
-        # Queries whether the current runtime is JRuby or not.
+        # Queries whether the current runtime is Ruby or not.
         #
-        # @return [ true | false ] whether the runtime is JRuby or not.
-        def jruby?
-          BSON::Environment.jruby?
+        # @return [ Boolean ] whether the current runtime is Ruby
+        def ruby?
+          RUBY_ENGINE == 'ruby'
         end
 
         # Returns the list of Ruby versions that identify this runtime.
         #
         # @return [ Array<String> ] the list of ruby versions
         def ruby_versions
-          if jruby?
-            [ "JRuby #{JRUBY_VERSION}", "like Ruby #{RUBY_VERSION}" ]
-          else
+          if ruby?
             [ "Ruby #{RUBY_VERSION}" ]
+          else
+            [ "#{RUBY_ENGINE} #{RUBY_ENGINE_VERSION}", "like Ruby #{RUBY_VERSION}" ]
           end
         end
 
