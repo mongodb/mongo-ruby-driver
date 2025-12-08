@@ -168,8 +168,7 @@ module Mongo
       # The hostname cannot include a port.
       #
       # The hostname must not begin with a dot, end with a dot, or have
-      # consecutive dots. The hostname must have a minimum of 3 total
-      # components (foo.bar.tld).
+      # consecutive dots. The hostname must have a minimum of 1 component (tld)
       #
       # Raises Error::InvalidURI if validation fails.
       def validate_srv_hostname(hostname)
@@ -185,8 +184,8 @@ module Mongo
         if parts.any?(&:empty?)
           raise_invalid_error!("Hostname cannot have consecutive dots: #{hostname}")
         end
-        if parts.length < 3
-          raise_invalid_error!("Hostname must have a minimum of 3 components (foo.bar.tld): #{hostname}")
+        if parts.length < 1
+          raise_invalid_error!("Hostname must have a minimum of 1 component (tld): #{hostname}")
         end
       end
 
