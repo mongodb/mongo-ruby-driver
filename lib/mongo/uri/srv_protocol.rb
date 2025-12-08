@@ -184,9 +184,6 @@ module Mongo
         if parts.any?(&:empty?)
           raise_invalid_error!("Hostname cannot have consecutive dots: #{hostname}")
         end
-        if parts.length < 1
-          raise_invalid_error!("Hostname must have a minimum of 1 component (tld): #{hostname}")
-        end
       end
 
       # Obtains the TXT options of a host.
