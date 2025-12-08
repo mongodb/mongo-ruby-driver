@@ -83,7 +83,7 @@ shared_examples 'app metadata document' do
     require_jruby
 
     it 'includes JRuby and Ruby compatibility versions' do
-      document[:client][:platform].should start_with("JRuby #{JRUBY_VERSION}, like Ruby #{RUBY_VERSION}")
+      document[:client][:platform].should start_with("jruby #{JRUBY_VERSION}, like Ruby #{RUBY_VERSION}")
     end
 
     context 'when custom platform is specified' do
@@ -92,7 +92,7 @@ shared_examples 'app metadata document' do
       end
 
       it 'starts with custom platform' do
-        document[:client][:platform].should start_with("foowidgets, JRuby #{JRUBY_VERSION}")
+        document[:client][:platform].should start_with("foowidgets, jruby #{JRUBY_VERSION}")
       end
     end
   end
