@@ -184,6 +184,9 @@ module Mongo
         if parts.any?(&:empty?)
           raise_invalid_error!("Hostname cannot have consecutive dots: #{hostname}")
         end
+        if parts.length == 0
+          raise_invalid_error!("Hostname cannot be empty: #{hostname}")
+        end
       end
 
       # Obtains the TXT options of a host.
