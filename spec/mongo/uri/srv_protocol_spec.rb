@@ -56,16 +56,6 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context 'when the host in URI does not have {hostname}, {domainname} and {tld}' do
-
-      let(:string) { "#{scheme}#{hosts}" }
-      let(:hosts) { '10gen.cc/' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
     context 'when the {tld} is empty' do
 
       let(:string) { "#{scheme}#{hosts}" }
@@ -215,24 +205,6 @@ describe Mongo::URI::SRVProtocol do
     context 'mongodb+srv://[::1]:foo' do
 
       let(:string) { "#{scheme}[::1]:foo" }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb+srv://example.com?w=1' do
-
-      let(:string) { "#{scheme}example.com?w=1" }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb+srv://example.com/?w' do
-
-      let(:string) { "#{scheme}example.com/?w" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
@@ -1302,8 +1274,8 @@ describe Mongo::URI::SRVProtocol do
         'a'
       end
 
-      it 'raises an error' do
-        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      it 'does not raise an error' do
+        expect { validate }.to_not raise_error
       end
     end
 
@@ -1313,8 +1285,8 @@ describe Mongo::URI::SRVProtocol do
         'a.b'
       end
 
-      it 'raises an error' do
-        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      it 'validates the hostname' do
+        expect { validate }.not_to raise_error
       end
     end
 

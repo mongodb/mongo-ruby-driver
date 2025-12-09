@@ -110,17 +110,27 @@ module Mongo
       # A hostname's domain name consists of each of the '.' delineated
       # parts after the first. For example, the hostname 'foo.bar.baz'
       # has the domain name 'bar.baz'.
+      # 
+      # If the hostname has less than three parts, its domain name is the hostname itself.
       #
       # @param [ String ] record_host The host of the SRV record.
       #
       # @raise [ Mongo::Error::MismatchedDomain ] If the record's domain name doesn't match that of
       #   the hostname.
       def validate_same_origin!(record_host)
-        domain_name ||= query_hostname.split('.')[1..-1]
-        host_parts = record_host.split('.')
+        srv_host_domain = query_hostname.split('.')
+        srv_is_less_than_three_parts = srv_host_domain.length < 3
+        unless srv_is_less_than_three_parts
+          srv_host_domain = srv_host_domain[1..-1]
+        end
+        record_host_parts = record_host.split('.')
 
-        unless (host_parts.size > domain_name.size) && (domain_name == host_parts[-domain_name.length..-1])
-          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, domain_name])
+        if (srv_is_less_than_three_parts && record_host_parts.length <= srv_host_domain.length) 
+          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, srv_host_domain])
+        end
+
+        unless (record_host_parts.size > srv_host_domain.size) && (srv_host_domain == record_host_parts[-srv_host_domain.size..-1])
+          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, srv_host_domain])
         end
       end
     end
