@@ -299,6 +299,7 @@ module Mongo
       cluster = Cluster.new(
         client.cluster.addresses.map(&:to_s),
         monitoring || Monitoring.new,
+        tracer = client.tracer,
         client.cluster_options,
       )
       client.instance_variable_set(:@cluster, cluster)
