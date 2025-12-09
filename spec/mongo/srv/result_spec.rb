@@ -42,27 +42,30 @@ describe Mongo::Srv::Result do
         let(:host_name) { example_host_names[i] }
         let(:mismatched_host_name) { example_host_names_that_do_not_match_parent[i] }
         context 'when address does not match parent domain' do
-          it 'raises MismatchedDomain error' do
-            record = double('record').tap do |record|
+          let(:record) do
+            double('record').tap do |record|
               allow(record).to receive(:target).and_return(mismatched_host_name)
               allow(record).to receive(:port).and_return(42)
               allow(record).to receive(:ttl).and_return(1)
             end
-
+          end
+          it 'raises MismatchedDomain error' do
             expect {
               result = described_class.new(srv_name)
               result.add_record(record)
             }.to raise_error(Mongo::Error::MismatchedDomain)
           end
         end
+
         context 'when address matches parent domain' do
-          it 'adds the record' do
-            record = double('record').tap do |record|
+          let(:record) do
+            double('record').tap do |record|
               allow(record).to receive(:target).and_return(host_name)
               allow(record).to receive(:port).and_return(42)
               allow(record).to receive(:ttl).and_return(1)
             end
-
+          end
+          it 'adds the record' do
             result = described_class.new(srv_name)
             result.add_record(record)
 
@@ -72,13 +75,14 @@ describe Mongo::Srv::Result do
 
         if i < 2
           context 'when the address is less than 3 parts' do
-            it 'does not accept address if it does not contain an extra domain level' do
-              record = double('record').tap do |record|
+            let(:record) do
+              double('record').tap do |record|
                 allow(record).to receive(:target).and_return(srv_name)
                 allow(record).to receive(:port).and_return(42)
                 allow(record).to receive(:ttl).and_return(1)
               end
-
+            end
+            it 'does not accept address if it does not contain an extra domain level' do
               expect {
                 result = described_class.new(srv_name)
                 result.add_record(record)

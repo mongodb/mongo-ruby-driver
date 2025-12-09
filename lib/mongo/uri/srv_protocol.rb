@@ -184,7 +184,7 @@ module Mongo
         if parts.any?(&:empty?)
           raise_invalid_error!("Hostname cannot have consecutive dots: #{hostname}")
         end
-        if parts.length == 0
+        if parts.length < 1
           raise_invalid_error!("Hostname cannot be empty: #{hostname}")
         end
       end

@@ -118,11 +118,10 @@ module Mongo
       # @raise [ Mongo::Error::MismatchedDomain ] If the record's domain name doesn't match that of
       #   the hostname.
       def validate_same_origin!(record_host)
-        srv_is_less_than_three_parts = query_hostname.split('.').length < 3
-        srv_host_domain = if srv_is_less_than_three_parts
-          query_hostname.split('.')
-        else
-          query_hostname.split('.')[1..-1]
+        srv_host_domain = query_hostname.split('.')
+        srv_is_less_than_three_parts = srv_host_domain.length < 3
+        unless srv_is_less_than_three_parts
+          srv_host_domain = srv_host_domain[1..-1]
         end
         record_host_parts = record_host.split('.')
 
