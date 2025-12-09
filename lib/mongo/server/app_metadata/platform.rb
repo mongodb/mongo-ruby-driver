@@ -34,16 +34,16 @@ module Mongo
           @metadata = metadata
         end
 
-        # Queries whether the current runtime is standard Ruby or not.
+        # Queries whether the current runtime is Ruby MRI or not.
         #
-        # @return [ Boolean ] whether the current runtime is standard Ruby
+        # @return [ true | false ] whether the runtime is Ruby MRI or not.
         def mri?
           RUBY_ENGINE == 'ruby'
         end
 
         # Queries whether the current runtime is JRuby or not.
         #
-        # @return [ Boolean ] whether the current runtime is JRuby
+        # @return [ true | false ] whether the runtime is JRuby or not.
         def jruby?
           RUBY_ENGINE == 'jruby'
         end
