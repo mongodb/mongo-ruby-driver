@@ -217,7 +217,7 @@ module Mongo
               write_concern: write_concern,
               session: session,
             )
-            tracer.trace_operation(operation, context, op_name: 'findOneAndUpdate') do
+            value = tracer.trace_operation(operation, context, op_name: 'findOneAndUpdate') do
               write_with_retry(write_concern, context: context) do |connection, txn_num, context|
                 gte_4_4 = connection.server.description.server_version_gte?('4.4')
                 if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
