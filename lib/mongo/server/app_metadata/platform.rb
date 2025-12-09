@@ -37,7 +37,7 @@ module Mongo
         # Queries whether the current runtime is standard Ruby or not.
         #
         # @return [ Boolean ] whether the current runtime is standard Ruby
-        def ruby?
+        def mri?
           RUBY_ENGINE == 'ruby'
         end
 
@@ -48,25 +48,17 @@ module Mongo
           RUBY_ENGINE == 'jruby'
         end
 
-        # Returns the correct case for known Ruby engines.
-        # For JRuby, this is 'JRuby'.
-        # For TruffleRuby, this is 'TruffleRuby'.
+        ENGINE_NAMES = { 'jruby' => 'JRuby', 'truffleruby' => 'TruffleRuby' }.freeze
+
         def engine_name
-          case RUBY_ENGINE
-          when 'jruby'
-            'JRuby'
-          when 'truffleruby'
-            'TruffleRuby'
-          else
-            RUBY_ENGINE
-          end
+          ENGINE_NAMES[RUBY_ENGINE] || RUBY_ENGINE
         end
 
         # Returns the list of Ruby versions that identify this runtime.
         #
         # @return [ Array<String> ] the list of ruby versions
         def ruby_versions
-          if ruby?
+          if mri?
             [ "Ruby #{RUBY_VERSION}" ]
           else
             [ "#{engine_name} #{RUBY_ENGINE_VERSION}", "like Ruby #{RUBY_VERSION}" ]
