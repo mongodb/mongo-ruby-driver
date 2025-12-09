@@ -83,7 +83,7 @@ shared_examples 'app metadata document' do
     require_jruby
 
     it 'includes JRuby and Ruby compatibility versions' do
-      document[:client][:platform].should start_with("jruby #{JRUBY_VERSION}, like Ruby #{RUBY_VERSION}")
+      document[:client][:platform].should start_with("JRuby #{JRUBY_VERSION}, like Ruby #{RUBY_VERSION}")
     end
 
     context 'when custom platform is specified' do
@@ -92,7 +92,7 @@ shared_examples 'app metadata document' do
       end
 
       it 'starts with custom platform' do
-        document[:client][:platform].should start_with("foowidgets, jruby #{JRUBY_VERSION}")
+        document[:client][:platform].should start_with("foowidgets, JRuby #{JRUBY_VERSION}")
       end
     end
   end
@@ -113,7 +113,7 @@ shared_examples 'app metadata document' do
         it 'adds empty strings' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|"
-          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|\z/
+          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\z/
         end
       end
 
@@ -125,7 +125,7 @@ shared_examples 'app metadata document' do
         it 'adds the fields' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|"
-          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|\z/
+          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\z/
         end
       end
 
@@ -137,7 +137,7 @@ shared_examples 'app metadata document' do
         it 'adds the fields' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|7.1.2"
-          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|OS9000\z/
+          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|OS9000\z/
         end
       end
     end
@@ -156,7 +156,7 @@ shared_examples 'app metadata document' do
         it 'adds the fields' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid|'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|42|4.0"
-          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|\|OS9000\z/
+          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\|OS9000\z/
         end
       end
 
@@ -171,7 +171,7 @@ shared_examples 'app metadata document' do
         it 'adds the fields' do
           document[:client][:driver][:name].should == 'mongo-ruby-driver|Mongoid|Rails'
           document[:client][:driver][:version].should == "#{Mongo::VERSION}|7.1.2|6.0.3"
-          document[:client][:platform].should =~ /\Aj?[Rr]uby[^|]+\|\|\z/
+          document[:client][:platform].should =~ /\AJ?Ruby[^|]+\|\|\z/
         end
       end
     end

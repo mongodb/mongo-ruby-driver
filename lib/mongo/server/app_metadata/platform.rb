@@ -48,6 +48,20 @@ module Mongo
           RUBY_ENGINE == 'jruby'
         end
 
+        # Returns the correct case for known Ruby engines.
+        # For JRuby, this is 'JRuby'.
+        # For TruffleRuby, this is 'TruffleRuby'.
+        def engine_name
+          case RUBY_ENGINE
+          when 'jruby'
+            'JRuby'
+          when 'truffleruby'
+            'TruffleRuby'
+          else
+            RUBY_ENGINE
+          end
+        end
+
         # Returns the list of Ruby versions that identify this runtime.
         #
         # @return [ Array<String> ] the list of ruby versions
@@ -55,7 +69,7 @@ module Mongo
           if ruby?
             [ "Ruby #{RUBY_VERSION}" ]
           else
-            [ "#{RUBY_ENGINE} #{RUBY_ENGINE_VERSION}", "like Ruby #{RUBY_VERSION}" ]
+            [ "#{engine_name} #{RUBY_ENGINE_VERSION}", "like Ruby #{RUBY_VERSION}" ]
           end
         end
 
