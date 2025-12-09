@@ -24,13 +24,13 @@ describe Mongo::Srv::Result do
       end
     end
 
-    exampleSrvName = ['i-love-rb', 'i-love-rb.mongodb', 'i-love-ruby.mongodb.io'];
-    exampleHostName = [
+    example_srv_names = ['i-love-rb', 'i-love-rb.mongodb', 'i-love-ruby.mongodb.io'];
+    example_host_names = [
       'rb-00.i-love-rb',
       'rb-00.i-love-rb.mongodb',
       'i-love-ruby-00.mongodb.io'
     ];
-    exampleHostNameThatDoNotMatchParent = [
+    example_host_names_that_do_not_match_parent = [
       'rb-00.i-love-rb-a-little',
       'rb-00.i-love-rb-a-little.mongodb',
       'i-love-ruby-00.evil-mongodb.io'
@@ -38,10 +38,9 @@ describe Mongo::Srv::Result do
 
     (0..2).each do |i|
       context "when srvName has #{i+1} part#{i != 0 ? 's' : ''}" do
-        let(:srv_name) { exampleSrvName[i] }
-        let(:host_name) { exampleHostName[i] }
-        let(:mismatched_host_name) { exampleHostNameThatDoNotMatchParent[i] }
-        
+        let(:srv_name) { example_srv_names[i] }
+        let(:host_name) { example_host_names[i] }
+        let(:mismatched_host_name) { example_host_names_that_do_not_match_parent[i] }
         context 'when address does not match parent domain' do
           it 'raises MismatchedDomain error' do
             record = double('record').tap do |record|
@@ -56,7 +55,6 @@ describe Mongo::Srv::Result do
             }.to raise_error(Mongo::Error::MismatchedDomain)
           end
         end
-        
         context 'when address matches parent domain' do
           it 'adds the record' do
             record = double('record').tap do |record|
