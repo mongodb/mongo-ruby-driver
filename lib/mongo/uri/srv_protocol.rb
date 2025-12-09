@@ -168,7 +168,7 @@ module Mongo
       # The hostname cannot include a port.
       #
       # The hostname must not begin with a dot, end with a dot, or have
-      # consecutive dots. The hostname must have a minimum of 1 component (tld)
+      # consecutive dots. The hostname must have a minimum of 1 component
       #
       # Raises Error::InvalidURI if validation fails.
       def validate_srv_hostname(hostname)
