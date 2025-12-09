@@ -8,6 +8,14 @@ tests:
         auth: ~
         options: ~
     -
+        description: "Invalid scheme"
+        uri: "mongo://localhost:27017"
+        valid: false
+        warning: ~
+        hosts: ~
+        auth: ~
+        options: ~
+    -
         description: "Missing host"
         uri: "mongodb://"
         valid: false
