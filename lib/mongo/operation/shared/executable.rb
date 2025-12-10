@@ -92,7 +92,9 @@ module Mongo
           end
         end
 
-        do_execute(connection, context, options)
+        do_execute(connection, context, options).tap do |result|
+          validate_result(result, connection, context)
+        end
       end
 
       private
@@ -106,7 +108,6 @@ module Mongo
         connection.tracer.trace_command(message, context, connection) do
           result = result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
           yield result
-          validate_result(result, connection, context)
         end
       end
 

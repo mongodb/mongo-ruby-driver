@@ -38,7 +38,6 @@ module Mongo
           connection.tracer.trace_command(message, context, connection) do
             result = Result.new(*dispatch_message(message, connection, context), @ids, context: context)
             yield result
-            validate_result(result, connection, context)
           end
         end
 
