@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # rubocop:todo all
 
+require 'opentelemetry-sdk'
+
 require 'spec_helper'
 
 require 'runners/unified'
