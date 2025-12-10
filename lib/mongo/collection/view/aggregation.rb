@@ -120,7 +120,7 @@ module Mongo
 
         end
 
-        def send_initial_query(server, context)
+        def send_initial_query(server, context, operation: nil)
           if server.load_balancer?
             # Connection will be checked in when cursor is drained.
             connection = server.pool.check_out(context: context)

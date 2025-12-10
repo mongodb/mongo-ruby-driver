@@ -52,7 +52,7 @@ class BackgroundThreadRegistry
             msg << "\n  not in an example"
           end
         end
-        warn msg
+        raise msg
       end
       @records.clear
     end

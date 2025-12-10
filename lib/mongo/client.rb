@@ -592,7 +592,6 @@ module Mongo
         @cluster = Cluster.new(
           addresses,
           @monitoring,
-          tracer,
           cluster_options.merge(srv_uri: srv_uri)
         )
       end
@@ -642,6 +641,7 @@ module Mongo
         # applications should read these values from client, not from cluster
         max_read_retries: options[:max_read_retries],
         read_retry_interval: options[:read_retry_interval],
+        tracer: tracer,
       ).tap do |options|
         # If the client has a cluster already, forward srv_uri to the new
         # cluster to maintain SRV monitoring. If the client is brand new,
@@ -912,7 +912,7 @@ module Mongo
       @connect_lock.synchronize do
         do_close rescue nil
 
-        @cluster = Cluster.new(addresses, monitoring, tracer, cluster_options)
+        @cluster = Cluster.new(addresses, monitoring, cluster_options)
 
         if @options[:auto_encryption_options]
           build_encrypter
