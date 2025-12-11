@@ -192,6 +192,11 @@ module Mongo
           return if result.successful?
 
           span.set_attribute('db.response.status_code', result.error.code.to_s)
+          begin
+            result.validate!
+          rescue Mongo::Error::OperationFailure => e
+            span.record_exception(e)
+          end
         end
 
         # Generates a summary string for the query.

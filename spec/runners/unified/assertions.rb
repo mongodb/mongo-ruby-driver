@@ -312,7 +312,7 @@ module Unified
       ok = [*type].reduce(false) { |acc, x| acc || type_matches?(object, x) }
 
       unless ok
-        raise Error::ResultMismatch, (msg || '') + " Object '#{object}' is not of type #{type}"
+        raise Error::ResultMismatch, (msg || '') + ": \"Object '#{object.inspect}' is not of type #{type}\""
       end
     end
 

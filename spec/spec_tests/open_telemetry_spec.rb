@@ -21,7 +21,7 @@ SKIPPED_OTEL_TESTS.each do |filename|
   warn "Skipping OpenTelemetry unified spec test: #{filename}"
 end
 
-describe 'CSOT unified spec tests' do
+describe 'OTel unified spec tests' do
   if [ 1, '1', 'yes', 'true' ].include?(ENV['OTEL_SPEC_TESTS'])
     define_unified_spec_tests(base, TESTS_TO_RUN)
   else
