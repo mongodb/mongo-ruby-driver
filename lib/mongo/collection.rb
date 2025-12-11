@@ -463,6 +463,12 @@ module Mongo
           session: session,
           operation_timeouts: operation_timeouts(opts)
         )
+        temp_write_concern = write_concern
+        write_concern = if opts[:write_concern]
+                          WriteConcern.get(opts[:write_concern])
+                        else
+                          temp_write_concern
+                        end
         operation = Operation::Drop.new({
           selector: { :drop => name },
           db_name: database.name,
@@ -471,12 +477,6 @@ module Mongo
         })
         tracer.trace_operation(operation, context, op_name: 'dropCollection') do
           maybe_drop_emm_collections(opts[:encrypted_fields], client, session) do
-            temp_write_concern = write_concern
-            write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              temp_write_concern
-            end
             do_drop(operation, session, context)
           end
         end
