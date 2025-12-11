@@ -126,6 +126,7 @@ module Mongo
       if options[:monitoring_io] == false && !options.key?(:cleanup)
         options[:cleanup] = false
       end
+      @tracer = options.delete(:tracer)
       @options = options.freeze
 
       # @update_lock covers @servers, @connecting, @connected, @topology and
@@ -136,7 +137,6 @@ module Mongo
       @update_lock = Mutex.new
       @servers = []
       @monitoring = monitoring
-      @tracer = options[:tracer]
       @event_listeners = Event::Listeners.new
       @app_metadata = Server::AppMetadata.new(@options.merge(purpose: :application))
       @monitor_app_metadata = Server::Monitor::AppMetadata.new(@options.merge(purpose: :monitor))
