@@ -16,6 +16,7 @@
 
 module Mongo
   module Tracing
+    # This module contains OpenTelemetry tracing functionality for MongoDB operations.
     module OpenTelemetry
     end
   end

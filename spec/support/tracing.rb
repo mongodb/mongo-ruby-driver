@@ -22,6 +22,7 @@ module Tracing
       @attributes[key] = value
     end
 
+    # rubocop:disable Lint/UnusedMethodArgument
     def record_exception(exception, attributes: nil)
       set_attribute('exception.type', exception.class.to_s)
       set_attribute('exception.message', exception.message)
@@ -31,6 +32,7 @@ module Tracing
                                                                               replace: '�')
       )
     end
+    # rubocop:enable Lint/UnusedMethodArgument
 
     def finish
       raise Tracing::Error, 'Span already finished' if @finished
@@ -79,9 +81,9 @@ module Tracing
 
     def span_hierarchy
       # Build a mapping of all spans by their object_id for quick lookup
-      span_map = {}
+      span_map = {}.compare_by_identity
       @spans.each do |span|
-        span_map[span.object_id] = span
+        span_map[span] = span
       end
 
       # Build the hierarchy by attaching children to their parents
@@ -92,7 +94,7 @@ module Tracing
           root_spans << span
         else
           # Find the parent span and add this span to its nested array
-          parent = span_map[span.with_parent.object_id]
+          parent = span_map[span.with_parent]
           unless parent
             raise Error, "Parent span not found for span #{span.name} (parent object_id: #{span.with_parent.object_id})"
           end
@@ -115,9 +117,6 @@ module Tracing
       when Tracing::Context
         # Extract span from our mock Context
         with_parent.span
-      when Tracing::Span
-        # Already a span
-        with_parent
       when OpenTelemetry::Context
         # Extract span from OpenTelemetry::Context
         # The OpenTelemetry context stores the span using a specific key

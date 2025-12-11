@@ -2,30 +2,34 @@
 
 require 'spec_helper'
 
-require 'opentelemetry'
+require 'opentelemetry-sdk'
 
+# rubocop:disable RSpec/VerifiedDoubles
 describe Mongo::Tracing::OpenTelemetry::CommandTracer do
-  let(:otel_tracer) { double('OpenTelemetry::Trace::Tracer') }
-  let(:parent_tracer) { double('Mongo::Tracing::OpenTelemetry::Tracer') }
+  let(:otel_tracer) { instance_double(OpenTelemetry::Trace::Tracer) }
+  let(:parent_tracer) { instance_double(Mongo::Tracing::OpenTelemetry::Tracer) }
   let(:query_text_max_length) { 0 }
   let(:command_tracer) do
     described_class.new(otel_tracer, parent_tracer, query_text_max_length: query_text_max_length)
   end
-  let(:lsid_value) { "55dcab94-2c82-445a-a7f2-5ce50213b753" }
+  let(:lsid_value) { '55dcab94-2c82-445a-a7f2-5ce50213b753' }
 
   let(:connection) do
-    double('Mongo::Server::Connection',
-           id: 123,
-           address: double('Address', host: 'localhost', port: 27_017),
-           transport: :tcp,
-           server: double('Server',
-                          description: double('Description', server_connection_id: 456)))
+    instance_double(Mongo::Server::Connection,
+                    id: 123,
+                    address: instance_double(Mongo::Address, host: 'localhost', port: 27_017),
+                    transport: :tcp,
+                    server: instance_double(Mongo::Server,
+                                            description: instance_double(Mongo::Server::Description,
+                                                                         server_connection_id: 456)))
   end
 
   let(:message) do
-    double('Mongo::Protocol::Message',
-           documents: [ document ],
-           payload: { 'command' => document })
+    double(
+      'message',
+      documents: [ document ],
+      payload: { 'command' => document }
+    )
   end
 
   let(:document) do
@@ -37,7 +41,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     }
   end
 
-  let(:operation_context) { double('Mongo::Operation::Context') }
+  let(:operation_context) { instance_double(Mongo::Operation::Context) }
 
   describe '#initialize' do
     it 'sets the otel_tracer' do
@@ -62,9 +66,9 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#trace_command' do
-    let(:span) { double('OpenTelemetry::Trace::Span', finish: nil, set_attribute: nil) }
-    let(:context) { double('OpenTelemetry::Context') }
-    let(:result) { double('Result', has_cursor_id?: false, successful?: true) }
+    let(:span) { instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil) }
+    let(:context) { instance_double(Mongo::Operation::Context) }
+    let(:result) { instance_double(Mongo::Operation::Result, has_cursor_id?: false, successful?: true) }
 
     before do
       allow(otel_tracer).to receive(:start_span).and_return(span)
@@ -100,7 +104,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
     context 'when result has cursor_id' do
       let(:result) do
-        double('Result', has_cursor_id?: true, cursor_id: 789, successful?: true)
+        instance_double(Mongo::Operation::Result, has_cursor_id?: true, cursor_id: 789, successful?: true)
       end
 
       it 'sets the cursor_id attribute' do
@@ -111,7 +115,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
     context 'when result has zero cursor_id' do
       let(:result) do
-        double('Result', has_cursor_id?: true, cursor_id: 0, successful?: true)
+        instance_double(Mongo::Operation::Result, has_cursor_id?: true, cursor_id: 0, successful?: true)
       end
 
       it 'does not set the cursor_id attribute' do
@@ -251,7 +255,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     context 'with getMore command' do
       let(:document) do
         {
-          'getMore' => double('BSON::Int64', value: 999),
+          'getMore' => BSON::Int64.new(999),
           'collection' => 'users',
           '$db' => 'test_db'
         }
@@ -267,7 +271,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
         {
           'find' => 'users',
           '$db' => 'test_db',
-          'txnNumber' => double('BSON::Int64', value: 42)
+          'txnNumber' => BSON::Int64.new(42)
         }
       end
 
@@ -390,7 +394,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     subject { command_tracer.send(:cursor_id, message) }
 
     context 'with getMore command' do
-      let(:document) { { 'getMore' => double('BSON::Int64', value: 999) } }
+      let(:document) { { 'getMore' => BSON::Int64.new(999) } }
 
       it 'returns the cursor ID' do
         expect(subject).to eq(999)
@@ -430,7 +434,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     subject { command_tracer.send(:txn_number, message) }
 
     context 'with txnNumber present' do
-      let(:document) { { 'find' => 'users', 'txnNumber' => double('BSON::Int64', value: 42) } }
+      let(:document) { { 'find' => 'users', 'txnNumber' => BSON::Int64.new(42) } }
 
       it 'returns the transaction number' do
         expect(subject).to eq(42)
@@ -509,3 +513,4 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
   end
 end
+# rubocop:enable RSpec/VerifiedDoubles
