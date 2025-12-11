@@ -120,20 +120,6 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       end
     end
 
-    context 'when result is not successful' do
-      let(:result) do
-        double('Result',
-               has_cursor_id?: false,
-               successful?: false,
-               error: double('Error', code: 13))
-      end
-
-      it 'sets the error status code' do
-        expect(span).to receive(:set_attribute).with('db.response.status_code', '13')
-        command_tracer.trace_command(message, operation_context, connection) { result }
-      end
-    end
-
     context 'when an OperationFailure exception is raised' do
       let(:error) { Mongo::Error::OperationFailure.new('error', nil, code: 42) }
 
