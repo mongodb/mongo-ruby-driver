@@ -37,6 +37,8 @@ module Unified
       @description = @test_spec.use('description')
       @outcome = @test_spec.use('outcome')
       @expected_events = @test_spec.use('expectEvents')
+      @expected_tracing_messages = @test_spec.use('expectTracingMessages')
+      @expected_spans = @test_spec.use('expectSpans')
       @skip_reason = @test_spec.use('skipReason')
       if req = @test_spec.use('runOnRequirements')
         @reqs = req.map { |r| Mongo::CRUD::Requirement.new(r) }
@@ -54,6 +56,7 @@ module Unified
       end
       @test_spec.freeze
       @subscribers = {}
+      @tracers = {}
       @observe_sensitive = {}
       @options = opts
     end
@@ -195,9 +198,24 @@ module Unified
             end
           end
 
+          observe_tracing_messages = spec.use('observeTracingMessages')
+          tracer = ::Tracing::Tracer.new
+          if observe_tracing_messages
+            opts[:tracing] = {
+              enabled: true,
+              tracer: tracer,
+            }
+            if observe_tracing_messages['enableCommandPayload']
+              # Set the maximum length of the query text to reasonably high
+              # value so that we can capture the full query text
+              opts[:tracing][:query_text_max_length] = 4096
+            end
+          end
+
           create_client(**opts).tap do |client|
             @observe_sensitive[id] = spec.use('observeSensitiveCommands')
             @subscribers[client] ||= subscriber
+            @tracers[client] ||= tracer
           end
         when 'database'
           client = entities.get(:client, spec.use!('client'))

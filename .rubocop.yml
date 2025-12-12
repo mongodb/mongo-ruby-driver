@@ -116,3 +116,6 @@ RSpec/ExampleLength:
 
 RSpec/MessageSpies:
   EnforcedStyle: receive
+
+RSpec/NamedSubject:
+  Enabled: false
