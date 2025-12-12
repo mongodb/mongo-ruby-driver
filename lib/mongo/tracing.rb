@@ -19,10 +19,10 @@ module Mongo
   module Tracing
     # Creates a new OpenTelemetry tracer for instrumenting MongoDB operations.
     #
-    # @param enabled [Boolean, nil] Whether tracing is enabled. Defautl to nil, which
+    # @param enabled [Boolean, nil] Whether tracing is enabled. Default to nil, which
     #   means it will check the environment variable OTEL_RUBY_INSTRUMENTATION_MONGODB_ENABLED.
     #   See +Mongo::Tracing::OpenTelemetry::Tracer+ for details.
-    # @param query_text_max_length [Integer, nil] Maximum length for captured query text. Defaults to nil,
+    # @param query_text_max_length [Integer, nil] Maximum length for captured query text. Default to nil,
     #   which means it will check the environment variable OTEL_RUBY_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH.
     #   See +Mongo::Tracing::OpenTelemetry::Tracer+ for details.
     # @param otel_tracer [OpenTelemetry::Trace::Tracer, nil] Custom OpenTelemetry tracer instance.

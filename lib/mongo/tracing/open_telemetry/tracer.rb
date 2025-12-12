@@ -58,7 +58,7 @@ module Mongo
 
         # Whether OpenTelemetry is enabled or not.
         #
-        # # @return [Boolean] true if OpenTelemetry is enabled, false otherwise.
+        # @return [Boolean] true if OpenTelemetry is enabled, false otherwise.
         def enabled?
           @enabled
         end
