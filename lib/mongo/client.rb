@@ -1217,6 +1217,9 @@ module Mongo
       end
     end
 
+    # Get the tracer configured for this client.
+    #
+    # @return [ Tracing::Tracer | nil ] The tracer configured for this client.
     def tracer
       tracing_opts = @options[:tracing] || {}
       @tracer ||= Tracing.create_tracer(

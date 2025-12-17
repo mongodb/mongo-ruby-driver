@@ -390,6 +390,11 @@ module Mongo
         self
       end
 
+      # Get the transport type for this connection.
+      #
+      # @return [ Symbol | nil ] The transport type, :tcp or :unix, or nil
+      #  if no socket.
+      # @api private
       def transport
         return nil if @socket.nil?
 

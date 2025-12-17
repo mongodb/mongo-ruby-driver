@@ -218,7 +218,7 @@ module Mongo
         #
         # @return [ String | nil ] the collection name, or nil if not applicable.
         def collection_name(message)
-          case message.documents.first.keys.first
+          case command_name(message)
           when 'getMore'
             message.documents.first['collection'].to_s
           when 'listCollections', 'listDatabases', 'commitTransaction', 'abortTransaction'
@@ -294,7 +294,7 @@ module Mongo
         EXCLUDED_KEYS = %w[lsid $db $clusterTime signature].freeze
 
         # Ellipsis for truncated query text.
-        ELLIPSES = '...'
+        ELLIPSIS = '...'
 
         # Extracts and formats the query text from the command.
         #
@@ -309,7 +309,7 @@ module Mongo
                  .reject { |key, _| EXCLUDED_KEYS.include?(key) }
                  .to_json
           if text.length > @query_text_max_length
-            "#{text[0...@query_text_max_length]}#{ELLIPSES}"
+            "#{text[0...@query_text_max_length]}#{ELLIPSIS}"
           else
             text
           end

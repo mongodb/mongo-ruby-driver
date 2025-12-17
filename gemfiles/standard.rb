@@ -4,7 +4,6 @@
 def standard_dependencies
   gem 'yard', '>= 0.9.35'
   gem 'ffi'
-  gem 'opentelemetry-sdk'
 
   group :development, :testing do
     gem 'jruby-openssl', platforms: :jruby
@@ -13,6 +12,7 @@ def standard_dependencies
     gem 'activesupport', '<7.1'
     gem 'rake'
     gem 'webrick'
+    gem 'opentelemetry-sdk'
 
     gem 'byebug', platforms: :mri
     gem 'ruby-debug', platforms: :jruby
@@ -41,8 +41,6 @@ def standard_dependencies
         gem 'ruby-debug-ide'
       end
     end
-
-    gem 'opentelemetry-api'
   end
 
   group :testing do
