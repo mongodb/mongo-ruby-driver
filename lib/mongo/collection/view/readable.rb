@@ -192,22 +192,25 @@ module Mongo
               session: session,
               operation_timeouts: operation_timeouts(opts)
             )
-            read_with_retry(session, selector, context) do |server|
-              Operation::Count.new(
-                selector: cmd,
-                db_name: database.name,
-                options: {:limit => -1},
-                read: read_pref,
-                session: session,
-                # For some reason collation was historically accepted as a
-                # string key. Note that this isn't documented as valid usage.
-                collation: opts[:collation] || opts['collation'] || collation,
-                comment: opts[:comment],
-              ).execute(
-                server,
-                context: context
-              )
-            end.n.to_i
+            operation = Operation::Count.new(
+              selector: cmd,
+              db_name: database.name,
+              options: {:limit => -1},
+              read: read_pref,
+              session: session,
+              # For some reason collation was historically accepted as a
+              # string key. Note that this isn't documented as valid usage.
+              collation: opts[:collation] || opts['collation'] || collation,
+              comment: opts[:comment],
+            )
+            tracer.trace_operation(operation, context) do
+              read_with_retry(session, selector, context) do |server|
+                operation.execute(
+                  server,
+                  context: context
+                )
+              end.n.to_i
+            end
           end
         end
 
@@ -294,31 +297,34 @@ module Mongo
               session: session,
               operation_timeouts: operation_timeouts(opts)
             )
-            read_with_retry(session, selector, context) do |server|
-              cmd = { count: collection.name }
-              cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-              if read_concern
-                cmd[:readConcern] = Options::Mapper.transform_values_to_strings(read_concern)
-              end
-              result = Operation::Count.new(
-                selector: cmd,
-                db_name: database.name,
-                read: read_pref,
-                session: session,
-                comment: opts[:comment],
-              ).execute(server, context: context)
-              result.n.to_i
+            cmd = { count: collection.name }
+            cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
+            if read_concern
+              cmd[:readConcern] = Options::Mapper.transform_values_to_strings(read_concern)
             end
-          end
-        rescue Error::OperationFailure::Family => exc
-          if exc.code == 26
-            # NamespaceNotFound
-            # This should only happen with the aggregation pipeline path
-            # (server 4.9+). Previous servers should return 0 for nonexistent
-            # collections.
-            0
-          else
-            raise
+            operation = Operation::Count.new(
+              selector: cmd,
+              db_name: database.name,
+              read: read_pref,
+              session: session,
+              comment: opts[:comment],
+            )
+            tracer.trace_operation(operation, context, op_name: 'estimatedDocumentCount') do
+              read_with_retry(session, selector, context) do |server|
+                result = operation.execute(server, context: context)
+                result.n.to_i
+              end
+            rescue Error::OperationFailure::Family => exc
+              if exc.code == 26
+                # NamespaceNotFound
+                # This should only happen with the aggregation pipeline path
+                # (server 4.9+). Previous servers should return 0 for nonexistent
+                # collections.
+                0
+              else
+                raise
+              end
+            end
           end
         end
 
@@ -362,22 +368,25 @@ module Mongo
               session: session,
               operation_timeouts: operation_timeouts(opts)
             )
-            read_with_retry(session, selector, context) do |server|
-              Operation::Distinct.new(
-                selector: cmd,
-                db_name: database.name,
-                options: {:limit => -1},
-                read: read_pref,
-                session: session,
-                comment: opts[:comment],
-                # For some reason collation was historically accepted as a
-                # string key. Note that this isn't documented as valid usage.
-                collation: opts[:collation] || opts['collation'] || collation,
-              ).execute(
-                server,
-                context: context
-              )
-            end.first['values']
+            operation = Operation::Distinct.new(
+              selector: cmd,
+              db_name: database.name,
+              options: {:limit => -1},
+              read: read_pref,
+              session: session,
+              comment: opts[:comment],
+              # For some reason collation was historically accepted as a
+              # string key. Note that this isn't documented as valid usage.
+              collation: opts[:collation] || opts['collation'] || collation,
+            )
+            tracer.trace_operation(operation, context) do
+              read_with_retry(session, selector, context) do |server|
+                operation.execute(
+                  server,
+                  context: context
+                )
+              end.first['values']
+            end
           end
         end
 

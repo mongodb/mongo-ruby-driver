@@ -126,6 +126,7 @@ module Mongo
       if options[:monitoring_io] == false && !options.key?(:cleanup)
         options[:cleanup] = false
       end
+      @tracer = options.delete(:tracer)
       @options = options.freeze
 
       # @update_lock covers @servers, @connecting, @connected, @topology and
@@ -298,7 +299,7 @@ module Mongo
       cluster = Cluster.new(
         client.cluster.addresses.map(&:to_s),
         monitoring || Monitoring.new,
-        client.cluster_options,
+        client.cluster_options
       )
       client.instance_variable_set(:@cluster, cluster)
     end
@@ -308,6 +309,8 @@ module Mongo
 
     # @return [ Monitoring ] monitoring The monitoring.
     attr_reader :monitoring
+
+    attr_reader :tracer
 
     # @return [ Object ] The cluster topology.
     attr_reader :topology

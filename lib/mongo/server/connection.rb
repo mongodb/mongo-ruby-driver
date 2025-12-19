@@ -139,6 +139,8 @@ module Mongo
       # across all connections.
       attr_reader :global_id
 
+      def_delegators :server, :tracer
+
       # The connection pool from which this connection was created.
       # May be nil.
       #
@@ -386,6 +388,22 @@ module Mongo
       def record_checkin!
         @last_checkin = Time.now
         self
+      end
+
+      # Get the transport type for this connection.
+      #
+      # @return [ Symbol | nil ] The transport type, :tcp or :unix, or nil
+      #  if no socket.
+      # @api private
+      def transport
+        return nil if @socket.nil?
+
+        case @socket
+        when Mongo::Socket::Unix
+          :unix
+        else
+          :tcp
+        end
       end
 
       private

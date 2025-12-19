@@ -45,7 +45,7 @@ module Mongo
           add_error_labels(connection, context) do
             check_for_network_error do
               add_server_diagnostics(connection) do
-                get_result(connection, context, options).tap do |result|
+                get_result(connection, context, options) do |result|
                   if session
                     if session.in_transaction? &&
                       connection.description.load_balancer?
@@ -104,12 +104,19 @@ module Mongo
       end
 
       def get_result(connection, context, options = {})
-        result_class.new(*dispatch_message(connection, context, options), context: context, connection: connection)
+        message = build_message(connection, context)
+        connection.tracer.trace_command(message, context, connection) do
+          result = result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
+          if block_given?
+            yield result
+          else
+            result
+          end
+        end
       end
 
       # Returns a Protocol::Message or nil as reply.
-      def dispatch_message(connection, context, options = {})
-        message = build_message(connection, context)
+      def dispatch_message(message, connection, context, options = {})
         message = message.maybe_encrypt(connection, context)
         reply = connection.dispatch([ message ], context, options)
         [reply, connection.description, connection.global_id]

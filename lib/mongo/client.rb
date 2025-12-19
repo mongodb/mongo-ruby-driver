@@ -112,6 +112,7 @@ module Mongo
       :ssl_verify_hostname,
       :ssl_verify_ocsp_endpoint,
       :timeout_ms,
+      :tracing,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
@@ -437,6 +438,20 @@ module Mongo
     #   See Ruby's Zlib module for valid levels.
     # @option options [ Hash ] :resolv_options For internal driver use only.
     #   Options to pass through to Resolv::DNS constructor for SRV lookups.
+    # @option options [ Hash ] :tracing OpenTelemetry tracing options.
+    #   - :enabled => Boolean, whether to enable OpenTelemetry tracing. The default
+    #     value is nil that means that the configuration will be taken from the
+    #     OTEL_RUBY_INSTRUMENTATION_MONGODB_ENABLED environment variable.
+    #   - :tracer => OpenTelemetry::Trace::Tracer, the tracer to use for
+    #     tracing. Must be an implementation of OpenTelemetry::Trace::Tracer
+    #     interface.
+    #   - :query_text_max_length => Integer, the maximum length of the query text
+    #     to be included in the span attributes. If the query text exceeds this
+    #     length, it will be truncated. Value 0 means no query text
+    #     will be included in the span attributes. The default value is nil that
+    #     means that the configuration will be taken from the
+    #     OTEL_RUBY_INSTRUMENTATION_MONGODB_QUERY_TEXT_MAX_LENGTH environment
+    #     variable.
     # @option options [ Hash ] :auto_encryption_options Auto-encryption related
     #   options.
     #   - :key_vault_client => Client | nil, a client connected to the MongoDB
@@ -574,8 +589,11 @@ module Mongo
 
       @connect_lock = Mutex.new
       @connect_lock.synchronize do
-        @cluster = Cluster.new(addresses, @monitoring,
-          cluster_options.merge(srv_uri: srv_uri))
+        @cluster = Cluster.new(
+          addresses,
+          @monitoring,
+          cluster_options.merge(srv_uri: srv_uri)
+        )
       end
 
       begin
@@ -623,6 +641,7 @@ module Mongo
         # applications should read these values from client, not from cluster
         max_read_retries: options[:max_read_retries],
         read_retry_interval: options[:read_retry_interval],
+        tracer: tracer,
       ).tap do |options|
         # If the client has a cluster already, forward srv_uri to the new
         # cluster to maintain SRV monitoring. If the client is brand new,
@@ -965,7 +984,10 @@ module Mongo
       cmd[:nameOnly] = !!name_only
       cmd[:filter] = filter unless filter.empty?
       cmd[:authorizedDatabases] = true if opts[:authorized_databases]
-      use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
+      use(Database::ADMIN)
+        .database
+        .read_command(cmd, opts.merge(op_name: 'listDatabases'))
+        .first[Database::DATABASES]
     end
 
     # Returns a list of Mongo::Database objects.
@@ -1193,6 +1215,18 @@ module Mongo
       else
         timeout_ms / 1_000.0
       end
+    end
+
+    # Get the tracer configured for this client.
+    #
+    # @return [ Tracing::Tracer | nil ] The tracer configured for this client.
+    def tracer
+      tracing_opts = @options[:tracing] || {}
+      @tracer ||= Tracing.create_tracer(
+        enabled: tracing_opts[:enabled],
+        query_text_max_length: tracing_opts[:query_text_max_length],
+        otel_tracer: tracing_opts[:tracer],
+      )
     end
 
     private

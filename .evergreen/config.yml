@@ -208,6 +208,20 @@ functions:
           TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
+  "run OTel tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          export OTEL_SPEC_TESTS=1
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
+          TEST_CMD="bundle exec rspec spec/spec_tests/open_telemetry_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
+            .evergreen/run-tests.sh
+
   "export FLE credentials":
     - command: shell.exec
       type: test
@@ -641,6 +655,9 @@ tasks:
   - name: "test-csot"
     commands:
       - func: "run CSOT tests"
+  - name: "test-otel"
+    commands:
+      - func: "run OTel tests"
   - name: "test-fle"
     commands:
       - func: "export FLE credentials"
@@ -1256,6 +1273,16 @@ buildvariants:
     display_name: "CSOT - ${mongodb-version}"
     tasks:
       - name: test-csot
+
+  - matrix_name: OTel
+    matrix_spec:
+      ruby: "ruby-3.3"
+      mongodb-version: "8.0"
+      topology: replica-set-single-node
+      os: ubuntu2204
+    display_name: "OTel - ${mongodb-version}"
+    tasks:
+      - name: test-otel
 
   - matrix_name: "no-retry-reads"
     matrix_spec:

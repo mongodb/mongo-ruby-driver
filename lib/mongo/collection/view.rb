@@ -72,6 +72,8 @@ module Mongo
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
 
+      def_delegators :client, :tracer
+
       alias :selector :filter
 
       # @return [ Integer | nil | The timeout_ms value that was passed as an

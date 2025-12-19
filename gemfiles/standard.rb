@@ -12,6 +12,7 @@ def standard_dependencies
     gem 'activesupport', '<7.1'
     gem 'rake'
     gem 'webrick'
+    gem 'opentelemetry-sdk'
 
     gem 'byebug', platforms: :mri
     gem 'ruby-debug', platforms: :jruby

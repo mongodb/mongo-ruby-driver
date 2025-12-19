@@ -45,6 +45,7 @@ module Mongo
 
       def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
       def_delegators :cluster, :next_primary
+      def_delegators :client, :tracer
 
       # The index key field.
       #
@@ -221,9 +222,7 @@ module Mongo
         end
 
         client.with_session(@options.merge(options)) do |session|
-          server = next_primary(nil, session)
-
-          indexes = normalize_models(models, server)
+          indexes = normalize_models(models)
           indexes.each do |index|
             if index[:bucketSize] || index['bucketSize']
               client.log_warn("Haystack indexes (bucketSize index option) are deprecated as of MongoDB 4.4")
@@ -244,7 +243,11 @@ module Mongo
             session: session,
             operation_timeouts: operation_timeouts(options)
           )
-          Operation::CreateIndex.new(spec).execute(server, context: context)
+          operation = Operation::CreateIndex.new(spec)
+          tracer.trace_operation(operation, context, op_name: 'createIndexes') do
+            server = next_primary(nil, session)
+            operation.execute(server, context: context)
+          end
         end
       end
 
@@ -283,16 +286,18 @@ module Mongo
           session: session,
           operation_timeouts: operation_timeouts(@options)
         )
-
-        cursor = read_with_retry_cursor(session, ServerSelector.primary, self, context: context) do |server|
-          send_initial_query(server, session, context)
-        end
-        if block_given?
-          cursor.each do |doc|
-            yield doc
+        op = initial_query_op(session)
+        tracer.trace_operation(op, context, op_name: 'listIndexes') do
+          cursor = read_with_retry_cursor(session, ServerSelector.primary, self, context: context) do |server|
+            send_initial_query(op, server, session, context)
           end
-        else
-          cursor.to_enum
+          if block_given?
+            cursor.each do |doc|
+              yield doc
+            end
+          else
+            cursor.to_enum
+          end
         end
       end
 
@@ -359,13 +364,17 @@ module Mongo
             write_concern: write_concern,
           }
           spec[:comment] = opts[:comment] unless opts[:comment].nil?
-          server = next_primary(nil, session)
           context = Operation::Context.new(
             client: client,
             session: session,
             operation_timeouts: operation_timeouts(opts)
           )
-          Operation::DropIndex.new(spec).execute(server, context: context)
+          op = Operation::DropIndex.new(spec)
+          op_name = name == Index::ALL ? 'dropIndexes' : 'dropIndex'
+          tracer.trace_operation(op, context, op_name: op_name) do
+            server = next_primary(nil, session)
+            op.execute(server, context: context)
+          end
         end
       end
 
@@ -394,7 +403,7 @@ module Mongo
         Options::Mapper.transform_keys_to_strings(spec)
       end
 
-      def normalize_models(models, server)
+      def normalize_models(models)
         models.map do |model|
           # Transform options first which gives us a mutable hash
           Options::Mapper.transform(model, OPTIONS).tap do |model|
@@ -403,12 +412,12 @@ module Mongo
         end
       end
 
-      def send_initial_query(server, session, context)
+      def send_initial_query(op, server, session, context)
         if server.load_balancer?
           connection = server.pool.check_out(context: context)
-          initial_query_op(session).execute_with_connection(connection, context: context)
+          op.execute_with_connection(connection, context: context)
         else
-          initial_query_op(session).execute(server, context: context)
+          op.execute(server, context: context)
         end
       end
     end
