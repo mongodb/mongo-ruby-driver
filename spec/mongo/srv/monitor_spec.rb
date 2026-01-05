@@ -233,30 +233,8 @@ describe Mongo::Srv::Monitor do
     end
 
     context 'when srv_max_hosts is specified' do
-      let(:srv_uri_with_max_hosts) do
-        Mongo::URI.get("mongodb+srv://this.is.not.used/?srvMaxHosts=1")
-      end
-
       let(:cluster) do
         Mongo::Cluster.new(hosts, Mongo::Monitoring.new, monitoring_io: false)
-      end
-
-      let(:monitor_with_max_hosts) do
-        described_class.new(cluster, srv_uri: srv_uri_with_max_hosts)
-      end
-      
-      before do
-        # monitor instantiation triggers cluster instantiation which
-        # performs real SRV lookups for the hostname.
-        # The next lookup (the one performed when cluster is already set up)
-        # is using our doubles.
-        RSpec::Mocks.with_temporary_scope do
-          allow(uri_resolver).to receive(:get_txt_options_string)
-          expect(Mongo::Srv::Resolver).to receive(:new).ordered.and_return(uri_resolver)
-          allow(resolver).to receive(:get_txt_options_string)
-          expect(Mongo::Srv::Resolver).to receive(:new).ordered.and_return(resolver)
-          monitor_with_max_hosts.send(:scan!)
-        end
       end
 
       let(:limited_result) do
@@ -270,7 +248,8 @@ describe Mongo::Srv::Monitor do
 
       let(:resolver) do
         double('resolver').tap do |resolver|
-          expect(resolver).to receive(:get_records).with(
+          allow(resolver).to receive(:get_txt_options_string)
+          expect(resolver).to receive(:get_records).at_least(:once).with(
             anything,
             anything,
             1  # Verify srv_max_hosts=1 is passed
@@ -278,8 +257,55 @@ describe Mongo::Srv::Monitor do
         end
       end
 
-      it 'limits the number of hosts in the cluster and passes srv_max_hosts to resolver' do
-        expect(cluster.servers_list.map(&:address).map(&:to_s).size).to eq(1)
+      context 'when srv_max_hosts=1 in the URI' do
+        let(:srv_uri_with_max_hosts) do
+          Mongo::URI.get("mongodb+srv://this.is.not.used/?srvMaxHosts=1")
+        end
+
+        let(:monitor_with_max_hosts) do
+          described_class.new(cluster, srv_uri: srv_uri_with_max_hosts)
+        end
+        
+        before do
+          # monitor instantiation triggers cluster instantiation which
+          # performs real SRV lookups for the hostname.
+          # The next lookup (the one performed when cluster is already set up)
+          # is using our doubles.
+          RSpec::Mocks.with_temporary_scope do
+            allow(uri_resolver).to receive(:get_txt_options_string)
+            expect(Mongo::Srv::Resolver).to receive(:new).ordered.and_return(uri_resolver)
+            allow(resolver).to receive(:get_txt_options_string)
+            expect(Mongo::Srv::Resolver).to receive(:new).ordered.and_return(resolver)
+            monitor_with_max_hosts.send(:scan!)
+          end
+        end
+
+        it 'limits the number of hosts in the cluster and passes srv_max_hosts to resolver' do
+          expect(cluster.servers_list.size).to eq(1)
+        end
+      end
+
+      context 'when srv_max_hosts is set on client' do
+        it 'creates client with srv_max_hosts and passes it to resolver on scan' do
+          client = nil
+          expect(Mongo::Srv::Resolver).to receive(:new).at_least(:once).and_return(resolver)
+          
+          client = Mongo::Client.new('mongodb+srv://test.example.com/', srv_max_hosts: 1, monitoring_io: false, connect: :sharded)
+          
+          # Start SRV monitor but don't run the background thread
+          client.cluster.send(:start_stop_srv_monitor)
+          
+          srv_monitor = client.cluster.instance_variable_get(:@srv_monitor)
+          
+          # Stop the background thread if it's running
+          srv_monitor.stop! if srv_monitor.running?
+          
+          srv_monitor.instance_variable_set(:@resolver, resolver)
+          
+          srv_monitor.send(:scan!)
+          
+          expect(client.cluster.servers_list.size).to eq(1)
+        end
       end
     end
   end
