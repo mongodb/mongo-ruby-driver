@@ -152,8 +152,8 @@ module Mongo
         log_debug "attempting to resolve #{hostname}"
 
         @srv_result = resolver.get_records(
-          hostname, 
-          uri_options[:srv_service_name] || options[:srv_service_name], 
+          hostname,
+          uri_options[:srv_service_name] || options[:srv_service_name],
           uri_options[:srv_max_hosts] || options[:srv_max_hosts]
         )
         if srv_result.empty?

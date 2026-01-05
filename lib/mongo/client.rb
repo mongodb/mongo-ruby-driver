@@ -356,7 +356,9 @@ module Mongo
     #   that the driver will communicate with for sharded topologies. If this
     #   option is 0, then there will be no maximum number of mongoses. If the
     #   given URI resolves to more hosts than ``:srv_max_hosts``, the client
-    #   will ramdomly choose an ``:srv_max_hosts`` sized subset of hosts.
+    #   will randomly choose an ``:srv_max_hosts`` sized subset of hosts. If
+    #   srvMaxHosts is provided in the URI options, it takes precedence over this
+    #   option.
     # @option options [ String ] :srv_service_name The service name to use in
     #   the SRV DNS query.
     # @option options [ true, false ] :ssl Whether to use TLS.
