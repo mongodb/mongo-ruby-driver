@@ -61,6 +61,20 @@ module Mongo
         options[:timeout] || Monitor::DEFAULT_TIMEOUT
       end
 
+      # Fisher-Yates shuffling algorithm helper
+      # @param [ Array ] array The array to shuffle
+      # @return [ Array ] The shuffled array
+      # @api private
+      def shuffle(array)
+        a = array.dup
+        n = a.length
+        (n - 1).downto(1) do |i|
+          j = rand(i + 1)
+          a[i], a[j] = a[j], a[i]
+        end
+        a
+      end
+      
       # Obtains all of the SRV records for a given hostname. If a srv_max_hosts
       # is specified and it is greater than 0, return maximum srv_max_hosts records.
       #
@@ -114,7 +128,7 @@ module Mongo
 
         # if srv_max_hosts is in [1, #addresses)
         if (1...result.address_strs.length).include? srv_max_hosts
-          sampled_records = resources.shuffle.first(srv_max_hosts)
+          sampled_records = shuffle(resources).first(srv_max_hosts)
           result = Srv::Result.new(hostname)
           sampled_records.each { |record| result.add_record(record) }
         end
