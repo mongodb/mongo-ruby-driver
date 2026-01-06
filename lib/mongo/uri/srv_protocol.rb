@@ -122,11 +122,13 @@ module Mongo
       end
 
       # Gets the SRV resolver.
+      # If domain verification fails or no SRV records are found,
+      # an error must not be raised per the spec; instead, a warning is logged.
       #
       # @return [ Mongo::Srv::Resolver ]
       def resolver
         @resolver ||= Srv::Resolver.new(
-          raise_on_invalid: true,
+          raise_on_invalid: false,
           resolv_options: options[:resolv_options],
           timeout: options[:connect_timeout],
         )
@@ -149,7 +151,11 @@ module Mongo
 
         log_debug "attempting to resolve #{hostname}"
 
-        @srv_result = resolver.get_records(hostname, uri_options[:srv_service_name], uri_options[:srv_max_hosts])
+        @srv_result = resolver.get_records(
+          hostname,
+          uri_options[:srv_service_name] || options[:srv_service_name],
+          uri_options[:srv_max_hosts] || options[:srv_max_hosts]
+        )
         if srv_result.empty?
           raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname)
         end

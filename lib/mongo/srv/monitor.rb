@@ -72,7 +72,11 @@ module Mongo
       def scan!
         begin
           last_result = Timeout.timeout(timeout) do
-            @resolver.get_records(@srv_uri.query_hostname)
+            @resolver.get_records(
+              @srv_uri.query_hostname, 
+              @srv_uri.uri_options[:srv_service_name] || options[:srv_service_name],
+              @srv_uri.uri_options[:srv_max_hosts] || @options[:srv_max_hosts]
+            )
           end
         rescue Resolv::ResolvTimeout => e
           log_warn("SRV monitor: timed out trying to resolve hostname #{@srv_uri.query_hostname}: #{e.class}: #{e}")
