@@ -81,7 +81,6 @@ class SpecConfig
       # Discover deployment topology.
       # TLS options need to be merged for evergreen due to
       # https://github.com/10gen/mongo-orchestration/issues/268
-      pp "Connecting using ssl_options: #{ssl_options}"
       client = Mongo::Client.new(addresses, Mongo::Options::Redacted.new(
         server_selection_timeout: 5.03,
       ).merge(ssl_options).merge(ruby_options))
