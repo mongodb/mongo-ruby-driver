@@ -1398,75 +1398,26 @@ module Mongo
     # The argument may contain a subset of options that the client will
     # eventually have; this method validates each of the provided options
     # but does not check for interactions between combinations of options.
-    def validate_new_options!(opts)
-      return Options::Redacted.new unless opts
-      if opts[:read_concern]
-        # Raise an error for non user-settable options
-        if opts[:read_concern][:after_cluster_time]
-          raise Mongo::Error::InvalidReadConcern.new(
-            'The after_cluster_time read_concern option cannot be specified by the user'
-          )
+    def validate_new_options!(options)
+      return Options::Redacted.new unless options
+
+      Options::Redacted.new(options).tap do |opts|
+        validate_read_concern!(opts[:read_concern])
+        validate_server_api!(opts[:server_api])
+        validate_max_min_pool_size!(opts)
+        validate_max_connecting!(opts)
+        validate_read!(opts)
+        validate_compressors!(opts)
+        validate_srv_max_hosts!(opts)
+
+        invalid_options = opts.keys.map(&:to_sym) - VALID_OPTIONS
+        if invalid_options.any?
+          log_warn("Unsupported client options: #{invalid_options.join(', ')}. These will be ignored.")
+          opts.delete_if { |key,| !VALID_OPTIONS.include?(key.to_sym) }
         end
 
-        given_keys = opts[:read_concern].keys.map(&:to_s)
-        allowed_keys = ['level']
-        invalid_keys = given_keys - allowed_keys
-        # Warn that options are invalid but keep it and forward to the server
-        unless invalid_keys.empty?
-          log_warn("Read concern has invalid keys: #{invalid_keys.join(',')}.")
-        end
-      end
-
-      if server_api = opts[:server_api]
-        unless server_api.is_a?(Hash)
-          raise ArgumentError, ":server_api value must be a hash: #{server_api}"
-        end
-
-        extra_keys = server_api.keys - %w(version strict deprecation_errors)
-        unless extra_keys.empty?
-          raise ArgumentError, "Unknown keys under :server_api: #{extra_keys.map(&:inspect).join(', ')}"
-        end
-
-        if version = server_api[:version]
-          unless VALID_SERVER_API_VERSIONS.include?(version)
-            raise ArgumentError, "Unknown server API version: #{version}"
-          end
-        end
-      end
-
-      Lint.validate_underscore_read_preference(opts[:read])
-      Lint.validate_read_concern_option(opts[:read_concern])
-      opts.each.inject(Options::Redacted.new) do |_options, (k, v)|
-        key = k.to_sym
-        if VALID_OPTIONS.include?(key)
-          validate_max_min_pool_size!(key, opts)
-          validate_max_connecting!(key, opts)
-          validate_read!(key, opts)
-          if key == :compressors
-            compressors = valid_compressors(v)
-
-            if compressors.include?('snappy')
-              validate_snappy_compression!
-            end
-
-            if compressors.include?('zstd')
-              validate_zstd_compression!
-            end
-
-            _options[key] = compressors unless compressors.empty?
-          elsif key == :srv_max_hosts
-            if v && (!v.is_a?(Integer) || v < 0)
-              log_warn("#{v} is not a valid integer for srv_max_hosts")
-            else
-              _options[key] = v
-            end
-          else
-            _options[key] = v
-          end
-        else
-          log_warn("Unsupported client option '#{k}'. It will be ignored.")
-        end
-        _options
+        Lint.validate_underscore_read_preference(opts[:read])
+        Lint.validate_read_concern_option(opts[:read_concern])
       end
     end
 
@@ -1605,6 +1556,48 @@ module Mongo
       end
     end
 
+    ALLOWED_READ_CONCERN_KEYS = %w[ level ].freeze
+
+    def validate_read_concern!(read_concern)
+      return unless read_concern
+
+      # Raise an error for non user-settable options
+      if read_concern[:after_cluster_time]
+        raise Mongo::Error::InvalidReadConcern.new(
+          'The after_cluster_time read_concern option cannot be specified by the user'
+        )
+      end
+
+      given_keys = read_concern.keys.map(&:to_s)
+      invalid_keys = given_keys - ALLOWED_READ_CONCERN_KEYS
+
+      # Warn that options are invalid but keep it and forward to the server
+      unless invalid_keys.empty?
+        log_warn("Read concern has invalid keys: #{invalid_keys.join(',')}.")
+      end
+    end
+
+    ALLOWED_SERVER_API_KEYS = %w[ version strict deprecation_errors ].freeze
+
+    def validate_server_api!(server_api)
+      return unless server_api
+
+      unless server_api.is_a?(Hash)
+        raise ArgumentError, ":server_api value must be a hash: #{server_api}"
+      end
+
+      extra_keys = server_api.keys - ALLOWED_SERVER_API_KEYS
+      unless extra_keys.empty?
+        raise ArgumentError, "Unknown keys under :server_api: #{extra_keys.map(&:inspect).join(', ')}"
+      end
+
+      if version = server_api[:version]
+        unless VALID_SERVER_API_VERSIONS.include?(version)
+          raise ArgumentError, "Unknown server API version: #{version}"
+        end
+      end
+    end
+
     # Validates all authentication-related options after they are set on the client
     # This method is intended to catch combinations of options which are not allowed
     def validate_authentication_options!
@@ -1675,6 +1668,26 @@ module Mongo
       end
     end
 
+    def validate_compressors!(opts)
+      return unless opts[:compressors]
+
+      compressors = valid_compressors(opts[:compressors])
+
+      if compressors.include?('snappy')
+        validate_snappy_compression!
+      end
+
+      if compressors.include?('zstd')
+        validate_zstd_compression!
+      end
+
+      if compressors.empty?
+        opts.delete(:compressors)
+      else
+        opts[:compressors] = compressors
+      end
+    end
+
     def validate_snappy_compression!
       return if defined?(Snappy)
       require 'snappy'
@@ -1693,14 +1706,25 @@ module Mongo
         "\"bundle install\" to install the gem. (#{e.class}: #{e})"
     end
 
-    def validate_max_min_pool_size!(option, opts)
-      if option == :min_pool_size && opts[:min_pool_size]
-        max = opts[:max_pool_size] || Server::ConnectionPool::DEFAULT_MAX_SIZE
-        if max != 0 && opts[:min_pool_size] > max
-          raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max)
-        end
+    def validate_max_min_pool_size!(opts)
+      return unless opts[:min_pool_size]
+
+      max = opts[:max_pool_size] || Server::ConnectionPool::DEFAULT_MAX_SIZE
+      if max != 0 && opts[:min_pool_size] > max
+        raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max)
       end
-      true
+    end
+
+    def validate_srv_max_hosts!(opts)
+      return unless opts.key?(:srv_max_hosts)
+
+      srv_max_hosts = opts[:srv_max_hosts]
+      return unless srv_max_hosts
+
+      if !srv_max_hosts.is_a?(Integer) || srv_max_hosts < 0
+        log_warn("#{srv_max_hosts} is not a valid integer for srv_max_hosts")
+        opts.delete(:srv_max_hosts)
+      end
     end
 
     # Validates whether the max_connecting option is valid.
@@ -1709,35 +1733,34 @@ module Mongo
     # @param [ Hash ] opts The client options.
     #
     # @return [ true ] If the option is valid.
-    # @raise [ Error::InvalidMaxConnecting ] If the option is invalid.
-    def validate_max_connecting!(option, opts)
-      if option == :max_connecting && opts.key?(:max_connecting)
-        max_connecting = opts[:max_connecting] || Server::ConnectionPool::DEFAULT_MAX_CONNECTING
-        if max_connecting <= 0
-          raise Error::InvalidMaxConnecting.new(opts[:max_connecting])
-        end
+    def validate_max_connecting!(opts)
+      return unless opts.key?(:max_connecting)
+
+      max_connecting = opts[:max_connecting] || Server::ConnectionPool::DEFAULT_MAX_CONNECTING
+      if max_connecting <= 0
+        opts[:max_connecting] = Server::ConnectionPool::DEFAULT_MAX_CONNECTING
+        log_warn("Invalid max_connecting: #{max_connecting}. Please ensure that it is greater than zero.")
       end
-      true
     end
 
-    def validate_read!(option, opts)
-      if option == :read && opts.has_key?(:read)
-        read = opts[:read]
-        # We could check if read is a Hash, but this would fail
-        # for custom classes implementing key access ([]).
-        # Instead reject common cases of strings and symbols.
-        if read.is_a?(String) || read.is_a?(Symbol)
-          raise Error::InvalidReadOption.new(read, "the read preference must be specified as a hash: { mode: #{read.inspect} }")
-        end
+    def validate_read!(opts)
+      return unless opts.has_key?(:read)
 
-        if mode = read[:mode]
-          mode = mode.to_sym
-          unless Mongo::ServerSelector::PREFERENCES.include?(mode)
-            raise Error::InvalidReadOption.new(read, "mode #{mode} is not one of recognized modes")
-          end
+      read = opts[:read]
+
+      # We could check if read is a Hash, but this would fail
+      # for custom classes implementing key access ([]).
+      # Instead reject common cases of strings and symbols.
+      if read.is_a?(String) || read.is_a?(Symbol)
+        raise Error::InvalidReadOption.new(read, "the read preference must be specified as a hash: { mode: #{read.inspect} }")
+      end
+
+      if mode = read[:mode]
+        mode = mode.to_sym
+        unless Mongo::ServerSelector::PREFERENCES.include?(mode)
+          raise Error::InvalidReadOption.new(read, "mode #{mode} is not one of recognized modes")
         end
       end
-      true
     end
 
     def assert_not_closed
