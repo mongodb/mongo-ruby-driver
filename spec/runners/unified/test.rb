@@ -556,8 +556,6 @@ module Unified
           # drivers-atlas-testing, ignore. SERVER-54216
         elsif e.code == 59
           # no such command (old server), ignore
-        elsif e.code == 8000
-          # CMD_NOT_ALLOWED: killAllSessions - running against a serverless instance
         else
           raise
         end
