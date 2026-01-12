@@ -663,7 +663,7 @@ module Mongo
     #
     # @api private
     def clear_description
-      @description = Mongo::Server::Description.new(address, {})
+      @description = Mongo::Server::Description.new(address)
     end
 
     # @param [ Object ] :service_id Close connections with the specified
