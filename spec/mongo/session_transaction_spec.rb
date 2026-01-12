@@ -10,8 +10,18 @@ describe Mongo::Session do
   min_server_fcv '4.0'
   require_topology :replica_set, :sharded
 
+  let(:subscriber) do
+    Mrss::EventSubscriber.new(name: 'SessionTransactionSpec')
+  end
+
+  let(:client) do
+    authorized_client.tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
+  end
+
   let(:session) do
-    authorized_client.start_session(session_options)
+    client.start_session(session_options)
   end
 
   let(:session_options) do
@@ -216,6 +226,55 @@ describe Mongo::Session do
         end
 
         expect(collection.find(timeout_around_with_tx: 2).first).not_to be nil
+      end
+    end
+
+    context 'csot' do
+      context 'when csot is enabled' do
+        context 'when timeout_ms is set to zero' do
+          it 'sets with_transaction_deadline to infinite' do
+            session.with_transaction(timeout_ms: 0) do
+              expect(session.with_transaction_deadline).to be_zero
+            end
+          end
+
+          it 'does not sent maxTimeMS' do
+            session.with_transaction(timeout_ms: 0) do
+              collection.insert_one({ a: 1 }, session: session)
+            end
+            event = subscriber.single_command_started_event('insert', database_name: collection.database.name)
+            expect(event.command['maxTimeMS']).to be_nil
+          end
+        end
+
+        context 'when timeout_ms is set to a positive value' do
+          before do
+            allow(Mongo::Utils).to receive(:monotonic_time).and_return(0)
+          end
+
+          it 'sets with_transaction_deadline to the specified value' do
+            session.with_transaction(timeout_ms: 1000) do
+              expect(session.with_transaction_deadline).to be_within(0.1).of(1000 / 1000.0)
+            end
+          end
+
+          it 'sends maxTimeMS with the operation' do
+            session.with_transaction(timeout_ms: 1_000) do
+              collection.insert_one({ a: 1 }, session: session)
+            end
+            event = subscriber.single_command_started_event('insert', database_name: collection.database.name)
+            expect(event.command['maxTimeMS']).not_to be_nil
+            expect(event.command['maxTimeMS']).to be <= 1_000
+          end
+        end
+      end
+
+      context 'when csot is disabled' do
+        it 'does not set with_transaction_deadline' do
+          session.with_transaction do
+            expect(session.with_transaction_deadline).to be_nil
+          end
+        end
       end
     end
   end
