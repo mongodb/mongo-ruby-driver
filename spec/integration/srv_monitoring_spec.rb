@@ -307,7 +307,7 @@ describe 'SRV Monitoring' do
       require_topology :sharded
 
       it 'updates topology via SRV records' do
-
+        skip 'https://jira.mongodb.org/browse/RUBY-3749'
         rules = [
           ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
             [0, 0, 27999, 'localhost.test.build.10gen.cc'],
@@ -356,7 +356,7 @@ describe 'SRV Monitoring' do
       require_topology :replica_set
 
       it 'updates topology via SRV records then stops SRV monitor' do
-
+        skip 'https://jira.mongodb.org/browse/RUBY-3749'
         rules = [
           ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
             [0, 0, 27999, 'localhost.test.build.10gen.cc'],

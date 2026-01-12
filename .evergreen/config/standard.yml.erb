@@ -59,7 +59,7 @@ buildvariants:
       os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: "mongo-recent"
     matrix_spec:
@@ -251,7 +251,7 @@ buildvariants:
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
  <% [
       [latest_ruby, latest_stable_mdb, 'ubuntu2204'],
@@ -268,7 +268,7 @@ buildvariants:
       os: <%= distro %>
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: <%= "snappy-#{rubies}" %>
     matrix_spec:
@@ -280,7 +280,7 @@ buildvariants:
       os: <%= distro %>
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   # the zstd-ruby gem does not support JRuby (explicitly). However, there is
   # apparently a zstd-jni gem for JRuby that we could investigate here; if
@@ -296,7 +296,7 @@ buildvariants:
       os: <%= distro %>
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "run-main-test-suite"
 
   - matrix_name: <%= "activesupport-#{rubies}" %>
     matrix_spec:

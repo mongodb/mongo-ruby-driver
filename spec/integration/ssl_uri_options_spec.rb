@@ -22,6 +22,8 @@ describe 'SSL connections with URI options' do
   end
 
   it 'successfully connects and runs an operation' do
+    skip 'https://jira.mongodb.org/browse/RUBY-3749'
+
     client = new_local_client(uri)
     expect { client[:foo].count_documents }.not_to raise_error
   end
