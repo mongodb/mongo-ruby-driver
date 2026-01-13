@@ -4,6 +4,7 @@ module Mongo
   module SearchIndex
     # A class representing a view of search indexes.
     class View
+      extend Forwardable
       include Enumerable
       include Retryable
       include Collection::Helpers
@@ -20,6 +21,8 @@ module Mongo
       # @return [ Hash ] the options hash to use for the aggregate command
       #   when querying the available indexes.
       attr_reader :aggregate_options
+
+      def_delegators :@collection, :tracer
 
       # Create the new search index view.
       #
@@ -51,7 +54,10 @@ module Mongo
       #
       # @return [ String ] the name of the new search index.
       def create_one(definition, name: nil, type: 'search')
-        create_many([ { name: name, definition: definition, type: type } ]).first
+        spec = { definition: definition, type: type }.tap do |sp|
+          sp[:name] = name unless name.nil?
+        end
+        create_many([ spec ]).first
       end
 
       # Create multiple search indexes with a single command.
@@ -64,8 +70,12 @@ module Mongo
       # @return [ Array<String> ] the names of the new search indexes.
       def create_many(indexes)
         spec = spec_with(indexes: indexes.map { |v| validate_search_index!(v) })
-        result = Operation::CreateSearchIndexes.new(spec).execute(next_primary, context: execution_context)
-        result.first['indexesCreated'].map { |idx| idx['name'] }
+        operation = Operation::CreateSearchIndexes.new(spec)
+        context = execution_context
+        tracer.trace_operation(operation, context, op_name: 'createSearchIndexes') do
+          result = operation.execute(next_primary, context: context)
+          result.first['indexesCreated'].map { |idx| idx['name'] }
+        end
       end
 
       # Drop the search index with the given id, or name. One or the other must
@@ -81,11 +91,14 @@ module Mongo
 
         spec = spec_with(index_id: id, index_name: name)
         op = Operation::DropSearchIndex.new(spec)
+        context = execution_context
 
-        # per the spec:
-        # Drivers MUST suppress NamespaceNotFound errors for the
-        # ``dropSearchIndex`` helper.  Drop operations should be idempotent.
-        do_drop(op, nil, execution_context)
+        tracer.trace_operation(op, context, op_name: 'dropSearchIndex') do
+          # per the spec:
+          # Drivers MUST suppress NamespaceNotFound errors for the
+          # ``dropSearchIndex`` helper.  Drop operations should be idempotent.
+          do_drop(op, nil, context)
+        end
       end
 
       # Iterate over the search indexes.
@@ -127,7 +140,11 @@ module Mongo
         validate_id_or_name!(id, name)
 
         spec = spec_with(index_id: id, index_name: name, index: definition)
-        Operation::UpdateSearchIndex.new(spec).execute(next_primary, context: execution_context)
+        op = Operation::UpdateSearchIndex.new(spec)
+        context = execution_context
+        tracer.trace_operation(op, context, op_name: 'updateSearchIndex') do
+          op.execute(next_primary, context: context)
+        end
       end
 
       # The following methods are to make the view act more like an array,

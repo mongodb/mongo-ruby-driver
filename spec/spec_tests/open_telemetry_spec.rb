@@ -10,7 +10,7 @@ require 'runners/unified'
 base = "#{CURRENT_PATH}/spec_tests/data/open_telemetry"
 OTEL_UNIFIED_TESTS = Dir.glob("#{base}/**/*.yml").sort
 SKIPPED_OTEL_TESTS = [
-  'bulk_write.yml', 'map_reduce.yml', 'atlas_search.yml'
+  'bulk_write.yml', 'map_reduce.yml'
 ]
 
 TESTS_TO_RUN = OTEL_UNIFIED_TESTS.reject do |path|
