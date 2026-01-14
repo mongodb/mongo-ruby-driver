@@ -2,6 +2,14 @@ axes:
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
+      - id: "latest"
+        display_name: "latest"
+        variables:
+          MONGODB_VERSION: "latest"      
+      - id: "8.2"
+        display_name: "8.2"
+        variables:
+          MONGODB_VERSION: "8.2"
       - id: "8.0"
         display_name: "8.0"
         variables:
@@ -139,10 +147,10 @@ axes:
         display_name: ruby-dev
         variables:
           RVM_RUBY: "ruby-dev"
-      - id: "ruby-3.5"
-        display_name: ruby-3.5
+      - id: "ruby-4.0"
+        display_name: ruby-4.0
         variables:
-          RVM_RUBY: "ruby-3.5"
+          RVM_RUBY: "ruby-4.0"
       - id: "ruby-3.4"
         display_name: ruby-3.4
         variables:
@@ -171,10 +179,10 @@ axes:
         display_name: ruby-2.7
         variables:
           RVM_RUBY: "ruby-2.7"
-      - id: "jruby-10"
-        display_name: jruby-10
+      - id: "jruby-10.0"
+        display_name: jruby-10.0
         variables:
-          RVM_RUBY: "jruby-10"
+          RVM_RUBY: "jruby-10.0"
       - id: "jruby-9.4"
         display_name: jruby-9.4
         variables:
