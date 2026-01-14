@@ -37,7 +37,7 @@
   latest_stable_mdb = "8.2".inspect # so it gets quoted as a string
 
 
-  recent_mdb = %w( 8.2 8.0 7.0 )
+  recent_mdb = %w( 8.2 8.0 )
 %>
 
 buildvariants:
@@ -122,7 +122,7 @@ buildvariants:
   - matrix_name: "mongo-api-version"
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: '7.0'
+      mongodb-version: '8.0'
       topology: standalone
       api-version-required: yes
       os: ubuntu2404
