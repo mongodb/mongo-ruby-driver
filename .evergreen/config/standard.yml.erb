@@ -46,7 +46,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: standalone
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: DriverBench
     tasks:
       - name: "driver-bench"
@@ -57,7 +57,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= recent_mdb %>
       topology: <%= topologies %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
     tags: ["pr"]
     tasks:
@@ -68,7 +68,7 @@ buildvariants:
       ruby: <%= recent_rubies %>
       mongodb-version: <%= recent_mdb %>
       topology: <%= topologies %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -113,7 +113,7 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: load-balanced
       single-mongos: single-mongos
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} single-lb ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -125,7 +125,7 @@ buildvariants:
       mongodb-version: '7.0'
       topology: standalone
       api-version-required: yes
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} api-version-required ${topology} ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -137,7 +137,7 @@ buildvariants:
       mongodb-version: <%= latest_stable_mdb %>
       topology: "sharded-cluster"
       single-mongos: single-mongos
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -148,7 +148,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: replica-set-single-node
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "CSOT - ${mongodb-version}"
     tags: ["pr"]
     tasks:
@@ -159,7 +159,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: replica-set-single-node
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "OTel - ${mongodb-version}"
     tags: ["pr"]
     tasks:
@@ -171,7 +171,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -183,7 +183,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: [replica-set, sharded-cluster]
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -195,7 +195,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -206,7 +206,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} fork ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -217,7 +217,7 @@ buildvariants:
       ruby: <%= supported_mri_rubies_3_ubuntu %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
     tasks:
       - name: "test-mlaunch"
@@ -239,7 +239,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= recent_mdb %>
       topology: replica-set
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tags: ["pr"]
     tasks:
@@ -251,7 +251,7 @@ buildvariants:
 #      ruby: <%= latest_ruby %>
 #      mongodb-version: <%= latest_stable_mdb %>
 #      topology: standalone
-#      os: ubuntu2204
+#      os: ubuntu2404
 #    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
 #    tasks:
 #      - name: "test-mlaunch"
@@ -262,14 +262,14 @@ buildvariants:
       ruby: <%= jrubies.first %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: <%= topologies %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
  <% [
-      [latest_ruby, latest_stable_mdb, 'ubuntu2204'],
+      [latest_ruby, latest_stable_mdb, 'ubuntu2404'],
       [supported_mri_ruby_2, '"6.0"', 'ubuntu2004']
     ].each do |rubies, mdb, distro|
  %>
@@ -347,7 +347,7 @@ buildvariants:
       ruby: <%= supported_mri_rubies_3_ubuntu %>
       topology: [replica-set, sharded-cluster]
       mongodb-version: [ '6.0', '7.0', '8.0' ]
-      os: ubuntu2204
+      os: ubuntu2404
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tags: ["pr"]
@@ -367,7 +367,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       mongodb-version: <%= latest_stable_mdb %>
       topology: standalone
-      os: ubuntu2204
+      os: ubuntu2404
       auth-and-ssl: kerberos
     display_name: "Kerberos Tests"
     tasks:
@@ -379,7 +379,7 @@ buildvariants:
 #      ruby: <%#= latest_ruby %>
 #      topology: [replica-set, sharded-cluster]
 #      mongodb-version: [ 'latest' ]
-#      os: ubuntu2204
+#      os: ubuntu2404
 #      fle: helper
 #    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
 #    tasks:
@@ -395,7 +395,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -408,7 +408,7 @@ buildvariants:
       ruby: <%= supported_mri_rubies_3_ubuntu %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -421,7 +421,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2404
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
     tasks:
@@ -434,7 +434,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2404
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
     tasks:
@@ -464,7 +464,7 @@ buildvariants:
       ruby: <%= latest_ruby %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -485,7 +485,7 @@ buildvariants:
       ruby: <%= jrubies.first %>
       topology: standalone
       mongodb-version: <%= latest_stable_mdb %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tasks:
       - name: test-mlaunch
@@ -496,7 +496,7 @@ buildvariants:
   #    ruby: <%= latest_ruby %>
   #    fle: helper
   #    topology: standalone
-  #    os: ubuntu2204
+  #    os: ubuntu2404
   #    mongodb-version: <%= latest_stable_mdb %>
   #  display_name: "GCP KMS"
   #  tasks:
@@ -527,7 +527,7 @@ buildvariants:
   - matrix_name: "atlas"
     matrix_spec:
       ruby: <%= supported_mri_rubies_3_ubuntu %>
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "Atlas  connectivity tests ${ruby}"
     tags: ["pr"]
     tasks:
@@ -537,7 +537,7 @@ buildvariants:
 #  - matrix_name: "aws-lambda"
 #    matrix_spec:
 #      ruby: 'ruby-3.2'
-#      os: ubuntu2204
+#      os: ubuntu2404
 #    display_name: "AWS Lambda"
 #    tasks:
 #       - name: test_aws_lambda_task_group
