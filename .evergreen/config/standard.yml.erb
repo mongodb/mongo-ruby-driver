@@ -346,8 +346,8 @@ buildvariants:
       auth-and-ssl: "noauth-and-nossl"
       ruby: <%= supported_mri_rubies_3_ubuntu %>
       topology: [replica-set, sharded-cluster]
-      mongodb-version: [ '6.0', '7.0', '8.0' ]
-      os: ubuntu2404
+      mongodb-version: [ '6.0', '7.0', '8.0', '8.2' ]
+      os: ubuntu2204
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tags: ["pr"]

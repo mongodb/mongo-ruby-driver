@@ -1192,7 +1192,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-4.0"
-      mongodb-version: ["8.2", "8.0", "7.0"]
+      mongodb-version: ["8.2", "8.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2404
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
@@ -1203,7 +1203,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "jruby-10.0"]
-      mongodb-version: ["8.2", "8.0", "7.0"]
+      mongodb-version: ["8.2", "8.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2404
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1259,7 +1259,7 @@ buildvariants:
   - matrix_name: "mongo-api-version"
     matrix_spec:
       ruby: "ruby-4.0"
-      mongodb-version: '7.0'
+      mongodb-version: '8.0'
       topology: standalone
       api-version-required: yes
       os: ubuntu2404
@@ -1374,7 +1374,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: "ruby-4.0"
-      mongodb-version: ["8.2", "8.0", "7.0"]
+      mongodb-version: ["8.2", "8.0"]
       topology: replica-set
       os: ubuntu2404
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
@@ -1543,8 +1543,8 @@ buildvariants:
       auth-and-ssl: "noauth-and-nossl"
       ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "ruby-3.2", "ruby-3.1"]
       topology: [replica-set, sharded-cluster]
-      mongodb-version: [ '6.0', '7.0', '8.0' ]
-      os: ubuntu2404
+      mongodb-version: [ '6.0', '7.0', '8.0', '8.2' ]
+      os: ubuntu2204
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
     tags: ["pr"]
