@@ -41,9 +41,7 @@ def standard_dependencies
         gem 'ruby-debug-ide'
       end
     end
-    if RUBY_VERSION >= '3.4'
-      gem 'ostruct'
-    end
+    gem 'ostruct' if RUBY_VERSION >= '3.4'
   end
 
   group :testing do
