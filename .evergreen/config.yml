@@ -1166,6 +1166,16 @@ axes:
         display_name: No
 
 buildvariants:
+  - matrix_name: "ruby-dev"
+    matrix_spec:
+      ruby: "ruby-dev"
+      mongodb-version: ["8.0", "7.0"]
+      topology: "replica-set"
+      os: ubuntu2204
+    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "run-main-test-suite"
+
   - matrix_name: DriverBench
     matrix_spec:
       ruby: "ruby-4.0"
@@ -1184,6 +1194,7 @@ buildvariants:
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1194,6 +1205,7 @@ buildvariants:
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1204,6 +1216,7 @@ buildvariants:
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2404-arm
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1214,6 +1227,7 @@ buildvariants:
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1224,6 +1238,7 @@ buildvariants:
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1235,6 +1250,7 @@ buildvariants:
       single-mongos: single-mongos
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} single-lb ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
 
@@ -1246,6 +1262,7 @@ buildvariants:
       api-version-required: yes
       os: ubuntu2204
     display_name: "${mongodb-version} api-version-required ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
 
@@ -1257,6 +1274,7 @@ buildvariants:
       single-mongos: single-mongos
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
 
@@ -1267,6 +1285,7 @@ buildvariants:
       topology: replica-set-single-node
       os: ubuntu2204
     display_name: "CSOT - ${mongodb-version}"
+    tags: ["pr"]
     tasks:
       - name: test-csot
 
@@ -1277,6 +1296,7 @@ buildvariants:
       topology: replica-set-single-node
       os: ubuntu2204
     display_name: "OTel - ${mongodb-version}"
+    tags: ["pr"]
     tasks:
       - name: test-otel
 
@@ -1288,6 +1308,7 @@ buildvariants:
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
 
@@ -1299,6 +1320,7 @@ buildvariants:
       topology: [replica-set, sharded-cluster]
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
 
@@ -1376,6 +1398,7 @@ buildvariants:
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1388,6 +1411,7 @@ buildvariants:
       compressor: 'zlib'
       os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1400,6 +1424,7 @@ buildvariants:
       compressor: 'snappy'
       os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1416,6 +1441,7 @@ buildvariants:
       compressor: 'zstd'
       os: ubuntu2204
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1427,6 +1453,7 @@ buildvariants:
       as: as
       os: ubuntu2204
     display_name: "AS ${mongodb-version} ${topology} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
 
@@ -1438,6 +1465,7 @@ buildvariants:
       bson: "*"
       os: ubuntu2204
     display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
   - matrix_name: zlib-"ruby-2.7"
@@ -1449,6 +1477,7 @@ buildvariants:
       compressor: 'zlib'
       os: ubuntu2004
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1461,6 +1490,7 @@ buildvariants:
       compressor: 'snappy'
       os: ubuntu2004
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1477,6 +1507,7 @@ buildvariants:
       compressor: 'zstd'
       os: ubuntu2004
     display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "run-main-test-suite"
 
@@ -1488,6 +1519,7 @@ buildvariants:
       as: as
       os: ubuntu2004
     display_name: "AS ${mongodb-version} ${topology} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
 
@@ -1499,6 +1531,7 @@ buildvariants:
       bson: "*"
       os: ubuntu2004
     display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-mlaunch"
 
@@ -1511,6 +1544,7 @@ buildvariants:
       os: ubuntu2204
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-fle"
   # kerberos integration tests are broken (RUBY-3266)
@@ -1557,6 +1591,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: "test-aws-auth"
 
@@ -1569,6 +1604,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
 
@@ -1611,6 +1647,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
   - matrix_name: ocsp-connectivity
@@ -1625,6 +1662,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
   - matrix_name: ocsp-connectivity
@@ -1639,6 +1677,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
   - matrix_name: ocsp-connectivity
@@ -1653,6 +1692,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
   - matrix_name: ocsp-connectivity
@@ -1667,6 +1707,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
   - matrix_name: ocsp-connectivity
@@ -1681,6 +1722,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
   - matrix_name: ocsp-connectivity
@@ -1695,6 +1737,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
   - matrix_name: ocsp-connectivity
@@ -1709,6 +1752,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
   - matrix_name: ocsp-connectivity
@@ -1723,6 +1767,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
 
@@ -1743,6 +1788,7 @@ buildvariants:
       mongodb-version: "8.0"
       os: ubuntu2204
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
+    tags: ["pr"]
     tasks:
       - name: test-mlaunch
 
@@ -1785,6 +1831,7 @@ buildvariants:
       ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "ruby-3.2", "ruby-3.1"]
       os: ubuntu2204
     display_name: "Atlas  connectivity tests ${ruby}"
+    tags: ["pr"]
     tasks:
        - name: test-atlas
 
