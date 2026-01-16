@@ -74,6 +74,11 @@ module Mongo
         SERVER_TOO_OLD = "Server at (%s) reports wire version (%s), but this version of the Ruby driver " +
                            "requires at least (%s)."
 
+        # Warning message if the server version is deprecated.
+        SERVER_DEPRECATED = 'Server at (%s) reports wire version (%s), but support for that wire version ' \
+                              'is deprecated and will be removed in a future version of the Ruby driver. ' \
+                              'Please upgrade your MongoDB server to a newer version soon.'
+
         # Error message if the driver is too old for the version of the server.
         #
         # @since 2.5.0
@@ -83,7 +88,20 @@ module Mongo
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
-        DRIVER_WIRE_VERSIONS = (6..25).freeze
+        DRIVER_WIRE_VERSIONS = 6..25
+
+        # The wire protocol versions that are deprecated in this version of the
+        # driver. Support for these versions will be removed in the future.
+        #
+        # If there are multiple currently-deprecated wire versions, this should
+        # be set to a range of those versions.
+        #
+        # If there is only a single currently-deprecated wire version, this should
+        # be set to a range where the min and max are the same value.
+        #
+        # If there are no currently-deprecated wire versions, this should be
+        # set to an empty array.
+        DEPRECATED_WIRE_VERSIONS = 6..6
 
         # Create the methods for each mapping to tell if they are supported.
         #
@@ -131,20 +149,21 @@ module Mongo
         end
 
         # Check that there is an overlap between the driver supported wire
-        #   version range and the server wire version range.
-        #
-        # @example Verify the wire version overlap.
-        #   features.check_driver_support!
+        # version range and the server wire version range. Also checks to see
+        # if the server is using a deprecated wire version.
         #
         # @raise [ Error::UnsupportedFeatures ] If the wire version range is
         #   not covered by the driver.
-        #
-        # @since 2.5.1
         def check_driver_support!
-          if DRIVER_WIRE_VERSIONS.min > @server_wire_versions.max
+          if DEPRECATED_WIRE_VERSIONS.include?(@server_wire_versions.max)
+            feature = "wire_version:#{@address}"
+            Mongo::Deprecations.warn(feature, SERVER_DEPRECATED % [@address, @server_wire_versions.max])
+
+          elsif DRIVER_WIRE_VERSIONS.min > @server_wire_versions.max
             raise Error::UnsupportedFeatures.new(SERVER_TOO_OLD % [@address,
                                                                    @server_wire_versions.max,
                                                                    DRIVER_WIRE_VERSIONS.min])
+
           elsif DRIVER_WIRE_VERSIONS.max < @server_wire_versions.min
             raise Error::UnsupportedFeatures.new(DRIVER_TOO_OLD % [@address,
                                                                    @server_wire_versions.min,

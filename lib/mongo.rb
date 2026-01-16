@@ -34,6 +34,7 @@ autoload :CGI, 'cgi'
 
 require 'bson'
 
+require 'mongo/deprecations'
 require 'mongo/id'
 require 'mongo/bson'
 require 'mongo/semaphore'

@@ -35,6 +35,26 @@ describe Mongo::Server::Description::Features do
       end
     end
 
+    if described_class::DEPRECATED_WIRE_VERSIONS.any?
+      context 'when the max server wire version range is deprecated' do
+        before do
+          Mongo::Deprecations.clear!
+        end
+
+        let(:wire_versions) do
+          (described_class::DEPRECATED_WIRE_VERSIONS.min - 1)..described_class::DEPRECATED_WIRE_VERSIONS.max
+        end
+
+        it 'issues a deprecation warning' do
+          expect {
+            features.check_driver_support!
+          }.to change {
+            Mongo::Deprecations.warned?("wire_version:#{default_address}")
+          }.from(false).to(true)
+        end
+      end
+    end
+
     context 'when the server wire version range max is higher' do
 
       let(:wire_versions) do
