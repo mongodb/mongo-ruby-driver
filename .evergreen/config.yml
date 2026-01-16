@@ -915,7 +915,7 @@ axes:
         variables:
           RVM_RUBY: "ruby-dev"
       - id: "ruby-4.0"
-        display_name: ruby-3.5
+        display_name: ruby-4.0
         variables:
           RVM_RUBY: "ruby-4.0"
       - id: "ruby-3.4"
@@ -946,10 +946,6 @@ axes:
         display_name: ruby-2.7
         variables:
           RVM_RUBY: "ruby-2.7"
-      - id: "jruby-10.0"
-        display_name: jruby-10.0
-        variables:
-          RVM_RUBY: "jruby-10.0"
       - id: "jruby-9.4"
         display_name: jruby-9.4
         variables:
@@ -1193,7 +1189,7 @@ buildvariants:
 
   - matrix_name: "mongo-recent"
     matrix_spec:
-      ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "ruby-3.2", "jruby-10.0"]
+      ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "ruby-3.2", "jruby-9.4"]
       mongodb-version: ["8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
@@ -1375,7 +1371,7 @@ buildvariants:
   - matrix_name: "jruby-auth"
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: jruby-10.0
+      ruby: jruby-9.4
       mongodb-version: "8.0"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
@@ -1520,7 +1516,7 @@ buildvariants:
   # kerberos integration tests are broken (RUBY-3266)
   # - matrix_name: "kerberos-integration"
   #   matrix_spec:
-  #     ruby: ["ruby-4.0", "ruby-2.7", "jruby-10.0"]
+  #     ruby: ["ruby-4.0", "ruby-2.7", "jruby-9.4"]
   #     os: rhel8
   #   display_name: "Kerberos integration ${os} ${ruby}"
   #   tasks:
@@ -1742,7 +1738,7 @@ buildvariants:
       ocsp-status: [valid, unknown]
       ocsp-delegate: '*'
       ocsp-connectivity: pass
-      ruby: jruby-10.0
+      ruby: jruby-9.4
       topology: standalone
       mongodb-version: "8.0"
       os: ubuntu2204
