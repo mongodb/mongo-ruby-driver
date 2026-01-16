@@ -1547,14 +1547,6 @@ buildvariants:
     tags: ["pr"]
     tasks:
       - name: "test-fle"
-  # kerberos integration tests are broken (RUBY-3266)
-  # - matrix_name: "kerberos-integration"
-  #   matrix_spec:
-  #     ruby: ["ruby-4.0", "ruby-2.7", "jruby-9.4"]
-  #     os: rhel8
-  #   display_name: "Kerberos integration ${os} ${ruby}"
-  #   tasks:
-  #     - name: "test-kerberos-integration"
 
   - matrix_name: "kerberos-unit"
     matrix_spec:
