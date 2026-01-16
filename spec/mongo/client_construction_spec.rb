@@ -1666,21 +1666,23 @@ describe Mongo::Client do
           require_no_linting
 
           it 'rejects bogus read preference as symbol' do
+            read = BSON::Document.new({ mode: :bogus })
             expect do
-              new_local_client_nmio(SINGLE_CLIENT, read: { mode: :bogus })
+              new_local_client_nmio(SINGLE_CLIENT, read: read)
             end.to raise_error(
               Mongo::Error::InvalidReadOption,
-              'Invalid read preference value: {"mode"=>:bogus}: ' \
+              "Invalid read preference value: #{read}: " \
               'mode bogus is not one of recognized modes'
             )
           end
 
           it 'rejects bogus read preference as string' do
+            read = BSON::Document.new({ mode: 'bogus' })
             expect do
-              new_local_client_nmio(SINGLE_CLIENT, read: { mode: 'bogus' })
+              new_local_client_nmio(SINGLE_CLIENT, read: read)
             end.to raise_error(
               Mongo::Error::InvalidReadOption,
-              'Invalid read preference value: {"mode"=>"bogus"}: mode bogus is not one of recognized modes'
+              "Invalid read preference value: #{read}: mode bogus is not one of recognized modes"
             )
           end
 
