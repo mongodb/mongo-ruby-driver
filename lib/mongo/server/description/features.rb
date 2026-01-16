@@ -85,6 +85,9 @@ module Mongo
         DRIVER_TOO_OLD = "Server at (%s) requires wire version (%s), but this version of the Ruby driver " +
                            "only supports up to (%s)."
 
+        # An empty range constant, for use in DEPRECATED_WIRE_VERSIONS.
+        EMPTY_RANGE = (0...0).freeze
+
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
@@ -100,8 +103,15 @@ module Mongo
         # be set to a range where the min and max are the same value.
         #
         # If there are no currently-deprecated wire versions, this should be
-        # set to an empty array.
+        # set to an empty range (e.g. the EMPTY_RANGE constant).
         DEPRECATED_WIRE_VERSIONS = 6..6
+
+        # make sure the deprecated versions are valid
+        if DEPRECATED_WIRE_VERSIONS.min
+          if DRIVER_WIRE_VERSIONS.min > DEPRECATED_WIRE_VERSIONS.max
+            raise ArgumentError, 'DEPRECATED_WIRE_VERSIONS must be empty, or be within DRIVER_WIRE_VERSIONS'
+          end
+        end
 
         # Create the methods for each mapping to tell if they are supported.
         #
