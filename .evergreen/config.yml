@@ -1171,7 +1171,7 @@ buildvariants:
       ruby: "ruby-dev"
       mongodb-version: ["8.0", "7.0"]
       topology: "replica-set"
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "run-main-test-suite"

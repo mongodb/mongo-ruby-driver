@@ -45,7 +45,7 @@ buildvariants:
       ruby: "ruby-dev"
       mongodb-version: <%= recent_mdb %>
       topology: "replica-set"
-      os: ubuntu2204
+      os: ubuntu2404
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "run-main-test-suite"
