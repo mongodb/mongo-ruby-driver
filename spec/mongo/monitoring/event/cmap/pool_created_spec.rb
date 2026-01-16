@@ -30,7 +30,7 @@ describe Mongo::Monitoring::Event::Cmap::PoolCreated do
     end
 
     it 'renders correctly' do
-      expect(event.summary).to eq("#<PoolCreated address=127.0.0.1:27017 options={:wait_queue_timeout=>3, :min_pool_size=>5} pool=0x#{pool.object_id}>")
+      expect(event.summary).to eq("#<PoolCreated address=127.0.0.1:27017 options=#{options} pool=0x#{pool.object_id}>")
     end
   end
 end
