@@ -21,9 +21,9 @@ module Mongo
     # Session was previously ended.
     #
     # @since 2.7.0
-    class SessionEnded < Error
+    class SessionEnded < InvalidSession
       def initialize
-        super("The session was ended and cannot be used")
+        super('The session was ended and cannot be used. Please create a new session.')
       end
     end
   end
