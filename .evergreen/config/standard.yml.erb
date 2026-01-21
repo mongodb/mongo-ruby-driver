@@ -27,13 +27,22 @@
                      jrubies
 
   # The latest stable version of MongoDB
-  latest_stable_mdb = "8.0".inspect # so it gets quoted as a string
+  latest_stable_mdb = "8.2".inspect # so it gets quoted as a string
 
 
-  recent_mdb = %w( 8.0 7.0 )
+  recent_mdb = %w( 8.2 8.0 )
 %>
 
 buildvariants:
+  - matrix_name: "mongodb-latest"
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      mongodb-version: <%= latest_stable_mdb %>
+      topology: <%= topologies %>
+      os: ubuntu2204
+    display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
+    tasks:
+      - name: "run-main-test-suite"
   - matrix_name: "ruby-dev"
     matrix_spec:
       ruby: "ruby-dev"
