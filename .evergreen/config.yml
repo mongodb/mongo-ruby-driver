@@ -1177,12 +1177,13 @@ buildvariants:
   - matrix_name: "mongodb-latest"
     matrix_spec:
       ruby: "ruby-4.0"
-      mongodb-version: "8.2"
+      mongodb-version: "latest"
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "run-main-test-suite"
+
   - matrix_name: "ruby-dev"
     matrix_spec:
       ruby: "ruby-dev"

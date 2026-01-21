@@ -37,12 +37,13 @@ buildvariants:
   - matrix_name: "mongodb-latest"
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: "latest"
       topology: <%= topologies %>
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
     tasks:
       - name: "run-main-test-suite"
+
   - matrix_name: "ruby-dev"
     matrix_spec:
       ruby: "ruby-dev"
