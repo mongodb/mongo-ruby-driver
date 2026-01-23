@@ -16,8 +16,7 @@ module Mongo
   # @api private
   module Deprecations
     extend self
-
-    include Mongo::Loggable
+    extend Mongo::Loggable
 
     # Mutex for synchronizing access to warned features.
     # @api private
