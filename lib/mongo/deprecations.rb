@@ -81,7 +81,7 @@ module Mongo
     # @return [ true | false ] If a warning has already been issued.
     def _warned?(feature, prefix: false)
       if prefix
-        warned_features.any? { |f| feature.to_s.start_with?(f) }
+        warned_features.any? { |f| f.to_s.start_with?(feature) }
       else
         warned_features.include?(feature.to_s)
       end
