@@ -1571,9 +1571,9 @@ buildvariants:
 #    tasks:
 #      - name: "test-fle"
 
-  - name: 'latest'
+  - name: 'latest-server'
     activate: false
-    display_name: 'Latest MongoDB'
+    display_name: 'Latest MongoDB Server'
     run_on: ubuntu2404-small
     expansions:
       FLE: helper
