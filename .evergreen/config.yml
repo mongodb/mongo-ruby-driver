@@ -777,6 +777,10 @@ axes:
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
+      - id: 'latest'
+        display_name: 'Latest'
+        variables:
+          MONGODB_VERSION: 'latest'
       - id: "8.0"
         display_name: "8.0"
         variables:
@@ -1570,6 +1574,19 @@ buildvariants:
 #    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
 #    tasks:
 #      - name: "test-fle"
+
+  - name: 'latest'
+    activate: false
+    display_name: 'Latest MongoDB'
+    run_on: ubuntu2404-small
+    expansions:
+      FLE: helper
+      TOPOLOGY: replica_set
+      MLAUNCH_TOPOLOGY: replica-set
+      RVM_RUBY: "ruby-4.0"
+      MONGODB_VERSION: 'latest'
+    tasks:
+      - name: "test-fle"
 
   - matrix_name: aws-auth-regular
     matrix_spec:
