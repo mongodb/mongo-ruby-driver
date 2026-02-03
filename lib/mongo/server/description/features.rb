@@ -104,7 +104,7 @@ module Mongo
         #
         # If there are no currently-deprecated wire versions, this should be
         # set to an empty range (e.g. the EMPTY_RANGE constant).
-        DEPRECATED_WIRE_VERSIONS = 6..6
+        DEPRECATED_WIRE_VERSIONS = 6..7
 
         # make sure the deprecated versions are valid
         if DEPRECATED_WIRE_VERSIONS.min

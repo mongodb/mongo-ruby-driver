@@ -291,4 +291,10 @@ describe Mongo::Server::Description::Features do
       end
     end
   end
+
+  [ 6, 7 ].each do |deprecated_wire_version|
+    it "declares wire version #{deprecated_wire_version} as deprecated" do
+      expect(described_class::DEPRECATED_WIRE_VERSIONS).to include(deprecated_wire_version)
+    end
+  end
 end
