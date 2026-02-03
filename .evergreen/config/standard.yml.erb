@@ -29,7 +29,6 @@
   # The latest stable version of MongoDB
   latest_stable_mdb = "8.0".inspect # so it gets quoted as a string
 
-
   recent_mdb = %w( 8.0 7.0 )
 %>
 
@@ -378,6 +377,18 @@ buildvariants:
 #    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
 #    tasks:
 #      - name: "test-fle"
+
+  - name: 'latest-server'
+    activate: false
+    display_name: 'Latest MongoDB Server'
+    run_on: ubuntu2204-small
+    expansions:
+      TOPOLOGY: sharded_cluster
+      MLAUNCH_TOPOLOGY: sharded-cluster
+      RVM_RUBY: <%= latest_ruby %>
+      MONGODB_VERSION: 'latest'
+    tasks:
+      - name: 'run-main-test-suite'
 
   - matrix_name: aws-auth-regular
     matrix_spec:
