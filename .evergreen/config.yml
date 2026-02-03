@@ -1574,15 +1574,14 @@ buildvariants:
   - name: 'latest-server'
     activate: false
     display_name: 'Latest MongoDB Server'
-    run_on: ubuntu2404-small
+    run_on: ubuntu2204-small
     expansions:
-      FLE: helper
-      TOPOLOGY: replica_set
-      MLAUNCH_TOPOLOGY: replica-set
+      TOPOLOGY: sharded_cluster
+      MLAUNCH_TOPOLOGY: sharded-cluster
       RVM_RUBY: "ruby-4.0"
       MONGODB_VERSION: 'latest'
     tasks:
-      - name: "test-fle"
+      - name: 'run-main-test-suite'
 
   - matrix_name: aws-auth-regular
     matrix_spec:
