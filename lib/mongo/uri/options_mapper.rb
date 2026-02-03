@@ -62,7 +62,7 @@ module Mongo
       def add_uri_option(key, value, uri_options)
         strategy = URI_OPTION_MAP[key.downcase]
         if strategy.nil?
-          log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
+          warn_unsupported_option(key, @string)
           return
         end
 
@@ -91,7 +91,7 @@ module Mongo
         opts.each do |key, value|
           strategy = URI_OPTION_MAP[key.downcase]
           if strategy.nil?
-            log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
+            warn_unsupported_option(key, @string)
             return
           end
 
@@ -205,6 +205,10 @@ module Mongo
       end
 
       private
+
+      def warn_unsupported_option(key, uri)
+        log_warn("Unsupported URI option '#{key}' on URI '#{uri}'. It will be ignored.")
+      end
 
       # Applies URI value transformation by either using the default cast
       # or a transformation appropriate for the given type.
