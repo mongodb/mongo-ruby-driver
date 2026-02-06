@@ -153,10 +153,6 @@ describe Mongo::Database do
       expect(actual).to_not include('system.version')
     end
 
-    context 'on 2.6 server' do
-      max_server_version '2.6'
-    end
-
     it 'does not include collections with $ in names' do
       expect(actual.none? { |name| name.include?('$') }).to be true
     end
@@ -200,8 +196,6 @@ describe Mongo::Database do
     end
 
     context 'when provided a filter' do
-      min_server_fcv '3.0'
-
       before do
         database['users2'].drop
         database['users2'].create
@@ -218,57 +212,52 @@ describe Mongo::Database do
     end
 
     context 'when provided authorized_collections or not' do
+      let(:database) do
+        described_class.new(client, SpecConfig.instance.test_db)
+      end
 
-      context 'on server versions >= 4.0' do
-        min_server_fcv '4.0'
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
-        let(:database) do
-          described_class.new(client, SpecConfig.instance.test_db)
+      let(:client) do
+        authorized_client.tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      context 'when authorized_collections is provided' do
+        let(:options) do
+          { authorized_collections: true }
         end
 
-        let(:subscriber) { Mrss::EventSubscriber.new }
-
-        let(:client) do
-          authorized_client.tap do |client|
-            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-          end
+        let!(:result) do
+          database.collections(options)
         end
 
-        context 'when authorized_collections is provided' do
-          let(:options) do
-            { authorized_collections: true }
-          end
-
-          let!(:result) do
-            database.collections(options)
-          end
-
-          let(:events) do
-            subscriber.command_started_events('listCollections')
-          end
-
-          it 'passes authorized_collections to the server' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['authorizedCollections']).to eq(true)
-          end
+        let(:events) do
+          subscriber.command_started_events('listCollections')
         end
 
-        context 'when no options are provided' do
-          let!(:result) do
-            database.collection_names
-          end
+        it 'passes authorized_collections to the server' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['authorizedCollections']).to eq(true)
+        end
+      end
 
-          let(:events) do
-            subscriber.command_started_events('listCollections')
-          end
+      context 'when no options are provided' do
+        let!(:result) do
+          database.collection_names
+        end
 
-          it 'authorized_collections not passed to server' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to be_nil
-          end
+        let(:events) do
+          subscriber.command_started_events('listCollections')
+        end
+
+        it 'authorized_collections not passed to server' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['nameOnly']).to eq(true)
+          expect(command['authorizedCollections']).to be_nil
         end
       end
     end
@@ -317,39 +306,27 @@ describe Mongo::Database do
       database['acol'].create
     end
 
-    context 'server 3.0+' do
-      min_server_fcv '3.0'
-
-      it 'returns a list of the collections info' do
-        expect(result).to include('acol')
-      end
-
-      context 'with more than one collection' do
-        before do
-          database['anothercol'].drop
-          database['anothercol'].create
-
-          expect(database.collections.length).to be > 1
-        end
-
-        let(:result) do
-          database.list_collections(filter: { name: 'anothercol' }).map do |info|
-            info['name']
-          end
-        end
-
-        it 'can filter by collection name' do
-          expect(result.length).to eq(1)
-          expect(result.first).to eq('anothercol')
-        end
-      end
+    it 'returns a list of the collections info' do
+      expect(result).to include('acol')
     end
 
-    context 'server 2.6' do
-      max_server_fcv '2.6'
+    context 'with more than one collection' do
+      before do
+        database['anothercol'].drop
+        database['anothercol'].create
 
-      it 'returns a list of the collections info' do
-        expect(result).to include("#{SpecConfig.instance.test_db}.acol")
+        expect(database.collections.length).to be > 1
+      end
+
+      let(:result) do
+        database.list_collections(filter: { name: 'anothercol' }).map do |info|
+          info['name']
+        end
+      end
+
+      it 'can filter by collection name' do
+        expect(result.length).to eq(1)
+        expect(result.first).to eq('anothercol')
       end
     end
 
@@ -380,8 +357,7 @@ describe Mongo::Database do
         end
       end
 
-      context 'server 3.0-4.5' do
-        min_server_fcv '3.0'
+      context 'server <= 4.5' do
         max_server_version '4.5'
 
         include_examples 'does not include system collections'
@@ -390,93 +366,78 @@ describe Mongo::Database do
           expect(result).to include('acol')
         end
       end
-
-      context 'server 2.6' do
-        max_server_version '2.6'
-
-        include_examples 'does not include system collections'
-
-        it 'returns results' do
-          expect(result).to include('admin.acol')
-        end
-      end
     end
 
     context 'when provided authorized_collections or name_only options or not' do
+      let(:database) do
+        described_class.new(client, SpecConfig.instance.test_db)
+      end
 
-      context 'on server versions >= 4.0' do
-        min_server_fcv '4.0'
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
-        let(:database) do
-          described_class.new(client, SpecConfig.instance.test_db)
+      let(:client) do
+        authorized_client.tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      context 'when both are provided' do
+        let(:options) do
+          { name_only: true, authorized_collections: true }
         end
 
-        let(:subscriber) { Mrss::EventSubscriber.new }
-
-        let(:client) do
-          authorized_client.tap do |client|
-            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-          end
+        let!(:result) do
+          database.list_collections(options)
         end
 
-        context 'when both are provided' do
-          let(:options) do
-            { name_only: true, authorized_collections: true }
-          end
-
-          let!(:result) do
-            database.list_collections(options)
-          end
-
-          let(:events) do
-            subscriber.command_started_events('listCollections')
-          end
-
-          it 'passes original options to the server' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to eq(true)
-          end
+        let(:events) do
+          subscriber.command_started_events('listCollections')
         end
 
-        context 'when name_only is provided' do
-          let(:options) do
-            { name_only: false }
-          end
+        it 'passes original options to the server' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['nameOnly']).to eq(true)
+          expect(command['authorizedCollections']).to eq(true)
+        end
+      end
 
-          let!(:result) do
-            database.list_collections(options)
-          end
-
-          let(:events) do
-            subscriber.command_started_events('listCollections')
-          end
-
-          it 'no options passed to server because false' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['nameOnly']).to be_nil
-            expect(command['authorizedCollections']).to be_nil
-          end
+      context 'when name_only is provided' do
+        let(:options) do
+          { name_only: false }
         end
 
-        context 'when no options provided' do
+        let!(:result) do
+          database.list_collections(options)
+        end
 
-          let!(:result) do
-            database.list_collections
-          end
+        let(:events) do
+          subscriber.command_started_events('listCollections')
+        end
 
-          let(:events) do
-            subscriber.command_started_events('listCollections')
-          end
+        it 'no options passed to server because false' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['nameOnly']).to be_nil
+          expect(command['authorizedCollections']).to be_nil
+        end
+      end
 
-          it 'no options passed to server because none provided' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['nameOnly']).to be_nil
-            expect(command['authorizedCollections']).to be_nil
-          end
+      context 'when no options provided' do
+
+        let!(:result) do
+          database.list_collections
+        end
+
+        let(:events) do
+          subscriber.command_started_events('listCollections')
+        end
+
+        it 'no options passed to server because none provided' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['nameOnly']).to be_nil
+          expect(command['authorizedCollections']).to be_nil
         end
       end
     end
@@ -578,8 +539,6 @@ describe Mongo::Database do
     end
 
     context 'when provided a filter' do
-      min_server_fcv '3.0'
-
       let(:database) do
         described_class.new(authorized_client, SpecConfig.instance.test_db)
       end
@@ -607,78 +566,73 @@ describe Mongo::Database do
     end
 
     context 'when provided authorized_collections or not' do
+      let(:database) do
+        described_class.new(client, SpecConfig.instance.test_db)
+      end
 
-      context 'on server versions >= 4.0' do
-        min_server_fcv '4.0'
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
-        let(:database) do
-          described_class.new(client, SpecConfig.instance.test_db)
+      let(:client) do
+        authorized_client.tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      context 'when authorized_collections are provided as false' do
+        let(:options) do
+          { authorized_collections: false }
         end
 
-        let(:subscriber) { Mrss::EventSubscriber.new }
-
-        let(:client) do
-          authorized_client.tap do |client|
-            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-          end
+        let!(:result) do
+          database.collections(options)
         end
 
-        context 'when authorized_collections are provided as false' do
-          let(:options) do
-            { authorized_collections: false }
-          end
-
-          let!(:result) do
-            database.collections(options)
-          end
-
-          let(:events) do
-            subscriber.command_started_events('listCollections')
-          end
-
-          it 'authorized_collections not passed to server because false' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to be_nil
-          end
+        let(:events) do
+          subscriber.command_started_events('listCollections')
         end
 
-        context 'when authorized_collections are provided as true' do
-          let(:options) do
-            { authorized_collections: true }
-          end
+        it 'authorized_collections not passed to server because false' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['nameOnly']).to eq(true)
+          expect(command['authorizedCollections']).to be_nil
+        end
+      end
 
-          let!(:result) do
-            database.collections(options)
-          end
-
-          let(:events) do
-            subscriber.command_started_events('listCollections')
-          end
-
-          it 'authorized_collections not passed to server because false' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['nameOnly']).to eq(true)
-            expect(command['authorizedCollections']).to eq(true)
-          end
+      context 'when authorized_collections are provided as true' do
+        let(:options) do
+          { authorized_collections: true }
         end
 
-        context 'when no options are provided' do
-          let!(:result) do
-            database.collections
-          end
+        let!(:result) do
+          database.collections(options)
+        end
 
-          let(:events) do
-            subscriber.command_started_events('listCollections')
-          end
+        let(:events) do
+          subscriber.command_started_events('listCollections')
+        end
 
-          it 'authorized_collections not passed to server because not provided' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['authorizedCollections']).to be_nil
-          end
+        it 'authorized_collections not passed to server because false' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['nameOnly']).to eq(true)
+          expect(command['authorizedCollections']).to eq(true)
+        end
+      end
+
+      context 'when no options are provided' do
+        let!(:result) do
+          database.collections
+        end
+
+        let(:events) do
+          subscriber.command_started_events('listCollections')
+        end
+
+        it 'authorized_collections not passed to server because not provided' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['authorizedCollections']).to be_nil
         end
       end
     end
@@ -729,8 +683,6 @@ describe Mongo::Database do
     end
 
     context 'when provided a session' do
-      min_server_fcv '3.6'
-
       let(:operation) do
         client.database.command({ :ping => 1 }, session: session)
       end
@@ -768,8 +720,6 @@ describe Mongo::Database do
     end
 
     context 'when a read concern is provided' do
-      min_server_fcv '3.2'
-
       context 'when the read concern is valid' do
 
         it 'sends the read concern' do
@@ -1008,8 +958,7 @@ describe Mongo::Database do
         client.database
       end
 
-      context 'when the server supports write concern on the dropDatabase command' do
-        min_server_fcv '3.4'
+      context 'with write concern on the dropDatabase command' do
         require_topology :single
 
         it 'applies the write concern' do
@@ -1020,7 +969,6 @@ describe Mongo::Database do
       end
 
       context 'when write concern is passed in as an option' do
-        min_server_fcv '3.4'
         require_topology :single
 
         let(:client_options) do
@@ -1060,14 +1008,6 @@ describe Mongo::Database do
           expect(events.length).to eq(1)
           expect(command).to_not be_nil
           expect(command[:writeConcern][:w]).to eq('majority')
-        end
-      end
-
-      context 'when the server does not support write concern on the dropDatabase command' do
-        max_server_version '3.2'
-
-        it 'does not apply the write concern' do
-          expect(database_with_write_options.drop).to be_successful
         end
       end
     end
@@ -1224,8 +1164,6 @@ describe Mongo::Database do
   end
 
   describe '#aggregate' do
-    min_server_fcv '3.6'
-
     let(:client) do
       root_authorized_admin_client
     end
@@ -1329,35 +1267,8 @@ describe Mongo::Database do
           database.aggregate(pipeline, options).collect { |doc| doc.keys.grep(/host/).first }
         end
 
-        context 'when the server selected supports collations' do
-          min_server_fcv '3.4'
-
-          it 'applies the collation' do
-            expect(result.uniq).to eq(['host'])
-          end
-        end
-
-        context 'when the server selected does not support collations' do
-          max_server_version '3.2'
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-
-          context 'when a String key is used' do
-
-            let(:options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-          end
+        it 'applies the collation' do
+          expect(result.uniq).to eq(['host'])
         end
       end
     end
