@@ -22,10 +22,7 @@ describe Mongo::Collection::View::Readable do
   end
 
   shared_examples_for 'a read concern aware operation' do
-
     context 'when a read concern is provided' do
-      min_server_fcv '3.2'
-
       let(:new_view) do
         Mongo::Collection::View.new(new_collection, selector, options)
       end
@@ -757,35 +754,8 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation to the count' do
-          expect(result).to eq(1)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation to the count' do
+        expect(result).to eq(1)
       end
     end
 
@@ -807,35 +777,8 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation to the count' do
-          expect(result).to eq(1)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:count_options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation to the count' do
+        expect(result).to eq(1)
       end
     end
 
@@ -1134,8 +1077,6 @@ describe Mongo::Collection::View::Readable do
   describe '#count_documents' do
 
     context 'when session is given' do
-      min_server_fcv '3.6'
-
       let(:subscriber) { Mrss::EventSubscriber.new }
 
       before do
@@ -1619,35 +1560,8 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation to the distinct' do
-          expect(result).to eq(['bang'])
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation to the distinct' do
+        expect(result).to eq(['bang'])
       end
     end
 
@@ -1666,35 +1580,8 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation to the distinct' do
-          expect(result).to eq(['bang'])
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:distinct_options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation to the distinct' do
+        expect(result).to eq(['bang'])
       end
     end
 
