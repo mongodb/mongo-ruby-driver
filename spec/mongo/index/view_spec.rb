@@ -37,9 +37,6 @@ describe Mongo::Index::View do
   end
 
   describe '#drop_one' do
-
-    max_server_version '8.2.99'
-
     let(:spec) do
       { another: -1 }
     end
@@ -105,27 +102,15 @@ describe Mongo::Index::View do
       end
 
       context 'when the server accepts writeConcern for the dropIndexes operation' do
-        min_server_fcv '3.4'
-
         it 'applies the write concern' do
           expect {
             result
           }.to raise_exception(Mongo::Error::OperationFailure)
         end
       end
-
-      context 'when the server does not accept writeConcern for the dropIndexes operation' do
-        max_server_version '3.2'
-
-        it 'does not apply the write concern' do
-          expect(result).to be_successful
-        end
-      end
     end
 
     context 'when there are multiple indexes with the same key pattern' do
-      min_server_fcv '3.4'
-
       before do
         view.create_one({ random: 1 }, unique: true)
         view.create_one({ random: 1 },
@@ -219,20 +204,10 @@ describe Mongo::Index::View do
         end
 
         context 'when the server accepts writeConcern for the dropIndexes operation' do
-          min_server_fcv '3.4'
-
           it 'applies the write concern' do
             expect {
               result
             }.to raise_exception(Mongo::Error::OperationFailure)
-          end
-        end
-
-        context 'when the server does not accept writeConcern for the dropIndexes operation' do
-          max_server_version '3.2'
-
-          it 'does not apply the write concern' do
-            expect(result).to be_successful
           end
         end
       end
@@ -368,29 +343,8 @@ describe Mongo::Index::View do
         context 'when hidden is specified' do
           let(:index) { view.get('with_hidden_1') }
 
-          context 'on server versions <= 3.2' do
-            # DRIVERS-1220 Server versions 3.2 and older do not perform any option
-            # checking on index creation. The server will allow the user to create
-            # the index with the hidden option, but the server does not support this
-            # option and will not use it.
-            max_server_fcv '3.2'
-
-            let!(:result) do
-              view.create_many({ key: { with_hidden: 1 }, hidden: true })
-            end
-
-            it 'returns ok' do
-              expect(result).to be_successful
-            end
-
-            it 'creates an index' do
-              expect(index).to_not be_nil
-            end
-          end
-
-          context 'on server versions between 3.4 and 4.2' do
+          context 'on server versions <= 4.2' do
             max_server_fcv '4.2'
-            min_server_fcv '3.4'
 
             it 'raises an exception' do
               expect do
@@ -441,8 +395,6 @@ describe Mongo::Index::View do
         end
 
         context 'when collation is specified' do
-          min_server_fcv '3.4'
-
           let(:result) do
             view.create_many(
               { key: { random: 1 },
@@ -456,8 +408,6 @@ describe Mongo::Index::View do
           end
 
           context 'when the server supports collations' do
-            min_server_fcv '3.4'
-
             it 'returns ok' do
               expect(result).to be_successful
             end
@@ -467,33 +417,6 @@ describe Mongo::Index::View do
               expect(index_info['collation']).not_to be_nil
               expect(index_info['collation']['locale']).to eq('en_US')
               expect(index_info['collation']['strength']).to eq(2)
-            end
-          end
-
-          context 'when the server does not support collations' do
-            max_server_version '3.2'
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-
-            context 'when a String key is used' do
-
-              let(:result) do
-                view.create_many(
-                  { key: { random: 1 },
-                    unique: true,
-                    'collation' => { locale: 'en_US', strength: 2 } }
-                )
-              end
-
-              it 'raises an exception' do
-                expect {
-                  result
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
             end
           end
         end
@@ -516,20 +439,10 @@ describe Mongo::Index::View do
           end
 
           context 'when the server accepts writeConcern for the createIndexes operation' do
-            min_server_fcv '3.4'
-
             it 'applies the write concern' do
               expect {
                 result
               }.to raise_exception(Mongo::Error::OperationFailure)
-            end
-          end
-
-          context 'when the server does not accept writeConcern for the createIndexes operation' do
-            max_server_version '3.2'
-
-            it 'does not apply the write concern' do
-              expect(result).to be_successful
             end
           end
         end
@@ -591,8 +504,6 @@ describe Mongo::Index::View do
           end
 
           context 'when the server supports collations' do
-            min_server_fcv '3.4'
-
             it 'returns ok' do
               expect(result).to be_successful
             end
@@ -602,33 +513,6 @@ describe Mongo::Index::View do
               expect(index_info['collation']).not_to be_nil
               expect(index_info['collation']['locale']).to eq('en_US')
               expect(index_info['collation']['strength']).to eq(2)
-            end
-          end
-
-          context 'when the server does not support collations' do
-            max_server_version '3.2'
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-
-            context 'when a String key is used' do
-
-              let(:result) do
-                view.create_many([
-                                   { key: { random: 1 },
-                                     unique: true,
-                                     'collation' => { locale: 'en_US', strength: 2 }},
-                                 ])
-              end
-
-              it 'raises an exception' do
-                expect {
-                  result
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
             end
           end
         end
@@ -651,20 +535,10 @@ describe Mongo::Index::View do
           end
 
           context 'when the server accepts writeConcern for the createIndexes operation' do
-            min_server_fcv '3.4'
-
             it 'applies the write concern' do
               expect {
                 result
               }.to raise_exception(Mongo::Error::OperationFailure)
-            end
-          end
-
-          context 'when the server does not accept writeConcern for the createIndexes operation' do
-            max_server_version '3.2'
-
-            it 'does not apply the write concern' do
-              expect(result).to be_successful
             end
           end
         end
@@ -782,20 +656,10 @@ describe Mongo::Index::View do
         end
 
         context 'when the server accepts writeConcern for the createIndexes operation' do
-          min_server_fcv '3.4'
-
           it 'applies the write concern' do
             expect {
               result
             }.to raise_exception(Mongo::Error::OperationFailure)
-          end
-        end
-
-        context 'when the server does not accept writeConcern for the createIndexes operation' do
-          max_server_version '3.2'
-
-          it 'does not apply the write concern' do
-            expect(result).to be_successful
           end
         end
       end
@@ -874,8 +738,6 @@ describe Mongo::Index::View do
     end
 
     context 'when providing an invalid partial index filter' do
-      min_server_fcv '3.2'
-
       it 'raises an exception' do
         expect {
           view.create_one({'x' => 1}, partial_filter_expression: 5)
@@ -884,8 +746,6 @@ describe Mongo::Index::View do
     end
 
     context 'when providing a valid partial index filter' do
-      min_server_fcv '3.2'
-
       let(:expression) do
         {'a' => {'$lte' => 1.5}}
       end
@@ -970,29 +830,8 @@ describe Mongo::Index::View do
     context 'when providing hidden option' do
       let(:index) { view.get('with_hidden_1') }
 
-      context 'on server versions <= 3.2' do
-        # DRIVERS-1220 Server versions 3.2 and older do not perform any option
-        # checking on index creation. The server will allow the user to create
-        # the index with the hidden option, but the server does not support this
-        # option and will not use it.
-        max_server_fcv '3.2'
-
-        let!(:result) do
-          view.create_one({ 'with_hidden' => 1 }, { hidden: true })
-        end
-
-        it 'returns ok' do
-          expect(result).to be_successful
-        end
-
-        it 'creates an index' do
-          expect(index).to_not be_nil
-        end
-      end
-
-      context 'on server versions between 3.4 and 4.2' do
+      context 'on server versions <= 4.2' do
         max_server_fcv '4.2'
-        min_server_fcv '3.4'
 
         it 'raises an exception' do
           expect do
@@ -1196,8 +1035,6 @@ describe Mongo::Index::View do
     end
 
     context 'when the collection does not exist' do
-      min_server_fcv '3.0'
-
       let(:nonexistent_collection) do
         authorized_client[:not_a_collection]
       end
@@ -1275,8 +1112,6 @@ describe Mongo::Index::View do
       end
 
       context 'when the server supports collations' do
-        min_server_fcv '3.4'
-
         let(:extended_options) do
           options.merge(:collation => { locale: 'en_US' } )
         end

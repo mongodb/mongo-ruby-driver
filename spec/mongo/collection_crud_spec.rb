@@ -166,7 +166,6 @@ describe Mongo::Collection do
       end
 
       context 'session id' do
-        min_server_fcv '3.6'
         require_topology :replica_set, :sharded
         require_wired_tiger
 
@@ -523,8 +522,6 @@ describe Mongo::Collection do
     end
 
     context 'when the documents are sent with OP_MSG' do
-      min_server_fcv '3.6'
-
       let(:documents) do
         [{ '_id' => 1, 'name' => '1'*16777191 }, { '_id' => 'y' }]
       end
@@ -544,8 +541,6 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_fcv '3.2'
-
       around(:each) do |spec|
         authorized_client[:validating].drop
         authorized_client[:validating,
@@ -614,9 +609,6 @@ describe Mongo::Collection do
     context 'when various options passed in' do
       # w: 2 requires a replica set
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       let(:session) do
         authorized_client.start_session
@@ -727,9 +719,6 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
-
       let(:session) do
         authorized_client.start_session
       end
@@ -828,8 +817,6 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_fcv '3.2'
-
       around(:each) do |spec|
         authorized_client[:validating,
                           :validator => { :a => { '$exists' => true } }].tap do |c|
@@ -883,11 +870,7 @@ describe Mongo::Collection do
   describe '#bulk_write' do
 
     context 'when various options passed in' do
-      min_server_fcv '3.2'
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       let(:requests) do
         [
@@ -1037,33 +1020,8 @@ describe Mongo::Collection do
         end
 
         context 'when the server selected supports collations' do
-          min_server_fcv '3.4'
-
           it 'applies the collation' do
             expect(result).to eq(['bang', 'bang'])
-          end
-        end
-
-        context 'when the server selected does not support collations' do
-          max_server_version '3.2'
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-
-          context 'when a String key is used' do
-
-            let(:options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
           end
         end
       end
@@ -1217,33 +1175,8 @@ describe Mongo::Collection do
         end
 
         context 'when the server selected supports collations' do
-          min_server_fcv '3.4'
-
           it 'applies the collation to the count' do
             expect(result).to eq(1)
-          end
-        end
-
-        context 'when the server selected does not support collations' do
-          max_server_version '3.2'
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-
-          context 'when a String key is used' do
-
-            let(:options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
           end
         end
       end
@@ -1332,33 +1265,8 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation to the distinct' do
           expect(result).to eq(['bang'])
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
         end
       end
     end
@@ -1501,8 +1409,6 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
           expect(authorized_collection.find(name: 'bang').count).to eq(0)
@@ -1538,29 +1444,6 @@ describe Mongo::Collection do
           end
         end
       end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
-      end
     end
 
     context 'when collation is not specified' do
@@ -1586,9 +1469,6 @@ describe Mongo::Collection do
     context 'when various options passed in' do
       # w: 2 requires a replica set
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       before do
         authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
@@ -1732,8 +1612,6 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation' do
           expect(result.written_count).to eq(2)
           expect(authorized_collection.find(name: 'bang').count).to eq(0)
@@ -1769,29 +1647,6 @@ describe Mongo::Collection do
           end
         end
       end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
-      end
     end
 
     context 'when a collation is not specified' do
@@ -1818,9 +1673,6 @@ describe Mongo::Collection do
     context 'when various options passed in' do
       # w: 2 requires a replica set
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       before do
         collection.insert_many([{ name: 'test1' }, { name: 'test2' }, { name: 'test3'}])
@@ -1854,204 +1706,6 @@ describe Mongo::Collection do
         expect(command[:writeConcern]).to_not be_nil
         expect(command[:writeConcern][:w]).to eq(2)
         expect(command[:bypassDocumentValidation]).to be(true)
-      end
-    end
-  end
-
-  describe '#parallel_scan' do
-    max_server_version '4.0'
-    require_topology :single, :replica_set
-
-    let(:documents) do
-      (1..200).map do |i|
-        { name: "testing-scan-#{i}" }
-      end
-    end
-
-    before do
-      authorized_collection.insert_many(documents)
-    end
-
-    let(:cursors) do
-      authorized_collection.parallel_scan(2)
-    end
-
-    it 'returns an array of cursors' do
-      cursors.each do |cursor|
-        expect(cursor.class).to be(Mongo::Cursor)
-      end
-    end
-
-    it 'returns the correct number of documents' do
-      expect(
-        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
-      ).to eq(200)
-    end
-
-    context 'when a session is provided' do
-      require_wired_tiger
-
-      let(:cursors) do
-        authorized_collection.parallel_scan(2, session: session)
-      end
-
-      let(:operation) do
-        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
-      end
-
-      let(:failed_operation) do
-        authorized_collection.parallel_scan(-2, session: session)
-      end
-
-      let(:client) do
-        authorized_client
-      end
-
-      it_behaves_like 'an operation using a session'
-      it_behaves_like 'a failed operation using a session'
-    end
-
-    context 'when a session is not provided' do
-      let(:collection) { client['test'] }
-
-      let(:cursors) do
-        collection.parallel_scan(2)
-      end
-
-      let(:operation) do
-        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
-      end
-
-      let(:failed_operation) do
-        collection.parallel_scan(-2)
-      end
-
-      let(:command) do
-        operation
-        event = subscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }
-        expect(event).not_to be_nil
-        event.command
-      end
-
-      it_behaves_like 'an operation not using a session'
-      it_behaves_like 'a failed operation not using a session'
-    end
-
-    context 'when a session supporting causal consistency is used' do
-      require_wired_tiger
-
-      before do
-        collection.drop
-        collection.create
-      end
-
-      let(:cursors) do
-        collection.parallel_scan(2, session: session)
-      end
-
-      let(:operation) do
-        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
-      end
-
-      let(:command) do
-        operation
-        event = subscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }
-        expect(event).not_to be_nil
-        event.command
-      end
-
-      it_behaves_like 'an operation supporting causally consistent reads'
-    end
-
-    context 'when a read concern is provided' do
-      require_wired_tiger
-      min_server_fcv '3.2'
-
-      let(:result) do
-        authorized_collection.with(options).parallel_scan(2)
-      end
-
-      context 'when the read concern is valid' do
-
-        let(:options) do
-          { read_concern: { level: 'local' }}
-        end
-
-        it 'sends the read concern' do
-          expect { result }.to_not raise_error
-        end
-      end
-
-      context 'when the read concern is not valid' do
-
-        let(:options) do
-          { read_concern: { level: 'idontknow' }}
-        end
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_error(Mongo::Error::OperationFailure)
-        end
-      end
-    end
-
-    context 'when the collection has a read preference' do
-      require_topology :single, :replica_set
-
-      before do
-        allow(collection.client.cluster).to receive(:single?).and_return(false)
-      end
-
-      let(:client) do
-        authorized_client.with(server_selection_timeout: 0.2)
-      end
-
-      let(:collection) do
-        client[authorized_collection.name,
-               read: { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }]
-      end
-
-      let(:result) do
-        collection.parallel_scan(2)
-      end
-
-      it 'uses that read preference' do
-        expect {
-          result
-        }.to raise_exception(Mongo::Error::NoServerAvailable)
-      end
-    end
-
-    context 'when a max time ms value is provided' do
-      require_topology :single, :replica_set
-
-      let(:result) do
-        authorized_collection.parallel_scan(2, options)
-      end
-
-      context 'when the read concern is valid' do
-
-        let(:options) do
-          { max_time_ms: 5 }
-        end
-
-        it 'sends the max time ms value' do
-          expect { result }.to_not raise_error
-        end
-      end
-
-      context 'when the max time ms is not valid' do
-
-        let(:options) do
-          { max_time_ms: 0.1 }
-        end
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_error(Mongo::Error::OperationFailure)
-        end
       end
     end
   end
@@ -2176,8 +1830,6 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_fcv '3.2'
-
       around(:each) do |spec|
         collection_with_validator.drop
         authorized_client[:validating,
@@ -2251,8 +1903,6 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
           expect(authorized_collection.find(name: 'doink').count).to eq(1)
@@ -2285,29 +1935,6 @@ describe Mongo::Collection do
                 result
               }.to raise_exception(Mongo::Error::UnsupportedCollation)
             end
-          end
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
         end
       end
@@ -2392,9 +2019,6 @@ describe Mongo::Collection do
     context 'when various options passed in' do
       # w: 2 requires a replica set
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       before do
         authorized_collection.insert_one({field: 'test1'})
@@ -2530,8 +2154,6 @@ describe Mongo::Collection do
       end
 
       context 'when the server supports arrayFilters' do
-        min_server_fcv '3.6'
-
         before do
           authorized_collection.insert_many([{
                                                _id: 0, x: [
@@ -2587,42 +2209,6 @@ describe Mongo::Collection do
           end
         end
       end
-
-      context 'when the server does not support arrayFilters' do
-        max_server_version '3.4'
-
-        let(:result) do
-          authorized_collection.update_many(selector,
-                                           { '$set' => { 'x.$[i].y' => 5 } },
-                                           options)
-        end
-
-        context 'when a Symbol key is used' do
-
-          let(:options) do
-            { array_filters: [{ 'i.y' => 3 }] }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-          end
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'array_filters' => [{ 'i.y' => 3 }] }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-          end
-        end
-      end
     end
 
     context 'when the updates fail' do
@@ -2639,8 +2225,6 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_fcv '3.2'
-
       around(:each) do |spec|
         authorized_client[:validating,
                           :validator => { :a => { '$exists' => true } }].tap do |c|
@@ -2717,8 +2301,6 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation' do
           expect(result.written_count).to eq(2)
           expect(authorized_collection.find(other: 'doink').count).to eq(2)
@@ -2751,29 +2333,6 @@ describe Mongo::Collection do
                 result
               }.to raise_exception(Mongo::Error::UnsupportedCollation)
             end
-          end
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
         end
       end
@@ -2859,9 +2418,6 @@ describe Mongo::Collection do
     context 'when various options passed in' do
       # w: 2 requires a replica set
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       before do
         collection.insert_many([{ field: 'test' }, { field: 'test2' }], session: session)
@@ -2998,8 +2554,6 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_fcv '3.2'
-
       around(:each) do |spec|
         authorized_client[:validating,
                           :validator => { :a => { '$exists' => true } }].tap do |c|
@@ -3075,8 +2629,6 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
           expect(authorized_collection.find(other: 'doink').count).to eq(1)
@@ -3112,29 +2664,6 @@ describe Mongo::Collection do
           end
         end
       end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
-      end
     end
 
     context 'when a collation is not specified' do
@@ -3164,8 +2693,6 @@ describe Mongo::Collection do
       end
 
       context 'when the server supports arrayFilters' do
-        min_server_fcv '3.6'
-
         before do
           authorized_collection.insert_one(_id: 0, x: [{ y: 1 }, { y: 2 }, {y: 3 }])
         end
@@ -3202,47 +2729,9 @@ describe Mongo::Collection do
           end
         end
       end
-
-      context 'when the server does not support arrayFilters' do
-        max_server_version '3.4'
-
-        let(:result) do
-          authorized_collection.update_one(selector,
-                                           { '$set' => { 'x.$[i].y' => 5 } },
-                                           options)
-        end
-
-        context 'when a Symbol key is used' do
-
-          let(:options) do
-            { array_filters: [{ 'i.y' => 3 }] }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-          end
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'array_filters' => [{ 'i.y' => 3 }] }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-          end
-        end
-      end
     end
 
     context 'when the documents are sent with OP_MSG' do
-      min_server_fcv '3.6'
-
       let(:documents) do
         [{ '_id' => 1, 'name' => '1'*16777191 }, { '_id' => 'y' }]
       end
@@ -3316,9 +2805,6 @@ describe Mongo::Collection do
     context 'when various options passed in' do
       # w: 2 requires a replica set
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       before do
         collection.insert_many([{ field: 'test1' }, { field: 'test2' }], session: session)
@@ -3474,7 +2960,6 @@ describe Mongo::Collection do
     end
 
     context 'when write_concern is provided' do
-      min_server_fcv '3.2'
       require_topology :single
 
       it 'uses the write concern' do
@@ -3486,7 +2971,6 @@ describe Mongo::Collection do
     end
 
     context 'when the collection has a write concern' do
-      min_server_fcv '3.2'
       require_topology :single
 
       let(:collection) do
@@ -3520,34 +3004,9 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
           expect(authorized_collection.find(name: 'bang').count).to eq(0)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
         end
       end
     end
@@ -3574,9 +3033,6 @@ describe Mongo::Collection do
     context 'when various options passed in' do
       # w: 2 requires a replica set
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       before do
         authorized_collection.delete_many
@@ -3788,8 +3244,6 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_fcv '3.2'
-
       around(:each) do |spec|
         authorized_client[:validating].drop
         authorized_client[:validating,
@@ -3849,7 +3303,6 @@ describe Mongo::Collection do
     end
 
     context 'when write_concern is provided' do
-      min_server_fcv '3.2'
       require_topology :single
 
       it 'uses the write concern' do
@@ -3862,7 +3315,6 @@ describe Mongo::Collection do
     end
 
     context 'when the collection has a write concern' do
-      min_server_fcv '3.2'
       require_topology :single
 
       let(:collection) do
@@ -3899,34 +3351,9 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
           expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
         end
       end
     end
@@ -3957,8 +3384,6 @@ describe Mongo::Collection do
       end
 
       context 'when the server supports arrayFilters' do
-        min_server_fcv '3.6'
-
         before do
           authorized_collection.insert_one(_id: 0, x: [{ y: 1 }, { y: 2 }, { y: 3 }])
         end
@@ -3994,50 +3419,11 @@ describe Mongo::Collection do
           end
         end
       end
-
-      context 'when the server selected does not support arrayFilters' do
-        max_server_version '3.4'
-
-        let(:result) do
-          authorized_collection.find_one_and_update(selector,
-                                                    { '$set' => { 'x.$[i].y' => 5 } },
-                                                    options)
-        end
-
-        context 'when a Symbol key is used' do
-
-          let(:options) do
-            { array_filters: [{ 'i.y' => 3 }] }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-          end
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'array_filters' => [{ 'i.y' => 3 }] }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-          end
-        end
-      end
     end
 
     context 'when various options passed in' do
       # w: 2 requires a replica set
       require_topology :replica_set
-
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
 
       let(:session) do
         authorized_client.start_session
@@ -4228,8 +3614,6 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_fcv '3.2'
-
       around(:each) do |spec|
         authorized_client[:validating].drop
         authorized_client[:validating,
@@ -4289,7 +3673,6 @@ describe Mongo::Collection do
     end
 
     context 'when write_concern is provided' do
-      min_server_fcv '3.2'
       require_topology :single
 
       it 'uses the write concern' do
@@ -4302,7 +3685,6 @@ describe Mongo::Collection do
     end
 
     context 'when the collection has a write concern' do
-      min_server_fcv '3.2'
       require_topology :single
 
       let(:collection) do
@@ -4339,34 +3721,9 @@ describe Mongo::Collection do
       end
 
       context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
           expect(authorized_collection.find(name: 'doink').count).to eq(1)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
         end
       end
     end
@@ -4391,9 +3748,6 @@ describe Mongo::Collection do
     end
 
     context 'when various options passed in' do
-      # https://jira.mongodb.org/browse/RUBY-2306
-      min_server_fcv '3.6'
-
       before do
         authorized_collection.insert_one({field: 'test1'})
       end
