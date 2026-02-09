@@ -16,10 +16,6 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
     context basename do
       group = Unified::TestGroup.new(path)
 
-      if basename =~ /retryable|transaction/
-        require_wired_tiger
-      end
-
       group.tests.each do |test|
         context test.description do
 

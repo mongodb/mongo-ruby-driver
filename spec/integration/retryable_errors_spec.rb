@@ -228,8 +228,6 @@ describe 'Failing retryable operations' do
       include_context 'read operation'
 
       context 'modern read retries' do
-        require_wired_tiger_on_36
-
         let(:client_options) do
           {retry_reads: true}
         end
@@ -263,8 +261,6 @@ describe 'Failing retryable operations' do
       include_context 'write operation'
 
       context 'modern write retries' do
-        require_wired_tiger_on_36
-
         let(:client_options) do
           {retry_writes: true}
         end

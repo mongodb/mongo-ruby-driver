@@ -998,7 +998,6 @@ describe Mongo::Client do
 
       context 'when an implicit session is used without enough connections' do
         require_no_multi_mongos
-        require_wired_tiger
 
         let(:client) do
           authorized_client.with(options).tap do |cl|

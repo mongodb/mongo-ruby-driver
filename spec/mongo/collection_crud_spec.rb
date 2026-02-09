@@ -143,8 +143,6 @@ describe Mongo::Collection do
     context 'when provided options' do
 
       context 'when a session is provided' do
-        require_wired_tiger
-
         let(:operation) do
           authorized_collection.find({}, session: session).to_a
         end
@@ -167,7 +165,6 @@ describe Mongo::Collection do
 
       context 'session id' do
         require_topology :replica_set, :sharded
-        require_wired_tiger
 
         let(:options) do
           { session: session }
@@ -192,8 +189,6 @@ describe Mongo::Collection do
       end
 
       context 'when a session supporting causal consistency is used' do
-        require_wired_tiger
-
         let(:operation) do
           collection.find({}, session: session).to_a
         end
@@ -929,8 +924,6 @@ describe Mongo::Collection do
     end
 
     context 'when a session supporting causal consistency is used' do
-      require_wired_tiger
-
       let(:operation) do
         collection.aggregate([], session: session).first
       end
@@ -1063,7 +1056,6 @@ describe Mongo::Collection do
     end
 
     context 'when transactions are enabled' do
-      require_wired_tiger
       require_transaction_support
 
       before do
@@ -1119,8 +1111,6 @@ describe Mongo::Collection do
       end
 
       context 'when a session is provided' do
-        require_wired_tiger
-
         let(:session) do
           authorized_client.start_session
         end
@@ -1142,8 +1132,6 @@ describe Mongo::Collection do
       end
 
       context 'when a session supporting causal consistency is used' do
-        require_wired_tiger
-
         let(:operation) do
           collection.count({}, session: session)
         end
@@ -1211,8 +1199,6 @@ describe Mongo::Collection do
       end
 
       context 'when a session is provided' do
-        require_wired_tiger
-
         let(:session) do
           authorized_client.start_session
         end
@@ -1235,8 +1221,6 @@ describe Mongo::Collection do
     end
 
     context 'when a session supporting causal consistency is used' do
-      require_wired_tiger
-
       let(:operation) do
         collection.distinct(:field, {}, session: session)
       end

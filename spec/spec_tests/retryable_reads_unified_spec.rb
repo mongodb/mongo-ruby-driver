@@ -9,7 +9,6 @@ base = "#{CURRENT_PATH}/spec_tests/data/retryable_reads"
 RETRYABLE_READ_UNIFIED_TESTS = Dir.glob("#{base}/unified/**/*.yml").sort
 
 describe 'Retryable reads spec tests - unified' do
-  require_wired_tiger
   require_no_multi_mongos
 
   define_unified_spec_tests(base, RETRYABLE_READ_UNIFIED_TESTS) do |spec, req, test|

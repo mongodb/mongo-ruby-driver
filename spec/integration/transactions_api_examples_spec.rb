@@ -4,7 +4,6 @@
 require 'spec_helper'
 
 describe 'Transactions API examples' do
-  require_wired_tiger
   require_transaction_support
 
   # Until https://jira.mongodb.org/browse/RUBY-1768 is implemented, limit
