@@ -27,17 +27,17 @@ tests:
       - client: *client0
         ignoreExtraSpans: false
         spans:
-          - name: deleteMany operation-delete.test
+          - name: delete operation-delete.test
             attributes:
-              db.system: mongodb
+              db.system.name: mongodb
               db.namespace: *databaseName0
               db.collection.name: *collectionName0
-              db.operation.name: deleteMany
-              db.operation.summary: deleteMany operation-delete.test
+              db.operation.name: delete
+              db.operation.summary: delete operation-delete.test
             nested:
               - name: delete
                 attributes:
-                  db.system: mongodb
+                  db.system.name: mongodb
                   db.command.name: delete
                   db.namespace: operation-delete
                   db.collection.name: test

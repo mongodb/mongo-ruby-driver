@@ -30,17 +30,17 @@ tests:
       - client: *client0
         ignoreExtraSpans: false
         spans:
-          - name: estimatedDocumentCount operation-count.test
+          - name: count operation-count.test
             attributes:
-              db.system: mongodb
+              db.system.name: mongodb
               db.namespace: *database0Name
               db.collection.name: *collection0Name
-              db.operation.name: estimatedDocumentCount
-              db.operation.summary: estimatedDocumentCount operation-count.test
+              db.operation.name: count
+              db.operation.summary: count operation-count.test
             nested:
               - name: count
                 attributes:
-                  db.system: mongodb
+                  db.system.name: mongodb
                   db.namespace: *database0Name
                   db.collection.name: *collection0Name
                   db.command.name: count
