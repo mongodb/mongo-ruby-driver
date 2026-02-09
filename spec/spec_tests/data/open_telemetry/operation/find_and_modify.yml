@@ -33,13 +33,13 @@ tests:
       - client: *client0
         ignoreExtraSpans: false
         spans:
-          - name: findAndModify operation-find-one-and-update.test
+          - name: findOneAndUpdate operation-find-one-and-update.test
             attributes:
               db.system.name: mongodb
               db.namespace: operation-find-one-and-update
               db.collection.name: test
-              db.operation.name: findAndModify
-              db.operation.summary: findAndModify operation-find-one-and-update.test
+              db.operation.name: findOneAndUpdate
+              db.operation.summary: findOneAndUpdate operation-find-one-and-update.test
 
             nested:
               - name: findAndModify
