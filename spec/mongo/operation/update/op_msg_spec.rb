@@ -111,8 +111,6 @@ describe Mongo::Operation::Update::OpMsg do
     require_no_linting
 
     context 'when the server supports OP_MSG' do
-      min_server_fcv '3.6'
-
       let(:global_args) do
         {
             update: TEST_COLL,
@@ -132,7 +130,6 @@ describe Mongo::Operation::Update::OpMsg do
       end
 
       context 'when the topology is replica set or sharded' do
-        min_server_fcv '3.6'
         require_topology :replica_set, :sharded
 
         let(:expected_global_args) do
@@ -147,7 +144,6 @@ describe Mongo::Operation::Update::OpMsg do
       end
 
       context 'when the topology is standalone' do
-        min_server_fcv '3.6'
         require_topology :single
 
         let(:expected_global_args) do
@@ -204,7 +200,6 @@ describe Mongo::Operation::Update::OpMsg do
           end
 
           context 'when the topology is replica set or sharded' do
-            min_server_fcv '3.6'
             require_topology :replica_set, :sharded
 
             let(:expected_global_args) do
@@ -222,7 +217,6 @@ describe Mongo::Operation::Update::OpMsg do
           end
 
           context 'when the topology is standalone' do
-            min_server_fcv '3.6'
             require_topology :single
 
             let(:expected_global_args) do
@@ -240,7 +234,6 @@ describe Mongo::Operation::Update::OpMsg do
         end
 
         context 'when the session is explicit' do
-          min_server_fcv '3.6'
           require_topology :replica_set, :sharded
 
           let(:session) do

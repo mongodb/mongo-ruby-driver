@@ -31,11 +31,7 @@ class SpecSetup
         rescue Mongo::Error::OperationFailure::Family => e
           # When testing a cluster that requires auth, root user is already set up
           # and it is not creatable without auth.
-          # Seems like every mongodb version has its own error message
-          # for trying to make a user when not authenticated,
-          # and prior to 4.0 or so the codes are supposedly not reliable either.
-          # In order: 4.0, 3.6, 3.4 through 2.6
-          if e.message =~ /command createUser requires authentication|there are no users authenticated|not authorized on admin to execute command.*createUser/
+          if e.message =~ /command createUser requires authentication/
             # However, if the cluster is configured to require auth but
             # test suite has wrong credentials, then admin_authorized_test_client
             # won't be authenticated and the following line will raise an

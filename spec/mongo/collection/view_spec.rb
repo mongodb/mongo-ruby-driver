@@ -144,9 +144,6 @@ describe Mongo::Collection::View do
 
       before do
         view.to_enum.next
-        if ClusterConfig.instance.fcv_ish < '3.2'
-          cursor.instance_variable_set(:@cursor_id, 1)
-        end
       end
 
       it 'sends a kill cursors command for the cursor' do
@@ -175,35 +172,8 @@ describe Mongo::Collection::View do
           view.limit(-1).first
         end
 
-        context 'when the server selected supports collations' do
-          min_server_fcv '3.4'
-
-          it 'applies the collation' do
-            expect(result['name']).to eq('bang')
-          end
-        end
-
-        context 'when the server selected does not support collations' do
-          max_server_version '3.2'
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-
-          context 'when a String key is used' do
-
-            let(:options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-          end
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
         end
       end
 

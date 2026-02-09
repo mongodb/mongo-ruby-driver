@@ -46,27 +46,12 @@ describe 'Auth' do
           expect(connection.app_metadata.send(:document)[:saslSupportedMechs]).to eq('admin.nonexistent_user')
         end
 
-        context 'scram-sha-1 only server' do
-          min_server_fcv '3.0'
-          max_server_version '3.6'
-
-          it 'indicates scram-sha-1 was used' do
-            expect do
-              connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
-          end
-        end
-
-        context 'scram-sha-256 server' do
-          min_server_fcv '4.0'
-
-          # An existing user on 4.0+ will negotiate scram-sha-256.
-          # A non-existing user on 4.0+ will negotiate scram-sha-1.
-          it 'indicates scram-sha-1 was used' do
-            expect do
-              connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
-          end
+        # An existing user will negotiate scram-sha-256.
+        # A non-existing user negotiate scram-sha-1.
+        it 'indicates scram-sha-1 was used' do
+          expect do
+            connection.connect!
+          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
         end
       end
 
@@ -79,34 +64,17 @@ describe 'Auth' do
           expect(connection.app_metadata.send(:document)[:saslSupportedMechs]).to eq("admin.existing_user")
         end
 
-        context 'scram-sha-1 only server' do
-          min_server_fcv '3.0'
-          max_server_version '3.6'
-
-          it 'indicates scram-sha-1 was used' do
-            expect do
-              connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
-          end
-        end
-
-        context 'scram-sha-256 server' do
-          min_server_fcv '4.0'
-
-          # An existing user on 4.0+ will negotiate scram-sha-256.
-          # A non-existing user on 4.0+ will negotiate scram-sha-1.
-          it 'indicates scram-sha-256 was used' do
-            expect do
-              connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram256\) is not authorized to access admin.*used mechanism: SCRAM-SHA-256/)
-          end
+        # An existing user will negotiate scram-sha-256.
+        # A non-existing user will negotiate scram-sha-1.
+        it 'indicates scram-sha-256 was used' do
+          expect do
+            connection.connect!
+          end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram256\) is not authorized to access admin.*used mechanism: SCRAM-SHA-256/)
         end
       end
     end
 
     context 'user mechanism is provided' do
-      min_server_fcv '3.0'
-
       context 'scram-sha-1 requested' do
         let(:options) do
           {user: 'nonexistent_user', auth_mech: :scram}
@@ -120,8 +88,6 @@ describe 'Auth' do
       end
 
       context 'scram-sha-256 requested' do
-        min_server_fcv '4.0'
-
         let(:options) do
           {user: 'nonexistent_user', auth_mech: :scram256}
         end
@@ -168,9 +134,6 @@ describe 'Auth' do
 
     context 'attempting to connect to a non-tls server with tls' do
       require_no_tls
-      # The exception raised is SocketTimeout on 3.6 server for whatever reason,
-      # run the test on 4.0+ only.
-      min_server_fcv '4.0'
 
       let(:options) { {ssl: true} }
 
@@ -229,7 +192,6 @@ describe 'Auth' do
 
   describe 'scram-sha-1 client key caching' do
     clean_slate
-    min_server_version '3.0'
     require_no_external_user
 
     let(:client) { authorized_client.with(max_pool_size: 2, auth_mech: :scram) }
@@ -240,7 +202,6 @@ describe 'Auth' do
 
   describe 'scram-sha-256 client key caching' do
     clean_slate
-    min_server_version '4.0'
     require_no_external_user
 
     let(:client) { authorized_client.with(max_pool_size: 2, auth_mech: :scram256) }

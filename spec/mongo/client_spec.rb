@@ -532,8 +532,6 @@ describe Mongo::Client do
     end
 
     context 'when filter criteria is present' do
-      min_server_fcv '3.6'
-
       include_context 'ensure test db exists'
 
       let(:result) do
@@ -670,8 +668,6 @@ describe Mongo::Client do
     end
 
     context 'when authorized_databases is provided' do
-      min_server_fcv '4.0'
-
       let(:client_options) do
         root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
       end
@@ -825,8 +821,6 @@ describe Mongo::Client do
     end
 
     context 'when filter criteria is present' do
-      min_server_fcv '3.6'
-
       include_context 'ensure test db exists'
 
       let(:result) do
@@ -915,7 +909,6 @@ describe Mongo::Client do
     end
 
     context 'when sessions are supported' do
-      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       it 'creates a session' do
@@ -1246,7 +1239,6 @@ describe Mongo::Client do
     end
 
     context 'when two clients have the same cluster' do
-      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       let(:client) do
@@ -1263,7 +1255,6 @@ describe Mongo::Client do
     end
 
     context 'when two clients have different clusters' do
-      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       let(:client) do
@@ -1277,16 +1268,6 @@ describe Mongo::Client do
       it 'raises an exception' do
         expect {
           client[TEST_COLL].insert_one({ a: 1 }, session: session)
-        }.to raise_exception(Mongo::Error::InvalidSession)
-      end
-    end
-
-    context 'when sessions are not supported' do
-      max_server_version '3.4'
-
-      it 'raises an exception' do
-        expect {
-          session
         }.to raise_exception(Mongo::Error::InvalidSession)
       end
     end

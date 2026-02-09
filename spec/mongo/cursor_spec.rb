@@ -462,8 +462,6 @@ describe Mongo::Cursor do
   end
 
   context 'when an implicit session is used' do
-    min_server_fcv '3.6'
-
     let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:subscribed_client) do
@@ -516,7 +514,6 @@ describe Mongo::Cursor do
     end
 
     context 'when a getMore is needed to retrieve all results' do
-      min_server_fcv '3.6'
       require_topology :single, :replica_set
 
       let(:documents) do
