@@ -188,9 +188,6 @@ describe 'QueryCache' do
   end
 
   describe 'queries with read concern' do
-    require_wired_tiger
-    min_server_fcv '3.6'
-
     before do
       authorized_client['test', write_concern: { w: :majority }].drop
     end
@@ -304,8 +301,6 @@ describe 'QueryCache' do
     end
 
     context 'when query has collation' do
-      min_server_fcv '3.4'
-
       let(:options1) do
         { :collation => { locale: 'fr' } }
       end
@@ -938,8 +933,6 @@ describe 'QueryCache' do
     end
 
     context 'when aggregating with $merge' do
-      min_server_fcv '4.2'
-
       before do
         authorized_collection.delete_many
         authorized_collection.find.to_a
@@ -989,9 +982,6 @@ describe 'QueryCache' do
     end
 
     context 'with read concern' do
-      require_wired_tiger
-      min_server_fcv '3.6'
-
       let(:aggregation_read_concern) do
         authorized_client['collection_spec', { read_concern: { level: :local } }]
           .aggregate([ { '$match' => { test: 1 } } ])
@@ -1018,8 +1008,6 @@ describe 'QueryCache' do
     end
 
     context 'when collation is specified' do
-      min_server_fcv '3.4'
-
       let(:aggregation_collation) do
         authorized_collection.aggregate(
           [ { '$match' => { test: 1 } } ],
