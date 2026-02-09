@@ -234,13 +234,9 @@ module Mongo
           end
         end
       end
-    # With OP_MSG (3.6+ servers), the size of each section in the message
+    # The size of each section in the message
     # is independently capped at 16m and each bulk operation becomes
     # its own section. The size of the entire bulk write is limited to 48m.
-    # With OP_QUERY (pre-3.6 servers), the entire bulk write is sent as a
-    # single document and is thus subject to the 16m document size limit.
-    # This means the splits differ between pre-3.6 and 3.6+ servers, with
-    # 3.6+ servers being able to split less.
     rescue Error::MaxBSONSize, Error::MaxMessageSize => e
       raise e if values.size <= 1
       unpin_maybe(session, connection) do
@@ -322,8 +318,8 @@ module Mongo
     # Loop through the requests and check if each operation is allowed to send
     # a hint for each operation on the given server version.
     #
-    # For the following operations, the client can send a hint for servers >= 4.2
-    # and for the rest, the client can only send it for 4.4+:
+    # For the following operations, the client can send a hint for all supported
+    # server versions, and for the rest, the client can only send it for 4.4+:
     #   - updateOne
     #   - updateMany
     #   - replaceOne
@@ -333,13 +329,12 @@ module Mongo
     # @return [ true | false ] Whether the request is able to send hints for
     #   the current server version.
     def can_hint?(connection)
-      gte_4_2 = connection.server.description.server_version_gte?('4.2')
       gte_4_4 = connection.server.description.server_version_gte?('4.4')
       op_combiner.requests.all? do |req|
         op = req.keys.first
         if req[op].keys.include?(:hint)
           if [:update_one, :update_many, :replace_one].include?(op)
-            gte_4_2
+            true
           else
             gte_4_4
           end

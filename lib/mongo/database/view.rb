@@ -224,22 +224,10 @@ module Mongo
             description = server.description
             send_initial_query(server, session, context, options)
           end
-          # On 3.0+ servers, we get just the collection names.
-          # On 2.6 server, we get collection names prefixed with the database
-          # name. We need to filter system collections out here because
-          # in the caller we don't know which server version executed the
-          # command and thus what the proper filtering logic should be
-          # (it is valid for collection names to have dots, thus filtering out
-          # collections named system.* here for 2.6 servers would actually
-          # filter out collections in the system database).
-          if description.server_version_gte?('3.0')
-            cursor.reject do |doc|
-              doc['name'].start_with?('system.') || doc['name'].include?('$')
-            end
-          else
-            cursor.reject do |doc|
-              doc['name'].start_with?("#{database.name}.system") || doc['name'].include?('$')
-            end
+
+          # Filter out the system collections
+          cursor.reject do |doc|
+            doc['name'].start_with?('system.') || doc['name'].include?('$')
           end
         end
       end

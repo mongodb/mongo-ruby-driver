@@ -16,7 +16,6 @@
 # limitations under the License.
 
 require 'mongo/operation/shared/result/aggregatable'
-require 'mongo/operation/shared/result/use_legacy_error_parser'
 
 module Mongo
   module Operation

@@ -21,8 +21,6 @@ module Mongo
     # MongoDB Wire protocol Msg message (OP_MSG), a bi-directional wire
     # protocol opcode.
     #
-    # OP_MSG is only available in MongoDB 3.6 (maxWireVersion >= 6) and later.
-    #
     # @api private
     #
     # @since 2.5.0

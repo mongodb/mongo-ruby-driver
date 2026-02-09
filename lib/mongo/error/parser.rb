@@ -15,30 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Sample error - mongo 3.4:
-# {
-#   "ok" : 0,
-#   "errmsg" : "not master",
-#   "code" : 10107,
-#   "codeName" : "NotMaster"
-# }
-#
-# Sample response with a write concern error - mongo 3.4:
-# {
-#   "n" : 1,
-#   "opTime" : {
-#     "ts" : Timestamp(1527728618, 1),
-#     "t" : NumberLong(4)
-#   },
-#   "electionId" : ObjectId("7fffffff0000000000000004"),
-#   "writeConcernError" : {
-#     "code" : 100,
-#     "codeName" : "CannotSatisfyWriteConcern",
-#     "errmsg" : "Not enough data-bearing nodes"
-#   },
-#   "ok" : 1
-# }
-
 module Mongo
   class Error
 
