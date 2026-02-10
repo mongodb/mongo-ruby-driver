@@ -165,9 +165,8 @@ module Mongo
       # @param [ true | false ] write_aggregation Whether we need a server that
       #   supports writing aggregations (e.g. with $merge/$out) on secondaries.
       # @param [ Array<Server> ] deprioritized A list of servers that should
-      #   be selected from only if no other servers are available. This is
-      #   used to avoid selecting the same server twice in a row when
-      #   retrying a command.
+      #   be selected from only if no other servers are available.
+      #
       # @param [ Float | nil ] :timeout Timeout in seconds for the operation,
       #   if any.
       #
@@ -287,6 +286,9 @@ module Mongo
           end
 
           server = try_select_server(cluster, write_aggregation: write_aggregation, deprioritized: deprioritized)
+          if server.nil? && deprioritized.any?
+            server = try_select_server(cluster, write_aggregation: write_aggregation, deprioritized: [])
+          end
 
           if server
             unless cluster.topology.compatible?
@@ -358,20 +360,20 @@ module Mongo
 
           if is_write_supported
             # 2. If all servers support secondary writes, we respect read preference.
-            suitable_servers(cluster)
+            suitable_servers(cluster, deprioritized)
           else
             # 3. Otherwise we fallback to primary for replica set.
             [cluster.servers.detect(&:primary?)]
           end
         else
-          suitable_servers(cluster)
+          suitable_servers(cluster, deprioritized)
         end
 
         # This list of servers may be ordered in a specific way
         # by the selector (e.g. for secondary preferred, the first
         # server may be a secondary and the second server may be primary)
         # and we should take the first server here respecting the order
-        server = suitable_server(servers, deprioritized)
+        server = suitable_server(servers)
 
         if server
           if Lint.enabled?
@@ -396,12 +398,14 @@ module Mongo
       # latency filtering.
       #
       # @param [ Cluster ] cluster The cluster.
+      # @param [ Array<Server> ] deprioritized A list of servers that should
+      #   be selected from only if no other servers are available.
       #
       # @return [ Array<Server> ] The candidate servers.
       #
       # @api private
-      def candidates(cluster)
-        servers = cluster.servers
+      def candidates(cluster, deprioritized = [])
+        servers = cluster.servers.reject { |s| deprioritized.include?(s) }
         if cluster.single?
           servers
         elsif cluster.sharded?
@@ -417,44 +421,57 @@ module Mongo
       # Returns servers satisfying the server selector from the cluster.
       #
       # @param [ Cluster ] cluster The cluster.
+      # @param [ Array<Server> ] deprioritized A list of servers that should
+      #   be selected from only if no other servers are available.
       #
       # @return [ Array<Server> ] The suitable servers.
       #
       # @api private
-      def suitable_servers(cluster)
+      def suitable_servers(cluster, deprioritized = [])
+        result = suitable_servers_impl(cluster, deprioritized)
+        if result.empty? && deprioritized.any?
+          result = suitable_servers_impl(cluster, [])
+        end
+        result
+      end
+
+      private
+
+      # Internal implementation of suitable_servers that applies deprioritization
+      # filtering to the candidate servers.
+      #
+      # @param [ Cluster ] cluster The cluster.
+      # @param [ Array<Server> ] deprioritized A list of servers that should
+      #   be excluded from the candidate pool.
+      #
+      # @return [ Array<Server> ] The suitable servers.
+      #
+      # @api private
+      def suitable_servers_impl(cluster, deprioritized)
         if cluster.single?
-          candidates(cluster)
+          candidates(cluster, deprioritized)
         elsif cluster.sharded?
           local_threshold = local_threshold_with_cluster(cluster)
-          servers = candidates(cluster)
+          servers = candidates(cluster, deprioritized)
           near_servers(servers, local_threshold)
         elsif cluster.replica_set?
           validate_max_staleness_value!(cluster)
-          candidates(cluster)
+          candidates(cluster, deprioritized)
         else
           # Unknown cluster - no servers
           []
         end
       end
 
-      private
-
       # Returns a server from the list of servers that is suitable for
       # executing the operation.
       #
       # @param [ Array<Server> ] servers The candidate servers.
-      # @param [ Array<Server> ] deprioritized A list of servers that should
-      #  be selected from only if no other servers are available.
       #
       # @return [ Server | nil ] The suitable server or nil if no suitable
       #  server is available.
-      def suitable_server(servers, deprioritized)
-        preferred = servers - deprioritized
-        if preferred.empty?
-          servers.first
-        else
-          preferred.first
-        end
+      def suitable_server(servers)
+        servers.first
       end
 
       # Convert this server preference definition into a format appropriate

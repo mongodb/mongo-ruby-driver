@@ -53,6 +53,10 @@ module Mongo
         # @since 2.0.0
         attr_reader :suitable_servers
 
+        # @return [ Array<Hash> ] deprioritized_servers The set of servers that are deprioritized
+        #   and must only be selected if no other suitable server exists.
+        attr_reader :deprioritized_servers
+
         # @return [ Mongo::Cluster::Topology ] type The topology type.
         #
         # @since 2.0.0
@@ -72,6 +76,7 @@ module Mongo
           @max_staleness = @read_preference['maxStalenessSeconds']
           @candidate_servers = @test['topology_description']['servers']
           @suitable_servers = @test['suitable_servers'] || []
+          @deprioritized_servers = @test['deprioritized_servers'] || []
           @in_latency_window = @test['in_latency_window'] || []
           @type = Mongo::Cluster::Topology.const_get(@test['topology_description']['type'])
         end
@@ -123,7 +128,7 @@ module Mongo
   end
 end
 
-def define_server_selection_spec_tests(test_paths)
+def define_server_selection_spec_tests(test_paths, skipped_tests = {})
   # Linter insists that a server selection semaphore is present when
   # performing server selection.
   require_no_linting
@@ -131,6 +136,13 @@ def define_server_selection_spec_tests(test_paths)
   test_paths.each do |file|
 
     spec = Mongo::ServerSelection::Read::Spec.new(file)
+
+    if skipped_tests.keys.include?(File.basename(file))
+      it spec.description do
+        skip("Skipped due to #{skipped_tests[File.basename(file)]}")
+      end
+      next
+    end
 
     context(spec.description) do
       # Cluster needs a topology and topology needs a cluster...
@@ -233,6 +245,13 @@ def define_server_selection_spec_tests(test_paths)
         end
       end
 
+      let(:deprioritized_servers) do
+        spec.deprioritized_servers.collect do |server|
+          Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners,
+            options.merge(monitoring_io: false))
+        end
+      end
+
       let(:in_latency_window) do
         spec.in_latency_window.collect do |server|
           Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners,
@@ -285,13 +304,20 @@ def define_server_selection_spec_tests(test_paths)
           if spec.in_latency_window.length == 1
 
             it 'selects the expected server' do
-              [server_selector.select_server(cluster)].should == in_latency_window
+              [
+                server_selector.select_server(cluster, deprioritized: deprioritized_servers)
+              ].should == in_latency_window
             end
 
           else
 
             it 'selects a server in the suitable list' do
-              in_latency_window.should include(server_selector.select_server(cluster))
+              expect(in_latency_window)
+                .to include(
+                      server_selector.select_server(
+                        cluster,
+                        deprioritized: deprioritized_servers)
+                    )
             end
 
             let(:expected_addresses) do
@@ -299,7 +325,7 @@ def define_server_selection_spec_tests(test_paths)
             end
 
             let(:actual_addresses) do
-              server_selector.suitable_servers(cluster).map(&:address).map(&:seed).sort
+              server_selector.suitable_servers(cluster, deprioritized_servers).map(&:address).map(&:seed).sort
             end
 
             it 'identifies expected suitable servers' do
@@ -316,7 +342,7 @@ def define_server_selection_spec_tests(test_paths)
             end
 
             let(:actual_addresses) do
-              servers = server_selector.send(:suitable_servers, cluster)
+              servers = server_selector.send(:suitable_servers, cluster, deprioritized_servers)
 
               # The tests expect that only secondaries are "suitable" for
               # server selection with secondary preferred read preference.
@@ -353,7 +379,7 @@ def define_server_selection_spec_tests(test_paths)
 
           it 'Raises a NoServerAvailable Exception' do
             expect do
-              server_selector.select_server(cluster)
+              server_selector.select_server(cluster, deprioritized: deprioritized_servers)
             end.to raise_exception(Mongo::Error::NoServerAvailable)
           end
 
