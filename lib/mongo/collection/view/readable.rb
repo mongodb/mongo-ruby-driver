@@ -736,7 +736,6 @@ module Mongo
               db_name: database.name,
               session: session,
               batch_size: batch_size,
-              to_return: 0,
               # max_time_ms is not being passed here, I assume intentionally?
             }
             op = Operation::GetMore.new(spec)

@@ -100,11 +100,6 @@ module Mongo
       # @since 2.0.0
       SELECTOR = :selector.freeze
 
-      # The field for number to return.
-      #
-      # @since 2.0.0
-      TO_RETURN = :to_return.freeze
-
       # The field for updates.
       #
       # @since 2.0.0
@@ -392,18 +387,6 @@ module Mongo
       # @since 2.0.0
       def selector(connection)
         spec[SELECTOR]
-      end
-
-      # The number of documents to request from the server.
-      #
-      # @example Get the to return value from the spec.
-      #   specifiable.to_return
-      #
-      # @return [ Integer ] The number of documents to return.
-      #
-      # @since 2.0.0
-      def to_return
-        spec[TO_RETURN]
       end
 
       # The update documents from the spec.
