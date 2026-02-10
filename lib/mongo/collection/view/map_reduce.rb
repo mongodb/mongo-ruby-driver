@@ -298,7 +298,7 @@ module Mongo
           if valid_server?(connection.description)
             op.execute_with_connection(connection, context: context)
           else
-            msg = "#{REROUTE} - #{connection.address} is not suitable because it is not currently the primray"
+            msg = "#{REROUTE} - #{connection.address} is not suitable because it is not currently the primary"
             log_warn(msg)
             server = cluster.next_primary(nil, session)
             op.execute(server, context: context)
