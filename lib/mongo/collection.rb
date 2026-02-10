@@ -576,10 +576,8 @@ module Mongo
       View.new(self, {}, options).aggregate(pipeline, options)
     end
 
-    # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline
-    # stage is supported in the aggregation framework. This stage allows users
-    # to request that notifications are sent for all changes to a particular
-    # collection.
+    # Allows users to request that notifications are sent for all changes
+    # to a particular collection.
     #
     # @example Get change notifications for a given collection.
     #   collection.watch([{ '$match' => { operationType: { '$in' => ['insert', 'replace'] } } }])
@@ -686,7 +684,7 @@ module Mongo
     #
     # @deprecated Use #count_documents or estimated_document_count instead. However, note that the
     #   following operators will need to be substituted when switching to #count_documents:
-    #     * $where should be replaced with $expr (only works on 3.6+)
+    #     * $where should be replaced with $expr
     #     * $near should be replaced with $geoWithin with $center
     #     * $nearSphere should be replaced with $geoWithin with $centerSphere
     def count(filter = nil, options = {})
@@ -706,7 +704,7 @@ module Mongo
     #
     # @option options :skip [ Integer ] The number of documents to skip.
     # @option options :hint [ Hash ] Override default index selection and force
-    #   MongoDB to use a specific index for the query. Requires server version 3.6+.
+    #   MongoDB to use a specific index for the query.
     # @option options :limit [ Integer ] Max number of docs to count.
     # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
     #   command to run.

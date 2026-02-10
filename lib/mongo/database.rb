@@ -458,9 +458,8 @@ module Mongo
       View.new(self, options).aggregate(pipeline, options)
     end
 
-    # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
-    # in the aggregation framework. As of version 4.0, this stage allows users to request that
-    # notifications are sent for all changes that occur in the client's database.
+    # Allows users to request that notifications are sent for all changes that
+    # occur in the client's database.
     #
     # @example Get change notifications for a given database..
     #  database.watch([{ '$match' => { operationType: { '$in' => ['insert', 'replace'] } } }])

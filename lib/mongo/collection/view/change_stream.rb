@@ -27,14 +27,6 @@ module Mongo
       # that notifications are sent for all changes to a particular collection
       # or database.
       #
-      # @note Only available in server versions 3.6 and higher.
-      # @note ChangeStreams do not work properly with JRuby because of the
-      #  issue documented here: https://github.com/jruby/jruby/issues/4212.
-      #  Namely, JRuby eagerly evaluates #next on an Enumerator in a background
-      #  green thread, therefore calling #next on the change stream will cause
-      #  getMores to be called in a loop in the background.
-      #
-      #
       # @since 2.5.0
       class ChangeStream
         include Aggregation::Behavior

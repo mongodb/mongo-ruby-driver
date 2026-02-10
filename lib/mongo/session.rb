@@ -38,8 +38,7 @@ module Mongo
     # A session can be explicit or implicit. Lifetime of explicit sessions is
     # managed by the application - applications explicitry create such sessions
     # and explicitly end them. Implicit sessions are created automatically by
-    # the driver when sending operations to servers that support sessions
-    # (3.6+), and their lifetime is managed by the driver.
+    # the driver, and their lifetime is managed by the driver.
     #
     # When an implicit session is created, it cannot have a server session
     # associated with it. The server session will be checked out of the
@@ -208,8 +207,8 @@ module Mongo
     #
     # @return [ true, false ] If writes will be retried.
     #
-    # @note Retryable writes are only available on server versions at least 3.6
-    #   and with sharded clusters, replica sets, or load-balanced topologies.
+    # @note Retryable writes are only available with sharded clusters, replica
+    #   sets, or load-balanced topologies.
     #
     # @since 2.5.0
     def retry_writes?
@@ -309,7 +308,7 @@ module Mongo
     # @since 2.5.0
     # @deprecated
     SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the connected servers.'.freeze
-    # Note: SESSIONS_NOT_SUPPORTED is used by Mongoid - do not remove from driver.
+    # Note: SESSIONS_NOT_SUPPORTED is used by Mongoid 7.6 and earlier
 
     # The state of a session in which the last operation was not related to
     # any transaction or no operations have yet occurred.

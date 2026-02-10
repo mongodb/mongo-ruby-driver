@@ -132,7 +132,7 @@ module Mongo
       # @option options [ true, false ] :unique (false) If true, this index will enforce
       #   a uniqueness constraint on that field.
       # @option options [ true, false ] :background (false) If true, the index will be built
-      #   in the background (only available for server versions >= 1.3.2 )
+      #   in the background
       # @option options [ true, false ] :drop_dups (false) If creating a unique index on
       #   this collection, this option will keep the first document the database indexes
       #   and drop all subsequent documents with duplicate values on this field.
@@ -194,9 +194,6 @@ module Mongo
       #     { key: { age: -1 }, background: true },
       #     { commit_quorum: 'majority' }
       #   )
-      #
-      # @note On MongoDB 3.0.0 and higher, the indexes will be created in
-      #   parallel on the server.
       #
       # @param [ Array<Hash> ] models The index specifications. Each model MUST
       #   include a :key option, except for the last item in the Array, which

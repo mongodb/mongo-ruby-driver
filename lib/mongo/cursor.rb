@@ -369,19 +369,6 @@ module Mongo
       @cursor_id
     end
 
-    # Get the number of documents to return. Used on 3.0 and lower server
-    # versions.
-    #
-    # @example Get the number to return.
-    #   cursor.to_return
-    #
-    # @return [ Integer ] The number of documents to return.
-    #
-    # @since 2.2.0
-    def to_return
-      use_limit? ? @remaining : (batch_size || 0)
-    end
-
     # Execute a getMore command and return the batch of documents
     # obtained from the server.
     #
@@ -453,10 +440,7 @@ module Mongo
         db_name: database.name,
         coll_name: collection_name,
         cursor_id: id,
-        # 3.2+ servers use batch_size, 3.0- servers use to_return.
-        # TODO should to_return be calculated in the operation layer?
         batch_size: batch_size_for_get_more,
-        to_return: to_return
       }
       if view.respond_to?(:options) && view.options.is_a?(Hash)
         spec[:comment] = view.options[:comment] unless view.options[:comment].nil?

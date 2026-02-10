@@ -34,21 +34,21 @@ module Mongo
       # @deprecated No longer necessary with Server Selection specification.
       PING = { :ping => 1 }.freeze
 
-      # The ping command for an OP_MSG (server versions >= 3.6).
+      # The ping command for an OP_MSG
       #
       # @since 2.5.0
       #
       # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG = { :ping => 1, '$db' => Database::ADMIN }.freeze
 
-      # Ping message as an OP_MSG (server versions >= 3.6).
+      # Ping message as an OP_MSG
       #
       # @since 2.5.0
       #
       # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG_MESSAGE = Protocol::Msg.new([], {}, PING_OP_MSG)
 
-      # The ping OP_MSG message as raw bytes (server versions >= 3.6).
+      # The ping OP_MSG message as raw bytes
       #
       # @since 2.5.0
       #

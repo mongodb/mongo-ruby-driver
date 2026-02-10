@@ -31,19 +31,7 @@ module Mongo
     # @since 2.0.0
     CODE = 'code'.freeze
 
-    # An error field, MongoDB < 2.6
-    #
-    # @since 2.0.0
-    # @deprecated
-    ERR = '$err'.freeze
-
-    # An error field, MongoDB < 2.4
-    #
-    # @since 2.0.0
-    # @deprecated
-    ERROR = 'err'.freeze
-
-    # The standard error message field, MongoDB 3.0+
+    # The standard error message field
     #
     # @since 2.0.0
     # @deprecated
