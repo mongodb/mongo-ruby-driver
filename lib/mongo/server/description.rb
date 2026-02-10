@@ -902,9 +902,10 @@ module Mongo
           return true
         end
 
-        required_wv = SERVER_VERSION_WIRE_VERSION_MAP[version] || 0
+        required_wv = SERVER_VERSION_WIRE_VERSION_MAP[version]
+        raise NotImplementedError, "Unexpected server version #{version.inspect}" unless required_wv
 
-        required_wv >= min_wire_version && required_wv <= max_wire_version
+        required_wv <= max_wire_version
       end
     end
   end

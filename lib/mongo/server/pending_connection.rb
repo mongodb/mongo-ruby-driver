@@ -56,7 +56,7 @@ module Mongo
           # If no mechanism was specified and we are talking to a 4.2
           # server, we'll send speculative auth document, the server will
           # ignore it and we'll perform authentication using explicit
-          # command after having defaulted the mechanism later to CR.
+          # command.
           #
           # If no mechanism was specified and we are talking to a 4.4+
           # server and the user account doesn't allow SCRAM-SHA-256, we will
