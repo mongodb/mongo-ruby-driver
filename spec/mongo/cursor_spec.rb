@@ -701,11 +701,6 @@ describe Mongo::Cursor do
           end
         end
 
-=begin Behavior of pre-2.10 driver:
-        it 'skips the second batch' do
-          expect(cursor.to_a.map { |doc| doc['a'] }).to eq((0..9).to_a + (20..99).to_a)
-        end
-=end
         it 'raises InvalidCursorOperation' do
           expect do
             cursor.to_a

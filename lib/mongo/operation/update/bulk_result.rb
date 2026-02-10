@@ -78,10 +78,6 @@ module Mongo
         end
 
         # Gets the number of documents modified.
-        # Not that in a mixed sharded cluster a call to
-        # update could return nModified (>= 2.6) or not (<= 2.4).
-        # If any call does not return nModified we can't report
-        # a valid final count so set the field to nil.
         #
         # @example Get the modified count.
         #   result.n_modified

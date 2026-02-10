@@ -161,7 +161,7 @@ module Mongo
       # @param [ true, false ] ping Whether to ping the server before selection.
       #   Deprecated and ignored.
       # @param [ Session | nil ] session Optional session to take into account
-      #   for mongos pinning. Added in version 2.10.0.
+      #   for mongos pinning.
       # @param [ true | false ] write_aggregation Whether we need a server that
       #   supports writing aggregations (e.g. with $merge/$out) on secondaries.
       # @param [ Array<Server> ] deprioritized A list of servers that should

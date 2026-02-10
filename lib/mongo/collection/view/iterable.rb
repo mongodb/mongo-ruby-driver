@@ -45,14 +45,7 @@ module Mongo
           return @cursor.to_enum unless block_given?
 
           limit_for_cached_query = compute_limit_for_cached_query
-
-          # Ruby versions 2.5 and older do not support arr[0..nil] syntax, so
-          # this must be a separate conditional.
-          cursor_to_iterate = if limit_for_cached_query
-            @cursor.to_a[0...limit_for_cached_query]
-          else
-            @cursor
-          end
+          cursor_to_iterate = @cursor.to_a[0...limit_for_cached_query]
 
           cursor_to_iterate.each do |doc|
             yield doc

@@ -679,7 +679,6 @@ EOT
     )
   end
 
-  # Get the default test user for the suite on versions 2.6 and higher.
   def test_user
     Mongo::Auth::User.new(
       database: 'admin',

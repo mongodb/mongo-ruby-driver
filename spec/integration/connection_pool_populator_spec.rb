@@ -295,8 +295,6 @@ describe 'Connection pool populator integration' do
     require_mri
 
     context 'when min size is provided' do
-      min_server_version '2.8'
-
       it 'populates the parent and child pools' do
         client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
           server_options.merge(min_pool_size: 2, max_pool_size: 5))

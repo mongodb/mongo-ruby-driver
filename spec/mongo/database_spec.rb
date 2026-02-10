@@ -450,8 +450,7 @@ describe Mongo::Database do
       end
 
       let(:collection_names) do
-        # 2.6 server prefixes collection names with database name
-        collections.map { |info| info['name'].sub(/^many-collections\./, '') }.sort
+        collections.map { |info| info['name'] }.sort
       end
 
       it 'lists all collections' do
