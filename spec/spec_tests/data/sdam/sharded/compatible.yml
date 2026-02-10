@@ -17,7 +17,9 @@ phases: [
                     isWritablePrimary: true,
                     msg: "isdbgrid",
                     minWireVersion: 0,
-                    maxWireVersion: 6
+                    # this should be the minimum maxWireVersion for the server to be considered compatible
+                    # currently 4.2 is the earliest version we support, which has maxWireVersion 8
+                    maxWireVersion: 8
                 }]
         ],
         outcome: {

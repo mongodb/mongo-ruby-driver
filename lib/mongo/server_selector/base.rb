@@ -402,9 +402,6 @@ module Mongo
       # @api private
       def candidates(cluster)
         servers = cluster.servers
-        servers.each do |server|
-          validate_max_staleness_support!(server)
-        end
         if cluster.single?
           servers
         elsif cluster.sharded?
@@ -578,7 +575,6 @@ module Mongo
         # last_scan here.
         if primary
           candidates.select do |server|
-            validate_max_staleness_support!(server)
             staleness = (server.last_scan - server.last_write_date) -
                         (primary.last_scan - primary.last_write_date)  +
                         server.cluster.heartbeat_interval
@@ -587,7 +583,6 @@ module Mongo
         else
           max_write_date = candidates.collect(&:last_write_date).max
           candidates.select do |server|
-            validate_max_staleness_support!(server)
             staleness = max_write_date - server.last_write_date + server.cluster.heartbeat_interval
             staleness <= @max_staleness
           end
@@ -613,12 +608,6 @@ module Mongo
               "format { enabled: true }"
             )
           end
-        end
-      end
-
-      def validate_max_staleness_support!(server)
-        if @max_staleness && !server.features.max_staleness_enabled?
-          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_WITH_LEGACY_SERVER)
         end
       end
 

@@ -202,7 +202,7 @@ module Mongo
         @threads = {}
 
         results = @operations.map do |op|
-          target = resolve_target(test_client, op)
+          target = resolve_target(test_client, op) || support_client
           context = CRUD::Context.new(
             session0: session0,
             session1: session1,

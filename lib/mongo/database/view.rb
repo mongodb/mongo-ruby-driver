@@ -82,19 +82,13 @@ module Mongo
           session: session,
           operation_timeouts: operation_timeouts(options)
         )
+
         cursor = read_with_retry_cursor(session, ServerSelector.primary, self, context: context) do |server|
           send_initial_query(server, session, context, options.merge(name_only: true))
         end
-        cursor.map do |info|
-          if cursor.initial_result.connection_description.features.list_collections_enabled?
-            info['name']
-          else
-            (info['name'] &&
-              info['name'].sub("#{@database.name}.", ''))
-          end
-        end.reject do |name|
-          name.start_with?('system.') || name.include?('$')
-        end
+
+        cursor.map { |info| info['name'] }
+              .reject { |name| name.start_with?('system.') || name.include?('$') }
       end
 
       # Get info on all the collections in the database.

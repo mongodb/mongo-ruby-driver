@@ -73,9 +73,6 @@ module Mongo
 
         begin
           if speculative_auth_doc && (speculative_auth_result = result['speculativeAuthenticate'])
-            unless description.features.scram_sha_1_enabled?
-              raise Error::InvalidServerAuthResponse, "Speculative auth succeeded on a pre-3.0 server"
-            end
             case speculative_auth_user.mechanism
             when :mongodb_x509
               # Done
@@ -290,14 +287,10 @@ module Mongo
           raise Mongo::Error, 'Trying to query default mechanism when handshake has not completed'
         end
 
-        if description.features.scram_sha_1_enabled?
-          if @sasl_supported_mechanisms&.include?('SCRAM-SHA-256')
-            :scram256
-          else
-            :scram
-          end
+        if @sasl_supported_mechanisms&.include?('SCRAM-SHA-256')
+          :scram256
         else
-          :mongodb_cr
+          :scram
         end
       end
     end

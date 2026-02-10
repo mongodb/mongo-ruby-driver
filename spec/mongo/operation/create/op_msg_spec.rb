@@ -148,8 +148,6 @@ describe Mongo::Operation::Create::OpMsg do
 
         it 'creates the correct OP_MSG message' do
           RSpec::Mocks.with_temporary_scope do
-            expect(connection.features).to receive(:sessions_enabled?).and_return(false)
-
             expect(expected_global_args[:session]).to be nil
             expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args)
             op.send(:message, connection)

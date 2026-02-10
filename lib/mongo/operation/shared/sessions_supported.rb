@@ -138,12 +138,8 @@ module Mongo
 
         add_read_preference(sel, connection)
 
-        if connection.features.sessions_enabled?
-          apply_cluster_time!(sel, connection)
-          if session && (acknowledged_write? || session.in_transaction?)
-            apply_session_options(sel, connection)
-          end
-        elsif session && session.explicit?
+        apply_cluster_time!(sel, connection)
+        if session && (acknowledged_write? || session.in_transaction?)
           apply_session_options(sel, connection)
         end
 

@@ -247,14 +247,6 @@ describe Mongo::Server do
 
   describe 'retry_writes?' do
 
-    before do
-      allow(server).to receive(:features).and_return(features)
-    end
-
-    let(:features) do
-      double('features', sessions_enabled?: true)
-    end
-
     context 'when the server has a logical_session_timeout value' do
 
       before do

@@ -29,7 +29,6 @@ module Mongo
         include ExecutableNoValidate
         include ExecutableTransactionLabel
         include PolymorphicResult
-        include Validatable
 
         private
 
@@ -43,7 +42,7 @@ module Mongo
         end
 
         def message(connection)
-          updates = validate_updates(connection, send(IDENTIFIER))
+          updates = send(IDENTIFIER)
           section = Protocol::Msg::Section1.new(IDENTIFIER, updates)
           cmd = apply_relevant_timeouts_to(command(connection), connection)
           Protocol::Msg.new(flags, {}, cmd, section)

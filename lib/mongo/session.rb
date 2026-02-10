@@ -1273,15 +1273,6 @@ module Mongo
 
     def check_transactions_supported!
       raise Mongo::Error::TransactionsNotSupported, "standalone topology" if cluster.single?
-
-      cluster.next_primary.with_connection do |conn|
-        if cluster.replica_set? && !conn.features.transactions_enabled?
-          raise Mongo::Error::TransactionsNotSupported, "server version is < 4.0"
-        end
-        if cluster.sharded? && !conn.features.sharded_transactions_enabled?
-          raise Mongo::Error::TransactionsNotSupported, "sharded transactions require server version >= 4.2"
-        end
-      end
     end
 
     def operation_timeouts(opts)

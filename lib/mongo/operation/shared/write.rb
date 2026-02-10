@@ -73,11 +73,7 @@ module Mongo
       def bulk_execute(connection, context:)
         Lint.assert_type(connection, Server::Connection)
 
-        if connection.features.op_msg_enabled?
-          self.class::OpMsg.new(spec).execute(connection, context: context).bulk_result
-        else
-          self.class::Command.new(spec).execute(connection, context: context).bulk_result
-        end
+        self.class::OpMsg.new(spec).execute(connection, context: context).bulk_result
       end
 
       private

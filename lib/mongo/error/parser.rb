@@ -76,23 +76,12 @@ module Mongo
 
       # Create the new parser with the returned document.
       #
-      # In legacy mode, the code and codeName fields of the document are not
-      # examined because the status (ok: 1) is not part of the document and
-      # there is no way to distinguish successful from failed responses using
-      # the document itself, and a successful response may legitimately have
-      # { code: 123, codeName: 'foo' } as the contents of a user-inserted
-      # document. The legacy server versions do not fill out code nor codeName
-      # thus not reading them does not lose information.
-      #
       # @example Create the new parser.
       #   Parser.new({ 'errmsg' => 'failed' })
       #
       # @param [ BSON::Document ] document The returned document.
       # @param [ Array<Protocol::Message> ] replies The message replies.
       # @param [ Hash ] options The options.
-      #
-      # @option options [ true | false ] :legacy Whether document and replies
-      #   are from a legacy (pre-3.2) response
       #
       # @since 2.0.0
       def initialize(document, replies = nil, options = nil)
@@ -224,7 +213,7 @@ module Mongo
       end
 
       def parse_code
-        if document['ok'] == 1 || @options[:legacy]
+        if document['ok'] == 1
           @code = @code_name = nil
         else
           @code = document['code']

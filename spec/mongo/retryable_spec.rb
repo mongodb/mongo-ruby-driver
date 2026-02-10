@@ -453,13 +453,13 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::UnsupportedCollation.new('unsupported collation')).ordered
+          Mongo::Error::MaxBSONSize).ordered
       end
 
       it 'raises an exception' do
         expect {
           retryable.write
-        }.to raise_error(Mongo::Error::UnsupportedCollation)
+        }.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end
   end
@@ -596,13 +596,13 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::UnsupportedCollation.new('unsupported collation')).ordered
+          Mongo::Error::MaxBSONSize).ordered
       end
 
       it 'raises an exception' do
         expect {
           retryable.write
-        }.to raise_error(Mongo::Error::UnsupportedCollation)
+        }.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end
 

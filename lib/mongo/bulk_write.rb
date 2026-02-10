@@ -217,8 +217,6 @@ module Mongo
     end
 
     def execute_operation(name, values, connection, context, operation_id, result_combiner, session, txn_num = nil)
-      validate_collation!(connection)
-      validate_array_filters!(connection)
       validate_hint!(connection)
 
       unpin_maybe(session, connection) do
@@ -293,24 +291,10 @@ module Mongo
 
     private
 
-    def validate_collation!(connection)
-      if op_combiner.has_collation? && !connection.features.collation_enabled?
-        raise Error::UnsupportedCollation.new
-      end
-    end
-
-    def validate_array_filters!(connection)
-      if op_combiner.has_array_filters? && !connection.features.array_filters_enabled?
-        raise Error::UnsupportedArrayFilters.new
-      end
-    end
-
     def validate_hint!(connection)
       if op_combiner.has_hint?
         if !can_hint?(connection) && write_concern && !write_concern.acknowledged?
           raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-        elsif !connection.features.update_delete_option_validation_enabled?
-          raise Error::UnsupportedOption.hint_error
         end
       end
     end

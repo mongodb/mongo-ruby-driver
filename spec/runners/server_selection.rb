@@ -196,7 +196,6 @@ def define_server_selection_spec_tests(test_paths)
       let(:candidate_servers) do
         spec.candidate_servers.collect do |server|
           features = double('features').tap do |feat|
-            allow(feat).to receive(:max_staleness_enabled?).and_return(server['maxWireVersion'] && server['maxWireVersion'] >= 5)
             allow(feat).to receive(:check_driver_support!).and_return(true)
           end
           address = Mongo::Address.new(server['address'])

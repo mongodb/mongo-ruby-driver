@@ -24,8 +24,8 @@ module Mongo
     #
     # @since 2.1.0
     class UnorderedCombiner
-      include Transformable
       include Validatable
+      include Transformable
       include Combineable
 
       # Combine the requests in order.

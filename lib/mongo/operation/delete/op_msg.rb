@@ -29,7 +29,6 @@ module Mongo
         include ExecutableNoValidate
         include ExecutableTransactionLabel
         include PolymorphicResult
-        include Validatable
 
         private
 
@@ -40,10 +39,7 @@ module Mongo
             let: spec[:let],
             comment: spec[:comment],
           }.compact.tap do |selector|
-            if hint = spec[:hint]
-              validate_hint_on_update(connection, selector)
-              selector[:hint] = hint
-            end
+            selector[:hint] = spec[:hint] if spec[:hint]
           end
         end
 

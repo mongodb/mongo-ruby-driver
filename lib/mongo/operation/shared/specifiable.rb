@@ -565,12 +565,7 @@ module Mongo
       end
 
       def apply_collation(selector, connection, collation)
-        if collation
-          unless connection.features.collation_enabled?
-            raise Error::UnsupportedCollation
-          end
-          selector = selector.merge(collation: collation)
-        end
+        selector = selector.merge(collation: collation) if collation
         selector
       end
     end
