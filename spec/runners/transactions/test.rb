@@ -256,10 +256,8 @@ module Mongo
         rescue Mongo::Error
         end
 
-        if ClusterConfig.instance.fcv_ish >= '4.2'
-          ::Utils.mongos_each_direct_client do |direct_client|
-            direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
-          end
+        ::Utils.mongos_each_direct_client do |direct_client|
+          direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
         key_vault_coll = support_client

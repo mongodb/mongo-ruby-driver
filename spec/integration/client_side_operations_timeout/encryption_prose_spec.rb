@@ -5,7 +5,6 @@ require 'spec_helper'
 describe 'CSOT for encryption' do
   require_libmongocrypt
   require_no_multi_mongos
-  min_server_fcv '4.2'
 
   include_context 'define shared FLE helpers'
   include_context 'with local kms_providers'

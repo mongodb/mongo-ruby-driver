@@ -890,7 +890,6 @@ module Mongo
         '5.0' => 12,
         '4.4' => 9,
         '4.2' => 8,
-        '4.0' => 7,
       }.freeze
 
       # @api private

@@ -133,18 +133,7 @@ describe 'SDAM error handling' do
     shared_examples_for 'not master or node recovering' do
       it_behaves_like 'marks server unknown'
       it_behaves_like 'requests server scan'
-
-      context 'server 4.2 or higher' do
-        min_server_fcv '4.2'
-
-        it_behaves_like 'does not clear connection pool'
-      end
-
-      context 'server 4.0 or lower' do
-        max_server_version '4.0'
-
-        it_behaves_like 'clears connection pool'
-      end
+      it_behaves_like 'does not clear connection pool'
     end
 
     shared_examples_for 'node shutting down' do

@@ -772,8 +772,6 @@ describe Mongo::Index::View do
     end
 
     context 'when providing an invalid wildcard projection expression' do
-      min_server_fcv '4.2'
-
       it 'raises an exception' do
         expect {
           view.create_one({ '$**' => 1 }, wildcard_projection: 5)
@@ -782,8 +780,6 @@ describe Mongo::Index::View do
     end
 
     context 'when providing a wildcard projection to an invalid base index' do
-      min_server_fcv '4.2'
-
       it 'raises an exception' do
         expect {
           view.create_one({ 'x' => 1 }, wildcard_projection: { rating: 1 })
@@ -792,8 +788,6 @@ describe Mongo::Index::View do
     end
 
     context 'when providing a valid wildcard projection' do
-      min_server_fcv '4.2'
-
       let!(:result) do
         view.create_one({ '$**' => 1 }, wildcard_projection: { 'rating' => 1 })
       end

@@ -122,7 +122,6 @@ describe 'Retryable reads errors tests' do
 
   context 'Retries in a sharded cluster' do
     require_topology :sharded
-    min_server_version '4.2'
     require_no_auth
 
     let(:subscriber) { Mrss::EventSubscriber.new }

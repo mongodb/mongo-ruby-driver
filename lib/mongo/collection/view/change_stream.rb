@@ -106,7 +106,7 @@ module Mongo
         # @option options [ BSON::Timestamp ] :start_at_operation_time Only
         #   return changes that occurred at or after the specified timestamp. Any
         #   command run against the server will return a cluster time that can
-        #   be used here. Only recognized by server versions 4.0+.
+        #   be used here.
         # @option options [ Bson::Document, Hash ] :start_after Similar to :resume_after, this
         #   option takes a resume token and starts a new change stream returning the first
         #   notification after the token. This will allow users to watch collections that have been
@@ -332,18 +332,13 @@ module Mongo
         def create_cursor!(timeout_ms = nil)
           # clear the cache because we may get a newer or an older server
           # (rolling upgrades)
-          @start_at_operation_time_supported = nil
-
           session = client.get_session(@options)
           context = Operation::Context.new(client: client, session: session, view: self, operation_timeouts: timeout_ms ? { operation_timeout_ms: timeout_ms } : operation_timeouts)
 
           start_at_operation_time = nil
-          start_at_operation_time_supported = nil
 
           @cursor = read_with_retry_cursor(session, server_selector, self, context: context) do |server|
             server.with_connection do |connection|
-              start_at_operation_time_supported = connection.description.server_version_gte?('4.0')
-
               result = send_initial_query(connection, context)
 
               if doc = result.replies.first && result.replies.first.documents.first
@@ -361,7 +356,6 @@ module Mongo
           end
 
           @start_at_operation_time = start_at_operation_time
-          @start_at_operation_time_supported = start_at_operation_time_supported
         end
 
         def pipeline
@@ -397,12 +391,7 @@ module Mongo
                 # Spec says we need to remove both startAtOperationTime and startAfter if
                 # either was passed in by user, thus we won't forward them
                 doc[:resumeAfter] = resume_token
-              elsif @start_at_operation_time_supported && @start_at_operation_time
-                # It is crucial to check @start_at_operation_time_supported
-                # here - we may have switched to an older server that
-                # does not support operation times and therefore shouldn't
-                # try to send one to it!
-                #
+              elsif @start_at_operation_time
                 # @start_at_operation_time is already a BSON::Timestamp
                 doc[:startAtOperationTime] = @start_at_operation_time
               else

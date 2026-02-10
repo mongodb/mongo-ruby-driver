@@ -26,7 +26,7 @@ describe 'Auth' do
       # and does not create its own users. However, the configured user may
       # not have the auth mechanisms we need. Therefore we create a user
       # for this test without specifying auth mechanisms, which gets us
-      # server default (scram for 4.0, scram & scram256 for 4.2).
+      # server default
 
       users = ClientRegistry.instance.global_client('root_authorized').use(:admin).database.users
       unless users.info('existing_user').empty?

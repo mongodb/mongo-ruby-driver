@@ -20,7 +20,6 @@ describe 'Transaction pinning' do
 
   context 'non-lb' do
     require_topology :sharded
-    min_server_fcv '4.2'
 
     # Start several transactions, then complete each of them.
     # Force each transaction to be on its own connection.
@@ -68,7 +67,6 @@ describe 'Transaction pinning' do
 
   context 'lb' do
     require_topology :load_balanced
-    min_server_fcv '4.2'
 
     # In load-balanced topology, we cannot create new connections to a
     # particular service.

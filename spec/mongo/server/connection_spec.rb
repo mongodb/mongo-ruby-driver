@@ -597,8 +597,6 @@ describe Mongo::Server::Connection do
     end
 
     context 'when the server returns unknown saslSupportedMechs' do
-      min_server_version '4.0'
-
       let(:connection) do
         described_class.new(server, server.options.merge(connection_pool: pool))
       end

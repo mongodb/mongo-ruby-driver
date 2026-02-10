@@ -625,7 +625,6 @@ module Mongo
     # @option options [ BSON::Timestamp ] :start_at_operation_time Only return
     #   changes that occurred at or after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
-    #   Only recognized by server versions 4.0+.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Boolean ] :show_expanded_events Enables the server to

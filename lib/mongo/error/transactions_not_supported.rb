@@ -16,11 +16,8 @@
 
 module Mongo
   class Error
-    # Transactions are not supported by the cluster. There might be the
-    # following reasons:
-    #  - topology is standalone
-    #  - topology is replica set and server version is < 4.0
-    #  - topology is sharded and server version is < 4.2
+    # Transactions are not supported by the cluster, e.g. if the topology is
+    # standalone.
     #
     # @param [ String ] reason The reason why transactions are no supported.
     #

@@ -5,7 +5,6 @@ require 'spec_helper'
 
 describe 'Mongos pinning' do
   require_topology :sharded
-  min_server_fcv '4.2'
 
   let(:client) { authorized_client }
   let(:collection) { client['mongos_pinning_spec'] }

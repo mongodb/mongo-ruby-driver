@@ -4,9 +4,6 @@
 require 'spec_helper'
 
 describe 'Failing retryable operations' do
-  # Requirement for fail point
-  min_server_fcv '4.0'
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client_options) do

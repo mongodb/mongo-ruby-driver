@@ -6,7 +6,6 @@ require 'tempfile'
 
 describe Mongo::Crypt::AutoEncrypter do
   require_libmongocrypt
-  min_server_fcv '4.2'
   require_enterprise
   clean_slate
 
