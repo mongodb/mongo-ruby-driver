@@ -76,7 +76,6 @@ describe 'Retryable writes errors tests' do
   context "PoolClearedError retryability test" do
     require_topology :single, :sharded
     require_no_multi_mongos
-    require_fail_command
     require_retry_writes
 
     let(:options) { { max_pool_size: 1 } }

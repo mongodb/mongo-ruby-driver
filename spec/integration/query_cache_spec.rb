@@ -1118,7 +1118,6 @@ describe 'QueryCache' do
   end
 
   context 'when find command fails and retries' do
-    require_fail_command
     require_no_multi_mongos
     require_warning_clean
 

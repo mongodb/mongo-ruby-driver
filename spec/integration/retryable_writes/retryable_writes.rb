@@ -8,7 +8,6 @@ require_relative './shared/only_supports_legacy_retries'
 require_relative './shared/does_not_support_retries'
 
 describe 'Retryable Writes' do
-  require_fail_command
   require_no_multi_mongos
   require_warning_clean
 

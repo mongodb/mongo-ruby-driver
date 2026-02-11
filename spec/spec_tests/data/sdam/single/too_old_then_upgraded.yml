@@ -1,4 +1,4 @@
-description: "Standalone with default maxWireVersion of 0 is upgraded to one with maxWireVersion 6"
+description: "Standalone with default maxWireVersion of 0 is upgraded to one with maxWireVersion 21"
 uri: "mongodb://a"
 phases: [
     {
@@ -29,9 +29,7 @@ phases: [
                     helloOk: true,
                     isWritablePrimary: true,
                     minWireVersion: 0,
-                    # this should be the minimum maxWireVersion for the server to be considered compatible
-                    # currently 4.2 is the earliest version we support, which has maxWireVersion 8
-                    maxWireVersion: 8
+                    maxWireVersion: 21
                 }]
         ],
         outcome: {
