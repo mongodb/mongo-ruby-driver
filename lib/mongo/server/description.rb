@@ -880,38 +880,20 @@ module Mongo
       alias_method :eql?, :==
 
       # @api private
-      def server_version_gte?(version)
-        required_wv = case version
-          when '7.0'
-            21
-          when '6.0'
-            17
-          when '5.2'
-            15
-          when '5.1'
-            14
-          when '5.0'
-            12
-          when '4.4'
-            9
-          when '4.2'
-            8
-          when '4.0'
-            7
-          when '3.6'
-            6
-          when '3.4'
-            5
-          when '3.2'
-            4
-          when '3.0'
-            3
-          when '2.6'
-            2
-          else
-            raise ArgumentError, "Bogus required version #{version}"
-          end
+      SERVER_VERSION_WIRE_VERSION_MAP = {
+        '8.2' => 27,
+        '8.0' => 25,
+        '7.0' => 21,
+        '6.0' => 17,
+        '5.2' => 15,
+        '5.1' => 14,
+        '5.0' => 12,
+        '4.4' => 9,
+        '4.2' => 8,
+      }.freeze
 
+      # @api private
+      def server_version_gte?(version)
         if load_balancer?
           # If we are talking to a load balancer, there is no monitoring
           # and we don't know what server is behind the load balancer.
@@ -920,7 +902,10 @@ module Mongo
           return true
         end
 
-        required_wv >= min_wire_version && required_wv <= max_wire_version
+        required_wv = SERVER_VERSION_WIRE_VERSION_MAP[version]
+        raise NotImplementedError, "Unexpected server version #{version.inspect}" unless required_wv
+
+        required_wv <= max_wire_version
       end
     end
   end

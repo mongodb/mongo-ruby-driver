@@ -28,15 +28,6 @@ module Mongo
     #   Mongo::Error::UnsupportedOption, which will prevent any breaking changes
     #   in your application when upgrading to version 3.0 of the driver.
     class UnsupportedCollation < UnsupportedOption
-
-      # The default error message describing that collations is not supported.
-      #
-      # @return [ String ] A default message describing that collations is not supported by the server.
-      #
-      # @since 2.4.0
-      DEFAULT_MESSAGE = "Collations is not a supported feature of the server handling this operation. " +
-          "Operation results may be unexpected."
-
       # The error message describing that collations cannot be used when write concern is unacknowledged.
       #
       # @return [ String ] A message describing that collations cannot be used when write concern is unacknowledged.
@@ -44,16 +35,6 @@ module Mongo
       # @since 2.4.0
       UNACKNOWLEDGED_WRITES_MESSAGE = "A collation cannot be specified when using unacknowledged writes. " +
         "Either remove the collation option or use acknowledged writes (w >= 1)."
-
-      # Create the new exception.
-      #
-      # @example Create the new exception.
-      #   Mongo::Error::UnsupportedCollation.new
-      #
-      # @since 2.4.0
-      def initialize(message = nil)
-        super(message || DEFAULT_MESSAGE)
-      end
     end
   end
 end

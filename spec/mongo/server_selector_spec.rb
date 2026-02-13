@@ -634,7 +634,6 @@ describe Mongo::ServerSelector do
 
     def make_server_with_staleness(last_write_date)
       make_server(:secondary).tap do |server|
-        allow(server.description.features).to receive(:max_staleness_enabled?).and_return(true)
         allow(server).to receive(:last_scan).and_return(Time.now)
         allow(server).to receive(:last_write_date).and_return(last_write_date)
       end

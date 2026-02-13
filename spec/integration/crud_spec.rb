@@ -12,32 +12,6 @@ describe 'CRUD operations' do
   end
 
   describe 'find' do
-    context 'when allow_disk_use is true' do
-      # Other cases are adequately covered by spec tests.
-      context 'on server version < 3.2' do
-        max_server_fcv '3.0'
-
-        it 'raises an exception' do
-          expect do
-            collection.find({}, { allow_disk_use: true }).first
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the allow_disk_use option on this command./)
-        end
-      end
-    end
-
-    context 'when allow_disk_use is false' do
-      # Other cases are adequately covered by spec tests.
-      context 'on server version < 3.2' do
-        max_server_fcv '3.0'
-
-        it 'raises an exception' do
-          expect do
-            collection.find({}, { allow_disk_use: false }).first
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the allow_disk_use option on this command./)
-        end
-      end
-    end
-
     context 'when using the legacy $query syntax' do
       before do
         collection.insert_one(_id: 1, test: 1)
@@ -67,9 +41,6 @@ describe 'CRUD operations' do
     end
 
     context 'with read concern' do
-      # Read concern requires 3.2+ server.
-      min_server_fcv '3.2'
-
       context 'with read concern specified on operation level' do
 
         it 'passes the read concern' do
@@ -142,8 +113,6 @@ describe 'CRUD operations' do
 
   describe 'explain' do
     context 'with explicit session' do
-      min_server_fcv '3.6'
-
       it 'passes the session' do
         client.start_session do |session|
           event = Utils.get_command_event(client, 'explain') do |client|
@@ -157,9 +126,6 @@ describe 'CRUD operations' do
     context 'with read preference specified on operation level' do
       require_topology :sharded
 
-      # RUBY-2706
-      min_server_fcv '3.6'
-
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
           client['foo'].find({}, read: {mode: :secondary_preferred}).explain.should be_explain_output
@@ -170,9 +136,6 @@ describe 'CRUD operations' do
 
     context 'with read preference specified on collection level' do
       require_topology :sharded
-
-      # RUBY-2706
-      min_server_fcv '3.6'
 
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
@@ -185,9 +148,6 @@ describe 'CRUD operations' do
     context 'with read preference specified on client level' do
       require_topology :sharded
 
-      # RUBY-2706
-      min_server_fcv '3.6'
-
       let(:client) { authorized_client.with(read: {mode: :secondary_preferred}) }
 
       it 'passes the read preference' do
@@ -199,9 +159,6 @@ describe 'CRUD operations' do
     end
 
     context 'with read concern' do
-      # Read concern requires 3.2+ server.
-      min_server_fcv '3.2'
-
       context 'with read concern specifed on operation level' do
 
         # Read concern is not allowed in explain command, driver drops it.
@@ -258,10 +215,7 @@ describe 'CRUD operations' do
       end
 
       it 'is stored as the correct type' do
-        # 18 is the number that represents the Int64 type for the $type
-        # operator; string aliases in the $type operator are only supported on
-        # server versions 3.2 and newer.
-        result = collection.find(int64: { '$type' => 18 }).first
+        result = collection.find(int64: { '$type' => 'long' }).first
         expect(result).not_to be_nil
         expect(result['int64']).to eq(42)
       end
@@ -273,10 +227,7 @@ describe 'CRUD operations' do
       end
 
       it 'is stored as the correct type' do
-        # 16 is the number that represents the Int32 type for the $type
-        # operator; string aliases in the $type operator are only supported on
-        # server versions 3.2 and newer.
-        result = collection.find(int32: { '$type' => 16 }).first
+        result = collection.find(int32: { '$type' => 'int' }).first
         expect(result).not_to be_nil
         expect(result['int32']).to eq(42)
       end
@@ -285,7 +236,6 @@ describe 'CRUD operations' do
     context 'with automatic encryption' do
       require_libmongocrypt
       require_enterprise
-      min_server_fcv '4.2'
 
       include_context 'define shared FLE helpers'
       include_context 'with local kms_providers'
@@ -314,10 +264,7 @@ describe 'CRUD operations' do
         end
 
         it 'is stored as the correct type' do
-          # 18 is the number that represents the Int64 type for the $type
-          # operator; string aliases in the $type operator are only supported on
-          # server versions 3.2 and newer.
-          result = collection.find(int64: { '$type' => 18 }).first
+          result = collection.find(int64: { '$type' => 'long' }).first
           expect(result).not_to be_nil
           expect(result['int64']).to eq(42)
         end
@@ -329,10 +276,7 @@ describe 'CRUD operations' do
         end
 
         it 'is stored as the correct type' do
-          # 16 is the number that represents the Int32 type for the $type
-          # operator; string aliases in the $type operator are only supported on
-          # server versions 3.2 and newer.
-          result = collection.find(int32: { '$type' => 16 }).first
+          result = collection.find(int32: { '$type' => 'int' }).first
           expect(result).not_to be_nil
           expect(result['int32']).to eq(42)
         end

@@ -16,7 +16,6 @@
 # limitations under the License.
 
 require 'mongo/operation/shared/result/aggregatable'
-require 'mongo/operation/shared/result/use_legacy_error_parser'
 
 module Mongo
   module Operation
@@ -107,6 +106,9 @@ module Mongo
       def initialize(replies, connection_description = nil, connection_global_id = nil, context: nil, connection: nil)
         @context = context
 
+        # TODO: older versions of MongoDB (2.4 and below?) could sometimes end
+        # up with nil here, which indicated an unackowledged write. Is that
+        # still the case? Can we simplify this?
         if replies
           if replies.is_a?(Array)
             if replies.length != 1
@@ -156,12 +158,6 @@ module Mongo
         :not_master?, :node_recovering?, :node_shutting_down?
 
       # Is the result acknowledged?
-      #
-      # @note On MongoDB 2.6 and higher all writes are acknowledged since the
-      #   driver uses write commands for all write operations. On 2.4 and
-      #   lower, the result is acknowledged if the GLE has been executed after
-      #   the command. If not, no replies will be specified. Reads will always
-      #   return true here since a replies is always provided.
       #
       # @return [ true, false ] If the result is acknowledged.
       #

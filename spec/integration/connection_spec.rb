@@ -237,13 +237,6 @@ describe 'Connections' do
     describe 'wire protocol version range update' do
       require_no_required_api_version
 
-      # 3.2 wire protocol is 4.
-      # Wire protocol < 2 means only scram auth is available,
-      # which is not supported by modern mongos.
-      # Instead of mucking with this we just limit this test to 3.2+
-      # so that we can downgrade protocol range to 0..3 instead of 0..1.
-      min_server_fcv '3.2'
-
       let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
 
       context 'non-lb' do
@@ -262,15 +255,6 @@ describe 'Connections' do
           server = client.cluster.servers.first
           expect(server.features.server_wire_versions.max >= 4).to be true
           max_version = server.features.server_wire_versions.max
-
-          # Depending on server version, handshake here may return a
-          # description that compares equal to the one we got from a
-          # monitoring connection (pre-4.2) or not (4.2+).
-          # Since we do run SDAM flow on handshake responses on
-          # non-monitoring connections, force descriptions to be different
-          # by setting the existing description here to unknown.
-          server.monitor.instance_variable_set('@description',
-            Mongo::Server::Description.new(server.address))
 
           RSpec::Mocks.with_temporary_scope do
             # now pretend a handshake returned a different range

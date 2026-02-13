@@ -161,7 +161,7 @@ module Mongo
       # @param [ true, false ] ping Whether to ping the server before selection.
       #   Deprecated and ignored.
       # @param [ Session | nil ] session Optional session to take into account
-      #   for mongos pinning. Added in version 2.10.0.
+      #   for mongos pinning.
       # @param [ true | false ] write_aggregation Whether we need a server that
       #   supports writing aggregations (e.g. with $merge/$out) on secondaries.
       # @param [ Array<Server> ] deprioritized A list of servers that should
@@ -406,9 +406,6 @@ module Mongo
       # @api private
       def candidates(cluster, deprioritized = [])
         servers = cluster.servers.reject { |s| deprioritized.include?(s) }
-        servers.each do |server|
-          validate_max_staleness_support!(server)
-        end
         if cluster.single?
           servers
         elsif cluster.sharded?
@@ -595,7 +592,6 @@ module Mongo
         # last_scan here.
         if primary
           candidates.select do |server|
-            validate_max_staleness_support!(server)
             staleness = (server.last_scan - server.last_write_date) -
                         (primary.last_scan - primary.last_write_date)  +
                         server.cluster.heartbeat_interval
@@ -604,7 +600,6 @@ module Mongo
         else
           max_write_date = candidates.collect(&:last_write_date).max
           candidates.select do |server|
-            validate_max_staleness_support!(server)
             staleness = max_write_date - server.last_write_date + server.cluster.heartbeat_interval
             staleness <= @max_staleness
           end
@@ -630,12 +625,6 @@ module Mongo
               "format { enabled: true }"
             )
           end
-        end
-      end
-
-      def validate_max_staleness_support!(server)
-        if @max_staleness && !server.features.max_staleness_enabled?
-          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_WITH_LEGACY_SERVER)
         end
       end
 

@@ -219,20 +219,6 @@ module Mongo
           code == 50 # MaxTimeMSExpired
         end
 
-        # Whether the error is caused by an attempted retryable write
-        # on a storage engine that does not support retryable writes.
-        #
-        # @return [ true | false ] Whether the error is caused by an attempted
-        # retryable write on a storage engine that does not support retryable writes.
-        #
-        # @since 2.10.0
-        def unsupported_retryable_write?
-          # code 20 is IllegalOperation.
-          # Note that the document is expected to be a BSON::Document, thus
-          # either having string keys or providing indifferent access.
-          code == 20 && server_message&.start_with?("Transaction numbers") || false
-        end
-
         private
 
         # Retrieve the details from a document

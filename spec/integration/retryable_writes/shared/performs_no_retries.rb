@@ -3,9 +3,6 @@
 
 module PerformsNoRetries
   shared_examples 'it performs no retries' do
-    # required for failCommand
-    min_server_fcv '4.0'
-
     context 'for connection error' do
       before do
         client.use('admin').command(

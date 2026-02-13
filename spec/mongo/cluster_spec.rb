@@ -665,99 +665,46 @@ describe Mongo::Cluster do
       end
     end
 
-    context 'in server < 3.6' do
-      max_server_version '3.4'
+    let(:cluster) { client.cluster }
 
-      let(:cluster) { client.cluster }
+    context 'in single topology' do
+      require_topology :single
 
-      context 'in single topology' do
-        require_topology :single
+      let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        let(:client) { ClientRegistry.instance.global_client('authorized') }
-
-        it_behaves_like 'does not support sessions'
-      end
-
-      context 'in single topology with replica set name set' do
-        require_topology :replica_set
-
-        let(:client) do
-          new_local_client(
-            [ SpecConfig.instance.addresses.first ],
-            SpecConfig.instance.test_options.merge(
-              connect: :direct,
-              replica_set: ClusterConfig.instance.replica_set_name
-            )
-          )
-        end
-
-        it_behaves_like 'does not support sessions'
-      end
-
-      context 'in replica set topology' do
-        require_topology :replica_set
-
-        let(:client) { ClientRegistry.instance.global_client('authorized') }
-
-        it_behaves_like 'does not support sessions'
-      end
-
-      context 'in sharded topology' do
-        require_topology :sharded
-
-        let(:client) { ClientRegistry.instance.global_client('authorized') }
-
-        it_behaves_like 'does not support sessions'
-      end
+      it_behaves_like 'supports sessions'
     end
 
-    context 'in server 3.6+' do
-      min_server_fcv '3.6'
+    context 'in single topology with replica set name set' do
+      require_topology :replica_set
 
-      let(:cluster) { client.cluster }
-
-      context 'in single topology' do
-        require_topology :single
-
-        let(:client) { ClientRegistry.instance.global_client('authorized') }
-
-        # Contrary to the session spec, 3.6 and 4.0 standalone servers
-        # report a logical session timeout and thus are considered to
-        # support sessions.
-        it_behaves_like 'supports sessions'
-      end
-
-      context 'in single topology with replica set name set' do
-        require_topology :replica_set
-
-        let(:client) do
-          new_local_client(
-            [ SpecConfig.instance.addresses.first ],
-            SpecConfig.instance.test_options.merge(
-              connect: :direct,
-              replica_set: ClusterConfig.instance.replica_set_name
-            )
+      let(:client) do
+        new_local_client(
+          [ SpecConfig.instance.addresses.first ],
+          SpecConfig.instance.test_options.merge(
+            connect: :direct,
+            replica_set: ClusterConfig.instance.replica_set_name
           )
-        end
-
-        it_behaves_like 'supports sessions'
+        )
       end
 
-      context 'in replica set topology' do
-        require_topology :replica_set
+      it_behaves_like 'supports sessions'
+    end
 
-        let(:client) { ClientRegistry.instance.global_client('authorized') }
+    context 'in replica set topology' do
+      require_topology :replica_set
 
-        it_behaves_like 'supports sessions'
-      end
+      let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-      context 'in sharded topology' do
-        require_topology :sharded
+      it_behaves_like 'supports sessions'
+    end
 
-        let(:client) { ClientRegistry.instance.global_client('authorized') }
+    context 'in sharded topology' do
+      require_topology :sharded
 
-        it_behaves_like 'supports sessions'
-      end
+      let(:client) { ClientRegistry.instance.global_client('authorized') }
+
+      it_behaves_like 'supports sessions'
     end
   end
 

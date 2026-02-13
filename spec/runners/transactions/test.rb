@@ -202,26 +202,14 @@ module Mongo
         @threads = {}
 
         results = @operations.map do |op|
-          target = resolve_target(test_client, op)
-          if op.needs_session?
-            context = CRUD::Context.new(
-              session0: session0,
-              session1: session1,
-              sdam_subscriber: sdam_subscriber,
-              threads: @threads,
-              primary_address: @primary_address,
-            )
-          else
-            # Hack to support write concern operations tests, which are
-            # defined to use transactions format but target pre-3.6 servers
-            # that do not support sessions
-            target ||= support_client
-            context = CRUD::Context.new(
-              sdam_subscriber: sdam_subscriber,
-              threads: @threads,
-              primary_address: @primary_address,
-            )
-          end
+          target = resolve_target(test_client, op) || support_client
+          context = CRUD::Context.new(
+            session0: session0,
+            session1: session1,
+            sdam_subscriber: sdam_subscriber,
+            threads: @threads,
+            primary_address: @primary_address,
+          )
 
           op.execute(target, context).tap do
             @threads = context.threads
@@ -268,10 +256,8 @@ module Mongo
         rescue Mongo::Error
         end
 
-        if ClusterConfig.instance.fcv_ish >= '4.2'
-          ::Utils.mongos_each_direct_client do |direct_client|
-            direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
-          end
+        ::Utils.mongos_each_direct_client do |direct_client|
+          direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
         key_vault_coll = support_client

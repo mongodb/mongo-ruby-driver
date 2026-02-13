@@ -31,42 +31,29 @@ describe Mongo::Collection::View::Writable do
       authorized_collection.insert_many([{ field: 'test1' }])
     end
 
-    context 'when hint option is provided' do
-      # Functionality on more recent servers is sufficiently covered by spec tests.
-      context 'on server versions < 4.2' do
-        max_server_fcv '4.0'
+    context 'when hint option is provided and the write concern is unacknowledged' do
+      let(:view_collection) do
+        client = authorized_client.with(write_concern: { w: 0 })
+        client[authorized_collection.name]
+      end
 
-        it 'raises a client-side exception' do
+      context "on 4.4+ servers" do
+        min_server_version '4.4'
+
+        it "doesn't raise an error" do
           expect do
             view.find_one_and_delete(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to_not raise_error
         end
       end
 
-      context 'when the write concern is unacknowledged' do
-        let(:view_collection) do
-          client = authorized_client.with(write_concern: { w: 0 })
-          client[authorized_collection.name]
-        end
+      context "on <=4.2 servers" do
+        max_server_version '4.2'
 
-        context "on 4.4+ servers" do
-          min_server_version '4.4'
-
-          it "doesn't raise an error" do
-            expect do
-              view.find_one_and_delete(hint: '_id_')
-            end.to_not raise_error(Mongo::Error::UnsupportedOption)
-          end
-        end
-
-        context "on <=4.2 servers" do
-          max_server_version '4.2'
-
-          it 'raises a client-side error' do
-            expect do
-              view.find_one_and_delete(hint: '_id_')
-            end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-          end
+        it 'raises a client-side error' do
+          expect do
+            view.find_one_and_delete(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -141,35 +128,8 @@ describe Mongo::Collection::View::Writable do
           { collation: { locale: 'en_US', strength: 2 } }
         end
 
-        context 'when the server selected supports collations' do
-          min_server_fcv '3.4'
-
-          it 'applies the collation' do
-            expect(result['name']).to eq('bang')
-          end
-        end
-
-        context 'when the server selected does not support collations' do
-          max_server_version '3.2'
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-
-          context 'when a String key is used' do
-
-            let(:options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-          end
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
         end
       end
 
@@ -210,35 +170,8 @@ describe Mongo::Collection::View::Writable do
           { collation: { locale: 'en_US', strength: 2 } }
         end
 
-        context 'when the server selected supports collations' do
-          min_server_fcv '3.4'
-
-          it 'applies the collation' do
-            expect(result['name']).to eq('bang')
-          end
-        end
-
-        context 'when the server selected does not support collations' do
-          max_server_version '3.2'
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-
-          context 'when a String key is used' do
-
-            let(:method_options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-          end
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
         end
       end
     end
@@ -265,42 +198,29 @@ describe Mongo::Collection::View::Writable do
       authorized_collection.insert_many([{ field: 'test1', other: 'sth' }])
     end
 
-    context 'when hint option is provided' do
-      # Functionality on more recent servers is sufficiently covered by spec tests.
-      context 'on server versions < 4.2' do
-        max_server_fcv '4.0'
+    context 'when hint option is provided and the write concern is unacknowledged' do
+      let(:view_collection) do
+        client = authorized_client.with(write_concern: { w: 0 })
+        client[authorized_collection.name]
+      end
 
-        it 'raises a client-side exception' do
+      context "on 4.4+ servers" do
+        min_server_version '4.4'
+
+        it "doesn't raise an error" do
           expect do
             view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to_not raise_error
         end
       end
 
-      context 'when the write concern is unacknowledged' do
-        let(:view_collection) do
-          client = authorized_client.with(write_concern: { w: 0 })
-          client[authorized_collection.name]
-        end
+      context "on <=4.2 servers" do
+        max_server_version '4.2'
 
-        context "on 4.4+ servers" do
-          min_server_version '4.4'
-
-          it "doesn't raise an error" do
-            expect do
-              view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-            end.to_not raise_error(Mongo::Error::UnsupportedOption)
-          end
-        end
-
-        context "on <=4.2 servers" do
-          max_server_version '4.2'
-
-          it 'raises a client-side error' do
-            expect do
-              view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-            end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-          end
+        it 'raises a client-side error' do
+          expect do
+            view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -378,36 +298,9 @@ describe Mongo::Collection::View::Writable do
           { collation: { locale: 'en_US', strength: 2 } }
         end
 
-        context 'when the server selected supports collations' do
-          min_server_fcv '3.4'
-
-          it 'applies the collation' do
-            expect(result['name']).to eq('bang')
-            expect(authorized_collection.find({ name: 'doink' }, limit: -1).first['name']).to eq('doink')
-          end
-        end
-
-        context 'when the server selected does not support collations' do
-          max_server_version '3.2'
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-
-          context 'when a String key is used' do
-
-            let(:options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-          end
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
+          expect(authorized_collection.find({ name: 'doink' }, limit: -1).first['name']).to eq('doink')
         end
       end
 
@@ -429,36 +322,9 @@ describe Mongo::Collection::View::Writable do
           { collation: { locale: 'en_US', strength: 2 } }
         end
 
-        context 'when the server selected supports collations' do
-          min_server_fcv '3.4'
-
-          it 'applies the collation' do
-            expect(result['name']).to eq('bang')
-            expect(authorized_collection.find({ name: 'doink' }, limit: -1).first['name']).to eq('doink')
-          end
-        end
-
-        context 'when the server selected does not support collations' do
-          max_server_version '3.2'
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-
-          context 'when a String key is used' do
-
-            let(:method_options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'raises an exception' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::UnsupportedCollation)
-            end
-          end
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
+          expect(authorized_collection.find({ name: 'doink' }, limit: -1).first['name']).to eq('doink')
         end
       end
 
@@ -522,42 +388,29 @@ describe Mongo::Collection::View::Writable do
       authorized_collection.insert_many([{ field: 'test1' }])
     end
 
-    context 'when hint option is provided' do
-      # Functionality on more recent servers is sufficiently covered by spec tests.
-      context 'on server versions < 4.2' do
-        max_server_fcv '4.0'
+    context 'when hint option is provided and the write concern is unacknowledged' do
+      let(:view_collection) do
+        client = authorized_client.with(write_concern: { w: 0 })
+        client[authorized_collection.name]
+      end
 
-        it 'raises a client-side exception' do
+      context "on 4.4+ servers" do
+        min_server_version '4.4'
+
+        it "doesn't raise an error" do
           expect do
             view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to_not raise_error
         end
       end
 
-      context 'when the write concern is unacknowledged' do
-        let(:view_collection) do
-          client = authorized_client.with(write_concern: { w: 0 })
-          client[authorized_collection.name]
-        end
+      context "on <=4.2 servers" do
+        max_server_version '4.2'
 
-        context "on 4.4+ servers" do
-          min_server_version '4.4'
-
-          it "doesn't raise an error" do
-            expect do
-              view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-            end.to_not raise_error(Mongo::Error::UnsupportedOption)
-          end
-        end
-
-        context "on <=4.2 servers" do
-          max_server_version '4.2'
-
-          it 'raises a client-side error' do
-            expect do
-              view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-            end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-          end
+        it 'raises a client-side error' do
+          expect do
+            view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -632,36 +485,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result['name']).to eq('bang')
-          expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result['name']).to eq('bang')
+        expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
       end
     end
 
@@ -683,36 +509,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result['name']).to eq('bang')
-          expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:method_options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result['name']).to eq('bang')
+        expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
       end
     end
 
@@ -752,42 +551,29 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#delete_many' do
-    context 'when a hint option is provided' do
-      # Functionality on more recent servers is sufficiently covered by spec tests.
-      context 'on server versions < 3.4' do
-        max_server_fcv '3.2'
+    context 'when a hint option is provided and the write concern is unacknowledged' do
+      let(:view_collection) do
+        client = authorized_client.with(write_concern: { w: 0 })
+        client[authorized_collection.name]
+      end
 
-        it 'raises a client-side exception' do
+      context "on 4.4+ servers" do
+        min_server_version '4.4'
+
+        it "doesn't raise an error" do
           expect do
             view.delete_many(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to_not raise_error
         end
       end
 
-      context 'when the write concern is unacknowledged' do
-        let(:view_collection) do
-          client = authorized_client.with(write_concern: { w: 0 })
-          client[authorized_collection.name]
-        end
+      context "on <=4.2 servers" do
+        max_server_version '4.2'
 
-        context "on 4.4+ servers" do
-          min_server_version '4.4'
-
-          it "doesn't raise an error" do
-            expect do
-              view.delete_many(hint: '_id_')
-            end.to_not raise_error(Mongo::Error::UnsupportedOption)
-          end
-        end
-
-        context "on <=4.2 servers" do
-          max_server_version '4.2'
-
-          it 'raises a client-side error' do
-            expect do
-              view.delete_many(hint: '_id_')
-            end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-          end
+        it 'raises a client-side error' do
+          expect do
+            view.delete_many(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -845,36 +631,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(2)
-          expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(2)
+        expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
       end
     end
 
@@ -897,36 +656,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(2)
-          expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:method_options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(2)
+        expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
       end
     end
 
@@ -953,42 +685,29 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#delete_one' do
-    context 'when a hint option is provided' do
-      # Functionality on more recent servers is sufficiently covered by spec tests.
-      context 'on server versions < 3.4' do
-        max_server_fcv '3.2'
+    context 'when a hint option is provided and the write concern is unacknowledged' do
+      let(:view_collection) do
+        client = authorized_client.with(write_concern: { w: 0 })
+        client[authorized_collection.name]
+      end
 
-        it 'raises a client-side exception' do
+      context "on 4.4+ servers" do
+        min_server_version '4.4'
+
+        it "doesn't raise an error" do
           expect do
             view.delete_one(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
+          end.to_not raise_error
         end
       end
 
-      context 'when the write concern is unacknowledged' do
-        let(:view_collection) do
-          client = authorized_client.with(write_concern: { w: 0 })
-          client[authorized_collection.name]
-        end
+      context "on <=4.2 servers" do
+        max_server_version '4.2'
 
-        context "on 4.4+ servers" do
-          min_server_version '4.4'
-
-          it "doesn't raise an error" do
-            expect do
-              view.delete_one(hint: '_id_')
-            end.to_not raise_error(Mongo::Error::UnsupportedOption)
-          end
-        end
-
-        context "on <=4.2 servers" do
-          max_server_version '4.2'
-
-          it 'raises a client-side error' do
-            expect do
-              view.delete_one(hint: '_id_')
-            end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-          end
+        it 'raises a client-side error' do
+          expect do
+            view.delete_one(hint: '_id_')
+          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
@@ -1049,36 +768,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(1)
+        expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
       end
     end
 
@@ -1100,36 +792,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:method_options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(1)
+        expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
       end
     end
 
@@ -1155,43 +820,16 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#replace_one' do
-    context 'when a hint option is provided' do
-      # Functionality on more recent servers is sufficiently covered by spec tests.
-      context 'on server versions < 3.4' do
-        max_server_fcv '3.2'
-
-        it 'raises a client-side exception' do
-          expect do
-            view.replace_one({ field: 'testing' }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
-        end
+    context 'when a hint option is provided and the write concern is unacknowledged' do
+      let(:view_collection) do
+        client = authorized_client.with(write_concern: { w: 0 })
+        client[authorized_collection.name]
       end
 
-      context 'when the write concern is unacknowledged' do
-        let(:view_collection) do
-          client = authorized_client.with(write_concern: { w: 0 })
-          client[authorized_collection.name]
-        end
-
-        context "on 4.2+ servers" do
-          min_server_version '4.2'
-
-          it "doesn't raise an error" do
-            expect do
-              view.replace_one({ field: 'testing' }, { hint: '_id_' })
-            end.to_not raise_error(Mongo::Error::UnsupportedOption)
-          end
-        end
-
-        context "on <=4.0 servers" do
-          max_server_version '4.0'
-
-          it 'raises a client-side error' do
-            expect do
-              view.replace_one({ field: 'testing' }, { hint: '_id_' })
-            end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-          end
-        end
+      it "doesn't raise an error" do
+        expect do
+          view.replace_one({ field: 'testing' }, { hint: '_id_' })
+        end.to_not raise_error
       end
     end
 
@@ -1320,36 +958,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(name: 'doink').to_a.size).to eq(1)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(1)
+        expect(authorized_collection.find(name: 'doink').to_a.size).to eq(1)
       end
     end
 
@@ -1371,36 +982,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(name: 'doink').to_a.size).to eq(1)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:method_options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(1)
+        expect(authorized_collection.find(name: 'doink').to_a.size).to eq(1)
       end
     end
 
@@ -1426,43 +1010,16 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#update_many' do
-    context 'when a hint option is provided' do
-      # Functionality on more recent servers is sufficiently covered by spec tests.
-      context 'on server versions < 3.4' do
-        max_server_fcv '3.2'
-
-        it 'raises a client-side exception' do
-          expect do
-            view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
-        end
+    context 'when a hint option is provided and the write concern is unacknowledged' do
+      let(:view_collection) do
+        client = authorized_client.with(write_concern: { w: 0 })
+        client[authorized_collection.name]
       end
 
-      context 'when the write concern is unacknowledged' do
-        let(:view_collection) do
-          client = authorized_client.with(write_concern: { w: 0 })
-          client[authorized_collection.name]
-        end
-
-        context "on 4.2+ servers" do
-          min_server_version '4.2'
-
-          it "doesn't raise an error" do
-            expect do
-              view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-            end.to_not raise_error(Mongo::Error::UnsupportedOption)
-          end
-        end
-
-        context "on <=4.0 servers" do
-          max_server_version '4.0'
-
-          it 'raises a client-side error' do
-            expect do
-              view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-            end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-          end
-        end
+      it "doesn't raise an error" do
+        expect do
+          view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+        end.to_not raise_error
       end
     end
 
@@ -1596,36 +1153,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(2)
-          expect(authorized_collection.find(other: 'doink').to_a.size).to eq(2)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(2)
+        expect(authorized_collection.find(other: 'doink').to_a.size).to eq(2)
       end
     end
 
@@ -1648,36 +1178,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(2)
-          expect(authorized_collection.find(other: 'doink').to_a.size).to eq(2)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:method_options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(2)
+        expect(authorized_collection.find(other: 'doink').to_a.size).to eq(2)
       end
     end
 
@@ -1703,43 +1206,16 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#update_one' do
-    context 'when a hint option is provided' do
-      # Functionality on more recent servers is sufficiently covered by spec tests.
-      context 'on server versions < 3.4' do
-        max_server_fcv '3.2'
-
-        it 'raises a client-side exception' do
-          expect do
-            view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
-        end
+    context 'when a hint option is provided and the write concern is unacknowledged' do
+      let(:view_collection) do
+        client = authorized_client.with(write_concern: { w: 0 })
+        client[authorized_collection.name]
       end
 
-      context 'when the write concern is unacknowledged' do
-        let(:view_collection) do
-          client = authorized_client.with(write_concern: { w: 0 })
-          client[authorized_collection.name]
-        end
-
-        context "on 4.2+ servers" do
-          min_server_version '4.2'
-
-          it "doesn't raise an error" do
-            expect do
-              view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-            end.to_not raise_error(Mongo::Error::UnsupportedOption)
-          end
-        end
-
-        context "on <=4.0 servers" do
-          max_server_version '4.0'
-
-          it 'raises a client-side error' do
-            expect do
-              view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-            end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-          end
-        end
+      it "doesn't raise an error" do
+        expect do
+          view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+        end.to_not raise_error
       end
     end
 
@@ -1870,36 +1346,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(other: 'doink').to_a.size).to eq(1)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(1)
+        expect(authorized_collection.find(other: 'doink').to_a.size).to eq(1)
       end
     end
 
@@ -1921,36 +1370,9 @@ describe Mongo::Collection::View::Writable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        it 'applies the collation' do
-          expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(other: 'doink').to_a.size).to eq(1)
-        end
-      end
-
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:method_options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(result.written_count).to eq(1)
+        expect(authorized_collection.find(other: 'doink').to_a.size).to eq(1)
       end
     end
 

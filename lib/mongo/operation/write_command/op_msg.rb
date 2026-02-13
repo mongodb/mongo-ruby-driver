@@ -23,18 +23,12 @@ module Mongo
       #
       # @api private
       class OpMsg < OpMsgBase
-        include Validatable
-
         private
 
         def selector(connection)
           super.tap do |selector|
-            if selector.key?(:findAndModify)
-              validate_find_options(connection, selector)
-            end
-            if wc = spec[:write_concern]
-              selector[:writeConcern] = wc.options
-            end
+            wc = spec[:write_concern]
+            selector[:writeConcern] = wc.options if wc
           end
         end
       end

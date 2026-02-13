@@ -185,7 +185,8 @@ describe Mongo::Operation::Insert::OpMsg do
 
         it 'creates the correct OP_MSG message' do
           RSpec::Mocks.with_temporary_scope do
-            expect(connection.features).to receive(:sessions_enabled?).and_return(false)
+            # mimic lack of session support
+            allow(authorized_primary.description).to receive(:logical_session_timeout).and_return(nil)
 
             expect(expected_global_args).not_to have_key(:lsid)
             expect(Mongo::Protocol::Msg).to receive(:new).with([],

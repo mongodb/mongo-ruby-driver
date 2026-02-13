@@ -31,19 +31,7 @@ module Mongo
     # @since 2.0.0
     CODE = 'code'.freeze
 
-    # An error field, MongoDB < 2.6
-    #
-    # @since 2.0.0
-    # @deprecated
-    ERR = '$err'.freeze
-
-    # An error field, MongoDB < 2.4
-    #
-    # @since 2.0.0
-    # @deprecated
-    ERROR = 'err'.freeze
-
-    # The standard error message field, MongoDB 3.0+
+    # The standard error message field
     #
     # @since 2.0.0
     # @deprecated
@@ -215,7 +203,6 @@ require 'mongo/error/missing_resume_token'
 require 'mongo/error/missing_scram_server_signature'
 require 'mongo/error/missing_service_id'
 require 'mongo/error/server_api_conflict'
-require 'mongo/error/server_api_not_supported'
 require 'mongo/error/server_not_usable'
 require 'mongo/error/server_timeout_error'
 require 'mongo/error/transactions_not_supported'

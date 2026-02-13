@@ -28,15 +28,6 @@ module Mongo
     #   Mongo::Error::UnsupportedOption, which will prevent any breaking changes
     #   in your application when upgrading to version 3.0 of the driver.
     class UnsupportedArrayFilters < UnsupportedOption
-
-      # The default error message describing that array filters are not supported.
-      #
-      # @return [ String ] A default message describing that array filters are not supported by the server.
-      #
-      # @since 2.5.0
-      DEFAULT_MESSAGE = "The array_filters option is not a supported feature of the server handling this operation. " +
-          "Operation results may be unexpected.".freeze
-
       # The error message describing that array filters cannot be used when write concern is unacknowledged.
       #
       # @return [ String ] A message describing that array filters cannot be used when write concern is unacknowledged.
@@ -44,16 +35,6 @@ module Mongo
       # @since 2.5.0
       UNACKNOWLEDGED_WRITES_MESSAGE = "The array_filters option cannot be specified when using unacknowledged writes. " +
         "Either remove the array_filters option or use acknowledged writes (w >= 1).".freeze
-
-      # Create the new exception.
-      #
-      # @example Create the new exception.
-      #   Mongo::Error::UnsupportedArrayFilters.new
-      #
-      # @since 2.5.0
-      def initialize(message = nil)
-        super(message || DEFAULT_MESSAGE)
-      end
     end
   end
 end

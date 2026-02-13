@@ -169,7 +169,7 @@ module Mongo
         #
         # @deprecated Use #count_documents or #estimated_document_count instead. However, note that
         #   the following operators will need to be substituted when switching to #count_documents:
-        #     * $where should be replaced with $expr (only works on 3.6+)
+        #     * $where should be replaced with $expr
         #     * $near should be replaced with $geoWithin with $center
         #     * $nearSphere should be replaced with $geoWithin with $centerSphere
         def count(opts = {})
@@ -223,7 +223,7 @@ module Mongo
         #
         # @option opts :skip [ Integer ] The number of documents to skip.
         # @option opts :hint [ Hash ] Override default index selection and force
-        #   MongoDB to use a specific index for the query. Requires server version 3.6+.
+        #   MongoDB to use a specific index for the query.
         # @option opts :limit [ Integer ] Max number of docs to count.
         # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run. This option is deprecated, use
@@ -736,7 +736,6 @@ module Mongo
               db_name: database.name,
               session: session,
               batch_size: batch_size,
-              to_return: 0,
               # max_time_ms is not being passed here, I assume intentionally?
             }
             op = Operation::GetMore.new(spec)

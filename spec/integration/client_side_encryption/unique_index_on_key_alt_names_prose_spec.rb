@@ -7,7 +7,6 @@ require 'spec_helper'
 # rubocop:disable RSpec/ExampleLength
 describe 'Decryption events' do
   require_enterprise
-  min_server_fcv '4.2'
   require_libmongocrypt
   include_context 'define shared FLE helpers'
   min_server_version '7.0.0-rc0'

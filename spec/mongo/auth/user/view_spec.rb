@@ -109,7 +109,6 @@ describe Mongo::Auth::User::View do
 
         context 'when compression is used' do
           require_compression
-          min_server_fcv '3.6'
 
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
@@ -196,7 +195,6 @@ describe Mongo::Auth::User::View do
 
         context 'when compression is used' do
           require_compression
-          min_server_fcv '3.6'
 
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
@@ -245,7 +243,6 @@ describe Mongo::Auth::User::View do
 
         context 'when compression is used' do
           require_compression
-          min_server_fcv '3.6'
 
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
@@ -489,7 +486,6 @@ describe Mongo::Auth::User::View do
 
   context "when the result is a write concern error" do
     require_topology :replica_set
-    min_server_version '4.0'
 
     let(:user) do
       Mongo::Auth::User.new({

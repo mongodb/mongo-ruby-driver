@@ -547,7 +547,7 @@ module Mongo
     #
     # @api private
     def retry_reads?
-      !!(features.sessions_enabled? && logical_session_timeout)
+      !!logical_session_timeout
     end
 
     # Will writes sent to this server be retried.
@@ -557,18 +557,17 @@ module Mongo
     #
     # @return [ true, false ] If writes will be retried.
     #
-    # @note Retryable writes are only available on server versions 3.6+ and with
-    #   sharded clusters or replica sets.
+    # @note Retryable writes are only available with sharded clusters or replica sets.
     #
     # @note Some of the conditions in this method automatically return false for
-    #       for load balanced topologies. The conditions in this method should
+    #       load balanced topologies. The conditions in this method should
     #       always be true, since load-balanced topologies are only available on
     #       MongoDB 5.0+, and not for standalone topologies. Therefore, we can
     #       assume that retry writes are enabled.
     #
     # @since 2.5.0
     def retry_writes?
-      !!(features.sessions_enabled? && logical_session_timeout && !standalone?) || load_balancer?
+      !!((logical_session_timeout && !standalone?) || load_balancer?)
     end
 
     # Marks server unknown and publishes the associated SDAM event

@@ -32,9 +32,6 @@ describe 'Map-reduce operations' do
     context 'specified on client' do
       let(:client) { authorized_client.with(read: {mode: :secondary_preferred }) }
 
-      # RUBY-2706: read preference is not sent on pre-3.6 servers
-      min_server_fcv '3.6'
-
       it 'is sent' do
         operation.to_a
 
@@ -44,9 +41,6 @@ describe 'Map-reduce operations' do
 
     context 'specified on collection' do
       let(:collection) { client['mr_integration', read: {mode: :secondary_preferred }] }
-
-      # RUBY-2706: read preference is not sent on pre-3.6 servers
-      min_server_fcv '3.6'
 
       it 'is sent' do
         operation.to_a
@@ -58,9 +52,6 @@ describe 'Map-reduce operations' do
     context 'specified on operation' do
       let(:find_options) { {read: {mode: :secondary_preferred }} }
 
-      # RUBY-2706: read preference is not sent on pre-3.6 servers
-      min_server_fcv '3.6'
-
       it 'is sent' do
         operation.to_a
 
@@ -70,8 +61,6 @@ describe 'Map-reduce operations' do
   end
 
   context 'session' do
-    min_server_fcv '3.6'
-
     it 'is sent' do
       operation.to_a
 

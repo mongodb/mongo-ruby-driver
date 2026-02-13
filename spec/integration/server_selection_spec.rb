@@ -6,9 +6,6 @@ require 'spec_helper'
 describe 'Server selection' do
   context 'replica set' do
     require_topology :replica_set
-    # 2.6 server does not provide replSetGetConfig and hence we cannot add
-    # the tags to the members.
-    min_server_version '3.0'
 
     context 'when mixed case tag names are used' do
       # For simplicity this test assumes our Evergreen configuration:
