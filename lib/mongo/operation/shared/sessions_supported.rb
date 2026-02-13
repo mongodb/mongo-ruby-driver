@@ -143,6 +143,8 @@ module Mongo
           if session && (acknowledged_write? || session.in_transaction?)
             apply_session_options(sel, connection)
           end
+        elsif session && session.explicit?
+          apply_session_options(sel, connection)
         end
 
         sel
