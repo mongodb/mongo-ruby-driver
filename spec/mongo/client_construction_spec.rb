@@ -817,8 +817,9 @@ describe Mongo::Client do
             { max_connecting: -5 }
           end
 
-          it 'raises an exception' do
-            expect { client }.to raise_error(Mongo::Error::InvalidMaxConnecting)
+          it 'logs a warning' do
+            expect(Mongo::Logger.logger).to receive(:warn).with(/Invalid max_connecting/)
+            client
           end
         end
       end
@@ -1035,13 +1036,14 @@ describe Mongo::Client do
             end
           end
 
-          context 'when max_connecting is a negative integer' do
+          context 'when max_connecting is zero' do
             let(:uri) do
               'mongodb://127.0.0.1:27017/?maxConnecting=0'
             end
 
-            it 'raises an exception' do
-              expect { client }.to raise_error(Mongo::Error::InvalidMaxConnecting)
+            it 'logs a warning' do
+              expect(Mongo::Logger.logger).to receive(:warn).with(/Invalid max_connecting/)
+              client
             end
           end
         end
