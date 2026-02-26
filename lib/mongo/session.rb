@@ -299,11 +299,6 @@ module Mongo
         'of the client owning this operation. Please only use this session for operations through its parent ' +
         'client.'.freeze
 
-    # Error message describing that the session cannot be used because it has already been ended.
-    #
-    # @since 2.5.0
-    SESSION_ENDED_ERROR_MSG = 'This session has ended and cannot be used. Please create a new one.'.freeze
-
     # Error message describing that sessions are not supported by the server version.
     #
     # @since 2.5.0
@@ -1262,7 +1257,7 @@ module Mongo
     end
 
     def check_if_ended!
-      raise Mongo::Error::InvalidSession.new(SESSION_ENDED_ERROR_MSG) if ended?
+      raise Mongo::Error::SessionEnded if ended?
     end
 
     def check_matching_cluster!(client)
