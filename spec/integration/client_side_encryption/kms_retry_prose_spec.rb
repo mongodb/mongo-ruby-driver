@@ -17,7 +17,6 @@ end
 describe 'KMS Retry Prose Spec' do
   require_libmongocrypt
   require_enterprise
-  min_server_version '4.2'
 
   include_context 'define shared FLE helpers'
 

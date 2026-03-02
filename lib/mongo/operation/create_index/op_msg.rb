@@ -36,8 +36,7 @@ module Mongo
             comment: spec[:comment],
           }.compact.tap do |selector|
             if commit_quorum = spec[:commit_quorum]
-              # While server versions 3.4 and newer generally perform option
-              # validation, there was a bug on server versions 4.2.0 - 4.2.5 where
+              # There was a bug on server versions 4.2.0 - 4.2.5 where
               # the server would accept the commitQuorum option and use it internally
               # (see SERVER-47193). As a result, the drivers specifications require
               # drivers to perform validation and raise an error when the commitQuorum

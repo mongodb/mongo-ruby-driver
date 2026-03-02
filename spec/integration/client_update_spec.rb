@@ -8,7 +8,6 @@ describe Mongo::Client do
 
   context 'auto encryption options' do
     require_libmongocrypt
-    min_server_fcv '4.2'
     require_enterprise
 
     include_context 'define shared FLE helpers'

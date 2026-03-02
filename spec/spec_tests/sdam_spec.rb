@@ -28,7 +28,6 @@ describe 'Server Discovery and Monitoring' do
 
           # Replace run! method to do nothing, to avoid races between
           # the background thread started by Server.new and our mocking.
-          # Replace with refinements once ruby 1.9 support is dropped
           def run!
           end
         end

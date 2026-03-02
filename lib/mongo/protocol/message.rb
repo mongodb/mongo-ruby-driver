@@ -170,8 +170,12 @@ module Mongo
         self
       end
 
+      # Protocol message subclasses that support the server api option should
+      # override this method to add the server api document to the message.
+      #
+      # @param [ Hash ] server_api The server api document to add to the message.
       def maybe_add_server_api(server_api)
-        raise Error::ServerApiNotSupported, "Server API parameters cannot be sent to pre-3.6 MongoDB servers. Please remove the :server_api parameter from Client options or use MongoDB 3.6 or newer"
+        raise NotImplementedError
       end
 
       private def merge_sections

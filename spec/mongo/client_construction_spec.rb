@@ -530,7 +530,6 @@ describe Mongo::Client do
 
           context 'when one supported compressor and one unsupported compressor are provided' do
             require_compression
-            min_server_fcv '3.6'
 
             let(:options) do
               { compressors: %w[ zlib snoopy ] }
@@ -544,19 +543,6 @@ describe Mongo::Client do
             it 'sets the compression key of the handshake document to the list of supported compressors' do
               expect(client.cluster.app_metadata.send(:document)[:compression]).to eq(%w[ zlib ])
             end
-          end
-        end
-
-        context 'when the compressor is not supported by the server' do
-          max_server_version '3.4'
-
-          let(:options) do
-            { compressors: %w[ zlib ] }
-          end
-
-          it 'does not set the compressor and warns' do
-            expect(Mongo::Logger.logger).to receive(:warn).at_least(:once)
-            expect(client.cluster.next_primary.monitor.compressor).to be_nil
           end
         end
 
@@ -575,13 +561,9 @@ describe Mongo::Client do
             expect(client.cluster.app_metadata.send(:document)[:compression]).to eq(options[:compressors])
           end
 
-          context 'when server supports compression' do
-            min_server_fcv '3.6'
-
-            it 'uses compression for messages' do
-              expect(Mongo::Protocol::Compressed).to receive(:new).at_least(:once).and_call_original
-              client[TEST_COLL].find({}, limit: 1).first
-            end
+          it 'uses compression for messages' do
+            expect(Mongo::Protocol::Compressed).to receive(:new).at_least(:once).and_call_original
+            client[TEST_COLL].find({}, limit: 1).first
           end
 
           it 'does not use compression for authentication messages' do
@@ -590,9 +572,7 @@ describe Mongo::Client do
           end
         end
 
-        context 'when snappy compression is requested and supported by the server' do
-          min_server_version '3.6'
-
+        context 'when snappy compression is requested' do
           let(:options) do
             { compressors: %w[ snappy ] }
           end
@@ -616,9 +596,7 @@ describe Mongo::Client do
           end
         end
 
-        context 'when zstd compression is requested and supported by the server' do
-          min_server_version '4.2'
-
+        context 'when zstd compression is requested' do
           let(:options) do
             { compressors: %w[ zstd ] }
           end
@@ -666,7 +644,6 @@ describe Mongo::Client do
 
       context 'when a zlib_compression_level option is provided' do
         require_compression
-        min_server_fcv '3.6'
 
         let(:client) do
           new_local_client_nmio(
@@ -1709,8 +1686,6 @@ describe Mongo::Client do
       end
 
       context 'when setting read concern options' do
-        min_server_fcv '3.2'
-
         context 'when read concern is valid' do
           let(:options) do
             { read_concern: { level: :local } }
@@ -1963,36 +1938,6 @@ describe Mongo::Client do
             end
           end
         end
-
-        context 'when connected to a pre-OP_MSG server' do
-          max_server_version '3.4'
-
-          let(:options) do
-            { server_api: { version: 1 } }
-          end
-
-          let(:client) do
-            new_local_client(
-              SpecConfig.instance.addresses,
-              SpecConfig.instance.all_test_options.merge(options)
-            )
-          end
-
-          it 'constructs the client' do
-            expect(client).to be_a(described_class)
-          end
-
-          it 'does not discover servers' do
-            client.cluster.servers_list.each do |s|
-              expect(s.status).to eq('UNKNOWN')
-            end
-          end
-
-          it 'fails operations' do
-            expect { client.command(ping: 1) }
-              .to raise_error(Mongo::Error::NoServerAvailable)
-          end
-        end
       end
     end
 
@@ -2015,7 +1960,6 @@ describe Mongo::Client do
 
         context 'with auto encryption options' do
           require_libmongocrypt
-          min_server_fcv '4.2'
           require_enterprise
           clean_slate
 

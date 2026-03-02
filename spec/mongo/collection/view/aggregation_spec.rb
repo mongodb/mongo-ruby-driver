@@ -186,20 +186,8 @@ describe Mongo::Collection::View::Aggregation do
         Mongo::Collection::View.new(collection, selector, view_options)
       end
 
-      context 'when the server supports write concern on the aggregate command' do
-        min_server_fcv '3.4'
-
-        it 'does not apply the write concern' do
-          expect(aggregation.to_a.size).to eq(2)
-        end
-      end
-
-      context 'when the server does not support write concern on the aggregation command' do
-        max_server_version '3.2'
-
-        it 'does not apply the write concern' do
-          expect(aggregation.to_a.size).to eq(2)
-        end
+      it 'does not apply the write concern' do
+        expect(aggregation.to_a.size).to eq(2)
       end
     end
   end
@@ -234,7 +222,6 @@ describe Mongo::Collection::View::Aggregation do
     end
 
     context 'session id' do
-      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       let(:options) do
@@ -278,83 +265,33 @@ describe Mongo::Collection::View::Aggregation do
       end
 
       let(:result) do
-        aggregation.explain['$cursor']['queryPlanner']['collation']['locale']
-      end
-
-      context 'when the server selected supports collations' do
-        min_server_fcv '3.4'
-
-        shared_examples_for 'applies the collation' do
-
-          context 'when the collation key is a String' do
-
-            let(:options) do
-              { 'collation' => { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'applies the collation' do
-              expect(result).to eq('en_US')
-            end
-          end
-
-          context 'when the collation key is a Symbol' do
-
-            let(:options) do
-              { collation: { locale: 'en_US', strength: 2 } }
-            end
-
-            it 'applies the collation' do
-              expect(result).to eq('en_US')
-            end
-          end
-        end
-
-        context '4.0-' do
-          max_server_version '4.0'
-
-          it_behaves_like 'applies the collation'
-        end
-
-        context '4.2+' do
-          min_server_fcv '4.2'
-
-          let(:result) do
-            if aggregation.explain.key?('queryPlanner')
-              aggregation.explain['queryPlanner']['collation']['locale']
-            else
-              # 7.2+ sharded cluster
-              aggregation.explain['shards'].first.last['queryPlanner']['collation']['locale']
-            end
-          end
-
-          it_behaves_like 'applies the collation'
+        if aggregation.explain.key?('queryPlanner')
+          aggregation.explain['queryPlanner']['collation']['locale']
+        else
+          # 7.2+ sharded cluster
+          aggregation.explain['shards'].first.last['queryPlanner']['collation']['locale']
         end
       end
 
-      context 'when the server selected does not support collations' do
-        max_server_version '3.2'
+      context 'when the collation key is a String' do
+
+        let(:options) do
+          { 'collation' => { locale: 'en_US', strength: 2 } }
+        end
+
+        it 'applies the collation' do
+          expect(result).to eq('en_US')
+        end
+      end
+
+      context 'when the collation key is a Symbol' do
 
         let(:options) do
           { collation: { locale: 'en_US', strength: 2 } }
         end
 
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              result
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
+        it 'applies the collation' do
+          expect(result).to eq('en_US')
         end
       end
     end
@@ -525,35 +462,8 @@ describe Mongo::Collection::View::Aggregation do
       aggregation.collect { |doc| doc['name']}
     end
 
-    context 'when the server selected supports collations' do
-      min_server_fcv '3.4'
-
-      it 'applies the collation' do
-        expect(result).to eq(['bang', 'bang'])
-      end
-    end
-
-    context 'when the server selected does not support collations' do
-      max_server_version '3.2'
-
-      it 'raises an exception' do
-        expect {
-          result
-        }.to raise_exception(Mongo::Error::UnsupportedCollation)
-      end
-
-      context 'when a String key is used' do
-
-        let(:options) do
-          { 'collation' => { locale: 'en_US', strength: 2 } }
-        end
-
-        it 'raises an exception' do
-          expect {
-            result
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-      end
+    it 'applies the collation' do
+      expect(result).to eq(['bang', 'bang'])
     end
   end
 
@@ -597,35 +507,10 @@ describe Mongo::Collection::View::Aggregation do
             Mongo::Collection::View.new(collection, selector, view_options)
           end
 
-          context 'when the server supports write concern on the aggregate command' do
-            min_server_fcv '3.4'
-
-            it 'uses the write concern' do
-              expect {
-                aggregation.to_a
-              }.to raise_exception(Mongo::Error::OperationFailure)
-            end
-          end
-
-          context 'when the server does not support write concern on the aggregation command' do
-            max_server_version '3.2'
-
-            let(:documents) do
-              [
-                { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
-                { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
-                { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
-              ]
-            end
-
-            before do
-              authorized_collection.insert_many(documents)
+          it 'uses the write concern' do
+            expect {
               aggregation.to_a
-            end
-
-            it 'does not apply the write concern' do
-              expect(authorized_client['output_collection'].find.count).to eq(2)
-            end
+            }.to raise_exception(Mongo::Error::OperationFailure)
           end
         end
       end

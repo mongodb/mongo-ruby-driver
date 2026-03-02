@@ -24,45 +24,20 @@ describe Mongo::Collection::View::Explainable do
   describe '#explain' do
 
     shared_examples 'executes the explain' do
-      context '3.0+ server' do
-        min_server_fcv '3.0'
+      context 'not sharded' do
+        require_topology :single, :replica_set
 
-        context 'not sharded' do
-          require_topology :single, :replica_set
-
-          it 'executes the explain' do
-            explain[:queryPlanner][:namespace].should == authorized_collection.namespace
-          end
-        end
-
-        context 'sharded' do
-          require_topology :sharded
-
-          context 'pre-3.2 server' do
-            max_server_version '3.0'
-
-            it 'executes the explain' do
-              skip 'https://jira.mongodb.org/browse/RUBY-3399'
-              explain[:queryPlanner][:parsedQuery].should be_a(Hash)
-            end
-          end
-
-          context '3.2+ server' do
-            min_server_fcv '3.2'
-
-            it 'executes the explain' do
-              skip 'https://jira.mongodb.org/browse/RUBY-3399'
-              explain[:queryPlanner][:mongosPlannerVersion].should == 1
-            end
-          end
+        it 'executes the explain' do
+          explain[:queryPlanner][:namespace].should == authorized_collection.namespace
         end
       end
 
-      context '2.6 server' do
-        max_server_version '2.6'
+      context 'sharded' do
+        require_topology :sharded
 
         it 'executes the explain' do
-          explain[:cursor].should == 'BasicCursor'
+          skip 'https://jira.mongodb.org/browse/RUBY-3399'
+          explain[:queryPlanner][:mongosPlannerVersion].should == 1
         end
       end
     end
@@ -81,9 +56,6 @@ describe Mongo::Collection::View::Explainable do
       end
 
       shared_examples 'triggers server error' do
-        # 3.0 does not produce the error.
-        min_server_fcv '3.2'
-
         it 'triggers server error' do
           lambda do
             explain

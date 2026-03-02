@@ -4,7 +4,6 @@
 require 'spec_helper'
 
 describe Mongo::Session::SessionPool do
-  min_server_fcv '3.6'
   require_topology :replica_set, :sharded, :load_balanced
   clean_slate_for_all
 

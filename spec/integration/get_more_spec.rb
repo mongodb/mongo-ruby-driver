@@ -4,9 +4,6 @@
 require 'spec_helper'
 
 describe 'getMore operation' do
-  # https://jira.mongodb.org/browse/RUBY-1987
-  min_server_fcv '3.2'
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do

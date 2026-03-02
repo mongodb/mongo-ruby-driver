@@ -104,6 +104,7 @@ tests:
           - _id: 2
 
   - description: Network error on Monitor check
+    skipReason: "RUBY-3781: Ruby driver's legacy_write_with_retry causes this to fail"
     operations:
       - name: createEntities
         object: testRunner
@@ -146,7 +147,7 @@ tests:
           failPoint:
             configureFailPoint: failCommand
             mode:
-              times: 2
+              times: 4
             data:
               failCommands:
                 - hello

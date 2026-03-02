@@ -2,6 +2,7 @@
 # rubocop:todo all
 
 require 'spec_helper'
+require 'support/recording_logger'
 
 describe Mongo::Collection::View::MapReduce do
   clean_slate_on_evergreen
@@ -66,7 +67,7 @@ describe Mongo::Collection::View::MapReduce do
 
   describe '#initialize' do
     it 'warns of deprecation' do
-      Mongo::Logger.logger.should receive(:warn).with('MONGODB | The map_reduce operation is deprecated, please use the aggregation pipeline instead')
+      Mongo::Deprecations.should receive(:warn).with(:map_reduce, any_args)
 
       map_reduce
     end
@@ -239,7 +240,6 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         context 'when the output collection is iterated' do
-          min_server_fcv '3.6'
           require_topology :replica_set, :sharded
 
           let(:options) do
@@ -278,7 +278,6 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         context 'when another db is specified' do
-          min_server_fcv '3.6'
           require_topology :single, :replica_set
           require_no_auth
 
@@ -315,7 +314,6 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         context 'when another db is specified' do
-          min_server_fcv '3.0'
           require_topology :single, :replica_set
           require_no_auth
 
@@ -352,7 +350,6 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         context 'when another db is specified' do
-          min_server_fcv '3.0'
           require_topology :single, :replica_set
           require_no_auth
 
@@ -628,24 +625,12 @@ describe Mongo::Collection::View::MapReduce do
           end
 
           shared_examples_for 'map reduce that writes accepting write concern' do
+            require_topology :single
 
-            context 'when the server supports write concern on the mapReduce command' do
-              min_server_fcv '3.4'
-              require_topology :single
-
-              it 'uses the write concern' do
-                expect {
-                  map_reduce.to_a
-                }.to raise_exception(Mongo::Error::OperationFailure)
-              end
-            end
-
-            context 'when the server does not support write concern on the mapReduce command' do
-              max_server_version '3.2'
-
-              it 'does not apply the write concern' do
-                expect(map_reduce.to_a.size).to eq(2)
-              end
+            it 'uses the write concern' do
+              expect {
+                map_reduce.to_a
+              }.to raise_exception(Mongo::Error::OperationFailure)
             end
           end
 
@@ -685,18 +670,22 @@ describe Mongo::Collection::View::MapReduce do
         require_warning_clean
         require_no_linting
 
+        let!(:default_logger) { Mongo::Logger.logger }
+
         before do
           stop_monitoring(authorized_client)
+          Mongo::Logger.logger = logger
         end
 
-        it 'does not reroute the operation to a primary' do
-          # We produce a deprecation warning, but there shouldn't be
-          # the reroute warning.
-          expect(Mongo::Logger.logger).to receive(:warn).once do |msg|
-            expect(msg).not_to include('Rerouting the MapReduce operation to the primary server')
-          end
+        after do
+          Mongo::Logger.logger = default_logger
+        end
 
+        let(:logger) { RecordingLogger.new }
+
+        it 'does not reroute the operation to a primary' do
           map_reduce.to_a
+          expect(logger.lines).not_to include('Rerouting the MapReduce operation to the primary server')
         end
       end
     end
@@ -806,85 +795,25 @@ describe Mongo::Collection::View::MapReduce do
       { name: 'BANG' }
     end
 
-    context 'when the server selected supports collations' do
-      min_server_fcv '3.4'
+    context 'when the collation key is a String' do
 
-      context 'when the collation key is a String' do
-
-        let(:options) do
-          { 'collation' => { locale: 'en_US', strength: 2 } }
-        end
-
-        it 'applies the collation' do
-          expect(map_reduce.first['value']).to eq(2)
-        end
+      let(:options) do
+        { 'collation' => { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the collation key is a Symbol' do
-
-        let(:options) do
-          { collation: { locale: 'en_US', strength: 2 } }
-        end
-
-        it 'applies the collation' do
-          expect(map_reduce.first['value']).to eq(2)
-        end
+      it 'applies the collation' do
+        expect(map_reduce.first['value']).to eq(2)
       end
     end
 
-    context 'when the server selected does not support collations' do
-      max_server_version '3.2'
+    context 'when the collation key is a Symbol' do
 
-      context 'when the map reduce has collation specified in its options' do
-
-        let(:options) do
-          { collation: { locale: 'en_US', strength: 2 } }
-        end
-
-        it 'raises an exception' do
-          expect {
-            map_reduce.to_a
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              map_reduce.to_a
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the view has collation specified in its options' do
-
-        let(:view_options) do
-          { collation: { locale: 'en_US', strength: 2 } }
-        end
-
-        it 'raises an exception' do
-          expect {
-            map_reduce.to_a
-          }.to raise_exception(Mongo::Error::UnsupportedCollation)
-        end
-
-        context 'when a String key is used' do
-
-          let(:options) do
-            { 'collation' => { locale: 'en_US', strength: 2 } }
-          end
-
-          it 'raises an exception' do
-            expect {
-              map_reduce.to_a
-            }.to raise_exception(Mongo::Error::UnsupportedCollation)
-          end
-        end
+      it 'applies the collation' do
+        expect(map_reduce.first['value']).to eq(2)
       end
     end
   end

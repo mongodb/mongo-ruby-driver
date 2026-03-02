@@ -324,16 +324,6 @@ module Mongo
         raise original_error
       end
 
-      # Retry writes on MMAPv1 should raise an actionable error; append actionable
-      # information to the error message and preserve the backtrace.
-      def raise_unsupported_error(e)
-        new_error = Error::OperationFailure.new("#{e.class}: #{e} "\
-          "This MongoDB deployment does not support retryable writes. Please add "\
-          "retryWrites=false to your connection string or use the retry_writes: false Ruby client option")
-        new_error.set_backtrace(e.backtrace)
-        raise new_error
-      end
-
       # Make sure the exception object is labeled 'RetryableWriteError'. If it
       # isn't, and should not be, re-raise the exception.
       def ensure_labeled_retryable!(e, connection_succeeded, session)
@@ -354,11 +344,7 @@ module Mongo
       # make sure it has been appropriately labeled. If either condition fails,
       # raise an exception.
       def ensure_retryable!(e)
-        if e.unsupported_retryable_write?
-          raise_unsupported_error(e)
-        elsif !e.label?('RetryableWriteError')
-          raise e
-        end
+        raise e unless e.label?('RetryableWriteError')
       end
 
       # Raise either e, or original_error, depending on whether e is

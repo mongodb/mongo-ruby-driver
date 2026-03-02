@@ -385,8 +385,8 @@ module Unified
             raise Error::ResultMismatch, "Actual value #{actual} does not match entity #{expected_v} with value #{result}"
           end
         when '$$lte'
-          if actual.nil? || actual >= expected_v
-            raise Error::ResultMismatch, "Actual value #{actual} should be less than #{expected_v}"
+          if actual.nil? || actual > expected_v
+            raise Error::ResultMismatch, "Actual value #{actual} should be less than or equal to #{expected_v}"
           end
         when '$$matchAsDocument'
           actual_v = BSON::ExtJSON.parse(actual)

@@ -294,35 +294,21 @@ describe Mongo::Collection do
             end
           end
 
-          context 'post-OP_MSG server' do
-            min_server_fcv '3.6'
-
-            context 'standalone' do
-              require_topology :single
-
-              let(:expected_read_preference) do
-                nil
-              end
-
-              it_behaves_like "uses collection's read preference when reading"
-            end
-
-            context 'RS, sharded' do
-              require_topology :replica_set, :sharded
-
-              let(:expected_read_preference) do
-                {'mode' => 'secondary'}
-              end
-
-              it_behaves_like "uses collection's read preference when reading"
-            end
-          end
-
-          context 'pre-OP-MSG server' do
-            max_server_version '3.4'
+          context 'standalone' do
+            require_topology :single
 
             let(:expected_read_preference) do
               nil
+            end
+
+            it_behaves_like "uses collection's read preference when reading"
+          end
+
+          context 'RS, sharded' do
+            require_topology :replica_set, :sharded
+
+            let(:expected_read_preference) do
+              {'mode' => 'secondary'}
             end
 
             it_behaves_like "uses collection's read preference when reading"
@@ -705,8 +691,6 @@ describe Mongo::Collection do
   describe '#watch' do
 
     context 'when change streams can be tested' do
-      require_wired_tiger
-      min_server_fcv '3.6'
       require_topology :replica_set
 
       let(:change_stream) do
@@ -816,8 +800,6 @@ describe Mongo::Collection do
     end
 
     context 'when the change stream is empty' do
-      require_wired_tiger
-      min_server_fcv '3.6'
       require_topology :replica_set
 
       context 'when setting the max_await_time_ms' do

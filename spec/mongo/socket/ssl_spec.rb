@@ -275,7 +275,7 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    # Note that as of MRI 2.4, Creating a socket with the wrong key type raises
+    # Note that in MRI < 3.1, Creating a socket with the wrong key type raises
     # a NoMethodError because #private? is attempted to be called on the key.
     # In jruby 9.2 a TypeError is raised.
     # In jruby 9.1 a OpenSSL::PKey::PKeyError is raised.

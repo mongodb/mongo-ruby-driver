@@ -4,8 +4,6 @@
 require 'spec_helper'
 
 describe Mongo::Collection::View::ChangeStream do
-  require_wired_tiger
-  min_server_fcv '3.6'
   require_topology :replica_set
   max_example_run_time 7
 

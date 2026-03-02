@@ -230,8 +230,7 @@ module Mongo
     #   analogous options present in the URI string.
     #
     # @option options [ String, Symbol ] :app_name Application name that is
-    #   printed to the mongod logs upon establishing a connection in server
-    #   versions >= 3.4.
+    #   printed to the mongod logs upon establishing a connection
     # @option options [ Symbol ] :auth_mech The authentication mechanism to
     #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256
     # @option options [ Hash ] :auth_mech_properties
@@ -308,7 +307,6 @@ module Mongo
     # @option options [ String ] :password The user's password.
     # @option options [ String ] :platform Platform information to include in
     #   the metadata printed to the mongod logs upon establishing a connection
-    #   in server versions >= 3.4.
     # @option options [ Hash ] :read The read preference options. The hash
     #   may have the following items:
     #   - *:mode* -- read preference specified as a symbol; valid values are
@@ -325,7 +323,7 @@ module Mongo
     #   reads are enabled (which is the default). If false, modern retryable
     #   reads are disabled and legacy retryable reads are enabled.
     # @option options [ true | false ] :retry_writes Retry writes once when
-    #   connected to a replica set or sharded cluster versions 3.6 and up.
+    #   connected to a replica set or sharded cluster.
     #   (Default is true.)
     # @option options [ true | false ] :scan Whether to scan all seeds
     #   in constructor. The default in driver version 2.x is to do so;
@@ -1045,9 +1043,8 @@ module Mongo
       end
     end
 
-    # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
-    # in the aggregation framework. As of version 4.0, this stage allows users to request that
-    # notifications are sent for all changes that occur in the client's cluster.
+    # Allows users to request that notifications are sent for all changes that
+    # occur in the client's cluster.
     #
     # @example Get change notifications for the client's cluster.
     #  client.watch([{ '$match' => { operationType: { '$in' => ['insert', 'replace'] } } }])
@@ -1093,7 +1090,6 @@ module Mongo
     # @option options [ BSON::Timestamp ] :start_at_operation_time Only return
     #   changes that occurred at or after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
-    #   Only recognized by server versions 4.0+.
     # @option options [ Object ] :comment A user-provided
     #   comment to attach to this command.
     # @option options [ Boolean ] :show_expanded_events Enables the server to

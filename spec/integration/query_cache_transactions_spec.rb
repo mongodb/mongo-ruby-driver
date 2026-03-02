@@ -45,7 +45,6 @@ describe 'QueryCache with transactions' do
 
   describe 'in transactions' do
     require_transaction_support
-    require_wired_tiger
 
     let(:collection) { client['test'] }
 

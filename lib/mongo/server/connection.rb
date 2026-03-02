@@ -34,35 +34,21 @@ module Mongo
       # @deprecated No longer necessary with Server Selection specification.
       PING = { :ping => 1 }.freeze
 
-      # The ping command for an OP_MSG (server versions >= 3.6).
+      # The ping command for an OP_MSG
       #
       # @since 2.5.0
       #
       # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG = { :ping => 1, '$db' => Database::ADMIN }.freeze
 
-      # Ping message.
-      #
-      # @since 2.1.0
-      #
-      # @deprecated No longer necessary with Server Selection specification.
-      PING_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, PING, :limit => -1)
-
-      # Ping message as an OP_MSG (server versions >= 3.6).
+      # Ping message as an OP_MSG
       #
       # @since 2.5.0
       #
       # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG_MESSAGE = Protocol::Msg.new([], {}, PING_OP_MSG)
 
-      # The ping message as raw bytes.
-      #
-      # @since 2.1.0
-      #
-      # @deprecated No longer necessary with Server Selection specification.
-      PING_BYTES = PING_MESSAGE.serialize.to_s.freeze
-
-      # The ping OP_MSG message as raw bytes (server versions >= 3.6).
+      # The ping OP_MSG message as raw bytes
       #
       # @since 2.5.0
       #
@@ -356,10 +342,9 @@ module Mongo
       #
       # @deprecated No longer necessary with Server Selection specification.
       def ping
-        bytes = features.op_msg_enabled? ? PING_OP_MSG_BYTES : PING_BYTES
         ensure_connected do |socket|
           reply = add_server_diagnostics do
-            socket.write(bytes)
+            socket.write(PING_OP_MSG_BYTES)
             Protocol::Message.deserialize(socket, max_message_size)
           end
           reply.documents[0][Operation::Result::OK] == 1

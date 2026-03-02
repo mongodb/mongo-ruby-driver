@@ -127,17 +127,13 @@ describe 'Cursor reaping' do
       cursor_id_and_kill_event
     end
 
-    context 'newer servers' do
-      min_server_fcv '3.2'
+    it 'is really killed' do
+      cursor_id, event = cursor_id_and_kill_event
 
-      it 'is really killed' do
-        cursor_id, event = cursor_id_and_kill_event
-
-        expect(event.reply['cursorsKilled']).to eq([cursor_id])
-        expect(event.reply['cursorsNotFound']).to be_empty
-        expect(event.reply['cursorsAlive']).to be_empty
-        expect(event.reply['cursorsUnknown']).to be_empty
-      end
+      expect(event.reply['cursorsKilled']).to eq([cursor_id])
+      expect(event.reply['cursorsNotFound']).to be_empty
+      expect(event.reply['cursorsAlive']).to be_empty
+      expect(event.reply['cursorsUnknown']).to be_empty
     end
   end
 end

@@ -53,7 +53,7 @@ module Mongo
 
       # @return [ Protocol::Message ] The message to send.
       def build_message(connection, auth_source, selector)
-        if connection && connection.features.op_msg_enabled?
+        if connection
           selector = selector.dup
           selector[Protocol::Msg::DATABASE_IDENTIFIER] = auth_source
           cluster_time = connection.mongos? && connection.cluster_time

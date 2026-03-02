@@ -804,22 +804,6 @@ axes:
         variables:
           MONGODB_VERSION: "4.2"
           CRYPT_SHARED_VERSION: "6.0.5"
-      - id: "4.0"
-        display_name: "4.0"
-        variables:
-          MONGODB_VERSION: "4.0"
-      - id: "3.6"
-        display_name: "3.6"
-        variables:
-          MONGODB_VERSION: "3.6"
-
-  - id: fcv
-    display_name: FCV
-    values:
-      - id: '3.4'
-        display_name: '3.4'
-        variables:
-          FCV: '3.4'
 
   - id: "topology"
     display_name: Topology

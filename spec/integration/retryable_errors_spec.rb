@@ -4,9 +4,6 @@
 require 'spec_helper'
 
 describe 'Failing retryable operations' do
-  # Requirement for fail point
-  min_server_fcv '4.0'
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client_options) do
@@ -228,8 +225,6 @@ describe 'Failing retryable operations' do
       include_context 'read operation'
 
       context 'modern read retries' do
-        require_wired_tiger_on_36
-
         let(:client_options) do
           {retry_reads: true}
         end
@@ -263,8 +258,6 @@ describe 'Failing retryable operations' do
       include_context 'write operation'
 
       context 'modern write retries' do
-        require_wired_tiger_on_36
-
         let(:client_options) do
           {retry_writes: true}
         end

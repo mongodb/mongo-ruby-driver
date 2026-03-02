@@ -9,7 +9,6 @@ base = "#{CURRENT_PATH}/spec_tests/data/retryable_reads"
 RETRYABLE_READS_TESTS = Dir.glob("#{base}/legacy/**/*.yml").sort
 
 describe 'Retryable reads legacy spec tests' do
-  require_wired_tiger
   require_no_multi_mongos
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|

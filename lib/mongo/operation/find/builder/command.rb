@@ -56,10 +56,6 @@ module Mongo
           ).freeze
 
           module_function def selector(spec, connection)
-            if spec[:collation] && !connection.features.collation_enabled?
-              raise Error::UnsupportedCollation
-            end
-
             BSON::Document.new.tap do |selector|
               OPTION_MAPPINGS.each do |k, server_k|
                 unless (value = spec[k]).nil?
