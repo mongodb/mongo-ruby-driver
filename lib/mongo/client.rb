@@ -92,6 +92,7 @@ module Mongo
       :scan,
       :sdam_proc,
       :server_api,
+      :server_monitoring_mode,
       :server_selection_timeout,
       :socket_timeout,
       :srv_max_hosts,

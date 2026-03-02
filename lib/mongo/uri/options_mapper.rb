@@ -325,6 +325,9 @@ module Mongo
       uri_option 'retryWrites', :retry_writes, type: :bool
       uri_option 'zlibCompressionLevel', :zlib_compression_level, type: :zlib_compression_level
 
+      # Monitoring Options
+      uri_option 'serverMonitoringMode', :server_monitoring_mode, type: :server_monitoring_mode
+
       # Converts +value+ to a boolean.
       #
       # Returns true for 'true', false for 'false', otherwise nil.
@@ -712,6 +715,31 @@ module Mongo
         value.to_s.gsub(/_(\w)/) { $1.upcase }
       end
       alias :stringify_read_mode :revert_read_mode
+
+      # Server monitoring mode transformation.
+      #
+      # @param [ String ] name Name of the URI option being processed.
+      # @param [ String ] value The server monitoring mode string value.
+      #
+      # @return [ Symbol | nil ] The server monitoring mode symbol.
+      def convert_server_monitoring_mode(name, value)
+        mode = value.downcase
+        if SERVER_MONITORING_MODES.include?(mode)
+          mode.to_sym
+        else
+          log_warn("#{value} is not a valid server monitoring mode")
+          nil
+        end
+      end
+
+      # Stringifies server monitoring mode.
+      #
+      # @param [ Symbol ] value The server monitoring mode.
+      #
+      # @return [ String ] The server monitoring mode as a string.
+      def stringify_server_monitoring_mode(value)
+        value.to_s
+      end
 
       # Read preference tags transformation.
       #

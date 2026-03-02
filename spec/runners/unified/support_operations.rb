@@ -286,6 +286,19 @@ module Unified
       end
     end
 
+    SDAM_SERVER_TYPE_MAP = {
+      'Standalone' => :standalone,
+      'RSPrimary' => :primary,
+      'RSSecondary' => :secondary,
+      'RSArbiter' => :arbiter,
+      'Mongos' => :sharded,
+      'Unknown' => :unknown,
+      'PossiblePrimary' => :unknown,
+      'RSGhost' => :ghost,
+      'RSOther' => :other,
+      'LoadBalancer' => :load_balancer,
+    }.freeze
+
     def select_events(subscriber, event)
       expected_name, opts = event.first
       expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { $1.upcase }
@@ -295,7 +308,8 @@ module Unified
           result = true
           if new_desc = spec.use('newDescription')
             if type = new_desc.use('type')
-              result &&= wevent.new_description.server_type == type.downcase.to_sym
+              expected_type = SDAM_SERVER_TYPE_MAP[type] || type.downcase.to_sym
+              result &&= wevent.new_description.server_type == expected_type
             end
           end
           unless spec.empty?
