@@ -408,6 +408,8 @@ module Unified
         $kill_transactions = nil
       end
 
+      disable_fail_points
+
       entities[:client]&.each do |id, client|
         client.close
       end
