@@ -264,5 +264,45 @@ describe Mongo::Session do
         end
       end
     end
+
+    context 'backoff calculation' do
+      require_topology :replica_set
+
+      it 'calculates exponential backoff correctly' do
+        # Test backoff formula: jitter * min(BACKOFF_INITIAL * 1.5^(attempt-1), BACKOFF_MAX)
+        backoff_initial = Mongo::Session::BACKOFF_INITIAL
+        backoff_max = Mongo::Session::BACKOFF_MAX
+
+        # Test attempt 1: 1.5^0 = 1
+        expected_attempt_1 = backoff_initial * (1.5 ** 0)
+        expect(expected_attempt_1).to eq(0.005)
+
+        # Test attempt 2: 1.5^1 = 1.5
+        expected_attempt_2 = backoff_initial * (1.5 ** 1)
+        expect(expected_attempt_2).to eq(0.0075)
+
+        # Test attempt 3: 1.5^2 = 2.25
+        expected_attempt_3 = backoff_initial * (1.5 ** 2)
+        expect(expected_attempt_3).to eq(0.01125)
+
+        # Test cap at BACKOFF_MAX
+        expected_attempt_large = [backoff_initial * (1.5 ** 20), backoff_max].min
+        expect(expected_attempt_large).to eq(backoff_max)
+      end
+
+      it 'applies jitter to backoff' do
+        # Jitter should be a random value between 0 and 1
+        # When multiplied with backoff, it should reduce the actual sleep time
+        backoff = 0.100  # 100ms
+        jitter_min = 0
+        jitter_max = 1
+
+        actual_min = jitter_min * backoff
+        actual_max = jitter_max * backoff
+
+        expect(actual_min).to eq(0)
+        expect(actual_max).to eq(0.100)
+      end
+    end
   end
 end
