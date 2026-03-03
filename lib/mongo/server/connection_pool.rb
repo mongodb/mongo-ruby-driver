@@ -995,17 +995,26 @@ module Mongo
       def connect_connection(connection, context = nil)
         begin
           connection.connect!(context)
-        rescue Exception
+        rescue Exception => exc
+          # When a connection encounters an error during creation
+          # (including handshake and authentication), mark the server
+          # as Unknown so the pool is cleared (per CMAP spec).
+          # The unknown! call must happen before disconnect! so that
+          # the ConnectionPoolCleared event is published before the
+          # ConnectionClosed event.
+          # Errors with the SystemOverloadedError label (network errors
+          # during handshake) are excluded per the SDAM spec — those
+          # must not change the server description.
+          if exc.is_a?(Mongo::Error) && !exc.label?('SystemOverloadedError')
+            @server.unknown!(
+              generation: exc.generation,
+              service_id: exc.service_id,
+              stop_push_monitor: true,
+            )
+          end
           connection.disconnect!(reason: :error)
           raise
         end
-      rescue Error::SocketError, Error::SocketTimeoutError => exc
-        @server.unknown!(
-          generation: exc.generation,
-          service_id: exc.service_id,
-          stop_push_monitor: true,
-        )
-        raise
       end
 
       def check_invariants
