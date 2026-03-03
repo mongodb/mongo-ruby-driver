@@ -159,7 +159,7 @@ module Mongo
               logger: options[:logger],
               log_prefix: options[:log_prefix],
               bg_error_backtrace: options[:bg_error_backtrace],
-                                   )
+            )
             if exc.is_a?(::Mongo::Error)
               # The SystemOverloadedError label marks errors as back-pressure
               # signals that should not cause the server to be marked Unknown.
