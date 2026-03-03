@@ -160,6 +160,19 @@ module Mongo
               log_prefix: options[:log_prefix],
               bg_error_backtrace: options[:bg_error_backtrace],
             )
+            if exc.is_a?(::Mongo::Error)
+              # The SystemOverloadedError label marks errors as back-pressure
+              # signals that should not cause the server to be marked Unknown.
+              # Per the SDAM spec, this label only applies to network errors
+              # during the handshake. Command errors (e.g. OperationFailure
+              # with "node is shutting down" codes) must still flow through
+              # normal SDAM error handling so the server is marked Unknown
+              # and the pool is cleared.
+              if exc.is_a?(Error::SocketError) || exc.is_a?(Error::SocketTimeoutError)
+                exc.add_label('SystemOverloadedError')
+                exc.add_label('RetryableError')
+              end
+            end
             raise
           end
         end

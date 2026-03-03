@@ -456,13 +456,26 @@ module Mongo
                    Utils.monotonic_time + 120
                  end
       transaction_in_progress = false
+      transaction_attempt = 0
+      last_error = nil
+
       loop do
+        if transaction_attempt > 0
+          backoff = backoff_seconds_for_retry(transaction_attempt)
+          if backoff_would_exceed_deadline?(deadline, backoff)
+            raise(last_error)
+          end
+          sleep(backoff)
+        end
+
         commit_options = {}
         if options
           commit_options[:write_concern] = options[:write_concern]
         end
         start_transaction(options)
         transaction_in_progress = true
+        transaction_attempt += 1
+
         begin
           rv = yield self
         rescue Exception => e
@@ -479,6 +492,7 @@ module Mongo
           end
 
           if e.is_a?(Mongo::Error) && e.label?('TransientTransactionError')
+            last_error = e
             next
           end
 
@@ -495,7 +509,7 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
-              if  deadline_expired?(deadline) ||
+              if deadline_expired?(deadline) ||
                 e.is_a?(Error::OperationFailure::Family) && e.max_time_ms_expired?
               then
                 transaction_in_progress = false
@@ -516,6 +530,7 @@ module Mongo
                 transaction_in_progress = false
                 raise
               end
+              last_error = e
               @state = NO_TRANSACTION_STATE
               next
             else
@@ -1311,6 +1326,21 @@ module Mongo
       else
         Utils.monotonic_time >= deadline
       end
+    end
+
+    # Exponential backoff settings for with_transaction retries.
+    BACKOFF_INITIAL = 0.005
+    BACKOFF_MAX = 0.5
+
+    def backoff_seconds_for_retry(transaction_attempt)
+      exponential = BACKOFF_INITIAL * (1.5 ** (transaction_attempt - 1))
+      Random.rand * [exponential, BACKOFF_MAX].min
+    end
+
+    def backoff_would_exceed_deadline?(deadline, backoff_seconds)
+      return false if deadline.zero?
+
+      Utils.monotonic_time + backoff_seconds >= deadline
     end
   end
 end
