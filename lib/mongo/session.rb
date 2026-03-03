@@ -1331,6 +1331,7 @@ module Mongo
     # Exponential backoff settings for with_transaction retries.
     BACKOFF_INITIAL = 0.005
     BACKOFF_MAX = 0.5
+    private_constant :BACKOFF_INITIAL, :BACKOFF_MAX
 
     def backoff_seconds_for_retry(transaction_attempt)
       exponential = BACKOFF_INITIAL * (1.5 ** (transaction_attempt - 1))
