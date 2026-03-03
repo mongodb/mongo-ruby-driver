@@ -170,8 +170,8 @@ module Mongo
               # and the pool is cleared.
               if exc.is_a?(Error::SocketError) || exc.is_a?(Error::SocketTimeoutError)
                 exc.add_label('SystemOverloadedError')
+                exc.add_label('RetryableError')
               end
-              exc.add_label('RetryableError')
             end
             raise
           end
