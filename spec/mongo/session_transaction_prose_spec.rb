@@ -5,6 +5,7 @@ require 'spec_helper'
 
 describe Mongo::Session do
   require_topology :replica_set
+  min_server_version '4.4'
 
   describe 'transactions convenient API prose tests' do
     let(:client) { authorized_client }
