@@ -27,7 +27,10 @@
                      jrubies
 
   # The latest stable version of MongoDB
-  latest_stable_mdb = "8.0".inspect # so it gets quoted as a string
+  latest_stable_mdb_raw = "8.0"
+  latest_stable_mdb = latest_stable_mdb_raw.inspect # so it gets quoted as a string
+
+  stable_and_rapid = [ latest_stable_mdb_raw, "rapid" ]
 
   recent_mdb = %w( 8.0 7.0 )
 %>
@@ -112,7 +115,7 @@ buildvariants:
   - matrix_name: "single-lb"
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= stable_and_rapid %>
       topology: load-balanced
       single-mongos: single-mongos
       os: ubuntu2204
@@ -136,7 +139,7 @@ buildvariants:
   - matrix_name: "single-mongos"
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= stable_and_rapid %>
       topology: "sharded-cluster"
       single-mongos: single-mongos
       os: ubuntu2204
@@ -148,7 +151,7 @@ buildvariants:
   - matrix_name: CSOT
     matrix_spec:
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= stable_and_rapid %>
       topology: replica-set-single-node
       os: ubuntu2204
     display_name: "CSOT - ${mongodb-version}"
@@ -171,7 +174,7 @@ buildvariants:
     matrix_spec:
       retry-reads: no-retry-reads
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= stable_and_rapid %>
       topology: <%= topologies %>
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
@@ -183,7 +186,7 @@ buildvariants:
     matrix_spec:
       retry-writes: no-retry-writes
       ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= stable_and_rapid %>
       topology: [replica-set, sharded-cluster]
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
@@ -270,7 +273,7 @@ buildvariants:
       - name: "run-main-test-suite"
 
  <% [
-      [latest_ruby, latest_stable_mdb, 'ubuntu2204'],
+      [latest_ruby, stable_and_rapid, 'ubuntu2204'],
       [supported_mri_ruby_2, '"6.0"', 'ubuntu2004']
     ].each do |rubies, mdb, distro|
  %>
@@ -342,12 +345,12 @@ buildvariants:
       - name: "test-mlaunch"
   <% end %>
 
-  - matrix_name: "fle above 4.4"
+  - matrix_name: "fle"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: <%= supported_mri_rubies_3_ubuntu %>
       topology: [replica-set, sharded-cluster]
-      mongodb-version: [ '6.0', '7.0', '8.0' ]
+      mongodb-version: [ '6.0', '7.0', '8.0', 'rapid' ]
       os: ubuntu2204
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
@@ -378,6 +381,8 @@ buildvariants:
 #    tasks:
 #      - name: "test-fle"
 
+  # Runs specs against the latest server. This is not automatically run on PR's
+  # because we don't want to block PR's when the latest DB breaks something.
   - name: 'latest-server'
     activate: false
     display_name: 'Latest MongoDB Server'
@@ -399,7 +404,7 @@ buildvariants:
       auth-and-ssl: [ aws-regular, aws-assume-role, aws-web-identity ]
       ruby: <%= latest_ruby %>
       topology: standalone
-      mongodb-version: <%= latest_stable_mdb %>
+      mongodb-version: <%= stable_and_rapid %>
       os: ubuntu2204
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tags: ["pr"]

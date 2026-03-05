@@ -61,6 +61,7 @@ prepare_server
 
 if test "$DOCKER_PRELOAD" != 1; then
   install_mlaunch_venv
+  pip3 install waitress
 fi
 
 # Make sure cmake is installed (in case we need to install the libmongocrypt

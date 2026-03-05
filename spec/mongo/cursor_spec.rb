@@ -569,6 +569,7 @@ describe Mongo::Cursor do
 
     context 'when the result set is iterated fully and the cursor id is non-zero' do
       min_server_fcv '5.0'
+      max_server_fcv '8.2' # 8.3 will exhaust the cursor with the last getMore
 
       let(:documents) do
         (1..5).map{ |i| { field: "test#{i}" }}
@@ -592,8 +593,8 @@ describe Mongo::Cursor do
       end
 
       it 'schedules a kill cursors command' do
-        get_more_commands = subscriber.started_events.select { |e| e.command_name == 'killCursors' }
-        expect(get_more_commands.length).to be 1
+        commands = subscriber.started_events.select { |e| e.command_name == 'killCursors' }
+        expect(commands.length).to be 1
       end
     end
   end

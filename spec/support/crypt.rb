@@ -23,6 +23,21 @@ module Crypt
 
   # For all FLE-related tests
   shared_context 'define shared FLE helpers' do
+    # SERVER-118428 -- mongocryptd rejects large messages
+    # DRIVERS-3382 -- once SERVER-118428 is fixed, remove these checks
+    before do
+      if extra_options[:mongocryptd_uri]
+        version = ClusterConfig.instance.server_version
+        bad_mongocryptd = case version
+          when /^8\.2/ then version >= '8.2.4'
+          when /^8\.0/ then version >= '8.0.18'
+          when /^7\.0/ then version >= '7.0.29'
+          else false
+          end
+        skip 'Bad mongocryptd version -- see DRIVERS-3382' if bad_mongocryptd
+      end
+    end
+
     # 96-byte binary string, base64-encoded local master key
     let(:local_master_key_b64) do
       Crypt::LOCAL_MASTER_KEY_B64
