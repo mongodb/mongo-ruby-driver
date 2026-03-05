@@ -327,6 +327,7 @@ module Mongo
           server_selector,
           session,
           failed_server,
+          error: original_error,
           timeout: context&.remaining_timeout_sec
         )
       rescue Error, Error::AuthError => e
