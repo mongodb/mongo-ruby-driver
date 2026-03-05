@@ -46,15 +46,35 @@ module Mongo
     # @api private
     #
     # @return [ Mongo::Server ] A server matching the server preference.
-    def select_server(cluster, server_selector, session, failed_server = nil, timeout: nil)
+    def select_server(cluster, server_selector, session, failed_server = nil, error: nil, timeout: nil)
+      deprioritized = if failed_server && deprioritize_server?(cluster, error)
+        [failed_server]
+      else
+        []
+      end
       server_selector.select_server(
         cluster,
         nil,
         session,
-        deprioritized: [failed_server].compact,
+        deprioritized: deprioritized,
         timeout: timeout
       )
     end
+
+    private
+
+    # Whether the failed server should be deprioritized during server
+    # selection for a retry attempt. For sharded and load-balanced
+    # topologies, servers are always deprioritized on any retryable error.
+    # For replica sets, servers are only deprioritized when the error
+    # carries the SystemOverloadedError label.
+    def deprioritize_server?(cluster, error)
+      return true if cluster.sharded? || cluster.load_balanced?
+
+      error.respond_to?(:label?) && error.label?('SystemOverloadedError')
+    end
+
+    public
 
     # Returns the read worker for handling retryable reads.
     #

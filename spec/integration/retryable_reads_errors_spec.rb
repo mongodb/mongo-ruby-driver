@@ -271,4 +271,89 @@ describe 'Retryable reads errors tests' do
       end
     end
   end
+
+  context 'Retries in a replica set' do
+    require_topology :replica_set
+    min_server_version '4.4'
+
+    let(:subscriber) { Mrss::EventSubscriber.new }
+
+    let(:find_failed_events) do
+      subscriber.failed_events.select { |e| e.command_name == 'find' }
+    end
+
+    let(:find_succeeded_events) do
+      subscriber.succeeded_events.select { |e| e.command_name == 'find' }
+    end
+
+    let(:options) { {} }
+
+    after do
+      authorized_client.use(:admin).command(
+        configureFailPoint: 'failCommand',
+        mode: 'off'
+      )
+      client.close
+    end
+
+    context 'when error has SystemOverloadedError label' do
+      let(:client) do
+        authorized_client.with(
+          retry_reads: true,
+          read: { mode: :primary_preferred }
+        )
+      end
+
+      before do
+        authorized_client.use(:admin).command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(find),
+            errorCode: 6,
+            errorLabels: %w(RetryableError SystemOverloadedError)
+          }
+        )
+      end
+
+      it 'retries on a different server' do
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        subscriber.clear_events!
+        expect { collection.find.first }.not_to raise_error
+        expect(find_failed_events.length).to eq(1)
+        expect(find_succeeded_events.length).to eq(1)
+        expect(find_failed_events.first.address).not_to eq(find_succeeded_events.first.address)
+      end
+    end
+
+    context 'when error does not have SystemOverloadedError label' do
+      let(:client) do
+        authorized_client.with(
+          retry_reads: true,
+          read: { mode: :primary_preferred }
+        )
+      end
+
+      before do
+        authorized_client.use(:admin).command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: %w(find),
+            errorCode: 6,
+            errorLabels: %w(RetryableError)
+          }
+        )
+      end
+
+      it 'retries on the same server' do
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        subscriber.clear_events!
+        expect { collection.find.first }.not_to raise_error
+        expect(find_failed_events.length).to eq(1)
+        expect(find_succeeded_events.length).to eq(1)
+        expect(find_failed_events.first.address).to eq(find_succeeded_events.first.address)
+      end
+    end
+  end
 end

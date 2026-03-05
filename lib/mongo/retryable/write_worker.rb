@@ -272,6 +272,7 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def retry_write(original_error, txn_num, context:, failed_server: nil, &block)
+        failed_error = failed_error || original_error
         context&.check_timeout!
 
         session = context.session
@@ -286,6 +287,7 @@ module Mongo
           ServerSelector.primary,
           session,
           failed_server,
+          error: failed_error,
           timeout: context.remaining_timeout_sec
         )
 
@@ -311,10 +313,12 @@ module Mongo
       rescue *retryable_exceptions, Error::PoolError => e
         maybe_fail_on_retryable(e, original_error, context, attempt)
         failed_server = server
+        failed_error = e
         retry
       rescue Error::OperationFailure::Family => e
         maybe_fail_on_operation_failure(e, original_error, context, attempt)
         failed_server = server
+        failed_error = e
         retry
       rescue Mongo::Error::TimeoutError
         raise

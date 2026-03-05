@@ -115,6 +115,8 @@ describe Mongo::Retryable do
   let(:cluster) do
     double('cluster', next_primary: server).tap do |cluster|
       allow(cluster).to receive(:replica_set?).and_return(true)
+      allow(cluster).to receive(:sharded?).and_return(false)
+      allow(cluster).to receive(:load_balanced?).and_return(false)
       allow(cluster).to receive(:addresses).and_return(['x'])
     end
   end
