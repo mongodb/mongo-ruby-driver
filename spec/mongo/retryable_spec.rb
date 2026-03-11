@@ -115,6 +115,8 @@ describe Mongo::Retryable do
   let(:cluster) do
     double('cluster', next_primary: server).tap do |cluster|
       allow(cluster).to receive(:replica_set?).and_return(true)
+      allow(cluster).to receive(:sharded?).and_return(false)
+      allow(cluster).to receive(:load_balanced?).and_return(false)
       allow(cluster).to receive(:addresses).and_return(['x'])
     end
   end
@@ -453,13 +455,13 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::UnsupportedCollation.new('unsupported collation')).ordered
+          Mongo::Error::MaxBSONSize).ordered
       end
 
       it 'raises an exception' do
         expect {
           retryable.write
-        }.to raise_error(Mongo::Error::UnsupportedCollation)
+        }.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end
   end
@@ -596,28 +598,13 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::UnsupportedCollation.new('unsupported collation')).ordered
+          Mongo::Error::MaxBSONSize).ordered
       end
 
       it 'raises an exception' do
         expect {
           retryable.write
-        }.to raise_error(Mongo::Error::UnsupportedCollation)
-      end
-    end
-
-    context 'when an error due to using an unsupported storage engine occurs' do
-      before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('message which is not checked',
-            nil, code: 20, server_message: 'Transaction numbers are only allowed on...',
-        )).ordered
-      end
-
-      it 'raises an exception with the correct error message' do
-        expect {
-          retryable.write
-        }.to raise_error(Mongo::Error::OperationFailure, /This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string or use the retry_writes: false Ruby client option/)
+        }.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end
   end

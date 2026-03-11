@@ -44,12 +44,10 @@ module Mongo
         # @example Get the query plan for the query with execution statistics.
         #   view.explain(verbosity: :execution_stats)
         #
-        # @option opts [ true | false ] :verbose The level of detail
-        #   to return for MongoDB 2.6 servers.
         # @option opts [ String | Symbol ] :verbosity The type of information
-        #   to return for MongoDB 3.0 and newer servers. If the value is a
-        #   symbol, it will be stringified and converted from underscore
-        #   style to camel case style (e.g. :query_planner => "queryPlanner").
+        #   to return. If the value is a symbol, it will be stringified and
+        #   converted from underscore style to camel case style
+        #   (e.g. :query_planner => "queryPlanner").
         #
         # @return [ Hash ] A single document with the query plan.
         #
@@ -66,12 +64,10 @@ module Mongo
           !!options[:explain]
         end
 
-        # @option opts [ true | false ] :verbose The level of detail
-        #   to return for MongoDB 2.6 servers.
         # @option opts [ String | Symbol ] :verbosity The type of information
-        #   to return for MongoDB 3.0 and newer servers. If the value is a
-        #   symbol, it will be stringified and converted from underscore
-        #   style to camel case style (e.g. :query_planner => "queryPlanner").
+        #   to return. If the value is a symbol, it will be stringified and
+        #   converted from underscore style to camel case style
+        #   (e.g. :query_planner => "queryPlanner").
         def explain_options(**opts)
           explain_limit = limit || 0
           # Note: opts will never be nil here.

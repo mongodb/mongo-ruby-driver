@@ -175,6 +175,10 @@ module Unified
           actual_events.select! do |event|
             event.class.name.sub(/.*::/, '') =~ /^(?:Pool|Connection)/
           end
+        when 'sdam'
+          actual_events.select! do |event|
+            event.class.name.sub(/.*::/, '') =~ /^(?:Server|Topology)/
+          end
         end
 
         if (!ignore_extra_events && actual_events.length != expected_events.length) ||
@@ -216,6 +220,9 @@ module Unified
       end
       if interrupt_in_use_connections = spec.use('interruptInUseConnections')
         assert_matches(actual.options[:interrupt_in_use_connections], interrupt_in_use_connections, 'Command interrupt_in_use_connections does not match expectation')
+      end
+      unless (awaited = spec.use('awaited')).nil?
+        assert_eq(actual.awaited?, awaited, 'Event awaited does not match expectation')
       end
       unless spec.empty?
         raise NotImplementedError, "Unhandled keys: #{spec}"
@@ -385,8 +392,8 @@ module Unified
             raise Error::ResultMismatch, "Actual value #{actual} does not match entity #{expected_v} with value #{result}"
           end
         when '$$lte'
-          if actual.nil? || actual >= expected_v
-            raise Error::ResultMismatch, "Actual value #{actual} should be less than #{expected_v}"
+          if actual.nil? || actual > expected_v
+            raise Error::ResultMismatch, "Actual value #{actual} should be less than or equal to #{expected_v}"
           end
         when '$$matchAsDocument'
           actual_v = BSON::ExtJSON.parse(actual)

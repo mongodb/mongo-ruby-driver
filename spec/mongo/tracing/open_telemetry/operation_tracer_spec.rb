@@ -234,8 +234,8 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
       )
     end
 
-    it 'includes db.system' do
-      expect(attributes['db.system']).to eq('mongodb')
+    it 'includes db.system.name' do
+      expect(attributes['db.system.name']).to eq('mongodb')
     end
 
     it 'includes db.namespace' do

@@ -21,8 +21,7 @@ require 'mongo/auth/stringprep/profiles/sasl'
 module Mongo
   module Auth
     # This namespace contains all behavior related to string preparation
-    # (RFC 3454). It's used to implement SCRAM-SHA-256 authentication,
-    # which is available in MongoDB server versions 4.0 and later.
+    # (RFC 3454). It's used to implement SCRAM-SHA-256 authentication.
     #
     # @since 2.6.0
     # @api private

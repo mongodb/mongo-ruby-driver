@@ -331,9 +331,12 @@ module Mongo
           end
           @connection = connection
           if tv_doc = result['topologyVersion']
-            # Successful response, server 4.4+
-            create_push_monitor!(TopologyVersion.new(tv_doc))
-            push_monitor.run!
+            if streaming_enabled?
+              create_push_monitor!(TopologyVersion.new(tv_doc))
+              push_monitor.run!
+            else
+              stop_push_monitor!
+            end
           else
             # Failed response or pre-4.4 server
             stop_push_monitor!
@@ -349,6 +352,26 @@ module Mongo
         delta = @next_earliest_scan - Time.now
         if delta > 0
           sleep(delta)
+        end
+      end
+
+      # Returns whether the streaming protocol is enabled, based on the
+      # serverMonitoringMode option. Default mode is :auto.
+      #
+      # - :stream - always use streaming when server supports it
+      # - :poll - never use streaming
+      # - :auto - use polling on FaaS platforms, streaming otherwise
+      #
+      # @return [ true | false ] Whether streaming is enabled.
+      def streaming_enabled?
+        mode = options[:server_monitoring_mode] || :auto
+        case mode
+        when :poll
+          false
+        when :stream
+          true
+        when :auto
+          !Server::AppMetadata::Environment.new.faas?
         end
       end
     end

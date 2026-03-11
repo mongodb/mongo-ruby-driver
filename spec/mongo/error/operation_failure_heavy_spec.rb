@@ -6,8 +6,6 @@ require 'spec_helper'
 describe Mongo::Error::OperationFailure do
 
   describe '#write_concern_error' do
-    # Fail point will work on 4.0 mongod but requires 4.2 for mongos
-    min_server_fcv '4.2'
     # Fail point must be set on the same server to which the query is sent
     require_no_multi_mongos
 

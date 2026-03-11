@@ -58,25 +58,10 @@ describe 'Bulk writes' do
       authorized_collection.bulk_write(operations)
     end
 
-    context '3.6+ server' do
-      min_server_fcv '3.6'
-
-      it 'splits the operations' do
-        # 3.6+ servers can send multiple bulk operations in one message,
-        # with the whole message being limited to 48m.
-        expect(insert_events.length).to eq(2)
-      end
-    end
-
-    context 'pre-3.6 server' do
-      max_server_version '3.4'
-
-      it 'splits the operations' do
-        # Pre-3.6 servers limit the entire message payload to the size of
-        # a single document which is 16m. Given our test data this means
-        # twice as many messages are sent.
-        expect(insert_events.length).to eq(4)
-      end
+    it 'splits the operations' do
+      # can send multiple bulk operations in one message,
+      # with the whole message being limited to 48m.
+      expect(insert_events.length).to eq(2)
     end
 
     it 'does not have a command failed event' do

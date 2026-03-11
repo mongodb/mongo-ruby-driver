@@ -276,7 +276,7 @@ describe Mongo::BulkWrite do
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                  end.to_not raise_error
                 end
               end
 
@@ -288,17 +288,6 @@ describe Mongo::BulkWrite do
                     bulk_write.execute
                   end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
                 end
-              end
-            end
-
-            # Functionality on more recent servers is sufficiently covered by spec tests.
-            context 'on server versions < 3.4' do
-              max_server_fcv '3.2'
-
-              it 'raises a client-side error' do
-                expect do
-                  bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
               end
             end
           end
@@ -351,43 +340,16 @@ describe Mongo::BulkWrite do
                 [{ delete_one: { filter: { name: 'BANG' }, collation: collation } }]
               end
 
-              context 'when the server selected supports collations' do
-                min_server_fcv '3.4'
-
-                let!(:result) do
-                  bulk_write.execute
-                end
-
-                it 'applies the collation' do
-                  expect(authorized_collection.find(name: 'bang').count).to eq(0)
-                end
-
-                it 'reports the deleted count' do
-                  expect(result.deleted_count).to eq(1)
-                end
+              let!(:result) do
+                bulk_write.execute
               end
 
-              context 'when the server selected does not support collations' do
-                max_server_version '3.2'
+              it 'applies the collation' do
+                expect(authorized_collection.find(name: 'bang').count).to eq(0)
+              end
 
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                end
-
-                context 'when a String key is used' do
-
-                  let(:requests) do
-                    [{ delete_one: { filter: { name: 'BANG' }, 'collation' => collation } }]
-                  end
-
-                  it 'raises an exception' do
-                    expect {
-                      bulk_write.execute
-                    }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                  end
-                end
+              it 'reports the deleted count' do
+                expect(result.deleted_count).to eq(1)
               end
             end
 
@@ -427,17 +389,6 @@ describe Mongo::BulkWrite do
                  }]
               end
 
-              # Functionality on more recent servers is sufficiently covered by spec tests.
-              context 'on server versions < 3.4' do
-                max_server_fcv '3.2'
-
-                it 'raises a client-side error' do
-                  expect do
-                    bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
-                end
-              end
-
               context 'with unacknowledged write concern' do
                 let(:bulk_write) do
                   described_class.new(
@@ -447,24 +398,10 @@ describe Mongo::BulkWrite do
                   )
                 end
 
-                context "on 4.2+ servers" do
-                  min_server_version '4.2'
-
-                  it "doesn't raises an error" do
-                    expect do
-                      bulk_write.execute
-                    end.to_not raise_error(Mongo::Error::UnsupportedOption)
-                  end
-                end
-
-                context "on <=4.2 servers" do
-                  max_server_version '4.0'
-
-                  it 'raises a client-side error' do
-                    expect do
-                      bulk_write.execute
-                    end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-                  end
+                it "doesn't raises an error" do
+                  expect do
+                    bulk_write.execute
+                  end.to_not raise_error
                 end
               end
             end
@@ -485,28 +422,14 @@ describe Mongo::BulkWrite do
                  }]
               end
 
-              context 'when the server selected supports arrayFilters' do
-                min_server_fcv '3.6'
-
-                let!(:result) do
-                  bulk_write.execute
-                end
-
-                it 'applies the arrayFilters' do
-                  expect(result.matched_count).to eq(1)
-                  expect(result.modified_count).to eq(1)
-                  expect(authorized_collection.find(_id: 1).first['x'].last['y']).to eq(5)
-                end
+              let!(:result) do
+                bulk_write.execute
               end
 
-              context 'when the server selected does not support arrayFilters' do
-                max_server_version '3.4'
-
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-                end
+              it 'applies the arrayFilters' do
+                expect(result.matched_count).to eq(1)
+                expect(result.modified_count).to eq(1)
+                expect(authorized_collection.find(_id: 1).first['x'].last['y']).to eq(5)
               end
             end
           end
@@ -523,17 +446,6 @@ describe Mongo::BulkWrite do
                  }]
               end
 
-              # Functionality on more recent servers is sufficiently covered by spec tests.
-              context 'on server versions < 3.4' do
-                max_server_fcv '3.2'
-
-                it 'raises a client-side error' do
-                  expect do
-                    bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
-                end
-              end
-
               context 'with unacknowledged write concern' do
                 let(:bulk_write) do
                   described_class.new(
@@ -543,24 +455,10 @@ describe Mongo::BulkWrite do
                   )
                 end
 
-                context "on 4.2+ servers" do
-                  min_server_version '4.2'
-
-                  it "doesn't raises an error" do
-                    expect do
-                      bulk_write.execute
-                    end.to_not raise_error(Mongo::Error::UnsupportedOption)
-                  end
-                end
-
-                context "on <=4.0 servers" do
-                  max_server_version '4.0'
-
-                  it 'raises a client-side error' do
-                    expect do
-                      bulk_write.execute
-                    end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-                  end
+                it "doesn't raises an error" do
+                  expect do
+                    bulk_write.execute
+                  end.to_not raise_error
                 end
               end
             end
@@ -600,31 +498,17 @@ describe Mongo::BulkWrite do
                  }]
               end
 
-              context 'when the server selected supports arrayFilters' do
-                min_server_fcv '3.6'
-
-                let!(:result) do
-                  bulk_write.execute
-                end
-
-                it 'applies the arrayFilters' do
-                  expect(result.matched_count).to eq(2)
-                  expect(result.modified_count).to eq(2)
-
-                  docs = authorized_collection.find(selector, sort: { _id: 1 }).to_a
-                  expect(docs[0]['x']).to eq ([{ 'y' => 1 },  { 'y' => 2 }, { 'y' => 5}])
-                  expect(docs[1]['x']).to eq ([{ 'y' => 5 },  { 'y' => 2 }, { 'y' => 1}])
-                end
+              let!(:result) do
+                bulk_write.execute
               end
 
-              context 'when the server selected does not support arrayFilters' do
-                max_server_version '3.4'
+              it 'applies the arrayFilters' do
+                expect(result.matched_count).to eq(2)
+                expect(result.modified_count).to eq(2)
 
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-                end
+                docs = authorized_collection.find(selector, sort: { _id: 1 }).to_a
+                expect(docs[0]['x']).to eq ([{ 'y' => 1 },  { 'y' => 2 }, { 'y' => 5}])
+                expect(docs[1]['x']).to eq ([{ 'y' => 5 },  { 'y' => 2 }, { 'y' => 1}])
               end
             end
           end
@@ -726,44 +610,16 @@ describe Mongo::BulkWrite do
                { delete_one: { filter: { name: 'DOINK' }, collation: collation }}]
             end
 
-            context 'when the server selected supports collations' do
-              min_server_fcv '3.4'
-
-              let!(:result) do
-                bulk_write.execute
-              end
-
-              it 'applies the collation' do
-                expect(authorized_collection.find(name: { '$in' => ['bang', 'doink']}).count).to eq(0)
-              end
-
-              it 'reports the deleted count' do
-                expect(result.deleted_count).to eq(2)
-              end
+            let!(:result) do
+              bulk_write.execute
             end
 
-            context 'when the server selected does not support collations' do
-              max_server_version '3.2'
+            it 'applies the collation' do
+              expect(authorized_collection.find(name: { '$in' => ['bang', 'doink']}).count).to eq(0)
+            end
 
-              it 'raises an exception' do
-                expect {
-                  bulk_write.execute
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
-
-              context 'when a String key is used' do
-
-                let(:requests) do
-                  [{ delete_one: { filter: { name: 'BANG' }, 'collation' => collation }},
-                   { delete_one: { filter: { name: 'DOINK' }, 'collation' => collation }}]
-                end
-
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                end
-              end
+            it 'reports the deleted count' do
+              expect(result.deleted_count).to eq(2)
             end
           end
 
@@ -822,17 +678,6 @@ describe Mongo::BulkWrite do
                }]
             end
 
-            # Functionality on more recent servers is sufficiently covered by spec tests.
-            context 'on server versions < 3.4' do
-              max_server_fcv '3.2'
-
-              it 'raises a client-side error' do
-                expect do
-                  bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
-              end
-            end
-
             context 'with unacknowledged write concern' do
               let(:bulk_write) do
                 described_class.new(
@@ -848,7 +693,7 @@ describe Mongo::BulkWrite do
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
+                  end.to_not raise_error
                 end
               end
 
@@ -914,43 +759,16 @@ describe Mongo::BulkWrite do
               [{ delete_many: { filter: { name: 'BANG' }, collation: collation }}]
             end
 
-            context 'when the server selected supports collations' do
-              min_server_fcv '3.4'
-
-              let!(:result) do
-                bulk_write.execute
-              end
-
-              it 'applies the collation' do
-                expect(authorized_collection.find(name: 'bang').count).to eq(0)
-              end
-
-              it 'reports the deleted count' do
-                expect(result.deleted_count).to eq(2)
-              end
+            let!(:result) do
+              bulk_write.execute
             end
 
-            context 'when the server selected does not support collations' do
-              max_server_version '3.2'
+            it 'applies the collation' do
+              expect(authorized_collection.find(name: 'bang').count).to eq(0)
+            end
 
-              it 'raises an exception' do
-                expect {
-                  bulk_write.execute
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
-
-              context 'when a String key is used' do
-
-                let(:requests) do
-                  [{ delete_many: { filter: { name: 'BANG' }, 'collation' => collation }}]
-                end
-
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                end
-              end
+            it 'reports the deleted count' do
+              expect(result.deleted_count).to eq(2)
             end
           end
 
@@ -1056,44 +874,16 @@ describe Mongo::BulkWrite do
                { delete_many: { filter: { name: 'DOINK' },  collation: collation }}]
             end
 
-            context 'when the server selected supports collations' do
-              min_server_fcv '3.4'
-
-              let!(:result) do
-                bulk_write.execute
-              end
-
-              it 'applies the collation' do
-                expect(authorized_collection.find(name: { '$in' => ['bang', 'doink'] }).count).to eq(0)
-              end
-
-              it 'reports the deleted count' do
-                expect(result.deleted_count).to eq(3)
-              end
+            let!(:result) do
+              bulk_write.execute
             end
 
-            context 'when the server selected does not support collations' do
-              max_server_version '3.2'
+            it 'applies the collation' do
+              expect(authorized_collection.find(name: { '$in' => ['bang', 'doink'] }).count).to eq(0)
+            end
 
-              it 'raises an exception' do
-                expect {
-                  bulk_write.execute
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
-
-              context 'when a String key is used' do
-
-                let(:requests) do
-                  [{ delete_many: { filter: { name: 'BANG' },  'collation' => collation }},
-                   { delete_many: { filter: { name: 'DOINK' },  'collation' => collation }}]
-                end
-
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                end
-              end
+            it 'reports the deleted count' do
+              expect(result.deleted_count).to eq(3)
             end
           end
 
@@ -1154,17 +944,6 @@ describe Mongo::BulkWrite do
               }]
             end
 
-            # Functionality on more recent servers is sufficiently covered by spec tests.
-            context 'on server versions < 3.4' do
-              max_server_fcv '3.2'
-
-              it 'raises a client-side error' do
-                expect do
-                  bulk_write.execute
-                end.to raise_error(Mongo::Error::UnsupportedOption, /The MongoDB server handling this request does not support the hint option on this command./)
-              end
-            end
-
             context 'with unacknowledged write concern' do
               let(:bulk_write) do
                 described_class.new(
@@ -1174,24 +953,10 @@ describe Mongo::BulkWrite do
                 )
               end
 
-              context "on 4.2+ servers" do
-                min_server_version '4.2'
-
-                it "doesn't raises an error" do
-                  expect do
-                    bulk_write.execute
-                  end.to_not raise_error(Mongo::Error::UnsupportedOption)
-                end
-              end
-
-              context "on <=4.0 servers" do
-                max_server_version '4.0'
-
-                it 'raises a client-side error' do
-                  expect do
-                    bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
-                end
+              it "doesn't raises an error" do
+                expect do
+                  bulk_write.execute
+                end.to_not raise_error
               end
             end
           end
@@ -1247,57 +1012,28 @@ describe Mongo::BulkWrite do
                                 collation: collation }}]
             end
 
-            context 'when the server selected supports collations' do
-              min_server_fcv '3.4'
-
-              let!(:result) do
-                bulk_write.execute
-              end
-
-              it 'applies the collation' do
-                expect(authorized_collection.find(other: 'pong').count).to eq(1)
-              end
-
-              it 'reports the upserted id' do
-                expect(result.upserted_ids).to eq([])
-              end
-
-              it 'reports the upserted count' do
-                expect(result.upserted_count).to eq(0)
-              end
-
-              it 'reports the modified count' do
-                expect(result.modified_count).to eq(1)
-              end
-
-              it 'reports the matched count' do
-                expect(result.matched_count).to eq(1)
-              end
+            let!(:result) do
+              bulk_write.execute
             end
 
-            context 'when the server selected does not support collations' do
-              max_server_version '3.2'
+            it 'applies the collation' do
+              expect(authorized_collection.find(other: 'pong').count).to eq(1)
+            end
 
-              it 'raises an exception' do
-                expect {
-                  bulk_write.execute
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
+            it 'reports the upserted id' do
+              expect(result.upserted_ids).to eq([])
+            end
 
-              context 'when a String key is used' do
+            it 'reports the upserted count' do
+              expect(result.upserted_count).to eq(0)
+            end
 
-                let(:requests) do
-                  [{ replace_one: { filter: { name: 'BANG' },
-                                    replacement: { other: 'pong' },
-                                    'collation' => collation }}]
-                end
+            it 'reports the modified count' do
+              expect(result.modified_count).to eq(1)
+            end
 
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                end
-              end
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(1)
             end
           end
 
@@ -1552,57 +1288,28 @@ describe Mongo::BulkWrite do
                                collation: collation }}]
             end
 
-            context 'when the server selected supports collations' do
-              min_server_fcv '3.4'
-
-              let!(:result) do
-                bulk_write.execute
-              end
-
-              it 'applies the collation' do
-                expect(authorized_collection.find(name: 'pong').count).to eq(1)
-              end
-
-              it 'reports the upserted id' do
-                expect(result.upserted_ids).to eq([])
-              end
-
-              it 'reports the upserted count' do
-                expect(result.upserted_count).to eq(0)
-              end
-
-              it 'reports the modified count' do
-                expect(result.modified_count).to eq(1)
-              end
-
-              it 'reports the matched count' do
-                expect(result.matched_count).to eq(1)
-              end
+            let!(:result) do
+              bulk_write.execute
             end
 
-            context 'when the server selected does not support collations' do
-              max_server_version '3.2'
+            it 'applies the collation' do
+              expect(authorized_collection.find(name: 'pong').count).to eq(1)
+            end
 
-              it 'raises an exception' do
-                expect {
-                  bulk_write.execute
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
+            it 'reports the upserted id' do
+              expect(result.upserted_ids).to eq([])
+            end
 
-              context 'when a String key is used' do
+            it 'reports the upserted count' do
+              expect(result.upserted_count).to eq(0)
+            end
 
-                let(:requests) do
-                  [{ update_one: { filter: { name: 'BANG' },
-                                   update: { "$set" => { name: 'pong' }},
-                                   'collation' => collation }}]
-                end
+            it 'reports the modified count' do
+              expect(result.modified_count).to eq(1)
+            end
 
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                end
-              end
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(1)
             end
           end
 
@@ -1660,60 +1367,28 @@ describe Mongo::BulkWrite do
                                collation: collation }}]
             end
 
-            context 'when the server selected supports collations' do
-              min_server_fcv '3.4'
-
-              let!(:result) do
-                bulk_write.execute
-              end
-
-              it 'applies the collation' do
-                expect(authorized_collection.find(name: 'pong').count).to eq(2)
-              end
-
-              it 'reports the upserted id' do
-                expect(result.upserted_ids).to eq([])
-              end
-
-              it 'reports the upserted count' do
-                expect(result.upserted_count).to eq(0)
-              end
-
-              it 'reports the modified count' do
-                expect(result.modified_count).to eq(2)
-              end
-
-              it 'reports the matched count' do
-                expect(result.matched_count).to eq(2)
-              end
+            let!(:result) do
+              bulk_write.execute
             end
 
-            context 'when the server selected does not support collations' do
-              max_server_version '3.2'
+            it 'applies the collation' do
+              expect(authorized_collection.find(name: 'pong').count).to eq(2)
+            end
 
-              it 'raises an exception' do
-                expect {
-                  bulk_write.execute
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
+            it 'reports the upserted id' do
+              expect(result.upserted_ids).to eq([])
+            end
 
-              context 'when a String key is used' do
+            it 'reports the upserted count' do
+              expect(result.upserted_count).to eq(0)
+            end
 
-                let(:requests) do
-                  [{ update_one: { filter: { name: 'BANG' },
-                                   update: { "$set" => { name: 'pong' }},
-                                   'collation' => collation }},
-                   { update_one: { filter: { name: 'DOINK' },
-                                   update: { "$set" => { name: 'pong' }},
-                                   'collation' => collation }}]
-                end
+            it 'reports the modified count' do
+              expect(result.modified_count).to eq(2)
+            end
 
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                end
-              end
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(2)
             end
           end
 
@@ -1926,57 +1601,28 @@ describe Mongo::BulkWrite do
                                 collation: collation }}]
             end
 
-            context 'when the server selected supports collations' do
-              min_server_fcv '3.4'
-
-              let!(:result) do
-                bulk_write.execute
-              end
-
-              it 'applies the collation' do
-                expect(authorized_collection.find(name: 'pong').count).to eq(2)
-              end
-
-              it 'reports the upserted id' do
-                expect(result.upserted_ids).to eq([])
-              end
-
-              it 'reports the upserted count' do
-                expect(result.upserted_count).to eq(0)
-              end
-
-              it 'reports the modified count' do
-                expect(result.modified_count).to eq(2)
-              end
-
-              it 'reports the matched count' do
-                expect(result.matched_count).to eq(2)
-              end
+            let!(:result) do
+              bulk_write.execute
             end
 
-            context 'when the server selected does not support collations' do
-              max_server_version '3.2'
+            it 'applies the collation' do
+              expect(authorized_collection.find(name: 'pong').count).to eq(2)
+            end
 
-              it 'raises an exception' do
-                expect {
-                  bulk_write.execute
-                }.to raise_exception(Mongo::Error::UnsupportedCollation)
-              end
+            it 'reports the upserted id' do
+              expect(result.upserted_ids).to eq([])
+            end
 
-              context 'when a String key is used' do
+            it 'reports the upserted count' do
+              expect(result.upserted_count).to eq(0)
+            end
 
-                let(:requests) do
-                  [{ update_many: { filter: { name: 'BANG' },
-                                    update: { "$set" => { name: 'pong' }},
-                                    'collation' => collation }}]
-                end
+            it 'reports the modified count' do
+              expect(result.modified_count).to eq(2)
+            end
 
-                it 'raises an exception' do
-                  expect {
-                    bulk_write.execute
-                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
-                end
-              end
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(2)
             end
           end
 
@@ -2179,15 +1825,12 @@ describe Mongo::BulkWrite do
             it_behaves_like 'an operation using a session'
           end
 
-          context 'when retryable writes are supported' do
-            require_wired_tiger
-            min_server_fcv '3.6'
+          context 'with retryable_writes' do
             require_topology :replica_set, :sharded
 
             # In a multi-shard cluster, retries may go to a different server
             # than original command which these tests are not prepared to handle
             require_no_multi_mongos
-
 
             let(:subscriber) { Mrss::EventSubscriber.new }
 
@@ -2419,8 +2062,6 @@ describe Mongo::BulkWrite do
   end
 
   describe 'when the collection has a validator' do
-    min_server_fcv '3.2'
-
     let(:collection_with_validator) do
       authorized_client[:validating,
                         :validator => { :a => { '$exists' => true } }].tap do |c|

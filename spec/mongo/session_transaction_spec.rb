@@ -6,8 +6,6 @@ require 'spec_helper'
 class SessionTransactionSpecError < StandardError; end
 
 describe Mongo::Session do
-  require_wired_tiger
-  min_server_fcv '4.0'
   require_topology :replica_set, :sharded
 
   let(:subscriber) do
@@ -34,17 +32,6 @@ describe Mongo::Session do
 
   before do
     collection.delete_many
-  end
-
-  describe 'start_transaction' do
-    context 'when topology is sharded and server is < 4.2' do
-      max_server_fcv '4.1'
-      require_topology :sharded
-
-      it 'raises an error' do
-        expect { session.start_transaction }.to raise_error(Mongo::Error::TransactionsNotSupported, /sharded transactions require server version/)
-      end
-    end
   end
 
   describe '#abort_transaction' do

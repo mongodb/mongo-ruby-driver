@@ -1439,5 +1439,69 @@ describe Mongo::URI do
 
       include_examples "roundtrips string"
     end
+
+    context 'when a serverMonitoringMode option is provided' do
+      context 'stream' do
+        let(:options) { 'serverMonitoringMode=stream' }
+
+        it 'sets the server monitoring mode in uri options' do
+          expect(uri.uri_options[:server_monitoring_mode]).to eq(:stream)
+        end
+
+        it 'sets the option on a client created with the uri' do
+          client = new_local_client_nmio(string)
+          expect(client.options[:server_monitoring_mode]).to eq(:stream)
+        end
+
+        include_examples "roundtrips string"
+      end
+
+      context 'poll' do
+        let(:options) { 'serverMonitoringMode=poll' }
+
+        it 'sets the server monitoring mode in uri options' do
+          expect(uri.uri_options[:server_monitoring_mode]).to eq(:poll)
+        end
+
+        it 'sets the option on a client created with the uri' do
+          client = new_local_client_nmio(string)
+          expect(client.options[:server_monitoring_mode]).to eq(:poll)
+        end
+
+        include_examples "roundtrips string"
+      end
+
+      context 'auto' do
+        let(:options) { 'serverMonitoringMode=auto' }
+
+        it 'sets the server monitoring mode in uri options' do
+          expect(uri.uri_options[:server_monitoring_mode]).to eq(:auto)
+        end
+
+        it 'sets the option on a client created with the uri' do
+          client = new_local_client_nmio(string)
+          expect(client.options[:server_monitoring_mode]).to eq(:auto)
+        end
+
+        include_examples "roundtrips string"
+      end
+
+      context 'case insensitive' do
+        let(:options) { 'serverMonitoringMode=Stream' }
+
+        it 'sets the server monitoring mode in uri options' do
+          expect(uri.uri_options[:server_monitoring_mode]).to eq(:stream)
+        end
+      end
+
+      context 'invalid value' do
+        let(:options) { 'serverMonitoringMode=invalid' }
+
+        it 'warns and does not set the option' do
+          expect(Mongo::Logger.logger).to receive(:warn).with(/invalid is not a valid server monitoring mode/)
+          expect(uri.uri_options[:server_monitoring_mode]).to be_nil
+        end
+      end
+    end
   end
 end

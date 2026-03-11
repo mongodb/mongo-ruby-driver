@@ -4,7 +4,6 @@
 shared_examples 'an operation using a session' do
 
   describe 'operation execution' do
-    min_server_fcv '3.6'
     require_topology :replica_set, :sharded
 
     context 'when the session is created from the same client used for the operation' do
@@ -87,99 +86,58 @@ shared_examples 'an operation using a session' do
 end
 
 shared_examples 'a failed operation using a session' do
+  require_topology :replica_set, :sharded
 
-  context 'when the operation fails' do
-    min_server_fcv '3.6'
-    require_topology :replica_set, :sharded
+  let!(:before_last_use) do
+    session.instance_variable_get(:@server_session).last_use
+  end
 
-    let!(:before_last_use) do
-      session.instance_variable_get(:@server_session).last_use
-    end
+  let!(:before_operation_time) do
+    (session.operation_time || 0)
+  end
 
-    let!(:before_operation_time) do
-      (session.operation_time || 0)
-    end
+  let!(:operation_result) do
+    sleep 0.2
+    begin; failed_operation; rescue => e; e; end
+  end
 
-    let!(:operation_result) do
-      sleep 0.2
-      begin; failed_operation; rescue => e; e; end
-    end
+  let(:session) do
+    client.start_session
+  end
 
-    let(:session) do
-      client.start_session
-    end
+  it 'raises an error' do
+    expect([Mongo::Error::OperationFailure::Family,
+            Mongo::Error::BulkWriteError].any? { |e| e === operation_result }).to be true
+  end
 
-    it 'raises an error' do
-      expect([Mongo::Error::OperationFailure::Family,
-              Mongo::Error::BulkWriteError].any? { |e| e === operation_result }).to be true
-    end
+  it 'updates the last use value' do
+    expect(session.instance_variable_get(:@server_session).last_use).not_to eq(before_last_use)
+  end
 
-    it 'updates the last use value' do
-      expect(session.instance_variable_get(:@server_session).last_use).not_to eq(before_last_use)
-    end
-
-    it 'updates the operation time value' do
-      expect(session.operation_time).not_to eq(before_operation_time)
-    end
+  it 'updates the operation time value' do
+    expect(session.operation_time).not_to eq(before_operation_time)
   end
 end
 
 shared_examples 'an explicit session with an unacknowledged write' do
-
-  context 'when sessions are supported' do
-    min_server_fcv '3.6'
-
-    let(:session) do
-      client.start_session
-    end
-
-    it 'does not add a session id to the operation' do
-      subscriber.clear_events!
-      operation
-      subscriber.non_auth_command_started_events.length.should == 1
-      expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
-    end
+  let(:session) do
+    client.start_session
   end
 
-  context 'when sessions are not supported' do
-    max_server_version '3.4'
-
-    let(:session) do
-      nil
-    end
-
-    it 'does not add a session id to the operation' do
-      expect(Mongo::Session).not_to receive(:new)
-      subscriber.clear_events!
-      operation
-      subscriber.non_auth_command_started_events.length.should == 1
-      expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
-    end
+  it 'does not add a session id to the operation' do
+    subscriber.clear_events!
+    operation
+    subscriber.non_auth_command_started_events.length.should == 1
+    expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
   end
 end
 
 shared_examples 'an implicit session with an unacknowledged write' do
-
-  context 'when sessions are supported' do
-    min_server_fcv '3.6'
-
-    it 'does not add a session id to the operation' do
-      subscriber.clear_events!
-      operation
-      subscriber.non_auth_command_started_events.length.should == 1
-      expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
-    end
-  end
-
-  context 'when sessions are not supported' do
-    max_server_version '3.4'
-
-    it 'does not add a session id to the operation' do
-      subscriber.clear_events!
-      operation
-      subscriber.non_auth_command_started_events.length.should == 1
-      expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
-    end
+  it 'does not add a session id to the operation' do
+    subscriber.clear_events!
+    operation
+    subscriber.non_auth_command_started_events.length.should == 1
+    expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
   end
 end
 
@@ -194,7 +152,6 @@ shared_examples 'an operation supporting causally consistent reads' do
   end
 
   context 'when connected to a standalone' do
-    min_server_fcv '3.6'
     require_topology :single
 
     context 'when the collection specifies a read concern' do
@@ -279,7 +236,6 @@ shared_examples 'an operation supporting causally consistent reads' do
   end
 
   context 'when connected to replica set or sharded cluster' do
-    min_server_fcv '3.6'
     require_topology :replica_set, :sharded
 
     context 'when the collection specifies a read concern' do
@@ -640,65 +596,45 @@ shared_examples 'an operation updating cluster time' do
   end
 
   context 'when the command is run once' do
+    context 'when the cluster is sharded or a replica set' do
+      retry_test
+      require_topology :replica_set, :sharded
 
-    context 'when the server is version 3.6' do
-      min_server_fcv '3.6'
-
-      context 'when the cluster is sharded or a replica set' do
-        retry_test
-        require_topology :replica_set, :sharded
-
-        let(:reply_cluster_time) do
-          operation_with_session
-          subscriber.succeeded_events[-1].reply['$clusterTime']
-        end
-
-        it 'updates the cluster time of the cluster' do
-          rct = reply_cluster_time
-          expect(cluster.cluster_time).to eq(rct)
-        end
-
-        it 'updates the cluster time of the session' do
-          rct = reply_cluster_time
-          expect(session.cluster_time).to eq(rct)
-        end
+      let(:reply_cluster_time) do
+        operation_with_session
+        subscriber.succeeded_events[-1].reply['$clusterTime']
       end
 
-      context 'when the server is a standalone' do
-        require_topology :single
+      it 'updates the cluster time of the cluster' do
+        rct = reply_cluster_time
+        expect(cluster.cluster_time).to eq(rct)
+      end
 
-        let(:before_cluster_time) do
-          client.cluster.cluster_time
-        end
-
-        let!(:reply_cluster_time) do
-          operation_with_session
-          subscriber.succeeded_events[-1].reply['$clusterTime']
-        end
-
-        it_behaves_like 'does not update the cluster time of the cluster'
-
-        retry_test
-        it 'does not update the cluster time of the session' do
-          reply_cluster_time
-          expect(session.cluster_time).to be_nil
-        end
+      it 'updates the cluster time of the session' do
+        rct = reply_cluster_time
+        expect(session.cluster_time).to eq(rct)
       end
     end
 
-    context 'when the server is less than version 3.6' do
-      max_server_version '3.4'
+    context 'when the server is a standalone' do
+      require_topology :single
 
       let(:before_cluster_time) do
         client.cluster.cluster_time
       end
 
-      let(:reply_cluster_time) do
-        operation
+      let!(:reply_cluster_time) do
+        operation_with_session
         subscriber.succeeded_events[-1].reply['$clusterTime']
       end
 
       it_behaves_like 'does not update the cluster time of the cluster'
+
+      retry_test
+      it 'does not update the cluster time of the session' do
+        reply_cluster_time
+        expect(session.cluster_time).to be_nil
+      end
     end
   end
 
@@ -710,7 +646,6 @@ shared_examples 'an operation updating cluster time' do
     end
 
     context 'when the cluster is sharded or a replica set' do
-      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       context 'when the session cluster time is advanced' do
@@ -773,7 +708,6 @@ shared_examples 'an operation updating cluster time' do
     end
 
     context 'when the server is a standalone' do
-      min_server_fcv '3.6'
       require_topology :single
 
       let(:before_cluster_time) do
@@ -790,127 +724,6 @@ shared_examples 'an operation updating cluster time' do
         second_command_cluster_time
         expect(client.cluster.cluster_time).to eq(bct)
       end
-    end
-  end
-
-  context 'when the server is less than version 3.6' do
-    max_server_version '3.4'
-
-    let(:before_cluster_time) do
-      client.cluster.cluster_time
-    end
-
-    it 'does not update the cluster time of the cluster' do
-      bct = before_cluster_time
-      operation
-      expect(client.cluster.cluster_time).to eq(bct)
-    end
-  end
-end
-
-shared_examples 'an operation not using a session' do
-  min_server_fcv '3.6'
-
-  describe 'operation execution' do
-
-    context 'when the client has a session' do
-
-      let(:session) do
-        client.start_session
-      end
-
-      let(:server_session) do
-        session.instance_variable_get(:@server_session)
-      end
-
-      let!(:before_last_use) do
-        server_session.last_use
-      end
-
-      let!(:before_operation_time) do
-        session.operation_time
-      end
-
-      let!(:operation_result) do
-        operation
-      end
-
-      after do
-        session.end_session
-      end
-
-      it 'does not send session id in command' do
-        expect(command).not_to have_key('lsid')
-      end
-
-      it 'does not update the last use value' do
-        expect(server_session.last_use).to eq(before_last_use)
-      end
-
-      it 'does not update the operation time value' do
-        expect(session.operation_time).to eq(before_operation_time)
-      end
-
-      it 'does not close the session when the operation completes' do
-        expect(session.ended?).to be(false)
-      end
-    end
-
-    context 'when the session is ended before it is used' do
-      let(:session) do
-        client.start_session
-      end
-
-      before do
-        session.end_session
-      end
-
-      let(:operation_result) do
-        operation
-      end
-
-      it 'does not raise an exception' do
-        expect {
-          operation_result
-        }.not_to raise_exception
-      end
-    end
-  end
-end
-
-shared_examples 'a failed operation not using a session' do
-  min_server_fcv '3.6'
-
-  context 'when the operation fails' do
-
-    let!(:before_last_use) do
-      session.instance_variable_get(:@server_session).last_use
-    end
-
-    let!(:before_operation_time) do
-      session.operation_time
-    end
-
-    let!(:operation_result) do
-      sleep 0.2
-      begin; failed_operation; rescue => e; e; end
-    end
-
-    let(:session) do
-      client.start_session
-    end
-
-    it 'raises an error' do
-      expect([Mongo::Error::OperationFailure,
-              Mongo::Error::BulkWriteError]).to include(operation_result.class)
-    end
-
-    it 'does not update the last use value' do
-      expect(session.instance_variable_get(:@server_session).last_use).to eq(before_last_use)
-    end
-
-    it 'does not update the operation time value' do
-      expect(session.operation_time).to eq(before_operation_time)
     end
   end
 end

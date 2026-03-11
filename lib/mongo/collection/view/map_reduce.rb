@@ -39,7 +39,7 @@ module Mongo
         #
         # @since 2.1.0
         # @deprecated
-        REROUTE = 'Rerouting the MapReduce operation to the primary server.'.freeze
+        REROUTE = 'Rerouting the MapReduce operation to the primary server'.freeze
 
         # @return [ View ] view The collection view.
         attr_reader :view
@@ -124,7 +124,7 @@ module Mongo
           @reduce_function = reduce.dup.freeze
           @options = BSON::Document.new(options).freeze
 
-          client.log_warn('The map_reduce operation is deprecated, please use the aggregation pipeline instead')
+          Deprecations.warn(:map_reduce, 'The map_reduce operation is deprecated, please use the aggregation pipeline instead.')
         end
 
         # Set or get the jsMode flag for the operation.
@@ -298,7 +298,7 @@ module Mongo
           if valid_server?(connection.description)
             op.execute_with_connection(connection, context: context)
           else
-            msg = "Rerouting the MapReduce operation to the primary server - #{connection.address} is not suitable because it is not currently the primray"
+            msg = "#{REROUTE} - #{connection.address} is not suitable because it is not currently the primary"
             log_warn(msg)
             server = cluster.next_primary(nil, session)
             op.execute(server, context: context)

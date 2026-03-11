@@ -46,8 +46,7 @@ module Mongo
       #
       # @param [ Hash ] options Metadata options.
       # @option options [ String, Symbol ] :app_name Application name that is
-      #   printed to the mongod logs upon establishing a connection in server
-      #   versions >= 3.4.
+      #   printed to the mongod logs upon establishing a connection
       # @option options [ Symbol ] :auth_mech The authentication mechanism to
       #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256
       # @option options [ String ] :auth_source The source to authenticate from.
@@ -57,7 +56,6 @@ module Mongo
       #   driver only supports 'zstd', 'snappy' and 'zlib'.
       # @option options [ String ] :platform Platform information to include in
       #   the metadata printed to the mongod logs upon establishing a connection
-      #   in server versions >= 3.4.
       # @option options [ Symbol ] :purpose The purpose of this connection.
       # @option options [ Hash ] :server_api The requested server API version.
       #   This hash can have the following items:

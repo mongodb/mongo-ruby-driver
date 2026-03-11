@@ -13,7 +13,7 @@ describe 'Step down behavior' do
     # These before/after blocks are run even if the tests themselves are
     # skipped due to server version not being appropriate
     ClientRegistry.instance.close_all_clients
-    if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
+    if ClusterConfig.instance.topology == :replica_set
       # It seems that a short election timeout can cause unintended elections,
       # which makes the server close connections which causes the driver to
       # reconnect which then fails the step down test.
@@ -25,7 +25,7 @@ describe 'Step down behavior' do
   end
 
   after(:all) do
-    if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
+    if ClusterConfig.instance.topology == :replica_set
       ClusterTools.instance.set_election_timeout(10)
       ClusterTools.instance.set_election_handoff(true)
       ClusterTools.instance.reset_priorities
@@ -47,7 +47,6 @@ describe 'Step down behavior' do
   end
 
   describe 'getMore iteration' do
-    min_server_fcv '4.2'
     require_no_linting
 
     let(:subscribed_client) do
@@ -127,8 +126,6 @@ describe 'Step down behavior' do
   end
 
   describe 'writes on connections' do
-    min_server_fcv '4.0'
-
     let(:server) do
       client = test_client.with(app_name: rand)
       client['test'].insert_one(test: 1)
@@ -155,9 +152,7 @@ describe 'Step down behavior' do
       admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
     end
 
-    describe 'not master - 4.2' do
-      min_server_fcv '4.2'
-
+    describe 'not master' do
       let(:write_concern) { {:w => 1} }
 
       # not master
@@ -171,29 +166,6 @@ describe 'Step down behavior' do
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
         expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0)
-
-        expect do
-          collection.insert_one(test: 1)
-        end.to_not raise_error
-      end
-    end
-
-    describe 'not master - 4.0' do
-      max_server_version '4.0'
-
-      let(:write_concern) { {:w => 1} }
-
-      # not master
-      let(:fail_point_code) { 10107 }
-
-      it 'closes the connection' do
-        subscriber.clear_events!
-
-        expect do
-          collection.insert_one(test: 1)
-        end.to raise_error(Mongo::Error::OperationFailure, /10107/)
-
-        expect(subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
 
         expect do
           collection.insert_one(test: 1)

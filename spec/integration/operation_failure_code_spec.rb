@@ -19,9 +19,8 @@ describe 'OperationFailure code' do
         fail('Should have raised')
       rescue Mongo::Error::OperationFailure::Family => e
         expect(e.code).to eq(11000)
-        # 4.0 and 4.2 sharded clusters set code name.
-        # 4.0 and 4.2 replica sets and standalones do not,
-        # and neither do older versions.
+        # 4.2 sharded clusters set code name.
+        # 4.2 replica sets and standalones do not
         expect([nil, 'DuplicateKey']).to include(e.code_name)
       end
     end

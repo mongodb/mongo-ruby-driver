@@ -323,4 +323,84 @@ describe Mongo::Server::Monitor do
       end
     end
   end
+
+  describe '#streaming_enabled?' do
+    context 'when server_monitoring_mode is :stream' do
+      let(:monitor_options) do
+        { server_monitoring_mode: :stream }
+      end
+
+      it 'returns true' do
+        expect(monitor.send(:streaming_enabled?)).to be true
+      end
+    end
+
+    context 'when server_monitoring_mode is :poll' do
+      let(:monitor_options) do
+        { server_monitoring_mode: :poll }
+      end
+
+      it 'returns false' do
+        expect(monitor.send(:streaming_enabled?)).to be false
+      end
+    end
+
+    context 'when server_monitoring_mode is :auto' do
+      let(:monitor_options) do
+        { server_monitoring_mode: :auto }
+      end
+
+      context 'when not in a FaaS environment' do
+        local_env(
+          'AWS_EXECUTION_ENV' => nil,
+          'AWS_LAMBDA_RUNTIME_API' => nil,
+          'FUNCTIONS_WORKER_RUNTIME' => nil,
+          'K_SERVICE' => nil,
+          'FUNCTION_NAME' => nil,
+          'VERCEL' => nil,
+        )
+
+        it 'returns true' do
+          expect(monitor.send(:streaming_enabled?)).to be true
+        end
+      end
+
+      context 'when in a FaaS environment' do
+        local_env('FUNCTIONS_WORKER_RUNTIME' => 'ruby')
+
+        it 'returns false' do
+          expect(monitor.send(:streaming_enabled?)).to be false
+        end
+      end
+    end
+
+    context 'when server_monitoring_mode is not set' do
+      let(:monitor_options) do
+        {}
+      end
+
+      context 'when not in a FaaS environment' do
+        local_env(
+          'AWS_EXECUTION_ENV' => nil,
+          'AWS_LAMBDA_RUNTIME_API' => nil,
+          'FUNCTIONS_WORKER_RUNTIME' => nil,
+          'K_SERVICE' => nil,
+          'FUNCTION_NAME' => nil,
+          'VERCEL' => nil,
+        )
+
+        it 'defaults to auto and returns true' do
+          expect(monitor.send(:streaming_enabled?)).to be true
+        end
+      end
+
+      context 'when in a FaaS environment' do
+        local_env('FUNCTIONS_WORKER_RUNTIME' => 'ruby')
+
+        it 'defaults to auto and returns false' do
+          expect(monitor.send(:streaming_enabled?)).to be false
+        end
+      end
+    end
+  end
 end

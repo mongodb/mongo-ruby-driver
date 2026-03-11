@@ -191,6 +191,12 @@ module Unified
                   end
                   kind = event.sub('Event', '').gsub(/([A-Z])/) { "_#{$1}" }.downcase.to_sym
                   subscriber.add_wanted_events(kind)
+                when 'serverHeartbeatStartedEvent', 'serverHeartbeatSucceededEvent', 'serverHeartbeatFailedEvent'
+                  unless client.send(:monitoring).subscribers[Mongo::Monitoring::SERVER_HEARTBEAT]&.include?(subscriber)
+                    client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+                  end
+                  kind = event.sub('Event', '').gsub(/([A-Z])/) { "_#{$1}" }.downcase.to_sym
+                  subscriber.add_wanted_events(kind)
                 else
                   raise NotImplementedError, "Unknown event #{event}"
                 end
@@ -401,6 +407,8 @@ module Unified
         kill_sessions
         $kill_transactions = nil
       end
+
+      disable_fail_points
 
       entities[:client]&.each do |id, client|
         client.close

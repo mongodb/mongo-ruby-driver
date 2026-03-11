@@ -159,16 +159,6 @@ describe Mongo::Error::Parser do
       it 'returns the code' do
         expect(parser.code).to eq(10107)
       end
-
-      context 'with legacy option' do
-        let(:parser) do
-          described_class.new(document, nil, legacy: true)
-        end
-
-        it 'returns nil' do
-          expect(parser.code).to be nil
-        end
-      end
     end
 
     context 'when document does not contain code' do
@@ -247,16 +237,6 @@ describe Mongo::Error::Parser do
 
       it 'returns the code name' do
         expect(parser.code_name).to eq('NotMaster')
-      end
-
-      context 'with legacy option' do
-        let(:parser) do
-          described_class.new(document, nil, legacy: true)
-        end
-
-        it 'returns nil' do
-          expect(parser.code_name).to be nil
-        end
       end
     end
 

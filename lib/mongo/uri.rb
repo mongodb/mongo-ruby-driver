@@ -204,6 +204,9 @@ module Mongo
       'SCRAM-SHA-256' => :scram256,
     }.freeze
 
+    # Valid values for the serverMonitoringMode URI option.
+    SERVER_MONITORING_MODES = %w(stream poll auto).freeze
+
     # Options that are allowed to appear more than once in the uri.
     #
     # In order to follow the URI options spec requirement that all instances

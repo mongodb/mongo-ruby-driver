@@ -163,8 +163,7 @@ class SpecConfig
   end
 
   def kill_all_server_sessions?
-    allow = ENV['KILL_ALL_SERVER_SESSIONS'] != '0'
-    allow && ClusterConfig.instance.fcv_ish >= '3.6'
+    ENV['KILL_ALL_SERVER_SESSIONS'] != '0'
   end
 
   # Test suite configuration
@@ -680,7 +679,6 @@ EOT
     )
   end
 
-  # Get the default test user for the suite on versions 2.6 and higher.
   def test_user
     Mongo::Auth::User.new(
       database: 'admin',

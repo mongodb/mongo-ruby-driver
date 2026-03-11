@@ -5,7 +5,6 @@ require 'spec_helper'
 
 describe 'Auto Encryption' do
   require_libmongocrypt
-  min_server_fcv '4.2'
   require_enterprise
 
   include_context 'define shared FLE helpers'

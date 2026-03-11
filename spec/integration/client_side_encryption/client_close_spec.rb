@@ -6,7 +6,6 @@ require 'spec_helper'
 describe 'Auto encryption client' do
   require_libmongocrypt
   require_enterprise
-  min_server_fcv '4.2'
 
   context 'after client is disconnected' do
     include_context 'define shared FLE helpers'

@@ -272,6 +272,7 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def retry_write(original_error, txn_num, context:, failed_server: nil, &block)
+        failed_error = failed_error || original_error
         context&.check_timeout!
 
         session = context.session
@@ -286,6 +287,7 @@ module Mongo
           ServerSelector.primary,
           session,
           failed_server,
+          error: failed_error,
           timeout: context.remaining_timeout_sec
         )
 
@@ -311,10 +313,12 @@ module Mongo
       rescue *retryable_exceptions, Error::PoolError => e
         maybe_fail_on_retryable(e, original_error, context, attempt)
         failed_server = server
+        failed_error = e
         retry
       rescue Error::OperationFailure::Family => e
         maybe_fail_on_operation_failure(e, original_error, context, attempt)
         failed_server = server
+        failed_error = e
         retry
       rescue Mongo::Error::TimeoutError
         raise
@@ -322,16 +326,6 @@ module Mongo
         fail_on_other_error!(e, original_error)
       rescue Error::RaiseOriginalError
         raise original_error
-      end
-
-      # Retry writes on MMAPv1 should raise an actionable error; append actionable
-      # information to the error message and preserve the backtrace.
-      def raise_unsupported_error(e)
-        new_error = Error::OperationFailure.new("#{e.class}: #{e} "\
-          "This MongoDB deployment does not support retryable writes. Please add "\
-          "retryWrites=false to your connection string or use the retry_writes: false Ruby client option")
-        new_error.set_backtrace(e.backtrace)
-        raise new_error
       end
 
       # Make sure the exception object is labeled 'RetryableWriteError'. If it
@@ -354,11 +348,7 @@ module Mongo
       # make sure it has been appropriately labeled. If either condition fails,
       # raise an exception.
       def ensure_retryable!(e)
-        if e.unsupported_retryable_write?
-          raise_unsupported_error(e)
-        elsif !e.label?('RetryableWriteError')
-          raise e
-        end
+        raise e unless e.label?('RetryableWriteError')
       end
 
       # Raise either e, or original_error, depending on whether e is

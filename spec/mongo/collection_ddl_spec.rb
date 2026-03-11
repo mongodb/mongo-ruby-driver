@@ -553,8 +553,6 @@ describe Mongo::Collection do
     end
 
     context 'when a session is provided' do
-      require_wired_tiger
-
       let(:session) do
         authorized_client.start_session
       end

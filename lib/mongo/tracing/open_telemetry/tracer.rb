@@ -101,7 +101,7 @@ module Mongo
           # Create the transaction span with minimal attributes
           span = @otel_tracer.start_span(
             'transaction',
-            attributes: { 'db.system' => 'mongodb' },
+            attributes: { 'db.system.name' => 'mongodb' },
             kind: :client
           )
 

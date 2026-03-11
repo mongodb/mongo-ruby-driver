@@ -163,7 +163,6 @@ describe 'Client construction' do
   context 'with auto encryption options'do
     require_libmongocrypt
     require_enterprise
-    min_server_fcv '4.2'
 
     # Diagnostics of leaked background threads only, these tests do not
     # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138

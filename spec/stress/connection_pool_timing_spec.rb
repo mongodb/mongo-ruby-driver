@@ -10,14 +10,14 @@ describe 'Connection pool timing test' do
   before(:all) do
     # This set up is taken from the step_down_spec file. In a future PR, ClusterTools
     # may be modified so this set up is no longer necessary.
-    if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
+    if ClusterConfig.instance.topology == :replica_set
       ClusterTools.instance.set_election_timeout(5)
       ClusterTools.instance.set_election_handoff(false)
     end
   end
 
   after(:all) do
-    if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
+    if ClusterConfig.instance.topology == :replica_set
       ClusterTools.instance.set_election_timeout(10)
       ClusterTools.instance.set_election_handoff(true)
       ClusterTools.instance.reset_priorities
@@ -92,7 +92,6 @@ describe 'Connection pool timing test' do
   end
 
   context 'when primary is changed, then more operations are performed' do
-    min_server_fcv '4.2'
     require_topology :replica_set
 
     let(:options) do

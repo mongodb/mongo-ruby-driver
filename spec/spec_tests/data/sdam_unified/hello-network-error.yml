@@ -147,7 +147,7 @@ tests:
           failPoint:
             configureFailPoint: failCommand
             mode:
-              times: 2
+              times: 4
             data:
               failCommands:
                 - hello

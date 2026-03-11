@@ -15,25 +15,6 @@ describe 'Retryable writes errors tests' do
     client['retryable-writes-error-spec']
   end
 
-  context 'when the storage engine does not support retryable writes but the server does' do
-    require_mmapv1
-    min_server_fcv '3.6'
-    require_topology :replica_set, :sharded
-
-    before do
-      collection.delete_many
-    end
-
-    context 'when a retryable write is attempted' do
-      it 'raises an actionable error message' do
-        expect {
-          collection.insert_one(a:1)
-        }.to raise_error(Mongo::Error::OperationFailure, /This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string or use the retry_writes: false Ruby client option/)
-        expect(collection.find.count).to eq(0)
-      end
-    end
-  end
-
   context "when encountering a NoWritesPerformed error after an error with a RetryableWriteError label" do
     require_topology :replica_set
     require_retry_writes
@@ -192,7 +173,6 @@ describe 'Retryable writes errors tests' do
 
   context 'Retries in a sharded cluster' do
     require_topology :sharded
-    min_server_version '4.2'
     require_no_auth
 
     let(:subscriber) { Mrss::EventSubscriber.new }

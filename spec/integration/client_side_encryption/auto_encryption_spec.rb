@@ -7,7 +7,6 @@ require 'json'
 
 describe 'Auto Encryption' do
   require_libmongocrypt
-  min_server_fcv '4.2'
   require_enterprise
 
   # Diagnostics of leaked background threads only, these tests do not

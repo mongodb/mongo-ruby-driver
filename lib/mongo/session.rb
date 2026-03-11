@@ -38,8 +38,7 @@ module Mongo
     # A session can be explicit or implicit. Lifetime of explicit sessions is
     # managed by the application - applications explicitry create such sessions
     # and explicitly end them. Implicit sessions are created automatically by
-    # the driver when sending operations to servers that support sessions
-    # (3.6+), and their lifetime is managed by the driver.
+    # the driver, and their lifetime is managed by the driver.
     #
     # When an implicit session is created, it cannot have a server session
     # associated with it. The server session will be checked out of the
@@ -208,8 +207,8 @@ module Mongo
     #
     # @return [ true, false ] If writes will be retried.
     #
-    # @note Retryable writes are only available on server versions at least 3.6
-    #   and with sharded clusters, replica sets, or load-balanced topologies.
+    # @note Retryable writes are only available with sharded clusters, replica
+    #   sets, or load-balanced topologies.
     #
     # @since 2.5.0
     def retry_writes?
@@ -309,7 +308,7 @@ module Mongo
     # @since 2.5.0
     # @deprecated
     SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the connected servers.'.freeze
-    # Note: SESSIONS_NOT_SUPPORTED is used by Mongoid - do not remove from driver.
+    # Note: SESSIONS_NOT_SUPPORTED is used by Mongoid 7.6 and earlier
 
     # The state of a session in which the last operation was not related to
     # any transaction or no operations have yet occurred.
@@ -457,13 +456,26 @@ module Mongo
                    Utils.monotonic_time + 120
                  end
       transaction_in_progress = false
+      transaction_attempt = 0
+      last_error = nil
+
       loop do
+        if transaction_attempt > 0
+          backoff = backoff_seconds_for_retry(transaction_attempt)
+          if backoff_would_exceed_deadline?(deadline, backoff)
+            raise(last_error)
+          end
+          sleep(backoff)
+        end
+
         commit_options = {}
         if options
           commit_options[:write_concern] = options[:write_concern]
         end
         start_transaction(options)
         transaction_in_progress = true
+        transaction_attempt += 1
+
         begin
           rv = yield self
         rescue Exception => e
@@ -480,6 +492,7 @@ module Mongo
           end
 
           if e.is_a?(Mongo::Error) && e.label?('TransientTransactionError')
+            last_error = e
             next
           end
 
@@ -496,7 +509,7 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
-              if  deadline_expired?(deadline) ||
+              if deadline_expired?(deadline) ||
                 e.is_a?(Error::OperationFailure::Family) && e.max_time_ms_expired?
               then
                 transaction_in_progress = false
@@ -517,6 +530,7 @@ module Mongo
                 transaction_in_progress = false
                 raise
               end
+              last_error = e
               @state = NO_TRANSACTION_STATE
               next
             else
@@ -1273,15 +1287,6 @@ module Mongo
 
     def check_transactions_supported!
       raise Mongo::Error::TransactionsNotSupported, "standalone topology" if cluster.single?
-
-      cluster.next_primary.with_connection do |conn|
-        if cluster.replica_set? && !conn.features.transactions_enabled?
-          raise Mongo::Error::TransactionsNotSupported, "server version is < 4.0"
-        end
-        if cluster.sharded? && !conn.features.sharded_transactions_enabled?
-          raise Mongo::Error::TransactionsNotSupported, "sharded transactions require server version >= 4.2"
-        end
-      end
     end
 
     def operation_timeouts(opts)
@@ -1321,6 +1326,22 @@ module Mongo
       else
         Utils.monotonic_time >= deadline
       end
+    end
+
+    # Exponential backoff settings for with_transaction retries.
+    BACKOFF_INITIAL = 0.005
+    BACKOFF_MAX = 0.5
+    private_constant :BACKOFF_INITIAL, :BACKOFF_MAX
+
+    def backoff_seconds_for_retry(transaction_attempt)
+      exponential = BACKOFF_INITIAL * (1.5 ** (transaction_attempt - 1))
+      Random.rand * [exponential, BACKOFF_MAX].min
+    end
+
+    def backoff_would_exceed_deadline?(deadline, backoff_seconds)
+      return false if deadline.zero?
+
+      Utils.monotonic_time + backoff_seconds >= deadline
     end
   end
 end

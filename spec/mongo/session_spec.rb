@@ -4,7 +4,6 @@
 require 'spec_helper'
 
 describe Mongo::Session do
-  min_server_fcv '3.6'
   require_topology :replica_set, :sharded
 
   let(:session) do

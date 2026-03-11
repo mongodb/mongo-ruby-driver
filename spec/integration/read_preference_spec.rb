@@ -76,25 +76,15 @@ describe 'Read preference' do
       # assertions also when they are run in RS topologies.
       require_topology :replica_set
 
-      context 'pre-OP_MSG server' do
-        max_server_version '3.4'
+      it 'sends expected read preference when reading' do
+        read_operation
 
-        it_behaves_like 'does not send read preference when reading'
-      end
-
-      context 'server supporting OP_MSG' do
-        min_server_fcv '3.6'
-
-        it 'sends expected read preference when reading' do
-          read_operation
-
-          event = subscriber.single_command_started_event('find')
-          actual_preference = event.command['$readPreference']
-          if expected_read_preference&.[]("mode") == "primary"
-            expect(actual_preference).to be_nil
-          else
-            expect(actual_preference).to eq(expected_read_preference)
-          end
+        event = subscriber.single_command_started_event('find')
+        actual_preference = event.command['$readPreference']
+        if expected_read_preference&.[]("mode") == "primary"
+          expect(actual_preference).to be_nil
+        else
+          expect(actual_preference).to eq(expected_read_preference)
         end
       end
     end
@@ -245,10 +235,6 @@ describe 'Read preference' do
   end
 
   context 'in transaction' do
-    # 4.0/RS is a valid topology to test against, but our tooling doesn't
-    # support multiple constraint specifications like runOn does.
-    # There is no loss of generality to constrain these tests to 4.2+.
-    min_server_fcv '4.2'
     require_topology :sharded, :replica_set
 
     let(:write_operation) do

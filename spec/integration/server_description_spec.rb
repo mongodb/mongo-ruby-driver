@@ -15,7 +15,6 @@ describe 'Server description' do
 
   describe '#op_time' do
     require_topology :replica_set
-    min_server_fcv '3.4'
 
     it 'is set' do
       expect(desc).not_to be_unknown
@@ -26,7 +25,6 @@ describe 'Server description' do
 
   describe '#last_write_date' do
     require_topology :replica_set
-    min_server_fcv '3.4'
 
     it 'is set' do
       expect(desc).not_to be_unknown

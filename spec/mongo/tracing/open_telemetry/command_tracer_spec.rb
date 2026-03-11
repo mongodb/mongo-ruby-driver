@@ -202,8 +202,8 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   describe '#span_attributes' do
     subject { command_tracer.send(:span_attributes, message, connection) }
 
-    it 'includes db.system' do
-      expect(subject['db.system']).to eq('mongodb')
+    it 'includes db.system.name' do
+      expect(subject['db.system.name']).to eq('mongodb')
     end
 
     it 'includes db.namespace' do

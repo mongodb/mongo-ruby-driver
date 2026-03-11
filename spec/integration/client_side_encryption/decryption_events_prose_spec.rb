@@ -4,7 +4,6 @@ require 'spec_helper'
 
 describe 'Decryption events' do
   require_enterprise
-  min_server_fcv '4.2'
   require_libmongocrypt
   include_context 'define shared FLE helpers'
   require_topology :replica_set

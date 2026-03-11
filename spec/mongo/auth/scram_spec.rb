@@ -62,7 +62,6 @@ describe Mongo::Auth::Scram do
 
         context 'when compression is used' do
           require_compression
-          min_server_fcv '3.6'
 
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
@@ -104,16 +103,12 @@ describe Mongo::Auth::Scram do
   end
 
   context 'when SCRAM-SHA-1 is used' do
-    min_server_fcv '3.0'
-
     let(:auth_mech) { :scram }
 
     it_behaves_like 'works correctly'
   end
 
   context 'when SCRAM-SHA-256 is used' do
-    min_server_fcv '4.0'
-
     let(:auth_mech) { :scram256 }
 
     it_behaves_like 'works correctly'

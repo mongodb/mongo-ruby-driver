@@ -4,7 +4,6 @@
 require 'spec_helper'
 
 describe 'Zstd compression' do
-  min_server_version '4.2'
   require_zstd_compression
 
   before do

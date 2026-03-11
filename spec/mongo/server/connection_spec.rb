@@ -257,7 +257,6 @@ describe Mongo::Server::Connection do
         end
 
         it_behaves_like 'failing connection with server diagnostics'
-        it_behaves_like 'marks server unknown'
         it_behaves_like 'logs a warning'
         it_behaves_like 'adds server diagnostics'
 
@@ -597,8 +596,6 @@ describe Mongo::Server::Connection do
     end
 
     context 'when the server returns unknown saslSupportedMechs' do
-      min_server_version '4.0'
-
       let(:connection) do
         described_class.new(server, server.options.merge(connection_pool: pool))
       end

@@ -2,18 +2,17 @@ version: 1
 style: integration
 description: error during minPoolSize population clears pool
 runOn:
-  -
-    # required for appName in fail point
+  - # required for appName in fail point
     minServerVersion: "4.9.0"
   # Remove the topology runOn requirement when cmap specs are adjusted for lbs
-  - topology: [ "single", "replicaset", "sharded" ]
+  - topology: ["single", "replicaset", "sharded"]
 failPoint:
   configureFailPoint: failCommand
   # high amount to ensure not interfered with by monitor checks.
   mode: { times: 50 }
   data:
-    failCommands: ["isMaster","hello"]
-    closeConnection: true
+    failCommands: ["isMaster", "hello"]
+    errorCode: 91
     appName: "poolCreateMinSizeErrorTest"
 poolOptions:
   minPoolSize: 1

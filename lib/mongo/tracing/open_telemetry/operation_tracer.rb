@@ -132,7 +132,7 @@ module Mongo
         # @return [ Hash ] OpenTelemetry span attributes following MongoDB semantic conventions.
         def span_attributes(operation, op_name)
           {
-            'db.system' => 'mongodb',
+            'db.system.name' => 'mongodb',
             'db.namespace' => operation.db_name.to_s,
             'db.collection.name' => collection_name(operation),
             'db.operation.name' => operation_name(operation, op_name),

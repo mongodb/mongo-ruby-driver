@@ -58,8 +58,6 @@ describe Mongo::Server::Connection do
     end
 
     context 'when the hello response includes saslSupportedMechs' do
-      min_server_fcv '4.0'
-
       let(:server_options) do
         SpecConfig.instance.test_options.merge(
           user: SpecConfig.instance.test_user.name,
@@ -96,41 +94,15 @@ describe Mongo::Server::Connection do
     context 'when the hello response indicates the auth mechanism is :scram' do
       require_no_external_user
 
-      let(:features) do
-        Mongo::Server::Description::Features.new(0..7)
-      end
-
       it 'uses scram' do
         connection
         RSpec::Mocks.with_temporary_scope do
-          expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
-
           pending_conn = nil
           Mongo::Server::PendingConnection.should receive(:new).and_wrap_original do |m, *args|
             pending_conn = m.call(*args)
           end
           connection.connect!
           expect(pending_conn.send(:default_mechanism)).to eq(:scram)
-        end
-      end
-    end
-
-    context 'when the hello response indicates the auth mechanism is :mongodb_cr' do
-      let(:features) do
-        Mongo::Server::Description::Features.new(0..2)
-      end
-
-      it 'uses mongodb_cr' do
-        connection
-        RSpec::Mocks.with_temporary_scope do
-          expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
-
-          pending_conn = nil
-          Mongo::Server::PendingConnection.should receive(:new).and_wrap_original do |m, *args|
-            pending_conn = m.call(*args)
-          end
-          connection.connect!
-          expect(pending_conn.send(:default_mechanism)).to eq(:mongodb_cr)
         end
       end
     end

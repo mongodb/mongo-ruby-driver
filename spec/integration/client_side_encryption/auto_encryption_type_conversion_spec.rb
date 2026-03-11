@@ -5,7 +5,6 @@ require 'spec_helper'
 describe 'Auto Encryption Type Conversion' do
   require_libmongocrypt
   require_enterprise
-  min_server_fcv '4.2'
 
   include_context 'define shared FLE helpers'
   include_context 'with local kms_providers'

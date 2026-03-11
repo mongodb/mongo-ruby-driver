@@ -135,7 +135,7 @@ module Mongo
         # @return [ Hash ] base span attributes.
         def base_attributes(message)
           {
-            'db.system' => 'mongodb',
+            'db.system.name' => 'mongodb',
             'db.namespace' => database(message),
             'db.collection.name' => collection_name(message),
             'db.command.name' => command_name(message),
