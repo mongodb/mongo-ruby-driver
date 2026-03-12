@@ -263,6 +263,36 @@ describe Mongo::Session do
           end
         end
       end
+
+      # RUBY-3685: insert_many (and bulk_write) raise ArgumentError inside
+      # with_transaction when the client has timeout_ms set.
+      # BulkWrite#execute passes operation_timeout_ms derived from
+      # collection.timeout_ms, which conflicts with the transaction deadline
+      # check in CsotTimeoutHolder.
+      context 'when client has timeout_ms and insert_many is used inside with_transaction' do
+        let(:client) do
+          authorized_client.with(timeout_ms: 10_000)
+        end
+
+        let(:collection) do
+          client['session-transaction-test']
+        end
+
+        it 'insert_many does not raise ArgumentError' do
+          session.with_transaction do
+            collection.insert_many([{ a: 1 }], session: session)
+          end
+        end
+
+        it 'bulk_write does not raise ArgumentError' do
+          session.with_transaction do
+            collection.bulk_write(
+              [{ insert_one: { a: 1 } }],
+              session: session
+            )
+          end
+        end
+      end
     end
   end
 end
