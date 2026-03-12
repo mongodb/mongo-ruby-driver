@@ -97,7 +97,11 @@ module Mongo
       @server_session = server_session
       options = options.dup
 
-      @client = client.use(:admin)
+      # Implicit sessions only need the cluster and client options (never run
+      # transactions), so avoid creating a Mongo::Client clone to prevent
+      # memory leaks: use the original client directly instead.
+      @client = options[:implicit] ? client : client.use(:admin)
+      @cluster = @client.cluster
       @options = options.dup.freeze
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
@@ -115,7 +119,7 @@ module Mongo
     attr_reader :client
 
     def cluster
-      @client.cluster
+      @cluster
     end
 
     # @return [ true | false ] Whether the session is configured for snapshot
@@ -384,12 +388,13 @@ module Mongo
           end
         end
         if @server_session
-          @client.cluster.session_pool.checkin(@server_session)
+          cluster.session_pool.checkin(@server_session)
         end
       end
     ensure
       @server_session = nil
       @ended = true
+      @client = nil
     end
 
     # Executes the provided block in a transaction, retrying as necessary.
@@ -1099,8 +1104,8 @@ module Mongo
     # @since 2.5.0
     # @api private
     def validate!(client)
-      check_matching_cluster!(client)
       check_if_ended!
+      check_matching_cluster!(client)
       self
     end
 
@@ -1280,7 +1285,7 @@ module Mongo
     end
 
     def check_matching_cluster!(client)
-      if @client.cluster != client.cluster
+      if cluster != client.cluster
         raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
       end
     end

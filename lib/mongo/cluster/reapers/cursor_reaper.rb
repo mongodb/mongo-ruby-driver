@@ -116,6 +116,12 @@ module Mongo
           if @active_cursor_ids.include?(kill_spec.cursor_id)
             @to_kill[kill_spec.server_address] ||= Set.new
             @to_kill[kill_spec.server_address] << kill_spec
+          else
+            # Cursor was already closed; end the session immediately to release
+            # references rather than waiting for the kill_spec to go out of scope.
+            if (session = kill_spec.session) && session.implicit?
+              session.end_session
+            end
           end
         end
       rescue ThreadError
