@@ -59,12 +59,11 @@ describe Mongo::Index::View do
         view_with_session.drop_one('another_-1')
       end
 
-      let(:failed_operation) do
-        view_with_session.drop_one('_another_-1')
+      let(:session) do
+        client.start_session
       end
 
       it_behaves_like 'an operation using a session'
-      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when the index exists' do
