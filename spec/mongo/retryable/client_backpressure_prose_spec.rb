@@ -51,7 +51,7 @@ describe 'Client Backpressure Prose Tests' do
 
     let(:worker) { Mongo::Retryable::ReadWorker.new(retryable) }
 
-    it 'with jitter=0 backoff is near-zero; with jitter≈1 backoff ≥ 2.1s' do
+    it 'with jitter=0 backoff is near-zero; with jitter~1 backoff >= 2.1s' do
       sleep_args = []
       allow(worker).to receive(:sleep) { |d| sleep_args << d }
 
@@ -73,7 +73,7 @@ describe 'Client Backpressure Prose Tests' do
 
       no_backoff_total = sleep_args.sum
 
-      # Run with jitter≈1 (maximum backoff).
+      # Run with jitter~1 (maximum backoff).
       allow(retry_policy).to receive(:backoff_delay) { |attempt|
         Mongo::Retryable::Backpressure.backoff_delay(attempt, jitter: 1.0)
       }
@@ -109,7 +109,7 @@ describe 'Client Backpressure Prose Tests' do
       expect(bucket.tokens).to eq(capacity)
       expect(bucket.capacity).to eq(capacity)
 
-      # Simulate a successful (non-retry) command — deposits
+      # Simulate a successful (non-retry) command - deposits
       # RETRY_TOKEN_RETURN_RATE (0.1) tokens.
       policy.record_success(is_retry: false)
 
@@ -183,7 +183,7 @@ describe 'Client Backpressure Prose Tests' do
 
     before { allow(worker).to receive(:sleep) }
 
-    it 'retries only as many times as there are tokens (2 tokens → 3 total attempts)' do
+    it 'retries only as many times as there are tokens (2 tokens -> 3 total attempts)' do
       bucket = retry_policy.token_bucket
 
       # Drain the bucket down to exactly 2 tokens.
