@@ -2,15 +2,17 @@
 
 require 'lite_spec_helper'
 
-describe Mongo::Retryable::BaseWorker do
+# Placed in retryable/ for logical grouping; uses string describe
+# to avoid RSpec/FilePath mismatch with BaseWorker path.
+describe 'Mongo::Retryable::BaseWorker overload error helpers' do
   # Create a testable subclass since BaseWorker's helper methods are private
   let(:worker_class) do
-    Class.new(described_class) do
+    Class.new(Mongo::Retryable::BaseWorker) do
       public :overload_error?, :retryable_overload_error?
     end
   end
 
-  let(:retryable) { double('retryable') }
+  let(:retryable) { instance_double(Mongo::Collection) }
   let(:worker) { worker_class.new(retryable) }
 
   describe '#overload_error?' do

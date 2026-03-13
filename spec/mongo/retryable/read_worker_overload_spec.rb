@@ -3,34 +3,34 @@
 require 'lite_spec_helper'
 
 describe Mongo::Retryable::ReadWorker do
-  subject(:worker) { described_class.new(retryable) }
+  let(:worker) { described_class.new(retryable) }
 
   let(:retry_policy) { Mongo::Retryable::RetryPolicy.new }
 
   let(:client) do
-    double('client').tap do |c|
+    instance_double(Mongo::Client).tap do |c|
       allow(c).to receive(:retry_policy).and_return(retry_policy)
       allow(c).to receive(:cluster).and_return(cluster)
     end
   end
 
-  let(:cluster) { double('cluster') }
+  let(:cluster) { instance_double(Mongo::Cluster) }
 
   let(:session) do
-    double('session', retry_reads?: true, in_transaction?: false)
+    instance_double(Mongo::Session, retry_reads?: true, in_transaction?: false)
   end
 
-  let(:server_selector) { double('server_selector') }
-  let(:server) { double('server') }
+  let(:server_selector) { instance_double(Mongo::ServerSelector::Primary) }
+  let(:server) { instance_double(Mongo::Server) }
 
   let(:context) do
-    double('context', remaining_timeout_sec: nil, csot?: false, deadline: nil).tap do |ctx|
+    instance_double(Mongo::Operation::Context, remaining_timeout_sec: nil, csot?: false, deadline: nil).tap do |ctx|
       allow(ctx).to receive(:check_timeout!)
     end
   end
 
   let(:retryable) do
-    double('retryable', client: client, cluster: cluster).tap do |r|
+    instance_double(Mongo::Collection, client: client, cluster: cluster).tap do |r|
       allow(r).to receive(:select_server).and_return(server)
     end
   end
@@ -60,6 +60,7 @@ describe Mongo::Retryable::ReadWorker do
   describe '#read_with_retry with overload errors' do
     context 'when an overload error is raised and then succeeds' do
       it 'retries with backoff and returns the result' do
+        expect(worker).to receive(:sleep).at_least(:twice)
         call_count = 0
         result = worker.read_with_retry(session, server_selector, context) do |_server, _is_retry|
           call_count += 1
@@ -70,7 +71,6 @@ describe Mongo::Retryable::ReadWorker do
 
         expect(result).to eq(:success)
         expect(call_count).to eq(4)
-        expect(worker).to have_received(:sleep).at_least(2).times
       end
     end
 
@@ -86,7 +86,6 @@ describe Mongo::Retryable::ReadWorker do
           end
         end.to raise_error(Mongo::Error::OperationFailure, /overloaded/)
 
-        # 1 initial + up to MAX_RETRIES retries
         expect(call_count).to be <= max + 1
       end
     end
@@ -122,7 +121,7 @@ describe Mongo::Retryable::ReadWorker do
       end
     end
 
-    context 'record_success is called on success' do
+    context 'when record_success is called on success' do
       it 'calls record_success(is_retry: false) on first-attempt success' do
         expect(retry_policy).to receive(:record_success).with(is_retry: false)
 
@@ -133,9 +132,6 @@ describe Mongo::Retryable::ReadWorker do
 
       it 'calls record_success(is_retry: true) after a retry succeeds' do
         call_count = 0
-
-        # record_success should be called with is_retry: true after the
-        # overload retry loop succeeds
         expect(retry_policy).to receive(:record_success).with(is_retry: true)
 
         worker.read_with_retry(session, server_selector, context) do |_server, _is_retry|

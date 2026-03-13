@@ -67,27 +67,17 @@ describe Mongo::Retryable::TokenBucket do
   end
 
   describe 'thread safety' do
-    it 'handles concurrent consume and deposit' do
-      bucket = described_class.new(capacity: 1000)
+    let(:bucket) { described_class.new(capacity: 1000) }
+
+    def run_concurrent_operations(bucket)
       threads = []
-
-      # 10 threads each consuming 1 token 50 times
-      10.times do
-        threads << Thread.new do
-          50.times { bucket.consume(1) }
-        end
-      end
-
-      # 5 threads each depositing 1 token 100 times
-      5.times do
-        threads << Thread.new do
-          100.times { bucket.deposit(1) }
-        end
-      end
-
+      10.times { threads << Thread.new { 50.times { bucket.consume(1) } } }
+      5.times { threads << Thread.new { 100.times { bucket.deposit(1) } } }
       threads.each(&:join)
+    end
 
-      # After 500 consumes and 500 deposits, we should be back at 1000
+    it 'handles concurrent consume and deposit' do
+      run_concurrent_operations(bucket)
       expect(bucket.tokens).to eq(1000)
     end
   end

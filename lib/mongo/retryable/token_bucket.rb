@@ -27,16 +27,16 @@ module Mongo
         @mutex.synchronize { @tokens }
       end
 
-      # Consume n tokens from the bucket.
+      # Consume tokens from the bucket.
       #
-      # @param [ Float ] n The number of tokens to consume.
+      # @param [ Float ] count The number of tokens to consume.
       #
       # @return [ true | false ] true if the tokens were consumed,
       #   false if there were insufficient tokens.
-      def consume(n = 1)
+      def consume(count = 1)
         @mutex.synchronize do
-          if @tokens >= n
-            @tokens -= n
+          if @tokens >= count
+            @tokens -= count
             true
           else
             false
@@ -44,14 +44,14 @@ module Mongo
         end
       end
 
-      # Deposit n tokens into the bucket, up to the maximum capacity.
+      # Deposit tokens into the bucket, up to the maximum capacity.
       #
-      # @param [ Float ] n The number of tokens to deposit.
+      # @param [ Float ] count The number of tokens to deposit.
       #
       # @return [ Float ] The new token count.
-      def deposit(n)
+      def deposit(count)
         @mutex.synchronize do
-          @tokens = [ @capacity, @tokens + n ].min
+          @tokens = [ @capacity, @tokens + count ].min
         end
       end
     end

@@ -47,12 +47,7 @@ module Mongo
       # @return [ true | false ] Whether the retry should proceed.
       def should_retry_overload?(attempt, delay, context: nil)
         return false if attempt > Backpressure::MAX_RETRIES
-
-        if context&.csot? && context&.deadline && (context.deadline.nonzero? &&
-                          Utils.monotonic_time + delay > context.deadline)
-          return false
-        end
-
+        return false if exceeds_deadline?(delay, context)
         return false if @token_bucket && !@token_bucket.consume(1)
 
         true
@@ -75,6 +70,16 @@ module Mongo
       # depositing 1 token.
       def record_non_overload_retry_failure
         @token_bucket&.deposit(1)
+      end
+
+      private
+
+      # Check whether the backoff delay would exceed the CSOT deadline.
+      def exceeds_deadline?(delay, context)
+        return false unless context&.csot?
+
+        deadline = context&.deadline
+        deadline&.nonzero? && Utils.monotonic_time + delay > deadline
       end
     end
   end

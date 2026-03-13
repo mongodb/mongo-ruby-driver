@@ -62,18 +62,18 @@ describe Mongo::Retryable::RetryPolicy do
       let(:policy) { described_class.new }
 
       it 'denies retry when delay would exceed deadline' do
-        context = double('context', csot?: true, deadline: Mongo::Utils.monotonic_time + 0.01)
-        expect(policy.should_retry_overload?(1, 100, context: context)).to be false
+        ctx = instance_double(Mongo::Operation::Context, csot?: true, deadline: Mongo::Utils.monotonic_time + 0.01)
+        expect(policy.should_retry_overload?(1, 100, context: ctx)).to be false
       end
 
       it 'allows retry when delay fits within deadline' do
-        context = double('context', csot?: true, deadline: Mongo::Utils.monotonic_time + 100)
-        expect(policy.should_retry_overload?(1, 0.1, context: context)).to be true
+        ctx = instance_double(Mongo::Operation::Context, csot?: true, deadline: Mongo::Utils.monotonic_time + 100)
+        expect(policy.should_retry_overload?(1, 0.1, context: ctx)).to be true
       end
 
       it 'allows retry when deadline is zero (unlimited)' do
-        context = double('context', csot?: true, deadline: 0)
-        expect(policy.should_retry_overload?(1, 100, context: context)).to be true
+        ctx = instance_double(Mongo::Operation::Context, csot?: true, deadline: 0)
+        expect(policy.should_retry_overload?(1, 100, context: ctx)).to be true
       end
     end
   end

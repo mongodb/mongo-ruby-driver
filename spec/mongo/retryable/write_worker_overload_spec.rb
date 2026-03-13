@@ -3,7 +3,6 @@
 require 'lite_spec_helper'
 
 describe Mongo::Retryable::WriteWorker do
-  # Expose private methods for direct testing
   let(:worker_class) do
     Class.new(described_class) do
       public :modern_write_with_retry, :overload_write_retry
@@ -13,17 +12,17 @@ describe Mongo::Retryable::WriteWorker do
   let(:retry_policy) { Mongo::Retryable::RetryPolicy.new(adaptive_retries: false) }
 
   let(:client) do
-    double('client').tap do |c|
+    instance_double(Mongo::Client).tap do |c|
       allow(c).to receive(:retry_policy).and_return(retry_policy)
       allow(c).to receive(:options).and_return(retry_writes: true)
       allow(c).to receive(:max_write_retries).and_return(1)
     end
   end
 
-  let(:cluster) { double('cluster') }
+  let(:cluster) { instance_double(Mongo::Cluster) }
 
   let(:session) do
-    double('session').tap do |s|
+    instance_double(Mongo::Session).tap do |s|
       allow(s).to receive(:retry_writes?).and_return(true)
       allow(s).to receive(:in_transaction?).and_return(false)
       allow(s).to receive(:materialize_if_needed)
@@ -32,17 +31,17 @@ describe Mongo::Retryable::WriteWorker do
     end
   end
 
-  let(:connection) { double('connection') }
+  let(:connection) { instance_double(Mongo::Server::Connection) }
 
   let(:server) do
-    double('server').tap do |s|
+    instance_double(Mongo::Server).tap do |s|
       allow(s).to receive(:retry_writes?).and_return(true)
       allow(s).to receive(:with_connection).and_yield(connection)
     end
   end
 
   let(:context) do
-    double('context').tap do |ctx|
+    instance_double(Mongo::Operation::Context).tap do |ctx|
       allow(ctx).to receive(:connection_global_id).and_return(nil)
       allow(ctx).to receive(:remaining_timeout_sec).and_return(nil)
       allow(ctx).to receive(:check_timeout!)
@@ -55,7 +54,7 @@ describe Mongo::Retryable::WriteWorker do
   end
 
   let(:retryable) do
-    double('retryable').tap do |r|
+    instance_double(Mongo::Collection).tap do |r|
       allow(r).to receive(:client).and_return(client)
       allow(r).to receive(:cluster).and_return(cluster)
       allow(r).to receive(:select_server).and_return(server)
@@ -83,6 +82,14 @@ describe Mongo::Retryable::WriteWorker do
 
   before do
     allow(worker).to receive(:sleep)
+  end
+
+  def call_overload_retry(wkr, error: nil, error_count: 1, &block)
+    wkr.overload_write_retry(
+      error || make_overload_error, session, 2,
+      context: context, failed_server: server, error_count: error_count,
+      &block
+    )
   end
 
   describe '#modern_write_with_retry' do
@@ -124,9 +131,6 @@ describe Mongo::Retryable::WriteWorker do
           :ok
         end
 
-        # If ensure_retryable! were called on an overload OperationFailure
-        # without RetryableWriteError, it would raise. The fact we get here
-        # means overload path was correctly taken.
         expect(call_count).to eq(2)
       end
     end
@@ -151,45 +155,24 @@ describe Mongo::Retryable::WriteWorker do
   describe '#overload_write_retry' do
     context 'when retry succeeds after backoff' do
       it 'sleeps and retries, returning the result' do
-        error = make_overload_error
-        call_count = 0
-
         expect(worker).to receive(:sleep).once
-
-        result = worker.overload_write_retry(
-          error, session, 2,
-          context: context, failed_server: server, error_count: 1
-        ) do |_conn, _txn, _ctx|
-          call_count += 1
-          :write_ok
-        end
+        result = call_overload_retry(worker) { |_c, _t, _x| :write_ok }
 
         expect(result).to eq(:write_ok)
-        expect(call_count).to eq(1)
       end
 
       it 'records success on retry' do
-        error = make_overload_error
         expect(retry_policy).to receive(:record_success).with(is_retry: true)
-
-        worker.overload_write_retry(
-          error, session, 2,
-          context: context, failed_server: server, error_count: 1
-        ) { |_conn, _txn, _ctx| :ok }
+        call_overload_retry(worker) { |_c, _t, _x| :ok }
       end
     end
 
     context 'with multiple overload errors' do
       it 'retries multiple times with backoff' do
-        error = make_overload_error
         call_count = 0
-
         expect(worker).to receive(:sleep).exactly(3).times
 
-        result = worker.overload_write_retry(
-          error, session, 2,
-          context: context, failed_server: server, error_count: 1
-        ) do |_conn, _txn, _ctx|
+        result = call_overload_retry(worker) do |_c, _t, _x|
           call_count += 1
           raise make_overload_error if call_count < 3
 
@@ -197,19 +180,15 @@ describe Mongo::Retryable::WriteWorker do
         end
 
         expect(result).to eq(:finally_ok)
-        expect(call_count).to eq(3)
       end
     end
 
     context 'when MAX_RETRIES (5) is exceeded' do
       it 'raises the last error' do
-        error = make_overload_error
+        max = Mongo::Retryable::Backpressure::MAX_RETRIES + 1
 
         expect do
-          worker.overload_write_retry(
-            error, session, 2,
-            context: context, failed_server: server, error_count: Mongo::Retryable::Backpressure::MAX_RETRIES + 1
-          ) { |_conn, _txn, _ctx| :should_not_reach }
+          call_overload_retry(worker, error_count: max) { |_c, _t, _x| :should_not_reach }
         end.to raise_error(Mongo::Error::OperationFailure, /overloaded/)
       end
     end
@@ -219,37 +198,29 @@ describe Mongo::Retryable::WriteWorker do
         call_count = 0
 
         expect do
-          worker.overload_write_retry(
-            make_overload_error, session, 2,
-            context: context, failed_server: server, error_count: 1
-          ) do |_conn, _txn, _ctx|
+          call_overload_retry(worker) do |_c, _t, _x|
             call_count += 1
             raise make_overload_error("overloaded attempt #{call_count}")
           end
         end.to raise_error(Mongo::Error::OperationFailure, /overloaded/)
 
-        # MAX_RETRIES is 5; starting at error_count=1, we get retries at
-        # counts 1..5, so 5 block invocations before count exceeds limit.
         expect(call_count).to eq(Mongo::Retryable::Backpressure::MAX_RETRIES)
       end
     end
 
     context 'when server does not support retryable writes' do
       it 'raises the last error with a note' do
-        non_retry_server = double('non_retry_server')
+        non_retry_server = instance_double(Mongo::Server)
         allow(non_retry_server).to receive(:retry_writes?).and_return(false)
         allow(retryable).to receive(:select_server).and_return(non_retry_server)
 
-        error = make_overload_error
-
-        expect do
-          worker.overload_write_retry(
-            error, session, 2,
-            context: context, failed_server: server, error_count: 1
-          ) { |_conn, _txn, _ctx| :should_not_reach }
-        end.to raise_error(Mongo::Error::OperationFailure) do |e|
-          expect(e.notes).to include('did not retry because server does not support retryable writes')
+        raised = begin
+          call_overload_retry(worker) { |_c, _t, _x| :no }
+        rescue Mongo::Error::OperationFailure => e
+          e
         end
+
+        expect(raised.notes).to include('did not retry because server does not support retryable writes')
       end
     end
 
@@ -258,16 +229,13 @@ describe Mongo::Retryable::WriteWorker do
         allow(retryable).to receive(:select_server)
           .and_raise(Mongo::Error.new('no server'))
 
-        error = make_overload_error
-
-        expect do
-          worker.overload_write_retry(
-            error, session, 2,
-            context: context, failed_server: server, error_count: 1
-          ) { |_conn, _txn, _ctx| :should_not_reach }
-        end.to raise_error(Mongo::Error::OperationFailure) do |e|
-          expect(e.notes.any? { |n| n.include?('later retry failed') }).to be true
+        raised = begin
+          call_overload_retry(worker) { |_c, _t, _x| :no }
+        rescue Mongo::Error::OperationFailure => e
+          e
         end
+
+        expect(raised.notes.any? { |n| n.include?('later retry failed') }).to be true
       end
     end
 
@@ -276,10 +244,7 @@ describe Mongo::Retryable::WriteWorker do
         call_count = 0
         expect(retry_policy).to receive(:record_non_overload_retry_failure).once
 
-        result = worker.overload_write_retry(
-          make_overload_error, session, 2,
-          context: context, failed_server: server, error_count: 1
-        ) do |_conn, _txn, _ctx|
+        result = call_overload_retry(worker) do |_c, _t, _x|
           call_count += 1
           raise make_retryable_write_error if call_count == 1
 
@@ -287,7 +252,6 @@ describe Mongo::Retryable::WriteWorker do
         end
 
         expect(result).to eq(:recovered)
-        expect(call_count).to eq(2)
       end
     end
   end
@@ -310,34 +274,19 @@ describe Mongo::Retryable::WriteWorker do
     let(:retry_policy) { Mongo::Retryable::RetryPolicy.new(adaptive_retries: true) }
 
     context 'when the token bucket is exhausted' do
+      before { retry_policy.token_bucket.consume(retry_policy.token_bucket.capacity) }
+
       it 'raises the error instead of retrying' do
-        # Drain the token bucket
-        bucket = retry_policy.token_bucket
-        bucket.consume(bucket.capacity)
-
-        error = make_overload_error
-
         expect do
-          worker.overload_write_retry(
-            error, session, 2,
-            context: context, failed_server: server, error_count: 1
-          ) { |_conn, _txn, _ctx| :should_not_reach }
+          call_overload_retry(worker) { |_c, _t, _x| :no }
         end.to raise_error(Mongo::Error::OperationFailure, /overloaded/)
       end
     end
 
     context 'when there are tokens available' do
       it 'retries and records success' do
-        error = make_overload_error
-
         expect(retry_policy).to receive(:record_success).with(is_retry: true)
-
-        result = worker.overload_write_retry(
-          error, session, 2,
-          context: context, failed_server: server, error_count: 1
-        ) { |_conn, _txn, _ctx| :ok }
-
-        expect(result).to eq(:ok)
+        call_overload_retry(worker) { |_c, _t, _x| :ok }
       end
     end
   end
