@@ -17,6 +17,7 @@
 
 require 'mongo/session/session_pool'
 require 'mongo/session/server_session'
+require 'mongo/session/session_escapable'
 
 module Mongo
 
