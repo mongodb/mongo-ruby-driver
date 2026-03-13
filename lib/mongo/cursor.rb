@@ -391,7 +391,9 @@ module Mongo
         process(execute_operation(get_more_operation))
       end
     rescue Error::OperationFailure => e
-      close
+      # When overload retries are exhausted on getMore, close the cursor
+      # so that killCursors is sent to the server.
+      close if e.label?('RetryableError') && e.label?('SystemOverloadedError')
       raise
     end
 
