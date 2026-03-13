@@ -1,0 +1,94 @@
+# frozen_string_literal: true
+
+require 'lite_spec_helper'
+
+describe Mongo::Retryable::TokenBucket do
+  describe '#initialize' do
+    it 'starts full with default capacity' do
+      bucket = described_class.new
+      expect(bucket.capacity).to eq(1000)
+      expect(bucket.tokens).to eq(1000)
+    end
+
+    it 'starts full with custom capacity' do
+      bucket = described_class.new(capacity: 10)
+      expect(bucket.capacity).to eq(10)
+      expect(bucket.tokens).to eq(10)
+    end
+  end
+
+  describe '#consume' do
+    it 'succeeds when tokens are available' do
+      bucket = described_class.new(capacity: 5)
+      expect(bucket.consume(1)).to be true
+      expect(bucket.tokens).to eq(4)
+    end
+
+    it 'fails when tokens are insufficient' do
+      bucket = described_class.new(capacity: 1)
+      expect(bucket.consume(1)).to be true
+      expect(bucket.consume(1)).to be false
+      expect(bucket.tokens).to eq(0)
+    end
+
+    it 'consumes the specified number of tokens' do
+      bucket = described_class.new(capacity: 10)
+      expect(bucket.consume(3)).to be true
+      expect(bucket.tokens).to eq(7)
+    end
+
+    it 'defaults to consuming 1 token' do
+      bucket = described_class.new(capacity: 5)
+      bucket.consume
+      expect(bucket.tokens).to eq(4)
+    end
+  end
+
+  describe '#deposit' do
+    it 'adds tokens to the bucket' do
+      bucket = described_class.new(capacity: 10)
+      bucket.consume(5)
+      bucket.deposit(3)
+      expect(bucket.tokens).to eq(8)
+    end
+
+    it 'caps at capacity' do
+      bucket = described_class.new(capacity: 10)
+      bucket.deposit(5)
+      expect(bucket.tokens).to eq(10)
+    end
+
+    it 'caps at capacity after partial consumption' do
+      bucket = described_class.new(capacity: 10)
+      bucket.consume(2)
+      bucket.deposit(5)
+      expect(bucket.tokens).to eq(10)
+    end
+  end
+
+  describe 'thread safety' do
+    it 'handles concurrent consume and deposit' do
+      bucket = described_class.new(capacity: 1000)
+      threads = []
+
+      # 10 threads each consuming 1 token 50 times
+      10.times do
+        threads << Thread.new do
+          50.times { bucket.consume(1) }
+        end
+      end
+
+      # 5 threads each depositing 1 token 100 times
+      5.times do
+        threads << Thread.new do
+          100.times { bucket.deposit(1) }
+        end
+      end
+
+      threads.each(&:join)
+
+      # After 500 consumes and 500 deposits, we should be back at 1000
+      expect(bucket.tokens).to eq(1000)
+    end
+  end
+end

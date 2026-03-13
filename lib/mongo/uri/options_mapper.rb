@@ -323,6 +323,7 @@ module Mongo
       uri_option 'readConcernLevel', :level, group: :read_concern, type: :symbol
       uri_option 'retryReads', :retry_reads, type: :bool
       uri_option 'retryWrites', :retry_writes, type: :bool
+      uri_option 'adaptiveRetries', :adaptive_retries, type: :bool
       uri_option 'zlibCompressionLevel', :zlib_compression_level, type: :zlib_compression_level
 
       # Monitoring Options

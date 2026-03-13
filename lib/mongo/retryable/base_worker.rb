@@ -110,6 +110,35 @@ module Mongo
         message = (options || {}).fetch(:message, "Retry")
         Logger.logger.warn "#{message} due to: #{e.class.name}: #{e.message}"
       end
+
+      # Returns the retry policy from the client.
+      #
+      # @return [ Mongo::Retryable::RetryPolicy ] The retry policy.
+      def retry_policy
+        client.retry_policy
+      end
+
+      # Whether the error indicates server overload.
+      #
+      # @param [ Exception ] e The error to check.
+      #
+      # @return [ true | false ] true if the error has the
+      #   SystemOverloadedError label.
+      def overload_error?(e)
+        e.respond_to?(:label?) && e.label?('SystemOverloadedError')
+      end
+
+      # Whether the error is a retryable overload error. An error is
+      # retryable overload when it has both the SystemOverloadedError and
+      # RetryableError labels.
+      #
+      # @param [ Exception ] e The error to check.
+      #
+      # @return [ true | false ] true if the error has both labels.
+      def retryable_overload_error?(e)
+        overload_error?(e) &&
+          e.respond_to?(:label?) && e.label?('RetryableError')
+      end
     end
 
   end

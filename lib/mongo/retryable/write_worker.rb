@@ -110,13 +110,38 @@ module Mongo
         options = session&.client&.options || {}
 
         if options[:retry_writes]
+          error_count = 0
           begin
-            server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+            result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, nil, context
             end
+            retry_policy.record_success(is_retry: error_count > 0) if error_count > 0
+            result
+          rescue Error::TimeoutError
+            raise
           rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
-            e.add_note('retries disabled')
-            raise e
+            if retryable_overload_error?(e)
+              error_count += 1
+              delay = retry_policy.backoff_delay(error_count)
+              unless retry_policy.should_retry_overload?(error_count, delay, context: context)
+                raise e
+              end
+              log_retry(e, message: 'Write retry (overload backoff)')
+              sleep(delay)
+              begin
+                server = select_server(
+                  cluster, ServerSelector.primary, session, server,
+                  error: e, timeout: context.remaining_timeout_sec
+                )
+              rescue Error, Error::AuthError => select_err
+                e.add_note("later retry failed: #{select_err.class}: #{select_err}")
+                raise e
+              end
+              retry
+            else
+              e.add_note('retries disabled')
+              raise e
+            end
           end
         else
           legacy_write_with_retry(server, context: context, &block)
@@ -233,7 +258,7 @@ module Mongo
         txn_num = nil
         connection_succeeded = false
 
-        server.with_connection(
+        result = server.with_connection(
           connection_global_id: context.connection_global_id,
           context: context
         ) do |connection|
@@ -246,18 +271,29 @@ module Mongo
           # it later for the retry as well.
           yield connection, txn_num, context.dup
         end
+        retry_policy.record_success(is_retry: false)
+        result
       rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure::Family => e
         e.add_notes('modern retry', 'attempt 1')
 
-        if e.is_a?(Error::OperationFailure::Family)
-          ensure_retryable!(e)
-        else
-          ensure_labeled_retryable!(e, connection_succeeded, session)
+        is_overload = retryable_overload_error?(e)
+        unless is_overload
+          if e.is_a?(Error::OperationFailure::Family)
+            ensure_retryable!(e)
+          else
+            ensure_labeled_retryable!(e, connection_succeeded, session)
+          end
         end
 
-        # Context#with creates a new context, which is not necessary here
-        # but the API is less prone to misuse this way.
-        retry_write(e, txn_num, context: context.with(is_retry: true), failed_server: server, &block)
+        retry_context = context.with(is_retry: true)
+
+        if is_overload
+          overload_write_retry(e, session, txn_num, context: retry_context, failed_server: server, error_count: 1, &block)
+        else
+          # Context#with creates a new context, which is not necessary here
+          # but the API is less prone to misuse this way.
+          retry_write(e, txn_num, context: retry_context, failed_server: server, &block)
+        end
       end
 
       # Called after a failed write, this will retry the write no more than
@@ -307,15 +343,25 @@ module Mongo
 
         attempt = attempt ? attempt + 1 : 2
         log_retry(original_error, message: 'Write retry')
-        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+        result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
         end
+        retry_policy.record_success(is_retry: true)
+        result
       rescue *retryable_exceptions, Error::PoolError => e
+        if retryable_overload_error?(e)
+          e.add_notes('modern retry', "attempt #{attempt}")
+          return overload_write_retry(e, context.session, txn_num, context: context, failed_server: server, error_count: attempt, &block)
+        end
         maybe_fail_on_retryable(e, original_error, context, attempt)
         failed_server = server
         failed_error = e
         retry
       rescue Error::OperationFailure::Family => e
+        if retryable_overload_error?(e)
+          e.add_notes('modern retry', "attempt #{attempt}")
+          return overload_write_retry(e, context.session, txn_num, context: context, failed_server: server, error_count: attempt, &block)
+        end
         maybe_fail_on_operation_failure(e, original_error, context, attempt)
         failed_server = server
         failed_error = e
@@ -326,6 +372,64 @@ module Mongo
         fail_on_other_error!(e, original_error)
       rescue Error::RaiseOriginalError
         raise original_error
+      end
+
+      # Retry loop for overload write errors with exponential backoff.
+      def overload_write_retry(last_error, session, txn_num, context:, failed_server:, error_count:, &block)
+        loop do
+          delay = retry_policy.backoff_delay(error_count)
+          unless retry_policy.should_retry_overload?(error_count, delay, context: context)
+            raise last_error
+          end
+          log_retry(last_error, message: 'Write retry (overload backoff)')
+          sleep(delay)
+
+          begin
+            server = select_server(
+              cluster, ServerSelector.primary, session, failed_server,
+              error: last_error,
+              timeout: context.remaining_timeout_sec
+            )
+          rescue Error, Error::AuthError => e
+            last_error.add_note("later retry failed: #{e.class}: #{e}")
+            raise last_error
+          end
+
+          unless server.retry_writes?
+            last_error.add_note('did not retry because server does not support retryable writes')
+            raise last_error
+          end
+
+          begin
+            context.check_timeout!
+            result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+              yield connection, txn_num, context
+            end
+            retry_policy.record_success(is_retry: true)
+            return result
+          rescue Error::TimeoutError
+            raise
+          rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
+            error_count += 1
+            e.add_notes('modern retry', "attempt #{error_count}")
+            is_overload = retryable_overload_error?(e)
+            if e.is_a?(Error::OperationFailure::Family)
+              unless is_overload || (e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed'))
+                raise e
+              end
+            else
+              unless is_overload || e.write_retryable?
+                raise e
+              end
+            end
+            retry_policy.record_non_overload_retry_failure unless is_overload
+            failed_server = server
+            last_error = e
+          rescue Error, Error::AuthError => e
+            last_error.add_note("later retry failed: #{e.class}: #{e}")
+            raise last_error
+          end
+        end
       end
 
       # Make sure the exception object is labeled 'RetryableWriteError'. If it
