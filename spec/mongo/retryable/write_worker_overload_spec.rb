@@ -281,9 +281,7 @@ describe Mongo::Retryable::WriteWorker do
           context: context, failed_server: server, error_count: 1
         ) do |_conn, _txn, _ctx|
           call_count += 1
-          if call_count == 1
-            raise make_retryable_write_error
-          end
+          raise make_retryable_write_error if call_count == 1
 
           :recovered
         end

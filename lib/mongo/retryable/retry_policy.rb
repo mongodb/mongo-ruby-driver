@@ -48,14 +48,12 @@ module Mongo
       def should_retry_overload?(attempt, delay, context: nil)
         return false if attempt > Backpressure::MAX_RETRIES
 
-        if context&.csot? && context&.deadline
-          return false if context.deadline.nonzero? &&
-            Utils.monotonic_time + delay > context.deadline
-        end
-
-        if @token_bucket && !@token_bucket.consume(1)
+        if context&.csot? && context&.deadline && (context.deadline.nonzero? &&
+                          Utils.monotonic_time + delay > context.deadline)
           return false
         end
+
+        return false if @token_bucket && !@token_bucket.consume(1)
 
         true
       end

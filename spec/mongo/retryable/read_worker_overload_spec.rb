@@ -3,6 +3,8 @@
 require 'lite_spec_helper'
 
 describe Mongo::Retryable::ReadWorker do
+  subject(:worker) { described_class.new(retryable) }
+
   let(:retry_policy) { Mongo::Retryable::RetryPolicy.new }
 
   let(:client) do
@@ -33,8 +35,6 @@ describe Mongo::Retryable::ReadWorker do
     end
   end
 
-  subject(:worker) { described_class.new(retryable) }
-
   before do
     allow(worker).to receive(:sleep)
   end
@@ -64,6 +64,7 @@ describe Mongo::Retryable::ReadWorker do
         result = worker.read_with_retry(session, server_selector, context) do |_server, _is_retry|
           call_count += 1
           raise make_overload_error if call_count <= 3
+
           :success
         end
 
@@ -97,6 +98,7 @@ describe Mongo::Retryable::ReadWorker do
         result = worker.read_with_retry(session, server_selector, context) do |_server, _is_retry|
           call_count += 1
           raise make_retryable_error if call_count == 1
+
           :success
         end
 
@@ -139,6 +141,7 @@ describe Mongo::Retryable::ReadWorker do
         worker.read_with_retry(session, server_selector, context) do |_server, _is_retry|
           call_count += 1
           raise make_overload_error if call_count == 1
+
           :ok
         end
       end

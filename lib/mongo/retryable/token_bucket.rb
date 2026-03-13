@@ -51,7 +51,7 @@ module Mongo
       # @return [ Float ] The new token count.
       def deposit(n)
         @mutex.synchronize do
-          @tokens = [@capacity, @tokens + n].min
+          @tokens = [ @capacity, @tokens + n ].min
         end
       end
     end

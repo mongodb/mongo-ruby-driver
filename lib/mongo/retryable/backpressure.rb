@@ -30,7 +30,7 @@ module Mongo
       #
       # @return [ Float ] The backoff delay in seconds.
       def self.backoff_delay(attempt, jitter: rand)
-        jitter * [MAX_BACKOFF, BASE_BACKOFF * (2**(attempt - 1))].min
+        jitter * [ MAX_BACKOFF, BASE_BACKOFF * (2**(attempt - 1)) ].min
       end
     end
   end

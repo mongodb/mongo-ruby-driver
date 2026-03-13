@@ -18,7 +18,7 @@ describe Mongo::Session do
     let(:session) do
       # Build a minimal session-like object that has the methods we need.
       # We use allocate + manual setup to avoid needing a real server connection.
-      sess = Mongo::Session.allocate
+      sess = described_class.allocate
 
       # Set the instance variables that with_transaction depends on.
       sess.instance_variable_set(:@client, client)
@@ -77,7 +77,7 @@ describe Mongo::Session do
       end
 
       # Use deterministic jitter for backoff_delay
-      allow(retry_policy).to receive(:backoff_delay).and_wrap_original do |method, attempt, **kwargs|
+      allow(retry_policy).to receive(:backoff_delay).and_wrap_original do |method, attempt, **_kwargs|
         method.call(attempt, jitter: 1.0)
       end
 
@@ -168,9 +168,8 @@ describe Mongo::Session do
 
         allow(session).to receive(:commit_transaction) do
           commit_count += 1
-          if commit_count == 1
-            raise commit_error
-          end
+          raise commit_error if commit_count == 1
+
           session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_COMMITTED_STATE)
         end
 

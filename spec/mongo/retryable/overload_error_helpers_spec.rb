@@ -30,7 +30,7 @@ describe Mongo::Retryable::BaseWorker do
       let(:error) { Mongo::Error::SocketError.new('test') }
 
       it 'returns false' do
-        expect(worker.overload_error?(error)).to be_falsey
+        expect(worker).not_to be_overload_error(error)
       end
     end
 
@@ -85,7 +85,7 @@ describe Mongo::Retryable::BaseWorker do
       let(:error) { Mongo::Error::SocketError.new('test') }
 
       it 'returns false' do
-        expect(worker.retryable_overload_error?(error)).to be_falsey
+        expect(worker).not_to be_retryable_overload_error(error)
       end
     end
   end
