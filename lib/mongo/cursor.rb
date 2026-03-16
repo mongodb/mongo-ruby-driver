@@ -383,7 +383,18 @@ module Mongo
       # doing so may result in silent data loss, the driver no longer retries
       # getMore operations in any circumstance.
       # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.md#qa
-      process(execute_operation(get_more_operation))
+      #
+      # However, overload errors (SystemOverloadedError + RetryableError) are
+      # retried with exponential backoff since the server never processed
+      # the request.
+      with_overload_retry(context: possibly_refreshed_context) do
+        process(execute_operation(get_more_operation))
+      end
+    rescue Error::OperationFailure => e
+      # When overload retries are exhausted on getMore, close the cursor
+      # so that killCursors is sent to the server.
+      close if e.label?('RetryableError') && e.label?('SystemOverloadedError')
+      raise
     end
 
     # @api private

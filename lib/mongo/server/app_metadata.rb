@@ -130,6 +130,7 @@ module Mongo
             doc[:driver] = driver_doc
             doc[:os] = os_doc
             doc[:platform] = platform_string
+            doc[:backpressure] = true
             env_doc.tap { |env| doc[:env] = env if env }
           end
       end

@@ -241,7 +241,11 @@ module Mongo
       selector = ServerSelector.get(txn_read_pref)
 
       client.with_session(opts) do |session|
-        server = selector.select_server(cluster, nil, session)
+        context = Operation::Context.new(
+          client: client,
+          session: session,
+          operation_timeouts: operation_timeouts(opts)
+        )
         op = Operation::Command.new(
           :selector => operation,
           :db_name => name,
@@ -249,13 +253,12 @@ module Mongo
           :session => session
         )
 
-        op.execute(server,
-          context: Operation::Context.new(
-            client: client,
-            session: session,
-            operation_timeouts: operation_timeouts(opts)
-          ),
-          options: execution_opts)
+        retry_enabled = client.options[:retry_reads] != false &&
+                        client.options[:retry_writes] != false
+        with_overload_retry(context: context, retry_enabled: retry_enabled) do
+          server = selector.select_server(cluster, nil, session)
+          op.execute(server, context: context, options: execution_opts)
+        end
       end
     end
 

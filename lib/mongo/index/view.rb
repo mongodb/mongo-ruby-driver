@@ -242,8 +242,11 @@ module Mongo
           )
           operation = Operation::CreateIndex.new(spec)
           tracer.trace_operation(operation, context, op_name: 'createIndexes') do
-            server = next_primary(nil, session)
-            operation.execute(server, context: context)
+            retry_enabled = collection.client.options[:retry_writes] != false
+            with_overload_retry(context: context, retry_enabled: retry_enabled) do
+              server = next_primary(nil, session)
+              operation.execute(server, context: context)
+            end
           end
         end
       end
@@ -369,8 +372,11 @@ module Mongo
           op = Operation::DropIndex.new(spec)
           op_name = name == Index::ALL ? 'dropIndexes' : 'dropIndex'
           tracer.trace_operation(op, context, op_name: op_name) do
-            server = next_primary(nil, session)
-            op.execute(server, context: context)
+            retry_enabled = collection.client.options[:retry_writes] != false
+            with_overload_retry(context: context, retry_enabled: retry_enabled) do
+              server = next_primary(nil, session)
+              op.execute(server, context: context)
+            end
           end
         end
       end

@@ -92,13 +92,16 @@ module Mongo
           op = initial_query_op(session)
           tracer.trace_operation(op, context) do
             if respond_to?(:write?, true) && write?
-              server = server_selector.select_server(cluster, nil, session, write_aggregation: true)
-              result = send_initial_query(server, context, operation: op)
+              retry_enabled = collection.client.options[:retry_writes] != false
+              with_overload_retry(context: context, retry_enabled: retry_enabled) do
+                server = server_selector.select_server(cluster, nil, session, write_aggregation: true)
+                result = send_initial_query(server, context, operation: op)
 
-              if use_query_cache?
-                CachingCursor.new(view, result, server, session: session, context: context)
-              else
-                Cursor.new(view, result, server, session: session, context: context)
+                if use_query_cache?
+                  CachingCursor.new(view, result, server, session: session, context: context)
+                else
+                  Cursor.new(view, result, server, session: session, context: context)
+                end
               end
             else
               read_with_retry_cursor(session, server_selector, view, context: context) do |server|
