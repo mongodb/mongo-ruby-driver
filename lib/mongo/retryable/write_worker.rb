@@ -257,6 +257,7 @@ module Mongo
       def modern_write_with_retry(session, server, context, &block)
         txn_num = nil
         connection_succeeded = false
+        was_starting = false
 
         result = server.with_connection(
           connection_global_id: context.connection_global_id,
@@ -266,6 +267,7 @@ module Mongo
 
           session.materialize_if_needed
           txn_num = session.in_transaction? ? session.txn_num : session.next_txn_num
+          was_starting = session.starting_transaction?
 
           # The context needs to be duplicated here because we will be using
           # it later for the retry as well.
@@ -288,7 +290,11 @@ module Mongo
         retry_context = context.with(is_retry: true)
 
         if is_overload
-          overload_write_retry(e, session, txn_num, context: retry_context, failed_server: server, error_count: 1, &block)
+          overload_write_retry(e, session, txn_num,
+            context: retry_context.with(overload_only_retry: true),
+            failed_server: server, error_count: 1,
+            was_starting_transaction: was_starting,
+            &block)
         else
           # Context#with creates a new context, which is not necessary here
           # but the API is less prone to misuse this way.
@@ -351,7 +357,7 @@ module Mongo
       rescue *retryable_exceptions, Error::PoolError => e
         if retryable_overload_error?(e)
           e.add_notes('modern retry', "attempt #{attempt}")
-          return overload_write_retry(e, context.session, txn_num, context: context, failed_server: server, error_count: attempt, &block)
+          return overload_write_retry(e, context.session, txn_num, context: context, failed_server: server, error_count: attempt, was_starting_transaction: false, &block)
         end
         maybe_fail_on_retryable(e, original_error, context, attempt)
         failed_server = server
@@ -360,7 +366,7 @@ module Mongo
       rescue Error::OperationFailure::Family => e
         if retryable_overload_error?(e)
           e.add_notes('modern retry', "attempt #{attempt}")
-          return overload_write_retry(e, context.session, txn_num, context: context, failed_server: server, error_count: attempt, &block)
+          return overload_write_retry(e, context.session, txn_num, context: context, failed_server: server, error_count: attempt, was_starting_transaction: false, &block)
         end
         maybe_fail_on_operation_failure(e, original_error, context, attempt)
         failed_server = server
@@ -375,7 +381,8 @@ module Mongo
       end
 
       # Retry loop for overload write errors with exponential backoff.
-      def overload_write_retry(last_error, session, txn_num, context:, failed_server:, error_count:, &block)
+      def overload_write_retry(last_error, session, txn_num, context:, failed_server:, error_count:,
+                               was_starting_transaction: false, &block)
         loop do
           delay = retry_policy.backoff_delay(error_count)
           unless retry_policy.should_retry_overload?(error_count, delay, context: context)
@@ -401,6 +408,7 @@ module Mongo
           end
 
           begin
+            session.revert_to_starting_transaction! if was_starting_transaction
             context.check_timeout!
             result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, txn_num, context
@@ -423,6 +431,7 @@ module Mongo
               end
             end
             retry_policy.record_non_overload_retry_failure unless is_overload
+            context = context.with(overload_only_retry: false) unless is_overload
             failed_server = server
             last_error = e
           rescue Error, Error::AuthError => e
