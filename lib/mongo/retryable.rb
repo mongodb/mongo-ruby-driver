@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/retryable/backpressure'
+require 'mongo/retryable/token_bucket'
+require 'mongo/retryable/retry_policy'
 require 'mongo/retryable/read_worker'
 require 'mongo/retryable/write_worker'
 
@@ -94,6 +97,51 @@ module Mongo
     #   based on it.
     def write_worker
       @write_worker ||= WriteWorker.new(self)
+    end
+
+    # Wraps an operation with overload retry logic. On overload errors
+    # (SystemOverloadedError + RetryableError), retries the block with
+    # exponential backoff up to MAX_RETRIES times.
+    #
+    # The block should include server selection so it is re-done on retry.
+    # For cursor operations (getMore), the same server is reused since the
+    # cursor is pinned.
+    #
+    # @param [ Operation::Context | nil ] context The operation context
+    #   for CSOT deadline checking.
+    # @param [ true | false ] retry_enabled Whether overload retries are
+    #   permitted. When false, overload errors are raised immediately
+    #   without retrying (used when retryReads/retryWrites is disabled).
+    #
+    # @return [ Object ] The result of the block.
+    #
+    # @api private
+    def with_overload_retry(context: nil, retry_enabled: true)
+      return yield unless retry_enabled
+
+      error_count = 0
+      loop do
+        begin
+          result = yield
+          client.retry_policy.record_success(is_retry: error_count > 0)
+          return result
+        rescue Error::TimeoutError
+          raise
+        rescue Error::OperationFailure::Family => e
+          if e.label?('SystemOverloadedError') && e.label?('RetryableError')
+            error_count += 1
+            policy = client.retry_policy
+            delay = policy.backoff_delay(error_count)
+            unless policy.should_retry_overload?(error_count, delay, context: context)
+              raise e
+            end
+            Logger.logger.warn("Overload retry due to: #{e.class.name}: #{e.message}")
+            sleep(delay)
+          else
+            raise e
+          end
+        end
+      end
     end
   end
 end

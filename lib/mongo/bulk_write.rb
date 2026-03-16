@@ -67,7 +67,7 @@ module Mongo
           context = Operation::Context.new(
             client: client,
             session: session,
-            operation_timeouts: { operation_timeout_ms: op_timeout_ms(deadline) }
+            operation_timeouts: operation_timeouts(deadline)
           )
           if single_statement?(operation)
             write_concern = write_concern(session)
@@ -179,6 +179,22 @@ module Mongo
         0
       else
         Utils.monotonic_time + (timeout_ms / 1_000.0)
+      end
+    end
+
+    # Returns the operation_timeouts hash for creating an Operation::Context.
+    # Uses operation_timeout_ms when the timeout was explicitly set on the
+    # bulk write, or inherited_timeout_ms when it comes from the collection
+    # or client. This distinction is important inside transactions where
+    # operation_timeout_ms is not allowed (RUBY-3685).
+    def operation_timeouts(deadline)
+      timeout = op_timeout_ms(deadline)
+      return {} if timeout.nil?
+
+      if @options[:timeout_ms]
+        { operation_timeout_ms: timeout }
+      else
+        { inherited_timeout_ms: timeout }
       end
     end
 

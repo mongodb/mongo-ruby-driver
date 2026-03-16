@@ -53,6 +53,7 @@ module Mongo
     #
     # @since 2.1.2
     VALID_OPTIONS = [
+      :adaptive_retries,
       :app_name,
       :auth_mech,
       :auth_mech_properties,
@@ -149,6 +150,11 @@ module Mongo
     # @return [ Mongo::Crypt::AutoEncrypter ] The object that encapsulates
     #   auto-encryption behavior
     attr_reader :encrypter
+
+    # @return [ Mongo::Retryable::RetryPolicy ] The retry policy for
+    #   backpressure and adaptive retries.
+    # @api private
+    attr_reader :retry_policy
 
     # Delegate command and collections execution to the current database.
     def_delegators :@database, :command, :collections
@@ -589,6 +595,9 @@ module Mongo
       end
 
       @connect_lock = Mutex.new
+      @retry_policy = Retryable::RetryPolicy.new(
+        adaptive_retries: !!@options[:adaptive_retries]
+      )
       @connect_lock.synchronize do
         @cluster = Cluster.new(
           addresses,

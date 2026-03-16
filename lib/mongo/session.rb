@@ -97,7 +97,11 @@ module Mongo
       @server_session = server_session
       options = options.dup
 
-      @client = client.use(:admin)
+      # Implicit sessions only need the cluster and client options (never run
+      # transactions), so avoid creating a Mongo::Client clone to prevent
+      # memory leaks: use the original client directly instead.
+      @client = options[:implicit] ? client : client.use(:admin)
+      @cluster = @client.cluster
       @options = options.dup.freeze
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
@@ -115,7 +119,7 @@ module Mongo
     attr_reader :client
 
     def cluster
-      @client.cluster
+      @cluster
     end
 
     # @return [ true | false ] Whether the session is configured for snapshot
@@ -384,12 +388,13 @@ module Mongo
           end
         end
         if @server_session
-          @client.cluster.session_pool.checkin(@server_session)
+          cluster.session_pool.checkin(@server_session)
         end
       end
     ensure
       @server_session = nil
       @ended = true
+      @client = nil
     end
 
     # Executes the provided block in a transaction, retrying as necessary.
@@ -458,14 +463,27 @@ module Mongo
       transaction_in_progress = false
       transaction_attempt = 0
       last_error = nil
+      overload_error_count = 0
+      overload_encountered = false
 
       loop do
         if transaction_attempt > 0
-          backoff = backoff_seconds_for_retry(transaction_attempt)
-          if backoff_would_exceed_deadline?(deadline, backoff)
-            raise(last_error)
+          if overload_encountered
+            delay = @client.retry_policy.backoff_delay(overload_error_count)
+            if backoff_would_exceed_deadline?(deadline, delay)
+              raise(last_error)
+            end
+            unless @client.retry_policy.should_retry_overload?(overload_error_count, delay)
+              raise(last_error)
+            end
+            sleep(delay)
+          else
+            backoff = backoff_seconds_for_retry(transaction_attempt)
+            if backoff_would_exceed_deadline?(deadline, backoff)
+              raise(last_error)
+            end
+            sleep(backoff)
           end
-          sleep(backoff)
         end
 
         commit_options = {}
@@ -493,6 +511,13 @@ module Mongo
 
           if e.is_a?(Mongo::Error) && e.label?('TransientTransactionError')
             last_error = e
+            if e.label?('SystemOverloadedError')
+              overload_encountered = true
+              overload_error_count += 1
+            elsif overload_encountered
+              overload_error_count += 1
+              @client.retry_policy.record_non_overload_retry_failure
+            end
             next
           end
 
@@ -515,6 +540,28 @@ module Mongo
                 transaction_in_progress = false
                 raise
               end
+
+              if e.label?('SystemOverloadedError')
+                overload_encountered = true
+                overload_error_count += 1
+              elsif overload_encountered
+                overload_error_count += 1
+                @client.retry_policy.record_non_overload_retry_failure
+              end
+
+              if overload_encountered
+                delay = @client.retry_policy.backoff_delay(overload_error_count)
+                if backoff_would_exceed_deadline?(deadline, delay)
+                  transaction_in_progress = false
+                  raise
+                end
+                unless @client.retry_policy.should_retry_overload?(overload_error_count, delay)
+                  transaction_in_progress = false
+                  raise
+                end
+                sleep(delay)
+              end
+
               wc_options = case v = commit_options[:write_concern]
                 when WriteConcern::Base
                   v.options
@@ -531,6 +578,13 @@ module Mongo
                 raise
               end
               last_error = e
+              if e.label?('SystemOverloadedError')
+                overload_encountered = true
+                overload_error_count += 1
+              elsif overload_encountered
+                overload_error_count += 1
+                @client.retry_policy.record_non_overload_retry_failure
+              end
               @state = NO_TRANSACTION_STATE
               next
             else
@@ -1099,8 +1153,8 @@ module Mongo
     # @since 2.5.0
     # @api private
     def validate!(client)
-      check_matching_cluster!(client)
       check_if_ended!
+      check_matching_cluster!(client)
       self
     end
 
@@ -1280,7 +1334,7 @@ module Mongo
     end
 
     def check_matching_cluster!(client)
-      if @client.cluster != client.cluster
+      if cluster != client.cluster
         raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
       end
     end
