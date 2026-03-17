@@ -34,11 +34,13 @@ module Unified
         client = entities.get(:client, args.use!('client'))
         client.command(fp = args.use('failPoint'))
 
+        # Use the client's actual primary address rather than the cached
+        # ClusterConfig value, which can become stale after a replSetStepDown.
+        primary_server = client.cluster.servers.find(&:primary?)
+        address = primary_server&.address || ClusterConfig.instance.primary_address
+
         $disable_fail_points ||= []
-        $disable_fail_points << [
-          fp,
-          ClusterConfig.instance.primary_address,
-        ]
+        $disable_fail_points << [fp, address]
       end
     end
 
