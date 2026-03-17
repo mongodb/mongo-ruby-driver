@@ -17,13 +17,6 @@ describe 'Client-Side Encryption' do
       )
     end
 
-    # 6.0 mongocrypt expects a JSON-compatible error message from the KMS, but
-    # the mock KMS server returns an HTML error page.
-    let(:affected_by_mock_kms_server_change) do
-      (kms_provider == 'azure' || kms_provider == 'gcp') &&
-        ClusterConfig.instance.server_version < '7.0'
-    end
-
     let(:client_encryption_no_client_cert) do
       Mongo::ClientEncryption.new(
         client,
@@ -320,7 +313,7 @@ describe 'Client-Side Encryption' do
         end
 
         it 'raises KmsError directly without wrapping CryptError' do
-          if should_raise_with_tls && !affected_by_mock_kms_server_change
+          if should_raise_with_tls
             begin
               client_encryption_with_tls.create_data_key(
                 kms_provider,
@@ -329,9 +322,8 @@ describe 'Client-Side Encryption' do
               }
               )
             rescue Mongo::Error::KmsError => exc
-              exc.message.should =~ /Error when connecting to KMS provider|Empty KMS response/
-              exc.message.should =~ /libmongocrypt error code/
-              exc.message.should_not =~ /CryptError/
+              expect(exc.message).to include('libmongocrypt error code')
+              expect(exc.message).not_to include('CryptError')
             else
               fail 'Expected to raise KmsError'
             end

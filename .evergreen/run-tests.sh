@@ -213,6 +213,13 @@ if test -n "$FLE"; then
     cd -
   fi
 
+  # work around error about trying to load a different crypt_shared lib when one
+  # is already loaded. Note that putting the shared library in the current directory
+  # means it will always be located, even if crypt_shared_lib_path is not set.
+  cp ${MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH} ${PROJECT_DIRECTORY}
+  export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=${PROJECT_DIRECTORY}/mongo_crypt_v1.so
+  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PROJECT_DIRECTORY}
+
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
   if test "$DOCKER_PRELOAD" != 1; then
@@ -344,6 +351,7 @@ if test "$COMPRESSOR" = zstd; then
   add_uri_option compressors=zstd
 fi
 
+# TEST_CMD="bundle exec rspec -f d spec/mongo/client_construction_spec.rb"
 
 echo "Running tests"
 set +e

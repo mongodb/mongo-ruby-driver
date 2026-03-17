@@ -178,6 +178,8 @@ describe Mongo::Client do
 
         let(:extra_options) do
           {
+            crypt_shared_lib_path: SpecConfig.instance.crypt_shared_lib_path,
+            crypt_shared_lib_required: SpecConfig.instance.crypt_shared_lib_required,
             mongocryptd_uri: mongocryptd_uri,
             mongocryptd_bypass_spawn: mongocryptd_bypass_spawn,
             mongocryptd_spawn_path: mongocryptd_spawn_path,
@@ -299,7 +301,12 @@ describe Mongo::Client do
               expect(encryption_options[:extra_options][:mongocryptd_spawn_path]).to eq(mongocryptd_spawn_path)
               expect(encryption_options[:extra_options][:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
 
-              expect(client.encrypter.mongocryptd_client.options[:monitoring_io]).to be false
+              if (SpecConfig.instance.crypt_shared_lib_path || '').strip.length > 0
+                expect(client.encrypter.mongocryptd_client).to be_nil
+              else
+                expect(client.encrypter.mongocryptd_client).not_to be_nil
+                expect(client.encrypter.mongocryptd_client.options[:monitoring_io]).to be false
+              end
             end
 
             context 'with default extra options' do
@@ -1998,7 +2005,7 @@ describe Mongo::Client do
               block_client.encrypter.mongocryptd_client,
               block_client.encrypter.key_vault_client,
               block_client.encrypter.metadata_client
-            ].each do |crypt_client|
+            ].compact.each do |crypt_client|
               expect(crypt_client.cluster.connected?).to be false
             end
           end
