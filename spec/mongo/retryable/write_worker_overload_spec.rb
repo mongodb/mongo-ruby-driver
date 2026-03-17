@@ -25,6 +25,7 @@ describe Mongo::Retryable::WriteWorker do
     instance_double(Mongo::Session).tap do |s|
       allow(s).to receive(:retry_writes?).and_return(true)
       allow(s).to receive(:in_transaction?).and_return(false)
+      allow(s).to receive(:starting_transaction?).and_return(false)
       allow(s).to receive(:materialize_if_needed)
       allow(s).to receive(:txn_num).and_return(1)
       allow(s).to receive(:next_txn_num).and_return(2)

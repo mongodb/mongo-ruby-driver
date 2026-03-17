@@ -750,7 +750,7 @@ module Mongo
           write_with_retry(write_concern, ending_transaction: true,
             context: context,
           ) do |connection, txn_num, context|
-            if context.retry?
+            if context.retry? && !context.overload_only_retry?
               if write_concern
                 wco = write_concern.options.merge(w: :majority)
                 wco[:wtimeout] ||= 10000
@@ -1123,6 +1123,16 @@ module Mongo
         raise Mongo::Error::InvalidTransactionOperation.new(
           "read preference in a transaction must be primary (requested: #{mode})"
         )
+      end
+    end
+
+    # Reverts the session state to STARTING_TRANSACTION_STATE.
+    # Called before retrying the first command in a transaction so that
+    # startTransaction: true is preserved on the retry.
+    # @api private
+    def revert_to_starting_transaction!
+      if within_states?(TRANSACTION_IN_PROGRESS_STATE)
+        @state = STARTING_TRANSACTION_STATE
       end
     end
 

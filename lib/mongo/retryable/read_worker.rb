@@ -207,7 +207,7 @@ module Mongo
         result
       rescue *retryable_exceptions, Error::OperationFailure::Family, Auth::Unauthorized, Error::PoolError => e
         e.add_notes('modern retry', 'attempt 1')
-        raise e if session.in_transaction?
+        raise e if session.in_transaction? && !retryable_overload_error?(e)
 
         if retryable_overload_error?(e)
           overload_read_retry(e, session, server_selector, context, server, error_count: 1, &block)
