@@ -31,6 +31,7 @@ describe 'Client-Side Encryption' do
                 mongocryptd_bypass_spawn: true,
                 mongocryptd_uri: "mongodb://localhost:#{mongocryptd_port}/db?serverSelectionTimeoutMS=1000",
                 mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=#{mongocryptd_port}"],
+                disable_crypt_shared_lib_search: true,
               },
             },
             database: 'db'
@@ -56,6 +57,7 @@ describe 'Client-Side Encryption' do
               bypass_auto_encryption: true,
               extra_options: {
                 mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=#{mongocryptd_port}"],
+                disable_crypt_shared_lib_search: true,
               },
             },
             database: 'db'

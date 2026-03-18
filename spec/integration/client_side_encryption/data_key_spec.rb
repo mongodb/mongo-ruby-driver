@@ -171,7 +171,10 @@ describe 'Client-Side Encryption' do
 
         expect do
           client_encrypted['coll'].insert_one(encrypted_placeholder: encrypted)
-        end.to raise_error(Mongo::Error::OperationFailure, /Cannot encrypt element of type(: encrypted binary data| binData)/)
+        # With mongocryptd the error comes back as OperationFailure from the
+        # markForEncryption command response; with crypt_shared it is raised
+        # directly by libmongocrypt as a CryptError. Both are Mongo::Error subclasses.
+        end.to raise_error(Mongo::Error, /Cannot encrypt element of type(: encrypted binary data| binData)/)
       end
     end
 

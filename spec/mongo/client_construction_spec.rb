@@ -316,11 +316,20 @@ describe Mongo::Client do
 
             context 'with default extra options' do
               let(:auto_encryption_options) do
-                {
+                opts = {
                   key_vault_namespace: key_vault_namespace,
                   kms_providers: kms_providers,
                   schema_map: schema_map,
                 }
+                # When the env var is set, pass the explicit crypt_shared path so
+                # that Handle in this process uses the same load mechanism as any
+                # prior Handle, avoiding the "existing library" conflict on macOS.
+                # The test assertions only check mongocryptd default values, so this
+                # does not affect what is being verified.
+                if (path = SpecConfig.instance.crypt_shared_lib_path)
+                  opts[:extra_options] = { crypt_shared_lib_path: path }
+                end
+                opts
               end
 
               it 'sets key_vault_client with no encryption options' do
