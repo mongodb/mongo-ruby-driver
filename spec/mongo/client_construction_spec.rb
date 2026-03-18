@@ -185,7 +185,10 @@ describe Mongo::Client do
           # Use the explicit path when available so every Handle in the process
           # loads via the same mechanism, avoiding the "An existing crypt_shared
           # library is loaded" conflict on macOS when specs run in the same process.
-          opts[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path if SpecConfig.instance.crypt_shared_lib_path
+          if SpecConfig.instance.crypt_shared_lib_path
+            opts[:crypt_shared_lib_path] =
+              SpecConfig.instance.crypt_shared_lib_path
+          end
           opts
         end
 
