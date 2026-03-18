@@ -297,8 +297,16 @@ describe Mongo::Client do
               expect(encryption_options[:extra_options][:mongocryptd_bypass_spawn]).to eq(mongocryptd_bypass_spawn)
               expect(encryption_options[:extra_options][:mongocryptd_spawn_path]).to eq(mongocryptd_spawn_path)
               expect(encryption_options[:extra_options][:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
+            end
 
-              expect(client.encrypter.mongocryptd_client.options[:monitoring_io]).to be false
+            context 'without crypt_shared library' do
+              around do |example|
+                SpecConfig.instance.without_crypt_shared_lib_path { example.run }
+              end
+
+              it 'creates mongocryptd_client with monitoring_io: false' do
+                expect(client.encrypter.mongocryptd_client.options[:monitoring_io]).to be false
+              end
             end
 
             context 'with default extra options' do
@@ -1997,7 +2005,7 @@ describe Mongo::Client do
               block_client.encrypter.mongocryptd_client,
               block_client.encrypter.key_vault_client,
               block_client.encrypter.metadata_client
-            ].each do |crypt_client|
+            ].compact.each do |crypt_client|
               expect(crypt_client.cluster.connected?).to be false
             end
           end
