@@ -105,6 +105,7 @@ module Mongo
           bypass_query_analysis: @options[:bypass_query_analysis],
           crypt_shared_lib_path: @options[:extra_options][:crypt_shared_lib_path],
           crypt_shared_lib_required: @options[:extra_options][:crypt_shared_lib_required],
+          disable_crypt_shared_lib_search: @options[:extra_options][:disable_crypt_shared_lib_search],
         )
 
         @mongocryptd_options = @options[:extra_options].slice(
@@ -243,6 +244,17 @@ module Mongo
 
         extra_options = opts.delete(:extra_options) || Options::Redacted.new
         extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
+
+        # When no explicit crypt_shared_lib_path is provided and the caller has
+        # not opted out of crypt_shared entirely, fall back to the environment
+        # variable. This ensures every Handle in the same process uses the same
+        # explicit-path load mechanism, preventing the "An existing crypt_shared
+        # library is loaded" conflict on macOS when multiple Handle instances are
+        # created after a prior path-override load.
+        if extra_options[:crypt_shared_lib_path].nil? && !extra_options[:disable_crypt_shared_lib_search]
+          env_path = ENV['MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH']
+          extra_options[:crypt_shared_lib_path] = env_path if env_path
+        end
 
         has_timeout_string_arg = extra_options[:mongocryptd_spawn_args].any? do |elem|
           elem.is_a?(String) && elem.match(/\A--idleShutdownTimeoutSecs=\d+\z/)

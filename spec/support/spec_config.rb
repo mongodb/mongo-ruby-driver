@@ -519,6 +519,15 @@ EOT
     @without_crypt_shared_lib_path = saved
   end
 
+  # Returns true when inside a without_crypt_shared_lib_path block. Used by
+  # test helpers to set disable_crypt_shared_lib_search on the Handle, which
+  # prevents the "$SYSTEM" search and avoids the "An existing crypt_shared
+  # library is loaded" error that occurs when a previous Handle in the same
+  # process loaded the library via a path override.
+  def suppress_crypt_shared_lib_search?
+    !!@without_crypt_shared_lib_path
+  end
+
   attr_accessor :crypt_shared_lib_required
 
   def require_crypt_shared

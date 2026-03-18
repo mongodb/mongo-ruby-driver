@@ -176,12 +176,17 @@ describe Mongo::Client do
         let(:bypass_auto_encryption) { true }
 
         let(:extra_options) do
-          {
+          opts = {
             mongocryptd_uri: mongocryptd_uri,
             mongocryptd_bypass_spawn: mongocryptd_bypass_spawn,
             mongocryptd_spawn_path: mongocryptd_spawn_path,
             mongocryptd_spawn_args: mongocryptd_spawn_args,
           }
+          # Use the explicit path when available so every Handle in the process
+          # loads via the same mechanism, avoiding the "An existing crypt_shared
+          # library is loaded" conflict on macOS when specs run in the same process.
+          opts[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path if SpecConfig.instance.crypt_shared_lib_path
+          opts
         end
 
         let(:mongocryptd_uri) { 'mongodb://localhost:27021' }
@@ -300,8 +305,8 @@ describe Mongo::Client do
             end
 
             context 'without crypt_shared library' do
-              around do |example|
-                SpecConfig.instance.without_crypt_shared_lib_path { example.run }
+              let(:extra_options) do
+                super().except(:crypt_shared_lib_path).merge(disable_crypt_shared_lib_search: true)
               end
 
               it 'creates mongocryptd_client with monitoring_io: false' do
