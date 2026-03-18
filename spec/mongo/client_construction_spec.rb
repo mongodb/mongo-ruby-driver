@@ -309,7 +309,7 @@ describe Mongo::Client do
 
             context 'without crypt_shared library' do
               let(:extra_options) do
-                super().except(:crypt_shared_lib_path).merge(disable_crypt_shared_lib_search: true)
+                super().reject { |k, _| k == :crypt_shared_lib_path }.merge(disable_crypt_shared_lib_search: true)
               end
 
               it 'creates mongocryptd_client with monitoring_io: false' do

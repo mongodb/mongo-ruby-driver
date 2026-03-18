@@ -174,7 +174,10 @@ describe 'Client-Side Encryption' do
         # With mongocryptd the error comes back as OperationFailure from the
         # markForEncryption command response; with crypt_shared it is raised
         # directly by libmongocrypt as a CryptError. Both are Mongo::Error subclasses.
-        end.to raise_error(Mongo::Error, /Cannot encrypt element of type(: encrypted binary data| binData)/)
+        end.to raise_error { |error|
+          expect(error).to be_a(Mongo::OperationFailure).or be_a(Mongo::CryptError)
+          expect(error.message).to match(/Cannot encrypt element of type(: encrypted binary data| binData)/)
+        }
       end
     end
 

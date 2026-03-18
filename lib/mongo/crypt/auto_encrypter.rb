@@ -245,7 +245,6 @@ module Mongo
         extra_options = opts.delete(:extra_options) || Options::Redacted.new
         extra_options = DEFAULT_EXTRA_OPTIONS.merge(extra_options)
 
-
         has_timeout_string_arg = extra_options[:mongocryptd_spawn_args].any? do |elem|
           elem.is_a?(String) && elem.match(/\A--idleShutdownTimeoutSecs=\d+\z/)
         end
