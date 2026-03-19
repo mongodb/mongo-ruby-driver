@@ -214,12 +214,6 @@ if test -n "$FLE"; then
     fi
   fi
 
-  # Treat mongocryptd configuration like helper for the remainder of this block.
-  # Note: crypt_shared download has already been skipped above for mongocryptd.
-  if test "$FLE" = "mongocryptd"; then
-    FLE="helper"
-  fi
-
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
   if test "$DOCKER_PRELOAD" != 1; then
