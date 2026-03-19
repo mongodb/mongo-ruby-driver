@@ -298,7 +298,7 @@ module Unified
       pipeline = args.use!('pipeline')
 
       opts = extract_options(args, 'let', 'comment', 'batchSize', 'maxTimeMS',
-        'allowDiskUse', 'timeoutMode', 'timeoutMS', 'maxTimeMS', allow_extra: true)
+        'allowDiskUse', 'timeoutMode', 'timeoutMS', 'maxTimeMS', 'maxAwaitTimeMS', allow_extra: true)
       symbolize_options!(opts, :timeout_mode)
 
       if session = args.use('session')

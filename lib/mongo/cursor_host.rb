@@ -49,18 +49,18 @@ module Mongo
           if timeout_mode == :cursor_lifetime
             raise ArgumentError, 'tailable cursors only support `timeout_mode: :iteration`'
           end
-
-          # "Drivers MUST error if [the maxAwaitTimeMS] option is set,
-          # timeoutMS is set to a non-zero value, and maxAwaitTimeMS is
-          # greater than or equal to timeoutMS."
-          max_await_time_ms = options[:max_await_time_ms] || 0
-          if cursor_type == :tailable_await && max_await_time_ms >= timeout_ms
-            raise ArgumentError, ':max_await_time_ms must not be >= :timeout_ms'
-          end
         else
           # "For non-tailable cursors, the default value of timeoutMode
           # is CURSOR_LIFETIME."
           timeout_mode ||= :cursor_lifetime
+        end
+
+        # "Drivers MUST error if [the maxAwaitTimeMS] option is set,
+        # timeoutMS is set to a non-zero value, and maxAwaitTimeMS is
+        # greater than or equal to timeoutMS."
+        max_await_time_ms = options[:max_await_time_ms] || 0
+        if max_await_time_ms > 0 && max_await_time_ms >= timeout_ms
+          raise ArgumentError, ':max_await_time_ms must not be >= :timeout_ms'
         end
       elsif timeout_mode
         # "Drivers MUST error if timeoutMode is set and timeoutMS is not."

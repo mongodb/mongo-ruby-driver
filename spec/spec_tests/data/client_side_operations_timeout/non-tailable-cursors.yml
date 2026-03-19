@@ -1,6 +1,6 @@
 description: "timeoutMS behaves correctly for non-tailable cursors"
 
-schemaVersion: "1.9"
+schemaVersion: "1.26"
 
 runOnRequirements:
   - minServerVersion: "4.4"
@@ -12,7 +12,9 @@ createEntities:
   - client:
       id: &client client
       uriOptions:
-        timeoutMS: 10
+        timeoutMS: 200
+        minPoolSize: 1
+      awaitMinPoolSizeMS: 10000
       useMultipleMongoses: false
       observeEvents:
         - commandStartedEvent
@@ -53,14 +55,11 @@ tests:
             data:
               failCommands: ["find"]
               blockConnection: true
-              # changed to 30ms to accommodate jruby latencies
-              blockTimeMS: 30
+              blockTimeMS: 250
       - name: find
         object: *collection
         arguments:
           filter: {}
-          # added as a 25ms timeout to accommodate jruby latencies
-          timeoutMS: 25
           timeoutMode: cursorLifetime
         expectError:
           isTimeoutError: true
@@ -89,16 +88,14 @@ tests:
             data:
               failCommands: ["find", "getMore"]
               blockConnection: true
-              # bumped to 50 to accommodate jruby latencies
-              blockTimeMS: 50
-      # Run a find with timeoutMS=39 and batchSize=1 to force two batches, which will cause a find and a getMore to be
-      # sent. Both will block for 20ms so together they will go over the timeout.
+              blockTimeMS: 125
+      # Run a find with timeoutMS=200 and batchSize=1 to force two batches, which will cause a find and a getMore to be
+      # sent. Both will block for 125ms, so together they will go over the timeout.
       - name: find
         object: *collection
         arguments:
           filter: {}
-          # bumped to 99 to accommodate jruby latencies
-          timeoutMS: 99
+          timeoutMS: 200
           batchSize: 2
         expectError:
           isTimeoutError: true
@@ -132,13 +129,13 @@ tests:
             data:
               failCommands: ["find", "getMore"]
               blockConnection: true
-              blockTimeMS: 20
+              blockTimeMS: 150
       - name: find
         object: *collection
         arguments:
           filter: {}
           timeoutMode: cursorLifetime
-          timeoutMS: 39
+          timeoutMS: 200
           batchSize: 2
         expectError:
           isTimeoutError: true
@@ -173,7 +170,7 @@ tests:
             data:
               failCommands: ["find"]
               blockConnection: true
-              blockTimeMS: 15
+              blockTimeMS: 250
       - name: find
         object: *collection
         arguments:
@@ -192,8 +189,8 @@ tests:
                 maxTimeMS: { $$exists: false }
 
   # If timeoutMode=ITERATION, timeoutMS applies separately to the initial find and the getMore on the cursor. Neither
-  # command should have a maxTimeMS field. This is a success test. The "find" is executed with timeoutMS=29 and both
-  # "find" and "getMore" commands are blocked for 15ms each. Neither exceeds the timeout, so iteration succeeds.
+  # command should have a maxTimeMS field. This is a success test. The "find" is executed with timeoutMS=200 and both
+  # "find" and "getMore" commands are blocked for 125ms each. Neither exceeds the timeout, so iteration succeeds.
   - description: "timeoutMS is refreshed for getMore if timeoutMode is iteration - success"
     operations:
       - name: failPoint
@@ -206,17 +203,13 @@ tests:
             data:
               failCommands: ["find", "getMore"]
               blockConnection: true
-              # blockTimeMS: 15
-              # Increase timeout
-              blockTimeMS: 20
+              blockTimeMS: 125
       - name: find
         object: *collection
         arguments:
           filter: {}
           timeoutMode: iteration
-          # timeoutMS: 29
-          # Increase timeout
-          timeoutMS: 39
+          timeoutMS: 200
           batchSize: 2
     expectEvents:
       - client: *client
@@ -236,8 +229,8 @@ tests:
                 maxTimeMS: { $$exists: false }
 
   # If timeoutMode=ITERATION, timeoutMS applies separately to the initial find and the getMore on the cursor. Neither
-  # command should have a maxTimeMS field. This is a failure test. The "find" inherits timeoutMS=10 and "getMore"
-  # commands are blocked for 15ms, causing iteration to fail with a timeout error.
+  # command should have a maxTimeMS field. This is a failure test. The "find" inherits timeoutMS=200 and "getMore"
+  # commands are blocked for 250ms, causing iteration to fail with a timeout error.
   - description: "timeoutMS is refreshed for getMore if timeoutMode is iteration - failure"
     operations:
       - name: failPoint
@@ -250,7 +243,7 @@ tests:
             data:
               failCommands: ["getMore"]
               blockConnection: true
-              blockTimeMS: 15
+              blockTimeMS: 250
       - name: find
         object: *collection
         arguments:

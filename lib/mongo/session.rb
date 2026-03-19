@@ -106,6 +106,8 @@ module Mongo
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
       @with_transaction_deadline = nil
+      @with_transaction_timeout_ms = nil
+      @inside_with_transaction = false
     end
 
     # @return [ Hash ] The options for this session.
@@ -452,6 +454,8 @@ module Mongo
     #
     # @since 2.7.0
     def with_transaction(options = nil)
+      @inside_with_transaction = true
+      @with_transaction_timeout_ms = options&.dig(:timeout_ms) || @options[:default_timeout_ms] || @client.timeout_ms
       @with_transaction_deadline = calculate_with_transaction_deadline(options)
       deadline = if @with_transaction_deadline
                    # CSOT enabled, so we have a customer defined deadline.
@@ -471,7 +475,7 @@ module Mongo
           if overload_encountered
             delay = @client.retry_policy.backoff_delay(overload_error_count)
             if backoff_would_exceed_deadline?(deadline, delay)
-              raise(last_error)
+              raise Mongo::Error::TimeoutError, 'CSOT timeout expired waiting to retry withTransaction'
             end
             unless @client.retry_policy.should_retry_overload?(overload_error_count, delay)
               raise(last_error)
@@ -480,7 +484,7 @@ module Mongo
           else
             backoff = backoff_seconds_for_retry(transaction_attempt)
             if backoff_would_exceed_deadline?(deadline, backoff)
-              raise(last_error)
+              raise Mongo::Error::TimeoutError, 'CSOT timeout expired waiting to retry withTransaction'
             end
             sleep(backoff)
           end
@@ -499,7 +503,10 @@ module Mongo
         rescue Exception => e
           if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
             log_warn("Aborting transaction due to #{e.class}: #{e}")
-            @with_transaction_deadline = nil
+            # CSOT: if the deadline is already expired, clear it so that
+            # abort_transaction uses a fresh timeout (not the expired deadline).
+            # If the deadline is not yet expired, keep it so abort uses remaining time.
+            @with_transaction_deadline = nil if @with_transaction_deadline && deadline_expired?(deadline)
             abort_transaction
             transaction_in_progress = false
           end
@@ -526,6 +533,15 @@ module Mongo
           if within_states?(TRANSACTION_ABORTED_STATE, NO_TRANSACTION_STATE, TRANSACTION_COMMITTED_STATE)
             transaction_in_progress = false
             return rv
+          end
+
+          # CSOT: if the timeout has expired before we can commit, abort the
+          # transaction instead and raise a client-side timeout error.
+          if @with_transaction_deadline && deadline_expired?(deadline)
+            transaction_in_progress = false
+            @with_transaction_deadline = nil
+            abort_transaction
+            raise Mongo::Error::TimeoutError, 'CSOT timeout expired before transaction could be committed'
           end
 
           begin
@@ -610,6 +626,8 @@ module Mongo
         end
       end
       @with_transaction_deadline = nil
+      @with_transaction_timeout_ms = nil
+      @inside_with_transaction = false
     end
 
     # Places subsequent operations in this session into a new transaction.
@@ -1282,6 +1300,12 @@ module Mongo
     # @api private
     attr_reader :with_transaction_deadline
 
+    # @return [ Boolean ] Whether we are currently inside a with_transaction block.
+    # @api private
+    def inside_with_transaction?
+      @inside_with_transaction
+    end
+
     private
 
     # Get the read concern the session will use when starting a transaction.
@@ -1355,9 +1379,14 @@ module Mongo
 
     def operation_timeouts(opts)
       {
-        inherited_timeout_ms: @client.timeout_ms
+        inherited_timeout_ms: @with_transaction_timeout_ms || @client.timeout_ms
       }.tap do |result|
-        if @with_transaction_deadline.nil?
+        if @inside_with_transaction
+          if opts[:timeout_ms]
+            raise Mongo::Error::InvalidTransactionOperation,
+              'timeoutMS cannot be overridden inside a withTransaction callback'
+          end
+        else
           if timeout_ms = opts[:timeout_ms]
             result[:operation_timeout_ms] = timeout_ms
           elsif default_timeout_ms = options[:default_timeout_ms]
