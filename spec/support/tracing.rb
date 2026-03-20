@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Tracing
-  Error = Class.new(StandardError)
+  class Error < StandardError; end
 
   class Span
     attr_reader :tracer, :name, :attributes, :with_parent, :kind, :finished, :nested

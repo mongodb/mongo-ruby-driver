@@ -70,7 +70,6 @@ describe Mongo::Client do
             # Client is created here.
             client
           end
-          puts "client_construction_spec.rb: Cluster is: #{client.cluster.summary}"
 
           # Because the first round of sdam waits for server statuses to change
           # rather than for server selection semaphore on the cluster which
@@ -2603,13 +2602,6 @@ describe Mongo::Client do
         # subscriber may receive events from the original client.
 
         new_client.cluster.next_primary
-
-        # Diagnostics
-        # rubocop:disable Style/IfUnlessModifier, Lint/Debugger
-        unless subscriber.started_events.empty?
-          p subscriber.started_events
-        end
-        # rubocop:enable Style/IfUnlessModifier, Lint/Debugger
 
         expect(subscriber.started_events.length).to eq 0
         expect(new_client.cluster.topology.class).not_to be Mongo::Cluster::Topology::Unknown
