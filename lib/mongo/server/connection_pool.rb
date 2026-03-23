@@ -1308,6 +1308,12 @@ module Mongo
         end
 
         connection
+      rescue Error::ConnectionCheckOutTimeout
+        # Per the CSOT spec, if a connection checkout fails because the CSOT
+        # deadline expired (rather than a configured waitQueueTimeout), the
+        # error must be a CSOT TimeoutError so that callers can distinguish it.
+        context&.check_timeout!
+        raise
       end
 
       # Waits for a connection to become available, or raises is no connection

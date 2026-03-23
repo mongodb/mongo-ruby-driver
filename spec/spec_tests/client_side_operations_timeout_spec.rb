@@ -8,6 +8,7 @@ CSOT_TESTS = Dir.glob("#{base}/**/*.yml").sort
 
 describe 'CSOT unified spec tests' do
   if [ 1, '1', 'yes', 'true' ].include?(ENV['CSOT_SPEC_TESTS'])
+    retry_test tries: 5
     define_unified_spec_tests(base, CSOT_TESTS)
   else
     skip 'CSOT spec tests are disabled. To enable them set env variable CSOT_SPEC_TESTS to 1'

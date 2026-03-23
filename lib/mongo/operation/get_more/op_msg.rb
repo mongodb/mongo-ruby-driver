@@ -54,9 +54,17 @@ module Mongo
             # maxAwaitTimeMS option. Drivers MUST error if this option is set,
             # timeoutMS is set to a non-zero value, and maxAwaitTimeMS is greater
             # than or equal to timeoutMS. If this option is set, drivers MUST use
-            # it as the maxTimeMS field on getMore commands.
+            # it as the maxTimeMS field on getMore commands, capped at remaining
+            # CSOT timeout if less than maxAwaitTimeMS.
             max_await_time_ms = view.respond_to?(:max_await_time_ms) ? view.max_await_time_ms : nil
-            spec[:maxTimeMS] = max_await_time_ms if max_await_time_ms
+            if max_await_time_ms
+              effective_ms = if timeout_ms && timeout_ms < max_await_time_ms
+                               timeout_ms
+                             else
+                               max_await_time_ms
+                             end
+              spec[:maxTimeMS] = effective_ms
+            end
           end
 
           spec

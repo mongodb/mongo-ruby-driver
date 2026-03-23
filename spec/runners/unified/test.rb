@@ -218,10 +218,34 @@ module Unified
             end
           end
 
+          await_min_pool_size_ms = spec.use('awaitMinPoolSizeMS')
+
           create_client(**opts).tap do |client|
             @observe_sensitive[id] = spec.use('observeSensitiveCommands')
             @subscribers[client] ||= subscriber
             @tracers[client] ||= tracer
+
+            if await_min_pool_size_ms
+              min_pool_size = opts[:min_pool_size] || 0
+              if min_pool_size > 0
+                deadline = Mongo::Utils.monotonic_time + await_min_pool_size_ms / 1000.0
+                loop do
+                  pools_ready = client.cluster.servers.all? do |server|
+                    next true unless server.description.data_bearing?
+                    begin
+                      server.pool.size >= min_pool_size
+                    rescue Mongo::Error::ServerNotUsable
+                      false
+                    end
+                  end
+                  break if pools_ready
+                  if Mongo::Utils.monotonic_time > deadline
+                    raise "Connection pool did not reach minPoolSize=#{min_pool_size} within #{await_min_pool_size_ms}ms"
+                  end
+                  sleep 0.01
+                end
+              end
+            end
           end
         when 'database'
           client = entities.get(:client, spec.use!('client'))
@@ -417,13 +441,13 @@ module Unified
 
     private
 
-    def execute_operations(ops)
+    def execute_operations(ops, propagate_errors: false)
       ops.each do |op|
-        execute_operation(op)
+        execute_operation(op, propagate_errors: propagate_errors)
       end
     end
 
-    def execute_operation(op)
+    def execute_operation(op, propagate_errors: false)
       use_all(op, 'operation', op) do |op|
         name = Utils.underscore(op.use!('name'))
         method_name = name
@@ -497,6 +521,7 @@ module Unified
             unless expected_error.empty?
               raise NotImplementedError, "Unhandled keys: #{expected_error}"
             end
+            raise e if propagate_errors
           else
             raise Error::ErrorMismatch, "Expected exception but none was raised"
           end

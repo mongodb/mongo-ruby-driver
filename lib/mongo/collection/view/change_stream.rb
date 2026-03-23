@@ -58,6 +58,16 @@ module Mongo
         # @api private
         attr_reader :cursor
 
+        # Refreshes the CSOT timeout for the next iteration. Delegates to the
+        # underlying cursor's refresh_timeout! method so that each call to
+        # try_next starts with a fresh timeout deadline, as required by the
+        # CSOT spec for tailable awaitData cursors.
+        #
+        # @api private
+        def refresh_timeout!
+          @cursor&.refresh_timeout!
+        end
+
         # Initialize the change stream for the provided collection view, pipeline
         # and options.
         #

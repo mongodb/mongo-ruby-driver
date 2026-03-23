@@ -166,11 +166,42 @@ module Unified
           args.clear
         end
 
+        # Preserve a deep copy of the raw ops so that on each retry of
+        # the withTransaction block we get fresh UsingHash objects whose
+        # keys have not been consumed by the previous attempt.
+        ops_raw = deep_to_plain(ops)
+
         session.with_transaction(**opts) do
-          execute_operations(ops)
+          execute_operations(ops_raw.map { |o| UsingHash[deep_wrap(o)] }, propagate_errors: true)
         end
       end
     end
+
+    private
+
+    def deep_to_plain(value)
+      case value
+      when Hash
+        value.each_with_object({}) { |(k, v), h| h[k] = deep_to_plain(v) }
+      when Array
+        value.map { |v| deep_to_plain(v) }
+      else
+        value
+      end
+    end
+
+    def deep_wrap(value)
+      case value
+      when Hash
+        UsingHash[value.transform_values { |v| deep_wrap(v) }]
+      when Array
+        value.map { |v| deep_wrap(v) }
+      else
+        value
+      end
+    end
+
+    public
 
     def assert_session_pinned(op, state = true)
       consume_test_runner(op)
@@ -313,6 +344,9 @@ module Unified
               expected_type = SDAM_SERVER_TYPE_MAP[type] || type.downcase.to_sym
               result &&= wevent.new_description.server_type == expected_type
             end
+          end
+          if command_name = spec.use('commandName')
+            result &&= wevent.respond_to?(:command_name) && wevent.command_name == command_name
           end
           unless spec.empty?
             raise NotImplementedError, "Unhandled keys: #{spec}"
