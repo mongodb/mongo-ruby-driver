@@ -59,7 +59,7 @@ module Mongo
         # timeoutMS is set to a non-zero value, and maxAwaitTimeMS is
         # greater than or equal to timeoutMS."
         max_await_time_ms = options[:max_await_time_ms] || 0
-        if max_await_time_ms > 0 && max_await_time_ms >= timeout_ms
+        if max_await_time_ms.positive? && max_await_time_ms >= timeout_ms
           raise ArgumentError, ':max_await_time_ms must not be >= :timeout_ms'
         end
       elsif timeout_mode
