@@ -55,11 +55,11 @@ task :build do
   system(*command)
 end
 
-# `rake version` is used by the deployment system so get the release version
-# of the product beng deployed. It must do nothing more than just print the
+# `rake version` is used by the deployment system to get the release version
+# of the product being deployed. It must do nothing more than just print the
 # product version number.
 #
-# See the mongodb-labs/driver-github-tools/ruby/publish Github action.
+# See the mongodb-labs/driver-github-tools/ruby/publish GitHub action.
 desc 'Print the current value of Mongo::VERSION'
 task :version do
   require 'mongo/version'
@@ -187,7 +187,7 @@ desc 'Generate all documentation'
 task docs: 'docs:yard'
 
 namespace :docs do
-  desc 'Generate yard documention'
+  desc 'Generate yard documentation'
   task :yard do
     out = File.join('yard-docs', Mongo::VERSION)
     FileUtils.rm_rf(out)

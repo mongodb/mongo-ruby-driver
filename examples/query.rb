@@ -48,7 +48,7 @@ cursor.each do |doc|
   puts doc
 end
 
-# Query with a logical conjuction (AND) of query conditions
+# Query with a logical conjunction (AND) of query conditions
 
 cursor = client[:restaurants].find({ 'cuisine' => 'Italian',
                                      'address.zipcode' => '10075' })

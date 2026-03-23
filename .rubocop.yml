@@ -63,10 +63,9 @@ Metrics/ModuleLength:
 Metrics/MethodLength:
   Max: 20
 
-# Disabled because gemfiles/bson_4-stable.gemspec uses a non-standard name and
-# there doesn't seem to be a good way to opt just a single file out of it.
 Naming/FileName:
-  Enabled: false
+  Exclude:
+    - 'gemfiles/bson_4-stable.gemfile'
 
 Naming/MethodParameterName:
   AllowedNames: [ id, op ]
