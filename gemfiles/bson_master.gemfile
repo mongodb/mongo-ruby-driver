@@ -1,9 +1,10 @@
-# rubocop:todo all
-source "https://rubygems.org"
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
 gemspec path: '..'
 
 gem 'bson', git: 'https://github.com/mongodb/bson-ruby', branch: 'master'
 
-require_relative './standard'
+require_relative 'standard'
 
 standard_dependencies

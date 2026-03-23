@@ -1,42 +1,51 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'bundler'
 require 'rspec/core/rake_task'
 
-if File.exist?('./spec/shared/lib/tasks/candidate.rake')
-  load 'spec/shared/lib/tasks/candidate.rake'
-end
+load 'spec/shared/lib/tasks/candidate.rake' if File.exist?('./spec/shared/lib/tasks/candidate.rake')
 
 ROOT = File.expand_path(File.join(File.dirname(__FILE__)))
 
-$: << File.join(ROOT, 'spec/shared/lib')
+$LOAD_PATH << File.join(ROOT, 'spec/shared/lib')
 
+# rubocop:disable Style/RegexpLiteral
 CLASSIFIERS = [
-  [%r,^mongo/server,, :unit_server],
-  [%r,^mongo,, :unit],
-  [%r,^kerberos,, :unit],
-  [%r,^integration/sdam_error_handling,, :sdam_integration],
-  [%r,^integration/cursor_reaping,, :cursor_reaping],
-  [%r,^integration/query_cache,, :query_cache],
-  [%r,^integration/transactions_examples,, :tx_examples],
-  [%r,^(atlas|integration),, :integration],
-  [%r,^spec_tests/sdam_integration,, :spec_sdam_integration],
-  [%r,^spec_tests,, :spec],
-]
+  [ %r{^mongo/server}, :unit_server ],
+  [ %r{^mongo}, :unit ],
+  [ %r{^kerberos}, :unit ],
+  [ %r{^integration/sdam_error_handling}, :sdam_integration ],
+  [ %r{^integration/cursor_reaping}, :cursor_reaping ],
+  [ %r{^integration/query_cache}, :query_cache ],
+  [ %r{^integration/transactions_examples}, :tx_examples ],
+  [ %r{^(atlas|integration)}, :integration ],
+  [ %r{^spec_tests/sdam_integration}, :spec_sdam_integration ],
+  [ %r{^spec_tests}, :spec ],
+].freeze
+# rubocop:enable Style/RegexpLiteral
 
 RUN_PRIORITY = (ENV['RUN_PRIORITY'] || %(
   tx_examples
   unit unit_server
   integration sdam_integration cursor_reaping query_cache
   spec spec_sdam_integration
-)).split.map(&:to_sym)
+)).split.map(&:to_sym).freeze
 
-RSpec::Core::RakeTask.new(:spec) do |t|
-  #t.rspec_opts = "--profile 5" if ENV['CI']
+def spec_organizer
+  require 'mrss/spec_organizer'
+
+  Mrss::SpecOrganizer.new(
+    root: ROOT,
+    classifiers: CLASSIFIERS,
+    priority_order: RUN_PRIORITY
+  )
 end
 
-task :default => ['spec:prepare', :spec]
+RSpec::Core::RakeTask.new(:spec) do |t|
+  # t.rspec_opts = '--profile 5' if ENV['CI']
+end
+
+task default: [ 'spec:prepare', :spec ]
 
 desc 'Build the gem'
 task :build do
@@ -49,9 +58,9 @@ end
 # `rake version` is used by the deployment system so get the release version
 # of the product beng deployed. It must do nothing more than just print the
 # product version number.
-# 
+#
 # See the mongodb-labs/driver-github-tools/ruby/publish Github action.
-desc "Print the current value of Mongo::VERSION"
+desc 'Print the current value of Mongo::VERSION'
 task :version do
   require 'mongo/version'
 
@@ -62,6 +71,7 @@ end
 # builds the gem. Our release process assumes the gem has already
 # been built (and signed via GPG), so we just need `rake release` to
 # push the gem to rubygems.
+desc 'Push the built gem to RubyGems. This should only be invoked from the Driver Release GitHub action.'
 task :release do
   require 'mongo/version'
 
@@ -82,14 +92,16 @@ task :release do
   system 'gem', 'push', "mongo-#{Mongo::VERSION}.gem"
 end
 
+desc 'Load the MongoDB Ruby driver. This is a prerequisite for many other tasks.'
 task :mongo do
   require 'mongo'
 end
 
+# rubocop:disable Metrics/BlockLength
 namespace :spec do
   desc 'Creates necessary user accounts in the cluster'
   task prepare: :mongo do
-    $: << File.join(File.dirname(__FILE__), 'spec')
+    $LOAD_PATH << File.join(File.dirname(__FILE__), 'spec')
 
     require 'support/utils'
     require 'support/spec_setup'
@@ -98,7 +110,7 @@ namespace :spec do
 
   desc 'Waits for sessions to be available in the deployment'
   task wait_for_sessions: :mongo do
-    $: << File.join(File.dirname(__FILE__), 'spec')
+    $LOAD_PATH << File.join(File.dirname(__FILE__), 'spec')
 
     require 'support/utils'
     require 'support/spec_config'
@@ -108,21 +120,20 @@ namespace :spec do
     client.database.command(ping: 1)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 300
     loop do
-      begin
-        client.cluster.validate_session_support!
-        break
-      rescue Mongo::Error::SessionsNotSupported
-        if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
-          raise "Sessions did not become supported in 300 seconds"
-        end
-        client.cluster.scan!
+      client.cluster.validate_session_support!
+      break
+    rescue Mongo::Error::SessionsNotSupported
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+        raise 'Sessions did not become supported in 300 seconds'
       end
+
+      client.cluster.scan!
     end
   end
 
   desc 'Prints configuration used by the test suite'
   task config: :mongo do
-    $: << File.join(File.dirname(__FILE__), 'spec')
+    $LOAD_PATH << File.join(File.dirname(__FILE__), 'spec')
 
     # Since this task is usually used for troubleshooting of test suite
     # configuration, leave driver log level at the default of debug to
@@ -133,17 +144,7 @@ namespace :spec do
     SpecConfig.instance.print_summary
   end
 
-  def spec_organizer
-    require 'mrss/spec_organizer'
-
-    Mrss::SpecOrganizer.new(
-      root: ROOT,
-      classifiers: CLASSIFIERS,
-      priority_order: RUN_PRIORITY,
-    )
-  end
-
-  task :ci => ['spec:prepare'] do
+  task ci: [ 'spec:prepare' ] do
     spec_organizer.run
   end
 
@@ -154,6 +155,7 @@ namespace :spec do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength
 
 desc 'Build and validate the evergreen config'
 task eg: %w[ eg:build eg:validate ]
@@ -181,11 +183,11 @@ namespace :eg do
   end
 end
 
-desc "Generate all documentation"
-task :docs => 'docs:yard'
+desc 'Generate all documentation'
+task docs: 'docs:yard'
 
 namespace :docs do
-  desc "Generate yard documention"
+  desc 'Generate yard documention'
   task :yard do
     out = File.join('yard-docs', Mongo::VERSION)
     FileUtils.rm_rf(out)

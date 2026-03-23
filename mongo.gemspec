@@ -1,26 +1,26 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'mongo/version'
 
 Gem::Specification.new do |s|
-  s.name              = 'mongo'
-  s.version           = Mongo::VERSION
-  s.platform          = Gem::Platform::RUBY
-  s.authors           = [ 'The MongoDB Ruby Team' ]
-  s.email             = 'dbx-ruby@mongodb.com'
-  s.homepage          = 'https://mongodb.com/docs/ruby-driver/'
-  s.summary           = 'Ruby driver for MongoDB'
-  s.license           = 'Apache-2.0'
-  s.description       = <<~DESC
+  s.name        = 'mongo'
+  s.version     = Mongo::VERSION
+  s.platform    = Gem::Platform::RUBY
+  s.authors     = [ 'The MongoDB Ruby Team' ]
+  s.email       = 'dbx-ruby@mongodb.com'
+  s.homepage    = 'https://mongodb.com/docs/ruby-driver/'
+  s.summary     = 'Ruby driver for MongoDB'
+  s.license     = 'Apache-2.0'
+  s.description = <<~DESC
     A pure-Ruby driver for connecting to, querying, and manipulating MongoDB
     databases. Officially developed and supported by MongoDB, with love for
     the Ruby community.
   DESC
 
   s.metadata = {
+    'rubygems_mfa_required' => 'true',
     'bug_tracker_uri' => 'https://jira.mongodb.org/projects/RUBY',
     'changelog_uri' => 'https://github.com/mongodb/mongo-ruby-driver/releases',
     'homepage_uri' => 'https://mongodb.com/docs/ruby-driver/',
@@ -28,14 +28,14 @@ Gem::Specification.new do |s|
     'source_code_uri' => 'https://github.com/mongodb/mongo-ruby-driver',
   }
 
-  s.files             = Dir.glob('{bin,lib}/**/*')
-  s.files             += %w[mongo.gemspec LICENSE README.md CONTRIBUTING.md]
+  s.files = Dir.glob('{bin,lib}/**/*')
+  s.files += %w[mongo.gemspec LICENSE README.md CONTRIBUTING.md]
 
-  s.executables       = ['mongo_console']
-  s.require_paths     = ['lib']
-  s.bindir            = 'bin'
+  s.executables   = [ 'mongo_console' ]
+  s.require_paths = [ 'lib' ]
+  s.bindir        = 'bin'
 
-  s.required_ruby_version = ">= 2.7"
+  s.required_ruby_version = '>= 2.7'
 
   s.add_dependency 'base64'
   s.add_dependency 'bson', '>=4.14.1', '<6.0.0'

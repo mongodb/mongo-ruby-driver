@@ -1,9 +1,10 @@
-# rubocop:todo all
-source "https://rubygems.org"
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
 gemspec path: '..'
 
 gem 'zstd-ruby'
 
-require_relative './standard'
+require_relative 'standard'
 
 standard_dependencies
