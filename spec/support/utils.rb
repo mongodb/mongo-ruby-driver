@@ -6,7 +6,10 @@ module Net
   autoload :HTTP, 'net/http'
 end
 
+# rubocop:disable Style/OneClassPerFile
 module Utils
+  # rubocop:enable Style/OneClassPerFile
+
   extend self
 
   # Used by #yamlify_command_events
@@ -212,7 +215,7 @@ module Utils
   # rubocop:disable Metrics
   def convert_operation_options(options)
     if options
-      options.map do |k, v|
+      options.filter_map do |k, v|
         out_v =
           case k
           when 'readPreference'
@@ -242,7 +245,7 @@ module Utils
             # they mean is for the driver to use the default write concern,
             # which for Ruby means no write concern is specified at all.
             #
-            # This nil return requires the compact call below to get rid of
+            # This nil return requires the filter_map call above to get rid of
             # the nils before outgoing options are constructed.
             next nil if v == {}
 
@@ -255,7 +258,7 @@ module Utils
             raise "Unhandled operation option #{k}"
           end
         [ out_k, out_v ]
-      end.compact.to_h
+      end.to_h
     else
       {}
     end
@@ -429,11 +432,11 @@ module Utils
       begin
         ip = ec2_instance_profile
         if ip
-          puts "Instance profile assigned: #{ip}"
+          warn "Instance profile assigned: #{ip}"
           break
         end
       rescue StandardError => e
-        puts "Problem retrieving instance profile: #{e.class}: #{e}"
+        warn "Problem retrieving instance profile: #{e.class}: #{e}"
       end
 
       if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
@@ -450,11 +453,11 @@ module Utils
       begin
         ip = ec2_instance_profile
         if ip.nil?
-          puts 'Instance profile cleared'
+          warn 'Instance profile cleared'
           break
         end
       rescue StandardError => e
-        puts "Problem retrieving instance profile: #{e.class}: #{e}"
+        warn "Problem retrieving instance profile: #{e.class}: #{e}"
       end
 
       if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
