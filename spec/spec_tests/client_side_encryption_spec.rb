@@ -30,8 +30,14 @@ describe 'Client-Side Encryption' do
     # mongocryptd_prose_spec tests).
     fails_on_jruby
 
-    SpecConfig.instance.require_crypt_shared do
-      define_transactions_spec_tests(CLIENT_SIDE_ENCRYPTION_TESTS, expectations_bson_types: EXPECTATIONS_BSON_TYPES)
+    # Only define tests when crypt_shared is available (MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH
+    # is set). Without an explicit path, libmongocrypt will fall back to $SYSTEM search which
+    # may not find the library, causing crypt_shared_lib_required: true to raise an error.
+    # On mongocryptd-only configurations (FLE=mongocryptd) crypt_shared is deliberately absent.
+    if SpecConfig.instance.crypt_shared_lib_path
+      SpecConfig.instance.require_crypt_shared do
+        define_transactions_spec_tests(CLIENT_SIDE_ENCRYPTION_TESTS, expectations_bson_types: EXPECTATIONS_BSON_TYPES)
+      end
     end
   end
 end

@@ -675,6 +675,17 @@ module Utils
       extra_options[:crypt_shared_lib_required] = SpecConfig.instance.crypt_shared_lib_required
       extra_options[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
       extra_options[:mongocryptd_uri] = 'mongodb://localhost:27777'
+    elsif !opts[:bypass_query_analysis]
+      if SpecConfig.instance.crypt_shared_lib_path
+        # Always use the explicit path so every Handle in the process loads via
+        # the same mechanism; prevents the "An existing crypt_shared library is
+        # loaded" conflict when mixing path-override and $SYSTEM Handles.
+        extra_options[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
+      elsif SpecConfig.instance.suppress_crypt_shared_lib_search?
+        # Inside without_crypt_shared_lib_path: suppress the "$SYSTEM" search
+        # to avoid conflicting with any library already resident in the process.
+        extra_options[:disable_crypt_shared_lib_search] = true
+      end
     end
 
     extra_options

@@ -96,10 +96,22 @@ module Crypt
     end
 
     let(:extra_options) do
-      {
+      opts = {
         mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
         mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
       }
+      if SpecConfig.instance.crypt_shared_lib_path
+        # Always use the explicit path when available so that every Handle in
+        # the process uses the same load mechanism and libmongocrypt does not
+        # raise "An existing crypt_shared library is loaded" errors.
+        opts[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
+      elsif SpecConfig.instance.suppress_crypt_shared_lib_search?
+        # Inside without_crypt_shared_lib_path: skip the "$SYSTEM" search
+        # entirely so we don't conflict with any library already loaded by a
+        # previous Handle via a path override.
+        opts[:disable_crypt_shared_lib_search] = true
+      end
+      opts
     end
 
     let(:kms_tls_options) do

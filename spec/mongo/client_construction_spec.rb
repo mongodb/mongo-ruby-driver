@@ -176,12 +176,20 @@ describe Mongo::Client do
         let(:bypass_auto_encryption) { true }
 
         let(:extra_options) do
-          {
+          opts = {
             mongocryptd_uri: mongocryptd_uri,
             mongocryptd_bypass_spawn: mongocryptd_bypass_spawn,
             mongocryptd_spawn_path: mongocryptd_spawn_path,
             mongocryptd_spawn_args: mongocryptd_spawn_args,
           }
+          # Use the explicit path when available so every Handle in the process
+          # loads via the same mechanism, avoiding the "An existing crypt_shared
+          # library is loaded" conflict on macOS when specs run in the same process.
+          if SpecConfig.instance.crypt_shared_lib_path
+            opts[:crypt_shared_lib_path] =
+              SpecConfig.instance.crypt_shared_lib_path
+          end
+          opts
         end
 
         let(:mongocryptd_uri) { 'mongodb://localhost:27021' }
@@ -297,17 +305,34 @@ describe Mongo::Client do
               expect(encryption_options[:extra_options][:mongocryptd_bypass_spawn]).to eq(mongocryptd_bypass_spawn)
               expect(encryption_options[:extra_options][:mongocryptd_spawn_path]).to eq(mongocryptd_spawn_path)
               expect(encryption_options[:extra_options][:mongocryptd_spawn_args]).to eq(mongocryptd_spawn_args)
+            end
 
-              expect(client.encrypter.mongocryptd_client.options[:monitoring_io]).to be false
+            context 'without crypt_shared library' do
+              let(:extra_options) do
+                super().reject { |k, _| k == :crypt_shared_lib_path }.merge(disable_crypt_shared_lib_search: true)
+              end
+
+              it 'creates mongocryptd_client with monitoring_io: false' do
+                expect(client.encrypter.mongocryptd_client.options[:monitoring_io]).to be false
+              end
             end
 
             context 'with default extra options' do
               let(:auto_encryption_options) do
-                {
+                opts = {
                   key_vault_namespace: key_vault_namespace,
                   kms_providers: kms_providers,
                   schema_map: schema_map,
                 }
+                # When the env var is set, pass the explicit crypt_shared path so
+                # that Handle in this process uses the same load mechanism as any
+                # prior Handle, avoiding the "existing library" conflict on macOS.
+                # The test assertions only check mongocryptd default values, so this
+                # does not affect what is being verified.
+                if (path = SpecConfig.instance.crypt_shared_lib_path)
+                  opts[:extra_options] = { crypt_shared_lib_path: path }
+                end
+                opts
               end
 
               it 'sets key_vault_client with no encryption options' do
@@ -1997,7 +2022,7 @@ describe Mongo::Client do
               block_client.encrypter.mongocryptd_client,
               block_client.encrypter.key_vault_client,
               block_client.encrypter.metadata_client
-            ].each do |crypt_client|
+            ].compact.each do |crypt_client|
               expect(crypt_client.cluster.connected?).to be false
             end
           end

@@ -419,6 +419,10 @@ describe Mongo::Crypt::AutoEncrypter do
   context 'when using crypt shared library' do
     min_server_version '6.0.0'
 
+    before do
+      skip 'Requires crypt_shared library' unless SpecConfig.instance.crypt_shared_lib_path
+    end
+
     let(:auto_encrypter_extra_options) do
       {
         crypt_shared_lib_path: SpecConfig.instance.crypt_shared_lib_path
