@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Query for all documents in a collection
 
@@ -49,10 +48,10 @@ cursor.each do |doc|
   puts doc
 end
 
-# Query with a logical conjuction (AND) of query conditions
+# Query with a logical conjunction (AND) of query conditions
 
 cursor = client[:restaurants].find({ 'cuisine' => 'Italian',
-                                     'address.zipcode' => '10075'})
+                                     'address.zipcode' => '10075' })
 
 cursor.each do |doc|
   puts doc
@@ -60,10 +59,8 @@ end
 
 # Query with a logical disjunction (OR) of query conditions
 
-cursor = client[:restaurants].find('$or' => [{ 'cuisine' => 'Italian' },
-                                             { 'address.zipcode' => '10075'}
-                                            ]
-                                  )
+cursor = client[:restaurants].find('$or' => [ { 'cuisine' => 'Italian' },
+                                              { 'address.zipcode' => '10075' } ])
 
 cursor.each do |doc|
   puts doc
