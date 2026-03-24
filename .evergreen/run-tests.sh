@@ -238,7 +238,7 @@ if test -n "$FLE"; then
   # Obtain temporary AWS credentials
   PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
 
-  if test "$FLE" = helper; then
+  if [[ "$FLE" == "helper" || "$FLE" == "mongocryptd" ]]; then
     echo "Using helper gem"
   elif test "$FLE" = path; then
     if false; then
