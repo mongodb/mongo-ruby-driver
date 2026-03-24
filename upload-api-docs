@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# rubocop:disable Style/OneClassPerFile
+
 require 'bundler/inline'
 
 gemfile true do
@@ -125,3 +127,5 @@ options = Options.new
 generate_docs(options)
 FileUploader.new(options).upload_docs
 return
+
+# rubocop:enable Style/OneClassPerFile

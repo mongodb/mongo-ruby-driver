@@ -7,8 +7,8 @@ describe 'Mongo::Crypt::Binding' do
   require_no_libmongocrypt
 
   before(:all) do
-    if ENV['FLE'] == 'helper'
-      skip 'FLE=helper is incompatible with unloaded binding tests'
+    if %w[helper mongocryptd].include?(ENV['FLE'])
+      skip "FLE=#{ENV['FLE']} is incompatible with unloaded binding tests"
     end
   end
 

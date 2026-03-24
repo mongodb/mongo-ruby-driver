@@ -11,6 +11,14 @@ describe 'Client with auto encryption #reconnect' do
   # actually require a clean slate. https://jira.mongodb.org/browse/RUBY-2138
   clean_slate
 
+  # This spec tests reconnection with mongocryptd as the encryption backend.
+  # It directly manipulates mongocryptd_client, which is only created when
+  # crypt_shared is not available. Force the mongocryptd path regardless of
+  # whether MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH is set.
+  around do |example|
+    SpecConfig.instance.without_crypt_shared_lib_path { example.run }
+  end
+
   include_context 'define shared FLE helpers'
 
   let(:client) do

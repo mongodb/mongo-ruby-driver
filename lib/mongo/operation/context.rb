@@ -131,6 +131,11 @@ module Mongo
         !!@is_retry
       end
 
+      # Whether every retry so far has been due to overload only.
+      def overload_only_retry?
+        !!@overload_only_retry
+      end
+
       # Returns a new context with the parameters changed as per the
       # provided arguments.
       #

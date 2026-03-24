@@ -62,6 +62,11 @@ module Mongo
       # @option options [ Boolean | nil ] :explicit_encryption_only Whether this
       #   handle is going to be used only for explicit encryption. If true,
       #   libmongocrypt is instructed not to load crypt shared library.
+      # @option options [ Boolean | nil ] :disable_crypt_shared_lib_search When
+      #   true, suppresses the automatic "$SYSTEM" search for crypt_shared. Use
+      #   this when a previous Handle in the same process has already loaded the
+      #   library via a path override and you want to avoid the conflicting-load
+      #   error that libmongocrypt raises on a subsequent "$SYSTEM" search.
       # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
       def initialize(kms_providers, kms_tls_options, options={})
@@ -85,9 +90,10 @@ module Mongo
 
         @crypt_shared_lib_path = options[:crypt_shared_lib_path]
         @explicit_encryption_only = options[:explicit_encryption_only]
+        @disable_crypt_shared_lib_search = options[:disable_crypt_shared_lib_search]
         if @crypt_shared_lib_path
           Binding.setopt_set_crypt_shared_lib_path_override(self, @crypt_shared_lib_path)
-        elsif !@bypass_query_analysis && !@explicit_encryption_only
+        elsif !@bypass_query_analysis && !@explicit_encryption_only && !@disable_crypt_shared_lib_search
           Binding.setopt_append_crypt_shared_lib_search_path(self, "$SYSTEM")
         end
 

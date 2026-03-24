@@ -17,7 +17,7 @@ describe Mongo::Server::ConnectionPool::GenerationManager do
     it 'closes all pipes and removes them from the map' do
       expect(manager.pipe_fds(service_id: service_id).size).to eq(2)
 
-      manager.instance_variable_get(:@pipe_fds)[service_id].each do |_gen, (r, w)|
+      manager.instance_variable_get(:@pipe_fds)[service_id].each_value do |(r, w)|
         expect(r).to receive(:close).and_call_original
         expect(w).to receive(:close).and_call_original
       end

@@ -21,7 +21,11 @@ describe 'Auto Encryption' do
             schema_map: { 'auto_encryption.users' => schema_map },
             extra_options: {
               mongocryptd_spawn_path: 'echo hello world',
-              mongocryptd_spawn_args: []
+              mongocryptd_spawn_args: [],
+              # Suppress $SYSTEM crypt_shared search to avoid "existing library"
+              # conflicts on macOS when another spec in the same process has
+              # already loaded crypt_shared via an explicit path override.
+              disable_crypt_shared_lib_search: true,
             }
           },
           database: 'auto_encryption'

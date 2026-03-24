@@ -415,6 +415,18 @@ module Mongo
       !!@fully_iterated
     end
 
+    # Refreshes the cursor's CSOT context so that the next getMore starts
+    # with a fresh timeout deadline. Used by tailable awaitData cursors to
+    # implement per-iteration timeout refresh as required by the CSOT spec.
+    # Only refreshes if this is a tailable awaitData cursor with an active timeout.
+    #
+    # @api private
+    def refresh_timeout!
+      return unless view.cursor_type == :tailable_await && context.timeout?
+
+      @context = @context.refresh(view: view)
+    end
+
     private
 
     def explicitly_closed?
@@ -522,6 +534,10 @@ module Mongo
     # @return [ Operation::Context ] the (possibly-refreshed) context.
     def possibly_refreshed_context
       return context if view.timeout_mode == :cursor_lifetime
+      # For tailable await cursors with CSOT, the timeout budget is shared across
+      # all getMore commands (cumulative). Only update the view reference; keep
+      # the same deadline so remaining time decreases across getMores.
+      return context.with(view: view) if view.cursor_type == :tailable_await
       context.refresh(view: view)
     end
 

@@ -105,6 +105,7 @@ module Mongo
           bypass_query_analysis: @options[:bypass_query_analysis],
           crypt_shared_lib_path: @options[:extra_options][:crypt_shared_lib_path],
           crypt_shared_lib_required: @options[:extra_options][:crypt_shared_lib_required],
+          disable_crypt_shared_lib_search: @options[:extra_options][:disable_crypt_shared_lib_search],
         )
 
         @mongocryptd_options = @options[:extra_options].slice(

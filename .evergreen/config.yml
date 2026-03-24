@@ -1067,6 +1067,10 @@ axes:
         display_name: via LMC path
         variables:
           FLE: path
+      - id: "mongocryptd"
+        display_name: mongocryptd (no crypt_shared)
+        variables:
+          FLE: mongocryptd
 
   - id: ocsp-algorithm
     display_name: OCSP Algorithm
@@ -1532,6 +1536,19 @@ buildvariants:
       os: ubuntu2204
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+    tags: ["pr"]
+    tasks:
+      - name: "test-fle"
+
+  - matrix_name: "fle-mongocryptd"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: "ruby-4.0"
+      topology: [replica-set, sharded-cluster]
+      mongodb-version: "8.0"
+      os: ubuntu2204
+      fle: mongocryptd
+    display_name: "FLE mongocryptd: ${mongodb-version} ${topology} ${ruby}"
     tags: ["pr"]
     tasks:
       - name: "test-fle"

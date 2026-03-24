@@ -66,7 +66,7 @@ fi
 
 # Make sure cmake is installed (in case we need to install the libmongocrypt
 # helper)
-if [ "$FLE" = "helper" ]; then
+if [ -n "$FLE" ]; then
   install_cmake
 fi
 
@@ -194,23 +194,25 @@ elif test "$AUTH" = kerberos; then
 fi
 
 if test -n "$FLE"; then
-  # Downloading crypt shared lib
-  if [ -z "$MONGO_CRYPT_SHARED_DOWNLOAD_URL" ]; then
-    crypt_shared_version=${CRYPT_SHARED_VERSION:-$("${BINDIR}"/mongod --version | grep -oP 'db version v\K.*')}
-    python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out $(pwd)/csfle_lib  --target $(host_distro) || true
-    if test -f $(pwd)/csfle_lib/lib/mongo_crypt_v1.so
-    then
-      export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+  # Downloading crypt shared lib (skipped for mongocryptd-only configuration)
+  if test "$FLE" != "mongocryptd"; then
+    if [ -z "$MONGO_CRYPT_SHARED_DOWNLOAD_URL" ]; then
+      crypt_shared_version=${CRYPT_SHARED_VERSION:-$("${BINDIR}"/mongod --version | grep -oP 'db version v\K.*')}
+      python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out $(pwd)/csfle_lib  --target $(host_distro) || true
+      if test -f $(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+      then
+        export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+      else
+        echo 'Could not find crypt_shared library'
+      fi
     else
-      echo 'Could not find crypt_shared library'
+      echo "Downloading crypt_shared package from $MONGO_CRYPT_SHARED_DOWNLOAD_URL"
+      mkdir -p $(pwd)/csfle_lib
+      cd $(pwd)/csfle_lib
+      curl --retry 3 -fL $MONGO_CRYPT_SHARED_DOWNLOAD_URL | tar zxf -
+      export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/lib/mongo_crypt_v1.so
+      cd -
     fi
-  else
-    echo "Downloading crypt_shared package from $MONGO_CRYPT_SHARED_DOWNLOAD_URL"
-    mkdir -p $(pwd)/csfle_lib
-    cd $(pwd)/csfle_lib
-    curl --retry 3 -fL $MONGO_CRYPT_SHARED_DOWNLOAD_URL | tar zxf -
-    export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/lib/mongo_crypt_v1.so
-    cd -
   fi
 
   # work around error about trying to load a different crypt_shared lib when one
@@ -244,7 +246,7 @@ if test -n "$FLE"; then
   # Obtain temporary AWS credentials
   PYTHON=python3 . .evergreen/csfle/set-temp-creds.sh
 
-  if test "$FLE" = helper; then
+  if [[ "$FLE" == "helper" || "$FLE" == "mongocryptd" ]]; then
     echo "Using helper gem"
   elif test "$FLE" = path; then
     if false; then

@@ -97,6 +97,12 @@ describe Mongo::Crypt::Handle do
       context 'with crypt_shared_lib_path' do
         min_server_version '6.0.0'
 
+        before(:all) do
+          if ENV['FLE'] == 'mongocryptd'
+            skip 'FLE=mongocryptd is incompatible with unloaded binding tests'
+          end
+        end
+
         context 'with correct path' do
           let(:crypt_shared_lib_path) do
             SpecConfig.instance.crypt_shared_lib_path
@@ -120,6 +126,12 @@ describe Mongo::Crypt::Handle do
 
       context 'with crypt_shared_lib_required' do
         min_server_version '6.0.0'
+
+        before(:all) do
+          if ENV['FLE'] == 'mongocryptd'
+            skip 'FLE=mongocryptd is incompatible with unloaded binding tests'
+          end
+        end
 
         context 'set to true' do
           let(:crypt_shared_lib_required) do

@@ -36,6 +36,7 @@ module Mongo
       :write, :write_concern,
       :retry_reads, :max_read_retries, :read_retry_interval,
       :retry_writes, :max_write_retries,
+      :timeout_ms,
 
       # Options which cannot currently be here:
       #

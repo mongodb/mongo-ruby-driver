@@ -23,12 +23,23 @@ module Unified
     def iterate_until_document_or_error(op)
       object_id = op.use!('object')
       object = entities.get_any(object_id)
-      object.try_next
+      # Per CSOT spec, timeoutMS is refreshed for each "next call" on a
+      # tailable awaitData cursor. Refresh at the start of this iteration
+      # so that each separate iterateUntilDocumentOrError operation gets a
+      # fresh deadline, while getMores within the loop share it cumulatively.
+      object.refresh_timeout! if object.respond_to?(:refresh_timeout!)
+      loop do
+        doc = object.try_next
+        return doc if doc
+      end
     end
 
     def iterate_once(op)
       stream_id = op.use!('object')
       stream = entities.get_any(stream_id)
+      # Per CSOT spec, timeoutMS is refreshed for each "next call" on a
+      # tailable awaitData cursor or change stream.
+      stream.refresh_timeout! if stream.respond_to?(:refresh_timeout!)
       stream.try_next
     end
 

@@ -1,6 +1,6 @@
 description: "sessions inherit timeoutMS from their parent MongoClient"
 
-schemaVersion: "1.9"
+schemaVersion: "1.26"
 
 runOnRequirements:
   - minServerVersion: "4.4"
@@ -13,7 +13,9 @@ createEntities:
   - client:
       id: &client client
       uriOptions:
-        timeoutMS: 50
+        timeoutMS: 500
+        minPoolSize: 1
+      awaitMinPoolSizeMS: 10000
       useMultipleMongoses: false
       observeEvents:
         - commandStartedEvent
@@ -52,7 +54,7 @@ tests:
             data:
               failCommands: ["commitTransaction"]
               blockConnection: true
-              blockTimeMS: 60
+              blockTimeMS: 600
       - name: startTransaction
         object: *session
       - name: insertOne
@@ -95,7 +97,7 @@ tests:
             data:
               failCommands: ["abortTransaction"]
               blockConnection: true
-              blockTimeMS: 60
+              blockTimeMS: 600
       - name: startTransaction
         object: *session
       - name: insertOne
@@ -132,11 +134,11 @@ tests:
           client: *failPointClient
           failPoint:
             configureFailPoint: failCommand
-            mode: { times: 1 }
+            mode: { times: 2 }
             data:
-              failCommands: ["insert"]
+              failCommands: ["insert", "abortTransaction"]
               blockConnection: true
-              blockTimeMS: 60
+              blockTimeMS: 600
       - name: withTransaction
         object: *session
         arguments:
@@ -153,9 +155,6 @@ tests:
     expectEvents:
       - client: *client
         events:
-          # Because the insert expects an error and gets an error, it technically succeeds, so withTransaction will
-          # try to run commitTransaction. This will fail client-side, though, because the timeout has already expired,
-          # so no command is sent.
           - commandStartedEvent:
               commandName: insert
               databaseName: *databaseName
@@ -166,3 +165,11 @@ tests:
                 maxTimeMS: { $$type: ["int", "long"] }
           - commandFailedEvent:
               commandName: insert
+          - commandStartedEvent:
+              commandName: abortTransaction
+              databaseName: admin
+              command:
+                abortTransaction: 1
+                maxTimeMS: { $$type: [ "int", "long" ] }
+          - commandFailedEvent:
+              commandName: abortTransaction

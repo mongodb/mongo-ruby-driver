@@ -141,7 +141,7 @@ describe Mongo::Session do
             exc.add_label('TransientTransactionError')
             raise exc
           end
-        end.to raise_error(Mongo::Error::OperationFailure, 'timeout test')
+        end.to raise_error(Mongo::Error::TimeoutError)
       end
     end
 

@@ -101,9 +101,10 @@ module Mongo
     end
 
     def check_no_override_inside_transaction!(opts, session)
-      return unless opts[:operation_timeout_ms] && session&.with_transaction_deadline
+      return unless opts[:operation_timeout_ms] && session&.inside_with_transaction?
 
-      raise ArgumentError, 'Cannot override timeout_ms inside with_transaction block'
+      raise Mongo::Error::InvalidTransactionOperation,
+            'timeoutMS cannot be overridden inside a withTransaction callback'
     end
 
     def calculate_deadline_from_timeout_ms(operation_timeout_ms)

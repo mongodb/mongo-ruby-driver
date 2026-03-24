@@ -1,10 +1,10 @@
-require:
+plugins:
   - rubocop-performance
   - rubocop-rake
   - rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.7
   NewCops: enable
   Exclude:
     - 'spec/shared/**/*'
@@ -51,6 +51,9 @@ Layout/SpaceInsideArrayLiteralBrackets:
 Layout/SpaceInsidePercentLiteralDelimiters:
   Enabled: false
 
+Lint/UselessConstantScoping:
+  Enabled: false
+
 Metrics/ClassLength:
   Max: 200
 
@@ -60,8 +63,15 @@ Metrics/ModuleLength:
 Metrics/MethodLength:
   Max: 20
 
+Naming/FileName:
+  Exclude:
+    - 'gemfiles/bson_4-stable.gemfile'
+
 Naming/MethodParameterName:
   AllowedNames: [ id, op ]
+
+Naming/PredicateMethod:
+  Enabled: false
 
 RSpec/BeforeAfterAll:
   Enabled: false
@@ -71,11 +81,23 @@ RSpec/BeforeAfterAll:
 RSpec/DescribeClass:
   Enabled: false
 
+RSpec/Eq:
+  Enabled: false
+
 Style/FetchEnvVar:
   Enabled: false
 
 RSpec/ImplicitExpect:
   EnforcedStyle: is_expected
+
+RSpec/IncludeExamples:
+  Enabled: false
+
+RSpec/IndexedLet:
+  Enabled: false
+
+RSpec/ExpectInLet:
+  Enabled: false
 
 RSpec/MultipleExpectations:
   Enabled: false
@@ -84,6 +106,9 @@ RSpec/MultipleMemoizedHelpers:
   Enabled: false
 
 RSpec/NestedGroups:
+  Enabled: false
+
+RSpec/ReceiveMessages:
   Enabled: false
 
 Style/Documentation:
