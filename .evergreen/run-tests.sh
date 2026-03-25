@@ -61,6 +61,7 @@ prepare_server
 
 if test "$DOCKER_PRELOAD" != 1; then
   install_mlaunch_venv
+  pip3 install waitress
 fi
 
 # Make sure cmake is installed (in case we need to install the libmongocrypt
@@ -344,7 +345,6 @@ fi
 if test "$COMPRESSOR" = zstd; then
   add_uri_option compressors=zstd
 fi
-
 
 echo "Running tests"
 set +e

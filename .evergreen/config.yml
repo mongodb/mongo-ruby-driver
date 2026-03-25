@@ -777,6 +777,10 @@ axes:
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
+      - id: "rapid"
+        display_name: "Rapid"
+        variables:
+          MONGODB_VERSION: "rapid"
       - id: "8.0"
         display_name: "8.0"
         variables:
@@ -1233,7 +1237,7 @@ buildvariants:
   - matrix_name: "single-lb"
     matrix_spec:
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: load-balanced
       single-mongos: single-mongos
       os: ubuntu2204
@@ -1257,7 +1261,7 @@ buildvariants:
   - matrix_name: "single-mongos"
     matrix_spec:
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: "sharded-cluster"
       single-mongos: single-mongos
       os: ubuntu2204
@@ -1292,7 +1296,7 @@ buildvariants:
     matrix_spec:
       retry-reads: no-retry-reads
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
@@ -1304,7 +1308,7 @@ buildvariants:
     matrix_spec:
       retry-writes: no-retry-writes
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: [replica-set, sharded-cluster]
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
@@ -1394,7 +1398,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: "replica-set"
       compressor: 'zlib'
       os: ubuntu2204
@@ -1407,7 +1411,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: "replica-set"
       compressor: 'snappy'
       os: ubuntu2204
@@ -1424,7 +1428,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: "replica-set"
       compressor: 'zstd'
       os: ubuntu2204
@@ -1436,7 +1440,7 @@ buildvariants:
   - matrix_name: activesupport-"ruby-4.0"
     matrix_spec:
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: replica-set
       as: as
       os: ubuntu2204
@@ -1448,7 +1452,7 @@ buildvariants:
   - matrix_name: bson-"ruby-4.0"
     matrix_spec:
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: replica-set
       bson: "*"
       os: ubuntu2204
@@ -1523,7 +1527,7 @@ buildvariants:
     tasks:
       - name: "test-mlaunch"
 
-  - matrix_name: "fle above 4.4"
+  - matrix_name: "fle"
     matrix_spec:
       auth-and-ssl: "noauth-and-nossl"
       ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "ruby-3.2", "ruby-3.1"]
@@ -1572,6 +1576,8 @@ buildvariants:
 #    tasks:
 #      - name: "test-fle"
 
+  # Runs specs against the latest server. This is not automatically run on PR's
+  # because we don't want to block PR's when the latest DB breaks something.
   - name: 'latest-server'
     activate: false
     display_name: 'Latest MongoDB Server'
@@ -1593,7 +1599,7 @@ buildvariants:
       auth-and-ssl: [ aws-regular, aws-assume-role, aws-web-identity ]
       ruby: "ruby-4.0"
       topology: standalone
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       os: ubuntu2204
     display_name: "AWS ${auth-and-ssl} ${mongodb-version} ${ruby}"
     tags: ["pr"]

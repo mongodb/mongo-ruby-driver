@@ -9,7 +9,7 @@ describe Mongo::Crypt::ExplicitDecryptionContext do
   include_context 'define shared FLE helpers'
 
   let(:credentials) { Mongo::Crypt::KMS::Credentials.new(kms_providers) }
-  let(:mongocrypt) { Mongo::Crypt::Handle.new(credentials, logger: logger) }
+  let(:mongocrypt) { Mongo::Crypt::Handle.new(credentials, {}, extra_options.merge(logger: logger)) }
   let(:context) { described_class.new(mongocrypt, io, value) }
   let(:logger) { nil }
   let(:io) { double("Mongo::ClientEncryption::IO") }
