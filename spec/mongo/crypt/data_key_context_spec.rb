@@ -16,7 +16,7 @@ describe Mongo::Crypt::DataKeyContext do
   end
 
   let(:mongocrypt) do
-    Mongo::Crypt::Handle.new(credentials, kms_tls_options)
+    Mongo::Crypt::Handle.new(credentials, kms_tls_options, extra_options)
   end
 
   let(:io) { double("Mongo::Crypt::EncryptionIO") }

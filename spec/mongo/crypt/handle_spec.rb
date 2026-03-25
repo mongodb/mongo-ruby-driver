@@ -38,7 +38,7 @@ describe Mongo::Crypt::Handle do
     end
 
     let(:crypt_shared_lib_path) do
-      nil
+      SpecConfig.instance.crypt_shared_lib_path
     end
 
     let(:crypt_shared_lib_required) do
