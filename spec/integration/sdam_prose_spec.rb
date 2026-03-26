@@ -85,27 +85,72 @@ describe 'SDAM prose tests' do
 
     after do
       sleep 1
-      root_authorized_client.use('admin').database.command(
-        setParameter: 1,
-        ingressConnectionEstablishmentRateLimiterEnabled: false,
-      )
+      admin_db = root_authorized_client.use('admin').database
+
+      if defined?(@prev_ingressConnectionEstablishmentRateLimiterEnabled) &&
+         defined?(@prev_ingressConnectionEstablishmentRatePerSec) &&
+         defined?(@prev_ingressConnectionEstablishmentBurstCapacitySecs) &&
+         defined?(@prev_ingressConnectionEstablishmentMaxQueueDepth)
+        admin_db.command(
+          setParameter: 1,
+          ingressConnectionEstablishmentRateLimiterEnabled: @prev_ingressConnectionEstablishmentRateLimiterEnabled,
+        )
+        admin_db.command(
+          setParameter: 1,
+          ingressConnectionEstablishmentRatePerSec: @prev_ingressConnectionEstablishmentRatePerSec,
+        )
+        admin_db.command(
+          setParameter: 1,
+          ingressConnectionEstablishmentBurstCapacitySecs: @prev_ingressConnectionEstablishmentBurstCapacitySecs,
+        )
+        admin_db.command(
+          setParameter: 1,
+          ingressConnectionEstablishmentMaxQueueDepth: @prev_ingressConnectionEstablishmentMaxQueueDepth,
+        )
+      else
+        # Fallback: at least disable the limiter if previous values were not captured.
+        admin_db.command(
+          setParameter: 1,
+          ingressConnectionEstablishmentRateLimiterEnabled: false,
+        )
+      end
     end
 
     it 'generates checkout failures when the ingress connection rate limiter is active' do
-      # Enable the ingress rate limiter.
-      root_authorized_client.use('admin').database.command(
+      admin_db = root_authorized_client.use('admin').database
+
+      # Capture current ingress connection establishment parameters so they can be restored.
+      current_params = admin_db.command(
+        getParameter: 1,
+        ingressConnectionEstablishmentRateLimiterEnabled: 1,
+        ingressConnectionEstablishmentRatePerSec: 1,
+        ingressConnectionEstablishmentBurstCapacitySecs: 1,
+        ingressConnectionEstablishmentMaxQueueDepth: 1,
+      ).first
+
+      @prev_ingressConnectionEstablishmentRateLimiterEnabled =
+        current_params['ingressConnectionEstablishmentRateLimiterEnabled']
+      @prev_ingressConnectionEstablishmentRatePerSec =
+        current_params['ingressConnectionEstablishmentRatePerSec']
+      @prev_ingressConnectionEstablishmentBurstCapacitySecs =
+        current_params['ingressConnectionEstablishmentBurstCapacitySecs']
+      @prev_ingressConnectionEstablishmentMaxQueueDepth =
+        current_params['ingressConnectionEstablishmentMaxQueueDepth']
+
+      # Enable the ingress rate limiter with test-specific values.
+      admin_db.command(
         setParameter: 1,
         ingressConnectionEstablishmentRateLimiterEnabled: true,
       )
-      root_authorized_client.use('admin').database.command(
+      admin_db.command(
         setParameter: 1,
         ingressConnectionEstablishmentRatePerSec: 20,
       )
-      root_authorized_client.use('admin').database.command(
+      admin_db.command(
         setParameter: 1,
         ingressConnectionEstablishmentBurstCapacitySecs: 1,
       )
-      root_authorized_client.use('admin').database.command(
+      admin_db.command(
         setParameter: 1,
         ingressConnectionEstablishmentMaxQueueDepth: 1,
       )
@@ -121,7 +166,9 @@ describe 'SDAM prose tests' do
             client.use('test')['test'].find(
               '$where' => 'function() { sleep(2000); return true; }'
             ).first
-          rescue StandardError
+          rescue Mongo::Error::PoolTimeout,
+                 Mongo::Error::SocketError,
+                 Mongo::Error::NoServerAvailable
             # Ignore connection errors (including checkout timeouts).
           end
         end
