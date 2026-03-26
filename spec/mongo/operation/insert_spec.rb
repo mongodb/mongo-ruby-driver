@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,16 +8,15 @@ describe Mongo::Operation::Insert do
   let(:context) { Mongo::Operation::Context.new }
 
   let(:documents) do
-    [{ '_id' => 1,
-       'name' => 'test' }]
+    [ { '_id' => 1,
+        'name' => 'test' } ]
   end
 
   let(:spec) do
-    { :documents     => documents,
-      :db_name       => SpecConfig.instance.test_db,
-      :coll_name     => TEST_COLL,
-      :write_concern => Mongo::WriteConcern.get(:w => 1)
-    }
+    { documents: documents,
+      db_name: SpecConfig.instance.test_db,
+      coll_name: TEST_COLL,
+      write_concern: Mongo::WriteConcern.get(w: 1) }
   end
 
   after do
@@ -30,9 +28,7 @@ describe Mongo::Operation::Insert do
   end
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(insert.spec).to eq(spec)
       end
@@ -40,11 +36,8 @@ describe Mongo::Operation::Insert do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two inserts have the same specs' do
-
         let(:other) do
           described_class.new(spec)
         end
@@ -55,17 +48,15 @@ describe Mongo::Operation::Insert do
       end
 
       context 'when two inserts have different specs' do
-
         let(:other_docs) do
-          [{ :bar => 1 }]
+          [ { bar: 1 } ]
         end
 
         let(:other_spec) do
-          { :documents     => other_docs,
-            :db_name       => 'test',
-            :coll_name     => 'test_coll',
-            :write_concern => { 'w' => 1 }
-          }
+          { documents: other_docs,
+            db_name: 'test',
+            coll_name: 'test_coll',
+            write_concern: { 'w' => 1 } }
         end
 
         let(:other) do
@@ -80,12 +71,10 @@ describe Mongo::Operation::Insert do
   end
 
   describe 'document ids' do
-
     context 'when documents do not contain an id' do
-
       let(:documents) do
-        [{ 'field' => 'test' },
-         { 'field' => 'test' }]
+        [ { 'field' => 'test' },
+          { 'field' => 'test' } ]
       end
 
       let(:inserted_ids) do
@@ -103,7 +92,6 @@ describe Mongo::Operation::Insert do
   end
 
   describe '#execute' do
-
     before do
       authorized_collection.indexes.create_one({ name: 1 }, { unique: true })
     end
@@ -114,9 +102,7 @@ describe Mongo::Operation::Insert do
     end
 
     context 'when inserting a single document' do
-
       context 'when the insert succeeds' do
-
         let!(:response) do
           insert.execute(authorized_primary, context: context)
         end
@@ -126,22 +112,20 @@ describe Mongo::Operation::Insert do
         end
 
         it 'inserts the document into the collection' do
-          expect(authorized_collection.find(_id: 1).to_a). to eq(documents)
+          expect(authorized_collection.find(_id: 1).to_a).to eq(documents)
         end
       end
 
       context 'when the insert fails' do
-
         let(:documents) do
-          [{ name: 'test' }]
+          [ { name: 'test' } ]
         end
 
         let(:spec) do
-          { :documents     => documents,
-            :db_name       => SpecConfig.instance.test_db,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(:w => 1)
-          }
+          { documents: documents,
+            db_name: SpecConfig.instance.test_db,
+            coll_name: TEST_COLL,
+            write_concern: Mongo::WriteConcern.get(w: 1) }
         end
 
         let(:failing_insert) do
@@ -149,23 +133,21 @@ describe Mongo::Operation::Insert do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             failing_insert.execute(authorized_primary, context: context)
             failing_insert.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
 
     context 'when inserting multiple documents' do
-
       context 'when the insert succeeds' do
-
         let(:documents) do
-          [{ '_id' => 1,
-             'name' => 'test1' },
-           { '_id' => 2,
-             'name' => 'test2' }]
+          [ { '_id' => 1,
+              'name' => 'test1' },
+            { '_id' => 2,
+              'name' => 'test2' } ]
         end
 
         let!(:response) do
@@ -177,22 +159,20 @@ describe Mongo::Operation::Insert do
         end
 
         it 'inserts the documents into the collection' do
-          expect(authorized_collection.find.sort(_id: 1).to_a). to eq(documents)
+          expect(authorized_collection.find.sort(_id: 1).to_a).to eq(documents)
         end
       end
 
       context 'when the insert fails on the last document' do
-
         let(:documents) do
-          [{ name: 'test3' }, { name: 'test' }]
+          [ { name: 'test3' }, { name: 'test' } ]
         end
 
         let(:spec) do
-          { :documents     => documents,
-            :db_name       => SpecConfig.instance.test_db,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(:w => 1)
-          }
+          { documents: documents,
+            db_name: SpecConfig.instance.test_db,
+            coll_name: TEST_COLL,
+            write_concern: Mongo::WriteConcern.get(w: 1) }
         end
 
         let(:failing_insert) do
@@ -200,25 +180,23 @@ describe Mongo::Operation::Insert do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             failing_insert.execute(authorized_primary, context: context)
             failing_insert.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
 
       context 'when the insert fails on the first document' do
-
         let(:documents) do
-          [{ name: 'test' }, { name: 'test4' }]
+          [ { name: 'test' }, { name: 'test4' } ]
         end
 
         let(:spec) do
-          { :documents     => documents,
-            :db_name       => SpecConfig.instance.test_db,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(:w => 1)
-          }
+          { documents: documents,
+            db_name: SpecConfig.instance.test_db,
+            coll_name: TEST_COLL,
+            write_concern: Mongo::WriteConcern.get(w: 1) }
         end
 
         let(:failing_insert) do
@@ -226,30 +204,28 @@ describe Mongo::Operation::Insert do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             failing_insert.execute(authorized_primary, context: context)
             failing_insert.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
-
       end
 
       context 'when a document exceeds max bson size' do
-
         let(:documents) do
-          [{ :x => 'y'* 17000000 }]
+          [ { x: 'y' * 17_000_000 } ]
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             insert.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::MaxBSONSize)
+          end.to raise_error(Mongo::Error::MaxBSONSize)
         end
 
         it 'does not insert the document' do
-          expect {
+          expect do
             insert.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::MaxBSONSize)
+          end.to raise_error(Mongo::Error::MaxBSONSize)
           expect(authorized_collection.find.count).to eq(0)
         end
       end

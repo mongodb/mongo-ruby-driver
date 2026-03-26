@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # This exception is raised when the URI Parser's query returns too many
     #   TXT records or the record specifies invalid options.
     #

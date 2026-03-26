@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Socket do
-
   let(:socket) do
     described_class.new(0, {})
   end
@@ -35,7 +33,8 @@ describe Mongo::Socket do
         socket.send(:map_exceptions) do
           raise SystemCallError.new('Test error', Errno::ENFILE::Errno)
         end
-      end.to raise_error(Mongo::Error::SocketError, 'Errno::ENFILE: Too many open files in system - Test error (for fake-address)')
+      end.to raise_error(Mongo::Error::SocketError,
+                         'Errno::ENFILE: Too many open files in system - Test error (for fake-address)')
     end
 
     it 'maps IOError and preserves message' do
@@ -74,7 +73,7 @@ describe Mongo::Socket do
       Mongo::Socket::TCP.new(target_host, ClusterConfig.instance.primary_address_port, 1, Socket::PF_INET)
     end
 
-    let(:raw_socket) { socket.instance_variable_get('@socket') }
+    let(:raw_socket) { socket.instance_variable_get(:@socket) }
 
     context 'timeout' do
       clean_slate_for_all
@@ -84,7 +83,7 @@ describe Mongo::Socket do
           expect(socket).to receive(:timeout).at_least(:once).and_return(0.2)
           # When we raise WaitWritable, the socket object is ready for
           # writing which makes the read method invoke read_nonblock many times
-          expect(raw_socket).to receive(:read_nonblock).at_least(:once) do |len, buf|
+          expect(raw_socket).to receive(:read_nonblock).at_least(:once) do |_len, _buf|
             sleep 0.01
             raise exception_class
           end
@@ -96,7 +95,6 @@ describe Mongo::Socket do
       end
 
       context 'with WaitReadable' do
-
         let(:exception_class) do
           Class.new(Exception) do
             include IO::WaitReadable
@@ -107,7 +105,6 @@ describe Mongo::Socket do
       end
 
       context 'with WaitWritable' do
-
         let(:exception_class) do
           Class.new(Exception) do
             include IO::WaitWritable
@@ -130,13 +127,13 @@ describe Mongo::Socket do
       Mongo::Socket::TCP.new(target_host, ClusterConfig.instance.primary_address_port, 1, Socket::PF_INET)
     end
 
-    let(:raw_socket) { socket.instance_variable_get('@socket') }
+    let(:raw_socket) { socket.instance_variable_get(:@socket) }
 
     context 'with timeout' do
       let(:timeout) { 5_000 }
 
       context 'data is less than WRITE_CHUNK_SIZE' do
-        let(:data) { "a" * 1024 }
+        let(:data) { 'a' * 1024 }
 
         context 'when a partial write occurs' do
           before do
@@ -147,14 +144,14 @@ describe Mongo::Socket do
           end
 
           it 'eventually writes everything' do
-            expect(socket.write(data, timeout: timeout)).
-              to be === data.length
+            expect(socket.write(data, timeout: timeout))
+              .to be === data.length
           end
         end
       end
 
       context 'data is greater than WRITE_CHUNK_SIZE' do
-        let(:data) { "a" * (2 * Mongo::Socket::WRITE_CHUNK_SIZE + 256) }
+        let(:data) { 'a' * ((2 * Mongo::Socket::WRITE_CHUNK_SIZE) + 256) }
 
         context 'when a partial write occurs' do
           before do
@@ -168,8 +165,8 @@ describe Mongo::Socket do
           end
 
           it 'eventually writes everything' do
-            expect(socket.write(data, timeout: timeout)).
-              to be === data.length
+            expect(socket.write(data, timeout: timeout))
+              .to be === data.length
           end
         end
       end

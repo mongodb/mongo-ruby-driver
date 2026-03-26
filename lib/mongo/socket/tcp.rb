@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Socket
-
     # Wrapper for TCP sockets.
     #
     # @since 2.0.0
     class TCP < Socket
-
       # Initializes a new TCP socket.
       #
       # @example Create the TCP socket.
@@ -46,9 +43,8 @@ module Mongo
       # @since 2.0.0
       # @api private
       def initialize(host, port, timeout, family, options = {})
-        if family.nil?
-          raise ArgumentError, 'family must be specified'
-        end
+        raise ArgumentError, 'family must be specified' if family.nil?
+
         super(timeout, options)
         @host, @port = host, port
         @family = family
@@ -56,7 +52,7 @@ module Mongo
         begin
           set_socket_options(@socket)
           connect!
-        rescue
+        rescue StandardError
           @socket.close
           raise
         end
@@ -113,7 +109,8 @@ module Mongo
           if select_timeout <= 0
             raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
           end
-          if IO.select(nil, [socket], nil, select_timeout)
+
+          if IO.select(nil, [ socket ], nil, select_timeout)
             retry
           else
             socket.close

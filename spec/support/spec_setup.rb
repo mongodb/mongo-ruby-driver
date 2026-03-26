@@ -1,8 +1,7 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-require_relative './spec_config'
-require_relative './client_registry'
+require_relative 'spec_config'
+require_relative 'client_registry'
 
 class SpecSetup
   def run
@@ -31,19 +30,14 @@ class SpecSetup
         rescue Mongo::Error::OperationFailure::Family => e
           # When testing a cluster that requires auth, root user is already set up
           # and it is not creatable without auth.
-          if e.message =~ /command createUser requires authentication/
-            # However, if the cluster is configured to require auth but
-            # test suite has wrong credentials, then admin_authorized_test_client
-            # won't be authenticated and the following line will raise an
-            # exception
-            if client.use('admin').database.users.info(SpecConfig.instance.root_user.name).any?
-              warn "Skipping root user creation, likely auth is enabled on cluster"
-            else
-              raise
-            end
-          else
-            raise
-          end
+          raise unless /command createUser requires authentication/.match?(e.message)
+          # However, if the cluster is configured to require auth but
+          # test suite has wrong credentials, then admin_authorized_test_client
+          # won't be authenticated and the following line will raise an
+          # exception
+          raise unless client.use('admin').database.users.info(SpecConfig.instance.root_user.name).any?
+
+          warn 'Skipping root user creation, likely auth is enabled on cluster'
         end
       end
 
@@ -58,12 +52,10 @@ class SpecSetup
     begin
       users.create(user)
     rescue Mongo::Error::OperationFailure::Family => e
-      if e.message =~ /User.*already exists/
-        users.remove(user.name)
-        users.create(user)
-      else
-        raise
-      end
+      raise unless /User.*already exists/.match?(e.message)
+
+      users.remove(user.name)
+      users.create(user)
     end
   end
 
@@ -71,7 +63,7 @@ class SpecSetup
     Mongo::Client.new(
       SpecConfig.instance.addresses,
       SpecConfig.instance.all_test_options.merge(
-        socket_timeout: 5, connect_timeout: 5,
+        socket_timeout: 5, connect_timeout: 5
       ),
       &block
     )

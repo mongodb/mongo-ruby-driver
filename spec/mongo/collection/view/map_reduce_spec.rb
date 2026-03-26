@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'support/recording_logger'
@@ -8,14 +7,14 @@ describe Mongo::Collection::View::MapReduce do
   clean_slate_on_evergreen
 
   let(:map) do
-  %Q{
+    %{
   function() {
     emit(this.name, { population: this.population });
   }}
   end
 
   let(:reduce) do
-    %Q{
+    %{
     function(key, values) {
       var result = { population: 0 };
       values.forEach(function(value) {
@@ -27,8 +26,8 @@ describe Mongo::Collection::View::MapReduce do
 
   let(:documents) do
     [
-      { name: 'Berlin', population: 3000000 },
-      { name: 'London', population: 9000000 }
+      { name: 'Berlin', population: 3_000_000 },
+      { name: 'London', population: 9_000_000 }
     ]
   end
 
@@ -74,21 +73,18 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   describe '#map_function' do
-
     it 'returns the map function' do
       expect(map_reduce.map_function).to eq(map)
     end
   end
 
   describe '#reduce_function' do
-
     it 'returns the reduce function' do
       expect(map_reduce.reduce_function).to eq(reduce)
     end
   end
 
   describe '#map' do
-
     let(:results) do
       map_reduce.map do |document|
         document
@@ -101,29 +97,25 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   describe '#reduce' do
-
     let(:results) do
       map_reduce.reduce(0) { |sum, doc| sum + doc['value']['population'] }
     end
 
     it 'calls the Enumerable method' do
-      expect(results).to eq(12000000)
+      expect(results).to eq(12_000_000)
     end
   end
 
   describe '#each' do
-
     context 'when no options are provided' do
-
       it 'iterates over the documents in the result' do
         map_reduce.each do |document|
-          expect(document[:value]).to_not be_nil
+          expect(document[:value]).not_to be_nil
         end
       end
     end
 
     context 'when provided a session' do
-
       let(:options) do
         { session: session }
       end
@@ -140,59 +132,53 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when out is in the options' do
-
       before do
         authorized_client['output_collection'].delete_many
       end
 
       context 'when out is a string' do
-
         let(:options) do
-          { :out => 'output_collection' }
+          { out: 'output_collection' }
         end
 
         it 'iterates over the documents in the result' do
           map_reduce.each do |document|
-            expect(document[:value]).to_not be_nil
+            expect(document[:value]).not_to be_nil
           end
         end
       end
 
       context 'when out is a document' do
-
         let(:options) do
-          { :out => {  replace: 'output_collection' } }
+          { out: { replace: 'output_collection' } }
         end
 
         it 'iterates over the documents in the result' do
           map_reduce.each do |document|
-            expect(document[:value]).to_not be_nil
+            expect(document[:value]).not_to be_nil
           end
         end
       end
     end
 
     context 'when out is inline' do
-
       let(:new_map_reduce) do
         map_reduce.out(inline: 1)
       end
 
       it 'iterates over the documents in the result' do
         new_map_reduce.each do |document|
-          expect(document[:value]).to_not be_nil
+          expect(document[:value]).not_to be_nil
         end
       end
     end
 
     context 'when out is a collection' do
-
       before do
         authorized_client['output_collection'].delete_many
       end
 
       context 'when #each is called without a block' do
-
         let(:new_map_reduce) do
           map_reduce.out(replace: 'output_collection')
         end
@@ -207,14 +193,13 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       context 'when the option is to replace' do
-
         let(:new_map_reduce) do
           map_reduce.out(replace: 'output_collection')
         end
 
         it 'iterates over the documents in the result' do
           new_map_reduce.each do |document|
-            expect(document[:value]).to_not be_nil
+            expect(document[:value]).not_to be_nil
           end
         end
 
@@ -223,7 +208,6 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         context 'when provided a session' do
-
           let(:options) do
             { session: session }
           end
@@ -267,13 +251,13 @@ describe Mongo::Collection::View::MapReduce do
           end
 
           before do
-            begin; client[TEST_COLL].create; rescue; end
-            begin; client.use('another-db')[TEST_COLL].create; rescue; end
+            begin; client[TEST_COLL].create; rescue StandardError; end
+            begin; client.use('another-db')[TEST_COLL].create; rescue StandardError; end
           end
 
           it 'uses the session when iterating over the output collection' do
             new_map_reduce.to_a
-            expect(find_command["lsid"]).to eq(BSON::Document.new(session.session_id))
+            expect(find_command['lsid']).to eq(BSON::Document.new(session.session_id))
           end
         end
 
@@ -287,25 +271,24 @@ describe Mongo::Collection::View::MapReduce do
 
           it 'iterates over the documents in the result' do
             new_map_reduce.each do |document|
-              expect(document[:value]).to_not be_nil
+              expect(document[:value]).not_to be_nil
             end
           end
 
-          it 'fetches the results from the collection'  do
+          it 'fetches the results from the collection' do
             expect(new_map_reduce.count).to eq(2)
           end
         end
       end
 
       context 'when the option is to merge' do
-
         let(:new_map_reduce) do
           map_reduce.out(merge: 'output_collection')
         end
 
         it 'iterates over the documents in the result' do
           new_map_reduce.each do |document|
-            expect(document[:value]).to_not be_nil
+            expect(document[:value]).not_to be_nil
           end
         end
 
@@ -323,7 +306,7 @@ describe Mongo::Collection::View::MapReduce do
 
           it 'iterates over the documents in the result' do
             new_map_reduce.each do |document|
-              expect(document[:value]).to_not be_nil
+              expect(document[:value]).not_to be_nil
             end
           end
 
@@ -334,14 +317,13 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       context 'when the option is to reduce' do
-
         let(:new_map_reduce) do
           map_reduce.out(reduce: 'output_collection')
         end
 
         it 'iterates over the documents in the result' do
           new_map_reduce.each do |document|
-            expect(document[:value]).to_not be_nil
+            expect(document[:value]).not_to be_nil
           end
         end
 
@@ -359,7 +341,7 @@ describe Mongo::Collection::View::MapReduce do
 
           it 'iterates over the documents in the result' do
             new_map_reduce.each do |document|
-              expect(document[:value]).to_not be_nil
+              expect(document[:value]).not_to be_nil
             end
           end
 
@@ -370,7 +352,6 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       context 'when the option is a collection name' do
-
         let(:new_map_reduce) do
           map_reduce.out('output_collection')
         end
@@ -382,9 +363,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when the view has a selector' do
-
       context 'when the selector is basic' do
-
         let(:selector) do
           { 'name' => 'Berlin' }
         end
@@ -401,9 +380,8 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       context 'when the selector is advanced' do
-
         let(:selector) do
-          { :$query => { 'name' => 'Berlin' }}
+          { :$query => { 'name' => 'Berlin' } }
         end
 
         it 'applies the selector to the map/reduce' do
@@ -419,7 +397,6 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when the view has a limit' do
-
       let(:view_options) do
         { limit: 1 }
       end
@@ -433,9 +410,7 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   describe '#execute' do
-
     context 'when output is to a collection' do
-
       let(:options) do
         { out: 'output_collection' }
       end
@@ -454,7 +429,6 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when there is no output' do
-
       let(:result) do
         map_reduce.execute
       end
@@ -469,7 +443,6 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when a session is provided' do
-
       let(:session) do
         authorized_client.start_session
       end
@@ -496,9 +469,8 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   describe '#finalize' do
-
     let(:finalize) do
-    %Q{
+      %{
     function(key, value) {
       value.testing = test;
       return value;
@@ -519,7 +491,6 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   describe '#js_mode' do
-
     let(:new_map_reduce) do
       map_reduce.js_mode(true)
     end
@@ -534,7 +505,6 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   describe '#out' do
-
     let(:location) do
       { 'replace' => 'testing' }
     end
@@ -552,20 +522,18 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when out is not defined' do
-
       it 'defaults to inline' do
         expect(map_reduce_spec[:selector][:out]).to eq('inline' => 1)
       end
     end
 
     context 'when out is specified in the options' do
-
       let(:location) do
         { 'replace' => 'testing' }
       end
 
       let(:options) do
-        { :out => location }
+        { out: location }
       end
 
       it 'sets the out value' do
@@ -578,13 +546,12 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when out is not inline' do
-
       let(:location) do
         { 'replace' => 'testing' }
       end
 
       let(:options) do
-        { :out => location }
+        { out: location }
       end
 
       it 'does not allow the operation on a secondary' do
@@ -611,7 +578,6 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         context 'when the view has a write concern' do
-
           let(:collection) do
             authorized_collection.with(write: INVALID_WRITE_CONCERN)
           end
@@ -628,34 +594,31 @@ describe Mongo::Collection::View::MapReduce do
             require_topology :single
 
             it 'uses the write concern' do
-              expect {
+              expect do
                 map_reduce.to_a
-              }.to raise_exception(Mongo::Error::OperationFailure)
+              end.to raise_exception(Mongo::Error::OperationFailure)
             end
           end
 
           context 'when out is a String' do
-
             let(:options) do
-              { :out => 'new-collection' }
+              { out: 'new-collection' }
             end
 
             it_behaves_like 'map reduce that writes accepting write concern'
           end
 
           context 'when out is a document and not inline' do
-
             let(:options) do
-              { :out => { merge: 'exisiting-collection' } }
+              { out: { merge: 'exisiting-collection' } }
             end
 
             it_behaves_like 'map reduce that writes accepting write concern'
           end
 
           context 'when out is a document but inline is specified' do
-
             let(:options) do
-              { :out => { inline: 1 } }
+              { out: { inline: 1 } }
             end
 
             it 'does not use the write concern' do
@@ -692,7 +655,6 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   describe '#scope' do
-
     let(:object) do
       { 'value' => 'testing' }
     end
@@ -711,7 +673,6 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   describe '#verbose' do
-
     let(:verbose) do
       false
     end
@@ -730,7 +691,6 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   context 'when limit is set on the view' do
-
     let(:limit) do
       3
     end
@@ -745,7 +705,6 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   context 'when sort is set on the view' do
-
     let(:sort) do
       { name: -1 }
     end
@@ -760,9 +719,8 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   context 'when the collection has a read preference' do
-
     let(:read_preference) do
-      {mode: :secondary}
+      { mode: :secondary }
     end
 
     it 'includes the read preference in the spec' do
@@ -772,23 +730,22 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   context 'when collation is specified' do
-
     let(:map) do
-      %Q{
+      %{
          function() {
            emit(this.name, 1);
         }}
     end
 
     let(:reduce) do
-      %Q{
+      %{
          function(key, values) {
            return Array.sum(values);
         }}
     end
 
     before do
-      authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+      authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' } ])
     end
 
     let(:selector) do
@@ -796,7 +753,6 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when the collation key is a String' do
-
       let(:options) do
         { 'collation' => { locale: 'en_US', strength: 2 } }
       end
@@ -807,7 +763,6 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     context 'when the collation key is a Symbol' do
-
       let(:options) do
         { collation: { locale: 'en_US', strength: 2 } }
       end
@@ -821,14 +776,14 @@ describe Mongo::Collection::View::MapReduce do
   describe '#map_reduce_spec' do
     context 'when read preference is given' do
       let(:view_options) do
-        { read: {mode: :secondary} }
+        { read: { mode: :secondary } }
       end
 
       context 'selector' do
         # For compatibility with released versions of Mongoid, this method
         # must return read preference under the :read key.
         it 'contains read preference' do
-          map_reduce_spec[:selector][:read].should == {'mode' => :secondary}
+          expect(map_reduce_spec[:selector][:read]).to eq({ 'mode' => :secondary })
         end
       end
     end

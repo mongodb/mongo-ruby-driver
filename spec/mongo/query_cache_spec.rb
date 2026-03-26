@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::QueryCache do
-
   around do |spec|
     Mongo::QueryCache.clear
     Mongo::QueryCache.cache { spec.run }
@@ -29,9 +27,7 @@ describe Mongo::QueryCache do
   end
 
   describe '#enabled' do
-
     context 'when query cache is disabled' do
-
       before do
         Mongo::QueryCache.enabled = false
       end
@@ -42,7 +38,6 @@ describe Mongo::QueryCache do
     end
 
     context 'when query cache is enabled' do
-
       before do
         Mongo::QueryCache.enabled = true
       end
@@ -54,7 +49,6 @@ describe Mongo::QueryCache do
   end
 
   describe '#cache' do
-
     before do
       Mongo::QueryCache.enabled = false
     end
@@ -68,7 +62,6 @@ describe Mongo::QueryCache do
   end
 
   describe '#uncached' do
-
     it 'disables the query cache inside the block' do
       Mongo::QueryCache.uncached do
         expect(Mongo::QueryCache.enabled?).to be(false)
@@ -78,7 +71,6 @@ describe Mongo::QueryCache do
   end
 
   describe '#cache_table' do
-
     before do
       authorized_collection.insert_one({ name: 'testing' })
       authorized_collection.find(name: 'testing').to_a
@@ -92,7 +84,6 @@ describe Mongo::QueryCache do
   end
 
   describe '#clear' do
-
     before do
       authorized_collection.insert_one({ name: 'testing' })
       authorized_collection.find(name: 'testing').to_a
@@ -106,7 +97,7 @@ describe Mongo::QueryCache do
   end
 
   describe '#set' do
-    let(:caching_cursor) { double("Mongo::CachingCursor") }
+    let(:caching_cursor) { double('Mongo::CachingCursor') }
     let(:namespace) { 'db.coll' }
     let(:selector) { { field: 'value' } }
     let(:skip) { 5 }
@@ -133,25 +124,26 @@ describe Mongo::QueryCache do
 
     it 'stores the cursor at the correct key' do
       Mongo::QueryCache.set(caching_cursor, **options)
-      expect(Mongo::QueryCache.send(:cache_table)[namespace][[namespace, selector, skip, sort, projection, collation, read_concern, read_preference]]).to eq(caching_cursor)
+      expect(Mongo::QueryCache.send(:cache_table)[namespace][[ namespace, selector, skip, sort, projection, collation,
+                                                               read_concern, read_preference ]]).to eq(caching_cursor)
     end
   end
 
   describe '#get' do
     let(:view) do
-      double("Mongo::Collection::View").tap do |view|
+      double('Mongo::Collection::View').tap do |view|
         allow(view).to receive(:client).and_return(client)
         allow(view).to receive(:operation_timeouts).and_return({})
       end
     end
 
     let(:result) do
-      double("Mongo::Operation::Result").tap do |result|
+      double('Mongo::Operation::Result').tap do |result|
         allow(result).to receive(:is_a?).with(Mongo::Operation::Result).and_return(true)
       end
     end
 
-    let(:server) { double("Mongo::Server") }
+    let(:server) { double('Mongo::Server') }
     let(:caching_cursor) { Mongo::CachingCursor.new(view, result, server) }
 
     let(:options) do
@@ -162,19 +154,17 @@ describe Mongo::QueryCache do
     end
 
     before do
-      allow(result).to receive(:cursor_id) { 0 }
-      allow(result).to receive(:namespace) { 'db.coll' }
-      allow(result).to receive(:connection_global_id) { 1 }
-      allow(view).to receive(:limit) { nil }
+      allow(result).to receive(:cursor_id).and_return(0)
+      allow(result).to receive(:namespace).and_return('db.coll')
+      allow(result).to receive(:connection_global_id).and_return(1)
+      allow(view).to receive(:limit).and_return(nil)
     end
 
-    [true, false].each do |load_balancer|
+    [ true, false ].each do |load_balancer|
       context "when load_balancer is #{load_balancer}" do
         before do
           allow(server).to receive(:load_balancer?) { load_balancer }
-          if load_balancer
-            allow(result).to receive(:connection) { nil }
-          end
+          allow(result).to receive(:connection).and_return(nil) if load_balancer
         end
 
         context 'when there is no entry in the cache' do
@@ -247,7 +237,7 @@ describe Mongo::QueryCache do
             end
 
             before do
-              allow(view).to receive(:limit) { 0 }
+              allow(view).to receive(:limit).and_return(0)
             end
 
             context 'when the query has a limit' do
@@ -265,7 +255,6 @@ describe Mongo::QueryCache do
                 expect(Mongo::QueryCache.get(**query_options)).to eq(caching_cursor)
               end
             end
-
 
             context 'when the query has no limit' do
               let(:limit) { nil }
@@ -298,7 +287,7 @@ describe Mongo::QueryCache do
             end
 
             before do
-              allow(view).to receive(:limit) { 5 }
+              allow(view).to receive(:limit).and_return(5)
             end
 
             context 'and the new query has a smaller limit' do
@@ -380,7 +369,7 @@ describe Mongo::QueryCache do
             end
 
             before do
-              allow(view).to receive(:limit) { -5 }
+              allow(view).to receive(:limit).and_return(-5)
             end
 
             context 'and the new query has a smaller limit' do
@@ -437,7 +426,7 @@ describe Mongo::QueryCache do
   end
 
   describe '#clear_namespace' do
-    let(:caching_cursor) { double("Mongo::CachingCursor") }
+    let(:caching_cursor) { double('Mongo::CachingCursor') }
     let(:namespace1) { 'db.coll' }
     let(:namespace2) { 'db.coll2' }
     let(:namespace3) { 'db.coll3' }

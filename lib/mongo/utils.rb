@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -16,10 +15,8 @@
 # limitations under the License.
 
 module Mongo
-
   # @api private
   module Utils
-
     class LocalLogger
       include Loggable
 
@@ -60,17 +57,17 @@ module Mongo
 
     # Symbolizes the keys in the provided hash.
     module_function def shallow_symbolize_keys(hash)
-      Hash[hash.map { |k, v| [k.to_sym, v] }]
+      Hash[hash.map { |k, v| [ k.to_sym, v ] }]
     end
 
     # Stringifies the keys in the provided hash and converts underscore
     # style keys to camel case style keys.
     module_function def shallow_camelize_keys(hash)
-      Hash[hash.map { |k, v| [camelize(k), v] }]
+      Hash[hash.map { |k, v| [ camelize(k), v ] }]
     end
 
     module_function def camelize(sym)
-      sym.to_s.gsub(/_(\w)/) { $1.upcase }
+      sym.to_s.gsub(/_(\w)/) { ::Regexp.last_match(1).upcase }
     end
 
     # @note server_api must have symbol keys or be a BSON::Document.
@@ -79,12 +76,8 @@ module Mongo
         if version = server_api[:version]
           doc['apiVersion'] = version
         end
-        unless server_api[:strict].nil?
-          doc['apiStrict'] = server_api[:strict]
-        end
-        unless server_api[:deprecation_errors].nil?
-          doc['apiDeprecationErrors'] = server_api[:deprecation_errors]
-        end
+        doc['apiStrict'] = server_api[:strict] unless server_api[:strict].nil?
+        doc['apiDeprecationErrors'] = server_api[:deprecation_errors] unless server_api[:deprecation_errors].nil?
       end
     end
 

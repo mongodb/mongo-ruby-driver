@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2009-2020 MongoDB Inc.
 #
@@ -16,9 +15,7 @@
 # limitations under the License.
 
 module Mongo
-
   module Protocol
-
     # Provides a registry for looking up a message class based on op code.
     #
     # @since 2.5.0
@@ -38,7 +35,7 @@ module Mongo
       # @return [ Class ] The corresponding Ruby class for the message type.
       #
       # @since 2.5.0
-      def get(op_code, message = nil)
+      def get(op_code, _message = nil)
         if type = MAPPINGS[op_code]
           type
         else
@@ -65,7 +62,7 @@ module Mongo
       private
 
       def define_type_reader(type)
-        type.module_eval <<-MOD
+        type.module_eval <<-MOD, __FILE__, __LINE__ + 1
           def op_code; OP_CODE; end
         MOD
       end

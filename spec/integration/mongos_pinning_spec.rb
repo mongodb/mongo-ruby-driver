@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -16,21 +15,21 @@ describe 'Mongos pinning' do
   context 'successful operations' do
     it 'pins and unpins' do
       session = client.start_session
-      expect(session.pinned_server).to be nil
+      expect(session.pinned_server).to be_nil
 
       session.start_transaction
-      expect(session.pinned_server).to be nil
+      expect(session.pinned_server).to be_nil
 
-      primary = client.cluster.next_primary
+      client.cluster.next_primary
 
-      collection.insert_one({a: 1}, session: session)
-      expect(session.pinned_server).not_to be nil
+      collection.insert_one({ a: 1 }, session: session)
+      expect(session.pinned_server).not_to be_nil
 
       session.commit_transaction
-      expect(session.pinned_server).not_to be nil
+      expect(session.pinned_server).not_to be_nil
 
-      collection.insert_one({a: 1}, session: session)
-      expect(session.pinned_server).to be nil
+      collection.insert_one({ a: 1 }, session: session)
+      expect(session.pinned_server).to be_nil
     end
   end
 end

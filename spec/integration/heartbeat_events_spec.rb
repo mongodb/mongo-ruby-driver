@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -23,25 +22,28 @@ describe 'Heartbeat events' do
 
   let(:address_str) { ClusterConfig.instance.primary_address_str }
 
-  let(:client) { new_local_client([address_str],
-    SpecConfig.instance.all_test_options.merge(
-      server_selection_timeout: 0.1, connect: :direct)) }
+  let(:client) do
+    new_local_client([ address_str ],
+                     SpecConfig.instance.all_test_options.merge(
+                       server_selection_timeout: 0.1, connect: :direct
+                     ))
+  end
 
   it 'notifies on successful heartbeats' do
     client.database.command(ping: 1)
 
     started_event = subscriber.started_events.first
-    expect(started_event).not_to be nil
+    expect(started_event).not_to be_nil
     expect(started_event.address).to be_a(Mongo::Address)
     expect(started_event.address.seed).to eq(address_str)
 
     succeeded_event = subscriber.succeeded_events.first
-    expect(succeeded_event).not_to be nil
+    expect(succeeded_event).not_to be_nil
     expect(succeeded_event.address).to be_a(Mongo::Address)
     expect(succeeded_event.address.seed).to eq(address_str)
 
     failed_event = subscriber.failed_events.first
-    expect(failed_event).to be nil
+    expect(failed_event).to be_nil
   end
 
   it 'notifies on failed heartbeats' do
@@ -53,15 +55,15 @@ describe 'Heartbeat events' do
     end.to raise_error(Mongo::Error::NoServerAvailable)
 
     started_event = subscriber.started_events.first
-    expect(started_event).not_to be nil
+    expect(started_event).not_to be_nil
     expect(started_event.address).to be_a(Mongo::Address)
     expect(started_event.address.seed).to eq(address_str)
 
     succeeded_event = subscriber.succeeded_events.first
-    expect(succeeded_event).to be nil
+    expect(succeeded_event).to be_nil
 
     failed_event = subscriber.failed_events.first
-    expect(failed_event).not_to be nil
+    expect(failed_event).not_to be_nil
     expect(failed_event.error).to be exc
     expect(failed_event.failure).to be exc
     expect(failed_event.address).to be_a(Mongo::Address)
@@ -69,16 +71,19 @@ describe 'Heartbeat events' do
   end
 
   context 'when monitoring option is false' do
-    let(:client) { new_local_client([address_str],
-      SpecConfig.instance.all_test_options.merge(
-        server_selection_timeout: 0.1, connect: :direct, monitoring: false)) }
+    let(:client) do
+      new_local_client([ address_str ],
+                       SpecConfig.instance.all_test_options.merge(
+                         server_selection_timeout: 0.1, connect: :direct, monitoring: false
+                       ))
+    end
 
     shared_examples_for 'does not notify on heartbeats' do
       it 'does not notify on heartbeats' do
         client.database.command(ping: 1)
 
         started_event = subscriber.started_events.first
-        expect(started_event).to be nil
+        expect(started_event).to be_nil
       end
     end
 
@@ -86,14 +91,15 @@ describe 'Heartbeat events' do
 
     context 'when a subscriber is added manually' do
       let(:client) do
-        sdam_proc = Proc.new do |client|
+        sdam_proc = proc do |client|
           client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
         end
 
-        new_local_client([address_str],
-          SpecConfig.instance.all_test_options.merge(
-            server_selection_timeout: 0.1, connect: :direct,
-            monitoring: false, sdam_proc: sdam_proc))
+        new_local_client([ address_str ],
+                         SpecConfig.instance.all_test_options.merge(
+                           server_selection_timeout: 0.1, connect: :direct,
+                           monitoring: false, sdam_proc: sdam_proc
+                         ))
       end
 
       it_behaves_like 'does not notify on heartbeats'

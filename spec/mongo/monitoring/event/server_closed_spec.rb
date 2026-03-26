@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Monitoring::Event::ServerClosed do
-
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
   end
@@ -13,7 +11,7 @@ describe Mongo::Monitoring::Event::ServerClosed do
 
   let(:cluster) do
     double('cluster').tap do |cluster|
-      allow(cluster).to receive(:addresses).and_return([address])
+      allow(cluster).to receive(:addresses).and_return([ address ])
       allow(cluster).to receive(:servers_list).and_return([])
     end
   end
@@ -31,7 +29,8 @@ describe Mongo::Monitoring::Event::ServerClosed do
 
     it 'renders correctly' do
       expect(topology).to receive(:server_descriptions).and_return({
-        '127.0.0.1:27017' => Mongo::Server::Description.new(Mongo::Address.new('127.0.0.1:27017'))})
+                                                                     '127.0.0.1:27017' => Mongo::Server::Description.new(Mongo::Address.new('127.0.0.1:27017'))
+                                                                   })
       expect(event.summary).to eq('#<ServerClosed address=127.0.0.1:27017 topology=Unknown[127.0.0.1:27017]>')
     end
   end

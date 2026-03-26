@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Raised when the driver does not support the complete set of server
     # features.
     #

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Server
-
     # Represents a description of the server, populated by the result of the
     # hello command.
     #
@@ -30,163 +28,162 @@ module Mongo
     #
     # @since 2.0.0
     class Description
-
       # Constant for reading arbiter info from config.
       #
       # @since 2.0.0
       # @deprecated
-      ARBITER = 'arbiterOnly'.freeze
+      ARBITER = 'arbiterOnly'
 
       # Constant for reading arbiters info from config.
       #
       # @since 2.0.0
-      ARBITERS = 'arbiters'.freeze
+      ARBITERS = 'arbiters'
 
       # Constant for reading hidden info from config.
       #
       # @since 2.0.0
-      HIDDEN = 'hidden'.freeze
+      HIDDEN = 'hidden'
 
       # Constant for reading hosts info from config.
       #
       # @since 2.0.0
-      HOSTS = 'hosts'.freeze
+      HOSTS = 'hosts'
 
       # Constant for the key for the message value.
       #
       # @since 2.0.0
       # @deprecated
-      MESSAGE = 'msg'.freeze
+      MESSAGE = 'msg'
 
       # Constant for the message that indicates a sharded cluster.
       #
       # @since 2.0.0
       # @deprecated
-      MONGOS_MESSAGE = 'isdbgrid'.freeze
+      MONGOS_MESSAGE = 'isdbgrid'
 
       # Constant for determining ghost servers.
       #
       # @since 2.0.0
       # @deprecated
-      REPLICA_SET = 'isreplicaset'.freeze
+      REPLICA_SET = 'isreplicaset'
 
       # Constant for reading max bson size info from config.
       #
       # @since 2.0.0
-      MAX_BSON_OBJECT_SIZE = 'maxBsonObjectSize'.freeze
+      MAX_BSON_OBJECT_SIZE = 'maxBsonObjectSize'
 
       # Constant for reading max message size info from config.
       #
       # @since 2.0.0
-      MAX_MESSAGE_BYTES = 'maxMessageSizeBytes'.freeze
+      MAX_MESSAGE_BYTES = 'maxMessageSizeBytes'
 
       # Constant for the max wire version.
       #
       # @since 2.0.0
-      MAX_WIRE_VERSION = 'maxWireVersion'.freeze
+      MAX_WIRE_VERSION = 'maxWireVersion'
 
       # Constant for min wire version.
       #
       # @since 2.0.0
-      MIN_WIRE_VERSION = 'minWireVersion'.freeze
+      MIN_WIRE_VERSION = 'minWireVersion'
 
       # Constant for reading max write batch size.
       #
       # @since 2.0.0
-      MAX_WRITE_BATCH_SIZE = 'maxWriteBatchSize'.freeze
+      MAX_WRITE_BATCH_SIZE = 'maxWriteBatchSize'
 
       # Constant for the lastWrite subdocument.
       #
       # @since 2.4.0
-      LAST_WRITE = 'lastWrite'.freeze
+      LAST_WRITE = 'lastWrite'
 
       # Constant for the lastWriteDate field in the lastWrite subdocument.
       #
       # @since 2.4.0
-      LAST_WRITE_DATE = 'lastWriteDate'.freeze
+      LAST_WRITE_DATE = 'lastWriteDate'
 
       # Constant for reading the me field.
       #
       # @since 2.1.0
-      ME = 'me'.freeze
+      ME = 'me'
 
       # Default max write batch size.
       #
       # @since 2.0.0
-      DEFAULT_MAX_WRITE_BATCH_SIZE = 1000.freeze
+      DEFAULT_MAX_WRITE_BATCH_SIZE = 1000
 
       # The legacy wire protocol version.
       #
       # @since 2.0.0
       # @deprecated Will be removed in 3.0.
-      LEGACY_WIRE_VERSION = 0.freeze
+      LEGACY_WIRE_VERSION = 0
 
       # Constant for reading passive info from config.
       #
       # @since 2.0.0
-      PASSIVE = 'passive'.freeze
+      PASSIVE = 'passive'
 
       # Constant for reading the passive server list.
       #
       # @since 2.0.0
-      PASSIVES = 'passives'.freeze
+      PASSIVES = 'passives'
 
       # Constant for reading primary info from config.
       #
       # @since 2.0.0
       # @deprecated
-      PRIMARY = 'ismaster'.freeze
+      PRIMARY = 'ismaster'
 
       # Constant for reading primary host field from config.
       #
       # @since 2.5.0
-      PRIMARY_HOST = 'primary'.freeze
+      PRIMARY_HOST = 'primary'
 
       # Constant for reading secondary info from config.
       #
       # @since 2.0.0
       # @deprecated
-      SECONDARY = 'secondary'.freeze
+      SECONDARY = 'secondary'
 
       # Constant for reading replica set name info from config.
       #
       # @since 2.0.0
-      SET_NAME = 'setName'.freeze
+      SET_NAME = 'setName'
 
       # Constant for reading tags info from config.
       #
       # @since 2.0.0
-      TAGS = 'tags'.freeze
+      TAGS = 'tags'
 
       # Constant for reading electionId info from config.
       #
       # @since 2.1.0
-      ELECTION_ID = 'electionId'.freeze
+      ELECTION_ID = 'electionId'
 
       # Constant for reading setVersion info from config.
       #
       # @since 2.2.2
-      SET_VERSION = 'setVersion'.freeze
+      SET_VERSION = 'setVersion'
 
       # Constant for reading localTime info from config.
       #
       # @since 2.1.0
-      LOCAL_TIME = 'localTime'.freeze
+      LOCAL_TIME = 'localTime'
 
       # Constant for reading operationTime info from config.
       #
       # @since 2.5.0
-      OPERATION_TIME = 'operationTime'.freeze
+      OPERATION_TIME = 'operationTime'
 
       # Constant for reading logicalSessionTimeoutMinutes info from config.
       #
       # @since 2.5.0
-      LOGICAL_SESSION_TIMEOUT_MINUTES = 'logicalSessionTimeoutMinutes'.freeze
+      LOGICAL_SESSION_TIMEOUT_MINUTES = 'logicalSessionTimeoutMinutes'
 
       # Constant for reading connectionId info from config.
       #
       # @api private
-      CONNECTION_ID = 'connectionId'.freeze
+      CONNECTION_ID = 'connectionId'
 
       # Fields to exclude when comparing two descriptions.
       #
@@ -195,8 +192,7 @@ module Mongo
                                  LAST_WRITE,
                                  OPERATION_TIME,
                                  Operation::CLUSTER_TIME,
-                                 CONNECTION_ID,
-                               ].freeze
+                                 CONNECTION_ID, ].freeze
 
       # Instantiate the new server description from the result of the hello
       # command or fabricate a placeholder description for Unknown and
@@ -218,9 +214,8 @@ module Mongo
       #
       # @api private
       def initialize(address, config = {}, average_round_trip_time: nil,
-        minimum_round_trip_time: 0, load_balancer: false,
-        force_load_balancer: false
-      )
+                     minimum_round_trip_time: 0, load_balancer: false,
+                     force_load_balancer: false)
         @address = address
         @config = config
         @load_balancer = !!load_balancer
@@ -231,56 +226,55 @@ module Mongo
         @last_update_time = Time.now.freeze
         @last_update_monotime = Utils.monotonic_time
 
-        if load_balancer
-          # When loadBalanced=true URI option is set, the driver will refuse
-          # to work if the server it communicates with does not set serviceId
-          # in ismaster/hello response.
-          #
-          # At the moment we cannot run a proper load balancer setup on evergreen
-          #
-          # Therefore, when connect=:load_balanced Ruby option is used instead
-          # of the loadBalanced=true URI option, if serviceId is not set in
-          # ismaster/hello response, the driver fabricates a serviceId and
-          # proceeds to treat a server that does not report itself as being
-          # behind a load balancer as a server that is behind a load balancer.
-          #
-          # 5.0+ servers should provide topologyVersion.processId which
-          # is specific to the particular process instance. We can use that
-          # field as a proxy for serviceId.
-          #
-          # If the topologyVersion isn't provided for whatever reason, we
-          # fabricate a serviceId locally.
-          #
-          # In either case, a serviceId provided by an actual server behind
-          # a load balancer is supposed to be a BSON::ObjectId. The fabricated
-          # service ids are strings, to distinguish them from the real ones.
-          # In particular processId is also a BSON::ObjectId, but will be
-          # mapped to a string for clarity that this is a fake service id.
-          #
-          # TODO: Remove this when https://jira.mongodb.org/browse/RUBY-2881 is done.
-          if ok? && !service_id
-            unless force_load_balancer
-              raise Error::MissingServiceId, "The server at #{address.seed} did not provide a service id in handshake response"
-            end
-
-            fake_service_id = if process_id = topology_version && topology_version['processId']
-              "process:#{process_id}"
-            else
-              "fake:#{rand(2**32-1)+1}"
-            end
-            @config = @config.merge('serviceId' => fake_service_id)
+        # When loadBalanced=true URI option is set, the driver will refuse
+        # to work if the server it communicates with does not set serviceId
+        # in ismaster/hello response.
+        #
+        # At the moment we cannot run a proper load balancer setup on evergreen
+        #
+        # Therefore, when connect=:load_balanced Ruby option is used instead
+        # of the loadBalanced=true URI option, if serviceId is not set in
+        # ismaster/hello response, the driver fabricates a serviceId and
+        # proceeds to treat a server that does not report itself as being
+        # behind a load balancer as a server that is behind a load balancer.
+        #
+        # 5.0+ servers should provide topologyVersion.processId which
+        # is specific to the particular process instance. We can use that
+        # field as a proxy for serviceId.
+        #
+        # If the topologyVersion isn't provided for whatever reason, we
+        # fabricate a serviceId locally.
+        #
+        # In either case, a serviceId provided by an actual server behind
+        # a load balancer is supposed to be a BSON::ObjectId. The fabricated
+        # service ids are strings, to distinguish them from the real ones.
+        # In particular processId is also a BSON::ObjectId, but will be
+        # mapped to a string for clarity that this is a fake service id.
+        #
+        # TODO: Remove this when https://jira.mongodb.org/browse/RUBY-2881 is done.
+        if load_balancer && ok? && !service_id
+          unless force_load_balancer
+            raise Error::MissingServiceId,
+                  "The server at #{address.seed} did not provide a service id in handshake response"
           end
+
+          fake_service_id = if process_id = topology_version && topology_version['processId']
+                              "process:#{process_id}"
+                            else
+                              "fake:#{rand((2**32) - 1) + 1}"
+                            end
+          @config = @config.merge('serviceId' => fake_service_id)
         end
 
-        if Mongo::Lint.enabled?
-          # prepopulate cache instance variables
-          hosts
-          arbiters
-          passives
-          topology_version
+        return unless Mongo::Lint.enabled?
 
-          freeze
-        end
+        # prepopulate cache instance variables
+        hosts
+        arbiters
+        passives
+        topology_version
+
+        freeze
       end
 
       # @return [ Address ] address The server's address.
@@ -297,9 +291,7 @@ module Mongo
       end
 
       # @return [ Features ] features The features for the server.
-      def features
-        @features
-      end
+      attr_reader :features
 
       # @return [ Float ] The moving average time the hello call took to complete.
       attr_reader :average_round_trip_time
@@ -318,8 +310,8 @@ module Mongo
       # @since 2.0.0
       def arbiter?
         ok? &&
-        config['arbiterOnly'] == true &&
-        !!config['setName']
+          config['arbiterOnly'] == true &&
+          !!config['setName']
       end
 
       # Get a list of all arbiters in the replica set.
@@ -344,7 +336,7 @@ module Mongo
       # @since 2.0.0
       def ghost?
         ok? &&
-        config['isreplicaset'] == true
+          config['isreplicaset'] == true
       end
 
       # Will return true if the server is hidden.
@@ -498,7 +490,7 @@ module Mongo
       def topology_version
         unless defined?(@topology_version)
           @topology_version = config['topologyVersion'] &&
-            TopologyVersion.new(config['topologyVersion'])
+                              TopologyVersion.new(config['topologyVersion'])
         end
         @topology_version
       end
@@ -584,9 +576,9 @@ module Mongo
         # but it's referred to it as "RSOther" which means a non-RS member
         # cannot be "other".
         ok? &&
-        !!config['setName'] && (
+          !!config['setName'] && (
           config['hidden'] == true ||
-          !primary? && !secondary? && !arbiter?
+          (!primary? && !secondary? && !arbiter?)
         )
       end
 
@@ -636,8 +628,8 @@ module Mongo
       # @since 2.0.0
       def primary?
         ok? &&
-          (config['ismaster'] == true || config['isWritablePrimary'] == true ) &&
-        !!config['setName']
+          (config['ismaster'] == true || config['isWritablePrimary'] == true) &&
+          !!config['setName']
       end
 
       # Get the name of the replica set the server belongs to, returns nil if
@@ -675,8 +667,8 @@ module Mongo
       # @since 2.0.0
       def secondary?
         ok? &&
-        config['secondary'] == true &&
-        !!config['setName']
+          config['secondary'] == true &&
+          !!config['setName']
       end
 
       # Returns the server type as a symbol.
@@ -696,6 +688,7 @@ module Mongo
         return :secondary if secondary?
         return :standalone if standalone?
         return :other if other?
+
         :unknown
       end
 
@@ -709,9 +702,9 @@ module Mongo
       # @since 2.0.0
       def standalone?
         ok? &&
-        config['msg'] != 'isdbgrid' &&
-        config['setName'].nil? &&
-        config['isreplicaset'] != true
+          config['msg'] != 'isdbgrid' &&
+          config['setName'].nil? &&
+          config['isreplicaset'] != true
       end
 
       # Returns whether this server is an unknown, per the SDAM spec.
@@ -724,7 +717,8 @@ module Mongo
       # @since 2.0.0
       def unknown?
         return false if load_balancer?
-        config.empty? || config.keys == %w(topologyVersion) || !ok?
+
+        config.empty? || config.keys == %w[topologyVersion] || !ok?
       end
 
       # @api private
@@ -821,9 +815,9 @@ module Mongo
       #
       # @since 2.7.0
       def op_time
-        if config['lastWrite'] && config['lastWrite']['opTime']
-          config['lastWrite']['opTime']['ts']
-        end
+        return unless config['lastWrite'] && config['lastWrite']['opTime']
+
+        config['lastWrite']['opTime']['ts']
       end
 
       # Time when this server description was created.
@@ -877,7 +871,7 @@ module Mongo
           config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)
         end
       end
-      alias_method :eql?, :==
+      alias eql? ==
 
       # @api private
       SERVER_VERSION_WIRE_VERSION_MAP = {

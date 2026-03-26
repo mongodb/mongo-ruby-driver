@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -27,7 +26,7 @@ describe 'Client-Side Encryption' do
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },
-          database: 'db',
+          database: 'db'
         )
       )
     end

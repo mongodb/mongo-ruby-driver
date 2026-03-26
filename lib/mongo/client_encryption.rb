@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -81,7 +80,7 @@ module Mongo
     #
     # @return [ BSON::Binary ] The 16-byte UUID of the new data key as a
     #   BSON::Binary object with type :uuid.
-    def create_data_key(kms_provider, options={})
+    def create_data_key(kms_provider, options = {})
       key_document = Crypt::KMS::MasterKeyDocument.new(kms_provider, options)
 
       key_alt_names = options[:key_alt_names]
@@ -119,7 +118,7 @@ module Mongo
     #
     # @raise [ ArgumentError ] if either contention_factor or query_type
     #   is set, and algorithm is not "Indexed".
-    def encrypt(value, options={})
+    def encrypt(value, options = {})
       @encrypter.encrypt(value, options)
     end
 
@@ -220,7 +219,7 @@ module Mongo
     def get_keys
       @encrypter.get_keys
     end
-    alias :keys :get_keys
+    alias keys get_keys
 
     # Removes a key_alt_name from a key in the key vault collection with the given id.
     #
@@ -273,7 +272,7 @@ module Mongo
       encrypted_fields = create_data_keys(coll_opts[:encrypted_fields], kms_provider, master_key)
       begin
         new_coll_opts = coll_opts.dup.merge(encrypted_fields: encrypted_fields)
-        [database[coll_name].create(new_coll_opts), encrypted_fields]
+        [ database[coll_name].create(new_coll_opts), encrypted_fields ]
       rescue Mongo::Error => e
         raise Error::CryptError, "Error creating collection with encrypted fields \
               #{encrypted_fields}: #{e.class}: #{e.message}"

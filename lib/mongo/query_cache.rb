@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB, Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module QueryCache
     class << self
-
       # Set whether the cache is enabled.
       #
       # @example Set if the cache is enabled.
@@ -26,7 +24,7 @@ module Mongo
       #
       # @param [ true, false ] value The enabled value.
       def enabled=(value)
-        Thread.current["[mongo]:query_cache:enabled"] = value
+        Thread.current['[mongo]:query_cache:enabled'] = value
       end
 
       # Is the query cache enabled on the current thread?
@@ -36,7 +34,7 @@ module Mongo
       #
       # @return [ true, false ] If the cache is enabled.
       def enabled?
-        !!Thread.current["[mongo]:query_cache:enabled"]
+        !!Thread.current['[mongo]:query_cache:enabled']
       end
 
       # Execute the block while using the query cache.
@@ -78,7 +76,7 @@ module Mongo
       #
       # @return [ Hash ] The hash of cached queries.
       private def cache_table
-        Thread.current["[mongo]:query_cache"] ||= {}
+        Thread.current['[mongo]:query_cache'] ||= {}
       end
 
       # Clear the query cache.
@@ -88,7 +86,7 @@ module Mongo
       #
       # @return [ nil ] Always nil.
       def clear
-        Thread.current["[mongo]:query_cache"] = nil
+        Thread.current['[mongo]:query_cache'] = nil
       end
 
       # Clear the section of the query cache storing cursors with results
@@ -205,8 +203,6 @@ module Mongo
           caching_cursor
         elsif limit.nil? && caching_cursor_limit.nil?
           caching_cursor
-        else
-          nil
         end
       end
 
@@ -214,6 +210,7 @@ module Mongo
         return nil unless limit
         # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
         return nil if limit == 0
+
         # For the purposes of caching, a negative limit is the same as as a positive limit.
         limit.abs
       end
@@ -221,12 +218,8 @@ module Mongo
       private
 
       def cache_key(**opts)
-        unless opts[:namespace]
-          raise ArgumentError.new("Cannot generate cache key without namespace")
-        end
-        unless opts[:selector]
-          raise ArgumentError.new("Cannot generate cache key without selector")
-        end
+        raise ArgumentError.new('Cannot generate cache key without namespace') unless opts[:namespace]
+        raise ArgumentError.new('Cannot generate cache key without selector') unless opts[:selector]
 
         [
           opts[:namespace],
@@ -254,7 +247,6 @@ module Mongo
 
     # Rack middleware that activates the query cache for each request.
     class Middleware
-
       # Instantiate the middleware.
       #
       # @example Create the new middleware.

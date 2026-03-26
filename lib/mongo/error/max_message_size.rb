@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,17 +16,15 @@
 
 module Mongo
   class Error
-
     # Exception that is raised when trying to send a message that exceeds max
     # message size.
     #
     # @since 2.0.0
     class MaxMessageSize < Error
-
       # The message is constant.
       #
       # @since 2.0.0
-      MESSAGE = "Message exceeds allowed max message size.".freeze
+      MESSAGE = 'Message exceeds allowed max message size.'
 
       # Instantiate the new exception.
       #
@@ -38,7 +35,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(max_size = nil)
-        super(max_size ?  MESSAGE + " The max is #{max_size}." : MESSAGE)
+        super(max_size ? MESSAGE + " The max is #{max_size}." : MESSAGE)
       end
     end
   end

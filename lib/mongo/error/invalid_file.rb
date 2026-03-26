@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # Raised if the file md5 and server md5 do not match when acknowledging
     # GridFS writes.
     #
     # @since 2.0.0
     class InvalidFile < Error
-
       # Create the new exception.
       #
       # @example Create the new exception.

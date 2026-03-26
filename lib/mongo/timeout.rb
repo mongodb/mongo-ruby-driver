@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -16,10 +15,8 @@
 # limitations under the License.
 
 module Mongo
-
   # @api private
   module Timeout
-
     # A wrapper around Ruby core's Timeout::timeout method that provides
     # a standardized API for Ruby versions older and newer than 2.4.0,
     # which is when the third argument was introduced.
@@ -30,12 +27,10 @@ module Mongo
     # @param [ String ] message The error message passed to the exception raised
     #   on timeout, optional. When no error message is provided, the default
     #   error message for the exception class is used.
-    def timeout(sec, klass=nil, message=nil)
+    def timeout(sec, klass = nil, message = nil, &block)
       if message && RUBY_VERSION < '2.94.0'
         begin
-          ::Timeout.timeout(sec) do
-            yield
-          end
+          ::Timeout.timeout(sec, &block)
         rescue ::Timeout::Error
           raise klass, message
         end
@@ -43,10 +38,8 @@ module Mongo
         # Jruby Timeout::timeout method does not support passing nil arguments.
         # Remove the nil arguments before passing them along to the core
         # Timeout::timeout method.
-        optional_args = [klass, message].compact
-        ::Timeout.timeout(sec, *optional_args) do
-          yield
-        end
+        optional_args = [ klass, message ].compact
+        ::Timeout.timeout(sec, *optional_args, &block)
       end
     end
     module_function :timeout

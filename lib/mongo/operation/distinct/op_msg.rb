@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class Distinct
-
       # A MongoDB distinct operation sent as an op message.
       #
       # @api private
@@ -30,10 +28,10 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(_connection)
           spec[:selector].merge(
             collation: spec[:collation],
-            comment: spec[:comment],
+            comment: spec[:comment]
           ).compact
         end
       end

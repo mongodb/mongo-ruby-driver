@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,28 +16,24 @@
 #
 
 RSpec::Matchers.define :match_command_name do |expectation|
-
   match do |event|
     expect(event.command_name.to_s).to eq(expectation.command_name.to_s)
   end
 end
 
 RSpec::Matchers.define :match_database_name do |expectation|
-
   match do |event|
     expect(event.database_name.to_s).to eq(expectation.database_name.to_s)
   end
 end
 
-RSpec::Matchers.define :generate_request_id do |expectation|
-
+RSpec::Matchers.define :generate_request_id do |_expectation|
   match do |event|
     expect(event.request_id).to be > 0
   end
 end
 
-RSpec::Matchers.define :generate_operation_id do |expectation|
-
+RSpec::Matchers.define :generate_operation_id do |_expectation|
   match do |event|
     expect(event.request_id).to be > 0
   end
@@ -61,7 +56,6 @@ RSpec::Matchers.define :match_reply do |expectation|
 end
 
 RSpec::Matchers.define :match_command_started_event do |expectation|
-
   match do |event|
     expect(event).to match_command_name(expectation)
     expect(event).to match_database_name(expectation)
@@ -72,7 +66,6 @@ RSpec::Matchers.define :match_command_started_event do |expectation|
 end
 
 RSpec::Matchers.define :match_command_succeeded_event do |expectation|
-
   match do |event|
     expect(event).to match_command_name(expectation)
     expect(event).to generate_operation_id
@@ -82,7 +75,6 @@ RSpec::Matchers.define :match_command_succeeded_event do |expectation|
 end
 
 RSpec::Matchers.define :match_command_failed_event do |expectation|
-
   match do |event|
     expect(event).to match_command_name(expectation)
     expect(event).to generate_operation_id
@@ -92,12 +84,10 @@ end
 
 module Mongo
   module CommandMonitoring
-
     # Matchers common behavior.
     #
     # @since 2.1.0
     module Matchable
-
       # Determine if the data matches.
       #
       # @example Does the data match?
@@ -111,7 +101,7 @@ module Mongo
       # @since 2.1.0
       def data_matches?(actual, expected)
         case expected
-        when ::Hash, BSON::Document then
+        when ::Hash, BSON::Document
           hash_matches?(actual, expected)
         when ::Array
           array_matches?(actual, expected)
@@ -164,9 +154,7 @@ module Mongo
       def array_matches?(actual, expected)
         expected.each_with_index do |value, i|
           # @todo: Durran: fix for kill cursors replies
-          if actual
-            return false unless data_matches?(actual[i], value)
-          end
+          return false if actual && !data_matches?(actual[i], value)
         end
       end
 
@@ -183,9 +171,9 @@ module Mongo
       # @since 2.1.0
       def value_matches?(actual, expected)
         case expected
-        when '42', 42 then
+        when '42', 42
           actual > 0
-        when '' then
+        when ''
           !actual.nil?
         else
           actual == expected
@@ -197,7 +185,6 @@ module Mongo
     #
     # @since 2.1.0
     class Spec
-
       # Create the spec.
       #
       # @param [ String ] test_path The yaml test path.
@@ -226,16 +213,13 @@ module Mongo
     #
     # @since 2.1.0
     class Test
-
       # @return [ String ] description The test description.
       attr_reader :description
 
       # @return [ Array<Expectation> ] The expectations.
       attr_reader :expectations
 
-      attr_reader :min_server_fcv
-
-      attr_reader :max_server_version
+      attr_reader :min_server_fcv, :max_server_version
 
       # Create the new test.
       #
@@ -252,7 +236,7 @@ module Mongo
         @max_server_version = test['ignore_if_server_version_greater_than']
         @min_server_fcv = test['ignore_if_server_version_less_than']
         @operation = Mongo::CRUD::Operation.new(self, test['operation'])
-        @expectations = test['expectations'].map{ |e| Expectation.new(e) }
+        @expectations = test['expectations'].map { |e| Expectation.new(e) }
       end
 
       # Run the test against the provided collection.
@@ -274,7 +258,6 @@ module Mongo
     #
     # @since 2.1.0
     class Expectation
-
       # @return [ String ] event_type The type of expected event.
       attr_reader :event_type
 
@@ -314,7 +297,7 @@ module Mongo
       #
       # @since 2.1.0
       def event_name
-        event_type.gsub('_', ' ')
+        event_type.tr('_', ' ')
       end
 
       # Create the new expectation.

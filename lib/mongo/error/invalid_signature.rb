@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # This exception is raised when the server verifier does not match the
     # expected signature on the client.
     #
     # @since 2.0.0
     class InvalidSignature < Error
-
       # @return [ String ] verifier The server verifier string.
       attr_reader :verifier
 

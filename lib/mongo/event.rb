@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,30 +16,29 @@
 
 module Mongo
   module Event
-
     # When a standalone is discovered.
     #
     # @since 2.0.6
     # @deprecated Will be removed in 3.0
-    STANDALONE_DISCOVERED = 'standalone_discovered'.freeze
+    STANDALONE_DISCOVERED = 'standalone_discovered'
 
     # When a server is elected primary.
     #
     # @since 2.0.0
     # @deprecated Will be removed in 3.0
-    PRIMARY_ELECTED = 'primary_elected'.freeze
+    PRIMARY_ELECTED = 'primary_elected'
 
     # When a server is discovered to be a member of a topology.
     #
     # @since 2.4.0
     # @deprecated Will be removed in 3.0
-    MEMBER_DISCOVERED = 'member_discovered'.freeze
+    MEMBER_DISCOVERED = 'member_discovered'
 
     # When a server is to be removed from a cluster.
     #
     # @since 2.0.6
     # @deprecated Will be removed in 3.0
-    DESCRIPTION_CHANGED = 'description_changed'.freeze
+    DESCRIPTION_CHANGED = 'description_changed'
   end
 end
 

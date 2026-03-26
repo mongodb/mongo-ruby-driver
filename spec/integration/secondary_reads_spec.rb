@@ -1,4 +1,3 @@
-# rubocop:todo all
 require 'spec_helper'
 
 describe 'Secondary reads' do
@@ -10,13 +9,10 @@ describe 'Secondary reads' do
   end
 
   shared_examples 'performs reads as per read preference' do
-
-    %i(primary primary_preferred).each do |mode|
-
+    %i[primary primary_preferred].each do |mode|
       context mode.inspect do
-
         let(:client) do
-          root_authorized_client.with(read: {mode: mode}).use('sr')
+          root_authorized_client.with(read: { mode: mode }).use('sr')
         end
 
         it 'reads from primary' do
@@ -34,11 +30,10 @@ describe 'Secondary reads' do
       end
     end
 
-    %i(secondary secondary_preferred).each do |mode|
-
+    %i[secondary secondary_preferred].each do |mode|
       context mode.inspect do
         let(:client) do
-          root_authorized_client.with(read: {mode: mode}).use('sr')
+          root_authorized_client.with(read: { mode: mode }).use('sr')
         end
 
         it 'reads from secondaries' do
@@ -80,17 +75,19 @@ describe 'Secondary reads' do
     else
       client.cluster.servers.each do |server|
         next unless server.primary? || server.secondary?
+
         addresses << server.address.seed
       end
     end
     stats = Hash.new(0)
     addresses.each do |address|
       ClientRegistry.instance.new_local_client(
-        [address],
-        SpecConfig.instance.all_test_options.merge(connect: :direct),
+        [ address ],
+        SpecConfig.instance.all_test_options.merge(connect: :direct)
       ) do |c|
         server = c.cluster.servers.first
         next unless server.primary? || server.secondary?
+
         stat = c.command(serverStatus: 1).documents.first
         queries = stat['opcounters']['query']
         if server.primary?

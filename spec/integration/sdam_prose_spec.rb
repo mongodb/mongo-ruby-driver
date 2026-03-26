@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -15,14 +14,19 @@ describe 'SDAM prose tests' do
 
     let(:client) do
       new_local_client(SpecConfig.instance.addresses,
-        # Heartbeat interval is bound by 500 ms
-        SpecConfig.instance.test_options.merge(
-          heartbeat_frequency: 0.5,
-          app_name: 'streamingRttTest',
-        ),
-      ).tap do |client|
+                       # Heartbeat interval is bound by 500 ms
+                       SpecConfig.instance.test_options.merge(
+                         heartbeat_frequency: 0.5,
+                         app_name: 'streamingRttTest'
+                       )).tap do |client|
         client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       end
+    end
+
+    after do
+      root_authorized_client.use('admin').database.command(
+        configureFailPoint: 'failCommand', mode: 'off'
+      )
     end
 
     it 'updates RTT' do
@@ -38,30 +42,22 @@ describe 'SDAM prose tests' do
 
       root_authorized_client.use('admin').database.command(
         configureFailPoint: 'failCommand',
-        mode: {times: 1000},
+        mode: { times: 1000 },
         data: {
-          failCommands: %w(isMaster hello),
+          failCommands: %w[isMaster hello],
           blockConnection: true,
           blockTimeMS: 500,
-          appName: "streamingRttTest",
-        },
+          appName: 'streamingRttTest',
+        }
       )
 
       deadline = Mongo::Utils.monotonic_time + 10
       loop do
-        if server.average_round_trip_time > 0.25
-          break
-        end
-        if Mongo::Utils.monotonic_time >= deadline
-          raise "Failed to witness RTT growing to >= 250 ms in 10 seconds"
-        end
+        break if server.average_round_trip_time > 0.25
+        raise 'Failed to witness RTT growing to >= 250 ms in 10 seconds' if Mongo::Utils.monotonic_time >= deadline
+
         sleep 0.2
       end
-    end
-
-    after do
-      root_authorized_client.use('admin').database.command(
-        configureFailPoint: 'failCommand', mode: 'off')
     end
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class ListCollections
-
       # A MongoDB listcollections operation sent as an op message.
       #
       # @api private
@@ -30,11 +28,11 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(_connection)
           (spec[SELECTOR] || {}).merge({
-            listCollections: 1,
-            comment: spec[:comment]
-          }).compact
+                                         listCollections: 1,
+                                         comment: spec[:comment]
+                                       }).compact
         end
       end
     end

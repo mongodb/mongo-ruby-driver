@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   module Operation
-
     # Shared behavior of response handling for operations.
     #
     # @api private
     module ResponseHandling
-
       private
 
       # @param [ Mongo::Operation::Result ] result The operation result.
@@ -52,12 +49,8 @@ module Mongo
       def add_error_labels(connection, context)
         yield
       rescue Mongo::Error::SocketError => e
-        if context.in_transaction? && !context.committing_transaction?
-          e.add_label('TransientTransactionError')
-        end
-        if context.committing_transaction?
-          e.add_label('UnknownTransactionCommitResult')
-        end
+        e.add_label('TransientTransactionError') if context.in_transaction? && !context.committing_transaction?
+        e.add_label('UnknownTransactionCommitResult') if context.committing_transaction?
 
         maybe_add_retryable_write_error_label!(e, connection, context)
 
@@ -66,12 +59,10 @@ module Mongo
         maybe_add_retryable_write_error_label!(e, connection, context)
         raise e
       rescue Mongo::Error::OperationFailure::Family => e
-        if context.committing_transaction?
-          if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
+        if context.committing_transaction? && (e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
               !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code)
-          ) || e.max_time_ms_expired?
-            e.add_label('UnknownTransactionCommitResult')
-          end
+                                                                                    ) || e.max_time_ms_expired?)
+          e.add_label('UnknownTransactionCommitResult')
         end
 
         maybe_add_retryable_write_error_label!(e, connection, context)
@@ -91,9 +82,7 @@ module Mongo
       def unpin_maybe(session, connection)
         yield
       rescue Mongo::Error => e
-        if session
-          session.unpin_maybe(e, connection)
-        end
+        session.unpin_maybe(e, connection) if session
         raise
       end
 
@@ -114,8 +103,6 @@ module Mongo
         e.service_id = connection.service_id
         raise e
       end
-
-      private
 
       # A method that will add the RetryableWriteError label to an error if
       # any of the following conditions are true:
@@ -150,8 +137,8 @@ module Mongo
         # Note: any write operation within a transaction (excepting commit and
         # abort is NOT a retryable operation)
         retryable_operation = context.committing_transaction? ||
-          context.aborting_transaction? ||
-          !context.in_transaction? && context.any_retry_writes?
+                              context.aborting_transaction? ||
+                              (!context.in_transaction? && context.any_retry_writes?)
 
         # An operation should add the RetryableWriteError label if one of the
         # following conditions is met:
@@ -163,9 +150,9 @@ module Mongo
           error.is_a?(Mongo::Error::SocketError) ||
           error.is_a?(Mongo::Error::SocketTimeoutError)
 
-        if retryable_operation && should_add_error_label && error.write_retryable?
-          error.add_label('RetryableWriteError')
-        end
+        return unless retryable_operation && should_add_error_label && error.write_retryable?
+
+        error.add_label('RetryableWriteError')
       end
     end
   end

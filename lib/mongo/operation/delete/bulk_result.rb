@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class Delete
-
       # Defines custom behavior of results for a delete when part of a bulk write.
       #
       # @since 2.0.0
@@ -37,9 +35,10 @@ module Mongo
         # @api public
         def n_removed
           return 0 unless acknowledged?
+
           @replies.reduce(0) do |n, reply|
             if reply.documents.first[Result::N]
-              n += reply.documents.first[Result::N]
+              n + reply.documents.first[Result::N]
             else
               n
             end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class Insert
-
       # Defines custom behavior of results for an insert.
       #
       # According to the CRUD spec, reporting the inserted ids
@@ -27,7 +25,6 @@ module Mongo
       # @since 2.0.0
       # @api semiprivate
       class Result < Operation::Result
-
         # Get the ids of the inserted documents.
         #
         # @since 2.0.0

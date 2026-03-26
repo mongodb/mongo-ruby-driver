@@ -97,7 +97,13 @@ task :mongo do
   require 'mongo'
 end
 
-# rubocop:disable Metrics/BlockLength
+RUBOCOPABLE = %w[ bin examples gemfiles profile lib spec mongo.gemspec Gemfile Rakefile upload-api-docs ].freeze
+
+desc 'Run rubocop on the codebase'
+task :rubocop do
+  sh 'bundle', 'exec', 'rubocop', *RUBOCOPABLE, verbose: false
+end
+
 namespace :spec do
   desc 'Creates necessary user accounts in the cluster'
   task prepare: :mongo do
@@ -155,8 +161,6 @@ namespace :spec do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength
-
 desc 'Build and validate the evergreen config'
 task eg: %w[ eg:build eg:validate ]
 

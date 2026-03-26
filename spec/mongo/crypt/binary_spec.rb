@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -96,7 +95,8 @@ describe Mongo::Crypt::Binary do
       it 'returns false' do
         expect do
           binary.write(data)
-        end.to raise_error(ArgumentError, /Cannot write #{data.length} bytes of data to a Binary object that was initialized with 0 bytes/)
+        end.to raise_error(ArgumentError,
+                           /Cannot write #{data.length} bytes of data to a Binary object that was initialized with 0 bytes/)
       end
     end
 
@@ -106,7 +106,8 @@ describe Mongo::Crypt::Binary do
       it 'returns false' do
         expect do
           binary.write(data)
-        end.to raise_error(ArgumentError, /Cannot write #{data.length} bytes of data to a Binary object that was initialized with #{data.length - 1} bytes/)
+        end.to raise_error(ArgumentError,
+                           /Cannot write #{data.length} bytes of data to a Binary object that was initialized with #{data.length - 1} bytes/)
       end
     end
   end

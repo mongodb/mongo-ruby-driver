@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Exception raised when trying to check out a connection from a connection
     # pool, the pool is at its max size and no connections become available
     # within the configured wait timeout.
@@ -27,7 +25,6 @@ module Mongo
     #
     # @since 2.9.0
     class ConnectionCheckOutTimeout < ::Timeout::Error
-
       # @return [ Mongo::Address ] address The address of the server the
       #   pool's connections connect to.
       #
@@ -42,9 +39,9 @@ module Mongo
       def initialize(msg, options)
         super(msg)
         @address = options[:address]
-        unless @address
-          raise ArgumentError, 'Address argument is required'
-        end
+        return if @address
+
+        raise ArgumentError, 'Address argument is required'
       end
     end
   end

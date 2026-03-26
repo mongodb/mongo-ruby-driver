@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,26 +17,24 @@
 module Mongo
   class Collection
     class View
-
       # Defines explain related behavior for collection view.
       #
       # @since 2.0.0
       module Explainable
-
         # The query planner verbosity constant.
         #
         # @since 2.2.0
-        QUERY_PLANNER = 'queryPlanner'.freeze
+        QUERY_PLANNER = 'queryPlanner'
 
         # The execution stats verbosity constant.
         #
         # @since 2.2.0
-        EXECUTION_STATS = 'executionStats'.freeze
+        EXECUTION_STATS = 'executionStats'
 
         # The all plans execution verbosity constant.
         #
         # @since 2.2.0
-        ALL_PLANS_EXECUTION = 'allPlansExecution'.freeze
+        ALL_PLANS_EXECUTION = 'allPlansExecution'
 
         # Get the query plan for the query.
         #
@@ -70,10 +67,8 @@ module Mongo
         #   (e.g. :query_planner => "queryPlanner").
         def explain_options(**opts)
           explain_limit = limit || 0
-          # Note: opts will never be nil here.
-          if Symbol === opts[:verbosity]
-            opts[:verbosity] = Utils.camelize(opts[:verbosity])
-          end
+          # NOTE: opts will never be nil here.
+          opts[:verbosity] = Utils.camelize(opts[:verbosity]) if opts[:verbosity].is_a?(Symbol)
           { limit: -explain_limit.abs, explain: opts }
         end
       end

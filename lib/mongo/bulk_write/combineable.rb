@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,14 +16,12 @@
 
 module Mongo
   class BulkWrite
-
     # Defines behavior around combiners
     #
     # @api private
     #
     # @since 2.1.0
     module Combineable
-
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
 

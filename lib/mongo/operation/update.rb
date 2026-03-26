@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ require 'mongo/operation/update/bulk_result'
 
 module Mongo
   module Operation
-
     # A MongoDB update operation.
     #
     # @api private
@@ -31,9 +29,7 @@ module Mongo
       include Specifiable
       include Write
 
-      private
-
-      IDENTIFIER = 'updates'.freeze
+      IDENTIFIER = 'updates'
     end
   end
 end

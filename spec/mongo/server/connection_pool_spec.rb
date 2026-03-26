@@ -1,16 +1,14 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
-
   let(:options) { {} }
 
   let(:server_options) do
     Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
-      SpecConfig.instance.all_test_options,
-    )).tap do |opts|
+                                          SpecConfig.instance.all_test_options
+                                        )).tap do |opts|
       opts.delete(:min_pool_size)
       opts.delete(:max_pool_size)
       opts.delete(:wait_queue_timeout)
@@ -49,8 +47,7 @@ describe Mongo::Server::ConnectionPool do
   let(:server) do
     register_server(
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        {monitoring_io: false}.update(server_options)
-      ).tap do |server|
+                        { monitoring_io: false }.update(server_options)).tap do |server|
         allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
       end
     )
@@ -71,9 +68,8 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#initialize' do
-
     context 'when a min size is provided' do
-      let (:options) do
+      let(:options) do
         { min_pool_size: 2 }
       end
 
@@ -87,12 +83,12 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'does not use the same objects in the pool' do
-        expect(pool.check_out).to_not equal(pool.check_out)
+        expect(pool.check_out).not_to equal(pool.check_out)
       end
     end
 
     context 'when min size exceeds default max size' do
-      let (:options) do
+      let(:options) do
         { min_pool_size: 50 }
       end
 
@@ -102,7 +98,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when min size is provided and max size is zero (unlimited)' do
-      let (:options) do
+      let(:options) do
         { min_size: 10, max_size: 0 }
       end
 
@@ -112,19 +108,18 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when no min size is provided' do
-
       it 'creates the pool with no connections' do
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
       end
 
-      it "starts the populator" do
+      it 'starts the populator' do
         expect(populator).to be_running
       end
     end
 
     context 'sizes given as min_size and max_size' do
-      let (:options) do
+      let(:options) do
         { min_size: 3, max_size: 7 }
       end
 
@@ -135,7 +130,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'sizes given as min_pool_size and max_pool_size' do
-      let (:options) do
+      let(:options) do
         { min_pool_size: 3, max_pool_size: 7 }
       end
 
@@ -146,7 +141,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'timeout given as wait_timeout' do
-      let (:options) do
+      let(:options) do
         { wait_timeout: 4 }
       end
 
@@ -156,7 +151,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'timeout given as wait_queue_timeout' do
-      let (:options) do
+      let(:options) do
         { wait_queue_timeout: 4 }
       end
 
@@ -168,7 +163,7 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#max_size' do
     context 'when a max pool size option is provided' do
-      let (:options) do
+      let(:options) do
         { max_pool_size: 3 }
       end
 
@@ -196,7 +191,7 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#wait_timeout' do
     context 'when the wait timeout option is provided' do
-      let (:options) do
+      let(:options) do
         { wait_queue_timeout: 3 }
       end
 
@@ -310,8 +305,8 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.closed?).to be true
       end
 
-      it "stops the populator" do
-        expect(populator).to_not be_running
+      it 'stops the populator' do
+        expect(populator).not_to be_running
       end
     end
   end
@@ -334,7 +329,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when a connection is checked out on the thread' do
-
       before do
         pool.check_in(connection)
       end
@@ -464,7 +458,7 @@ describe Mongo::Server::ConnectionPool do
         end
       end
 
-      it "returns immediately" do
+      it 'returns immediately' do
         expect(pool.check_in(connection)).to be_nil
       end
     end
@@ -477,10 +471,10 @@ describe Mongo::Server::ConnectionPool do
 
       it 'closes connection' do
         expect(connection.closed?).to be false
-        expect(pool.instance_variable_get('@available_connections').length).to eq(0)
+        expect(pool.instance_variable_get(:@available_connections).length).to eq(0)
         pool.check_in(connection)
         expect(connection.closed?).to be true
-        expect(pool.instance_variable_get('@available_connections').length).to eq(0)
+        expect(pool.instance_variable_get(:@available_connections).length).to eq(0)
       end
     end
 
@@ -489,7 +483,8 @@ describe Mongo::Server::ConnectionPool do
         pool.check_in(connection)
         expect do
           pool.check_in(connection)
-        end.to raise_error(ArgumentError, /Trying to check in a connection which is not currently checked out by this pool.*/)
+        end.to raise_error(ArgumentError,
+                           /Trying to check in a connection which is not currently checked out by this pool.*/)
         expect(pool.size).to eq(1)
         expect(pool.check_out).to eq(connection)
       end
@@ -526,7 +521,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when a connection is checked out on a different thread' do
-
       let!(:connection) do
         Thread.new { pool.check_out }.join
       end
@@ -536,12 +530,11 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'does not return the same connection instance' do
-        expect(pool.check_out).to_not eql(connection)
+        expect(pool.check_out).not_to eql(connection)
       end
     end
 
     context 'when connections are checked out and checked back in' do
-
       it 'pulls the connection from the front of the queue' do
         first = pool.check_out
         second = pool.check_out
@@ -599,17 +592,14 @@ describe Mongo::Server::ConnectionPool do
           pool.check_out
         end
       end
-
     end
 
     context 'when there are no available connections' do
-
       let(:options) do
         { max_pool_size: 1, min_pool_size: 0 }
       end
 
       context 'when the max size is not reached' do
-
         it 'creates a new connection' do
           expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
           expect(pool.check_out).to be_a(Mongo::Server::Connection)
@@ -618,14 +608,13 @@ describe Mongo::Server::ConnectionPool do
       end
 
       context 'when the max size is reached' do
-
         context 'without service_id' do
           it 'raises a timeout error' do
             expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
             pool.check_out
-            expect {
+            expect do
               pool.check_out
-            }.to raise_error(::Timeout::Error)
+            end.to raise_error(Timeout::Error)
             expect(pool.size).to eq(1)
           end
         end
@@ -635,7 +624,7 @@ describe Mongo::Server::ConnectionPool do
 
           let(:connection_global_id) do
             pool.with_connection do |connection|
-              connection.global_id.should_not be nil
+              connection.global_id.should_not be_nil
               connection.global_id
             end
           end
@@ -646,9 +635,9 @@ describe Mongo::Server::ConnectionPool do
 
             pool.check_out(connection_global_id: connection_global_id)
 
-            expect {
+            expect do
               pool.check_out(connection_global_id: connection_global_id)
-            }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
+            end.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
 
             expect(pool.size).to eq(1)
           end
@@ -660,9 +649,9 @@ describe Mongo::Server::ConnectionPool do
             pool.check_out(connection_global_id: connection_global_id)
 
             start_time = Mongo::Utils.monotonic_time
-            expect {
+            expect do
               pool.check_out(connection_global_id: connection_global_id)
-            }.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
+            end.to raise_error(Mongo::Error::ConnectionCheckOutTimeout)
             elapsed_time = Mongo::Utils.monotonic_time - start_time
 
             elapsed_time.should > 1
@@ -672,7 +661,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when waiting for a connection to be checked in' do
-
       let!(:connection) { pool.check_out }
 
       before do
@@ -724,23 +712,23 @@ describe Mongo::Server::ConnectionPool do
         expect { pool.check_out }.to raise_error(Mongo::Error)
         expect(pool.size).to eq(0)
 
-         checkout_failed_events = subscriber.published_events.select do |event|
+        checkout_failed_events = subscriber.published_events.select do |event|
           event.is_a?(Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed)
         end
         expect(checkout_failed_events.size).to eq(1)
         expect(checkout_failed_events.first.reason).to be(:connection_error)
       end
 
-      context "when the error is caused by close" do
+      context 'when the error is caused by close' do
         let(:pool) { server.pool }
         let(:options) { { max_size: 1 } }
 
-        it "raises an error and returns immediately" do
+        it 'raises an error and returns immediately' do
           expect(pool.max_size).to eq(1)
-          Timeout::timeout(1) do
-            c1 = pool.check_out
+          Timeout.timeout(1) do
+            pool.check_out
             thread = Thread.new do
-              c2 = pool.check_out
+              pool.check_out
             end
 
             sleep 0.1
@@ -753,14 +741,14 @@ describe Mongo::Server::ConnectionPool do
       end
     end
 
-    context "when the pool is paused" do
+    context 'when the pool is paused' do
       require_no_linting
 
       before do
         pool.pause
       end
 
-      it "raises a PoolPausedError" do
+      it 'raises a PoolPausedError' do
         expect do
           pool.check_out
         end.to raise_error(Mongo::Error::PoolPausedError)
@@ -768,51 +756,51 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  describe "#ready" do
+  describe '#ready' do
     require_no_linting
 
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
 
-    context "when the pool is closed" do
+    context 'when the pool is closed' do
       before do
         pool.close
       end
 
-      it "raises an error" do
+      it 'raises an error' do
         expect do
           pool.ready
         end.to raise_error(Mongo::Error::PoolClosedError)
       end
     end
 
-    context "when readying an initialized pool" do
+    context 'when readying an initialized pool' do
       before do
         pool.ready
       end
 
-      it "starts the populator" do
+      it 'starts the populator' do
         expect(populator).to be_running
       end
 
-      it "readies the pool" do
+      it 'readies the pool' do
         expect(pool).to be_ready
       end
     end
 
-    context "when readying a paused pool" do
+    context 'when readying a paused pool' do
       before do
         pool.ready
         pool.pause
       end
 
-      it "readies the pool" do
+      it 'readies the pool' do
         pool.ready
         expect(pool).to be_ready
       end
 
-      it "signals the populate semaphore" do
+      it 'signals the populate semaphore' do
         RSpec::Mocks.with_temporary_scope do
           expect(populate_semaphore).to receive(:signal).and_wrap_original do |m, *args|
             m.call(*args)
@@ -823,172 +811,172 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  describe "#ready?" do
+  describe '#ready?' do
     require_no_linting
 
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
 
-    shared_examples "pool is ready" do
-      it "is ready" do
+    shared_examples 'pool is ready' do
+      it 'is ready' do
         expect(pool).to be_ready
       end
     end
 
-    shared_examples "pool is not ready" do
-      it "is not ready" do
-        expect(pool).to_not be_ready
+    shared_examples 'pool is not ready' do
+      it 'is not ready' do
+        expect(pool).not_to be_ready
       end
     end
 
-    context "before readying the pool" do
-      it_behaves_like "pool is not ready"
+    context 'before readying the pool' do
+      it_behaves_like 'pool is not ready'
     end
 
-    context "after readying the pool" do
+    context 'after readying the pool' do
       before do
         pool.ready
       end
 
-      it_behaves_like "pool is ready"
+      it_behaves_like 'pool is ready'
     end
 
-    context "after readying and pausing the pool" do
-      before do
-        pool.ready
-        pool.pause
-      end
-
-      it_behaves_like "pool is not ready"
-    end
-
-    context "after readying, pausing, and readying the pool" do
+    context 'after readying and pausing the pool' do
       before do
         pool.ready
         pool.pause
+      end
+
+      it_behaves_like 'pool is not ready'
+    end
+
+    context 'after readying, pausing, and readying the pool' do
+      before do
+        pool.ready
+        pool.pause
         pool.ready
       end
 
-      it_behaves_like "pool is ready"
+      it_behaves_like 'pool is ready'
     end
 
-    context "after closing the pool" do
+    context 'after closing the pool' do
       before do
         pool.ready
         pool.close
       end
 
-      it_behaves_like "pool is not ready"
+      it_behaves_like 'pool is not ready'
     end
   end
 
-  describe "#pause" do
+  describe '#pause' do
     require_no_linting
 
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
 
-    context "when the pool is closed" do
+    context 'when the pool is closed' do
       before do
         pool.close
       end
 
-      it "raises an error" do
+      it 'raises an error' do
         expect do
           pool.pause
         end.to raise_error(Mongo::Error::PoolClosedError)
       end
     end
 
-    context "when the pool is paused" do
+    context 'when the pool is paused' do
       before do
         pool.ready
         pool.pause
       end
 
-      it "is still paused" do
+      it 'is still paused' do
         expect(pool).to be_paused
         pool.pause
         expect(pool).to be_paused
       end
     end
 
-    context "when the pool is ready" do
+    context 'when the pool is ready' do
       before do
         pool.ready
       end
 
-      it "is still paused" do
+      it 'is still paused' do
         expect(pool).to be_ready
         pool.pause
         expect(pool).to be_paused
       end
 
-      it "does not stop the populator" do
+      it 'does not stop the populator' do
         expect(populator).to be_running
       end
     end
   end
 
-  describe "#paused?" do
+  describe '#paused?' do
     require_no_linting
 
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
 
-    shared_examples "pool is paused" do
-      it "is paused" do
+    shared_examples 'pool is paused' do
+      it 'is paused' do
         expect(pool).to be_paused
       end
     end
 
-    shared_examples "pool is not paused" do
-      it "is not paused" do
-        expect(pool).to_not be_paused
+    shared_examples 'pool is not paused' do
+      it 'is not paused' do
+        expect(pool).not_to be_paused
       end
     end
 
-    context "before readying the pool" do
-      it_behaves_like "pool is paused"
+    context 'before readying the pool' do
+      it_behaves_like 'pool is paused'
     end
 
-    context "after readying the pool" do
+    context 'after readying the pool' do
       before do
         pool.ready
       end
 
-      it_behaves_like "pool is not paused"
+      it_behaves_like 'pool is not paused'
     end
 
-    context "after readying and pausing the pool" do
-      before do
-        pool.ready
-        pool.pause
-      end
-
-      it_behaves_like "pool is paused"
-    end
-
-    context "after readying, pausing, and readying the pool" do
+    context 'after readying and pausing the pool' do
       before do
         pool.ready
         pool.pause
+      end
+
+      it_behaves_like 'pool is paused'
+    end
+
+    context 'after readying, pausing, and readying the pool' do
+      before do
+        pool.ready
+        pool.pause
         pool.ready
       end
 
-      it_behaves_like "pool is not paused"
+      it_behaves_like 'pool is not paused'
     end
 
-    context "after closing the pool" do
+    context 'after closing the pool' do
       before do
         pool.ready
         pool.close
       end
 
-      it "raises an error" do
+      it 'raises an error' do
         expect do
           pool.paused?
         end.to raise_error(Mongo::Error::PoolClosedError)
@@ -996,58 +984,57 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  describe "#closed?" do
+  describe '#closed?' do
     require_no_linting
 
     let(:pool) do
       register_pool(described_class.new(server, server_options))
     end
 
-    shared_examples "pool is closed" do
-      it "is closed" do
+    shared_examples 'pool is closed' do
+      it 'is closed' do
         expect(pool).to be_closed
       end
     end
 
-    shared_examples "pool is not closed" do
-      it "is not closed" do
-        expect(pool).to_not be_closed
+    shared_examples 'pool is not closed' do
+      it 'is not closed' do
+        expect(pool).not_to be_closed
       end
     end
 
-    context "before readying the pool" do
-      it_behaves_like "pool is not closed"
+    context 'before readying the pool' do
+      it_behaves_like 'pool is not closed'
     end
 
-    context "after readying the pool" do
+    context 'after readying the pool' do
       before do
         pool.ready
       end
 
-      it_behaves_like "pool is not closed"
+      it_behaves_like 'pool is not closed'
     end
 
-    context "after readying and pausing the pool" do
+    context 'after readying and pausing the pool' do
       before do
         pool.ready
         pool.pause
       end
 
-      it_behaves_like "pool is not closed"
+      it_behaves_like 'pool is not closed'
     end
 
-    context "after closing the pool" do
+    context 'after closing the pool' do
       before do
         pool.ready
         pool.close
       end
 
-      it_behaves_like "pool is closed"
+      it_behaves_like 'pool is closed'
     end
   end
 
   describe '#disconnect!' do
-
     context 'when pool is closed' do
       before do
         pool.close
@@ -1073,7 +1060,7 @@ describe Mongo::Server::ConnectionPool do
         pool.ready
         # kill background thread to test disconnect behavior
         pool.stop_populator
-        expect(pool.instance_variable_get('@populator').running?).to be false
+        expect(pool.instance_variable_get(:@populator).running?).to be false
         # make pool be of size 2 so that it has enqueued connections
         # when told to disconnect
         c1 = pool.check_out
@@ -1096,7 +1083,7 @@ describe Mongo::Server::ConnectionPool do
 
       it 'disconnects and removes and bumps' do
         old_connections = []
-        pool.instance_variable_get('@available_connections').each do |connection|
+        pool.instance_variable_get(:@available_connections).each do |connection|
           expect(connection).to receive(:disconnect!)
           old_connections << connection
         end
@@ -1149,7 +1136,7 @@ describe Mongo::Server::ConnectionPool do
       end
     end
 
-    context "when interrupting in use connections" do
+    context 'when interrupting in use connections' do
       context "when there's checked out connections" do
         require_topology :single, :replica_set, :sharded
         require_no_linting
@@ -1164,14 +1151,14 @@ describe Mongo::Server::ConnectionPool do
           pending_connections << pool.send(:create_connection)
         end
 
-        it "interrupts the connections" do
+        it 'interrupts the connections' do
           expect(pool).to receive(:populate).exactly(3).and_call_original
           RSpec::Mocks.with_temporary_scope do
             allow(pool.server).to receive(:unknown?).and_return(true)
             pool.clear(lazy: true, interrupt_in_use_connections: true)
           end
 
-          ::Utils.wait_for_condition(3) do
+          Utils.wait_for_condition(3) do
             pool.size == 0
           end
 
@@ -1183,13 +1170,13 @@ describe Mongo::Server::ConnectionPool do
       end
     end
 
-    context "when in load-balanced mode" do
+    context 'when in load-balanced mode' do
       require_topology :load_balanced
 
-      it "does not pause the pool" do
+      it 'does not pause the pool' do
         allow(pool.server).to receive(:unknown?).and_return(true)
         pool.clear
-        expect(pool).to_not be_paused
+        expect(pool).not_to be_paused
       end
     end
   end
@@ -1256,11 +1243,10 @@ describe Mongo::Server::ConnectionPool do
       expect(pool.inspect).to include('current_size=')
     end
 
-=begin obsolete
-    it 'includes the queue inspection' do
-      expect(pool.inspect).to include(pool.__send__(:queue).inspect)
-    end
-=end
+    # obsolete
+    #     it 'includes the queue inspection' do
+    #       expect(pool.inspect).to include(pool.__send__(:queue).inspect)
+    #     end
 
     it 'indicates the pool is not closed' do
       expect(pool.inspect).not_to include('closed')
@@ -1287,7 +1273,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when a connection cannot be checked out' do
-
       it 'does not add the connection to the pool' do
         # fails because with_connection raises the SocketError which is not caught anywhere
         allow(pool).to receive(:check_out).and_raise(Mongo::Error::SocketError)
@@ -1318,7 +1303,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when there is a max_idle_time specified' do
-
       let(:options) do
         { max_pool_size: 2, max_idle_time: 0.5 }
       end
@@ -1327,27 +1311,24 @@ describe Mongo::Server::ConnectionPool do
         Timecop.return
       end
 
-=begin obsolete
-      context 'when the connections have not been checked out' do
-
-        before do
-          queue.each do |conn|
-            expect(conn).not_to receive(:disconnect!)
-          end
-          sleep(0.5)
-          pool.close_idle_sockets
-        end
-
-        it 'does not close any sockets' do
-          expect(queue.none? { |c| c.connected? }).to be(true)
-        end
-      end
-=end
+      # obsolete
+      #       context 'when the connections have not been checked out' do
+      #
+      #         before do
+      #           queue.each do |conn|
+      #             expect(conn).not_to receive(:disconnect!)
+      #           end
+      #           sleep(0.5)
+      #           pool.close_idle_sockets
+      #         end
+      #
+      #         it 'does not close any sockets' do
+      #           expect(queue.none? { |c| c.connected? }).to be(true)
+      #         end
+      #       end
 
       context 'when connections have been checked out and returned to the pool' do
-
         context 'when min size is 0' do
-
           let(:options) do
             { max_pool_size: 2, min_pool_size: 0, max_idle_time: 0.5 }
           end
@@ -1372,7 +1353,7 @@ describe Mongo::Server::ConnectionPool do
           before do
             # Kill background thread to test close_idle_socket behavior
             pool.stop_populator
-            expect(pool.instance_variable_get('@populator').running?).to be false
+            expect(pool.instance_variable_get(:@populator).running?).to be false
           end
 
           context 'when more than the number of min_size are checked out' do
@@ -1381,10 +1362,10 @@ describe Mongo::Server::ConnectionPool do
             end
 
             it 'closes and removes connections with idle sockets and does not connect new ones' do
-              first = pool.check_out
-              second = pool.check_out
-              third = pool.check_out
-              fourth = pool.check_out
+              pool.check_out
+              pool.check_out
+              pool.check_out
+              pool.check_out
               fifth = pool.check_out
 
               pool.check_in(fifth)
@@ -1404,14 +1385,13 @@ describe Mongo::Server::ConnectionPool do
           end
 
           context 'when between 0 and min_size number of connections are checked out' do
-
             let(:options) do
               { max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5 }
             end
 
             it 'closes and removes connections with idle sockets and does not connect new ones' do
-              first = pool.check_out
-              second = pool.check_out
+              pool.check_out
+              pool.check_out
               third = pool.check_out
               fourth = pool.check_out
               fifth = pool.check_out
@@ -1419,7 +1399,6 @@ describe Mongo::Server::ConnectionPool do
               pool.check_in(third)
               pool.check_in(fourth)
               pool.check_in(fifth)
-
 
               expect(third).to receive(:disconnect!).and_call_original
               expect(third).not_to receive(:connect!)
@@ -1448,7 +1427,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when available connections include idle and non-idle ones' do
-      let (:options) do
+      let(:options) do
         { max_pool_size: 2, max_idle_time: 0.5 }
       end
 
@@ -1487,7 +1466,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when there is no max_idle_time specified' do
-
       let(:connection) do
         conn = pool.check_out
         conn.connect!
@@ -1516,16 +1494,15 @@ describe Mongo::Server::ConnectionPool do
       pool.stop_populator
       pool.disconnect!
       # Manually mark the pool ready.
-      pool.instance_variable_set('@ready', true)
+      pool.instance_variable_set(:@ready, true)
     end
 
-    let(:options) { {min_pool_size: 2, max_pool_size: 3} }
+    let(:options) { { min_pool_size: 2, max_pool_size: 3 } }
 
     context 'when pool size is at least min_pool_size' do
-
       before do
-        first_connection = pool.check_out
-        second_connection = pool.check_out
+        pool.check_out
+        pool.check_out
         expect(pool.size).to eq 2
         expect(pool.available_count).to eq 0
       end
@@ -1539,7 +1516,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when pool size is less than min_pool_size' do
       before do
-        first_connection = pool.check_out
+        pool.check_out
         expect(pool.size).to eq 1
         expect(pool.available_count).to eq 0
       end
@@ -1560,23 +1537,21 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.populate).to be false
 
         # Can't just check pool size; size errors when pool is closed
-        expect(pool.instance_variable_get('@available_connections').length).to eq(0)
-        expect(pool.instance_variable_get('@checked_out_connections').length).to eq(0)
-        expect(pool.instance_variable_get('@pending_connections').length).to eq(0)
+        expect(pool.instance_variable_get(:@available_connections).length).to eq(0)
+        expect(pool.instance_variable_get(:@checked_out_connections).length).to eq(0)
+        expect(pool.instance_variable_get(:@pending_connections).length).to eq(0)
       end
     end
 
     context 'when connect fails with socket related error once' do
       before do
         i = 0
-        expect(pool).to receive(:connect_connection).exactly(:twice).and_wrap_original{ |m, *args|
+        expect(pool).to(receive(:connect_connection).exactly(:twice).and_wrap_original do |m, *args|
           i += 1
-          if i == 1
-            raise Mongo::Error::SocketError
-          else
-            m.call(*args)
-          end
-        }
+          raise Mongo::Error::SocketError if i == 1
+
+          m.call(*args)
+        end)
         expect(pool.size).to eq 0
       end
 
@@ -1594,19 +1569,19 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'retries, raises the second error, and fails to create a connection' do
-        expect{ pool.populate }.to raise_error(Mongo::Error::SocketError)
+        expect { pool.populate }.to raise_error(Mongo::Error::SocketError)
         expect(pool.size).to eq 0
       end
     end
 
     context 'when connect fails with non socket related error' do
       before do
-        expect(pool).to receive(:connect_connection).once.and_raise(Mongo::Auth::InvalidMechanism.new(""))
+        expect(pool).to receive(:connect_connection).once.and_raise(Mongo::Auth::InvalidMechanism.new(''))
         expect(pool.size).to eq 0
       end
 
       it 'does not retry, raises the error, and fails to create a connection' do
-        expect{ pool.populate }.to raise_error(Mongo::Auth::InvalidMechanism)
+        expect { pool.populate }.to raise_error(Mongo::Auth::InvalidMechanism)
         expect(pool.size).to eq 0
       end
     end

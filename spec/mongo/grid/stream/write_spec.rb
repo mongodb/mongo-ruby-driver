@@ -1,17 +1,23 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Grid::FSBucket::Stream::Write do
-
   let(:support_fs) do
     authorized_client.database.fs(fs_options)
   end
 
   before do
-    support_fs.files_collection.drop rescue nil
-    support_fs.chunks_collection.drop rescue nil
+    begin
+      support_fs.files_collection.drop
+    rescue StandardError
+      nil
+    end
+    begin
+      support_fs.chunks_collection.drop
+    rescue StandardError
+      nil
+    end
   end
 
   let(:file) do
@@ -23,7 +29,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
   end
 
   let(:fs_options) do
-    { }
+    {}
   end
 
   let(:fs) do
@@ -35,7 +41,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
   end
 
   let(:extra_options) do
-    { }
+    {}
   end
 
   let(:options) do
@@ -47,7 +53,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
   end
 
   describe '#initialize' do
-
     it 'sets the file id' do
       expect(stream.file_id).to be_a(BSON::ObjectId)
     end
@@ -61,7 +66,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when the fs does not have disable_md5 specified' do
-
       it 'sets an md5 for the file' do
         stream.send(:file_info).to_bson
         expect(stream.send(:file_info).document[:md5].size).to eq(32)
@@ -69,25 +73,22 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when the fs has disable_md5 specified' do
-
       before do
         stream.send(:file_info).to_bson
       end
 
       context 'when disable_md5 is true' do
-
         let(:fs_options) do
           { disable_md5: true }
         end
 
         it 'does not set an md5 for the file' do
-          expect(stream.send(:file_info).document.has_key?(:md5)). to be(false)
-          expect(stream.send(:file_info).document[:md5]). to be_nil
+          expect(stream.send(:file_info).document.has_key?(:md5)).to be(false)
+          expect(stream.send(:file_info).document[:md5]).to be_nil
         end
       end
 
       context 'when disabled_md5 is false' do
-
         let(:fs_options) do
           { disable_md5: false }
         end
@@ -107,14 +108,13 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       it 'uses the write concern of the fs as a default' do
-        expect{
+        expect do
           stream.close
-        }.to raise_exception(Mongo::Error::OperationFailure)
+        end.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
 
     context 'when the fs does not have a write concern' do
-
       let(:fs) do
         authorized_client.with(write: nil).database.fs
       end
@@ -125,9 +125,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when provided options' do
-
       context 'when provided a write option' do
-
         let(:extra_options) do
           {
             write: INVALID_WRITE_CONCERN
@@ -143,14 +141,12 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         context 'when chunks are inserted' do
-
           it 'uses that write concern' do
             expect(stream.send(:chunks_collection).write_concern.options[:w]).to eq(expected[:w])
           end
         end
 
         context 'when a files document is inserted' do
-
           it 'uses that write concern' do
             expect(stream.send(:files_collection).write_concern.options[:w]).to eq(expected[:w])
           end
@@ -158,10 +154,9 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       context 'when provided a metadata document' do
-
         let(:options) do
           {
-              metadata: { 'some_field' => 'test-file' }
+            metadata: { 'some_field' => 'test-file' }
           }
         end
 
@@ -171,10 +166,9 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       context 'when provided a chunk size option' do
-
         let(:options) do
           {
-              chunk_size: 50
+            chunk_size: 50
           }
         end
 
@@ -183,10 +177,9 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         context 'when chunk size is also set on the FSBucket object' do
-
           let(:fs_options) do
             {
-                chunk_size: 100
+              chunk_size: 100
             }
           end
 
@@ -197,10 +190,9 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       context 'when provided a content type option' do
-
         let(:options) do
           {
-              content_type: 'text/plain'
+            content_type: 'text/plain'
           }
         end
 
@@ -210,10 +202,9 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       context 'when provided an aliases option' do
-
         let(:options) do
           {
-              aliases: [ 'testing-file' ]
+            aliases: [ 'testing-file' ]
           }
         end
 
@@ -223,7 +214,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       context 'when provided a file_id option' do
-
         let(:options) do
           {
             file_id: 'Custom ID'
@@ -238,13 +228,11 @@ describe Mongo::Grid::FSBucket::Stream::Write do
   end
 
   describe '#write' do
-
     let(:file_from_db) do
       fs.find_one(filename: filename)
     end
 
     context 'when the stream is written to' do
-
       before do
         stream.write(file)
       end
@@ -255,19 +243,17 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when indexes need to be ensured' do
-
       context 'when the files collection is empty' do
-
         before do
           stream.write(file)
         end
 
         let(:chunks_index) do
-          fs.database[fs.chunks_collection.name].indexes.get(:files_id => 1, :n => 1)
+          fs.database[fs.chunks_collection.name].indexes.get(files_id: 1, n: 1)
         end
 
         let(:files_index) do
-          fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
+          fs.database[fs.files_collection.name].indexes.get(filename: 1, uploadDate: 1)
         end
 
         it 'creates an index on the files collection' do
@@ -279,7 +265,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         context 'when write is called more than once' do
-
           before do
             expect(fs).not_to receive(:ensure_indexes!)
           end
@@ -317,13 +302,12 @@ describe Mongo::Grid::FSBucket::Stream::Write do
           chunks_indexes = fs.chunks_collection.indexes.map { |index| index['key'] }
 
           # Ruby parses the index keys with integer values
-          expect(files_indexes).to eq([{ '_id' => 1 }, { 'filename' => 1, 'uploadDate' => 1 }])
-          expect(chunks_indexes).to eq([{ '_id' => 1 }, { 'files_id' => 1, 'n' => 1 }])
+          expect(files_indexes).to eq([ { '_id' => 1 }, { 'filename' => 1, 'uploadDate' => 1 } ])
+          expect(chunks_indexes).to eq([ { '_id' => 1 }, { 'files_id' => 1, 'n' => 1 } ])
         end
       end
 
       context 'when the files collection is not empty' do
-
         before do
           support_fs.send(:ensure_indexes!)
           support_fs.files_collection.insert_one(a: 1)
@@ -331,7 +315,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         let(:files_index) do
-          fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
+          fs.database[fs.files_collection.name].indexes.get(filename: 1, uploadDate: 1)
         end
 
         it 'assumes indexes already exist' do
@@ -340,23 +324,20 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       context 'when the index creation is done explicitely' do
-
         before do
-          fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
+          fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, unique: false)
         end
 
-        it 'should not raise an error to the user' do
-          expect {
+        it 'does not raise an error to the user' do
+          expect do
             stream.write(file)
-          }.not_to raise_error
+          end.not_to raise_error
         end
       end
     end
 
     context 'when provided an io stream' do
-
       context 'when no file id is specified' do
-
         before do
           stream.write(file)
           stream.close
@@ -376,7 +357,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       context 'when a custom file id is provided' do
-
         let(:extra_options) do
           {
             file_id: 'Custom ID'
@@ -406,7 +386,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       context 'when the user file contains no data' do
-
         before do
           stream.write(file)
           stream.close
@@ -425,7 +404,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         it 'creates a files document' do
-          expect(files_coll_doc).not_to be(nil)
+          expect(files_coll_doc).not_to be_nil
         end
 
         it 'sets length to 0 in the files document' do
@@ -439,7 +418,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when the stream is written to multiple times' do
-
       before do
         stream.write(file)
         stream.write(file2)
@@ -460,27 +438,24 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when the stream is closed' do
-
       before do
         stream.close
       end
 
       it 'does not allow further writes' do
-        expect {
+        expect do
           stream.write(file)
-        }.to raise_error(Mongo::Error::ClosedStream)
+        end.to raise_error(Mongo::Error::ClosedStream)
       end
     end
   end
 
   describe '#close' do
-
     let(:file_content) do
-      File.open(__FILE__).read
+      File.read(__FILE__)
     end
 
     context 'when close is called on the stream' do
-
       before do
         stream.write(file)
       end
@@ -495,7 +470,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when the stream is closed' do
-
       before do
         stream.write(file)
         stream.close
@@ -523,23 +497,20 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when the stream is already closed' do
-
       before do
         stream.close
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           stream.close
-        }.to raise_error(Mongo::Error::ClosedStream)
+        end.to raise_error(Mongo::Error::ClosedStream)
       end
     end
   end
 
   describe '#closed?' do
-
     context 'when the stream is closed' do
-
       before do
         stream.close
       end
@@ -550,7 +521,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when the stream is still open' do
-
       it 'returns false' do
         expect(stream.closed?).to be(false)
       end

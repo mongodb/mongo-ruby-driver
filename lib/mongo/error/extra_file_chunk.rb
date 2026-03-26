@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Raised if an extra chunk is found.
     #
     # @since 2.1.0
     class ExtraFileChunk < Error
-
       # Create the new exception.
       #
       # @example Create the new exception.
@@ -30,7 +27,7 @@ module Mongo
       #
       # @since 2.1.0
       def initialize
-        super("Extra file chunk found.")
+        super('Extra file chunk found.')
       end
     end
   end

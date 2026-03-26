@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Protocol
-
     # MongoDB Wire protocol Msg message (OP_MSG), a bi-directional wire
     # protocol opcode.
     #
@@ -30,13 +28,13 @@ module Mongo
       # The identifier for the database name to execute the command on.
       #
       # @since 2.5.0
-      DATABASE_IDENTIFIER = '$db'.freeze
+      DATABASE_IDENTIFIER = '$db'
 
       # Keys that the driver adds to commands. These are going to be
       # moved to the end of the hash for better logging.
       #
       # @api private
-      INTERNAL_KEYS = Set.new(%w($clusterTime $db lsid signature txnNumber)).freeze
+      INTERNAL_KEYS = Set.new(%w[$clusterTime $db lsid signature txnNumber]).freeze
 
       # Creates a new OP_MSG protocol message
       #
@@ -64,9 +62,7 @@ module Mongo
       def initialize(flags, options, main_document, *sequences)
         if flags
           flags.each do |flag|
-            unless KNOWN_FLAGS.key?(flag)
-              raise ArgumentError, "Unknown flag: #{flag.inspect}"
-            end
+            raise ArgumentError, "Unknown flag: #{flag.inspect}" unless KNOWN_FLAGS.key?(flag)
           end
         end
         @flags = flags || []
@@ -74,6 +70,7 @@ module Mongo
         unless main_document.is_a?(Hash)
           raise ArgumentError, "Main document must be a Hash, given: #{main_document.class}"
         end
+
         @main_document = main_document
         sequences.each_with_index do |section, index|
           unless section.is_a?(Section1)
@@ -82,14 +79,14 @@ module Mongo
         end
         @sequences = sequences
         @sections = [
-          {type: 0, payload: @main_document}
+          { type: 0, payload: @main_document }
         ] + @sequences.map do |section|
-          {type: 1, payload: {
+          { type: 1, payload: {
             identifier: section.identifier,
             sequence: section.documents.map do |doc|
               CachingHash.new(doc)
             end,
-          }}
+          } }
         end
         @request_id = nil
         super
@@ -138,7 +135,7 @@ module Mongo
           database_name: @main_document[DATABASE_IDENTIFIER],
           command: ordered_command,
           request_id: request_id,
-          reply: @main_document,
+          reply: @main_document
         )
       end
 
@@ -180,19 +177,20 @@ module Mongo
       #
       # @api private
       def fix_after_deserialization
-        if @sections.nil?
-          raise NotImplementedError, "After deserializations @sections should have been initialized"
-        end
+        raise NotImplementedError, 'After deserializations @sections should have been initialized' if @sections.nil?
+
         if @sections.length != 1
-          raise NotImplementedError, "Deserialization must have produced exactly one section, but it produced #{sections.length} sections"
+          raise NotImplementedError,
+                "Deserialization must have produced exactly one section, but it produced #{sections.length} sections"
         end
+
         @main_document = @sections.first
         @sequences = []
-        @sections = [{type: 0, payload: @main_document}]
+        @sections = [ { type: 0, payload: @main_document } ]
       end
 
       def documents
-        [@main_document]
+        [ @main_document ]
       end
 
       # Possibly encrypt this message with libmongocrypt. Message will only be
@@ -210,24 +208,22 @@ module Mongo
       # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
       #   message if encryption was not possible or necessary.
       def maybe_encrypt(connection, context)
-        # TODO verify compression happens later, i.e. when this method runs
+        # TODO: verify compression happens later, i.e. when this method runs
         # the message is not compressed.
         if context.encrypt?
           if connection.description.max_wire_version < 8
             raise Error::CryptError.new(
-              "Cannot perform encryption against a MongoDB server older than " +
-              "4.2 (wire version less than 8). Currently connected to server " +
+              'Cannot perform encryption against a MongoDB server older than ' +
+              '4.2 (wire version less than 8). Currently connected to server ' +
               "with max wire version #{connection.description.max_wire_version}} " +
-              "(Auto-encryption requires a minimum MongoDB version of 4.2)"
+              '(Auto-encryption requires a minimum MongoDB version of 4.2)'
             )
           end
 
           db_name = @main_document[DATABASE_IDENTIFIER]
           cmd = merge_sections
           enc_cmd = context.encrypt(db_name, cmd)
-          if cmd.key?('$db') && !enc_cmd.key?('$db')
-            enc_cmd['$db'] = cmd['$db']
-          end
+          enc_cmd['$db'] = cmd['$db'] if cmd.key?('$db') && !enc_cmd.key?('$db')
 
           Msg.new(@flags, @options, enc_cmd)
         else
@@ -272,25 +268,22 @@ module Mongo
         updates = @main_document['updates']
         deletes = @main_document['deletes']
 
-        num_inserts = inserts && inserts.length || 0
-        num_updates = updates && updates.length || 0
-        num_deletes = deletes && deletes.length || 0
+        num_inserts = (inserts && inserts.length) || 0
+        num_updates = (updates && updates.length) || 0
+        num_deletes = (deletes && deletes.length) || 0
 
-        num_inserts > 1  || num_updates > 1 || num_deletes > 1
+        num_inserts > 1 || num_updates > 1 || num_deletes > 1
       end
 
       def maybe_add_server_api(server_api)
         conflicts = {}
-        %i(apiVersion apiStrict apiDeprecationErrors).each do |key|
-          if @main_document.key?(key)
-            conflicts[key] = @main_document[key]
-          end
-          if @main_document.key?(key.to_s)
-            conflicts[key] = @main_document[key.to_s]
-          end
+        %i[apiVersion apiStrict apiDeprecationErrors].each do |key|
+          conflicts[key] = @main_document[key] if @main_document.key?(key)
+          conflicts[key] = @main_document[key.to_s] if @main_document.key?(key.to_s)
         end
         unless conflicts.empty?
-          raise Error::ServerApiConflict, "The Client is configured with :server_api option but the operation provided the following conflicting parameters: #{conflicts.inspect}"
+          raise Error::ServerApiConflict,
+                "The Client is configured with :server_api option but the operation provided the following conflicting parameters: #{conflicts.inspect}"
         end
 
         main_document = @main_document.merge(
@@ -307,14 +300,11 @@ module Mongo
       #
       # @return [ Integer ] Number of returned documents.
       def number_returned
-        if doc = documents.first
-          if cursor = doc['cursor']
-            if batch = cursor['firstBatch'] || cursor['nextBatch']
-              return batch.length
-            end
-          end
+        if (doc = documents.first) && (cursor = doc['cursor']) && (batch = cursor['firstBatch'] || cursor['nextBatch'])
+          return batch.length
         end
-        raise NotImplementedError, "number_returned is only defined for cursor replies"
+
+        raise NotImplementedError, 'number_returned is only defined for cursor replies'
       end
 
       private
@@ -331,28 +321,27 @@ module Mongo
             end
         end
 
-        if contains_too_large_document
-          raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size after serialization')
-        end
+        return unless contains_too_large_document
+
+        raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size after serialization')
       end
 
       def command
         @command ||= if @main_document
-          @main_document.dup.tap do |cmd|
-            @sequences.each do |section|
-              cmd[section.identifier] ||= []
-              cmd[section.identifier] += section.documents
-            end
-          end
-        else
-          documents.first
-        end
+                       @main_document.dup.tap do |cmd|
+                         @sequences.each do |section|
+                           cmd[section.identifier] ||= []
+                           cmd[section.identifier] += section.documents
+                         end
+                       end
+                     else
+                       documents.first
+                     end
       end
 
-      def add_check_sum(buffer)
-        if flags.include?(:checksum_present)
-          #buffer.put_int32(checksum)
-        end
+      def add_check_sum(_buffer)
+        nil unless flags.include?(:checksum_present)
+        # buffer.put_int32(checksum)
       end
 
       # Encapsulates a type 1 OP_MSG section.
@@ -372,7 +361,7 @@ module Mongo
             identifier == other.identifier && documents == other.documents
         end
 
-        alias :eql? :==
+        alias eql? ==
       end
 
       # The operation code required to specify a OP_MSG message.

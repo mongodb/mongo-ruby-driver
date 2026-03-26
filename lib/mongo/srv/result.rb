@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Srv
-
     # SRV record lookup result.
     #
     # Contains server addresses that the query resolved to, and minimum TTL
@@ -29,8 +27,8 @@ module Mongo
 
       # @return [ String ] MISMATCHED_DOMAINNAME Error message format string indicating that an SRV
       #   record found does not match the domain of a hostname.
-      MISMATCHED_DOMAINNAME = "Parent domain name in SRV record result (%s) does not match " +
-                                 "that of the hostname (%s)".freeze
+      MISMATCHED_DOMAINNAME = 'Parent domain name in SRV record result (%s) does not match ' +
+                              'that of the hostname (%s)'
 
       # @return [ String ] query_hostname The hostname pointing to the DNS records.
       attr_reader :query_hostname
@@ -68,18 +66,18 @@ module Mongo
         validate_hostname!(record_host)
         validate_same_origin!(record_host)
         address_str = if record_host.index(':')
-          # IPV6 address
-          "[#{record_host}]:#{port}"
-        else
-          "#{record_host}:#{port}"
-        end
+                        # IPV6 address
+                        "[#{record_host}]:#{port}"
+                      else
+                        "#{record_host}:#{port}"
+                      end
         @address_strs << address_str
 
-        if @min_ttl.nil?
-          @min_ttl = record.ttl
-        else
-          @min_ttl = [@min_ttl, record.ttl].min
-        end
+        @min_ttl = if @min_ttl.nil?
+                     record.ttl
+                   else
+                     [ @min_ttl, record.ttl ].min
+                   end
 
         nil
       end
@@ -99,9 +97,7 @@ module Mongo
       # @param [ String ] host Hostname to transform.
       def normalize_hostname(host)
         host = host.downcase
-        unless host.end_with?('..')
-          host = host.sub(/\.\z/, '')
-        end
+        host = host.delete_suffix('.') unless host.end_with?('..')
         host
       end
 
@@ -110,7 +106,7 @@ module Mongo
       # A hostname's domain name consists of each of the '.' delineated
       # parts after the first. For example, the hostname 'foo.bar.baz'
       # has the domain name 'bar.baz'.
-      # 
+      #
       # If the hostname has less than three parts, its domain name is the hostname itself.
       #
       # @param [ String ] record_host The host of the SRV record.
@@ -120,17 +116,15 @@ module Mongo
       def validate_same_origin!(record_host)
         srv_host_domain = query_hostname.split('.')
         srv_is_less_than_three_parts = srv_host_domain.length < 3
-        unless srv_is_less_than_three_parts
-          srv_host_domain = srv_host_domain[1..-1]
-        end
+        srv_host_domain = srv_host_domain[1..-1] unless srv_is_less_than_three_parts
         record_host_parts = record_host.split('.')
 
-        if (srv_is_less_than_three_parts && record_host_parts.length <= srv_host_domain.length) 
-          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, srv_host_domain])
+        if srv_is_less_than_three_parts && record_host_parts.length <= srv_host_domain.length
+          raise Error::MismatchedDomain.new(format(MISMATCHED_DOMAINNAME, record_host, srv_host_domain))
         end
 
         unless (record_host_parts.size > srv_host_domain.size) && (srv_host_domain == record_host_parts[-srv_host_domain.size..-1])
-          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, srv_host_domain])
+          raise Error::MismatchedDomain.new(format(MISMATCHED_DOMAINNAME, record_host, srv_host_domain))
         end
       end
     end

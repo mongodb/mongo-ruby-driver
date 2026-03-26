@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -41,7 +40,7 @@ describe Mongo::Operation::SessionsSupported do
   let(:server) do
     double('server').tap do |server|
       allow(server).to receive(:cluster).and_return(cluster)
-      # TODO consider adding tests for load-balanced topologies also
+      # TODO: consider adding tests for load-balanced topologies also
       allow(server).to receive(:load_balancer?).and_return(false)
     end
   end
@@ -54,9 +53,8 @@ describe Mongo::Operation::SessionsSupported do
   end
 
   describe '#add_read_preference' do
-
     let(:read_pref) do
-      Mongo::ServerSelector.get(:mode => mode)
+      Mongo::ServerSelector.get(mode: mode)
     end
 
     let(:actual) do
@@ -66,11 +64,10 @@ describe Mongo::Operation::SessionsSupported do
     end
 
     let(:expected_read_preference) do
-      {mode: mode.to_s.gsub(/_(.)/) { $1.upcase }}
+      { mode: mode.to_s.gsub(/_(.)/) { Regexp.last_match(1).upcase } }
     end
 
     shared_examples_for 'adds read preference' do
-
       let(:expected) do
         selector.merge(:$readPreference => expected_read_preference)
       end
@@ -81,14 +78,13 @@ describe Mongo::Operation::SessionsSupported do
     end
 
     shared_examples_for 'does not modify selector' do
-
       it 'does not modify selector' do
         expect(actual).to eq(selector)
       end
     end
 
     shared_examples_for 'does not send read preference' do
-      ([nil] + %i(primary primary_preferred secondary secondary_preferred nearest)).each do |_mode|
+      ([ nil ] + %i[primary primary_preferred secondary secondary_preferred nearest]).each do |_mode|
         active_mode = _mode
 
         context "when read preference mode is #{active_mode}" do
@@ -100,12 +96,13 @@ describe Mongo::Operation::SessionsSupported do
     end
 
     shared_examples_for 'sends read preference correctly for replica set' do
-      context "when read preference mode is primary" do
-        let(:mode) { :primary}
+      context 'when read preference mode is primary' do
+        let(:mode) { :primary }
 
         it_behaves_like 'does not modify selector'
       end
-      %i(primary_preferred secondary secondary_preferred nearest).each do |_mode|
+
+      %i[primary_preferred secondary secondary_preferred nearest].each do |_mode|
         active_mode = _mode
 
         context "when read preference mode is #{active_mode}" do
@@ -123,7 +120,7 @@ describe Mongo::Operation::SessionsSupported do
     end
 
     shared_examples_for 'sends user-specified read preference' do
-      %i(primary primary_preferred secondary secondary_preferred nearest).each do |_mode|
+      %i[primary primary_preferred secondary secondary_preferred nearest].each do |_mode|
         active_mode = _mode
 
         context "when read preference mode is #{active_mode}" do
@@ -133,11 +130,11 @@ describe Mongo::Operation::SessionsSupported do
         end
       end
 
-      context "when read preference mode is nil" do
+      context 'when read preference mode is nil' do
         let(:mode) { nil }
 
         let(:expected_read_preference) do
-          {mode: 'primary'}
+          { mode: 'primary' }
         end
 
         it_behaves_like 'adds read preference'
@@ -145,8 +142,7 @@ describe Mongo::Operation::SessionsSupported do
     end
 
     shared_examples_for 'changes read preference to allow secondary reads' do
-
-      %i(primary_preferred secondary secondary_preferred nearest).each do |_mode|
+      %i[primary_preferred secondary secondary_preferred nearest].each do |_mode|
         active_mode = _mode
 
         context "when read preference mode is #{active_mode}" do
@@ -156,21 +152,21 @@ describe Mongo::Operation::SessionsSupported do
         end
       end
 
-      context "when read preference mode is primary" do
+      context 'when read preference mode is primary' do
         let(:mode) { :primary }
 
         let(:expected_read_preference) do
-          {mode: 'primaryPreferred'}
+          { mode: 'primaryPreferred' }
         end
 
         it_behaves_like 'adds read preference'
       end
 
-      context "when read preference mode is nil" do
+      context 'when read preference mode is nil' do
         let(:mode) { nil }
 
         let(:expected_read_preference) do
-          {mode: 'primaryPreferred'}
+          { mode: 'primaryPreferred' }
         end
 
         it_behaves_like 'adds read preference'
@@ -178,7 +174,7 @@ describe Mongo::Operation::SessionsSupported do
     end
 
     shared_examples_for 'sends read preference correctly for mongos' do
-      %i(primary_preferred secondary nearest).each do |_mode|
+      %i[primary_preferred secondary nearest].each do |_mode|
         active_mode = _mode
 
         context "when read preference mode is #{active_mode}" do
@@ -190,6 +186,7 @@ describe Mongo::Operation::SessionsSupported do
 
       context 'when read preference mode is primary' do
         let(:mode) { 'primary' }
+
         it_behaves_like 'does not modify selector'
       end
 
@@ -213,7 +210,7 @@ describe Mongo::Operation::SessionsSupported do
         end
 
         context 'with tag_sets specified' do
-          let(:tag_sets) { [{ dc: 'ny' }] }
+          let(:tag_sets) { [ { dc: 'ny' } ] }
 
           let(:expected_read_preference) do
             { mode: 'secondaryPreferred', tags: tag_sets }
@@ -228,7 +225,6 @@ describe Mongo::Operation::SessionsSupported do
       let(:single?) { true }
 
       context 'when the server is a standalone' do
-
         let(:standalone?) { true }
         let(:mongos?) { false }
 
@@ -236,7 +232,6 @@ describe Mongo::Operation::SessionsSupported do
       end
 
       context 'when the server is a mongos' do
-
         let(:standalone?) { false }
         let(:mongos?) { true }
 
@@ -244,7 +239,6 @@ describe Mongo::Operation::SessionsSupported do
       end
 
       context 'when the server is a replica set member' do
-
         let(:standalone?) { false }
         let(:mongos?) { false }
 
@@ -256,7 +250,6 @@ describe Mongo::Operation::SessionsSupported do
       let(:single?) { false }
 
       context 'when the server is a standalone' do
-
         let(:standalone?) { true }
         let(:mongos?) { false }
 
@@ -264,7 +257,6 @@ describe Mongo::Operation::SessionsSupported do
       end
 
       context 'when the server is a mongos' do
-
         let(:standalone?) { false }
         let(:mongos?) { true }
 
@@ -288,7 +280,7 @@ describe Mongo::Operation::SessionsSupported do
           end
 
           context 'when tag_sets are specified' do
-            let(:tag_sets) { [{ dc: 'ny' }] }
+            let(:tag_sets) { [ { dc: 'ny' } ] }
 
             let(:expected_read_preference) do
               { mode: 'secondaryPreferred', tags: tag_sets }
@@ -309,7 +301,7 @@ describe Mongo::Operation::SessionsSupported do
 
           context 'when hedge and tag_sets are specified' do
             let(:hedge) { { enabled: true } }
-            let(:tag_sets) { [{ dc: 'ny' }] }
+            let(:tag_sets) { [ { dc: 'ny' } ] }
 
             let(:expected_read_preference) do
               { mode: 'secondaryPreferred', tags: tag_sets, hedge: hedge }
@@ -321,7 +313,6 @@ describe Mongo::Operation::SessionsSupported do
       end
 
       context 'when the server is a replica set member' do
-
         let(:standalone?) { false }
         let(:mongos?) { false }
 

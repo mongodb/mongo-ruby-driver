@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -18,18 +17,16 @@
 module Mongo
   module Operation
     class ParallelScan
-
       # Defines custom behavior of results in a parallel scan.
       #
       # @since 2.0.0
       # @api semiprivate
       class Result < Operation::Result
-
         # The name of the cursors field in the result.
         #
         # @since 2.0.0
         # @api private
-        CURSORS = 'cursors'.freeze
+        CURSORS = 'cursors'
 
         # Get all the cursor ids from the result.
         #
@@ -41,7 +38,7 @@ module Mongo
         # @since 2.0.0
         # @api private
         def cursor_ids
-          documents.map {|doc| doc[CURSOR][CURSOR_ID]}
+          documents.map { |doc| doc[CURSOR][CURSOR_ID] }
         end
 
         # Get the documents from parallel scan.

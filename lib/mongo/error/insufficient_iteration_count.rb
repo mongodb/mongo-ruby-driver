@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Exception that is raised when trying to create a database with no name.
     #
     # @since 2.6.0
     class InsufficientIterationCount < Error
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
@@ -30,7 +27,7 @@ module Mongo
       #
       # @since 2.6.0
       def initialize(msg)
-        super(msg)
+        super
       end
 
       def self.message(required_count, given_count)

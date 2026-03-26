@@ -1,11 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-require "mongo/config/options"
-require "mongo/config/validators/option"
+require 'mongo/config/options'
+require 'mongo/config/validators/option'
 
 module Mongo
-
   # This module defines configuration options for Mongo.
   #
   # @api private

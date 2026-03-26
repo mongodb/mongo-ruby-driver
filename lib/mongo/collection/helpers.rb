@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2022 MongoDB Inc.
 #
@@ -30,13 +29,11 @@ module Mongo
       # @return [ Result ] The result of the execution.
       def do_drop(operation, session, context)
         operation.execute(next_primary(nil, session), context: context)
-      rescue Error::OperationFailure::Family => ex
+      rescue Error::OperationFailure::Family => e
         # NamespaceNotFound
-        if ex.code == 26 || ex.code.nil? && ex.message =~ /ns not found/
-          false
-        else
-          raise
-        end
+        raise unless e.code == 26 || (e.code.nil? && e.message =~ /ns not found/)
+
+        false
       end
     end
   end

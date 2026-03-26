@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/operation/distinct/op_msg'
 
 module Mongo
   module Operation
-
     # A MongoDB distinct command operation.
     #
     # @api private

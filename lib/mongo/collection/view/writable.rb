@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,16 +17,14 @@
 module Mongo
   class Collection
     class View
-
       # Defines write related behavior for collection view.
       #
       # @since 2.0.0
       module Writable
-
         # The array filters field constant.
         #
         # @since 2.5.0
-        ARRAY_FILTERS = 'array_filters'.freeze
+        ARRAY_FILTERS = 'array_filters'
 
         # Finds a single document in the database via findAndModify and deletes
         # it, returning the original document.
@@ -64,10 +61,10 @@ module Mongo
         def find_one_and_delete(opts = {})
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              write_concern_with_session(session)
-            end
+                              WriteConcern.get(opts[:write_concern])
+                            else
+                              write_concern_with_session(session)
+                            end
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -101,7 +98,7 @@ module Mongo
                 db_name: database.name,
                 write_concern: write_concern,
                 session: session,
-                txn_num: txn_num,
+                txn_num: txn_num
               ).execute_with_connection(connection, context: context)
             end
           end.first&.fetch('value', nil)
@@ -182,10 +179,10 @@ module Mongo
         def find_one_and_update(document, opts = {})
           value = with_session(opts) do |session|
             write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              write_concern_with_session(session)
-            end
+                              WriteConcern.get(opts[:write_concern])
+                            else
+                              write_concern_with_session(session)
+                            end
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -215,7 +212,7 @@ module Mongo
               selector: cmd,
               db_name: database.name,
               write_concern: write_concern,
-              session: session,
+              session: session
             )
             value = tracer.trace_operation(operation, context, op_name: 'findOneAndUpdate') do
               write_with_retry(write_concern, context: context) do |connection, txn_num, context|
@@ -223,6 +220,7 @@ module Mongo
                 if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
                   raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
                 end
+
                 operation.txn_num = txn_num
                 operation.execute_with_connection(connection, context: context)
               end
@@ -259,10 +257,10 @@ module Mongo
         def delete_many(opts = {})
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              write_concern_with_session(session)
-            end
+                              WriteConcern.get(opts[:write_concern])
+                            else
+                              write_concern_with_session(session)
+                            end
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -285,14 +283,15 @@ module Mongo
               bypass_document_validation: !!opts[:bypass_document_validation],
               session: session,
               let: opts[:let],
-              comment: opts[:comment],
+              comment: opts[:comment]
             )
             tracer.trace_operation(operation, context, op_name: 'deleteMany') do
-              nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+              nro_write_with_retry(write_concern, context: context) do |connection, _txn_num, context|
                 gte_4_4 = connection.server.description.server_version_gte?('4.4')
                 if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
                   raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
                 end
+
                 operation.execute_with_connection(connection, context: context)
               end
             end
@@ -327,10 +326,10 @@ module Mongo
         def delete_one(opts = {})
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              write_concern_with_session(session)
-            end
+                              WriteConcern.get(opts[:write_concern])
+                            else
+                              write_concern_with_session(session)
+                            end
 
             QueryCache.clear_namespace(collection.namespace)
 
@@ -361,7 +360,7 @@ module Mongo
                 session: session,
                 txn_num: txn_num,
                 let: opts[:let],
-                comment: opts[:comment],
+                comment: opts[:comment]
               ).execute_with_connection(connection, context: context)
             end
           end
@@ -405,10 +404,10 @@ module Mongo
         def replace_one(replacement, opts = {})
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              write_concern_with_session(session)
-            end
+                              WriteConcern.get(opts[:write_concern])
+                            else
+                              write_concern_with_session(session)
+                            end
             validate_replacement_documents!(replacement)
 
             QueryCache.clear_namespace(collection.namespace)
@@ -421,9 +420,7 @@ module Mongo
               collation: opts[:collation] || opts['collation'] || collation,
               sort: opts[:sort] || opts['sort'],
             }.compact
-            if opts[:upsert]
-              update_doc['upsert'] = true
-            end
+            update_doc['upsert'] = true if opts[:upsert]
 
             context = Operation::Context.new(
               client: client,
@@ -445,7 +442,7 @@ module Mongo
                 session: session,
                 txn_num: txn_num,
                 let: opts[:let],
-                comment: opts[:comment],
+                comment: opts[:comment]
               ).execute_with_connection(connection, context: context)
             end
           end
@@ -486,10 +483,10 @@ module Mongo
         def update_many(spec, opts = {})
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              write_concern_with_session(session)
-            end
+                              WriteConcern.get(opts[:write_concern])
+                            else
+                              write_concern_with_session(session)
+                            end
             validate_update_documents!(spec)
 
             QueryCache.clear_namespace(collection.namespace)
@@ -502,16 +499,14 @@ module Mongo
               hint: opts[:hint],
               collation: opts[:collation] || opts['collation'] || collation,
             }.compact
-            if opts[:upsert]
-              update_doc['upsert'] = true
-            end
+            update_doc['upsert'] = true if opts[:upsert]
 
             context = Operation::Context.new(
               client: client,
               session: session,
               operation_timeouts: operation_timeouts(opts)
             )
-            nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+            nro_write_with_retry(write_concern, context: context) do |connection, _txn_num, context|
               gte_4_2 = connection.server.description.server_version_gte?('4.2')
               if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
                 raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
@@ -525,7 +520,7 @@ module Mongo
                 bypass_document_validation: !!opts[:bypass_document_validation],
                 session: session,
                 let: opts[:let],
-                comment: opts[:comment],
+                comment: opts[:comment]
               ).execute_with_connection(connection, context: context)
             end
           end
@@ -571,10 +566,10 @@ module Mongo
         def update_one(spec, opts = {})
           with_session(opts) do |session|
             write_concern = if opts[:write_concern]
-              WriteConcern.get(opts[:write_concern])
-            else
-              write_concern_with_session(session)
-            end
+                              WriteConcern.get(opts[:write_concern])
+                            else
+                              write_concern_with_session(session)
+                            end
             validate_update_documents!(spec)
 
             QueryCache.clear_namespace(collection.namespace)
@@ -587,9 +582,7 @@ module Mongo
               collation: opts[:collation] || opts['collation'] || collation,
               sort: opts[:sort] || opts['sort'],
             }.compact
-            if opts[:upsert]
-              update_doc['upsert'] = true
-            end
+            update_doc['upsert'] = true if opts[:upsert]
 
             context = Operation::Context.new(
               client: client,
@@ -604,7 +597,7 @@ module Mongo
               bypass_document_validation: !!opts[:bypass_document_validation],
               session: session,
               let: opts[:let],
-              comment: opts[:comment],
+              comment: opts[:comment]
             )
             tracer.trace_operation(operation, context) do
               write_with_retry(write_concern, context: context) do |connection, txn_num, context|
@@ -612,6 +605,7 @@ module Mongo
                 if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
                   raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
                 end
+
                 operation.txn_num = txn_num
                 operation.execute_with_connection(connection, context: context)
               end
@@ -630,17 +624,12 @@ module Mongo
         # @raise [ Error::InvalidUpdateDocument ] if the first key in the
         #   document does not start with a $.
         def validate_update_documents!(spec)
-          if update = spec.is_a?(Array) ? spec&.first : spec
-            if key = update.keys&.first
-              unless key.to_s.start_with?("$")
-                if Mongo.validate_update_replace
-                  raise Error::InvalidUpdateDocument.new(key: key)
-                else
-                  Error::InvalidUpdateDocument.warn(Logger.logger, key)
-                end
-              end
-            end
-          end
+          return unless update = spec.is_a?(Array) ? spec&.first : spec
+          return unless key = update.keys&.first
+          return if key.to_s.start_with?('$')
+          raise Error::InvalidUpdateDocument.new(key: key) if Mongo.validate_update_replace
+
+          Error::InvalidUpdateDocument.warn(Logger.logger, key)
         end
 
         # Check the replacement documents to make sure they don't have atomic
@@ -652,17 +641,12 @@ module Mongo
         # @raise [ Error::InvalidUpdateDocument ] if the first key in the
         #   document does not start with a $.
         def validate_replacement_documents!(spec)
-          if replace = spec.is_a?(Array) ? spec&.first : spec
-            if key = replace.keys&.first
-              if key.to_s.start_with?("$")
-                if Mongo.validate_update_replace
-                  raise Error::InvalidReplacementDocument.new(key: key)
-                else
-                  Error::InvalidReplacementDocument.warn(Logger.logger, key)
-                end
-              end
-            end
-          end
+          return unless replace = spec.is_a?(Array) ? spec&.first : spec
+          return unless key = replace.keys&.first
+          return unless key.to_s.start_with?('$')
+          raise Error::InvalidReplacementDocument.new(key: key) if Mongo.validate_update_replace
+
+          Error::InvalidReplacementDocument.warn(Logger.logger, key)
         end
       end
     end

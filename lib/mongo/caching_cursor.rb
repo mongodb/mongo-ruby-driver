@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -16,13 +15,11 @@
 # limitations under the License.
 
 module Mongo
-
   # A Cursor that attempts to load documents from memory first before hitting
   # the database if the same query has already been executed.
   #
   # @api semiprivate
   class CachingCursor < Cursor
-
     # @return [ Array <BSON::Document> ] The cursor's cached documents.
     # @api private
     attr_reader :cached_docs
@@ -34,11 +31,9 @@ module Mongo
     #   cursor.each do |doc|
     #     # ...
     #   end
-    def each
+    def each(&block)
       if @cached_docs
-        @cached_docs.each do |doc|
-          yield doc
-        end
+        @cached_docs.each(&block)
 
         unless closed?
           # StopIteration raised by try_next ends this loop.

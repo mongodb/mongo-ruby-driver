@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Monitoring
     module Event
-
       # Event fired when the topology changes.
       #
       # @since 2.4.0
       class TopologyChanged < Mongo::Event::Base
-
         # @return [ Cluster::Topology ] previous_topology The previous topology.
         attr_reader :previous_topology
 
@@ -54,8 +51,8 @@ module Mongo
         # @api experimental
         def summary
           "#<#{short_class_name}" +
-          " prev=#{previous_topology.summary}" +
-          " new=#{new_topology.summary}>"
+            " prev=#{previous_topology.summary}" +
+            " new=#{new_topology.summary}>"
         end
       end
     end

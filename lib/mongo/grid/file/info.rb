@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Grid
     class File
-
       # Encapsulates behavior around GridFS files collection file document.
       #
       # @since 2.0.0
@@ -26,31 +24,30 @@ module Mongo
       # @deprecated Please use the 'stream' API on a FSBucket instead.
       #   Will be removed in driver version 3.0.
       class Info
-
         # Name of the files collection.
         #
         # @since 2.0.0
-        COLLECTION = 'files'.freeze
+        COLLECTION = 'files'
 
         # Mappings of user supplied fields to db specification.
         #
         # @since 2.0.0
         MAPPINGS = {
-          :chunk_size => :chunkSize,
-          :content_type => :contentType,
-          :filename => :filename,
-          :_id => :_id,
-          :md5 => :md5,
-          :length => :length,
-          :metadata => :metadata,
-          :upload_date => :uploadDate,
-          :aliases => :aliases
+          chunk_size: :chunkSize,
+          content_type: :contentType,
+          filename: :filename,
+          _id: :_id,
+          md5: :md5,
+          length: :length,
+          metadata: :metadata,
+          upload_date: :uploadDate,
+          aliases: :aliases
         }.freeze
 
         # Default content type for stored files.
         #
         # @since 2.0.0
-        DEFAULT_CONTENT_TYPE = 'binary/octet-stream'.freeze
+        DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
 
         # @return [ BSON::Document ] document The files collection document.
         attr_reader :document
@@ -67,6 +64,7 @@ module Mongo
         # @since 2.0.0
         def ==(other)
           return false unless other.is_a?(Info)
+
           document == other.document
         end
 
@@ -141,7 +139,7 @@ module Mongo
           # document contains a mix of user options and keys added
           # internally by the driver, like session.
           # Remove the keys that driver adds but keep user options.
-          document = document.reject do |key, value|
+          document = document.reject do |key, _value|
             key.to_s == 'session'
           end
           @document = default_document.merge(Options::Mapper.transform(document, MAPPINGS))
@@ -171,7 +169,7 @@ module Mongo
         def length
           document[:length]
         end
-        alias :size :length
+        alias size length
 
         # Get the additional metadata from the file information document.
         #
@@ -233,10 +231,8 @@ module Mongo
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
-        def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
-          if @client_md5 && !document[:md5]
-            document[:md5] = @client_md5.hexdigest
-          end
+        def to_bson(buffer = BSON::ByteBuffer.new, _validating_keys = nil)
+          document[:md5] = @client_md5.hexdigest if @client_md5 && !document[:md5]
           document.to_bson(buffer)
         end
 
@@ -256,11 +252,11 @@ module Mongo
 
         def default_document
           BSON::Document.new(
-            :_id => BSON::ObjectId.new,
-            :chunkSize => Chunk::DEFAULT_SIZE,
+            _id: BSON::ObjectId.new,
+            chunkSize: Chunk::DEFAULT_SIZE,
             # MongoDB stores times with millisecond precision
-            :uploadDate => Time.now.utc.round(3),
-            :contentType => DEFAULT_CONTENT_TYPE
+            uploadDate: Time.now.utc.round(3),
+            contentType: DEFAULT_CONTENT_TYPE
           )
         end
       end

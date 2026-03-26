@@ -1,11 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'support/shared/server_selector'
 
 describe Mongo::ServerSelector::PrimaryPreferred do
-
   let(:name) { :primary_preferred }
 
   include_context 'server selector'
@@ -21,9 +19,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
   it_behaves_like 'a server selector with sensitive data in its options'
 
   describe '#initialize' do
-
     context 'when max_staleness is provided' do
-
       let(:options) do
         { max_staleness: 95 }
       end
@@ -35,9 +31,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
   end
 
   describe '#==' do
-
     context 'when max staleness is the same' do
-
       let(:options) do
         { max_staleness: 95 }
       end
@@ -52,7 +46,6 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
 
     context 'when max staleness is different' do
-
       let(:other_options) do
         { max_staleness: 100 }
       end
@@ -68,28 +61,25 @@ describe Mongo::ServerSelector::PrimaryPreferred do
   end
 
   describe '#to_mongos' do
-
     context 'tag sets not provided' do
-
       it 'returns a read preference formatted for mongos' do
-        expect(selector.to_mongos).to eq({ :mode => 'primaryPreferred' })
+        expect(selector.to_mongos).to eq({ mode: 'primaryPreferred' })
       end
     end
 
     context 'tag set provided' do
-      let(:tag_sets) { [tag_set] }
+      let(:tag_sets) { [ tag_set ] }
 
       it 'returns a read preference formatted for mongos' do
         expect(selector.to_mongos).to eq(
-          { :mode => 'primaryPreferred', :tags => tag_sets}
+          { mode: 'primaryPreferred', tags: tag_sets }
         )
       end
     end
 
     context 'max staleness not provided' do
-
       let(:expected) do
-        { :mode => 'primaryPreferred' }
+        { mode: 'primaryPreferred' }
       end
 
       it 'returns a read preference formatted for mongos' do
@@ -98,13 +88,12 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
 
     context 'max staleness provided' do
-
       let(:max_staleness) do
         100
       end
 
       let(:expected) do
-        { :mode => 'primaryPreferred', maxStalenessSeconds: 100 }
+        { mode: 'primaryPreferred', maxStalenessSeconds: 100 }
       end
 
       it 'returns a read preference formatted for mongos' do
@@ -114,7 +103,6 @@ describe Mongo::ServerSelector::PrimaryPreferred do
   end
 
   describe '#select_in_replica_set' do
-
     context 'no candidates' do
       let(:candidates) { [] }
 
@@ -124,24 +112,24 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
 
     context 'single primary candidate' do
-      let(:candidates) { [primary] }
+      let(:candidates) { [ primary ] }
 
       it 'returns an array with the primary' do
-        expect(selector.send(:select_in_replica_set, candidates)).to eq( [primary] )
+        expect(selector.send(:select_in_replica_set, candidates)).to eq([ primary ])
       end
     end
 
     context 'single secondary candidate' do
-      let(:candidates) { [secondary] }
+      let(:candidates) { [ secondary ] }
 
       it 'returns an array with the secondary' do
-        expect(selector.send(:select_in_replica_set, candidates)).to eq( [secondary] )
+        expect(selector.send(:select_in_replica_set, candidates)).to eq([ secondary ])
       end
     end
 
     context 'primary and secondary candidates' do
-      let(:candidates) { [secondary, primary] }
-      let(:expected) { [primary] }
+      let(:candidates) { [ secondary, primary ] }
+      let(:expected) { [ primary ] }
 
       it 'returns an array with the primary' do
         expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -149,8 +137,8 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
 
     context 'secondary and primary candidates' do
-      let(:candidates) { [secondary, primary] }
-      let(:expected) { [primary] }
+      let(:candidates) { [ secondary, primary ] }
+      let(:expected) { [ primary ] }
 
       it 'returns an array with the primary' do
         expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -158,44 +146,43 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
 
     context 'tag sets provided' do
-      let(:tag_sets) { [tag_set] }
+      let(:tag_sets) { [ tag_set ] }
 
       let(:matching_primary) do
-        make_server(:primary, :tags => server_tags, address: default_address )
+        make_server(:primary, tags: server_tags, address: default_address)
       end
 
       let(:matching_secondary) do
-        make_server(:secondary, :tags => server_tags, address: default_address )
+        make_server(:secondary, tags: server_tags, address: default_address)
       end
 
       context 'single candidate' do
-
         context 'primary' do
-          let(:candidates) { [primary] }
+          let(:candidates) { [ primary ] }
 
           it 'returns array with primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ primary ])
           end
         end
 
         context 'matching_primary' do
-          let(:candidates) { [matching_primary] }
+          let(:candidates) { [ matching_primary ] }
 
           it 'returns array with matching primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ matching_primary ])
           end
         end
 
         context 'matching secondary' do
-          let(:candidates) { [matching_secondary] }
+          let(:candidates) { [ matching_secondary ] }
 
           it 'returns array with matching secondary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ matching_secondary ])
           end
         end
 
         context 'secondary' do
-          let(:candidates) { [secondary] }
+          let(:candidates) { [ secondary ] }
 
           it 'returns an empty array' do
             expect(selector.send(:select_in_replica_set, candidates)).to be_empty
@@ -204,26 +191,25 @@ describe Mongo::ServerSelector::PrimaryPreferred do
       end
 
       context 'multiple candidates' do
-
         context 'no matching secondaries' do
-          let(:candidates) { [primary, secondary, secondary] }
+          let(:candidates) { [ primary, secondary, secondary ] }
 
           it 'returns an array with the primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ primary ])
           end
         end
 
         context 'one matching primary' do
-          let(:candidates) { [matching_primary, secondary, secondary] }
+          let(:candidates) { [ matching_primary, secondary, secondary ] }
 
           it 'returns an array of the primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([matching_primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ matching_primary ])
           end
         end
 
         context 'one matching secondary' do
-          let(:candidates) { [primary, matching_secondary, secondary] }
-          let(:expected) { [primary] }
+          let(:candidates) { [ primary, matching_secondary, secondary ] }
+          let(:expected) { [ primary ] }
 
           it 'returns an array of the primary' do
             expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -231,17 +217,17 @@ describe Mongo::ServerSelector::PrimaryPreferred do
         end
 
         context 'two matching secondaries' do
-          let(:candidates) { [primary, matching_secondary, matching_secondary] }
-          let(:expected) { [primary] }
+          let(:candidates) { [ primary, matching_secondary, matching_secondary ] }
+          let(:expected) { [ primary ] }
 
-          it 'returns an array of the primary ' do
+          it 'returns an array of the primary' do
             expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
           end
         end
 
         context 'one matching primary, one matching secondary' do
-          let(:candidates) { [primary, matching_secondary, secondary] }
-          let(:expected) { [primary] }
+          let(:candidates) { [ primary, matching_secondary, secondary ] }
+          let(:expected) { [ primary ] }
 
           it 'returns an array of the primary' do
             expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -251,36 +237,32 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
 
     context 'high latency servers' do
-      let(:far_primary) { make_server(:primary, :average_round_trip_time => 0.100, address: default_address) }
-      let(:far_secondary) { make_server(:secondary, :average_round_trip_time => 0.113, address: default_address) }
+      let(:far_primary) { make_server(:primary, average_round_trip_time: 0.100, address: default_address) }
+      let(:far_secondary) { make_server(:secondary, average_round_trip_time: 0.113, address: default_address) }
 
       context 'single candidate' do
-
         context 'far primary' do
-          let(:candidates) { [far_primary] }
+          let(:candidates) { [ far_primary ] }
 
           it 'returns array with far primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([far_primary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ far_primary ])
           end
         end
 
         context 'far secondary' do
-          let(:candidates) { [far_secondary] }
+          let(:candidates) { [ far_secondary ] }
 
           it 'returns array with far primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([far_secondary])
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ far_secondary ])
           end
-
         end
       end
 
       context 'multiple candidates' do
-
         context 'primary available' do
-
           context 'local primary, local secondary' do
-            let(:candidates) { [primary, secondary] }
-            let(:expected) { [primary] }
+            let(:candidates) { [ primary, secondary ] }
+            let(:expected) { [ primary ] }
 
             it 'returns an array of the primary' do
               expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -288,8 +270,8 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           end
 
           context 'local primary, far secondary' do
-            let(:candidates) { [primary, far_secondary] }
-            let(:expected) { [primary] }
+            let(:candidates) { [ primary, far_secondary ] }
+            let(:expected) { [ primary ] }
 
             it 'returns an array of the primary' do
               expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -297,8 +279,8 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           end
 
           context 'far primary, local secondary' do
-            let(:candidates) { [far_primary, secondary] }
-            let(:expected) { [far_primary] }
+            let(:candidates) { [ far_primary, secondary ] }
+            let(:expected) { [ far_primary ] }
 
             it 'returns an array of the far primary' do
               expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -306,8 +288,8 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           end
 
           context 'far primary, far secondary' do
-            let(:candidates) { [far_primary, far_secondary] }
-            let(:expected) { [far_primary] }
+            let(:candidates) { [ far_primary, far_secondary ] }
+            let(:expected) { [ far_primary ] }
 
             it 'returns an array of the far primary' do
               expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -315,10 +297,9 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           end
 
           context 'two local servers, one far server' do
-
             context 'local primary, local secondary, far secondary' do
-              let(:candidates) { [primary, secondary, far_secondary] }
-              let(:expected) { [primary] }
+              let(:candidates) { [ primary, secondary, far_secondary ] }
+              let(:expected) { [ primary ] }
 
               it 'returns an array of the primary' do
                 expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -326,8 +307,8 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             end
 
             context 'two local secondaries' do
-              let(:candidates) { [far_primary, secondary, secondary] }
-              let(:expected) { [far_primary] }
+              let(:candidates) { [ far_primary, secondary, secondary ] }
+              let(:expected) { [ far_primary ] }
 
               it 'returns an array with primary' do
                 expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -337,10 +318,9 @@ describe Mongo::ServerSelector::PrimaryPreferred do
         end
 
         context 'primary not available' do
-
           context 'one secondary' do
-            let(:candidates) { [secondary] }
-            let(:expected) { [secondary] }
+            let(:candidates) { [ secondary ] }
+            let(:expected) { [ secondary ] }
 
             it 'returns an array with the secondary' do
               expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -348,8 +328,8 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           end
 
           context 'one local secondary, one far secondary' do
-            let(:candidates) { [secondary, far_secondary] }
-            let(:expected) { [secondary] }
+            let(:candidates) { [ secondary, far_secondary ] }
+            let(:expected) { [ secondary ] }
 
             it 'returns an array of the secondary' do
               expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -357,8 +337,8 @@ describe Mongo::ServerSelector::PrimaryPreferred do
           end
 
           context 'two local secondaries, one far secondary' do
-            let(:candidates) { [secondary, secondary, far_secondary] }
-            let(:expected) { [secondary, secondary] }
+            let(:candidates) { [ secondary, secondary, far_secondary ] }
+            let(:expected) { [ secondary, secondary ] }
 
             it 'returns an array of the secondary' do
               expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
@@ -369,4 +349,3 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
   end
 end
-

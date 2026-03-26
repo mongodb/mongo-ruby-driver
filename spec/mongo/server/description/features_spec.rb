@@ -1,18 +1,14 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Server::Description::Features do
-
   let(:features) do
     described_class.new(wire_versions, default_address)
   end
 
   describe '#initialize' do
-
     context 'when the server wire version range is the same' do
-
       let(:wire_versions) do
         0..3
       end
@@ -23,15 +19,14 @@ describe Mongo::Server::Description::Features do
     end
 
     context 'when the server wire version range min is higher' do
-
       let(:wire_versions) do
-        described_class::DRIVER_WIRE_VERSIONS.max+1..described_class::DRIVER_WIRE_VERSIONS.max+2
+        described_class::DRIVER_WIRE_VERSIONS.max + 1..described_class::DRIVER_WIRE_VERSIONS.max + 2
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           features.check_driver_support!
-        }.to raise_error(Mongo::Error::UnsupportedFeatures)
+        end.to raise_error(Mongo::Error::UnsupportedFeatures)
       end
     end
 
@@ -46,9 +41,9 @@ describe Mongo::Server::Description::Features do
         end
 
         it 'issues a deprecation warning' do
-          expect {
+          expect do
             features.check_driver_support!
-          }.to change {
+          end.to change {
             Mongo::Deprecations.warned?("wire_version:#{default_address}")
           }.from(false).to(true)
         end
@@ -56,7 +51,6 @@ describe Mongo::Server::Description::Features do
     end
 
     context 'when the server wire version range max is higher' do
-
       let(:wire_versions) do
         0..4
       end
@@ -67,20 +61,18 @@ describe Mongo::Server::Description::Features do
     end
 
     context 'when the server wire version range max is lower' do
-
       let(:wire_versions) do
-        described_class::DRIVER_WIRE_VERSIONS.min-2..described_class::DRIVER_WIRE_VERSIONS.min-1
+        described_class::DRIVER_WIRE_VERSIONS.min - 2..described_class::DRIVER_WIRE_VERSIONS.min - 1
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           features.check_driver_support!
-        }.to raise_error(Mongo::Error::UnsupportedFeatures)
+        end.to raise_error(Mongo::Error::UnsupportedFeatures)
       end
     end
 
     context 'when the server wire version range max is lower' do
-
       let(:wire_versions) do
         0..2
       end
@@ -93,7 +85,6 @@ describe Mongo::Server::Description::Features do
 
   describe '#get_more_comment_enabled?' do
     context 'when the wire range includes 9' do
-
       let(:wire_versions) do
         0..9
       end
@@ -104,13 +95,12 @@ describe Mongo::Server::Description::Features do
     end
 
     context 'when the wire range does not include 9' do
-
       let(:wire_versions) do
         0..8
       end
 
       it 'returns false' do
-        expect(features).to_not be_get_more_comment_enabled
+        expect(features).not_to be_get_more_comment_enabled
       end
     end
   end

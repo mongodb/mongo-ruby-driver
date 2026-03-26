@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -20,7 +19,6 @@ require 'mongo/cursor_host'
 module Mongo
   class Collection
     class View
-
       # Defines iteration related behavior for collection views, including
       # cursor instantiation.
       #
@@ -40,7 +38,7 @@ module Mongo
         # @since 2.0.0
         #
         # @yieldparam [ Hash ] Each matching document.
-        def each
+        def each(&block)
           @cursor = prefer_cached_cursor? ? cached_cursor : new_cursor_for_iteration
           return @cursor.to_enum unless block_given?
 
@@ -55,9 +53,7 @@ module Mongo
                                 @cursor
                               end
 
-          cursor_to_iterate.each do |doc|
-            yield doc
-          end
+          cursor_to_iterate.each(&block)
         end
 
         # Cleans up resources associated with this query.
@@ -74,11 +70,11 @@ module Mongo
         #
         # @since 2.1.0
         def close_query
-          if @cursor
-            @cursor.close
-          end
+          return unless @cursor
+
+          @cursor.close
         end
-        alias :kill_cursors :close_query
+        alias kill_cursors close_query
 
         private
 
@@ -160,7 +156,7 @@ module Mongo
           }
 
           if spec[:oplog_replay]
-            collection.client.log_warn("The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later")
+            collection.client.log_warn('The :oplog_replay option is deprecated and ignored by MongoDB 4.4 and later')
           end
 
           maybe_set_tailable_options(spec)
@@ -216,7 +212,7 @@ module Mongo
           # If a query with a limit is performed, the query cache will
           # re-use results from an earlier query with the same or larger
           # limit, and then impose the lower limit during iteration.
-          return QueryCache.normalized_limit(limit)
+          QueryCache.normalized_limit(limit)
         end
 
         # Add tailable cusror options to the command specifiction if needed.

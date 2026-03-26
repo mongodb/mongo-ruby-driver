@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -37,10 +36,10 @@ class Mongo::Cluster
       @awaited = !!awaited
     end
 
-    attr_reader :cluster
+    attr_reader :cluster, :previous_desc, :updated_desc, :original_desc
 
     def_delegators :cluster, :servers_list, :seeds,
-      :publish_sdam_event, :log_warn
+                   :publish_sdam_event, :log_warn
 
     # The topology stored in this attribute can change multiple times throughout
     # a single sdam flow (e.g. unknown -> RS no primary -> RS with primary).
@@ -50,10 +49,6 @@ class Mongo::Cluster
     #
     # @return Mongo::Cluster::Topology The current topology.
     attr_reader :topology
-
-    attr_reader :previous_desc
-    attr_reader :updated_desc
-    attr_reader :original_desc
 
     def awaited?
       @awaited
@@ -65,34 +60,31 @@ class Mongo::Cluster
     # updated_desc's address.
     def update_server_descriptions
       servers_list.each do |server|
-        if server.address == updated_desc.address
-          # SDAM flow must be run when topology version in the new description
-          # is equal to the current topology version, per the example in
-          # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md#what-is-the-purpose-of-topologyversion
-          unless updated_desc.topology_version_gte?(server.description)
-            return false
-          end
+        next unless server.address == updated_desc.address
+        # SDAM flow must be run when topology version in the new description
+        # is equal to the current topology version, per the example in
+        # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.md#what-is-the-purpose-of-topologyversion
+        return false unless updated_desc.topology_version_gte?(server.description)
 
-          @server_description_changed = server.description != updated_desc
+        @server_description_changed = server.description != updated_desc
 
-          # Always update server description, so that fields that do not
-          # affect description equality comparisons but are part of the
-          # description are updated.
-          server.update_description(updated_desc)
-          server.update_last_scan
+        # Always update server description, so that fields that do not
+        # affect description equality comparisons but are part of the
+        # description are updated.
+        server.update_description(updated_desc)
+        server.update_last_scan
 
-          # If there was no content difference between descriptions, we
-          # still need to run sdam flow, but if the flow produces no change
-          # in topology we will omit sending events.
-          return true
-        end
+        # If there was no content difference between descriptions, we
+        # still need to run sdam flow, but if the flow produces no change
+        # in topology we will omit sending events.
+        return true
       end
       false
     end
 
     def server_description_changed
       @previous_server_descriptions = servers_list.map do |server|
-        [server.address.to_s, server.description]
+        [ server.address.to_s, server.description ]
       end
 
       unless update_server_descriptions
@@ -107,23 +99,21 @@ class Mongo::Cluster
       case topology
       when Topology::LoadBalanced
         @updated_desc = ::Mongo::Server::Description::LoadBalancer.new(
-          updated_desc.address,
+          updated_desc.address
         )
         update_server_descriptions
       when Topology::Single
-        if topology.replica_set_name
-          if updated_desc.replica_set_name != topology.replica_set_name
-            log_warn(
-              "Server #{updated_desc.address.to_s} has an incorrect replica set name '#{updated_desc.replica_set_name}'; expected '#{topology.replica_set_name}'"
-            )
-            @updated_desc = ::Mongo::Server::Description.new(
-              updated_desc.address,
-              {},
-              average_round_trip_time: updated_desc.average_round_trip_time,
-              minimum_round_trip_time: updated_desc.minimum_round_trip_time
-            )
-            update_server_descriptions
-          end
+        if topology.replica_set_name && (updated_desc.replica_set_name != topology.replica_set_name)
+          log_warn(
+            "Server #{updated_desc.address} has an incorrect replica set name '#{updated_desc.replica_set_name}'; expected '#{topology.replica_set_name}'"
+          )
+          @updated_desc = ::Mongo::Server::Description.new(
+            updated_desc.address,
+            {},
+            average_round_trip_time: updated_desc.average_round_trip_time,
+            minimum_round_trip_time: updated_desc.minimum_round_trip_time
+          )
+          update_server_descriptions
         end
       when Topology::Unknown
         if updated_desc.standalone?
@@ -133,25 +123,27 @@ class Mongo::Cluster
         elsif updated_desc.primary?
           @topology = Topology::ReplicaSetWithPrimary.new(
             topology.options.merge(replica_set_name: updated_desc.replica_set_name),
-            topology.monitoring, self)
+            topology.monitoring, self
+          )
           update_rs_from_primary
         elsif updated_desc.secondary? || updated_desc.arbiter? || updated_desc.other?
           @topology = Topology::ReplicaSetNoPrimary.new(
             topology.options.merge(replica_set_name: updated_desc.replica_set_name),
-            topology.monitoring, self)
+            topology.monitoring, self
+          )
           update_rs_without_primary
         end
       when Topology::Sharded
         unless updated_desc.unknown? || updated_desc.mongos?
           log_warn(
-            "Removing server #{updated_desc.address.to_s} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected SHARDED"
+            "Removing server #{updated_desc.address} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected SHARDED"
           )
           remove
         end
       when Topology::ReplicaSetWithPrimary
         if updated_desc.standalone? || updated_desc.mongos?
           log_warn(
-            "Removing server #{updated_desc.address.to_s} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected a replica set member"
+            "Removing server #{updated_desc.address} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected a replica set member"
           )
           remove
           check_if_has_primary
@@ -165,7 +157,7 @@ class Mongo::Cluster
       when Topology::ReplicaSetNoPrimary
         if updated_desc.standalone? || updated_desc.mongos?
           log_warn(
-            "Removing server #{updated_desc.address.to_s} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected a replica set member"
+            "Removing server #{updated_desc.address} because it is of the wrong type (#{updated_desc.server_type.to_s.upcase}) - expected a replica set member"
           )
           remove
         elsif updated_desc.primary?
@@ -181,7 +173,8 @@ class Mongo::Cluster
           @topology = Topology::ReplicaSetWithPrimary.new(
             # Do not pass updated_desc's RS name here
             topology.options,
-            topology.monitoring, self)
+            topology.monitoring, self
+          )
           update_rs_from_primary
         elsif updated_desc.secondary? || updated_desc.arbiter? || updated_desc.other?
           update_rs_without_primary
@@ -200,10 +193,11 @@ class Mongo::Cluster
     def update_unknown_with_standalone
       if seeds.length == 1
         @topology = Topology::Single.new(
-          topology.options, topology.monitoring, self)
+          topology.options, topology.monitoring, self
+        )
       else
         log_warn(
-          "Removing server #{updated_desc.address.to_s} because it is a standalone and we have multiple seeds (#{seeds.length})"
+          "Removing server #{updated_desc.address} because it is a standalone and we have multiple seeds (#{seeds.length})"
         )
         remove
       end
@@ -222,12 +216,13 @@ class Mongo::Cluster
       if topology.replica_set_name.nil?
         @topology = Topology::ReplicaSetWithPrimary.new(
           topology.options.merge(replica_set_name: updated_desc.replica_set_name),
-          topology.monitoring, self)
+          topology.monitoring, self
+        )
       end
 
       if topology.replica_set_name != updated_desc.replica_set_name
         log_warn(
-          "Removing server #{updated_desc.address.to_s} because it has an " +
+          "Removing server #{updated_desc.address} because it has an " +
           "incorrect replica set name '#{updated_desc.replica_set_name}'; " +
           "expected '#{topology.replica_set_name}'"
         )
@@ -253,19 +248,20 @@ class Mongo::Cluster
           topology.options.merge(
             max_election_id: updated_desc.election_id,
             max_set_version: updated_desc.set_version
-          ), topology.monitoring, self)
+          ), topology.monitoring, self
+        )
       else
         max_election_id = topology.new_max_election_id(updated_desc)
         max_set_version = topology.new_max_set_version(updated_desc)
 
         if max_election_id != topology.max_election_id ||
-          max_set_version != topology.max_set_version
-        then
+           max_set_version != topology.max_set_version
           @topology = Topology::ReplicaSetWithPrimary.new(
             topology.options.merge(
               max_election_id: max_election_id,
               max_set_version: max_set_version
-            ), topology.monitoring, self)
+            ), topology.monitoring, self
+          )
         end
       end
 
@@ -276,18 +272,18 @@ class Mongo::Cluster
       publish_description_change_event
 
       servers_list.each do |server|
-        if server.address != updated_desc.address
-          if server.primary?
-            server.update_description(
-              ::Mongo::Server::Description.new(
-                server.address,
-                {},
-                average_round_trip_time: server.description.average_round_trip_time,
-                minimum_round_trip_time: updated_desc.minimum_round_trip_time
-              )
-            )
-          end
-        end
+        next unless server.address != updated_desc.address
+
+        next unless server.primary?
+
+        server.update_description(
+          ::Mongo::Server::Description.new(
+            server.address,
+            {},
+            average_round_trip_time: server.description.average_round_trip_time,
+            minimum_round_trip_time: updated_desc.minimum_round_trip_time
+          )
+        )
       end
 
       servers = add_servers_from_desc(updated_desc)
@@ -304,7 +300,7 @@ class Mongo::Cluster
     def update_rs_with_primary_from_member
       if topology.replica_set_name != updated_desc.replica_set_name
         log_warn(
-          "Removing server #{updated_desc.address.to_s} because it has an " +
+          "Removing server #{updated_desc.address} because it has an " +
           "incorrect replica set name (#{updated_desc.replica_set_name}); " +
           "current set name is #{topology.replica_set_name}"
         )
@@ -315,7 +311,7 @@ class Mongo::Cluster
 
       if updated_desc.me_mismatch?
         log_warn(
-          "Removing server #{updated_desc.address.to_s} because it " +
+          "Removing server #{updated_desc.address} because it " +
           "reported itself as #{updated_desc.me}"
         )
         remove
@@ -331,10 +327,11 @@ class Mongo::Cluster
         end
       end
 
-      unless have_primary
-        @topology = Topology::ReplicaSetNoPrimary.new(
-          topology.options, topology.monitoring, self)
-      end
+      return if have_primary
+
+      @topology = Topology::ReplicaSetNoPrimary.new(
+        topology.options, topology.monitoring, self
+      )
     end
 
     # Updates a ReplicaSetNoPrimary topology from a non-primary member.
@@ -342,12 +339,13 @@ class Mongo::Cluster
       if topology.replica_set_name.nil?
         @topology = Topology::ReplicaSetNoPrimary.new(
           topology.options.merge(replica_set_name: updated_desc.replica_set_name),
-          topology.monitoring, self)
+          topology.monitoring, self
+        )
       end
 
       if topology.replica_set_name != updated_desc.replica_set_name
         log_warn(
-          "Removing server #{updated_desc.address.to_s} because it has an " +
+          "Removing server #{updated_desc.address} because it has an " +
           "incorrect replica set name (#{updated_desc.replica_set_name}); " +
           "current set name is #{topology.replica_set_name}"
         )
@@ -365,14 +363,14 @@ class Mongo::Cluster
         server.start_monitoring
       end
 
-      if updated_desc.me_mismatch?
-        log_warn(
-          "Removing server #{updated_desc.address.to_s} because it " +
-          "reported itself as #{updated_desc.me}"
-        )
-        remove
-        return
-      end
+      return unless updated_desc.me_mismatch?
+
+      log_warn(
+        "Removing server #{updated_desc.address} because it " +
+        "reported itself as #{updated_desc.me}"
+      )
+      remove
+      nil
     end
 
     # Adds all servers referenced in the given description (which is
@@ -386,7 +384,7 @@ class Mongo::Cluster
     #   This is the set of servers on which monitoring should be started.
     def add_servers_from_desc(updated_desc)
       added_servers = []
-      %w(hosts passives arbiters).each do |m|
+      %w[hosts passives arbiters].each do |m|
         updated_desc.send(m).each do |address_str|
           if server = cluster.add(address_str, monitor: false)
             added_servers << server
@@ -403,22 +401,20 @@ class Mongo::Cluster
     # given server description (which is supposed to have come from a
     # good primary).
     def remove_servers_not_in_desc(updated_desc)
-      updated_desc_address_strs = %w(hosts passives arbiters).map do |m|
+      updated_desc_address_strs = %w[hosts passives arbiters].map do |m|
         updated_desc.send(m)
       end.flatten
       servers_list.each do |server|
-        unless updated_desc_address_strs.include?(address_str = server.address.to_s)
-          updated_host = updated_desc.address.to_s
-          if updated_desc.me && updated_desc.me != updated_host
-            updated_host += " (self-identified as #{updated_desc.me})"
-          end
-          log_warn(
-            "Removing server #{address_str} because it is not in hosts reported by primary " +
-            "#{updated_host}. Reported hosts are: " +
-            updated_desc.hosts.join(', ')
-          )
-          do_remove(address_str)
-        end
+        next if updated_desc_address_strs.include?(address_str = server.address.to_s)
+
+        updated_host = updated_desc.address.to_s
+        updated_host += " (self-identified as #{updated_desc.me})" if updated_desc.me && updated_desc.me != updated_host
+        log_warn(
+          "Removing server #{address_str} because it is not in hosts reported by primary " +
+          "#{updated_host}. Reported hosts are: " +
+          updated_desc.hosts.join(', ')
+        )
+        do_remove(address_str)
       end
     end
 
@@ -450,11 +446,11 @@ class Mongo::Cluster
         )
       end
       @servers_to_disconnect += servers
-      if servers_list.empty?
-        log_warn(
-          "Topology now has no servers - this is likely a misconfiguration of the cluster and/or the application"
-        )
-      end
+      return unless servers_list.empty?
+
+      log_warn(
+        'Topology now has no servers - this is likely a misconfiguration of the cluster and/or the application'
+      )
     end
 
     def publish_description_change_event
@@ -464,9 +460,7 @@ class Mongo::Cluster
       # method is called at the end of SDAM flow as part of "commit changes"
       # step, server description change is incorporated into the topology
       # change.
-      unless @server_description_changed || topology_effectively_changed?
-        return
-      end
+      return unless @server_description_changed || topology_effectively_changed?
 
       # updated_desc here may not be the description we received from
       # the server - in case of a stale primary, the server reported itself
@@ -483,9 +477,7 @@ class Mongo::Cluster
       # previous description. This allows this method to be called multiple
       # times in the flow when the events should be published, without
       # worrying about whether there are any unpublished changes.
-      if updated_desc.object_id == previous_desc.object_id
-        return
-      end
+      return if updated_desc.equal?(previous_desc)
 
       publish_sdam_event(
         ::Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED,
@@ -494,7 +486,7 @@ class Mongo::Cluster
           topology,
           previous_desc,
           updated_desc,
-          awaited: awaited?,
+          awaited: awaited?
         )
       )
       @previous_desc = updated_desc
@@ -532,20 +524,12 @@ class Mongo::Cluster
       # If a server description changed, topology description change event
       # must be published with the previous and next topologies being of
       # the same type, unless we already published topology change event
-      if topology_changed_event_published
-        return
-      end
+      return if topology_changed_event_published
 
-      if updated_desc.unknown? && previous_desc.unknown?
-        return
-      end
-      if updated_desc.object_id == previous_desc.object_id
-        return
-      end
+      return if updated_desc.unknown? && previous_desc.unknown?
+      return if updated_desc.equal?(previous_desc)
 
-      unless topology_effectively_changed?
-        return
-      end
+      return unless topology_effectively_changed?
 
       # If we are here, there has been a change in the server descriptions
       # in our topology, but topology class has not changed.
@@ -568,12 +552,10 @@ class Mongo::Cluster
     # If the server being processed is identified as data bearing, creates the
     # server's connection pool so it can start populating
     def start_pool_if_data_bearing
-      return if !updated_desc.data_bearing?
+      return unless updated_desc.data_bearing?
 
       servers_list.each do |server|
-        if server.address == @updated_desc.address
-          server.pool
-        end
+        server.pool if server.address == @updated_desc.address
       end
     end
 
@@ -582,44 +564,42 @@ class Mongo::Cluster
     # invoking this method.
     def check_if_has_primary
       unless topology.replica_set?
-        raise ArgumentError, "check_if_has_primary should only be called when topology is replica set, but it is #{topology.class.name.sub(/.*::/, '')}"
+        raise ArgumentError,
+              "check_if_has_primary should only be called when topology is replica set, but it is #{topology.class.name.sub(/.*::/,
+                                                                                                                            '')}"
       end
 
       primary = servers_list.detect do |server|
         # A primary with the wrong set name is not a primary
         server.primary? && server.description.replica_set_name == topology.replica_set_name
       end
-      unless primary
-        @topology = Topology::ReplicaSetNoPrimary.new(
-          topology.options, topology.monitoring, self)
-      end
+      return if primary
+
+      @topology = Topology::ReplicaSetNoPrimary.new(
+        topology.options, topology.monitoring, self
+      )
     end
 
     # Whether updated_desc is for a stale primary.
     def stale_primary?
       if updated_desc.max_wire_version >= 17
-        if updated_desc.election_id.nil? && !topology.max_election_id.nil?
-          return true
-        end
+        return true if updated_desc.election_id.nil? && !topology.max_election_id.nil?
         if updated_desc.election_id && topology.max_election_id && updated_desc.election_id < topology.max_election_id
           return true
         end
+
         if updated_desc.election_id == topology.max_election_id
-          if updated_desc.set_version.nil? && !topology.max_set_version.nil?
-            return true
-          end
+          return true if updated_desc.set_version.nil? && !topology.max_set_version.nil?
           if updated_desc.set_version && topology.max_set_version && updated_desc.set_version < topology.max_set_version
             return true
           end
         end
-      else
-        if updated_desc.election_id && updated_desc.set_version
-          if topology.max_set_version && topology.max_election_id &&
-              (updated_desc.set_version < topology.max_set_version ||
-                  (updated_desc.set_version == topology.max_set_version &&
-                      updated_desc.election_id < topology.max_election_id))
-            return true
-          end
+      elsif updated_desc.election_id && updated_desc.set_version
+        if topology.max_set_version && topology.max_election_id &&
+           (updated_desc.set_version < topology.max_set_version ||
+               (updated_desc.set_version == topology.max_set_version &&
+                   updated_desc.election_id < topology.max_election_id))
+          return true
         end
       end
       false
@@ -642,25 +622,22 @@ class Mongo::Cluster
     # descriptions at the beginning of SDAM flow and compare them to the
     # current ones.
     def topology_effectively_changed?
-      unless topology.equal?(cluster.topology)
-        return true
-      end
+      return true unless topology.equal?(cluster.topology)
 
       server_descriptions = servers_list.map do |server|
-        [server.address.to_s, server.description]
+        [ server.address.to_s, server.description ]
       end
 
       @previous_server_descriptions != server_descriptions
     end
 
     def verify_invariants
-      if Mongo::Lint.enabled?
-        if cluster.topology.single?
-          if cluster.servers_list.length > 1
-            raise Mongo::Error::LintError, "Trying to create a single topology with multiple servers: #{cluster.servers_list}"
-          end
-        end
-      end
+      return unless Mongo::Lint.enabled?
+      return unless cluster.topology.single?
+      return unless cluster.servers_list.length > 1
+
+      raise Mongo::Error::LintError,
+            "Trying to create a single topology with multiple servers: #{cluster.servers_list}"
     end
   end
 end

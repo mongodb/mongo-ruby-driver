@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 ## Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'ffi'
 
 module Mongo
   module Crypt
-
     # A wrapper around mongocrypt_status_t, representing the status of
     # a mongocrypt_t handle.
     #
@@ -39,9 +37,9 @@ module Mongo
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
         @status = pointer || FFI::AutoPointer.new(
-                              Binding.mongocrypt_status_new,
-                              Binding.method(:mongocrypt_status_destroy)
-                            )
+          Binding.mongocrypt_status_new,
+          Binding.method(:mongocrypt_status_destroy)
+        )
       end
 
       # Initialize a Status object from an existing pointer to a
@@ -52,7 +50,7 @@ module Mongo
       #
       # @return [ Mongo::Crypt::Status ] A new Status object
       def self.from_pointer(pointer)
-        self.new(pointer: pointer)
+        new(pointer: pointer)
       end
 
       # Set a label, code, and message on the Status
@@ -63,10 +61,10 @@ module Mongo
       #
       # @return [ Mongo::Crypt::Status ] returns self
       def update(label, code, message)
-        unless [:ok, :error_client, :error_kms].include?(label)
+        unless %i[ok error_client error_kms].include?(label)
           raise ArgumentError.new(
             "#{label} is an invalid value for a Mongo::Crypt::Status label. " +
-            "Label must have one of the following values: :ok, :error_client, :error_kms"
+            'Label must have one of the following values: :ok, :error_client, :error_kms'
           )
         end
 
@@ -127,11 +125,11 @@ module Mongo
       def raise_crypt_error(kms: false)
         return if ok?
 
-        if kms || label == :error_kms
-          error = Error::KmsError.new(message, code: code)
-        else
-          error = Error::CryptError.new(message, code: code)
-        end
+        error = if kms || label == :error_kms
+                  Error::KmsError.new(message, code: code)
+                else
+                  Error::CryptError.new(message, code: code)
+                end
 
         raise error
       end

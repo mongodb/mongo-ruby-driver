@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -33,7 +32,7 @@ describe Mongo::Srv::Monitor do
 
     context 'when srv_max_hosts is not specified' do
       let(:srv_uri) do
-        Mongo::URI.get("mongodb+srv://this.is.not.used")
+        Mongo::URI.get('mongodb+srv://this.is.not.used')
       end
 
       let(:cluster) do
@@ -60,7 +59,7 @@ describe Mongo::Srv::Monitor do
 
       context 'when a new DNS record is added' do
         let(:new_hosts) do
-          hosts + ['localhost.test.build.10gen.cc:27019']
+          hosts + [ 'localhost.test.build.10gen.cc:27019' ]
         end
 
         let(:new_result) do
@@ -85,7 +84,7 @@ describe Mongo::Srv::Monitor do
 
       context 'when a DNS record is removed' do
         let(:new_hosts) do
-          hosts - ['test1.test.build.10gen.cc:27018']
+          hosts - [ 'test1.test.build.10gen.cc:27018' ]
         end
 
         let(:new_result) do
@@ -110,7 +109,7 @@ describe Mongo::Srv::Monitor do
 
       context 'when a single DNS record is replaced' do
         let(:new_hosts) do
-          hosts - ['test1.test.build.10gen.cc:27018'] +  ['test1.test.build.10gen.cc:27019']
+          hosts - [ 'test1.test.build.10gen.cc:27018' ] + [ 'test1.test.build.10gen.cc:27019' ]
         end
 
         let(:new_result) do
@@ -135,7 +134,7 @@ describe Mongo::Srv::Monitor do
 
       context 'when all DNS result are replaced with a single record' do
         let(:new_hosts) do
-          ['test1.test.build.10gen.cc:27019']
+          [ 'test1.test.build.10gen.cc:27019' ]
         end
 
         let(:new_result) do
@@ -199,7 +198,7 @@ describe Mongo::Srv::Monitor do
       end
 
       context 'when the DNS lookup is unable to resolve the hostname' do
-      let(:resolver) do
+        let(:resolver) do
           double('resolver').tap do |resolver|
             allow(resolver).to receive(:get_records).and_raise(Resolv::ResolvError)
           end
@@ -240,7 +239,7 @@ describe Mongo::Srv::Monitor do
       let(:limited_result) do
         double('result').tap do |result|
           allow(result).to receive(:hostname).and_return(hostname)
-          allow(result).to receive(:address_strs).and_return([hosts.first])
+          allow(result).to receive(:address_strs).and_return([ hosts.first ])
           allow(result).to receive(:empty?).and_return(false)
           allow(result).to receive(:min_ttl).and_return(nil)
         end
@@ -252,20 +251,20 @@ describe Mongo::Srv::Monitor do
           expect(resolver).to receive(:get_records).at_least(:once).with(
             anything,
             anything,
-            1  # Verify srv_max_hosts=1 is passed
+            1 # Verify srv_max_hosts=1 is passed
           ).and_return(limited_result)
         end
       end
 
       context 'when srv_max_hosts=1 in the URI' do
         let(:srv_uri_with_max_hosts) do
-          Mongo::URI.get("mongodb+srv://this.is.not.used/?srvMaxHosts=1")
+          Mongo::URI.get('mongodb+srv://this.is.not.used/?srvMaxHosts=1')
         end
 
         let(:monitor_with_max_hosts) do
           described_class.new(cluster, srv_uri: srv_uri_with_max_hosts)
         end
-        
+
         before do
           # monitor instantiation triggers cluster instantiation which
           # performs real SRV lookups for the hostname.
@@ -287,23 +286,24 @@ describe Mongo::Srv::Monitor do
 
       context 'when srv_max_hosts is set on client' do
         it 'creates client with srv_max_hosts and passes it to resolver on scan' do
-          client = nil
+          nil
           expect(Mongo::Srv::Resolver).to receive(:new).at_least(:once).and_return(resolver)
-          
-          client = Mongo::Client.new('mongodb+srv://test.example.com/', srv_max_hosts: 1, monitoring_io: false, connect: :sharded)
-          
+
+          client = Mongo::Client.new('mongodb+srv://test.example.com/', srv_max_hosts: 1, monitoring_io: false,
+                                                                        connect: :sharded)
+
           # Start SRV monitor but don't run the background thread
           client.cluster.send(:start_stop_srv_monitor)
-          
+
           srv_monitor = client.cluster.instance_variable_get(:@srv_monitor)
-          
+
           # Stop the background thread if it's running
           srv_monitor.stop! if srv_monitor.running?
-          
+
           srv_monitor.instance_variable_set(:@resolver, resolver)
-          
+
           srv_monitor.send(:scan!)
-          
+
           expect(client.cluster.servers_list.size).to eq(1)
         end
       end

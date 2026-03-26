@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -7,13 +6,14 @@ describe 'Server::Monitor' do
   require_topology :single, :replica_set, :sharded
 
   let(:client) do
-    new_local_client([ClusterConfig.instance.primary_address_str],
-      SpecConfig.instance.test_options.merge(SpecConfig.instance.auth_options.merge(
-        monitor_options)))
+    new_local_client([ ClusterConfig.instance.primary_address_str ],
+                     SpecConfig.instance.test_options.merge(SpecConfig.instance.auth_options.merge(
+                                                              monitor_options
+                                                            )))
   end
 
   let(:monitor_options) do
-    {heartbeat_frequency: 1}
+    { heartbeat_frequency: 1 }
   end
 
   retry_test
@@ -40,7 +40,7 @@ describe 'Server::Monitor' do
     require_topology :replica_set
 
     let(:monitor_options) do
-      {heartbeat_frequency: 20}
+      { heartbeat_frequency: 20 }
     end
 
     it 'updates server description' do

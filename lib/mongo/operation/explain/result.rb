@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,13 +17,11 @@
 module Mongo
   module Operation
     class Explain
-
       # Defines custom behavior of results in find command with explain.
       #
       # @since 2.5.0
       # @api semiprivate
       class Result < Operation::Result
-
         # Get the cursor id.
         #
         # @example Get the cursor id.

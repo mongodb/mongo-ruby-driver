@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Operation::Aggregate::Result do
-
   let(:description) do
     Mongo::Server::Description.new(
       double('description address'),
@@ -33,17 +31,15 @@ describe Mongo::Operation::Aggregate::Result do
 
   let(:aggregate) do
     [
-      { '_id' => 'New York', 'totalpop' => 40270 },
-      { '_id' => 'Berlin', 'totalpop' => 103056 }
+      { '_id' => 'New York', 'totalpop' => 40_270 },
+      { '_id' => 'Berlin', 'totalpop' => 103_056 }
     ]
   end
 
   describe '#cursor_id' do
-
     context 'when the result is not using a cursor' do
-
       let(:documents) do
-        [{ 'result' => aggregate, 'ok' => 1.0 }]
+        [ { 'result' => aggregate, 'ok' => 1.0 } ]
       end
 
       it 'returns zero' do
@@ -52,9 +48,8 @@ describe Mongo::Operation::Aggregate::Result do
     end
 
     context 'when the result is using a cursor' do
-
       let(:documents) do
-        [{ 'cursor' => { 'id' => 15, 'ns' => 'test', 'firstBatch' => aggregate }, 'ok' => 1.0 }]
+        [ { 'cursor' => { 'id' => 15, 'ns' => 'test', 'firstBatch' => aggregate }, 'ok' => 1.0 } ]
       end
 
       it 'returns the cursor id' do
@@ -64,11 +59,9 @@ describe Mongo::Operation::Aggregate::Result do
   end
 
   describe '#documents' do
-
     context 'when the result is not using a cursor' do
-
       let(:documents) do
-        [{ 'result' => aggregate, 'ok' => 1.0 }]
+        [ { 'result' => aggregate, 'ok' => 1.0 } ]
       end
 
       it 'returns the documents' do
@@ -77,9 +70,8 @@ describe Mongo::Operation::Aggregate::Result do
     end
 
     context 'when the result is using a cursor' do
-
       let(:documents) do
-        [{ 'cursor' => { 'id' => 15, 'ns' => 'test', 'firstBatch' => aggregate }, 'ok' => 1.0 }]
+        [ { 'cursor' => { 'id' => 15, 'ns' => 'test', 'firstBatch' => aggregate }, 'ok' => 1.0 } ]
       end
 
       it 'returns the documents' do

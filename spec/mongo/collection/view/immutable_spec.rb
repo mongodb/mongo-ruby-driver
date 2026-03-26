@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Collection::View::Immutable do
-
   let(:selector) do
     {}
   end
@@ -22,11 +20,9 @@ describe Mongo::Collection::View::Immutable do
   end
 
   describe '#configure' do
-
     context 'when the options have modifiers' do
-
       let(:options) do
-        { :max_time_ms => 500 }
+        { max_time_ms: 500 }
       end
 
       let(:new_view) do

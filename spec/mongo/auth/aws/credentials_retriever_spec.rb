@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -21,7 +20,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
           double('credentials', expired?: false)
         end
 
-        before(:each) do
+        before do
           cache.credentials = credentials
         end
 
@@ -41,7 +40,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
             double('credentials', expired?: false)
           end
 
-          before(:each) do
+          before do
             expect(subject)
               .to receive(:obtain_credentials_from_endpoints)
               .and_return(credentials)
@@ -58,7 +57,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
         end
 
         context 'when cannot obtain credentials from endpoints' do
-          before(:each) do
+          before do
             expect(subject)
               .to receive(:obtain_credentials_from_endpoints)
               .and_return(nil)
@@ -71,7 +70,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
       end
 
       context 'when cached credentials expired' do
-        before(:each) do
+        before do
           cache.credentials = double('credentials', expired?: true)
         end
 
@@ -79,7 +78,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
       end
 
       context 'when no credentials cached' do
-        before(:each) do
+        before do
           cache.clear
         end
 

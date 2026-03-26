@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -14,16 +13,12 @@ describe 'URI options' do
   clean_slate_for_all_if_possible
 
   URI_OPTIONS_TESTS.each do |file|
-
     spec = Mongo::ConnectionString::Spec.new(file)
 
     context(spec.description) do
-
       spec.tests.each do |test|
         context "#{test.description}" do
-          if test.description.downcase.include?("gssapi")
-            require_mongo_kerberos
-          end
+          require_mongo_kerberos if test.description.downcase.include?('gssapi')
 
           if test.valid?
 
@@ -32,7 +27,7 @@ describe 'URI options' do
             # again.
             if test.warn?
               it 'warns' do
-                expect(Mongo::Logger.logger).to receive(:warn)#.and_call_original
+                expect(Mongo::Logger.logger).to receive(:warn) # .and_call_original
                 expect(test.client).to be_a(Mongo::Client)
               end
             else
@@ -55,35 +50,29 @@ describe 'URI options' do
             if opts = test.expected_options
               if opts['compressors'] && opts['compressors'].include?('snappy')
                 before do
-                  unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /snappy/
-                    skip "This test requires snappy compression"
-                  end
+                  skip 'This test requires snappy compression' unless /snappy/.match?(ENV.fetch('BUNDLE_GEMFILE', ''))
+                  skip 'This test requires zstd compression' unless /zstd/.match?(ENV.fetch('BUNDLE_GEMFILE', ''))
                 end
               end
 
               if opts['compressors'] && opts['compressors'].include?('zstd')
-                before do
-                  unless ENV.fetch('BUNDLE_GEMFILE', '') =~ /zstd/
-                    skip "This test requires zstd compression"
-                  end
-                end
               end
 
               it 'creates a client with the correct options' do
                 mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
-                  opts,
+                  opts
                 )
-                mapped.should == expected
+                expect(mapped).to eq(expected)
               end
             end
 
           else
 
             it 'raises an error' do
-              expect{
+              expect do
                 test.uri
-              }.to raise_exception(Mongo::Error::InvalidURI)
+              end.to raise_exception(Mongo::Error::InvalidURI)
             end
           end
         end

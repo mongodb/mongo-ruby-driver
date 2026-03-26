@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -32,6 +31,7 @@ module Mongo
     def wait(timeout = nil)
       raise_unless_locked!
       return false if timeout && timeout < 0
+
       @cv.wait(@lock, timeout)
     end
 
@@ -50,9 +50,9 @@ module Mongo
     private
 
     def raise_unless_locked!
-      unless @lock.owned?
-        raise ArgumentError, "the lock must be owned when calling this method"
-      end
+      return if @lock.owned?
+
+      raise ArgumentError, 'the lock must be owned when calling this method'
     end
   end
 end

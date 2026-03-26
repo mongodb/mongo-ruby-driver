@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -57,7 +56,7 @@ describe Mongo::Auth::Aws::CredentialsCache do
     it 'clears the credentials' do
       subject.credentials = double('credentials')
       subject.clear
-      expect(subject.credentials).to be nil
+      expect(subject.credentials).to be_nil
     end
   end
 end

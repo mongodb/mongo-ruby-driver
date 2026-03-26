@@ -1,27 +1,26 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Operation::Update::OpMsg do
-
-  let(:updates) { [{:q => { :foo => 1 },
-                    :u => { :$set => { :bar => 1 } },
-                    :multi => true,
-                    :upsert => false }] }
+  let(:updates) do
+    [ { q: { foo: 1 },
+        u: { :$set => { bar: 1 } },
+        multi: true,
+        upsert: false } ]
+  end
 
   let(:write_concern) do
     Mongo::WriteConcern.get(w: :majority)
   end
   let(:session) { nil }
   let(:spec) do
-    { :updates       => updates,
-      :db_name       => SpecConfig.instance.test_db,
-      :coll_name     => TEST_COLL,
-      :write_concern => write_concern,
-      :ordered       => true,
-      :session       => session
-    }
+    { updates: updates,
+      db_name: SpecConfig.instance.test_db,
+      coll_name: TEST_COLL,
+      write_concern: write_concern,
+      ordered: true,
+      session: session }
   end
 
   let(:op) { described_class.new(spec) }
@@ -36,9 +35,7 @@ describe Mongo::Operation::Update::OpMsg do
   end
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(op.spec).to eq(spec)
       end
@@ -46,9 +43,7 @@ describe Mongo::Operation::Update::OpMsg do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two ops have the same specs' do
         let(:other) { described_class.new(spec) }
 
@@ -58,17 +53,18 @@ describe Mongo::Operation::Update::OpMsg do
       end
 
       context 'when two ops have different specs' do
-        let(:other_updates) { [{:q => { :bar => 1 },
-                                :u => { :$set => { :bar => 2 } },
-                                :multi => true,
-                                :upsert => false }] }
+        let(:other_updates) do
+          [ { q: { bar: 1 },
+              u: { :$set => { bar: 2 } },
+              multi: true,
+              upsert: false } ]
+        end
         let(:other_spec) do
-          { :updates       => other_updates,
-            :db_name       => SpecConfig.instance.test_db,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(w: :majority),
-            :ordered       => true
-          }
+          { updates: other_updates,
+            db_name: SpecConfig.instance.test_db,
+            coll_name: TEST_COLL,
+            write_concern: Mongo::WriteConcern.get(w: :majority),
+            ordered: true }
         end
         let(:other) { described_class.new(other_spec) }
 
@@ -84,13 +80,11 @@ describe Mongo::Operation::Update::OpMsg do
     require_no_linting
 
     context 'when write concern is not specified' do
-
       let(:spec) do
-        { :updates       => updates,
-          :db_name       => SpecConfig.instance.test_db,
-          :coll_name     => TEST_COLL,
-          :ordered       => true
-        }
+        { updates: updates,
+          db_name: SpecConfig.instance.test_db,
+          coll_name: TEST_COLL,
+          ordered: true }
       end
 
       it 'does not include write concern in the selector' do
@@ -99,7 +93,6 @@ describe Mongo::Operation::Update::OpMsg do
     end
 
     context 'when write concern is specified' do
-
       it 'includes write concern in the selector' do
         expect(op.send(:command, connection)[:writeConcern]).to eq(BSON::Document.new(write_concern.options))
       end
@@ -113,11 +106,11 @@ describe Mongo::Operation::Update::OpMsg do
     context 'when the server supports OP_MSG' do
       let(:global_args) do
         {
-            update: TEST_COLL,
-            ordered: true,
-            writeConcern: write_concern.options,
-            '$db' => SpecConfig.instance.test_db,
-            lsid: session.session_id
+          update: TEST_COLL,
+          ordered: true,
+          writeConcern: write_concern.options,
+          '$db' => SpecConfig.instance.test_db,
+          lsid: session.session_id
         }
       end
 
@@ -137,7 +130,7 @@ describe Mongo::Operation::Update::OpMsg do
         end
 
         it 'creates the correct OP_MSG message' do
-          authorized_client.command(ping:1)
+          authorized_client.command(ping: 1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
           op.send(:message, connection)
         end
@@ -151,7 +144,7 @@ describe Mongo::Operation::Update::OpMsg do
         end
 
         it 'creates the correct OP_MSG message' do
-          authorized_client.command(ping:1)
+          authorized_client.command(ping: 1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
           op.send(:message, connection)
         end
@@ -186,13 +179,11 @@ describe Mongo::Operation::Update::OpMsg do
       end
 
       context 'when the write concern is 0' do
-
         let(:write_concern) do
           Mongo::WriteConcern.get(w: 0)
         end
 
         context 'when the session is implicit' do
-
           let(:session) do
             Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
               allow(session).to receive(:session_id).and_return(42)
@@ -211,8 +202,9 @@ describe Mongo::Operation::Update::OpMsg do
             end
 
             it 'does not send a session id in the command' do
-              authorized_client.command(ping:1)
-              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              authorized_client.command(ping: 1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args,
+                                                                 expected_payload_1)
               op.send(:message, connection)
             end
           end
@@ -227,8 +219,9 @@ describe Mongo::Operation::Update::OpMsg do
             end
 
             it 'creates the correct OP_MSG message' do
-              authorized_client.command(ping:1)
-              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              authorized_client.command(ping: 1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args,
+                                                                 expected_payload_1)
               op.send(:message, connection)
             end
           end
@@ -253,9 +246,10 @@ describe Mongo::Operation::Update::OpMsg do
           end
 
           it 'does not send a session id in the command' do
-            authorized_client.command(ping:1)
+            authorized_client.command(ping: 1)
             RSpec::Mocks.with_temporary_scope do
-              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args,
+                                                                 expected_payload_1)
               op.send(:message, connection)
             end
           end

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Operation::Result do
-
   let(:description) do
     Mongo::Server::Description.new(
       double('description address'),
@@ -32,11 +30,9 @@ describe Mongo::Operation::Result do
   end
 
   describe '#acknowledged?' do
-
     context 'when the reply is for a read command' do
-
       let(:documents) do
-        [{ 'isWritablePrimary' => true, 'ok' => 1.0 }]
+        [ { 'isWritablePrimary' => true, 'ok' => 1.0 } ]
       end
 
       it 'returns true' do
@@ -45,11 +41,9 @@ describe Mongo::Operation::Result do
     end
 
     context 'when the reply is for a write command' do
-
       context 'when the command was acknowledged' do
-
         let(:documents) do
-          [{ "ok" => 1, "n" => 2 }]
+          [ { 'ok' => 1, 'n' => 2 } ]
         end
 
         it 'returns true' do
@@ -58,20 +52,17 @@ describe Mongo::Operation::Result do
       end
 
       context 'when the command was not acknowledged' do
-
         let(:reply) { nil }
 
         it 'returns false' do
-          expect(result).to_not be_acknowledged
+          expect(result).not_to be_acknowledged
         end
       end
     end
   end
 
   describe '#cursor_id' do
-
     context 'when the reply exists' do
-
       let(:cursor_id) { 5 }
 
       it 'delegates to the reply' do
@@ -80,7 +71,6 @@ describe Mongo::Operation::Result do
     end
 
     context 'when the reply does not exist' do
-
       let(:reply) { nil }
 
       it 'returns zero' do
@@ -91,7 +81,6 @@ describe Mongo::Operation::Result do
 
   describe '#has_cursor_id?' do
     context 'when the reply exists' do
-
       let(:cursor_id) { 5 }
 
       it 'returns true' do
@@ -100,7 +89,6 @@ describe Mongo::Operation::Result do
     end
 
     context 'when the reply does not exist' do
-
       let(:reply) { nil }
 
       it 'returns false' do
@@ -110,13 +98,10 @@ describe Mongo::Operation::Result do
   end
 
   describe '#documents' do
-
     context 'when the result is for a command' do
-
       context 'when a reply is received' do
-
         let(:documents) do
-          [{ "ok" => 1, "n" => 2 }]
+          [ { 'ok' => 1, 'n' => 2 } ]
         end
 
         it 'returns the documents' do
@@ -125,7 +110,6 @@ describe Mongo::Operation::Result do
       end
 
       context 'when a reply is not received' do
-
         let(:reply) { nil }
 
         it 'returns an empty array' do
@@ -136,22 +120,17 @@ describe Mongo::Operation::Result do
   end
 
   describe '#each' do
-
     let(:documents) do
-      [{ "ok" => 1, "n" => 2 }]
+      [ { 'ok' => 1, 'n' => 2 } ]
     end
 
     context 'when a block is given' do
-
       it 'yields to each document' do
-        result.each do |document|
-          expect(document).to eq(documents.first)
-        end
+        expect(result).to all(eq(documents.first))
       end
     end
 
     context 'when no block is given' do
-
       it 'returns an enumerator' do
         expect(result.each).to be_a(Enumerator)
       end
@@ -159,18 +138,15 @@ describe Mongo::Operation::Result do
   end
 
   describe '#initialize' do
-
     it 'sets the replies' do
       expect(result.replies).to eq([ reply ])
     end
   end
 
   describe '#returned_count' do
-
     context 'when the reply is for a read command' do
-
       let(:documents) do
-        [{ 'hello' => true, 'ok' => 1.0 }]
+        [ { 'hello' => true, 'ok' => 1.0 } ]
       end
 
       it 'returns the number returned' do
@@ -179,11 +155,9 @@ describe Mongo::Operation::Result do
     end
 
     context 'when the reply is for a write command' do
-
       context 'when the write is acknowledged' do
-
         let(:documents) do
-          [{ "ok" => 1, "n" => 2 }]
+          [ { 'ok' => 1, 'n' => 2 } ]
         end
 
         it 'returns the number returned' do
@@ -192,7 +166,6 @@ describe Mongo::Operation::Result do
       end
 
       context 'when the write is not acknowledged' do
-
         let(:reply) { nil }
 
         it 'returns zero' do
@@ -203,11 +176,9 @@ describe Mongo::Operation::Result do
   end
 
   describe '#successful?' do
-
     context 'when the reply is for a read command' do
-
       let(:documents) do
-        [{ 'ismaster' => true, 'ok' => 1.0 }]
+        [ { 'ismaster' => true, 'ok' => 1.0 } ]
       end
 
       it 'returns true' do
@@ -216,11 +187,9 @@ describe Mongo::Operation::Result do
     end
 
     context 'when the reply is for a query' do
-
       context 'when the query has no errors' do
-
         let(:documents) do
-          [{ 'field' => 'name' }]
+          [ { 'field' => 'name' } ]
         end
 
         it 'returns true' do
@@ -229,18 +198,16 @@ describe Mongo::Operation::Result do
       end
 
       context 'when the query has errors' do
-
         let(:documents) do
-          [{ '$err' => 'not authorized for query on test.system.namespaces', 'code'=> 16550 }]
+          [ { '$err' => 'not authorized for query on test.system.namespaces', 'code' => 16_550 } ]
         end
 
         it 'returns false' do
-          expect(result).to_not be_successful
+          expect(result).not_to be_successful
         end
       end
 
       context 'when the query reply has the cursor_not_found flag set' do
-
         let(:flags) do
           [ :cursor_not_found ]
         end
@@ -250,19 +217,16 @@ describe Mongo::Operation::Result do
         end
 
         it 'returns false' do
-          expect(result).to_not be_successful
+          expect(result).not_to be_successful
         end
       end
     end
 
     context 'when the reply is for a write command' do
-
       context 'when the write is acknowledged' do
-
         context 'when ok is 1' do
-
           let(:documents) do
-            [{ "ok" => 1, "n" => 2 }]
+            [ { 'ok' => 1, 'n' => 2 } ]
           end
 
           it 'returns true' do
@@ -271,19 +235,17 @@ describe Mongo::Operation::Result do
         end
 
         context 'when ok is not 1' do
-
           let(:documents) do
-            [{ "ok" => 0, "n" => 0 }]
+            [ { 'ok' => 0, 'n' => 0 } ]
           end
 
           it 'returns false' do
-            expect(result).to_not be_successful
+            expect(result).not_to be_successful
           end
         end
       end
 
       context 'when the write is not acknowledged' do
-
         let(:reply) { nil }
 
         it 'returns true' do
@@ -294,8 +256,9 @@ describe Mongo::Operation::Result do
 
     context 'when there is a write concern error' do
       let(:documents) do
-        [{'ok' => 1.0, 'writeConcernError' => {
-          'code' => 91, 'errmsg' => 'Replication is being shut down'}}]
+        [ { 'ok' => 1.0, 'writeConcernError' => {
+          'code' => 91, 'errmsg' => 'Replication is being shut down'
+        } } ]
       end
 
       it 'is false' do
@@ -305,11 +268,9 @@ describe Mongo::Operation::Result do
   end
 
   describe '#written_count' do
-
     context 'when the reply is for a read command' do
-
       let(:documents) do
-        [{ 'ismaster' => true, 'ok' => 1.0 }]
+        [ { 'ismaster' => true, 'ok' => 1.0 } ]
       end
 
       it 'returns the number written' do
@@ -318,9 +279,8 @@ describe Mongo::Operation::Result do
     end
 
     context 'when the reply is for a write command' do
-
       let(:documents) do
-        [{ "ok" => 1, "n" => 2 }]
+        [ { 'ok' => 1, 'n' => 2 } ]
       end
 
       it 'returns the number written' do
@@ -337,7 +297,7 @@ describe Mongo::Operation::Result do
     before do
       class Result
         def get_result(client)
-          client.database.command(:ping => 1)
+          client.database.command(ping: 1)
         end
       end
     end
@@ -352,11 +312,11 @@ describe Mongo::Operation::Result do
   end
 
   describe '#validate!' do
-
     context 'when there is a write concern error' do
       let(:documents) do
-        [{'ok' => 1.0, 'writeConcernError' => {
-          'code' => 91, 'errmsg' => 'Replication is being shut down'}}]
+        [ { 'ok' => 1.0, 'writeConcernError' => {
+          'code' => 91, 'errmsg' => 'Replication is being shut down'
+        } } ]
       end
 
       it 'raises OperationFailure' do

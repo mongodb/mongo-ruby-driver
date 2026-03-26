@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class KillCursors
-
       # A MongoDB killcursors operation sent as an op message.
       #
       # @api private
@@ -30,7 +28,7 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(_connection)
           {
             killCursors: coll_name,
             cursors: int64_cursor_ids,

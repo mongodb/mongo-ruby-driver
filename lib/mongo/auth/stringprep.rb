@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -71,15 +70,14 @@ module Mongo
           raise Mongo::Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::INVALID_BIDIRECTIONAL)
         end
 
-        if out.each_char.any? { |c| table_contains?(Tables::D1, c) }
-          if out.each_char.any? { |c| table_contains?(Tables::D2, c) }
-            raise Mongo::Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::INVALID_BIDIRECTIONAL)
-          end
-
-          unless table_contains?(Tables::D1, out[0]) && table_contains?(Tables::D1, out[-1])
-            raise Mongo::Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::INVALID_BIDIRECTIONAL)
-          end
+        return unless out.each_char.any? { |c| table_contains?(Tables::D1, c) }
+        if out.each_char.any? { |c| table_contains?(Tables::D2, c) }
+          raise Mongo::Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::INVALID_BIDIRECTIONAL)
         end
+
+        return if table_contains?(Tables::D1, out[0]) && table_contains?(Tables::D1, out[-1])
+
+        raise Mongo::Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::INVALID_BIDIRECTIONAL)
       end
 
       def check_prohibited!(out, prohibited)
@@ -94,7 +92,7 @@ module Mongo
 
       def mapping(c, mappings)
         m = mappings.find { |m| m.has_key?(c) }
-        mapped = (m && m[c]) || [c]
+        mapped = (m && m[c]) || [ c ]
         mapped.map { |i| i.chr(Encoding::UTF_8) }.join
       end
 

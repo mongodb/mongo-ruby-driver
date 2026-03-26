@@ -1,57 +1,52 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
-
   # @api private
   module Lint
-
     # Raises LintError if +obj+ is not of type +cls+.
     def assert_type(obj, cls)
       return unless enabled?
-      unless obj.is_a?(cls)
-        raise Error::LintError, "Expected #{obj} to be a #{cls}"
-      end
+      return if obj.is_a?(cls)
+
+      raise Error::LintError, "Expected #{obj} to be a #{cls}"
     end
     module_function :assert_type
 
     def validate_underscore_read_preference(read_pref)
       return unless enabled?
       return if read_pref.nil?
-      unless read_pref.is_a?(Hash)
-        raise Error::LintError, "Read preference is not a hash: #{read_pref}"
-      end
+      raise Error::LintError, "Read preference is not a hash: #{read_pref}" unless read_pref.is_a?(Hash)
+
       validate_underscore_read_preference_mode(read_pref[:mode] || read_pref['mode'])
     end
     module_function :validate_underscore_read_preference
 
     def validate_underscore_read_preference_mode(mode)
       return unless enabled?
-      if mode
-        unless %w(primary primary_preferred secondary secondary_preferred nearest).include?(mode.to_s)
-          raise Error::LintError, "Invalid read preference mode: #{mode}"
-        end
-      end
+
+      return unless mode
+      return if %w[primary primary_preferred secondary secondary_preferred nearest].include?(mode.to_s)
+
+      raise Error::LintError, "Invalid read preference mode: #{mode}"
     end
     module_function :validate_underscore_read_preference_mode
 
     def validate_camel_case_read_preference(read_pref)
       return unless enabled?
       return if read_pref.nil?
-      unless read_pref.is_a?(Hash)
-        raise Error::LintError, "Read preference is not a hash: #{read_pref}"
-      end
+      raise Error::LintError, "Read preference is not a hash: #{read_pref}" unless read_pref.is_a?(Hash)
+
       validate_camel_case_read_preference_mode(read_pref[:mode] || read_pref['mode'])
     end
     module_function :validate_camel_case_read_preference
 
     def validate_camel_case_read_preference_mode(mode)
       return unless enabled?
-      if mode
-        unless %w(primary primaryPreferred secondary secondaryPreferred nearest).include?(mode.to_s)
-          raise Error::LintError, "Invalid read preference mode: #{mode}"
-        end
-      end
+
+      return unless mode
+      return if %w[primary primaryPreferred secondary secondaryPreferred nearest].include?(mode.to_s)
+
+      raise Error::LintError, "Invalid read preference mode: #{mode}"
     end
     module_function :validate_camel_case_read_preference_mode
 
@@ -76,29 +71,28 @@ module Mongo
     def validate_read_concern_option(read_concern)
       return unless enabled?
       return if read_concern.nil?
-      unless read_concern.is_a?(Hash)
-        raise Error::LintError, "Read concern is not a hash: #{read_concern}"
-      end
+      raise Error::LintError, "Read concern is not a hash: #{read_concern}" unless read_concern.is_a?(Hash)
       return if read_concern.empty?
+
       keys = read_concern.keys
-      if read_concern.is_a?(BSON::Document)
-        # Permits indifferent access
-        allowed_keys = ['level']
-      else
-        # Does not permit indifferent access
-        allowed_keys = [:level]
-      end
-      if keys != allowed_keys
-        raise Error::LintError, "Read concern has invalid keys: #{keys.inspect}"
-      end
+      allowed_keys = if read_concern.is_a?(BSON::Document)
+                       # Permits indifferent access
+                       [ 'level' ]
+                     else
+                       # Does not permit indifferent access
+                       [ :level ]
+                     end
+      raise Error::LintError, "Read concern has invalid keys: #{keys.inspect}" if keys != allowed_keys
+
       level = read_concern[:level]
-      return if [:local, :available, :majority, :linearizable, :snapshot].include?(level)
+      return if %i[local available majority linearizable snapshot].include?(level)
+
       raise Error::LintError, "Read concern level is invalid: value must be a symbol: #{level.inspect}"
     end
     module_function :validate_read_concern_option
 
     def enabled?
-      ENV['MONGO_RUBY_DRIVER_LINT'] && %w(1 yes true on).include?(ENV['MONGO_RUBY_DRIVER_LINT'].downcase)
+      ENV['MONGO_RUBY_DRIVER_LINT'] && %w[1 yes true on].include?(ENV['MONGO_RUBY_DRIVER_LINT'].downcase)
     end
     module_function :enabled?
   end

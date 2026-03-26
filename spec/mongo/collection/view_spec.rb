@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Collection::View do
-
   let(:filter) do
     {}
   end
@@ -22,18 +20,15 @@ describe Mongo::Collection::View do
   end
 
   describe '#==' do
-
     context 'when the other object is not a collection view' do
-
       let(:other) { 'test' }
 
       it 'returns false' do
-        expect(view).to_not eq(other)
+        expect(view).not_to eq(other)
       end
     end
 
     context 'when the views have the same collection, filter, and options' do
-
       let(:other) do
         described_class.new(authorized_collection, filter, options)
       end
@@ -44,7 +39,6 @@ describe Mongo::Collection::View do
     end
 
     context 'when two views have a different collection' do
-
       let(:other_collection) do
         authorized_client[:other]
       end
@@ -59,7 +53,6 @@ describe Mongo::Collection::View do
     end
 
     context 'when two views have a different filter' do
-
       let(:other_filter) do
         { 'name' => 'Emily' }
       end
@@ -74,7 +67,6 @@ describe Mongo::Collection::View do
     end
 
     context 'when two views have different options' do
-
       let(:other_options) do
         { 'limit' => 20 }
       end
@@ -90,7 +82,6 @@ describe Mongo::Collection::View do
   end
 
   describe 'copy' do
-
     let(:view_clone) do
       view.clone
     end
@@ -109,9 +100,8 @@ describe Mongo::Collection::View do
   end
 
   describe '#each' do
-
     let(:documents) do
-      (1..10).map{ |i| { field: "test#{i}" }}
+      (1..10).map { |i| { field: "test#{i}" } }
     end
 
     before do
@@ -120,22 +110,18 @@ describe Mongo::Collection::View do
     end
 
     context 'when a block is not provided' do
-
       let(:enumerator) do
         view.each
       end
 
       it 'returns an enumerator' do
-        enumerator.each do |doc|
-          expect(doc).to have_key('field')
-        end
+        expect(enumerator).to all(have_key('field'))
       end
     end
 
     describe '#close_query' do
-
       let(:options) do
-        { :batch_size => 1 }
+        { batch_size: 1 }
       end
 
       let(:cursor) do
@@ -153,9 +139,7 @@ describe Mongo::Collection::View do
     end
 
     describe 'collation' do
-
       context 'when the view has a collation set' do
-
         let(:options) do
           { collation: { locale: 'en_US', strength: 2 } }
         end
@@ -178,7 +162,6 @@ describe Mongo::Collection::View do
       end
 
       context 'when the view does not have a collation set' do
-
         let(:filter) do
           { name: 'BANG' }
         end
@@ -199,7 +182,6 @@ describe Mongo::Collection::View do
   end
 
   describe '#hash' do
-
     let(:other) do
       described_class.new(authorized_collection, filter, options)
     end
@@ -209,7 +191,6 @@ describe Mongo::Collection::View do
     end
 
     context 'when two views only have different collections' do
-
       let(:other_collection) do
         authorized_client[:other]
       end
@@ -224,7 +205,6 @@ describe Mongo::Collection::View do
     end
 
     context 'when two views only have different filter' do
-
       let(:other_filter) do
         { 'name' => 'Emily' }
       end
@@ -239,7 +219,6 @@ describe Mongo::Collection::View do
     end
 
     context 'when two views only have different options' do
-
       let(:other_options) do
         { 'limit' => 20 }
       end
@@ -255,9 +234,7 @@ describe Mongo::Collection::View do
   end
 
   describe '#initialize' do
-
     context 'when the filter is not a valid document' do
-
       let(:filter) do
         'y'
       end
@@ -274,13 +251,12 @@ describe Mongo::Collection::View do
     end
 
     context 'when the filter and options are standard' do
-
       let(:filter) do
         { 'name' => 'test' }
       end
 
       let(:options) do
-        { 'sort' => { 'name' => 1 }}
+        { 'sort' => { 'name' => 1 } }
       end
 
       it 'parses a standard filter' do
@@ -303,13 +279,12 @@ describe Mongo::Collection::View do
     end
 
     context 'when the filter contains modifiers' do
-
       let(:filter) do
-        { :$query => { :name => 'test' }, :$comment => 'testing' }
+        { :$query => { name: 'test' }, :$comment => 'testing' }
       end
 
       let(:options) do
-        { :sort => { name: 1 }}
+        { sort: { name: 1 } }
       end
 
       it 'parses a standard filter' do
@@ -322,13 +297,12 @@ describe Mongo::Collection::View do
     end
 
     context 'when the options contain modifiers' do
-
       let(:filter) do
         { 'name' => 'test' }
       end
 
       let(:options) do
-        { :sort => { name: 1 }, :modifiers => { :$comment => 'testing'}}
+        { sort: { name: 1 }, modifiers: { :$comment => 'testing' } }
       end
 
       it 'parses a standard filter' do
@@ -341,13 +315,12 @@ describe Mongo::Collection::View do
     end
 
     context 'when the filter and options both contain modifiers' do
-
       let(:filter) do
-        { :$query => { 'name' => 'test' }, :$hint => { name: 1 }}
+        { :$query => { 'name' => 'test' }, :$hint => { name: 1 } }
       end
 
       let(:options) do
-        { :sort => { name: 1 }, :modifiers => { :$comment => 'testing' }}
+        { sort: { name: 1 }, modifiers: { :$comment => 'testing' } }
       end
 
       it 'parses a standard filter' do
@@ -363,9 +336,7 @@ describe Mongo::Collection::View do
   end
 
   describe '#inspect' do
-
     context 'when there is a namespace, filter, and options' do
-
       let(:options) do
         { 'limit' => 5 }
       end

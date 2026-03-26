@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Auth
     class Aws
-
       # Defines behavior around a single MONGODB-AWS conversation between the
       # client and server.
       #
@@ -26,7 +24,6 @@ module Mongo
       #
       # @api private
       class Conversation < SaslConversationBase
-
         # Continue the AWS conversation. This sends the client final message
         # to the server after setting the reply from the previous server
         # communication.
@@ -45,12 +42,13 @@ module Mongo
           validate_server_nonce!
           @sts_host = payload[:h]
           unless (1..255).include?(@sts_host.bytesize)
-            raise Error::InvalidServerAuthConfiguration, "STS host name length is not in 1..255 bytes range: #{@sts_host}"
+            raise Error::InvalidServerAuthConfiguration,
+                  "STS host name length is not in 1..255 bytes range: #{@sts_host}"
           end
 
           selector = CLIENT_CONTINUE_MESSAGE.merge(
             payload: BSON::Binary.new(client_final_payload),
-            conversationId: conversation_id,
+            conversationId: conversation_id
           )
           build_message(connection, user.auth_source, selector)
         end
@@ -91,7 +89,7 @@ module Mongo
             secret_access_key: credentials.secret_access_key,
             session_token: credentials.session_token,
             host: @sts_host,
-            server_nonce: server_nonce,
+            server_nonce: server_nonce
           )
 
           # Uncomment this line to validate obtained credentials on the
@@ -107,15 +105,13 @@ module Mongo
           # rules, validation will fail but credentials may be perfectly OK
           # and the server may be able to authenticate using them just fine
           # (provided the server is allowed to communicate with STS).
-          #request.validate!
+          # request.validate!
 
           payload = {
             a: request.authorization,
             d: request.formatted_time,
           }
-          if credentials.session_token
-            payload[:t] = credentials.session_token
-          end
+          payload[:t] = credentials.session_token if credentials.session_token
           payload.to_bson.to_s
         end
       end

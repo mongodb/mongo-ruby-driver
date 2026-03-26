@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -18,13 +17,11 @@
 module Mongo
   module Auth
     class Gssapi
-
       # Defines behaviour around a single Kerberos conversation between the
       # client and the server.
       #
       # @api private
       class Conversation < SaslConversationBase
-
         # The base client first message.
         START_MESSAGE = { saslStart: 1, autoAuthorize: 1 }.freeze
 
@@ -44,14 +41,12 @@ module Mongo
         def initialize(user, connection, **opts)
           super
           host = connection.address.host
-          unless defined?(Mongo::GssapiNative)
-            require 'mongo_kerberos'
-          end
+          require 'mongo_kerberos' unless defined?(Mongo::GssapiNative)
           @authenticator = Mongo::GssapiNative::Authenticator.new(
             user.name,
             host,
             user.auth_mech_properties[:service_name] || 'mongodb',
-            user.auth_mech_properties[:canonicalize_host_name] || false,
+            user.auth_mech_properties[:canonicalize_host_name] || false
           )
         end
 

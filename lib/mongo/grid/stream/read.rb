@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Grid
     class FSBucket
-
       module Stream
         # A stream that reads files from the FSBucket.
         #
@@ -93,11 +91,9 @@ module Mongo
                 data = chunk.data.data
                 yield data
                 num_read += 1
-                length_read += data.size
+                length_read + data.size
               end.tap do
-                if num_read < num_chunks
-                  raise Error::MissingFileChunk.new(num_chunks, num_read)
-                end
+                raise Error::MissingFileChunk.new(num_chunks, num_read) if num_read < num_chunks
               end
             else
               view.to_enum
@@ -164,7 +160,7 @@ module Mongo
           def read_preference
             @read_preference ||= begin
               pref = options[:read] || fs.read_preference
-              if BSON::Document === pref
+              if pref.is_a?(BSON::Document)
                 pref
               else
                 BSON::Document.new(pref)
@@ -185,15 +181,11 @@ module Mongo
           def file_info
             @file_info ||= begin
               doc = options[:file_info_doc] ||
-                fs.files_collection.find(
-                  { _id: file_id },
-                  { timeout_ms: @timeout_holder.remaining_timeout_ms! }
-                ).first
-              if doc
-                File::Info.new(Options::Mapper.transform(doc, File::Info::MAPPINGS.invert))
-              else
-                nil
-              end
+                    fs.files_collection.find(
+                      { _id: file_id },
+                      { timeout_ms: @timeout_holder.remaining_timeout_ms! }
+                    ).first
+              File::Info.new(Options::Mapper.transform(doc, File::Info::MAPPINGS.invert)) if doc
             end
           end
 
@@ -215,16 +207,16 @@ module Mongo
           def view
             @view ||= begin
               opts = if read_preference
-                options.merge(read: read_preference)
-              else
-                options
-              end
+                       options.merge(read: read_preference)
+                     else
+                       options
+                     end
               if @timeout_holder.csot?
                 opts[:timeout_ms] = @timeout_holder.remaining_timeout_ms!
                 opts[:timeout_mode] = :cursor_lifetime
               end
 
-              fs.chunks_collection.find({ :files_id => file_id }, opts).sort(:n => 1)
+              fs.chunks_collection.find({ files_id: file_id }, opts).sort(n: 1)
             end
           end
 
@@ -239,23 +231,21 @@ module Mongo
           end
 
           def validate_length!(index, num_chunks, chunk, length_read)
-            if num_chunks > 0 && chunk.data.data.size > 0
-              raise Error::ExtraFileChunk.new unless index < num_chunks
-              if index == num_chunks - 1
-                unless chunk.data.data.size + length_read == file_info.length
-                  raise_unexpected_chunk_length!(chunk)
-                end
-              elsif chunk.data.data.size != file_info.chunk_size
-                raise_unexpected_chunk_length!(chunk)
-              end
+            return unless num_chunks > 0 && chunk.data.data.size > 0
+            raise Error::ExtraFileChunk.new unless index < num_chunks
+
+            if index == num_chunks - 1
+              raise_unexpected_chunk_length!(chunk) unless chunk.data.data.size + length_read == file_info.length
+            elsif chunk.data.data.size != file_info.chunk_size
+              raise_unexpected_chunk_length!(chunk)
             end
           end
 
           def validate_n!(index, chunk)
-            unless index == chunk.n
-              close
-              raise Error::MissingFileChunk.new(index, chunk)
-            end
+            return if index == chunk.n
+
+            close
+            raise Error::MissingFileChunk.new(index, chunk)
           end
         end
       end

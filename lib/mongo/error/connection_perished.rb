@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Exception raised when trying to perform operations on a connection that
     # experienced a network error.
     class ConnectionPerished < Error

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -39,19 +38,19 @@ describe Mongo::Server do
   let(:server) do
     register_server(
       described_class.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false).merge(server_options))
+                          SpecConfig.instance.test_options.merge(monitoring_io: false).merge(server_options))
     )
   end
 
   let(:monitor_app_metadata) do
     Mongo::Server::Monitor::AppMetadata.new(
-      server_api: SpecConfig.instance.ruby_options[:server_api],
+      server_api: SpecConfig.instance.ruby_options[:server_api]
     )
   end
 
   shared_context 'with monitoring io' do
     let(:server_options) do
-      {monitoring_io: true}
+      { monitoring_io: true }
     end
 
     before do
@@ -62,26 +61,22 @@ describe Mongo::Server do
   end
 
   describe '#==' do
-
     context 'when the other is not a server' do
-
       let(:other) do
         false
       end
 
       it 'returns false' do
-        expect(server).to_not eq(other)
+        expect(server).not_to eq(other)
       end
     end
 
     context 'when the other is a server' do
-
       context 'when the addresses match' do
-
         let(:other) do
           register_server(
             described_class.new(address, cluster, monitoring, listeners,
-              SpecConfig.instance.test_options.merge(monitoring_io: false))
+                                SpecConfig.instance.test_options.merge(monitoring_io: false))
           )
         end
 
@@ -91,7 +86,6 @@ describe Mongo::Server do
       end
 
       context 'when the addresses dont match' do
-
         let(:other_address) do
           Mongo::Address.new('127.0.0.1:27018')
         end
@@ -99,19 +93,18 @@ describe Mongo::Server do
         let(:other) do
           register_server(
             described_class.new(other_address, cluster, monitoring, listeners,
-              SpecConfig.instance.test_options.merge(monitoring_io: false))
+                                SpecConfig.instance.test_options.merge(monitoring_io: false))
           )
         end
 
         it 'returns false' do
-          expect(server).to_not eq(other)
+          expect(server).not_to eq(other)
         end
       end
     end
   end
 
   describe '#disconnect!' do
-
     context 'with monitoring io' do
       include_context 'with monitoring io'
 
@@ -192,13 +185,12 @@ describe Mongo::Server do
     end
 
     context 'monitoring_io: false' do
-
       let(:server_options) do
-        {monitoring_io: false}
+        { monitoring_io: false }
       end
 
       it 'does not create monitoring thread' do
-        expect(server.monitor.instance_variable_get('@thread')).to be nil
+        expect(server.monitor.instance_variable_get(:@thread)).to be_nil
       end
     end
 
@@ -206,7 +198,7 @@ describe Mongo::Server do
       include_context 'with monitoring io'
 
       it 'creates monitoring thread' do
-        expect(server.monitor.instance_variable_get('@thread')).to be_a(Thread)
+        expect(server.monitor.instance_variable_get(:@thread)).to be_a(Thread)
       end
     end
   end
@@ -246,15 +238,12 @@ describe Mongo::Server do
   end
 
   describe 'retry_writes?' do
-
     context 'when the server has a logical_session_timeout value' do
-
       before do
         allow(server).to receive(:logical_session_timeout).and_return(true)
       end
 
       context 'when the server is a standalone' do
-
         before do
           allow(server).to receive(:standalone?).and_return(true)
         end
@@ -265,7 +254,6 @@ describe Mongo::Server do
       end
 
       context 'when the server is not a standalone' do
-
         before do
           allow(server).to receive(:standalone?).and_return(true)
         end
@@ -277,7 +265,6 @@ describe Mongo::Server do
     end
 
     context 'when the server does not have a logical_session_timeout value' do
-
       before do
         allow(server).to receive(:logical_session_timeout).and_return(nil)
       end
@@ -380,9 +367,8 @@ describe Mongo::Server do
     end
 
     context 'server is unknown' do
-
       let(:server_options) do
-        {monitoring_io: false}
+        { monitoring_io: false }
       end
 
       before do

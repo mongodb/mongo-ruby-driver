@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -23,21 +22,18 @@ describe 'change streams examples in Ruby' do
     inventory.drop
   end
 
-  context 'example 1 - basic watching'do
-
+  context 'example 1 - basic watching' do
     it 'returns a change after an insertion' do
-
       insert_thread = Thread.new do
         sleep 2
         inventory.insert_one(x: 1)
       end
 
       stream_thread = Thread.new do
-
         # Start Changestream Example 1
 
         cursor = inventory.watch.to_enum
-        next_change = cursor.next
+        cursor.next
 
         # End Changestream Example 1
       end
@@ -60,26 +56,22 @@ describe 'change streams examples in Ruby' do
   end
 
   context 'example 2 - full document update lookup specified' do
-
     it 'returns a change and the delta after an insertion' do
-
       inventory.insert_one(_id: 1, x: 2)
 
       update_thread = Thread.new do
         sleep 2
-        inventory.update_one({ _id: 1}, { '$set' => { x: 5 }})
+        inventory.update_one({ _id: 1 }, { '$set' => { x: 5 } })
       end
 
       stream_thread = Thread.new do
-
         # Start Changestream Example 2
 
         cursor = inventory.watch([], full_document: 'updateLookup').to_enum
-        next_change = cursor.next
+        cursor.next
 
         # End Changestream Example 2
       end
-
 
       update_thread.value
       change = stream_thread.value
@@ -103,9 +95,7 @@ describe 'change streams examples in Ruby' do
   end
 
   context 'example 3 - resuming from a previous change' do
-
     it 'returns the correct change when resuming' do
-
       insert_thread = Thread.new do
         sleep 2
         inventory.insert_one(x: 1)
@@ -114,7 +104,6 @@ describe 'change streams examples in Ruby' do
 
       next_change = nil
       resume_stream_thread = Thread.new do
-
         # Start Changestream Example 3
 
         change_stream = inventory.watch
@@ -123,7 +112,7 @@ describe 'change streams examples in Ruby' do
         resume_token = change_stream.resume_token
 
         new_cursor = inventory.watch([], resume_after: resume_token).to_enum
-        resumed_change = new_cursor.next
+        new_cursor.next
 
         # End Changestream Example 3
       end
@@ -161,9 +150,7 @@ describe 'change streams examples in Ruby' do
   end
 
   context 'example 4 - using a pipeline to filter changes' do
-
     it 'returns the filtered changes' do
-
       ops_thread = Thread.new do
         sleep 2
         inventory.insert_one(username: 'wallace')
@@ -172,13 +159,12 @@ describe 'change streams examples in Ruby' do
       end
 
       stream_thread = Thread.new do
-
         # Start Changestream Example 4
 
         pipeline = [
-          { "$match" => { 'fullDocument.username' => 'alice' } },
-          { "$addFields" => { 'newField' => 'this is an added field!' } }
-        ];
+          { '$match' => { 'fullDocument.username' => 'alice' } },
+          { '$addFields' => { 'newField' => 'this is an added field!' } }
+        ]
         cursor = inventory.watch(pipeline).to_enum
         cursor.next
 

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -34,19 +33,19 @@ describe Mongo::Error::BulkWriteError do
 
   describe '#message' do
     it 'is correct' do
-      expect(error.message).to eq("Multiple errors: [1]: message1; [2]: message2 (note1, note2)")
+      expect(error.message).to eq('Multiple errors: [1]: message1; [2]: message2 (note1, note2)')
     end
   end
 
   describe '#to_s' do
     it 'is correct' do
-      expect(error.to_s).to eq("Multiple errors: [1]: message1; [2]: message2 (note1, note2)")
+      expect(error.to_s).to eq('Multiple errors: [1]: message1; [2]: message2 (note1, note2)')
     end
   end
 
   describe '#inspect' do
     it 'is correct' do
-      expect(error.inspect).to eq("#<Mongo::Error::BulkWriteError: Multiple errors: [1]: message1; [2]: message2 (note1, note2)>")
+      expect(error.inspect).to eq('#<Mongo::Error::BulkWriteError: Multiple errors: [1]: message1; [2]: message2 (note1, note2)>')
     end
   end
 end

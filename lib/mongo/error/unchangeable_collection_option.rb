@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # Raised if a new collection is created from an existing one and options other than the
     # changeable ones are provided.
     #
     # @since 2.1.0
     class UnchangeableCollectionOption < Error
-
       # Create the new exception.
       #
       # @example Create the new exception.
@@ -34,7 +31,7 @@ module Mongo
       # @since 2.1.0
       def initialize(option)
         super("The option #{option} cannot be set on a new collection instance." +
-                  " The options that can be updated are #{Collection::CHANGEABLE_OPTIONS}")
+          " The options that can be updated are #{Collection::CHANGEABLE_OPTIONS}")
       end
     end
   end

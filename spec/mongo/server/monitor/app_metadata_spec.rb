@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Server::Monitor::AppMetadata do
-
   describe '#document' do
     let(:document) do
       app_metadata.send(:document)

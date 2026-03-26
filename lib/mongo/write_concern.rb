@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -20,7 +19,6 @@ require 'mongo/write_concern/acknowledged'
 require 'mongo/write_concern/unacknowledged'
 
 module Mongo
-
   # Base module for all write concern specific behavior.
   #
   # @since 2.0.0
@@ -31,36 +29,36 @@ module Mongo
     #
     # @since 2.0.0
     # @deprecated
-    W = :w.freeze
+    W = :w
 
     # The journal write concern.
     #
     # @since 2.0.0
     # @deprecated
-    J = :j.freeze
+    J = :j
 
     # The file sync write concern.
     #
     # @since 2.0.0
     # @deprecated
-    FSYNC = :fsync.freeze
+    FSYNC = :fsync
 
     # The wtimeout write concern.
     #
     # @since 2.0.0
     # @deprecated
-    WTIMEOUT = :wtimeout.freeze
+    WTIMEOUT = :wtimeout
 
     # The GLE command name.
     #
     # @since 2.0.0
     # @deprecated
-    GET_LAST_ERROR = :getlasterror.freeze
+    GET_LAST_ERROR = :getlasterror
 
     # The default write concern is to acknowledge on a single server.
     #
     # @since 2.0.0
-    DEFAULT = { }.freeze
+    DEFAULT = {}.freeze
 
     # Create a write concern object for the provided options.
     #
@@ -87,12 +85,13 @@ module Mongo
     # @since 2.0.0
     def get(options)
       return options if options.is_a?(Base)
-      if options
-        if (options[:w] || options['w']) == 0
-          Unacknowledged.new(options)
-        else
-          Acknowledged.new(options)
-        end
+
+      return unless options
+
+      if (options[:w] || options['w']) == 0
+        Unacknowledged.new(options)
+      else
+        Acknowledged.new(options)
       end
     end
   end

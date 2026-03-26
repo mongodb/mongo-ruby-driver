@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Intermediate step between a Struct and an OpenStruct. Allows only designated
 # field names to be read or written but allows passing fields to constructor
@@ -10,20 +9,16 @@ class KeywordStruct
       cls.class_exec do
         define_method(:initialize) do |**fields|
           fields.each do |field, value|
-            unless field_names.include?(field)
-              raise ArgumentError, "Unknown field #{field}"
-            end
+            raise ArgumentError, "Unknown field #{field}" unless field_names.include?(field)
 
             instance_variable_set("@#{field}", value)
           end
         end
 
-        attr_accessor *field_names
+        attr_accessor(*field_names)
       end
 
-      if block_given?
-        cls.class_exec(&block)
-      end
+      cls.class_exec(&block) if block_given?
     end
   end
 end

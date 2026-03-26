@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,24 +17,22 @@
 module Mongo
   module Operation
     class Update
-
       # Defines custom behavior of results for an update.
       #
       # @since 2.0.0
       # @api semiprivate
       class Result < Operation::Result
-
         # The number of modified docs field in the result.
         #
         # @since 2.0.0
         # @api private
-        MODIFIED = 'nModified'.freeze
+        MODIFIED = 'nModified'
 
         # The upserted docs field in the result.
         #
         # @since 2.0.0
         # @api private
-        UPSERTED = 'upserted'.freeze
+        UPSERTED = 'upserted'
 
         # Get the number of documents matched.
         #
@@ -48,6 +45,7 @@ module Mongo
         # @api public
         def matched_count
           return 0 unless acknowledged?
+
           if upsert?
             0
           else
@@ -66,6 +64,7 @@ module Mongo
         # @api public
         def modified_count
           return 0 unless acknowledged?
+
           first[MODIFIED]
         end
 
@@ -81,6 +80,7 @@ module Mongo
         # @api public
         def upserted_id
           return nil unless upsert?
+
           upsert?.first['_id']
         end
 

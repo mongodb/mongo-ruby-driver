@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -30,7 +29,7 @@ describe Mongo::Cursor do
     end
 
     before do
-      documents = [{test: 1}] * 10
+      documents = [ { test: 1 } ] * 10
       authorized_collection.insert_many(documents)
     end
 
@@ -116,7 +115,6 @@ describe Mongo::Cursor do
   end
 
   describe '#each' do
-
     let(:server) do
       view.send(:server_selector).select_server(authorized_client.cluster)
     end
@@ -130,15 +128,13 @@ describe Mongo::Cursor do
     end
 
     context 'when no options are provided to the view' do
-
       let(:view) do
         Mongo::Collection::View.new(authorized_collection)
       end
 
       context 'when the initial query retrieves all documents' do
-
         let(:documents) do
-          (1..10).map{ |i| { field: "test#{i}" }}
+          (1..10).map { |i| { field: "test#{i}" } }
         end
 
         before do
@@ -146,20 +142,17 @@ describe Mongo::Cursor do
         end
 
         it 'returns the correct amount' do
-          expect(cursor.to_a.count).to eq(10)
+          expect(cursor.to_a.size).to eq(10)
         end
 
         it 'iterates the documents' do
-          cursor.each do |doc|
-            expect(doc).to have_key('field')
-          end
+          expect(cursor).to all(have_key('field'))
         end
       end
 
       context 'when the initial query does not retrieve all documents' do
-
         let(:documents) do
-          (1..102).map{ |i| { field: "test#{i}" }}
+          (1..102).map { |i| { field: "test#{i}" } }
         end
 
         before do
@@ -167,7 +160,6 @@ describe Mongo::Cursor do
         end
 
         context 'when a getMore gets a socket error' do
-
           let(:op) do
             double('operation')
           end
@@ -190,24 +182,20 @@ describe Mongo::Cursor do
         end
 
         context 'when no errors occur' do
-
           it 'returns the correct amount' do
-            expect(cursor.to_a.count).to eq(102)
+            expect(cursor.to_a.size).to eq(102)
           end
 
           it 'iterates the documents' do
-            cursor.each do |doc|
-              expect(doc).to have_key('field')
-            end
+            expect(cursor).to all(have_key('field'))
           end
         end
       end
     end
 
     context 'when options are provided to the view' do
-
       let(:documents) do
-        (1..10).map{ |i| { field: "test#{i}" }}
+        (1..10).map { |i| { field: "test#{i}" } }
       end
 
       before do
@@ -216,123 +204,102 @@ describe Mongo::Cursor do
       end
 
       context 'when a limit is provided' do
-
         context 'when no batch size is provided' do
-
           context 'when the limit is positive' do
-
             let(:view) do
-              Mongo::Collection::View.new(authorized_collection, {}, :limit => 2)
+              Mongo::Collection::View.new(authorized_collection, {}, limit: 2)
             end
 
             it 'returns the correct amount' do
-              expect(cursor.to_a.count).to eq(2)
+              expect(cursor.to_a.size).to eq(2)
             end
 
             it 'iterates the documents' do
-              cursor.each do |doc|
-                expect(doc).to have_key('field')
-              end
+              expect(cursor).to all(have_key('field'))
             end
           end
 
           context 'when the limit is negative' do
-
             let(:view) do
-              Mongo::Collection::View.new(authorized_collection, {}, :limit => -2)
+              Mongo::Collection::View.new(authorized_collection, {}, limit: -2)
             end
 
             it 'returns the positive number of documents' do
-              expect(cursor.to_a.count).to eq(2)
+              expect(cursor.to_a.size).to eq(2)
             end
 
             it 'iterates the documents' do
-              cursor.each do |doc|
-                expect(doc).to have_key('field')
-              end
+              expect(cursor).to all(have_key('field'))
             end
           end
 
           context 'when the limit is zero' do
-
             let(:view) do
-              Mongo::Collection::View.new(authorized_collection, {}, :limit => 0)
+              Mongo::Collection::View.new(authorized_collection, {}, limit: 0)
             end
 
             it 'returns all documents' do
-              expect(cursor.to_a.count).to eq(10)
+              expect(cursor.to_a.size).to eq(10)
             end
 
             it 'iterates the documents' do
-              cursor.each do |doc|
-                expect(doc).to have_key('field')
-              end
+              expect(cursor).to all(have_key('field'))
             end
           end
         end
 
         context 'when a batch size is provided' do
-
           context 'when the batch size is less than the limit' do
-
             let(:view) do
               Mongo::Collection::View.new(
                 authorized_collection,
                 {},
-                :limit => 5, :batch_size => 3
+                limit: 5, batch_size: 3
               )
             end
 
             it 'returns the limited number of documents' do
-              expect(cursor.to_a.count).to eq(5)
+              expect(cursor.to_a.size).to eq(5)
             end
 
             it 'iterates the documents' do
-              cursor.each do |doc|
-                expect(doc).to have_key('field')
-              end
+              expect(cursor).to all(have_key('field'))
             end
           end
 
           context 'when the batch size is more than the limit' do
-
             let(:view) do
               Mongo::Collection::View.new(
                 authorized_collection,
                 {},
-                :limit => 5, :batch_size => 7
+                limit: 5, batch_size: 7
               )
             end
 
             it 'returns the limited number of documents' do
-              expect(cursor.to_a.count).to eq(5)
+              expect(cursor.to_a.size).to eq(5)
             end
 
             it 'iterates the documents' do
-              cursor.each do |doc|
-                expect(doc).to have_key('field')
-              end
+              expect(cursor).to all(have_key('field'))
             end
           end
 
           context 'when the batch size is the same as the limit' do
-
             let(:view) do
               Mongo::Collection::View.new(
                 authorized_collection,
                 {},
-                :limit => 5, :batch_size => 5
+                limit: 5, batch_size: 5
               )
             end
 
             it 'returns the limited number of documents' do
-              expect(cursor.to_a.count).to eq(5)
+              expect(cursor.to_a.size).to eq(5)
             end
 
             it 'iterates the documents' do
-              cursor.each do |doc|
-                expect(doc).to have_key('field')
-              end
+              expect(cursor).to all(have_key('field'))
             end
           end
         end
@@ -340,9 +307,8 @@ describe Mongo::Cursor do
     end
 
     context 'when the cursor is not fully iterated and is garbage collected' do
-
       let(:documents) do
-        (1..6).map{ |i| { field: "test#{i}" }}
+        (1..6).map { |i| { field: "test#{i}" } }
       end
 
       let(:cluster) do
@@ -358,9 +324,9 @@ describe Mongo::Cursor do
 
       let(:view) do
         Mongo::Collection::View.new(
-            authorized_collection,
-            {},
-            :batch_size => 2,
+          authorized_collection,
+          {},
+          batch_size: 2
         )
       end
 
@@ -373,11 +339,11 @@ describe Mongo::Cursor do
         cluster.instance_variable_get(:@periodic_executor).flush
         expect do
           cursor.to_a
-        # Mongo::Error::SessionEnded is raised here because the periodic executor
-        # called above kills the cursor and closes the session.
-        # This code is normally scheduled in cursor finalizer, so the cursor object
-        # is garbage collected when the code is executed. So, a user won't get
-        # this exception.
+          # Mongo::Error::SessionEnded is raised here because the periodic executor
+          # called above kills the cursor and closes the session.
+          # This code is normally scheduled in cursor finalizer, so the cursor object
+          # is garbage collected when the code is executed. So, a user won't get
+          # this exception.
         end.to raise_exception(Mongo::Error::SessionEnded)
       end
 
@@ -403,18 +369,17 @@ describe Mongo::Cursor do
           # documents are retrieved via two batches thus fulfilling the
           # requirement of the test to continue iterating the cursor.
 
-=begin When repeated iteration of cursors is prohibited, these are the expectations
-          if BSON::Environment.jruby?
-            expected_counts = [4, 5]
-          else
-            expected_counts = [5]
-          end
-=end
+          # When repeated iteration of cursors is prohibited, these are the expectations
+          #           if BSON::Environment.jruby?
+          #             expected_counts = [4, 5]
+          #           else
+          #             expected_counts = [5]
+          #           end
 
           # Since currently repeated iteration of cursors is allowed, calling
           # to_a on the cursor would perform such an iteration and return
           # all documents of the initial read.
-          expected_counts = [6]
+          expected_counts = [ 6 ]
 
           expect(expected_counts).to include(cursor.to_a.size)
         end
@@ -422,9 +387,8 @@ describe Mongo::Cursor do
     end
 
     context 'when the cursor is fully iterated' do
-
       let(:documents) do
-        (1..3).map{ |i| { field: "test#{i}" }}
+        (1..3).map { |i| { field: "test#{i}" } }
       end
 
       before do
@@ -493,13 +457,12 @@ describe Mongo::Cursor do
     end
 
     let(:find_events) do
-      subscriber.started_events.select { |e| e.command_name == "find" }
+      subscriber.started_events.select { |e| e.command_name == 'find' }
     end
 
     context 'when all results are retrieved in the first response' do
-
       let(:documents) do
-        (1..2).map{ |i| { field: "test#{i}" }}
+        (1..2).map { |i| { field: "test#{i}" } }
       end
 
       let(:view) do
@@ -507,7 +470,7 @@ describe Mongo::Cursor do
       end
 
       it 'returns the session to the cluster session pool' do
-        1.times { enum.next }
+        enum.next
         expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
         expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
       end
@@ -517,13 +480,12 @@ describe Mongo::Cursor do
       require_topology :single, :replica_set
 
       let(:documents) do
-        (1..4).map{ |i| { field: "test#{i}" }}
+        (1..4).map { |i| { field: "test#{i}" } }
       end
 
       let(:view) do
         collection.find({}, batch_size: 2, limit: 4)
       end
-
 
       context 'when result set is not iterated fully but the known # of documents is retrieved' do
         # These tests set up a collection with 4 documents and find all
@@ -538,7 +500,6 @@ describe Mongo::Cursor do
         max_server_version '4.9'
 
         context 'when not all documents are iterated' do
-
           it 'returns the session to the cluster session pool' do
             3.times { enum.next }
             expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
@@ -547,7 +508,6 @@ describe Mongo::Cursor do
         end
 
         context 'when the same number of documents is iterated as # in the collection' do
-
           it 'returns the session to the cluster session pool' do
             4.times { enum.next }
             expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
@@ -557,10 +517,9 @@ describe Mongo::Cursor do
       end
 
       context 'when result set is iterated fully' do
-
         it 'returns the session to the cluster session pool' do
           # Iterate fully and assert that there are 4 documents total
-          enum.to_a.length.should == 4
+          expect(enum.to_a.length).to eq(4)
           expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
           expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
         end
@@ -572,10 +531,10 @@ describe Mongo::Cursor do
       max_server_fcv '8.2' # 8.3 will exhaust the cursor with the last getMore
 
       let(:documents) do
-        (1..5).map{ |i| { field: "test#{i}" }}
+        (1..5).map { |i| { field: "test#{i}" } }
       end
 
-      let(:view) { collection.find(field:{'$gte'=>BSON::MinKey.new}).sort(field:1).limit(5).batch_size(4) }
+      let(:view) { collection.find(field: { '$gte' => BSON::MinKey.new }).sort(field: 1).limit(5).batch_size(4) }
 
       before do
         view.to_a
@@ -589,7 +548,7 @@ describe Mongo::Cursor do
       it 'has a non-zero cursor id on successful get more' do
         get_more_commands = subscriber.succeeded_events.select { |e| e.command_name == 'getMore' }
         expect(get_more_commands.length).to be 1
-        expect(get_more_commands[0].reply['cursor']['id']).to_not be 0
+        expect(get_more_commands[0].reply['cursor']['id']).not_to be 0
       end
 
       it 'schedules a kill cursors command' do
@@ -600,7 +559,6 @@ describe Mongo::Cursor do
   end
 
   describe '#inspect' do
-
     let(:view) do
       Mongo::Collection::View.new(authorized_collection)
     end
@@ -643,14 +601,13 @@ describe Mongo::Cursor do
   end
 
   describe '#to_a' do
-
     let(:view) do
       Mongo::Collection::View.new(authorized_collection, {}, batch_size: 10)
     end
 
     let(:query_spec) do
-      { :selector => {}, :options => {}, :db_name => SpecConfig.instance.test_db,
-        :coll_name => authorized_collection.name }
+      { selector: {}, options: {}, db_name: SpecConfig.instance.test_db,
+        coll_name: authorized_collection.name }
     end
 
     let(:reply) do
@@ -666,14 +623,14 @@ describe Mongo::Cursor do
         authorized_collection.drop
         docs = []
         100.times do |i|
-          docs << {a: i}
+          docs << { a: i }
         end
         authorized_collection.insert_many(docs)
       end
 
       context 'after #each was called once' do
         before do
-          cursor.each do |doc|
+          cursor.each do |_doc|
             break
           end
         end
@@ -685,7 +642,7 @@ describe Mongo::Cursor do
 
       context 'after exactly one batch was iterated' do
         before do
-          cursor.each_with_index do |doc, i|
+          cursor.each_with_index do |_doc, i|
             break if i == 9
           end
         end
@@ -697,7 +654,7 @@ describe Mongo::Cursor do
 
       context 'after two batches were iterated' do
         before do
-          cursor.each_with_index do |doc, i|
+          cursor.each_with_index do |_doc, i|
             break if i == 19
           end
         end
@@ -705,7 +662,8 @@ describe Mongo::Cursor do
         it 'raises InvalidCursorOperation' do
           expect do
             cursor.to_a
-          end.to raise_error(Mongo::Error::InvalidCursorOperation, 'Cannot restart iteration of a cursor which issued a getMore')
+          end.to raise_error(Mongo::Error::InvalidCursorOperation,
+                             'Cannot restart iteration of a cursor which issued a getMore')
         end
       end
     end
@@ -716,7 +674,7 @@ describe Mongo::Cursor do
       Mongo::Collection::View.new(
         authorized_collection,
         {},
-        batch_size: 2,
+        batch_size: 2
       )
     end
 
@@ -733,7 +691,7 @@ describe Mongo::Cursor do
     end
 
     let(:documents) do
-      (1..10).map{ |i| { field: "test#{i}" }}
+      (1..10).map { |i| { field: "test#{i}" } }
     end
 
     before do
@@ -776,13 +734,13 @@ describe Mongo::Cursor do
         cursor
         if SpecConfig.instance.connect_options[:connect] == :load_balanced
           expect(cursor.connection).to receive(:deliver)
-              .at_least(:once)
-              .and_raise(Mongo::Error::SocketError, "test error")
+            .at_least(:once)
+            .and_raise(Mongo::Error::SocketError, 'test error')
         else
           server.with_connection do |conn|
             expect(conn).to receive(:deliver)
               .at_least(:once)
-              .and_raise(Mongo::Error::SocketError, "test error")
+              .and_raise(Mongo::Error::SocketError, 'test error')
           end
         end
         expect do
@@ -811,7 +769,7 @@ describe Mongo::Cursor do
 
     before do
       collection.drop
-      collection.insert_many([].fill({ "bar": "baz" }, 0, 102))
+      collection.insert_many([].fill({ bar: 'baz' }, 0, 102))
     end
 
     context 'when limit is 0 and batch_size is not set' do

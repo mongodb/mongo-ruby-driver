@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -19,11 +18,12 @@ describe 'Direct connection with RS name' do
 
   let(:client) do
     new_local_client(
-      [SpecConfig.instance.addresses.first],
+      [ SpecConfig.instance.addresses.first ],
       SpecConfig.instance.test_options.merge(
         replica_set: replica_set_name, connect: :direct,
-        server_selection_timeout: 3.32,
-      ))
+        server_selection_timeout: 3.32
+      )
+    )
   end
 
   context 'in replica set' do
@@ -48,7 +48,7 @@ describe 'Direct connection with RS name' do
       it_behaves_like 'passes RS name to topology'
 
       it 'creates a client which does not find a suitable server' do
-        # TODO When RUBY-2197 is implemented, assert the error message also
+        # TODO: When RUBY-2197 is implemented, assert the error message also
         expect do
           client.database.command(ping: 1)
         end.to raise_error(Mongo::Error::NoServerAvailable)
@@ -65,7 +65,7 @@ describe 'Direct connection with RS name' do
       it_behaves_like 'passes RS name to topology'
 
       it 'creates a client which raises on every operation' do
-        # TODO When RUBY-2197 is implemented, assert the error message also
+        # TODO: When RUBY-2197 is implemented, assert the error message also
         expect do
           client.database.command(ping: 1)
         end.to raise_error(Mongo::Error::NoServerAvailable)

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class Delete
-
       # A MongoDB delete operation sent as an op message.
       #
       # @api private
@@ -32,13 +30,12 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(_connection)
           { delete: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,
             ordered: ordered?,
             let: spec[:let],
-            comment: spec[:comment],
-          }.compact.tap do |selector|
+            comment: spec[:comment], }.compact.tap do |selector|
             selector[:hint] = spec[:hint] if spec[:hint]
           end
         end

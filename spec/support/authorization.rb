@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2009-2020 MongoDB Inc.
 #
@@ -18,7 +17,7 @@
 # The default test collection.
 #
 # @since 2.0.0
-TEST_COLL = 'test'.freeze
+TEST_COLL = 'test'
 
 # An invalid write concern.
 #
@@ -26,14 +25,12 @@ TEST_COLL = 'test'.freeze
 INVALID_WRITE_CONCERN = { w: 4000 }
 
 module Authorization
-
   # On inclusion provides helpers for use with testing with and without
   # authorization.
   #
   #
   # @since 2.0.0
   def self.included(context)
-
     # Gets the root system administrator user.
     #
     # @since 2.0.0
@@ -59,8 +56,8 @@ module Authorization
           database: SpecConfig.instance.test_db,
           user: SpecConfig.instance.test_user.name,
           password: SpecConfig.instance.test_user.password,
-          heartbeat_frequency: 10,
-        ),
+          heartbeat_frequency: 10
+        )
       )
     end
 

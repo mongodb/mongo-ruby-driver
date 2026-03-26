@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
@@ -17,24 +16,22 @@
 
 module Mongo
   class Monitoring
-
     # Subscribes to Topology Changed events and logs them.
     #
     # @since 2.4.0
     class TopologyChangedLogSubscriber < SDAMLogSubscriber
-
       private
 
       def log_event(event)
-        if event.previous_topology.class != event.new_topology.class
+        if event.previous_topology.class == event.new_topology.class
           log_debug(
-            "Topology type '#{event.previous_topology.display_name}' changed to " +
-            "type '#{event.new_topology.display_name}'."
+            "There was a change in the members of the '#{event.new_topology.display_name}' " +
+              'topology.'
           )
         else
           log_debug(
-            "There was a change in the members of the '#{event.new_topology.display_name}' " +
-              "topology."
+            "Topology type '#{event.previous_topology.display_name}' changed to " +
+            "type '#{event.new_topology.display_name}'."
           )
         end
       end

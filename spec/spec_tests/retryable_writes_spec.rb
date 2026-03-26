@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -16,9 +15,9 @@ describe 'Retryable writes spec tests - legacy' do
   # is simply redundant.
   require_retry_writes
 
-  define_crud_spec_tests(RETRYABLE_WRITES_TESTS) do |spec, req, test|
+  define_crud_spec_tests(RETRYABLE_WRITES_TESTS) do |_spec, _req, test|
     let(:client) do
-      authorized_client.with(test.client_options.merge({max_write_retries: 0}))
+      authorized_client.with(test.client_options.merge({ max_write_retries: 0 }))
     end
   end
 end

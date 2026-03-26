@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Monitoring::Event::CommandSucceeded do
-
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
   end
@@ -14,7 +12,6 @@ describe Mongo::Monitoring::Event::CommandSucceeded do
   end
 
   describe '#initialize' do
-
     context 'when the reply should be redacted' do
       context 'sensitive command' do
         let(:started_event) do

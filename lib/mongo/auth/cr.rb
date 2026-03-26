@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Auth
-
     # Defines behavior for MongoDB-CR authentication.
     #
     # @since 2.0.0
@@ -26,11 +24,10 @@ module Mongo
     #   removed in driver version 3.0. Please use SCRAM instead.
     # @api private
     class CR < Base
-
       # The authentication mechanism string.
       #
       # @since 2.0.0
-      MECHANISM = 'MONGODB-CR'.freeze
+      MECHANISM = 'MONGODB-CR'
 
       # Log the user in on the current connection.
       #

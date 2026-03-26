@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ require 'mongo/grid/stream/write'
 module Mongo
   module Grid
     class FSBucket
-
       # A stream that reads and writes files from/to the FSBucket.
       #
       # @since 2.1.0
@@ -42,8 +40,8 @@ module Mongo
         #
         # @since 2.1.0
         MODE_MAP = {
-            READ_MODE => Read,
-            WRITE_MODE => Write
+          READ_MODE => Read,
+          WRITE_MODE => Write
         }.freeze
 
         # Get a stream for reading/writing files from/to the FSBucket.

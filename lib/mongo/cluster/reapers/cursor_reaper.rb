@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,9 +15,7 @@
 # limitations under the License.
 
 module Mongo
-
   class Cluster
-
     # A manager that sends kill cursors operations at regular intervals to close
     # cursors that have been garbage collected without being exhausted.
     #
@@ -32,7 +29,7 @@ module Mongo
       # kill cursors operations.
       #
       # @since 2.3.0
-      FREQUENCY = 1.freeze
+      FREQUENCY = 1
 
       # Create a cursor reaper.
       #
@@ -69,12 +66,8 @@ module Mongo
       #
       # @since 2.3.0
       def register_cursor(id)
-        if id.nil?
-          raise ArgumentError, 'register_cursor called with nil cursor_id'
-        end
-        if id == 0
-          raise ArgumentError, 'register_cursor called with cursor_id=0'
-        end
+        raise ArgumentError, 'register_cursor called with nil cursor_id' if id.nil?
+        raise ArgumentError, 'register_cursor called with cursor_id=0' if id == 0
 
         @mutex.synchronize do
           @active_cursor_ids << id
@@ -92,12 +85,8 @@ module Mongo
       #
       # @since 2.3.0
       def unregister_cursor(id)
-        if id.nil?
-          raise ArgumentError, 'unregister_cursor called with nil cursor_id'
-        end
-        if id == 0
-          raise ArgumentError, 'unregister_cursor called with cursor_id=0'
-        end
+        raise ArgumentError, 'unregister_cursor called with nil cursor_id' if id.nil?
+        raise ArgumentError, 'unregister_cursor called with cursor_id=0' if id == 0
 
         @mutex.synchronize do
           @active_cursor_ids.delete(id)
@@ -116,12 +105,10 @@ module Mongo
           if @active_cursor_ids.include?(kill_spec.cursor_id)
             @to_kill[kill_spec.server_address] ||= Set.new
             @to_kill[kill_spec.server_address] << kill_spec
-          else
+          elsif (session = kill_spec.session) && session.implicit?
             # Cursor was already closed; end the session immediately to release
             # references rather than waiting for the kill_spec to go out of scope.
-            if (session = kill_spec.session) && session.implicit?
-              session.end_session
-            end
+            session.end_session
           end
         end
       rescue ThreadError
@@ -137,7 +124,7 @@ module Mongo
       #
       # @since 2.3.0
       def kill_cursors
-        # TODO optimize this to batch kill cursor operations for the same
+        # TODO: optimize this to batch kill cursor operations for the same
         # server/database/collection instead of killing each cursor
         # individually.
         loop do
@@ -179,7 +166,7 @@ module Mongo
           # operation, though this would make that operation have a
           # different API from all of the other ones which accept hashes.
           spec = {
-            cursor_ids: [kill_spec.cursor_id],
+            cursor_ids: [ kill_spec.cursor_id ],
             coll_name: kill_spec.coll_name,
             db_name: kill_spec.db_name,
           }
@@ -190,7 +177,7 @@ module Mongo
           end
 
           unless server
-            # TODO We currently don't have a server for the address that the
+            # TODO: We currently don't have a server for the address that the
             # cursor is associated with. We should leave the cursor in the
             # queue to be killed at a later time (when the server comes back).
             next
@@ -207,15 +194,13 @@ module Mongo
             op.execute(server, context: Operation::Context.new(options: options))
           end
 
-          if session = kill_spec.session
-            if session.implicit?
-              session.end_session
-            end
-          end
+          next unless session = kill_spec.session
+
+          session.end_session if session.implicit?
         end
       end
-      alias :execute :kill_cursors
-      alias :flush :kill_cursors
+      alias execute kill_cursors
+      alias flush kill_cursors
     end
   end
 end

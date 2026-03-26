@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 
@@ -19,10 +18,9 @@ module Mongo
   class Server
     # @api private
     class RoundTripTimeCalculator
-
       # The weighting factor (alpha) for calculating the average moving
       # round trip time.
-      RTT_WEIGHT_FACTOR = 0.2.freeze
+      RTT_WEIGHT_FACTOR = 0.2
       private_constant :RTT_WEIGHT_FACTOR
 
       RTT_SAMPLES_FOR_MINIMUM = 10
@@ -39,9 +37,7 @@ module Mongo
         @rtts = []
       end
 
-      attr_reader :last_round_trip_time
-      attr_reader :average_round_trip_time
-      attr_reader :minimum_round_trip_time
+      attr_reader :last_round_trip_time, :average_round_trip_time, :minimum_round_trip_time
 
       def measure
         start = Utils.monotonic_time
@@ -51,7 +47,7 @@ module Mongo
           # If we encountered a network error, the round-trip is not
           # complete and thus RTT for it does not make sense.
           raise
-        rescue Error, Error::AuthError => exc
+        rescue Error, Error::AuthError => e
           # For other errors, RTT is valid.
         end
         last_rtt = Utils.monotonic_time - start
@@ -59,7 +55,7 @@ module Mongo
         # If hello fails, we need to return the last round trip time
         # because it is used in the heartbeat failed SDAM event,
         # but we must not update the round trip time recorded in the server.
-        unless exc
+        unless e
           @last_round_trip_time = last_rtt
           @lock.synchronize do
             update_average_round_trip_time
@@ -67,19 +63,17 @@ module Mongo
           end
         end
 
-        if exc
-          raise exc
-        else
-          rv
-        end
+        raise e if e
+
+        rv
       end
 
       def update_average_round_trip_time
         @average_round_trip_time = if average_round_trip_time
-          RTT_WEIGHT_FACTOR * last_round_trip_time + (1 - RTT_WEIGHT_FACTOR) * average_round_trip_time
-        else
-          last_round_trip_time
-        end
+                                     (RTT_WEIGHT_FACTOR * last_round_trip_time) + ((1 - RTT_WEIGHT_FACTOR) * average_round_trip_time)
+                                   else
+                                     last_round_trip_time
+                                   end
       end
 
       def update_minimum_round_trip_time

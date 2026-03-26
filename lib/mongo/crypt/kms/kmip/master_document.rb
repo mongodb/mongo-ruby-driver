@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -32,7 +31,7 @@ module Mongo
           # @return [ String | nil ] KMIP KMS endpoint with optional port.
           attr_reader :endpoint
 
-          FORMAT_HINT = "KMIP KMS key document must be in the format: " +
+          FORMAT_HINT = 'KMIP KMS key document must be in the format: ' +
                         "{ key_id: 'KEY-ID', endpoint: 'ENDPOINT' }"
 
           # Creates a master key document object form a parameters hash.
@@ -60,8 +59,8 @@ module Mongo
           # @return [ BSON::Document ] KMIP KMS credentials in libmongocrypt format.
           def to_document
             BSON::Document.new({
-              provider: 'kmip',
-            }).tap do |bson|
+                                 provider: 'kmip',
+                               }).tap do |bson|
               bson.update({ endpoint: endpoint }) unless endpoint.nil?
               bson.update({ keyId: key_id }) unless key_id.nil?
             end
@@ -71,4 +70,3 @@ module Mongo
     end
   end
 end
-

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -17,20 +16,16 @@
 
 module Mongo
   module Operation
-
     # Custom behavior for operations that support the bypassdocumentvalidation option.
     #
     # @since 2.5.2
     # @api private
     module BypassDocumentValidation
-
       private
 
       def command(connection)
-        if Lint.enabled?
-          unless connection.is_a?(Server::Connection)
-            raise Error::LintError, "Connection is not a Connection instance: #{connection}"
-          end
+        if Lint.enabled? && !connection.is_a?(Server::Connection)
+          raise Error::LintError, "Connection is not a Connection instance: #{connection}"
         end
 
         sel = super
@@ -39,6 +34,7 @@ module Mongo
 
       def add_bypass_document_validation(sel)
         return sel unless bypass_document_validation
+
         sel.merge(bypassDocumentValidation: true)
       end
     end

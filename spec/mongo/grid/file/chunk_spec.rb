@@ -1,11 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'stringio'
 
 describe Mongo::Grid::File::Chunk do
-
   let(:data) do
     BSON::Binary.new('testing')
   end
@@ -15,46 +13,40 @@ describe Mongo::Grid::File::Chunk do
   end
 
   let(:file_info) do
-    Mongo::Grid::File::Info.new(:files_id => file_id)
+    Mongo::Grid::File::Info.new(files_id: file_id)
   end
 
   describe '#==' do
-
     let(:chunk) do
-      described_class.new(:data => data, :files_id => file_id, :n => 5)
+      described_class.new(data: data, files_id: file_id, n: 5)
     end
 
     context 'when the other is not a chunk' do
-
       it 'returns false' do
-        expect(chunk).to_not eq('test')
+        expect(chunk).not_to eq('test')
       end
     end
 
     context 'when the other object is a chunk' do
-
       context 'when the documents are equal' do
-
         it 'returns true' do
           expect(chunk).to eq(chunk)
         end
       end
 
       context 'when the documents are not equal' do
-
         let(:other) do
-          described_class.new(:data => data, :files_id => file_id, :n => 6)
+          described_class.new(data: data, files_id: file_id, n: 6)
         end
 
         it 'returns false' do
-          expect(chunk).to_not eq(other)
+          expect(chunk).not_to eq(other)
         end
       end
     end
   end
 
   describe '.assemble' do
-
     let(:data_size) do
       Mongo::Grid::File::Chunk::DEFAULT_SIZE * 3
     end
@@ -72,7 +64,7 @@ describe Mongo::Grid::File::Chunk do
     end
 
     before do
-      (1..data_size).each{ |i| raw_data << '1' }
+      (1..data_size).each { |_i| raw_data << '1' }
     end
 
     let(:chunks) do
@@ -85,9 +77,8 @@ describe Mongo::Grid::File::Chunk do
   end
 
   describe '#document' do
-
     let(:chunk) do
-      described_class.new(:data => data, :files_id => file_id, :n => 5)
+      described_class.new(data: data, files_id: file_id, n: 5)
     end
 
     let(:document) do
@@ -111,7 +102,6 @@ describe Mongo::Grid::File::Chunk do
     end
 
     context 'when asking for the document multiple times' do
-
       it 'returns the same document' do
         expect(document[:_id]).to eq(chunk.document[:_id])
       end
@@ -119,9 +109,8 @@ describe Mongo::Grid::File::Chunk do
   end
 
   describe '#initialize' do
-
     let(:chunk) do
-      described_class.new(:data => data, :files_id => file_id, :n => 5)
+      described_class.new(data: data, files_id: file_id, n: 5)
     end
 
     it 'sets the document' do
@@ -134,9 +123,8 @@ describe Mongo::Grid::File::Chunk do
   end
 
   describe '#to_bson' do
-
     let(:chunk) do
-      described_class.new(:data => data, :files_id => file_id, :n => 5)
+      described_class.new(data: data, files_id: file_id, n: 5)
     end
 
     let(:document) do
@@ -149,9 +137,7 @@ describe Mongo::Grid::File::Chunk do
   end
 
   describe '.split' do
-
     context 'when the data is smaller than the default size' do
-
       let(:raw_data) do
         +'testing'
       end
@@ -182,7 +168,6 @@ describe Mongo::Grid::File::Chunk do
     end
 
     context 'when the data is larger that the default size' do
-
       let(:data_size) do
         Mongo::Grid::File::Chunk::DEFAULT_SIZE * 3
       end
@@ -204,7 +189,7 @@ describe Mongo::Grid::File::Chunk do
       end
 
       before do
-        (1..data_size).each{ |i| raw_data << '1' }
+        (1..data_size).each { |_i| raw_data << '1' }
       end
 
       let(:chunks) do

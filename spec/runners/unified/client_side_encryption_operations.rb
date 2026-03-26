@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Unified
   module ClientSideEncryptionOperations
@@ -11,7 +10,7 @@ module Unified
         opts[:key_material] = opts[:key_material].data if opts[:key_material]
         client_encryption.create_data_key(
           args.use!('kmsProvider'),
-          opts,
+          opts
         )
       end
     end

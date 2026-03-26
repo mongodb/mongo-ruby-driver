@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -72,7 +71,7 @@ describe 'QueryCache with transactions' do
 
           session = client.start_session
           session.with_transaction(
-           read_concern: { level: :snapshot }
+            read_concern: { level: :snapshot }
           ) do
             collection.find({}, session: session).to_a
           end
@@ -87,7 +86,7 @@ describe 'QueryCache with transactions' do
 
           session = client.start_session
           session.with_transaction(
-           read: { mode: :primary }
+            read: { mode: :primary }
           ) do
             collection.find({}, session: session).to_a
           end

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::BulkWrite do
-
   before do
     authorized_collection.drop
   end
@@ -18,7 +16,7 @@ describe Mongo::BulkWrite do
   end
 
   let(:array_filters) do
-    [{ 'i.y' => 3}]
+    [ { 'i.y' => 3 } ]
   end
 
   let(:collection) do
@@ -33,66 +31,59 @@ describe Mongo::BulkWrite do
     require_topology :single
 
     it 'raises an OperationFailure' do
-      expect {
+      expect do
         bulk_write_invalid_write_concern.execute
-      }.to raise_error(Mongo::Error::OperationFailure)
+      end.to raise_error(Mongo::Error::OperationFailure)
     end
   end
 
   describe '#execute' do
     shared_examples_for 'an executable bulk write' do
-
       context 'when providing a bad operation' do
-
         let(:requests) do
-          [{ not_an_operation: { _id: 0 }}]
+          [ { not_an_operation: { _id: 0 } } ]
         end
 
         it 'raises an exception' do
-          expect {
+          expect do
             bulk_write.execute
-          }.to raise_error(Mongo::Error::InvalidBulkOperationType)
+          end.to raise_error(Mongo::Error::InvalidBulkOperationType)
         end
       end
 
       context 'when providing no requests' do
-
         let(:requests) do
           []
         end
 
         it 'raises an exception' do
-          expect {
+          expect do
             bulk_write.execute
-          }.to raise_error(ArgumentError, /Bulk write requests cannot be empty/)
+          end.to raise_error(ArgumentError, /Bulk write requests cannot be empty/)
         end
       end
 
       context 'when the operations do not need to be split' do
-
         context 'when a write error occurs' do
-
           let(:requests) do
             [
-              { insert_one: { _id: 0 }},
-              { insert_one: { _id: 1 }},
-              { insert_one: { _id: 0 }},
-              { insert_one: { _id: 1 }}
+              { insert_one: { _id: 0 } },
+              { insert_one: { _id: 1 } },
+              { insert_one: { _id: 0 } },
+              { insert_one: { _id: 1 } }
             ]
           end
 
           let(:error) do
-            begin
-              bulk_write.execute
-            rescue => e
-              e
-            end
+            bulk_write.execute
+          rescue StandardError => e
+            e
           end
 
           it 'raises an exception' do
-            expect {
+            expect do
               bulk_write.execute
-            }.to raise_error(Mongo::Error::BulkWriteError)
+            end.to raise_error(Mongo::Error::BulkWriteError)
           end
 
           it 'sets the document index on the error' do
@@ -100,7 +91,6 @@ describe Mongo::BulkWrite do
           end
 
           context 'when a session is provided' do
-
             let(:extra_options) do
               { session: session }
             end
@@ -118,9 +108,8 @@ describe Mongo::BulkWrite do
         end
 
         context 'when provided a single insert one' do
-
           let(:requests) do
-            [{ insert_one: { _id: 0 }}]
+            [ { insert_one: { _id: 0 } } ]
           end
 
           let(:result) do
@@ -138,7 +127,6 @@ describe Mongo::BulkWrite do
           end
 
           context 'when a session is provided' do
-
             let(:operation) do
               result
             end
@@ -155,13 +143,11 @@ describe Mongo::BulkWrite do
           end
 
           context 'when there is a write concern error' do
-
             it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
-
               let(:extra_options) do
-                {session: session}
+                { session: session }
               end
 
               let(:client) do
@@ -178,12 +164,11 @@ describe Mongo::BulkWrite do
         end
 
         context 'when provided multiple insert ones' do
-
           let(:requests) do
             [
-              { insert_one: { _id: 0 }},
-              { insert_one: { _id: 1 }},
-              { insert_one: { _id: 2 }}
+              { insert_one: { _id: 0 } },
+              { insert_one: { _id: 1 } },
+              { insert_one: { _id: 2 } }
             ]
           end
 
@@ -193,30 +178,27 @@ describe Mongo::BulkWrite do
 
           it 'inserts the documents' do
             expect(result.inserted_count).to eq(3)
-            expect(authorized_collection.find(_id: { '$in'=> [ 0, 1, 2 ]}).count).to eq(3)
+            expect(authorized_collection.find(_id: { '$in' => [ 0, 1, 2 ] }).count).to eq(3)
           end
 
           context 'when there is a write failure' do
-
             let(:requests) do
-              [{ insert_one: { _id: 1 }}, { insert_one: { _id: 1 }}]
+              [ { insert_one: { _id: 1 } }, { insert_one: { _id: 1 } } ]
             end
 
             it 'raises a BulkWriteError' do
-              expect {
+              expect do
                 bulk_write.execute
-              }.to raise_error(Mongo::Error::BulkWriteError)
+              end.to raise_error(Mongo::Error::BulkWriteError)
             end
           end
 
           context 'when there is a write concern error' do
-
             it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
-
               let(:extra_options) do
-                {session: session}
+                { session: session }
               end
 
               let(:client) do
@@ -233,9 +215,8 @@ describe Mongo::BulkWrite do
         end
 
         context 'when provided a single delete one' do
-
           let(:requests) do
-            [{ delete_one: { filter: { _id: 0 }}}]
+            [ { delete_one: { filter: { _id: 0 } } } ]
           end
 
           let(:result) do
@@ -253,12 +234,12 @@ describe Mongo::BulkWrite do
 
           context 'when the write has specified a hint option' do
             let(:requests) do
-              [{
-                 delete_one: {
-                   filter: { _id: 1 },
-                   hint: '_id_',
-                 }
-               }]
+              [ {
+                delete_one: {
+                  filter: { _id: 1 },
+                  hint: '_id_',
+                }
+              } ]
             end
 
             context 'with unacknowledged write concern' do
@@ -270,30 +251,30 @@ describe Mongo::BulkWrite do
                 )
               end
 
-              context "on 4.4+ servers" do
+              context 'on 4.4+ servers' do
                 min_server_version '4.4'
 
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error
+                  end.not_to raise_error
                 end
               end
 
-              context "on <=4.2 servers" do
+              context 'on <=4.2 servers' do
                 max_server_version '4.2'
 
                 it 'raises a client-side error' do
                   expect do
                     bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                  end.to raise_error(Mongo::Error::UnsupportedOption,
+                                     /The hint option cannot be specified on an unacknowledged write operation/)
                 end
               end
             end
           end
 
           context 'when a session is provided' do
-
             let(:operation) do
               result
             end
@@ -310,13 +291,11 @@ describe Mongo::BulkWrite do
           end
 
           context 'when there is a write concern error' do
-
             it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
-
               let(:extra_options) do
-                {session: session}
+                { session: session }
               end
 
               let(:client) do
@@ -331,13 +310,12 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the write has a collation specified' do
-
               before do
                 authorized_collection.insert_one(name: 'bang')
               end
 
               let(:requests) do
-                [{ delete_one: { filter: { name: 'BANG' }, collation: collation } }]
+                [ { delete_one: { filter: { name: 'BANG' }, collation: collation } } ]
               end
 
               let!(:result) do
@@ -354,13 +332,12 @@ describe Mongo::BulkWrite do
             end
 
             context 'when a collation is not specified' do
-
               before do
                 authorized_collection.insert_one(name: 'bang')
               end
 
               let(:requests) do
-                [{ delete_one: { filter: { name: 'BANG' }}}]
+                [ { delete_one: { filter: { name: 'BANG' } } } ]
               end
 
               let!(:result) do
@@ -380,13 +357,13 @@ describe Mongo::BulkWrite do
           context 'when bulk executing update_one' do
             context 'when the write has specified a hint option' do
               let(:requests) do
-                [{
-                   update_one: {
-                     filter: { _id: 1 },
-                     update: { '$set' => { 'x.$[i].y' => 5 } },
-                     hint: '_id_',
-                   }
-                 }]
+                [ {
+                  update_one: {
+                    filter: { _id: 1 },
+                    update: { '$set' => { 'x.$[i].y' => 5 } },
+                    hint: '_id_',
+                  }
+                } ]
               end
 
               context 'with unacknowledged write concern' do
@@ -401,25 +378,24 @@ describe Mongo::BulkWrite do
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error
+                  end.not_to raise_error
                 end
               end
             end
 
             context 'when the write has specified arrayFilters' do
-
               before do
-                authorized_collection.insert_one(_id: 1, x: [{ y: 1 }, { y: 2 }, { y: 3 }])
+                authorized_collection.insert_one(_id: 1, x: [ { y: 1 }, { y: 2 }, { y: 3 } ])
               end
 
               let(:requests) do
-                [{
-                   update_one: {
-                     filter: { _id: 1 },
-                     update: { '$set' => { 'x.$[i].y' => 5 } },
-                     array_filters: array_filters,
-                   }
-                 }]
+                [ {
+                  update_one: {
+                    filter: { _id: 1 },
+                    update: { '$set' => { 'x.$[i].y' => 5 } },
+                    array_filters: array_filters,
+                  }
+                } ]
               end
 
               let!(:result) do
@@ -437,13 +413,13 @@ describe Mongo::BulkWrite do
           context 'when bulk executing update_many' do
             context 'when the write has specified a hint option' do
               let(:requests) do
-                [{
-                   update_many: {
-                     filter: { '$or' => [{ _id: 1 }, { _id: 2 }]},
-                     update: { '$set' => { 'x.$[i].y' => 5 } },
-                     hint: '_id_',
-                   }
-                 }]
+                [ {
+                  update_many: {
+                    filter: { '$or' => [ { _id: 1 }, { _id: 2 } ] },
+                    update: { '$set' => { 'x.$[i].y' => 5 } },
+                    hint: '_id_',
+                  }
+                } ]
               end
 
               context 'with unacknowledged write concern' do
@@ -458,44 +434,42 @@ describe Mongo::BulkWrite do
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error
+                  end.not_to raise_error
                 end
               end
             end
 
-
             context 'when the write has specified arrayFilters' do
-
               before do
-                authorized_collection.insert_many([{
-                                                     _id: 1, x: [
-                                                       { y: 1 },
-                                                       { y: 2 },
-                                                       { y: 3 }
-                                                     ]
-                                                   },
-                                                   {
-                                                     _id: 2,
-                                                     x: [
-                                                       { y: 3 },
-                                                       { y: 2 },
-                                                       { y: 1 }
-                                                     ]
-                                                   }])
+                authorized_collection.insert_many([ {
+                                                    _id: 1, x: [
+                                                      { y: 1 },
+                                                      { y: 2 },
+                                                      { y: 3 }
+                                                    ]
+                                                  },
+                                                    {
+                                                      _id: 2,
+                                                      x: [
+                                                        { y: 3 },
+                                                        { y: 2 },
+                                                        { y: 1 }
+                                                      ]
+                                                    } ])
               end
 
               let(:selector) do
-                { '$or' => [{ _id: 1 }, { _id: 2 }]}
+                { '$or' => [ { _id: 1 }, { _id: 2 } ] }
               end
 
               let(:requests) do
-                [{
-                   update_many: {
-                     filter: { '$or' => [{ _id: 1 }, { _id: 2 }]},
-                     update: { '$set' => { 'x.$[i].y' => 5 } },
-                     array_filters: array_filters,
-                   }
-                 }]
+                [ {
+                  update_many: {
+                    filter: { '$or' => [ { _id: 1 }, { _id: 2 } ] },
+                    update: { '$set' => { 'x.$[i].y' => 5 } },
+                    array_filters: array_filters,
+                  }
+                } ]
               end
 
               let!(:result) do
@@ -507,20 +481,19 @@ describe Mongo::BulkWrite do
                 expect(result.modified_count).to eq(2)
 
                 docs = authorized_collection.find(selector, sort: { _id: 1 }).to_a
-                expect(docs[0]['x']).to eq ([{ 'y' => 1 },  { 'y' => 2 }, { 'y' => 5}])
-                expect(docs[1]['x']).to eq ([{ 'y' => 5 },  { 'y' => 2 }, { 'y' => 1}])
+                expect(docs[0]['x']).to eq([ { 'y' => 1 },  { 'y' => 2 }, { 'y' => 5 } ])
+                expect(docs[1]['x']).to eq([ { 'y' => 5 },  { 'y' => 2 }, { 'y' => 1 } ])
               end
             end
           end
 
           context 'when multiple documents match delete selector' do
-
             before do
-              authorized_collection.insert_many([{ a: 1 }, { a: 1 }])
+              authorized_collection.insert_many([ { a: 1 }, { a: 1 } ])
             end
 
             let(:requests) do
-              [{ delete_one: { filter: { a: 1 }}}]
+              [ { delete_one: { filter: { a: 1 } } } ]
             end
 
             it 'reports n_removed correctly' do
@@ -535,12 +508,11 @@ describe Mongo::BulkWrite do
         end
 
         context 'when provided multiple delete ones' do
-
           let(:requests) do
             [
-              { delete_one: { filter: { _id: 0 }}},
-              { delete_one: { filter: { _id: 1 }}},
-              { delete_one: { filter: { _id: 2 }}}
+              { delete_one: { filter: { _id: 0 } } },
+              { delete_one: { filter: { _id: 1 } } },
+              { delete_one: { filter: { _id: 2 } } }
             ]
           end
 
@@ -550,17 +522,16 @@ describe Mongo::BulkWrite do
 
           before do
             authorized_collection.insert_many([
-              { _id: 0 }, { _id: 1 }, { _id: 2 }
-            ])
+                                                { _id: 0 }, { _id: 1 }, { _id: 2 }
+                                              ])
           end
 
           it 'deletes the documents' do
             expect(result.deleted_count).to eq(3)
-            expect(authorized_collection.find(_id: { '$in'=> [ 0, 1, 2 ]}).count).to eq(0)
+            expect(authorized_collection.find(_id: { '$in' => [ 0, 1, 2 ] }).count).to eq(0)
           end
 
           context 'when a session is provided' do
-
             let(:operation) do
               result
             end
@@ -577,13 +548,11 @@ describe Mongo::BulkWrite do
           end
 
           context 'when there is a write concern error' do
-
             it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
-
               let(:extra_options) do
-                {session: session}
+                { session: session }
               end
 
               let(:client) do
@@ -599,15 +568,14 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write has a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'doink')
             end
 
             let(:requests) do
-              [{ delete_one: { filter: { name: 'BANG' }, collation: collation }},
-               { delete_one: { filter: { name: 'DOINK' }, collation: collation }}]
+              [ { delete_one: { filter: { name: 'BANG' }, collation: collation } },
+                { delete_one: { filter: { name: 'DOINK' }, collation: collation } } ]
             end
 
             let!(:result) do
@@ -615,7 +583,7 @@ describe Mongo::BulkWrite do
             end
 
             it 'applies the collation' do
-              expect(authorized_collection.find(name: { '$in' => ['bang', 'doink']}).count).to eq(0)
+              expect(authorized_collection.find(name: { '$in' => %w[bang doink] }).count).to eq(0)
             end
 
             it 'reports the deleted count' do
@@ -624,15 +592,14 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write does not have a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'doink')
             end
 
             let(:requests) do
-              [{ delete_one: { filter: { name: 'BANG' }}},
-               { delete_one: { filter: { name: 'DOINK' }}}]
+              [ { delete_one: { filter: { name: 'BANG' } } },
+                { delete_one: { filter: { name: 'DOINK' } } } ]
             end
 
             let!(:result) do
@@ -640,7 +607,7 @@ describe Mongo::BulkWrite do
             end
 
             it 'does not apply the collation' do
-              expect(authorized_collection.find(name: { '$in' => ['bang', 'doink']}).count).to eq(2)
+              expect(authorized_collection.find(name: { '$in' => %w[bang doink] }).count).to eq(2)
             end
 
             it 'reports the deleted count' do
@@ -650,9 +617,8 @@ describe Mongo::BulkWrite do
         end
 
         context 'when provided a single delete many' do
-
           let(:requests) do
-            [{ delete_many: { filter: { _id: 0 }}}]
+            [ { delete_many: { filter: { _id: 0 } } } ]
           end
 
           let(:result) do
@@ -670,12 +636,12 @@ describe Mongo::BulkWrite do
 
           context 'when the write has specified a hint option' do
             let(:requests) do
-              [{
-                 delete_many: {
-                   filter: { _id: 1 },
-                   hint: '_id_',
-                 }
-               }]
+              [ {
+                delete_many: {
+                  filter: { _id: 1 },
+                  hint: '_id_',
+                }
+              } ]
             end
 
             context 'with unacknowledged write concern' do
@@ -687,30 +653,30 @@ describe Mongo::BulkWrite do
                 )
               end
 
-              context "on 4.4+ servers" do
+              context 'on 4.4+ servers' do
                 min_server_version '4.4'
 
                 it "doesn't raises an error" do
                   expect do
                     bulk_write.execute
-                  end.to_not raise_error
+                  end.not_to raise_error
                 end
               end
 
-              context "on <=4.2 servers" do
+              context 'on <=4.2 servers' do
                 max_server_version '4.2'
 
                 it 'raises a client-side error' do
                   expect do
                     bulk_write.execute
-                  end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+                  end.to raise_error(Mongo::Error::UnsupportedOption,
+                                     /The hint option cannot be specified on an unacknowledged write operation/)
                 end
               end
             end
           end
 
           context 'when a session is provided' do
-
             let(:operation) do
               result
             end
@@ -727,13 +693,11 @@ describe Mongo::BulkWrite do
           end
 
           context 'when there is a write concern error' do
-
             it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
-
               let(:extra_options) do
-                {session: session}
+                { session: session }
               end
 
               let(:client) do
@@ -749,14 +713,13 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write has a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'bang')
             end
 
             let(:requests) do
-              [{ delete_many: { filter: { name: 'BANG' }, collation: collation }}]
+              [ { delete_many: { filter: { name: 'BANG' }, collation: collation } } ]
             end
 
             let!(:result) do
@@ -773,14 +736,13 @@ describe Mongo::BulkWrite do
           end
 
           context 'when a collation is not specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'bang')
             end
 
             let(:requests) do
-              [{ delete_many: { filter: { name: 'BANG' }}}]
+              [ { delete_many: { filter: { name: 'BANG' } } } ]
             end
 
             let!(:result) do
@@ -798,12 +760,11 @@ describe Mongo::BulkWrite do
         end
 
         context 'when provided multiple delete many ops' do
-
           let(:requests) do
             [
-              { delete_many: { filter: { _id: 0 }}},
-              { delete_many: { filter: { _id: 1 }}},
-              { delete_many: { filter: { _id: 2 }}}
+              { delete_many: { filter: { _id: 0 } } },
+              { delete_many: { filter: { _id: 1 } } },
+              { delete_many: { filter: { _id: 2 } } }
             ]
           end
 
@@ -813,17 +774,16 @@ describe Mongo::BulkWrite do
 
           before do
             authorized_collection.insert_many([
-              { _id: 0 }, { _id: 1 }, { _id: 2 }
-            ])
+                                                { _id: 0 }, { _id: 1 }, { _id: 2 }
+                                              ])
           end
 
           it 'deletes the documents' do
             expect(result.deleted_count).to eq(3)
-            expect(authorized_collection.find(_id: { '$in'=> [ 0, 1, 2 ]}).count).to eq(0)
+            expect(authorized_collection.find(_id: { '$in' => [ 0, 1, 2 ] }).count).to eq(0)
           end
 
           context 'when a session is provided' do
-
             let(:operation) do
               result
             end
@@ -840,11 +800,9 @@ describe Mongo::BulkWrite do
           end
 
           context 'when there is a write concern error' do
-
             it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
-
               let(:operation) do
                 result
               end
@@ -854,7 +812,7 @@ describe Mongo::BulkWrite do
               end
 
               let(:extra_options) do
-                {session: session}
+                { session: session }
               end
 
               it_behaves_like 'an operation using a session'
@@ -862,7 +820,6 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write has a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'bang')
@@ -870,8 +827,8 @@ describe Mongo::BulkWrite do
             end
 
             let(:requests) do
-              [{ delete_many: { filter: { name: 'BANG' },  collation: collation }},
-               { delete_many: { filter: { name: 'DOINK' },  collation: collation }}]
+              [ { delete_many: { filter: { name: 'BANG' }, collation: collation } },
+                { delete_many: { filter: { name: 'DOINK' }, collation: collation } } ]
             end
 
             let!(:result) do
@@ -879,7 +836,7 @@ describe Mongo::BulkWrite do
             end
 
             it 'applies the collation' do
-              expect(authorized_collection.find(name: { '$in' => ['bang', 'doink'] }).count).to eq(0)
+              expect(authorized_collection.find(name: { '$in' => %w[bang doink] }).count).to eq(0)
             end
 
             it 'reports the deleted count' do
@@ -888,7 +845,6 @@ describe Mongo::BulkWrite do
           end
 
           context 'when a collation is not specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'bang')
@@ -896,8 +852,8 @@ describe Mongo::BulkWrite do
             end
 
             let(:requests) do
-              [{ delete_many: { filter: { name: 'BANG' }}},
-               { delete_many: { filter: { name: 'DOINK' }}}]
+              [ { delete_many: { filter: { name: 'BANG' } } },
+                { delete_many: { filter: { name: 'DOINK' } } } ]
             end
 
             let!(:result) do
@@ -905,7 +861,7 @@ describe Mongo::BulkWrite do
             end
 
             it 'does not apply the collation' do
-              expect(authorized_collection.find(name: { '$in' => ['bang', 'doink'] }).count).to eq(3)
+              expect(authorized_collection.find(name: { '$in' => %w[bang doink] }).count).to eq(3)
             end
 
             it 'reports the deleted count' do
@@ -915,9 +871,8 @@ describe Mongo::BulkWrite do
         end
 
         context 'when providing a single replace one' do
-
           let(:requests) do
-            [{ replace_one: { filter: { _id: 0 }, replacement: { name: 'test' }}}]
+            [ { replace_one: { filter: { _id: 0 }, replacement: { name: 'test' } } } ]
           end
 
           let(:result) do
@@ -935,13 +890,13 @@ describe Mongo::BulkWrite do
 
           context 'when a hint option is provided' do
             let(:requests) do
-              [{
+              [ {
                 replace_one: {
                   filter: { _id: 0 },
                   replacements: { name: 'test' },
                   hint: '_id_'
                 }
-              }]
+              } ]
             end
 
             context 'with unacknowledged write concern' do
@@ -956,13 +911,12 @@ describe Mongo::BulkWrite do
               it "doesn't raises an error" do
                 expect do
                   bulk_write.execute
-                end.to_not raise_error
+                end.not_to raise_error
               end
             end
           end
 
           context 'when a session is provided' do
-
             let(:operation) do
               result
             end
@@ -979,13 +933,11 @@ describe Mongo::BulkWrite do
           end
 
           context 'when there is a write concern error' do
-
             it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
-
               let(:extra_options) do
-                {session: session}
+                { session: session }
               end
 
               let(:client) do
@@ -1001,15 +953,14 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write has a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
             end
 
             let(:requests) do
-              [{ replace_one: { filter: { name: 'BANG' },
-                                replacement: { other: 'pong' },
-                                collation: collation }}]
+              [ { replace_one: { filter: { name: 'BANG' },
+                                 replacement: { other: 'pong' },
+                                 collation: collation } } ]
             end
 
             let!(:result) do
@@ -1038,13 +989,12 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write does not have a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
             end
 
             let(:requests) do
-              [{ replace_one: { filter: { name: 'BANG' }, replacement: { other: 'pong' }}}]
+              [ { replace_one: { filter: { name: 'BANG' }, replacement: { other: 'pong' } } } ]
             end
 
             let!(:result) do
@@ -1074,11 +1024,9 @@ describe Mongo::BulkWrite do
         end
 
         context 'when providing a single update one' do
-
           context 'when upsert is false' do
-
             let(:requests) do
-              [{ update_one: { filter: { _id: 0 }, update: { "$set" => { name: 'test' }}}}]
+              [ { update_one: { filter: { _id: 0 }, update: { '$set' => { name: 'test' } } } } ]
             end
 
             let(:result) do
@@ -1111,7 +1059,6 @@ describe Mongo::BulkWrite do
             end
 
             context 'when a session is provided' do
-
               let(:operation) do
                 result
               end
@@ -1128,13 +1075,12 @@ describe Mongo::BulkWrite do
             end
 
             context 'when documents match but are not modified' do
-
               before do
                 authorized_collection.insert_one({ a: 0 })
               end
 
               let(:requests) do
-                [{ update_one: { filter: { a: 0 }, update: { "$set" => { a: 0 }}}}]
+                [ { update_one: { filter: { a: 0 }, update: { '$set' => { a: 0 } } } } ]
               end
 
               it 'reports the upserted id' do
@@ -1170,7 +1116,7 @@ describe Mongo::BulkWrite do
 
               let(:requests) do
                 batch_size.times.collect do |i|
-                  { update_one: { filter: { a: i }, update: { "$set" => { a: i, b: 3 }}, upsert: true }}
+                  { update_one: { filter: { a: i }, update: { '$set' => { a: i, b: 3 } }, upsert: true } }
                 end
               end
 
@@ -1181,13 +1127,11 @@ describe Mongo::BulkWrite do
             end
 
             context 'when there is a write concern error' do
-
               it_behaves_like 'bulk write with write concern yielding operation failure'
 
               context 'when a session is provided' do
-
                 let(:extra_options) do
-                  {session: session}
+                  { session: session }
                 end
 
                 let(:client) do
@@ -1204,9 +1148,8 @@ describe Mongo::BulkWrite do
           end
 
           context 'when upsert is true' do
-
             let(:requests) do
-              [{ update_one: { filter: { _id: 0 }, update: { "$set" => { name: 'test' } }, upsert: true }}]
+              [ { update_one: { filter: { _id: 0 }, update: { '$set' => { name: 'test' } }, upsert: true } } ]
             end
 
             let(:result) do
@@ -1231,16 +1174,14 @@ describe Mongo::BulkWrite do
             end
 
             it 'reports the upserted id' do
-              expect(result.upserted_ids).to eq([0])
+              expect(result.upserted_ids).to eq([ 0 ])
             end
 
             context 'when there is a write concern error' do
-
               it_behaves_like 'bulk write with write concern yielding operation failure'
             end
 
             context 'when write_concern is specified as an option' do
-
               # In a multi-sharded cluster, the write seems to go to a
               # different shard from the read
               require_no_multi_mongos
@@ -1277,15 +1218,14 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write has a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
             end
 
             let(:requests) do
-              [{ update_one: { filter: { name: 'BANG' },
-                               update: { "$set" => { name: 'pong' }},
-                               collation: collation }}]
+              [ { update_one: { filter: { name: 'BANG' },
+                                update: { '$set' => { name: 'pong' } },
+                                collation: collation } } ]
             end
 
             let!(:result) do
@@ -1314,13 +1254,12 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write does not have a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
             end
 
             let(:requests) do
-              [{ update_one: { filter: { name: 'BANG' }, update: { "$set" => { name: 'pong' }}}}]
+              [ { update_one: { filter: { name: 'BANG' }, update: { '$set' => { name: 'pong' } } } } ]
             end
 
             let!(:result) do
@@ -1350,21 +1289,19 @@ describe Mongo::BulkWrite do
         end
 
         context 'when providing multiple update ones' do
-
           context 'when the write has a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'doink')
             end
 
             let(:requests) do
-              [{ update_one: { filter: { name: 'BANG' },
-                               update: { "$set" => { name: 'pong' }},
-                               collation: collation }},
-               { update_one: { filter: { name: 'DOINK' },
-                               update: { "$set" => { name: 'pong' }},
-                               collation: collation }}]
+              [ { update_one: { filter: { name: 'BANG' },
+                                update: { '$set' => { name: 'pong' } },
+                                collation: collation } },
+                { update_one: { filter: { name: 'DOINK' },
+                                update: { '$set' => { name: 'pong' } },
+                                collation: collation } } ]
             end
 
             let!(:result) do
@@ -1393,15 +1330,14 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write does not have a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'doink')
             end
 
             let(:requests) do
-              [{ update_one: { filter: { name: 'BANG' }, update: { "$set" => { name: 'pong' }}}},
-               { update_one: { filter: { name: 'DOINK' }, update: { "$set" => { name: 'pong' }}}}]
+              [ { update_one: { filter: { name: 'BANG' }, update: { '$set' => { name: 'pong' } } } },
+                { update_one: { filter: { name: 'DOINK' }, update: { '$set' => { name: 'pong' } } } } ]
             end
 
             let!(:result) do
@@ -1430,10 +1366,9 @@ describe Mongo::BulkWrite do
           end
 
           context 'when upsert is false' do
-
             let(:requests) do
-              [{ update_one: { filter: { _id: 0 }, update: { "$set" => { name: 'test' }}}},
-               { update_one: { filter: { _id: 1 }, update: { "$set" => { name: 'test' }}}}]
+              [ { update_one: { filter: { _id: 0 }, update: { '$set' => { name: 'test' } } } },
+                { update_one: { filter: { _id: 1 }, update: { '$set' => { name: 'test' } } } } ]
             end
 
             let(:result) do
@@ -1441,7 +1376,7 @@ describe Mongo::BulkWrite do
             end
 
             before do
-              authorized_collection.insert_many([{ _id: 0 }, { _id: 1 }])
+              authorized_collection.insert_many([ { _id: 0 }, { _id: 1 } ])
             end
 
             it 'updates the document' do
@@ -1466,10 +1401,9 @@ describe Mongo::BulkWrite do
             end
 
             context 'when there is a mix of updates and matched without an update' do
-
               let(:requests) do
-                [{ update_one: { filter: { a: 0 }, update: { "$set" => { a: 1 }}}},
-                 { update_one: { filter: { a: 2 }, update: { "$set" => { a: 2 }}}}]
+                [ { update_one: { filter: { a: 0 }, update: { '$set' => { a: 1 } } } },
+                  { update_one: { filter: { a: 2 }, update: { '$set' => { a: 2 } } } } ]
               end
 
               let(:result) do
@@ -1477,7 +1411,7 @@ describe Mongo::BulkWrite do
               end
 
               before do
-                authorized_collection.insert_many([{ a: 0 }, { a: 2 }])
+                authorized_collection.insert_many([ { a: 0 }, { a: 2 } ])
               end
 
               it 'updates the document' do
@@ -1503,16 +1437,14 @@ describe Mongo::BulkWrite do
             end
 
             context 'when there is a write concern error' do
-
               it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
 
           context 'when upsert is true' do
-
             let(:requests) do
-              [{ update_one: { filter: { _id: 0 }, update: { "$set" => { name: 'test' }}, upsert: true }},
-               { update_one: { filter: { _id: 1 }, update: { "$set" => { name: 'test1' }}, upsert: true }}]
+              [ { update_one: { filter: { _id: 0 }, update: { '$set' => { name: 'test' } }, upsert: true } },
+                { update_one: { filter: { _id: 1 }, update: { '$set' => { name: 'test1' } }, upsert: true } } ]
             end
 
             let(:result) do
@@ -1521,7 +1453,7 @@ describe Mongo::BulkWrite do
 
             it 'updates the document' do
               expect(result.modified_count).to eq(0)
-              expect(authorized_collection.find(name: { '$in' => ['test', 'test1'] }).count).to eq(2)
+              expect(authorized_collection.find(name: { '$in' => %w[test test1] }).count).to eq(2)
             end
 
             it 'reports the upserted count' do
@@ -1537,15 +1469,14 @@ describe Mongo::BulkWrite do
             end
 
             it 'reports the upserted id' do
-              expect(result.upserted_ids).to eq([0, 1])
+              expect(result.upserted_ids).to eq([ 0, 1 ])
             end
 
             context 'when there is a mix of updates, upsert, and matched without an update' do
-
               let(:requests) do
-                [{ update_one: { filter: { a: 0 }, update: { "$set" => { a: 1 }}}},
-                 { update_one: { filter: { a: 2 }, update: { "$set" => { a: 2 }}}},
-                 { update_one: { filter: { _id: 3 }, update: { "$set" => { a: 4 }}, upsert: true }}]
+                [ { update_one: { filter: { a: 0 }, update: { '$set' => { a: 1 } } } },
+                  { update_one: { filter: { a: 2 }, update: { '$set' => { a: 2 } } } },
+                  { update_one: { filter: { _id: 3 }, update: { '$set' => { a: 4 } }, upsert: true } } ]
               end
 
               let(:result) do
@@ -1553,7 +1484,7 @@ describe Mongo::BulkWrite do
               end
 
               before do
-                authorized_collection.insert_many([{ a: 0 }, { a: 2 }])
+                authorized_collection.insert_many([ { a: 0 }, { a: 2 } ])
               end
 
               it 'updates the documents' do
@@ -1563,7 +1494,7 @@ describe Mongo::BulkWrite do
               end
 
               it 'reports the upserted id' do
-                expect(result.upserted_ids).to eq([3])
+                expect(result.upserted_ids).to eq([ 3 ])
               end
 
               it 'reports the upserted count' do
@@ -1580,25 +1511,22 @@ describe Mongo::BulkWrite do
             end
 
             context 'when there is a write concern error' do
-
               it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
         end
 
         context 'when providing a single update many' do
-
           context 'when the write has a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'bang')
             end
 
             let(:requests) do
-              [{ update_many: { filter: { name: 'BANG' },
-                                update: { "$set" => { name: 'pong' }},
-                                collation: collation }}]
+              [ { update_many: { filter: { name: 'BANG' },
+                                 update: { '$set' => { name: 'pong' } },
+                                 collation: collation } } ]
             end
 
             let!(:result) do
@@ -1627,14 +1555,13 @@ describe Mongo::BulkWrite do
           end
 
           context 'when the write does not have a collation specified' do
-
             before do
               authorized_collection.insert_one(name: 'bang')
               authorized_collection.insert_one(name: 'bang')
             end
 
             let(:requests) do
-              [{ update_many: { filter: { name: 'BANG' }, update: { "$set" => { name: 'pong' }}}}]
+              [ { update_many: { filter: { name: 'BANG' }, update: { '$set' => { name: 'pong' } } } } ]
             end
 
             let!(:result) do
@@ -1663,9 +1590,8 @@ describe Mongo::BulkWrite do
           end
 
           context 'when upsert is false' do
-
             let(:requests) do
-              [{ update_many: { filter: { a: 0 }, update: { "$set" => { name: 'test' }}}}]
+              [ { update_many: { filter: { a: 0 }, update: { '$set' => { name: 'test' } } } } ]
             end
 
             let(:result) do
@@ -1673,7 +1599,7 @@ describe Mongo::BulkWrite do
             end
 
             before do
-              authorized_collection.insert_many([{ a: 0 }, { a: 0 }])
+              authorized_collection.insert_many([ { a: 0 }, { a: 0 } ])
             end
 
             it 'updates the documents' do
@@ -1697,15 +1623,13 @@ describe Mongo::BulkWrite do
             end
 
             context 'when there is a write concern error' do
-
               it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
 
           context 'when upsert is true' do
-
             let(:requests) do
-              [{ update_many: { filter: { _id: 0 }, update: { "$set" => { name: 'test' }}, upsert: true }}]
+              [ { update_many: { filter: { _id: 0 }, update: { '$set' => { name: 'test' } }, upsert: true } } ]
             end
 
             let(:result) do
@@ -1730,11 +1654,10 @@ describe Mongo::BulkWrite do
             end
 
             it 'reports the upserted id' do
-              expect(result.upserted_ids).to eq([0])
+              expect(result.upserted_ids).to eq([ 0 ])
             end
 
             context 'when there is a write concern error' do
-
               it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
@@ -1751,7 +1674,7 @@ describe Mongo::BulkWrite do
         end
 
         let(:connection) do
-          server = client.cluster.next_primary
+          client.cluster.next_primary
         end
 
         before do
@@ -1760,39 +1683,35 @@ describe Mongo::BulkWrite do
         end
 
         context 'when a write error occurs' do
-
           let(:requests) do
             batch_size.times.map do |i|
-              { insert_one: { _id: i }}
+              { insert_one: { _id: i } }
             end
           end
 
           let(:error) do
-            begin
-              bulk_write.execute
-            rescue => e
-              e
-            end
+            bulk_write.execute
+          rescue StandardError => e
+            e
           end
 
           it 'raises an exception' do
-            expect {
-              requests.push({ insert_one: { _id: 5 }})
+            expect do
+              requests.push({ insert_one: { _id: 5 } })
               bulk_write.execute
-            }.to raise_error(Mongo::Error::BulkWriteError)
+            end.to raise_error(Mongo::Error::BulkWriteError)
           end
 
           it 'sets the document index on the error' do
-            requests.push({ insert_one: { _id: 5 }})
+            requests.push({ insert_one: { _id: 5 } })
             expect(error.result['writeErrors'].first['index']).to eq(batch_size)
           end
         end
 
         context 'when no write errors occur' do
-
           let(:requests) do
             batch_size.times.map do |i|
-              { insert_one: { _id: i }}
+              { insert_one: { _id: i } }
             end
           end
 
@@ -1809,7 +1728,6 @@ describe Mongo::BulkWrite do
           end
 
           context 'when a session is provided' do
-
             let(:operation) do
               result
             end
@@ -1877,17 +1795,16 @@ describe Mongo::BulkWrite do
             end
 
             it 'increments the transaction number' do
-              expect(second_txn_number). to eq(first_txn_number + 1)
+              expect(second_txn_number).to eq(first_txn_number + 1)
             end
           end
         end
       end
 
       context 'when an operation exceeds the max bson size' do
-
         let(:requests) do
           5.times.map do |i|
-            { insert_one: { _id: i, x: 'y' * 4000000 }}
+            { insert_one: { _id: i, x: 'y' * 4_000_000 } }
           end
         end
 
@@ -1900,7 +1817,6 @@ describe Mongo::BulkWrite do
         end
 
         context 'when a session is provided' do
-
           let(:operation) do
             result
           end
@@ -1919,7 +1835,6 @@ describe Mongo::BulkWrite do
     end
 
     context 'when the bulk write is unordered' do
-
       let(:bulk_write) do
         described_class.new(collection, requests, options)
       end
@@ -1940,7 +1855,6 @@ describe Mongo::BulkWrite do
     end
 
     context 'when the bulk write is ordered' do
-
       let(:bulk_write) do
         described_class.new(collection, requests, options)
       end
@@ -1962,13 +1876,11 @@ describe Mongo::BulkWrite do
   end
 
   describe '#initialize' do
-
     let(:requests) do
-      [{ insert_one: { _id: 0 }}]
+      [ { insert_one: { _id: 0 } } ]
     end
 
     shared_examples_for 'a bulk write initializer' do
-
       it 'sets the collection' do
         expect(bulk_write.collection).to eq(authorized_collection)
       end
@@ -1979,7 +1891,6 @@ describe Mongo::BulkWrite do
     end
 
     context 'when no options are provided' do
-
       let(:bulk_write) do
         described_class.new(authorized_collection, requests)
       end
@@ -1992,7 +1903,6 @@ describe Mongo::BulkWrite do
     end
 
     context 'when options are provided' do
-
       let(:bulk_write) do
         described_class.new(authorized_collection, requests, ordered: true)
       end
@@ -2003,7 +1913,6 @@ describe Mongo::BulkWrite do
     end
 
     context 'when nil options are provided' do
-
       let(:bulk_write) do
         described_class.new(authorized_collection, requests, nil)
       end
@@ -2015,9 +1924,7 @@ describe Mongo::BulkWrite do
   end
 
   describe '#ordered?' do
-
     context 'when no option provided' do
-
       let(:bulk_write) do
         described_class.new(authorized_collection, [])
       end
@@ -2028,9 +1935,7 @@ describe Mongo::BulkWrite do
     end
 
     context 'when the option is provided' do
-
       context 'when the option is true' do
-
         let(:options) do
           { ordered: true }
         end
@@ -2045,7 +1950,6 @@ describe Mongo::BulkWrite do
       end
 
       context 'when the option is false' do
-
         let(:options) do
           { ordered: false }
         end
@@ -2055,7 +1959,7 @@ describe Mongo::BulkWrite do
         end
 
         it 'returns false' do
-          expect(bulk_write).to_not be_ordered
+          expect(bulk_write).not_to be_ordered
         end
       end
     end
@@ -2064,47 +1968,45 @@ describe Mongo::BulkWrite do
   describe 'when the collection has a validator' do
     let(:collection_with_validator) do
       authorized_client[:validating,
-                        :validator => { :a => { '$exists' => true } }].tap do |c|
+                        validator: { a: { '$exists' => true } }].tap do |c|
         c.create
       end
     end
 
     before do
-      begin; authorized_client[:validating].drop; rescue; end
+      begin; authorized_client[:validating].drop; rescue StandardError; end
       collection_with_validator.delete_many
-      collection_with_validator.insert_many([{ :a => 1 }, { :a => 2 }])
+      collection_with_validator.insert_many([ { a: 1 }, { a: 2 } ])
     end
 
     context 'when the documents are invalid' do
-
       let(:ops) do
         [
-            { insert_one: { :x => 1 } },
-            { update_one: { filter: { :a => 1 },
-                            update: { '$unset' => { :a => '' } } } },
-            { replace_one: { filter: { :a => 2 },
-                             replacement: { :x => 2 } } }
+          { insert_one: { x: 1 } },
+          { update_one: { filter: { a: 1 },
+                          update: { '$unset' => { a: '' } } } },
+          { replace_one: { filter: { a: 2 },
+                           replacement: { x: 2 } } }
         ]
       end
 
       context 'when bypass_document_validation is not set' do
-
         let(:result) do
           collection_with_validator.bulk_write(ops)
         end
 
         it 'raises BulkWriteError' do
-          expect {
+          expect do
             result
-          }.to raise_exception(Mongo::Error::BulkWriteError)
+          end.to raise_exception(Mongo::Error::BulkWriteError)
         end
       end
 
       context 'when bypass_document_validation is true' do
-
         let(:result2) do
           collection_with_validator.bulk_write(
-              ops, :bypass_document_validation => true)
+            ops, bypass_document_validation: true
+          )
         end
 
         it 'executes successfully' do
@@ -2115,7 +2017,7 @@ describe Mongo::BulkWrite do
     end
   end
 
-  describe "#acknowledged?" do
+  describe '#acknowledged?' do
     let(:requests) { [ { insert_one: { x: 1 } } ] }
     let(:options) { {} }
     let(:bulk_write) do
@@ -2127,24 +2029,24 @@ describe Mongo::BulkWrite do
     end
     let(:result) { bulk_write.execute }
 
-    context "when using unacknowledged writes with one request" do
-     let(:options) { { write_concern: { w: 0 } } }
+    context 'when using unacknowledged writes with one request' do
+      let(:options) { { write_concern: { w: 0 } } }
 
       it 'acknowledged? returns false' do
         expect(result.acknowledged?).to be false
       end
     end
 
-    context "when using unacknowledged writes with multiple requests" do
-     let(:options) { { write_concern: { w: 0 } } }
-     let(:requests) { [ { insert_one: { x: 1 } }, { insert_one: { x: 1 } } ] }
+    context 'when using unacknowledged writes with multiple requests' do
+      let(:options) { { write_concern: { w: 0 } } }
+      let(:requests) { [ { insert_one: { x: 1 } }, { insert_one: { x: 1 } } ] }
 
       it 'acknowledged? returns false' do
         expect(result.acknowledged?).to be false
       end
     end
 
-    context "when not using unacknowledged writes" do
+    context 'when not using unacknowledged writes' do
       let(:options) { { write_concern: { w: 1 } } }
 
       it 'acknowledged? returns true' do

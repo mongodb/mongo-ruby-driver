@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,9 +15,7 @@
 # limitations under the License.
 
 module Mongo
-
   class Cluster
-
     # A manager that calls a method on each of a cluster's pools to close idle
     #  sockets.
     #
@@ -26,7 +23,6 @@ module Mongo
     #
     # @since 2.5.0
     class SocketReaper
-
       # Initialize the SocketReaper object.
       #
       # @example Initialize the socket reaper.
@@ -58,8 +54,7 @@ module Mongo
       #   garbage collected.
       #
       # @since 2.5.0
-      def flush
-      end
+      def flush; end
     end
   end
 end

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Single do
-
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
   end
@@ -38,35 +36,30 @@ describe Mongo::Cluster::Topology::Single do
   end
 
   describe '.servers' do
-
     let(:mongos) do
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false)
-      ).tap do |server|
+                        SpecConfig.instance.test_options.merge(monitoring_io: false)).tap do |server|
         allow(server).to receive(:description).and_return(mongos_description)
       end
     end
 
     let(:standalone) do
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false)
-      ).tap do |server|
+                        SpecConfig.instance.test_options.merge(monitoring_io: false)).tap do |server|
         allow(server).to receive(:description).and_return(standalone_description)
       end
     end
 
     let(:standalone_two) do
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false)
-      ).tap do |server|
+                        SpecConfig.instance.test_options.merge(monitoring_io: false)).tap do |server|
         allow(server).to receive(:description).and_return(standalone_description)
       end
     end
 
     let(:replica_set) do
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false)
-      ).tap do |server|
+                        SpecConfig.instance.test_options.merge(monitoring_io: false)).tap do |server|
         allow(server).to receive(:description).and_return(replica_set_description)
       end
     end
@@ -77,13 +70,13 @@ describe Mongo::Cluster::Topology::Single do
 
     let(:standalone_description) do
       Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
-        'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
+                                                'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
     end
 
     let(:replica_set_description) do
       Mongo::Server::Description.new(address, { 'isWritablePrimary' => true,
-        'minWireVersion' => 2, 'maxWireVersion' => 8,
-        'setName' => 'testing' })
+                                                'minWireVersion' => 2, 'maxWireVersion' => 8,
+                                                'setName' => 'testing' })
     end
 
     let(:servers) do
@@ -101,8 +94,9 @@ describe Mongo::Cluster::Topology::Single do
     context 'with RS name' do
       let(:topology) do
         Mongo::Cluster::Topology::Single.new(
-          {replica_set_name: 'foo'},
-          monitoring, temp_cluster)
+          { replica_set_name: 'foo' },
+          monitoring, temp_cluster
+        )
       end
 
       it 'accepts RS name' do
@@ -113,7 +107,7 @@ describe Mongo::Cluster::Topology::Single do
     context 'with more than one server in topology' do
       let(:topology) do
         Mongo::Cluster::Topology::Single.new({},
-          monitoring, temp_cluster)
+                                             monitoring, temp_cluster)
       end
 
       let(:server_1) do
@@ -130,48 +124,44 @@ describe Mongo::Cluster::Topology::Single do
 
       let(:temp_cluster) do
         double('temp cluster').tap do |cluster|
-          allow(cluster).to receive(:servers_list).and_return([server_1, server_2])
+          allow(cluster).to receive(:servers_list).and_return([ server_1, server_2 ])
         end
       end
 
       it 'fails' do
         expect do
           topology
-        end.to raise_error(ArgumentError, /Cannot instantiate a single topology with more than one server in the cluster: one, two/)
+        end.to raise_error(ArgumentError,
+                           /Cannot instantiate a single topology with more than one server in the cluster: one, two/)
       end
     end
   end
 
   describe '.replica_set?' do
-
     it 'returns false' do
-      expect(topology).to_not be_replica_set
+      expect(topology).not_to be_replica_set
     end
   end
 
   describe '.sharded?' do
-
     it 'returns false' do
-      expect(topology).to_not be_sharded
+      expect(topology).not_to be_sharded
     end
   end
 
   describe '.single?' do
-
     it 'returns true' do
       expect(topology).to be_single
     end
   end
 
   describe '#has_readable_servers?' do
-
     it 'returns true' do
       expect(topology).to have_readable_server(nil, nil)
     end
   end
 
   describe '#has_writable_servers?' do
-
     it 'returns true' do
       expect(topology).to have_writable_server(nil)
     end
@@ -185,7 +175,7 @@ describe Mongo::Cluster::Topology::Single do
     end
 
     it 'renders correctly' do
-      expect(topology).to receive(:server_descriptions).and_return({desc.address.to_s => desc})
+      expect(topology).to receive(:server_descriptions).and_return({ desc.address.to_s => desc })
       expect(topology.summary).to eq('Single[127.0.0.2:27017]')
     end
   end

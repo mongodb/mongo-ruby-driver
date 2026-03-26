@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class Insert
-
       # A MongoDB insert operation sent as an op message.
       #
       # @api private
@@ -33,7 +31,7 @@ module Mongo
 
         private
 
-        def get_result(connection, context, options = {})
+        def get_result(connection, context, _options = {})
           message = build_message(connection, context)
           connection.tracer.trace_command(message, context, connection) do
             result = Result.new(*dispatch_message(message, connection, context), @ids, context: context)
@@ -41,7 +39,7 @@ module Mongo
           end
         end
 
-        def selector(connection)
+        def selector(_connection)
           {
             insert: coll_name,
             Protocol::Msg::DATABASE_IDENTIFIER => db_name,

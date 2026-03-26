@@ -4,7 +4,6 @@ require 'spec_helper'
 
 # Unnecessary to rewrite a legacy test to use shorter examples; this can
 # be revisited if these tests ever need to be significantly modified.
-# rubocop:disable RSpec/ExampleLength
 describe 'Range Explicit Encryption' do
   min_server_version '8.0.0-rc18'
 

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class BulkWrite
-
     # Combines groups of bulk write operations in order.
     #
     # @api private
@@ -45,7 +43,7 @@ module Mongo
       private
 
       def add(operations, name, document)
-        operations.push({ name => []}) if next_group?(name, operations)
+        operations.push({ name => [] }) if next_group?(name, operations)
         operations[-1][name].push(transform(name, document))
         operations
       end

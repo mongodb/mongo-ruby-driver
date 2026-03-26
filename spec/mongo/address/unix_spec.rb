@@ -1,23 +1,19 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Address::Unix do
-
   let(:resolver) do
     described_class.new(*described_class.parse(address))
   end
 
   describe 'self.parse' do
-
     it 'returns the host and no port' do
-      expect(described_class.parse('/path/to/socket.sock')).to eq(['/path/to/socket.sock'])
+      expect(described_class.parse('/path/to/socket.sock')).to eq([ '/path/to/socket.sock' ])
     end
   end
 
   describe '#initialize' do
-
     let(:address) do
       '/path/to/socket.sock'
     end

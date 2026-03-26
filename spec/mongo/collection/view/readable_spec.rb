@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Collection::View::Readable do
-
   let(:selector) do
     {}
   end
@@ -28,33 +26,30 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when the read concern is valid' do
-
         let(:new_collection) do
           authorized_collection.with(read_concern: { level: 'local' })
         end
 
         it 'sends the read concern' do
-          expect { result }.to_not raise_error
+          expect { result }.not_to raise_error
         end
       end
 
       context 'when the read concern is not valid' do
-
         let(:new_collection) do
           authorized_collection.with(read_concern: { level: 'na' })
         end
 
         it 'raises an exception' do
-          expect {
+          expect do
             result
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
   end
 
   describe '#allow_partial_results' do
-
     let(:new_view) do
       view.allow_partial_results
     end
@@ -83,22 +78,21 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#aggregate' do
-
     let(:documents) do
       [
-        { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
-        { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
-        { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+        { city: 'Berlin', pop: 18_913, neighborhood: 'Kreuzberg' },
+        { city: 'Berlin', pop: 84_143, neighborhood: 'Mitte' },
+        { city: 'New York', pop: 40_270, neighborhood: 'Brooklyn' }
       ]
     end
 
     let(:pipeline) do
-      [{
-        "$group" => {
-          "_id" => "$city",
-          "totalpop" => { "$sum" => "$pop" }
+      [ {
+        '$group' => {
+          '_id' => '$city',
+          'totalpop' => { '$sum' => '$pop' }
         }
-      }]
+      } ]
     end
 
     before do
@@ -110,7 +104,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when incorporating read concern' do
-
       let(:result) do
         new_view.aggregate(pipeline, options).to_a
       end
@@ -119,25 +112,22 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when not iterating the aggregation' do
-
       it 'returns the aggregation object' do
         expect(aggregation).to be_a(Mongo::Collection::View::Aggregation)
       end
     end
 
     context 'when iterating the aggregation' do
-
       it 'yields to each document' do
         aggregation.each do |doc|
-          expect(doc[:totalpop]).to_not be_nil
+          expect(doc[:totalpop]).not_to be_nil
         end
       end
     end
 
     context 'when options are specified' do
-
       let(:agg_options) do
-        { :max_time_ms => 500 }
+        { max_time_ms: 500 }
       end
 
       let(:aggregation) do
@@ -149,72 +139,71 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context "when using methods to set aggregate options" do
-
-      context "when the broken_view_options flag is off" do
+    context 'when using methods to set aggregate options' do
+      context 'when the broken_view_options flag is off' do
         config_override :broken_view_options, false
 
         let(:aggregate) do
           view.send(opt, param).aggregate(pipeline, options)
         end
 
-        context "when a :allow_disk_use is given" do
+        context 'when a :allow_disk_use is given' do
           let(:aggregate) do
             view.allow_disk_use.aggregate(pipeline, options)
           end
           let(:opt) { :allow_disk_use }
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(aggregate.options[opt]).to eq(true)
           end
         end
 
-        context "when a :batch_size is given" do
+        context 'when a :batch_size is given' do
           let(:opt) { :batch_size }
           let(:param) { 2 }
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(aggregate.options[opt]).to eq(param)
           end
         end
 
-        context "when a :max_time_ms is given" do
+        context 'when a :max_time_ms is given' do
           let(:opt) { :max_time_ms }
           let(:param) { 2 }
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(aggregate.options[opt]).to eq(param)
           end
         end
 
-        context "when a :max_await_time_ms is given" do
+        context 'when a :max_await_time_ms is given' do
           let(:opt) { :max_await_time_ms }
           let(:param) { 2 }
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(aggregate.options[opt]).to eq(param)
           end
         end
 
-        context "when a :comment is given" do
+        context 'when a :comment is given' do
           let(:opt) { :comment }
-          let(:param) { "comment" }
+          let(:param) { 'comment' }
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(aggregate.options[opt]).to eq(param)
           end
         end
 
-        context "when a :hint is given" do
+        context 'when a :hint is given' do
           let(:opt) { :hint }
-          let(:param) { "_id_" }
+          let(:param) { '_id_' }
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(aggregate.options[opt]).to eq(param)
           end
         end
 
-        context "when a :session is given on the view" do
+        context 'when a :session is given on the view' do
           let(:opt) { :session }
           let(:param) { authorized_client.start_session }
           let(:aggregate) do
@@ -225,43 +214,42 @@ describe Mongo::Collection::View::Readable do
             param.end_session
           end
 
-          context "when broken_view_options is false" do
+          context 'when broken_view_options is false' do
             config_override :broken_view_options, false
 
-            it "sets the option correctly" do
+            it 'sets the option correctly' do
               expect(aggregate.options[opt]).to eq(param)
             end
           end
 
-          context "when broken_view_options is true" do
+          context 'when broken_view_options is true' do
             config_override :broken_view_options, true
 
-            it "does not set the option" do
-              expect(aggregate.options[opt]).to be nil
+            it 'does not set the option' do
+              expect(aggregate.options[opt]).to be_nil
             end
           end
         end
 
-        context "when also including in options" do
-
+        context 'when also including in options' do
           let(:aggregate) do
             view.limit(1).aggregate(pipeline, { limit: 2 })
           end
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(aggregate.options[:limit]).to eq(2)
           end
         end
       end
 
-      context "when the broken_view_options flag is on" do
+      context 'when the broken_view_options flag is on' do
         config_override :broken_view_options, true
 
         let(:aggregate) do
           view.send(opt, param).aggregate(pipeline, options)
         end
 
-        context "when a :allow_disk_use is given" do
+        context 'when a :allow_disk_use is given' do
           let(:aggregate) do
             view.allow_disk_use.aggregate(pipeline, options)
           end
@@ -272,7 +260,7 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when a :batch_size is given" do
+        context 'when a :batch_size is given' do
           let(:opt) { :batch_size }
           let(:param) { 2 }
 
@@ -281,7 +269,7 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when a :max_time_ms is given" do
+        context 'when a :max_time_ms is given' do
           let(:opt) { :max_time_ms }
           let(:param) { 2 }
 
@@ -290,7 +278,7 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when a :max_await_time_ms is given" do
+        context 'when a :max_await_time_ms is given' do
           let(:opt) { :max_await_time_ms }
           let(:param) { 2 }
 
@@ -299,31 +287,30 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when a :comment is given" do
+        context 'when a :comment is given' do
           let(:opt) { :comment }
-          let(:param) { "comment" }
+          let(:param) { 'comment' }
 
           it "doesn't set the option correctly" do
             expect(aggregate.options[opt]).to be_nil
           end
         end
 
-        context "when a :hint is given" do
+        context 'when a :hint is given' do
           let(:opt) { :hint }
-          let(:param) { "_id_" }
+          let(:param) { '_id_' }
 
           it "doesn't set the option correctly" do
             expect(aggregate.options[opt]).to be_nil
           end
         end
 
-        context "when also including in options" do
-
+        context 'when also including in options' do
           let(:aggregate) do
             view.limit(1).aggregate(pipeline, { limit: 2 })
           end
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(aggregate.options[:limit]).to eq(2)
           end
         end
@@ -332,16 +319,15 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#map_reduce' do
-
     let(:map) do
-    %Q{
+      %{
     function() {
       emit(this.name, { population: this.population });
     }}
     end
 
     let(:reduce) do
-      %Q{
+      %{
       function(key, values) {
         var result = { population: 0 };
         values.forEach(function(value) {
@@ -353,8 +339,8 @@ describe Mongo::Collection::View::Readable do
 
     let(:documents) do
       [
-        { name: 'Berlin', population: 3000000 },
-        { name: 'London', population: 9000000 }
+        { name: 'Berlin', population: 3_000_000 },
+        { name: 'London', population: 9_000_000 }
       ]
     end
 
@@ -367,7 +353,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when incorporating read concern' do
-
       let(:result) do
         new_view.map_reduce(map, reduce, options).to_a
       end
@@ -376,13 +361,12 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a session supporting causal consistency is used' do
-
       let(:view) do
         Mongo::Collection::View.new(collection, selector, session: session)
       end
 
       let(:operation) do
-        begin; view.map_reduce(map, reduce).to_a; rescue; end
+        view.map_reduce(map, reduce).to_a; rescue StandardError
       end
 
       let(:command) do
@@ -394,57 +378,53 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when not iterating the map/reduce' do
-
       it 'returns the map/reduce object' do
         expect(map_reduce).to be_a(Mongo::Collection::View::MapReduce)
       end
     end
 
     context 'when iterating the map/reduce' do
-
       it 'yields to each document' do
         map_reduce.each do |doc|
-          expect(doc[:_id]).to_not be_nil
+          expect(doc[:_id]).not_to be_nil
         end
       end
     end
 
-    context "when using methods to set map_reduce options" do
-
+    context 'when using methods to set map_reduce options' do
       let(:map_reduce) do
         view.send(opt, param).map_reduce(map, reduce, options)
       end
 
-      context "when a :limit is given" do
+      context 'when a :limit is given' do
         let(:opt) { :limit }
         let(:param) { 1 }
 
-        it "sets the option correctly" do
+        it 'sets the option correctly' do
           expect(map_reduce.options[opt]).to eq(param)
         end
       end
 
-      context "when a :sort is given" do
+      context 'when a :sort is given' do
         let(:opt) { :sort }
         let(:param) { { 'x' => Mongo::Index::ASCENDING } }
 
-        it "sets the option correctly" do
+        it 'sets the option correctly' do
           expect(map_reduce.options[opt]).to eq(param)
         end
       end
 
-      context "when also including in options" do
-
+      context 'when also including in options' do
         let(:map_reduce) do
-          view.limit(1).map_reduce(map, reduce, { limit: 2})
+          view.limit(1).map_reduce(map, reduce, { limit: 2 })
         end
 
-        it "sets the option correctly" do
+        it 'sets the option correctly' do
           expect(map_reduce.options[:limit]).to eq(2)
         end
       end
 
-      context "when a :session is given on the view" do
+      context 'when a :session is given on the view' do
         let(:opt) { :session }
         let(:param) { authorized_client.start_session }
         let(:map_reduce) do
@@ -456,7 +436,7 @@ describe Mongo::Collection::View::Readable do
         end
 
         with_config_values :broken_view_options, true, false do
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(map_reduce.options[opt]).to eq(param)
           end
         end
@@ -465,13 +445,11 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#batch_size' do
-
     let(:options) do
-      { :batch_size => 13 }
+      { batch_size: 13 }
     end
 
     context 'when a batch size is specified' do
-
       let(:new_batch_size) do
         15
       end
@@ -487,7 +465,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a batch size is not specified' do
-
       it 'returns the batch_size' do
         expect(view.batch_size).to eq(options[:batch_size])
       end
@@ -495,13 +472,11 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#comment' do
-
     let(:options) do
-      { :comment => 'test1' }
+      { comment: 'test1' }
     end
 
     context 'when a comment is specified' do
-
       let(:new_comment) do
         'test2'
       end
@@ -517,7 +492,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a comment is not specified' do
-
       it 'returns the comment' do
         expect(view.comment).to eq(options[:comment])
       end
@@ -525,9 +499,8 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#count' do
-
     let(:documents) do
-      (1..10).map{ |i| { field: "test#{i}" }}
+      (1..10).map { |i| { field: "test#{i}" } }
     end
 
     before do
@@ -540,7 +513,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when incorporating read concern' do
-
       let(:result) do
         new_view.count(options)
       end
@@ -549,7 +521,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a selector is provided' do
-
       let(:selector) do
         { field: 'test1' }
       end
@@ -564,7 +535,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when no selector is provided' do
-
       it 'returns the count of matching documents' do
         expect(view.count).to eq(10)
       end
@@ -601,7 +571,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       let(:view_with_read_pref) do
-        view.read(:mode => :secondary, :tag_sets => [{ 'non' => 'existent' }])
+        view.read(mode: :secondary, tag_sets: [ { 'non' => 'existent' } ])
       end
 
       let(:result) do
@@ -609,14 +579,13 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'uses the read preference setting on the view' do
-        expect {
+        expect do
           result
-        }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
 
     context 'when the collection has a read preference set' do
-
       let(:client) do
         # Set a timeout in case the collection read_preference does get used.
         # Otherwise, the test will hang for 30 seconds.
@@ -624,7 +593,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       let(:read_preference) do
-        { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+        { mode: :secondary, tag_sets: [ { 'non' => 'existent' } ] }
       end
 
       let(:collection) do
@@ -636,7 +605,6 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when a read preference argument is provided' do
-
         let(:result) do
           view.count(read: { mode: :primary })
         end
@@ -647,7 +615,6 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when a read preference is set on the view' do
-
         let(:view_with_read_pref) do
           view.read(mode: :primary)
         end
@@ -673,9 +640,9 @@ describe Mongo::Collection::View::Readable do
         end
 
         it 'uses the read preference of the collection' do
-          expect {
+          expect do
             result
-          }.to raise_exception(Mongo::Error::NoServerAvailable)
+          end.to raise_exception(Mongo::Error::NoServerAvailable)
         end
       end
 
@@ -699,21 +666,20 @@ describe Mongo::Collection::View::Readable do
         end
 
         let(:result) do
-          read_preference = { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+          read_preference = { mode: :secondary, tag_sets: [ { 'non' => 'existent' } ] }
           view.count(read: read_preference)
         end
 
         it 'uses the read preference passed to the method' do
-          expect {
+          expect do
             result
-          }.to raise_exception(Mongo::Error::NoServerAvailable)
+          end.to raise_exception(Mongo::Error::NoServerAvailable)
         end
       end
 
       context 'when a read preference is set on the view' do
-
         let(:view_with_read_pref) do
-          view.read(:mode => :primary)
+          view.read(mode: :primary)
         end
 
         let(:result) do
@@ -727,9 +693,9 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'takes a max_time_ms option' do
-      expect {
+      expect do
         view.count(max_time_ms: 0.1)
-      }.to raise_error(Mongo::Error::OperationFailure)
+      end.to raise_error(Mongo::Error::OperationFailure)
     end
 
     it 'sets the max_time_ms option on the command' do
@@ -737,7 +703,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a collation is specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -760,7 +725,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a collation is specified in the method options' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -782,17 +746,16 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context "when using methods to set count options" do
-      let(:obj_path) { [:selector, opt] }
+    context 'when using methods to set count options' do
+      let(:obj_path) { [ :selector, opt ] }
 
-      shared_examples "a count option" do
-
-        context "when the broken_view_options flag is off" do
+      shared_examples 'a count option' do
+        context 'when the broken_view_options flag is off' do
           config_override :broken_view_options, false
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts.dig(*obj_path)).to eq(param)
               m.call(*args)
             end
@@ -800,12 +763,12 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when the broken_view_options flag is on" do
+        context 'when the broken_view_options flag is on' do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
             expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts.dig(*obj_path)).to be_nil
               m.call(*args)
             end
@@ -814,45 +777,44 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when a :hint is given" do
+      context 'when a :hint is given' do
         let(:opt) { :hint }
-        let(:param) { "_id_" }
+        let(:param) { '_id_' }
 
-        it_behaves_like "a count option"
+        it_behaves_like 'a count option'
       end
 
-      context "when a :max_time_ms is given" do
+      context 'when a :max_time_ms is given' do
         let(:opt) { :max_time_ms }
         let(:param) { 5000 }
-        let(:obj_path) { [:selector, :maxTimeMS] }
+        let(:obj_path) { %i[selector maxTimeMS] }
 
-        it_behaves_like "a count option"
+        it_behaves_like 'a count option'
       end
 
-      context "when a :comment is given" do
+      context 'when a :comment is given' do
         let(:opt) { :comment }
-        let(:param) { "comment" }
+        let(:param) { 'comment' }
         let(:obj_path) { opt }
 
-        it_behaves_like "a count option"
+        it_behaves_like 'a count option'
       end
 
-      context "when a :limit is given" do
+      context 'when a :limit is given' do
         let(:opt) { :limit }
         let(:param) { 1 }
 
-        it_behaves_like "a count option"
+        it_behaves_like 'a count option'
       end
 
-      context "when a :skip is given" do
+      context 'when a :skip is given' do
         let(:opt) { :skip }
         let(:param) { 1 }
 
-        it_behaves_like "a count option"
+        it_behaves_like 'a count option'
       end
 
-      context "when a :session is given on the view" do
-
+      context 'when a :session is given on the view' do
         let(:opt) { :session }
         let(:param) { authorized_client.start_session }
         let(:aggregate) do
@@ -864,7 +826,7 @@ describe Mongo::Collection::View::Readable do
         end
 
         with_config_values :broken_view_options, true, false do
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
               expect(args.first[opt]).to eq(param)
               m.call(*args)
@@ -874,10 +836,9 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when also including in options" do
-
+      context 'when also including in options' do
         with_config_values :broken_view_options, true, false do
-          it "gives options higher precedence" do
+          it 'gives options higher precedence' do
             expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
               opts = args.first.slice(:selector)
               expect(opts.dig(:selector, :limit)).to eq(2)
@@ -890,47 +851,46 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
-  describe "#estimated_document_count" do
-
+  describe '#estimated_document_count' do
     let(:result) do
       view.estimated_document_count(options)
     end
 
     context 'when limit is set' do
       it 'raises an error' do
-        expect {
+        expect do
           view.limit(5).estimated_document_count(options)
-        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with limit")
+        end.to raise_error(ArgumentError, 'Cannot call estimated_document_count when querying with limit')
       end
     end
 
     context 'when skip is set' do
       it 'raises an error' do
-        expect {
+        expect do
           view.skip(5).estimated_document_count(options)
-        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
+        end.to raise_error(ArgumentError, 'Cannot call estimated_document_count when querying with skip')
       end
     end
 
     context 'when limit passed as an option' do
       it 'raises an error' do
-        expect {
+        expect do
           view.estimated_document_count(options.merge(limit: 5))
-        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with limit")
+        end.to raise_error(ArgumentError, 'Cannot call estimated_document_count when querying with limit')
       end
     end
 
     context 'when skip passed as an option' do
       it 'raises an error' do
-        expect {
+        expect do
           view.estimated_document_count(options.merge(skip: 5))
-        }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with skip")
+        end.to raise_error(ArgumentError, 'Cannot call estimated_document_count when querying with skip')
       end
     end
 
     context 'when collection has documents' do
       let(:documents) do
-        (1..10).map{ |i| { field: "test#{i}" }}
+        (1..10).map { |i| { field: "test#{i}" } }
       end
 
       before do
@@ -939,20 +899,18 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when a selector is provided' do
-
         let(:selector) do
           { field: 'test1' }
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             result
-          }.to raise_error(ArgumentError, "Cannot call estimated_document_count when querying with a filter")
+          end.to raise_error(ArgumentError, 'Cannot call estimated_document_count when querying with a filter')
         end
       end
 
       context 'when no selector is provided' do
-
         it 'returns the estimated count of matching documents' do
           expect(view.estimated_document_count).to eq(10)
         end
@@ -960,29 +918,28 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when collection does not exist' do
-
       let(:view) do
         Mongo::Collection::View.new(
-          authorized_client['nonexistent-collection-for-estimated-document-count'], selector, options)
+          authorized_client['nonexistent-collection-for-estimated-document-count'], selector, options
+        )
       end
 
       it 'returns 0' do
-        view.estimated_document_count.should == 0
+        expect(view.estimated_document_count).to eq(0)
       end
     end
 
-    context "when using methods to set options" do
-
-      context "when the broken_view_options flag is on" do
+    context 'when using methods to set options' do
+      context 'when the broken_view_options flag is on' do
         config_override :broken_view_options, true
 
-        context "when a :max_time_ms is given" do
+        context 'when a :max_time_ms is given' do
           let(:opt) { :max_time_ms }
           let(:param) { 5000 }
 
           it "doesn't set the option correctly" do
             expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts.dig(:selector, :maxTimeMS)).to be_nil
               m.call(*args)
             end
@@ -990,14 +947,14 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when a :comment is given" do
+        context 'when a :comment is given' do
           let(:opt) { :comment }
-          let(:param) { "comment" }
+          let(:param) { 'comment' }
           let(:obj_path) { opt }
 
           it "doesn't set the option correctly" do
             expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts[opt]).to be_nil
               m.call(*args)
             end
@@ -1006,16 +963,16 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when the broken_view_options flag is off" do
+      context 'when the broken_view_options flag is off' do
         config_override :broken_view_options, false
 
-        context "when a :max_time_ms is given" do
+        context 'when a :max_time_ms is given' do
           let(:opt) { :max_time_ms }
           let(:param) { 5000 }
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts.dig(:selector, :maxTimeMS)).to eq(param)
               m.call(*args)
             end
@@ -1023,14 +980,14 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when a :comment is given" do
+        context 'when a :comment is given' do
           let(:opt) { :comment }
-          let(:param) { "comment" }
+          let(:param) { 'comment' }
           let(:obj_path) { opt }
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts[opt]).to eq(param)
               m.call(*args)
             end
@@ -1038,7 +995,7 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when a :session is given on the view" do
+        context 'when a :session is given on the view' do
           let(:opt) { :session }
           let(:param) { authorized_client.start_session }
 
@@ -1047,7 +1004,7 @@ describe Mongo::Collection::View::Readable do
           end
 
           with_config_values :broken_view_options, true, false do
-            it "sets the option correctly" do
+            it 'sets the option correctly' do
               expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
                 expect(args.first[opt]).to eq(param)
                 m.call(*args)
@@ -1057,10 +1014,9 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when also including in options" do
-
+        context 'when also including in options' do
           with_config_values :broken_view_options, true, false do
-            it "gives options higher precedence" do
+            it 'gives options higher precedence' do
               expect(Mongo::Operation::Count).to receive(:new).once.and_wrap_original do |m, *args|
                 opts = args.first.slice(:selector)
                 expect(opts.dig(:selector, :maxTimeMS)).to eq(2000)
@@ -1075,7 +1031,6 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#count_documents' do
-
     context 'when session is given' do
       let(:subscriber) { Mrss::EventSubscriber.new }
 
@@ -1085,7 +1040,8 @@ describe Mongo::Collection::View::Readable do
 
       let(:connection) do
         double('connection').tap do |connection|
-          allow(connection).to receive_message_chain(:server, :cluster).and_return(authorized_client.cluster)
+          server = double('server', cluster: authorized_client.cluster)
+          allow(connection).to receive(:server).and_return(server)
         end
       end
 
@@ -1097,14 +1053,14 @@ describe Mongo::Collection::View::Readable do
           authorized_collection.count_documents({}, session: session)
 
           event = subscriber.single_command_started_event('aggregate')
-          event.command['lsid'].should == session_id
+          expect(event.command['lsid']).to eq(session_id)
         end
       end
     end
 
-    context "when using methods to set count options" do
-      shared_examples "a count option" do
-        context "when the broken_view_options flag is on" do
+    context 'when using methods to set count options' do
+      shared_examples 'a count option' do
+        context 'when the broken_view_options flag is on' do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
@@ -1117,10 +1073,10 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when the broken_view_options flag is off" do
+        context 'when the broken_view_options flag is off' do
           config_override :broken_view_options, false
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
               opts = args[1]
               expect(opts[opt]).to eq(param)
@@ -1131,48 +1087,48 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when a :hint is given" do
+      context 'when a :hint is given' do
         let(:opt) { :hint }
-        let(:param) { "_id_" }
+        let(:param) { '_id_' }
 
-        it_behaves_like "a count option"
+        it_behaves_like 'a count option'
       end
 
-      context "when a :max_time_ms is given" do
+      context 'when a :max_time_ms is given' do
         let(:opt) { :max_time_ms }
         let(:param) { 5000 }
 
-        it_behaves_like "a count option"
+        it_behaves_like 'a count option'
       end
 
-      context "when a :comment is given" do
+      context 'when a :comment is given' do
         let(:opt) { :comment }
-        let(:param) { "comment" }
+        let(:param) { 'comment' }
 
-        it_behaves_like "a count option"
+        it_behaves_like 'a count option'
       end
 
-      context "when a :limit is given" do
-        context "when the broken_view_options flag is false" do
+      context 'when a :limit is given' do
+        context 'when the broken_view_options flag is false' do
           config_override :broken_view_options, false
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
-              expect(pipeline[1][:'$limit']).to eq(1)
+              pipeline, = args
+              expect(pipeline[1][:$limit]).to eq(1)
               m.call(*args)
             end
             view.limit(1).count_documents(options)
           end
         end
 
-        context "when the broken_view_options flag is on" do
+        context 'when the broken_view_options flag is on' do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
-              expect(pipeline[1][:'$limit']).to be_nil
+              pipeline, = args
+              expect(pipeline[1][:$limit]).to be_nil
               m.call(*args)
             end
             view.limit(1).count_documents(options)
@@ -1180,27 +1136,27 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when a :skip is given" do
-        context "when the broken_view_options flag is on" do
+      context 'when a :skip is given' do
+        context 'when the broken_view_options flag is on' do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
-              expect(pipeline[1][:'$skip']).to be_nil
+              pipeline, = args
+              expect(pipeline[1][:$skip]).to be_nil
               m.call(*args)
             end
             view.skip(1).count_documents(options)
           end
         end
 
-        context "when the broken_view_options flag is off" do
+        context 'when the broken_view_options flag is off' do
           config_override :broken_view_options, false
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
-              expect(pipeline[1][:'$skip']).to eq(1)
+              pipeline, = args
+              expect(pipeline[1][:$skip]).to eq(1)
               m.call(*args)
             end
             view.skip(1).count_documents(options)
@@ -1208,7 +1164,7 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when a :session is given on the view" do
+      context 'when a :session is given on the view' do
         let(:opt) { :session }
         let(:param) { authorized_client.start_session }
 
@@ -1216,9 +1172,9 @@ describe Mongo::Collection::View::Readable do
           param.end_session
         end
 
-        context "when broken_view_options is false" do
+        context 'when broken_view_options is false' do
           config_override :broken_view_options, false
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
               expect(args[1][opt]).to eq(param)
               m.call(*args)
@@ -1227,11 +1183,11 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when broken_view_options is true" do
+        context 'when broken_view_options is true' do
           config_override :broken_view_options, true
-          it "does not set the option" do
+          it 'does not set the option' do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              expect(args[1][opt]).to be nil
+              expect(args[1][opt]).to be_nil
               m.call(*args)
             end
             authorized_collection.find({}, session: param).count_documents(options)
@@ -1239,13 +1195,12 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when also including in options" do
-
+      context 'when also including in options' do
         with_config_values :broken_view_options, true, false do
-          it "gives options higher precedence" do
+          it 'gives options higher precedence' do
             expect_any_instance_of(Mongo::Collection::View).to receive(:aggregate).once.and_wrap_original do |m, *args|
-              pipeline, opts = args
-              expect(pipeline[1][:'$limit']).to eq(2)
+              pipeline, = args
+              expect(pipeline[1][:$limit]).to eq(2)
               m.call(*args)
             end
             view.limit(1).count_documents({ limit: 2 })
@@ -1256,9 +1211,7 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#distinct' do
-
     context 'when incorporating read concern' do
-
       let(:result) do
         new_view.distinct(:field, options)
       end
@@ -1267,13 +1220,12 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a selector is provided' do
-
       let(:selector) do
         { field: 'test' }
       end
 
       let(:documents) do
-        (1..3).map{ |i| { field: "test" }}
+        (1..3).map { |_i| { field: 'test' } }
       end
 
       before do
@@ -1281,7 +1233,6 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when the field is a symbol' do
-
         let(:distinct) do
           view.distinct(:field)
         end
@@ -1292,7 +1243,6 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when the field is a string' do
-
         let(:distinct) do
           view.distinct('field')
         end
@@ -1303,7 +1253,6 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when the field is nil' do
-
         let(:distinct) do
           view.distinct(nil)
         end
@@ -1316,7 +1265,6 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when the field does not exist' do
-
         let(:distinct) do
           view.distinct(:doesnotexist)
         end
@@ -1328,9 +1276,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when no selector is provided' do
-
       let(:documents) do
-        (1..3).map{ |i| { field: "test#{i}" }}
+        (1..3).map { |i| { field: "test#{i}" } }
       end
 
       before do
@@ -1338,29 +1285,26 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when the field is a symbol' do
-
         let(:distinct) do
           view.distinct(:field)
         end
 
         it 'returns the distinct values' do
-          expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
+          expect(distinct.sort).to eq(%w[test1 test2 test3])
         end
       end
 
       context 'when the field is a string' do
-
         let(:distinct) do
           view.distinct('field')
         end
 
         it 'returns the distinct values' do
-          expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
+          expect(distinct.sort).to eq(%w[test1 test2 test3])
         end
       end
 
       context 'when the field is nil' do
-
         let(:distinct) do
           view.distinct(nil)
         end
@@ -1394,7 +1338,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       let(:view_with_read_pref) do
-        view.read(:mode => :secondary, :tag_sets => [{ 'non' => 'existent' }])
+        view.read(mode: :secondary, tag_sets: [ { 'non' => 'existent' } ])
       end
 
       let(:result) do
@@ -1402,16 +1346,15 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'uses the read preference setting on the view' do
-        expect {
+        expect do
           result
-        }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
 
     context 'when the collection has a read preference set' do
-
       let(:documents) do
-        (1..3).map{ |i| { field: "test#{i}" }}
+        (1..3).map { |i| { field: "test#{i}" } }
       end
 
       before do
@@ -1425,7 +1368,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       let(:read_preference) do
-        { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+        { mode: :secondary, tag_sets: [ { 'non' => 'existent' } ] }
       end
 
       let(:collection) do
@@ -1437,13 +1380,12 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when a read preference argument is provided' do
-
         let(:distinct) do
           view.distinct(:field, read: { mode: :primary })
         end
 
         it 'uses the read preference passed to the method' do
-          expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
+          expect(distinct.sort).to eq(%w[test1 test2 test3])
         end
       end
 
@@ -1459,9 +1401,9 @@ describe Mongo::Collection::View::Readable do
         end
 
         it 'uses the read preference of the collection' do
-          expect {
+          expect do
             distinct
-          }.to raise_exception(Mongo::Error::NoServerAvailable)
+          end.to raise_exception(Mongo::Error::NoServerAvailable)
         end
       end
 
@@ -1469,7 +1411,7 @@ describe Mongo::Collection::View::Readable do
         require_topology :single, :replica_set
 
         let(:documents) do
-          (1..3).map{ |i| { field: "test#{i}" }}
+          (1..3).map { |i| { field: "test#{i}" } }
         end
 
         before do
@@ -1490,21 +1432,20 @@ describe Mongo::Collection::View::Readable do
         end
 
         let(:distinct) do
-          read_preference = { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+          read_preference = { mode: :secondary, tag_sets: [ { 'non' => 'existent' } ] }
           view.distinct(:field, read: read_preference)
         end
 
         it 'uses the read preference passed to the method' do
-          expect {
+          expect do
             distinct
-          }.to raise_exception(Mongo::Error::NoServerAvailable)
+          end.to raise_exception(Mongo::Error::NoServerAvailable)
         end
       end
 
       context 'when a read preference is set on the view' do
-
         let(:view_with_read_pref) do
-          view.read(:mode => :secondary, :tag_sets => [{ 'non' => 'existent' }])
+          view.read(mode: :secondary, tag_sets: [ { 'non' => 'existent' } ])
         end
 
         let(:distinct) do
@@ -1512,15 +1453,14 @@ describe Mongo::Collection::View::Readable do
         end
 
         it 'uses the read preference passed to the method' do
-          expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
+          expect(distinct.sort).to eq(%w[test1 test2 test3])
         end
       end
     end
 
     context 'when a max_time_ms is specified' do
-
       let(:documents) do
-        (1..3).map{ |i| { field: "test" }}
+        (1..3).map { |_i| { field: 'test' } }
       end
 
       before do
@@ -1528,9 +1468,9 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'sets the max_time_ms option on the command' do
-        expect {
+        expect do
           view.distinct(:field, max_time_ms: 0.1)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'sets the max_time_ms option on the command' do
@@ -1539,14 +1479,12 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when the field does not exist' do
-
       it 'returns an empty array' do
         expect(view.distinct(:nofieldexists)).to be_empty
       end
     end
 
     context 'when a collation is specified on the view' do
-
       let(:result) do
         view.distinct(:name)
       end
@@ -1561,12 +1499,11 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'applies the collation to the distinct' do
-        expect(result).to eq(['bang'])
+        expect(result).to eq([ 'bang' ])
       end
     end
 
     context 'when a collation is specified in the method options' do
-
       let(:result) do
         view.distinct(:name, distinct_options)
       end
@@ -1581,12 +1518,11 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'applies the collation to the distinct' do
-        expect(result).to eq(['bang'])
+        expect(result).to eq([ 'bang' ])
       end
     end
 
     context 'when a collation is not specified' do
-
       let(:result) do
         view.distinct(:name)
       end
@@ -1597,22 +1533,21 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'does not apply the collation to the distinct' do
-        expect(result).to match_array(['bang', 'BANG'])
+        expect(result).to match_array(%w[bang BANG])
       end
     end
 
-    context "when using methods to set options" do
-
-      context "when a :max_time_ms is given" do
+    context 'when using methods to set options' do
+      context 'when a :max_time_ms is given' do
         let(:opt) { :max_time_ms }
         let(:param) { 5000 }
 
-        context "when the broken_view_options flag is on" do
+        context 'when the broken_view_options flag is on' do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
             expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts.dig(:selector, :maxTimeMS)).to be_nil
               m.call(*args)
             end
@@ -1620,12 +1555,12 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when the broken_view_options flag is off" do
+        context 'when the broken_view_options flag is off' do
           config_override :broken_view_options, false
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts.dig(:selector, :maxTimeMS)).to eq(param)
               m.call(*args)
             end
@@ -1634,17 +1569,17 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when a :comment is given" do
+      context 'when a :comment is given' do
         let(:opt) { :comment }
-        let(:param) { "comment" }
+        let(:param) { 'comment' }
         let(:obj_path) { opt }
 
-        context "when the broken_view_options flag is on" do
+        context 'when the broken_view_options flag is on' do
           config_override :broken_view_options, true
 
           it "doesn't set the option correctly" do
             expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts[opt]).to be_nil
               m.call(*args)
             end
@@ -1652,12 +1587,12 @@ describe Mongo::Collection::View::Readable do
           end
         end
 
-        context "when the broken_view_options flag is off" do
+        context 'when the broken_view_options flag is off' do
           config_override :broken_view_options, false
 
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
-              opts = args.first.slice(*args.first.keys - [:session])
+              opts = args.first.slice(*args.first.keys - [ :session ])
               expect(opts[opt]).to eq(param)
               m.call(*args)
             end
@@ -1666,7 +1601,7 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when a :session is given on the view" do
+      context 'when a :session is given on the view' do
         let(:opt) { :session }
         let(:param) { authorized_client.start_session }
 
@@ -1675,7 +1610,7 @@ describe Mongo::Collection::View::Readable do
         end
 
         with_config_values :broken_view_options, true, false do
-          it "sets the option correctly" do
+          it 'sets the option correctly' do
             expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
               expect(args.first[opt]).to eq(param)
               m.call(*args)
@@ -1685,10 +1620,9 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context "when also including in options" do
-
+      context 'when also including in options' do
         with_config_values :broken_view_options, true, false do
-          it "gives options higher precedence" do
+          it 'gives options higher precedence' do
             expect(Mongo::Operation::Distinct).to receive(:new).once.and_wrap_original do |m, *args|
               opts = args.first.slice(:selector)
               expect(opts.dig(:selector, :maxTimeMS)).to eq(2000)
@@ -1702,11 +1636,9 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#hint' do
-
     context 'when a hint is specified' do
-
       let(:options) do
-        { :hint => { 'x' => Mongo::Index::ASCENDING } }
+        { hint: { 'x' => Mongo::Index::ASCENDING } }
       end
 
       let(:new_hint) do
@@ -1724,9 +1656,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a hint is not specified' do
-
       let(:options) do
-        { :hint => 'x' }
+        { hint: 'x' }
       end
 
       it 'returns the hint' do
@@ -1736,11 +1667,9 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#limit' do
-
     context 'when a limit is specified' do
-
       let(:options) do
-        { :limit => 5 }
+        { limit: 5 }
       end
 
       let(:new_limit) do
@@ -1758,9 +1687,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a limit is not specified' do
-
       let(:options) do
-        { :limit => 5 }
+        { limit: 5 }
       end
 
       it 'returns the limit' do
@@ -1770,7 +1698,6 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#max_scan' do
-
     let(:new_view) do
       view.max_scan(10)
     end
@@ -1781,7 +1708,6 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#max_value' do
-
     let(:new_view) do
       view.max_value(_id: 1)
     end
@@ -1792,7 +1718,6 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#min_value' do
-
     let(:new_view) do
       view.min_value(_id: 1)
     end
@@ -1803,7 +1728,6 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#no_cursor_timeout' do
-
     let(:new_view) do
       view.no_cursor_timeout
     end
@@ -1829,7 +1753,7 @@ describe Mongo::Collection::View::Readable do
 
       it 'is sent to server' do
         new_view.to_a
-        event.command.slice('noCursorTimeout').should == {'noCursorTimeout' => true}
+        expect(event.command.slice('noCursorTimeout')).to eq({ 'noCursorTimeout' => true })
       end
     end
 
@@ -1850,12 +1774,12 @@ describe Mongo::Collection::View::Readable do
 
       it 'is applied on the server' do
         # Initialize collection with two documents.
-        new_view.collection.insert_many([{}, {}])
+        new_view.collection.insert_many([ {}, {} ])
 
         expect(new_view.count).to be == 2
 
         # Initial "noTimeout" count should be zero.
-        states = [current_no_timeout_count]
+        states = [ current_no_timeout_count ]
 
         # The "noTimeout" count should be one while iterating.
         new_view.batch_size(1).each { states << current_no_timeout_count }
@@ -1868,19 +1792,17 @@ describe Mongo::Collection::View::Readable do
         #
         # This starts failing with [0, 0, 0, 0] from:
         #   commit 2d9f0217ec904a1952a1ada2136502eefbca562e
-        expect(states).to be == [0, 1, 1, 0]
+        expect(states).to be == [ 0, 1, 1, 0 ]
       end
     end
   end
 
   describe '#projection' do
-
     let(:options) do
-      { :projection => { 'x' => 1 } }
+      { projection: { 'x' => 1 } }
     end
 
     context 'when projection are specified' do
-
       let(:new_projection) do
         { 'y' => 1 }
       end
@@ -1899,19 +1821,17 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'returns only that field on the collection' do
-        expect(view.projection(new_projection).first.keys).to match_array(['_id', 'y'])
+        expect(view.projection(new_projection).first.keys).to match_array(%w[_id y])
       end
     end
 
     context 'when projection is not specified' do
-
       it 'returns the projection' do
         expect(view.projection).to eq(options[:projection])
       end
     end
 
     context 'when projection is not a document' do
-
       let(:new_projection) do
         'y'
       end
@@ -1925,15 +1845,13 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#read' do
-
     context 'when a read pref is specified' do
-
       let(:options) do
-        { :read => { :mode => :secondary } }
+        { read: { mode: :secondary } }
       end
 
       let(:new_read) do
-        { :mode => :secondary_preferred }
+        { mode: :secondary_preferred }
       end
 
       it 'sets the read preference' do
@@ -1947,9 +1865,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a read pref is not specified' do
-
       let(:options) do
-        { :read =>  {:mode => :secondary} }
+        { read: { mode: :secondary } }
       end
 
       it 'returns the read preference' do
@@ -1957,7 +1874,6 @@ describe Mongo::Collection::View::Readable do
       end
 
       context 'when no read pref is set on initialization' do
-
         let(:options) do
           {}
         end
@@ -1970,13 +1886,11 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#show_disk_loc' do
-
     let(:options) do
-      { :show_disk_loc => true }
+      { show_disk_loc: true }
     end
 
     context 'when show_disk_loc is specified' do
-
       let(:new_show_disk_loc) do
         false
       end
@@ -1992,7 +1906,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when show_disk_loc is not specified' do
-
       it 'returns the show_disk_loc value' do
         expect(view.show_disk_loc).to eq(options[:show_disk_loc])
       end
@@ -2000,13 +1913,11 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#modifiers' do
-
     let(:options) do
-      { :modifiers => { '$orderby' => 1 } }
+      { modifiers: { '$orderby' => 1 } }
     end
 
     context 'when a modifiers document is specified' do
-
       let(:new_modifiers) do
         { '$orderby' => -1 }
       end
@@ -2022,7 +1933,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a modifiers document is not specified' do
-
       it 'returns the modifiers value' do
         expect(view.modifiers).to eq(options[:modifiers])
       end
@@ -2030,13 +1940,11 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#max_time_ms' do
-
     let(:options) do
-      { :max_time_ms => 200 }
+      { max_time_ms: 200 }
     end
 
     context 'when max_time_ms is specified' do
-
       let(:new_max_time_ms) do
         300
       end
@@ -2052,7 +1960,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when max_time_ms is not specified' do
-
       it 'returns the max_time_ms value' do
         expect(view.max_time_ms).to eq(options[:max_time_ms])
       end
@@ -2060,13 +1967,11 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#cusor_type' do
-
     let(:options) do
-      { :cursor_type => :tailable }
+      { cursor_type: :tailable }
     end
 
     context 'when cursor_type is specified' do
-
       let(:new_cursor_type) do
         :tailable_await
       end
@@ -2082,7 +1987,6 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when cursor_type is not specified' do
-
       it 'returns the cursor_type value' do
         expect(view.cursor_type).to eq(options[:cursor_type])
       end
@@ -2090,11 +1994,9 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#skip' do
-
     context 'when a skip is specified' do
-
       let(:options) do
-        { :skip => 5 }
+        { skip: 5 }
       end
 
       let(:new_skip) do
@@ -2112,9 +2014,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a skip is not specified' do
-
       let(:options) do
-        { :skip => 5 }
+        { skip: 5 }
       end
 
       it 'returns the skip value' do
@@ -2124,7 +2025,6 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#snapshot' do
-
     let(:new_view) do
       view.snapshot(true)
     end
@@ -2135,11 +2035,9 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#sort' do
-
     context 'when a sort is specified' do
-
       let(:options) do
-        { :sort => { 'x' => Mongo::Index::ASCENDING }}
+        { sort: { 'x' => Mongo::Index::ASCENDING } }
       end
 
       let(:new_sort) do
@@ -2157,9 +2055,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     context 'when a sort is not specified' do
-
       let(:options) do
-        { :sort => { 'x' => Mongo::Index::ASCENDING }}
+        { sort: { 'x' => Mongo::Index::ASCENDING } }
       end
 
       it 'returns the sort' do

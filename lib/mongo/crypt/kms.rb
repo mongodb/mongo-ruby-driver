@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -43,10 +42,11 @@ module Mongo
         def validate_param(key, opts, format_hint, required: true)
           value = opts.fetch(key)
           return nil if value.nil? && !required
+
           if value.nil?
             raise ArgumentError.new(
               "The #{key} option must be a String with at least one character; " \
-              "currently have nil"
+              'currently have nil'
             )
           end
           unless value.is_a?(String)
@@ -58,7 +58,7 @@ module Mongo
           if value.empty?
             raise ArgumentError.new(
               "The #{key} option must be a String with at least one character; " \
-              "it is currently an empty string"
+              'it is currently an empty string'
             )
           end
           value
@@ -68,8 +68,6 @@ module Mongo
               "The specified KMS provider options are invalid: #{opts}. " +
               format_hint
             )
-          else
-            nil
           end
         end
 
@@ -92,17 +90,17 @@ module Mongo
                 "Incorrect TLS options for #{provider}: TLS is required"
               )
             end
-            %i(
+            %i[
               ssl_verify_certificate
               ssl_verify_hostname
-            ).each do |opt|
-              if provider_opts[opt] == false
-                raise ArgumentError.new(
-                  "Incorrect TLS options for #{provider}: " +
-                  'Insecure TLS options prohibited, ' +
-                  "#{opt} cannot be set to false for KMS"
-                )
-              end
+            ].each do |opt|
+              next unless provider_opts[opt] == false
+
+              raise ArgumentError.new(
+                "Incorrect TLS options for #{provider}: " +
+                'Insecure TLS options prohibited, ' +
+                "#{opt} cannot be set to false for KMS"
+              )
             end
           end
           opts
@@ -113,8 +111,8 @@ module Mongo
   end
 end
 
-require "mongo/crypt/kms/credentials"
-require "mongo/crypt/kms/master_key_document"
+require 'mongo/crypt/kms/credentials'
+require 'mongo/crypt/kms/master_key_document'
 require 'mongo/crypt/kms/aws'
 require 'mongo/crypt/kms/azure'
 require 'mongo/crypt/kms/gcp'

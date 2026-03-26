@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -17,14 +16,12 @@
 
 module Mongo
   class Error
-
     # Exception raised if an operation using a snapshot session is
     # directed to a pre-5.0 server.
     class SnapshotSessionInvalidServerVersion < Error
-
       # Instantiate the new exception.
       def initialize
-        super("Snapshot reads require MongoDB 5.0 or later")
+        super('Snapshot reads require MongoDB 5.0 or later')
       end
     end
   end

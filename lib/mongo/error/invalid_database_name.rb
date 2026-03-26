@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,16 +16,14 @@
 
 module Mongo
   class Error
-
     # Exception that is raised when trying to create a database with no name.
     #
     # @since 2.0.0
     class InvalidDatabaseName < Error
-
       # The message is constant.
       #
       # @since 2.0.0
-      MESSAGE = 'nil is an invalid database name. Please provide a string or symbol.'.freeze
+      MESSAGE = 'nil is an invalid database name. Please provide a string or symbol.'
 
       # Instantiate the new exception.
       #

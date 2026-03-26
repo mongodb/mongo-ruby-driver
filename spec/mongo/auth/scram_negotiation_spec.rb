@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -15,14 +14,12 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
   let(:create_user!) do
     root_authorized_admin_client.tap do |client|
       users = client.database.users
-      if users.info(user.name).any?
-        users.remove(user.name)
-      end
+      users.remove(user.name) if users.info(user.name).any?
       client.database.command(
         createUser: user.name,
         pwd: password,
-        roles: ['root'],
-        mechanisms: server_user_auth_mechanisms,
+        roles: [ 'root' ],
+        mechanisms: server_user_auth_mechanisms
       )
       client.close
     end
@@ -37,7 +34,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
   end
 
   context 'when the configuration is specified in code' do
-
     let(:client) do
       opts = {
         database: 'admin',
@@ -54,11 +50,9 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     context 'when the user exists' do
-
       context 'when the user only can use SCRAM-SHA-1 to authenticate' do
-
         let(:server_user_auth_mechanisms) do
-          ['SCRAM-SHA-1']
+          [ 'SCRAM-SHA-1' ]
         end
 
         let(:user) do
@@ -70,7 +64,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when no auth mechanism is specified' do
-
           let(:auth_mech) do
             nil
           end
@@ -83,7 +76,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-1 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram
           end
@@ -95,9 +87,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           end
         end
 
-
         context 'when SCRAM-SHA-256 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram256
           end
@@ -110,9 +100,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
       end
 
       context 'when the user only can use SCRAM-SHA-256 to authenticate' do
-
         let(:server_user_auth_mechanisms) do
-          ['SCRAM-SHA-256']
+          [ 'SCRAM-SHA-256' ]
         end
 
         let(:user) do
@@ -124,7 +113,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when no auth mechanism is specified' do
-
           let(:auth_mech) do
             nil
           end
@@ -132,12 +120,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully' do
             create_user!
 
-            expect { client.database['admin'].find(options = { limit: 1 }).first }.not_to raise_error
+            expect { client.database['admin'].find({ limit: 1 }).first }.not_to raise_error
           end
         end
 
         context 'when SCRAM-SHA-1 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram
           end
@@ -150,7 +137,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-256 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram256
           end
@@ -164,9 +150,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
       end
 
       context 'when the user only can use either SCRAM-SHA-1 or SCRAM-SHA-256 to authenticate' do
-
         let(:server_user_auth_mechanisms) do
-          ['SCRAM-SHA-1', 'SCRAM-SHA-256']
+          %w[SCRAM-SHA-1 SCRAM-SHA-256]
         end
 
         let(:user) do
@@ -178,7 +163,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when no auth mechanism is specified' do
-
           let(:auth_mech) do
             nil
           end
@@ -191,7 +175,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-1 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram
           end
@@ -220,7 +203,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-256 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram256
           end
@@ -249,7 +231,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     context 'when the user does not exist' do
-
       let(:auth_mech) do
         nil
       end
@@ -257,7 +238,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
       let(:user) do
         Mongo::Auth::User.new(
           user: 'nonexistent',
-          password: 'nonexistent',
+          password: 'nonexistent'
         )
       end
 
@@ -267,17 +248,15 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     context 'when the username and password provided require saslprep' do
-
       let(:auth_mech) do
         nil
       end
 
       let(:server_user_auth_mechanisms) do
-        ['SCRAM-SHA-256']
+        [ 'SCRAM-SHA-256' ]
       end
 
       context 'when the username and password as ASCII' do
-
         let(:user) do
           Mongo::Auth::User.new(
             user: 'IX',
@@ -297,7 +276,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
       end
 
       context 'when the username and password are non-ASCII' do
-
         let(:user) do
           Mongo::Auth::User.new(
             user: "\u2168",
@@ -319,15 +297,14 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
   end
 
   context 'when the configuration is specified in the URI' do
-
     let(:uri) do
       Utils.create_mongodb_uri(
         SpecConfig.instance.addresses,
         username: user.name,
         password: password,
         uri_options: SpecConfig.instance.uri_options.merge(
-          auth_mech: auth_mech,
-        ),
+          auth_mech: auth_mech
+        )
       )
     end
 
@@ -336,23 +313,20 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     context 'when the user exists' do
-
       context 'when the user only can use SCRAM-SHA-1 to authenticate' do
-
         let(:server_user_auth_mechanisms) do
-          ['SCRAM-SHA-1']
+          [ 'SCRAM-SHA-1' ]
         end
 
         let(:user) do
           Mongo::Auth::User.new(
             user: 'sha1',
             password: 'sha1',
-            auth_mech: auth_mech,
+            auth_mech: auth_mech
           )
         end
 
         context 'when no auth mechanism is specified' do
-
           let(:auth_mech) do
             nil
           end
@@ -365,7 +339,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-1 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram
           end
@@ -378,7 +351,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-256 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram256
           end
@@ -391,21 +363,19 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
       end
 
       context 'when the user only can use SCRAM-SHA-256 to authenticate' do
-
         let(:server_user_auth_mechanisms) do
-          ['SCRAM-SHA-256']
+          [ 'SCRAM-SHA-256' ]
         end
 
         let(:user) do
           Mongo::Auth::User.new(
             user: 'sha256',
             password: 'sha256',
-            auth_mech: auth_mech,
+            auth_mech: auth_mech
           )
         end
 
         context 'when no auth mechanism is specified' do
-
           let(:auth_mech) do
             nil
           end
@@ -413,12 +383,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully' do
             create_user!
 
-            expect { client.database['admin'].find(options = { limit: 1 }).first }.not_to raise_error
+            expect { client.database['admin'].find({ limit: 1 }).first }.not_to raise_error
           end
         end
 
         context 'when SCRAM-SHA-1 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram
           end
@@ -431,7 +400,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-256 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram256
           end
@@ -445,21 +413,19 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
       end
 
       context 'when the user only can use either SCRAM-SHA-1 or SCRAM-SHA-256 to authenticate' do
-
         let(:server_user_auth_mechanisms) do
-          ['SCRAM-SHA-1', 'SCRAM-SHA-256']
+          %w[SCRAM-SHA-1 SCRAM-SHA-256]
         end
 
         let(:user) do
           Mongo::Auth::User.new(
             user: 'both',
             password: 'both',
-            auth_mech: auth_mech,
+            auth_mech: auth_mech
           )
         end
 
         context 'when no auth mechanism is specified' do
-
           let(:auth_mech) do
             nil
           end
@@ -472,7 +438,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-1 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram
           end
@@ -500,7 +465,6 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         end
 
         context 'when SCRAM-SHA-256 is specified as the auth mechanism' do
-
           let(:auth_mech) do
             :scram256
           end

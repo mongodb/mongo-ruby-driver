@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -22,7 +21,6 @@ require 'mongo/retryable/read_worker'
 require 'mongo/retryable/write_worker'
 
 module Mongo
-
   # Defines basic behavior around retrying operations.
   #
   # @since 2.1.0
@@ -31,14 +29,14 @@ module Mongo
 
     # Delegate the public read_with_retry methods to the read_worker
     def_delegators :read_worker,
-      :read_with_retry_cursor,
-      :read_with_retry,
-      :read_with_one_retry
+                   :read_with_retry_cursor,
+                   :read_with_retry,
+                   :read_with_one_retry
 
     # Delegate the public write_with_retry methods to the write_worker
     def_delegators :write_worker,
-      :write_with_retry,
-      :nro_write_with_retry
+                   :write_with_retry,
+                   :nro_write_with_retry
 
     # This is a separate method to make it possible for the test suite to
     # assert that server selection is performed during retry attempts.
@@ -51,10 +49,10 @@ module Mongo
     # @return [ Mongo::Server ] A server matching the server preference.
     def select_server(cluster, server_selector, session, failed_server = nil, error: nil, timeout: nil)
       deprioritized = if failed_server && deprioritize_server?(cluster, error)
-        [failed_server]
-      else
-        []
-      end
+                        [ failed_server ]
+                      else
+                        []
+                      end
       server_selector.select_server(
         cluster,
         nil,
@@ -121,26 +119,21 @@ module Mongo
 
       error_count = 0
       loop do
-        begin
-          result = yield
-          client.retry_policy.record_success(is_retry: error_count > 0)
-          return result
-        rescue Error::TimeoutError
-          raise
-        rescue Error::OperationFailure::Family => e
-          if e.label?('SystemOverloadedError') && e.label?('RetryableError')
-            error_count += 1
-            policy = client.retry_policy
-            delay = policy.backoff_delay(error_count)
-            unless policy.should_retry_overload?(error_count, delay, context: context)
-              raise e
-            end
-            Logger.logger.warn("Overload retry due to: #{e.class.name}: #{e.message}")
-            sleep(delay)
-          else
-            raise e
-          end
-        end
+        result = yield
+        client.retry_policy.record_success(is_retry: error_count > 0)
+        return result
+      rescue Error::TimeoutError
+        raise
+      rescue Error::OperationFailure::Family => e
+        raise e unless e.label?('SystemOverloadedError') && e.label?('RetryableError')
+
+        error_count += 1
+        policy = client.retry_policy
+        delay = policy.backoff_delay(error_count)
+        raise e unless policy.should_retry_overload?(error_count, delay, context: context)
+
+        Logger.logger.warn("Overload retry due to: #{e.class.name}: #{e.message}")
+        sleep(delay)
       end
     end
   end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -20,7 +19,6 @@ require 'mongo/grid/file/info'
 
 module Mongo
   module Grid
-
     # A representation of a file in the database.
     #
     # @since 2.0.0
@@ -51,6 +49,7 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(File)
+
         chunks == other.chunks && info == other.info
       end
 
@@ -74,7 +73,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(data, options = {})
-        options = options.merge(:length => data.size) unless options[:length]
+        options = options.merge(length: data.size) unless options[:length]
         @info = Info.new(options)
         initialize_chunks!(data)
       end
@@ -113,11 +112,11 @@ module Mongo
       #
       # @return [ Array<Grid::File::Chunk> ] Array of chunks.
       def initialize_chunks!(value)
-        if value.is_a?(Array)
-          @chunks = value.map{ |doc| Chunk.new(doc) }
-        else
-          @chunks = Chunk.split(value, info)
-        end
+        @chunks = if value.is_a?(Array)
+                    value.map { |doc| Chunk.new(doc) }
+                  else
+                    Chunk.split(value, info)
+                  end
       end
     end
   end

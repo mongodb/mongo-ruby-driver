@@ -1,17 +1,14 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
   module CRUD
-
     # Represents a single CRUD test.
     #
     # @since 2.0.0
     class CRUDTest < CRUDTestBase
-
       # Spec tests have configureFailPoint as a string, make it a string here too
       FAIL_POINT_BASE_COMMAND = BSON::Document.new(
-        'configureFailPoint' => "onPrimaryTransactionalWrite",
+        'configureFailPoint' => 'onPrimaryTransactionalWrite'
       ).freeze
 
       # Instantiate the new CRUDTest.
@@ -33,26 +30,24 @@ module Mongo
         @description = test['description']
         @client_options = ::Utils.convert_client_options(test['clientOptions'] || {})
 
-        if test['failPoint']
-          @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
-        end
+        @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint']) if test['failPoint']
 
-        if test['operations']
-          @operations = test['operations'].map do |op_spec|
-            Operation.new(self, op_spec)
-          end
-        else
-          @operations = [Operation.new(self, test['operation'], test['outcome'])]
-        end
+        @operations = if test['operations']
+                        test['operations'].map do |op_spec|
+                          Operation.new(self, op_spec)
+                        end
+                      else
+                        [ Operation.new(self, test['operation'], test['outcome']) ]
+                      end
 
         @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
 
-        if test['outcome']
-          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
-        end
+        return unless test['outcome']
+
+        @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: :bson))
       end
 
-      attr_reader :client_options
+      attr_reader :client_options, :outcome
 
       # Operations to be performed by the test.
       #
@@ -60,8 +55,6 @@ module Mongo
       # there are multiple operations for each test. In either case we build
       # an array of operations.
       attr_reader :operations
-
-      attr_reader :outcome
 
       # Run the test.
       #
@@ -78,7 +71,7 @@ module Mongo
       def run(client, num_ops)
         result = nil
         1.upto(num_ops) do |i|
-          operation = @operations[i-1]
+          operation = @operations[i - 1]
           target = resolve_target(client, operation)
           result = operation.execute(target)
         end
@@ -94,7 +87,7 @@ module Mongo
         if @data.nil?
           # nothing to do
         elsif @data.is_a?(Array)
-          collection = client[spec.collection_name, write_concern: {w: :majority}]
+          collection = client[spec.collection_name, write_concern: { w: :majority }]
           collection.delete_many
           collection.insert_many(@data) unless @data.empty?
         elsif @data.is_a?(Hash)

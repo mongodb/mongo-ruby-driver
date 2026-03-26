@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'net/http'
@@ -8,9 +7,7 @@ describe Mongo::Auth::Aws::Request do
   require_aws_auth
 
   before(:all) do
-    if ENV['AUTH'] =~ /aws-(ec2|ecs|web)/
-      skip "This test requires explicit credentials to be provided"
-    end
+    skip 'This test requires explicit credentials to be provided' if /aws-(ec2|ecs|web)/.match?(ENV['AUTH'])
   end
 
   let(:access_key_id) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID') }
@@ -24,12 +21,12 @@ describe Mongo::Auth::Aws::Request do
         secret_access_key: secret_access_key,
         session_token: session_token,
         host: 'sts.amazonaws.com',
-        server_nonce: 'aaaaaaaaaaafake',
+        server_nonce: 'aaaaaaaaaaafake'
       )
     end
 
     let(:sts_request) do
-      Net::HTTP::Post.new("https://sts.amazonaws.com").tap do |req|
+      Net::HTTP::Post.new('https://sts.amazonaws.com').tap do |req|
         request.headers.each do |k, v|
           req[k] = v
         end
@@ -46,10 +43,10 @@ describe Mongo::Auth::Aws::Request do
       # Uncomment to log complete request headers and the response.
       # WARNING: do not enable this in Evergreen as this can expose real
       # AWS credentias.
-      #http.set_debug_output(STDERR)
+      # http.set_debug_output(STDERR)
 
       http.start do
-        resp = http.request(sts_request)
+        http.request(sts_request)
       end
     end
 
@@ -66,7 +63,7 @@ describe Mongo::Auth::Aws::Request do
       # the entire response is printed for diagnostic purposes.
       sts_response.body.should_not =~ /"Error"/
 
-      sts_response.code.should == '200'
+      expect(sts_response.code).to eq('200')
       result['Arn'].should =~ /^arn:aws:(iam|sts)::/
       result['Account'].should be_a(String)
       result['UserId'].should =~ /^A/

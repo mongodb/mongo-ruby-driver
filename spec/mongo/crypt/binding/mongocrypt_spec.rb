@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require_relative '../helpers/mongo_crypt_spec_helper'
@@ -16,26 +15,26 @@ describe 'Mongo::Crypt::Binding' do
       let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
 
       it 'returns a pointer' do
-        expect(mongocrypt).to be_a_kind_of(FFI::Pointer)
+        expect(mongocrypt).to be_a(FFI::Pointer)
       end
     end
 
     describe '#mongocrypt_init' do
-      let(:key_bytes) { [114, 117, 98, 121] * 24 } # 96 bytes
+      let(:key_bytes) { [ 114, 117, 98, 121 ] * 24 } # 96 bytes
 
       let(:kms_providers) do
         BSON::Document.new({
-          local: {
-            key: BSON::Binary.new(key_bytes.pack('C*'), :generic),
-          }
-        })
+                             local: {
+                               key: BSON::Binary.new(key_bytes.pack('C*'), :generic),
+                             }
+                           })
       end
 
       let(:binary) do
         data = kms_providers.to_bson.to_s
         Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(
           FFI::MemoryPointer.from_string(data),
-          data.bytesize,
+          data.bytesize
         )
       end
 
@@ -64,7 +63,7 @@ describe 'Mongo::Crypt::Binding' do
           MongoCryptSpecHelper.bind_crypto_hooks(mongocrypt)
         end
 
-        let(:key_bytes) { [114, 117, 98, 121] * 23 } # NOT 96 bytes
+        let(:key_bytes) { [ 114, 117, 98, 121 ] * 23 } # NOT 96 bytes
 
         it 'returns false' do
           expect(Mongo::Crypt::Binding.mongocrypt_init(mongocrypt)).to be false
@@ -74,7 +73,7 @@ describe 'Mongo::Crypt::Binding' do
 
     describe '#mongocrypt_status' do
       let(:status) { Mongo::Crypt::Binding.mongocrypt_status_new }
-      let(:mongocrypt) { mongocrypt = Mongo::Crypt::Binding.mongocrypt_new }
+      let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
 
       after do
         Mongo::Crypt::Binding.mongocrypt_status_destroy(status)
@@ -88,11 +87,11 @@ describe 'Mongo::Crypt::Binding' do
       end
 
       context 'for a mongocrypt_t object with invalid kms options' do
-        let(:key_bytes) { [114, 117, 98, 121] * 23 } # NOT 96 bytes
+        let(:key_bytes) { [ 114, 117, 98, 121 ] * 23 } # NOT 96 bytes
 
         let(:binary) do
           p = FFI::MemoryPointer.new(key_bytes.size)
-                .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, key_bytes)
+                                .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, key_bytes)
 
           Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, key_bytes.length)
         end

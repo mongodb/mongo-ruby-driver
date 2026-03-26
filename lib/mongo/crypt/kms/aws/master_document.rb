@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -34,7 +33,7 @@ module Mongo
           # @return [ String | nil ] AWS KMS endpoint.
           attr_reader :endpoint
 
-          FORMAT_HINT = "AWS key document  must be in the format: " +
+          FORMAT_HINT = 'AWS key document  must be in the format: ' +
                         "{ region: 'REGION', key: 'KEY' }"
 
           # Creates a master key document object form a parameters hash.
@@ -62,13 +61,11 @@ module Mongo
           # @return [ BSON::Document ] AWS KMS master key document in libmongocrypt format.
           def to_document
             BSON::Document.new({
-              provider: 'aws',
-              region: region,
-              key: key,
-            }).tap do |bson|
-              unless endpoint.nil?
-                bson.update({ endpoint: endpoint })
-              end
+                                 provider: 'aws',
+                                 region: region,
+                                 key: key,
+                               }).tap do |bson|
+              bson.update({ endpoint: endpoint }) unless endpoint.nil?
             end
           end
         end

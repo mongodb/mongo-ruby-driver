@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -18,10 +17,8 @@
 module Mongo
   class Server
     class PushMonitor
-
       # @api private
       class Connection < Server::Monitor::Connection
-
         def socket_timeout
           options[:socket_timeout]
         end

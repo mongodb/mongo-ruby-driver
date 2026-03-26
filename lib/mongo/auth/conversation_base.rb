@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,19 +16,17 @@
 
 module Mongo
   module Auth
-
     # Defines common behavior around authentication conversations between
     # the client and the server.
     #
     # @api private
     class ConversationBase
-
       # Create the new conversation.
       #
       # @param [ Auth::User ] user The user to authenticate.
       # @param [ Mongo::Connection ] connection The connection to authenticate
       #   over.
-      def initialize(user, connection, **opts)
+      def initialize(user, connection, **_opts)
         @user = user
         @connection = connection
       end
@@ -57,30 +54,29 @@ module Mongo
           selector = selector.dup
           selector[Protocol::Msg::DATABASE_IDENTIFIER] = auth_source
           cluster_time = connection.mongos? && connection.cluster_time
-          if cluster_time
-            selector[Operation::CLUSTER_TIME] = cluster_time
-          end
+          selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
           Protocol::Msg.new([], {}, selector)
         else
           Protocol::Query.new(
             auth_source,
             Database::COMMAND,
             selector,
-            limit: -1,
+            limit: -1
           )
         end
       end
 
       def validate_external_auth_source
-        if user.auth_source != '$external'
-          user_name_msg = if user.name
-            " #{user.name}"
-          else
-            ''
-          end
-          mechanism = user.mechanism
-          raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for #{mechanism} is '$external'"
-        end
+        return unless user.auth_source != '$external'
+
+        user_name_msg = if user.name
+                          " #{user.name}"
+                        else
+                          ''
+                        end
+        mechanism = user.mechanism
+        raise Auth::InvalidConfiguration,
+              "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for #{mechanism} is '$external'"
       end
     end
   end

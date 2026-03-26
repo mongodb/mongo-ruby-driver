@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::URI do
-
   let(:uri) { described_class.new(string) }
 
   shared_examples_for 'parses successfully' do
@@ -22,7 +20,6 @@ describe Mongo::URI do
   end
 
   shared_examples_for 'a millisecond option' do
-
     let(:string) { "mongodb://example.com/?#{uri_option}=123" }
 
     it_behaves_like 'parses successfully'
@@ -44,7 +41,6 @@ describe Mongo::URI do
   end
 
   shared_examples_for 'an integer option' do
-
     let(:string) { "mongodb://example.com/?#{uri_option}=123" }
 
     it_behaves_like 'parses successfully'
@@ -65,9 +61,7 @@ describe Mongo::URI do
   end
 
   shared_examples_for 'a boolean option' do
-
     context 'is true' do
-
       let(:string) { "mongodb://example.com/?#{uri_option}=true" }
 
       it_behaves_like 'parses successfully'
@@ -78,7 +72,6 @@ describe Mongo::URI do
     end
 
     context 'is TRUE' do
-
       let(:string) { "mongodb://example.com/?#{uri_option}=TRUE" }
 
       it_behaves_like 'parses successfully'
@@ -89,7 +82,6 @@ describe Mongo::URI do
     end
 
     context 'is false' do
-
       let(:string) { "mongodb://example.com/?#{uri_option}=false" }
 
       it_behaves_like 'parses successfully'
@@ -100,7 +92,6 @@ describe Mongo::URI do
     end
 
     context 'is FALSE' do
-
       let(:string) { "mongodb://example.com/?#{uri_option}=FALSE" }
 
       it_behaves_like 'parses successfully'
@@ -112,7 +103,6 @@ describe Mongo::URI do
   end
 
   shared_examples_for 'an inverted boolean option' do
-
     let(:string) { "mongodb://example.com/?#{uri_option}=true" }
 
     it_behaves_like 'parses successfully'
@@ -123,7 +113,6 @@ describe Mongo::URI do
   end
 
   shared_examples_for 'a string option' do
-
     let(:string) { "mongodb://example.com/?#{uri_option}=foo" }
 
     it_behaves_like 'parses successfully'
@@ -160,7 +149,6 @@ describe Mongo::URI do
   end
 
   context 'appName' do
-
     let(:uri_option) { 'appName' }
     let(:ruby_option) { :app_name }
 
@@ -168,7 +156,6 @@ describe Mongo::URI do
   end
 
   context 'authMechanism' do
-
     let(:string) { 'mongodb://example.com/?authMechanism=SCRAM-SHA-256' }
 
     it_behaves_like 'parses successfully'
@@ -178,7 +165,6 @@ describe Mongo::URI do
     end
 
     context 'lowercase value' do
-
       let(:string) { 'mongodb://example.com/?authMechanism=scram-sha-256' }
 
       it_behaves_like 'parses successfully'
@@ -189,7 +175,6 @@ describe Mongo::URI do
     end
 
     context 'unrecognized value' do
-
       let(:string) { 'mongodb://example.com/?authMechanism=foobar' }
 
       it_behaves_like 'parses successfully'
@@ -201,45 +186,41 @@ describe Mongo::URI do
   end
 
   context 'authMechanismProperties' do
-
     let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:TRUE' }
 
     it_behaves_like 'parses successfully'
 
     it 'parses correctly' do
       expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-        SERVICE_realm: 'foo',
-        CANONICALIZE_HOST_name: true,
-      ))
+                                                             SERVICE_realm: 'foo',
+                                                             CANONICALIZE_HOST_name: true
+                                                           ))
     end
 
     context 'canonicalize host name is false' do
-
       let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:false' }
 
       it 'parses correctly' do
         expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-          SERVICE_realm: 'foo',
-          CANONICALIZE_HOST_name: false,
-        ))
+                                                               SERVICE_realm: 'foo',
+                                                               CANONICALIZE_HOST_name: false
+                                                             ))
       end
     end
 
     context 'canonicalize host name is true in mixed case' do
-
       let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_realm:foo,CANONICALIZE_HOST_name:TrUe' }
 
       it 'parses correctly' do
         expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
-          SERVICE_realm: 'foo',
-          CANONICALIZE_HOST_name: true,
-        ))
+                                                               SERVICE_realm: 'foo',
+                                                               CANONICALIZE_HOST_name: true
+                                                             ))
       end
     end
   end
 
   context 'authSource' do
-
     let(:uri_option) { 'authSource' }
     let(:ruby_option) { :auth_source }
 
@@ -255,18 +236,16 @@ describe Mongo::URI do
   end
 
   context 'compressors' do
-
     let(:string) { 'mongodb://example.com/?compressors=snappy,zlib' }
 
     it_behaves_like 'parses successfully'
 
     it 'is an array of strings string' do
-      expect(uri.uri_options[:compressors]).to eq(['snappy', 'zlib'])
+      expect(uri.uri_options[:compressors]).to eq(%w[snappy zlib])
     end
   end
 
   context 'connect' do
-
     let(:client) { new_local_client_nmio(string) }
 
     shared_examples 'raises an error when client is created' do
@@ -277,7 +256,7 @@ describe Mongo::URI do
       end
     end
 
-    %i(direct sharded replica_set load_balanced).each do |value|
+    %i[direct sharded replica_set load_balanced].each do |value|
       context "#{value}" do
         let(:string) { "mongodb://example.com/?connect=#{value}" }
 
@@ -289,7 +268,7 @@ describe Mongo::URI do
       end
     end
 
-    %i(replica-set load-balanced).each do |value|
+    %i[replica-set load-balanced].each do |value|
       context "#{value}" do
         let(:string) { "mongodb://example.com/?connect=#{value}" }
 
@@ -317,7 +296,6 @@ describe Mongo::URI do
   end
 
   context 'connectTimeoutMS' do
-
     let(:uri_option) { 'connectTimeoutMS' }
     let(:ruby_option) { :connect_timeout }
 
@@ -325,7 +303,6 @@ describe Mongo::URI do
   end
 
   context 'fsync' do
-
     let(:string) { 'mongodb://example.com/?fsync=true' }
 
     it_behaves_like 'parses successfully'
@@ -336,7 +313,6 @@ describe Mongo::URI do
   end
 
   context 'heartbeatFrequencyMS' do
-
     let(:uri_option) { 'heartbeatFrequencyMS' }
     let(:ruby_option) { :heartbeat_frequency }
 
@@ -344,7 +320,6 @@ describe Mongo::URI do
   end
 
   context 'journal' do
-
     let(:string) { 'mongodb://example.com/?journal=true' }
 
     it_behaves_like 'parses successfully'
@@ -355,7 +330,6 @@ describe Mongo::URI do
   end
 
   context 'localThresholdMS' do
-
     let(:uri_option) { 'localThresholdMS' }
     let(:ruby_option) { :local_threshold }
 
@@ -363,7 +337,6 @@ describe Mongo::URI do
   end
 
   context 'maxIdleTimeMS' do
-
     let(:uri_option) { 'maxIdleTimeMS' }
     let(:ruby_option) { :max_idle_time }
 
@@ -371,8 +344,7 @@ describe Mongo::URI do
   end
 
   context 'maxStalenessSeconds' do
-
-    let(:string) { "mongodb://example.com/?maxStalenessSeconds=123" }
+    let(:string) { 'mongodb://example.com/?maxStalenessSeconds=123' }
 
     it_behaves_like 'parses successfully'
 
@@ -382,7 +354,7 @@ describe Mongo::URI do
     end
 
     context '-1 as value' do
-      let(:string) { "mongodb://example.com/?maxStalenessSeconds=-1" }
+      let(:string) { 'mongodb://example.com/?maxStalenessSeconds=-1' }
 
       it_behaves_like 'parses successfully'
 
@@ -393,7 +365,6 @@ describe Mongo::URI do
   end
 
   context 'maxPoolSize' do
-
     let(:uri_option) { 'maxPoolSize' }
     let(:ruby_option) { :max_pool_size }
 
@@ -401,7 +372,6 @@ describe Mongo::URI do
   end
 
   context 'minPoolSize' do
-
     let(:uri_option) { 'minPoolSize' }
     let(:ruby_option) { :min_pool_size }
 
@@ -409,7 +379,6 @@ describe Mongo::URI do
   end
 
   context 'readConcernLevel' do
-
     let(:string) { 'mongodb://example.com/?readConcernLevel=snapshot' }
 
     it_behaves_like 'parses successfully'
@@ -420,8 +389,7 @@ describe Mongo::URI do
   end
 
   context 'readPreference' do
-
-    let(:string) { "mongodb://example.com/?readPreference=nearest" }
+    let(:string) { 'mongodb://example.com/?readPreference=nearest' }
 
     it_behaves_like 'parses successfully'
 
@@ -430,8 +398,7 @@ describe Mongo::URI do
     end
 
     context 'an unknown value' do
-
-      let(:string) { "mongodb://example.com/?readPreference=foobar" }
+      let(:string) { 'mongodb://example.com/?readPreference=foobar' }
 
       it 'is unchanged' do
         expect(uri.uri_options[:read]).to eq(BSON::Document.new(mode: 'foobar'))
@@ -440,29 +407,28 @@ describe Mongo::URI do
   end
 
   context 'readPreferenceTags' do
-
-    let(:string) { "mongodb://example.com/?readPreferenceTags=dc:ny,rack:1" }
+    let(:string) { 'mongodb://example.com/?readPreferenceTags=dc:ny,rack:1' }
 
     it_behaves_like 'parses successfully'
 
     it 'parses correctly' do
       expect(uri.uri_options[:read]).to eq(BSON::Document.new(
-        tag_sets: [{'dc' => 'ny', 'rack' => '1'}]))
+                                             tag_sets: [ { 'dc' => 'ny', 'rack' => '1' } ]
+                                           ))
     end
 
     context 'with double escaped keys and values' do
-
-      let(:string) { "mongodb://example.com/?readPreferenceTags=dc%252f:ny,rack:1%252f" }
+      let(:string) { 'mongodb://example.com/?readPreferenceTags=dc%252f:ny,rack:1%252f' }
 
       it 'unescapes once' do
         expect(uri.uri_options[:read]).to eq(BSON::Document.new(
-          tag_sets: [{'dc%2f' => 'ny', 'rack' => '1%2f'}]))
+                                               tag_sets: [ { 'dc%2f' => 'ny', 'rack' => '1%2f' } ]
+                                             ))
       end
     end
   end
 
   context 'replicaSet' do
-
     let(:uri_option) { 'replicaSet' }
     let(:ruby_option) { :replica_set }
 
@@ -470,7 +436,6 @@ describe Mongo::URI do
   end
 
   context 'retryWrites' do
-
     let(:uri_option) { 'retryWrites' }
     let(:ruby_option) { :retry_writes }
 
@@ -478,7 +443,6 @@ describe Mongo::URI do
   end
 
   context 'serverSelectionTimeoutMS' do
-
     let(:uri_option) { 'serverSelectionTimeoutMS' }
     let(:ruby_option) { :server_selection_timeout }
 
@@ -486,7 +450,6 @@ describe Mongo::URI do
   end
 
   context 'socketTimeoutMS' do
-
     let(:uri_option) { 'socketTimeoutMS' }
     let(:ruby_option) { :socket_timeout }
 
@@ -494,7 +457,6 @@ describe Mongo::URI do
   end
 
   context 'ssl' do
-
     let(:uri_option) { 'ssl' }
     let(:ruby_option) { :ssl }
 
@@ -502,7 +464,6 @@ describe Mongo::URI do
   end
 
   context 'tls' do
-
     let(:uri_option) { 'tls' }
     let(:ruby_option) { :ssl }
 
@@ -510,7 +471,6 @@ describe Mongo::URI do
   end
 
   context 'tlsAllowInvalidCertificates' do
-
     let(:uri_option) { 'tlsAllowInvalidCertificates' }
     let(:ruby_option) { :ssl_verify_certificate }
 
@@ -518,7 +478,6 @@ describe Mongo::URI do
   end
 
   context 'tlsAllowInvalidHostnames' do
-
     let(:uri_option) { 'tlsAllowInvalidHostnames' }
     let(:ruby_option) { :ssl_verify_hostname }
 
@@ -526,7 +485,6 @@ describe Mongo::URI do
   end
 
   context 'tlsCAFile' do
-
     let(:uri_option) { 'tlsCAFile' }
     let(:ruby_option) { :ssl_ca_cert }
 
@@ -534,7 +492,6 @@ describe Mongo::URI do
   end
 
   context 'tlsCertificateKeyFile' do
-
     let(:uri_option) { 'tlsCertificateKeyFile' }
     let(:ruby_option) { :ssl_cert }
 
@@ -542,7 +499,6 @@ describe Mongo::URI do
   end
 
   context 'tlsCertificateKeyFilePassword' do
-
     let(:uri_option) { 'tlsCertificateKeyFilePassword' }
     let(:ruby_option) { :ssl_key_pass_phrase }
 
@@ -550,7 +506,6 @@ describe Mongo::URI do
   end
 
   context 'tlsInsecure' do
-
     let(:uri_option) { 'tlsInsecure' }
     let(:ruby_option) { :ssl_verify }
 
@@ -558,9 +513,8 @@ describe Mongo::URI do
   end
 
   context 'w' do
-
     context 'integer value' do
-      let(:string) { "mongodb://example.com/?w=1" }
+      let(:string) { 'mongodb://example.com/?w=1' }
 
       it_behaves_like 'parses successfully'
 
@@ -570,7 +524,7 @@ describe Mongo::URI do
     end
 
     context 'string value' do
-      let(:string) { "mongodb://example.com/?w=foo" }
+      let(:string) { 'mongodb://example.com/?w=foo' }
 
       it_behaves_like 'parses successfully'
 
@@ -580,7 +534,7 @@ describe Mongo::URI do
     end
 
     context 'majority' do
-      let(:string) { "mongodb://example.com/?w=majority" }
+      let(:string) { 'mongodb://example.com/?w=majority' }
 
       it_behaves_like 'parses successfully'
 
@@ -591,7 +545,6 @@ describe Mongo::URI do
   end
 
   context 'waitQueueTimeoutMS' do
-
     let(:uri_option) { 'waitQueueTimeoutMS' }
     let(:ruby_option) { :wait_queue_timeout }
 
@@ -599,8 +552,7 @@ describe Mongo::URI do
   end
 
   context 'wtimeoutMS' do
-
-    let(:string) { "mongodb://example.com/?wtimeoutMS=100" }
+    let(:string) { 'mongodb://example.com/?wtimeoutMS=100' }
 
     it_behaves_like 'parses successfully'
 
@@ -610,7 +562,6 @@ describe Mongo::URI do
   end
 
   context 'zlibCompressionLevel' do
-
     let(:uri_option) { 'zlibCompressionLevel' }
     let(:ruby_option) { :zlib_compression_level }
 

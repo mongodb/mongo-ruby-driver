@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,14 +16,12 @@
 
 module Mongo
   class Error
-
     # Exception raised if the object is not a valid replacement document.
     class InvalidReplacementDocument < Error
-
       # The error message.
       #
       # @deprecated
-      MESSAGE = 'Invalid replacement document provided'.freeze
+      MESSAGE = 'Invalid replacement document provided'
 
       # Construct the error message.
       #
@@ -34,7 +31,7 @@ module Mongo
       #
       # @api private
       def self.message(key)
-        message = "Invalid replacement document provided. Replacement documents "
+        message = 'Invalid replacement document provided. Replacement documents '
         message += "must not contain atomic modifiers. The \"#{key}\" key is invalid."
         message
       end

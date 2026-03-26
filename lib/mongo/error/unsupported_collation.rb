@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,12 @@
 
 module Mongo
   class Error
-
     # Raised if a collation is specified for an operation but the server selected does not
     # support collations.
     #
     # @since 2.4.0
     #
-    # @deprecated RUBY-2260 In driver version 3.0, this error class will be 
+    # @deprecated RUBY-2260 In driver version 3.0, this error class will be
     #   replaced with UnsupportedOption. To handle this error, catch
     #   Mongo::Error::UnsupportedOption, which will prevent any breaking changes
     #   in your application when upgrading to version 3.0 of the driver.
@@ -33,8 +31,8 @@ module Mongo
       # @return [ String ] A message describing that collations cannot be used when write concern is unacknowledged.
       #
       # @since 2.4.0
-      UNACKNOWLEDGED_WRITES_MESSAGE = "A collation cannot be specified when using unacknowledged writes. " +
-        "Either remove the collation option or use acknowledged writes (w >= 1)."
+      UNACKNOWLEDGED_WRITES_MESSAGE = 'A collation cannot be specified when using unacknowledged writes. ' +
+                                      'Either remove the collation option or use acknowledged writes (w >= 1).'
     end
   end
 end

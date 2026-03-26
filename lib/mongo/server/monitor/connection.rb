@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Server
     class Monitor
-
       # This class models the monitor connections and their behavior.
       #
       # @since 2.0.0
@@ -58,9 +56,8 @@ module Mongo
         def initialize(address, options = {})
           @address = address
           @options = options.dup.freeze
-          unless @app_metadata = options[:app_metadata]
-            raise ArgumentError, 'App metadata is required'
-          end
+          raise ArgumentError, 'App metadata is required' unless @app_metadata = options[:app_metadata]
+
           @socket = nil
           @pid = Process.pid
           @compressor = nil
@@ -109,14 +106,12 @@ module Mongo
         def dispatch_bytes(bytes, **opts)
           write_bytes(bytes)
           read_response(
-            socket_timeout: opts[:read_socket_timeout],
+            socket_timeout: opts[:read_socket_timeout]
           )
         end
 
         def write_bytes(bytes)
-          unless connected?
-            raise ArgumentError, "Trying to dispatch on an unconnected connection #{self}"
-          end
+          raise ArgumentError, "Trying to dispatch on an unconnected connection #{self}" unless connected?
 
           add_server_connection_id do
             add_server_diagnostics do
@@ -128,16 +123,14 @@ module Mongo
         # @option opts [ Numeric ] :socket_timeout The timeout to use for
         #   each read operation.
         def read_response(**opts)
-          unless connected?
-            raise ArgumentError, "Trying to read on an unconnected connection #{self}"
-          end
+          raise ArgumentError, "Trying to read on an unconnected connection #{self}" unless connected?
 
           add_server_connection_id do
             add_server_diagnostics do
               Protocol::Message.deserialize(socket,
-                Protocol::Message::MAX_MESSAGE_SIZE,
-                nil,
-                **opts)
+                                            Protocol::Message::MAX_MESSAGE_SIZE,
+                                            nil,
+                                            **opts)
             end
           end
         end
@@ -156,13 +149,12 @@ module Mongo
         #
         # @since 2.0.0
         def connect!
-          if @socket
-            raise ArgumentError, 'Monitoring connection already connected'
-          end
+          raise ArgumentError, 'Monitoring connection already connected' if @socket
 
           @socket = add_server_diagnostics do
             address.socket(socket_timeout, ssl_options.merge(
-              connection_address: address, monitor: true))
+                                             connection_address: address, monitor: true
+                                           ))
           end
           true
         end
@@ -181,9 +173,13 @@ module Mongo
         # @return [ true ] If the disconnect succeeded.
         #
         # @since 2.0.0
-        def disconnect!(options = nil)
+        def disconnect!(_options = nil)
           if socket
-            socket.close rescue nil
+            begin
+              socket.close
+            rescue StandardError
+              nil
+            end
             @socket = nil
           end
           true
@@ -210,13 +206,12 @@ module Mongo
           set_hello_ok!(reply)
           @server_connection_id = reply['connectionId']
           reply
-        rescue => exc
+        rescue StandardError => e
           msg = "Failed to handshake with #{address}"
-          Utils.warn_bg_exception(msg, exc,
-            logger: options[:logger],
-            log_prefix: options[:log_prefix],
-            bg_error_backtrace: options[:bg_error_backtrace],
-          )
+          Utils.warn_bg_exception(msg, e,
+                                  logger: options[:logger],
+                                  log_prefix: options[:log_prefix],
+                                  bg_error_backtrace: options[:bg_error_backtrace])
           raise
         end
 
@@ -229,14 +224,12 @@ module Mongo
         def check_document
           server_api = @app_metadata.server_api || options[:server_api]
           doc = if hello_ok? || server_api
-            _doc = HELLO_DOC
-            if server_api
-              _doc = _doc.merge(Utils.transform_server_api(server_api))
-            end
-            _doc
-          else
-            LEGACY_HELLO_DOC
-          end
+                  _doc = HELLO_DOC
+                  _doc = _doc.merge(Utils.transform_server_api(server_api)) if server_api
+                  _doc
+                else
+                  LEGACY_HELLO_DOC
+                end
           # compressors must be set to maintain correct compression status
           # in the server description. See RUBY-2427
           if compressors = options[:compressors]

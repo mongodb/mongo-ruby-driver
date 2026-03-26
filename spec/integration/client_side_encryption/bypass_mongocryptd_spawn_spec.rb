@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -12,7 +11,7 @@ describe 'Client-Side Encryption' do
 
     # Choose a different port for mongocryptd than the one used by all the other
     # tests to avoid failures caused by other tests spawning mongocryptd.
-    let(:mongocryptd_port) { 27091 }
+    let(:mongocryptd_port) { 27_091 }
 
     context 'via mongocryptdBypassSpawn' do
       let(:test_schema_map) do
@@ -30,19 +29,21 @@ describe 'Client-Side Encryption' do
               extra_options: {
                 mongocryptd_bypass_spawn: true,
                 mongocryptd_uri: "mongodb://localhost:#{mongocryptd_port}/db?serverSelectionTimeoutMS=1000",
-                mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=#{mongocryptd_port}"],
+                mongocryptd_spawn_args: [ '--pidfilepath=bypass-spawning-mongocryptd.pid',
+                                          "--port=#{mongocryptd_port}" ],
                 disable_crypt_shared_lib_search: true,
               },
             },
             database: 'db'
-          ),
+          )
         )
       end
 
       it 'does not spawn' do
         lambda do
           client['coll'].insert_one(encrypted: 'test')
-        end.should raise_error(Mongo::Error::NoServerAvailable, /Server address=localhost:#{Regexp.quote(mongocryptd_port.to_s)} UNKNOWN/)
+        end.should raise_error(Mongo::Error::NoServerAvailable,
+                               /Server address=localhost:#{Regexp.quote(mongocryptd_port.to_s)} UNKNOWN/)
       end
     end
 
@@ -56,17 +57,18 @@ describe 'Client-Side Encryption' do
               key_vault_namespace: 'keyvault.datakeys',
               bypass_auto_encryption: true,
               extra_options: {
-                mongocryptd_spawn_args: [ "--pidfilepath=bypass-spawning-mongocryptd.pid", "--port=#{mongocryptd_port}"],
+                mongocryptd_spawn_args: [ '--pidfilepath=bypass-spawning-mongocryptd.pid',
+                                          "--port=#{mongocryptd_port}" ],
                 disable_crypt_shared_lib_search: true,
               },
             },
             database: 'db'
-          ),
+          )
         )
       end
 
       let(:mongocryptd_client) do
-        new_local_client(["localhost:#{mongocryptd_port}"], server_selection_timeout: 1)
+        new_local_client([ "localhost:#{mongocryptd_port}" ], server_selection_timeout: 1)
       end
 
       it 'does not spawn' do

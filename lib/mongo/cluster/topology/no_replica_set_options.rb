@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -24,12 +23,10 @@ module Mongo
         def validate_options(options, cluster)
           # These options can be set to nil for convenience, but not to
           # any value including an empty string.
-          [:replica_set_name, :max_election_id, :max_set_version].each do |option|
-            if options[option]
-              raise ArgumentError, "Topology #{self.class.name} cannot have the :#{option} option set"
-            end
+          %i[replica_set_name max_election_id max_set_version].each do |option|
+            raise ArgumentError, "Topology #{self.class.name} cannot have the :#{option} option set" if options[option]
           end
-          super(options, cluster)
+          super
         end
       end
     end

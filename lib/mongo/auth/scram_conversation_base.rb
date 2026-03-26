@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Auth
-
     # Defines common behavior around authentication conversations between
     # the client and the server.
     #
     # @api private
     class ScramConversationBase < SaslConversationBase
-
       # The minimum iteration count for SCRAM-SHA-1 and SCRAM-SHA-256.
       MIN_ITER_COUNT = 4096
 
@@ -79,7 +76,8 @@ module Mongo
         @iterations = parsed_data.fetch('i').to_i.tap do |i|
           if i < MIN_ITER_COUNT
             raise Error::InsufficientIterationCount.new(
-              Error::InsufficientIterationCount.message(MIN_ITER_COUNT, i))
+              Error::InsufficientIterationCount.message(MIN_ITER_COUNT, i)
+            )
           end
         end
         @auth_message = "#{first_bare},#{payload_data},#{without_proof}"
@@ -88,7 +86,7 @@ module Mongo
 
         selector = CLIENT_CONTINUE_MESSAGE.merge(
           payload: client_final_message,
-          conversationId: id,
+          conversationId: id
         )
         build_message(connection, user.auth_source, selector)
       end
@@ -111,7 +109,7 @@ module Mongo
       def finalize(connection)
         selector = CLIENT_CONTINUE_MESSAGE.merge(
           payload: client_empty_message,
-          conversationId: id,
+          conversationId: id
         )
         build_message(connection, user.auth_source, selector)
       end
@@ -138,15 +136,14 @@ module Mongo
       def parse_payload(payload)
         Hash[payload.split(',').reject { |v| v == '' }.map do |pair|
           k, v, = pair.split('=', 2)
-          if k == ''
-            raise Error::InvalidServerAuthResponse, 'Payload malformed: missing key'
-          end
-          [k, v]
+          raise Error::InvalidServerAuthResponse, 'Payload malformed: missing key' if k == ''
+
+          [ k, v ]
         end]
       end
 
       def client_first_message_options
-        {skipEmptyExchange: true}
+        { skipEmptyExchange: true }
       end
 
       # @see http://tools.ietf.org/html/rfc5802#section-3
@@ -192,8 +189,8 @@ module Mongo
       # @since 2.0.0
       def client_final
         @client_final ||= client_proof(client_key,
-          client_signature(stored_key(client_key),
-          auth_message))
+                                       client_signature(stored_key(client_key),
+                                                        auth_message))
       end
 
       # Looks for field 'v' in payload data, if it is present verifies the
@@ -203,13 +200,10 @@ module Mongo
       # This method can be called from different conversation steps
       # depending on whether the short SCRAM conversation is used.
       def check_server_signature(payload_data)
-        if verifier = payload_data['v']
-          if compare_digest(verifier, server_signature)
-            @server_verified = true
-          else
-            raise Error::InvalidSignature.new(verifier, server_signature)
-          end
-        end
+        return unless verifier = payload_data['v']
+        raise Error::InvalidSignature.new(verifier, server_signature) unless compare_digest(verifier, server_signature)
+
+        @server_verified = true
       end
 
       # Client key algorithm implementation.
@@ -310,7 +304,7 @@ module Mongo
 
       # @api private
       def cache_key(*extra)
-        [user.password, salt, iterations, @mechanism] + extra
+        [ user.password, salt, iterations, @mechanism ] + extra
       end
 
       # Server key algorithm implementation.
@@ -365,12 +359,12 @@ module Mongo
       #
       # @since 2.0.0
       def xor(first, second)
-        first.bytes.zip(second.bytes).map{ |(a,b)| (a ^ b).chr }.join('')
+        first.bytes.zip(second.bytes).map { |(a, b)| (a ^ b).chr }.join('')
       end
 
       def compare_digest(a, b)
         check = a.bytesize ^ b.bytesize
-        a.bytes.zip(b.bytes){ |x, y| check |= x ^ y.to_i }
+        a.bytes.zip(b.bytes) { |x, y| check |= x ^ y.to_i }
         check == 0
       end
     end

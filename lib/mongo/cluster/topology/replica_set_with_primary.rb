@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Cluster
     module Topology
-
       # Defines behavior when a cluster is in replica set topology,
       # and is a no primary which has been discovered by the driver.
       #

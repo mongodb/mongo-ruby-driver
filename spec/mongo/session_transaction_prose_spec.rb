@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -68,9 +67,9 @@ describe Mongo::Session do
         configureFailPoint: 'failCommand',
         mode: { times: times },
         data: {
-          failCommands: ['commitTransaction'],
+          failCommands: [ 'commitTransaction' ],
           errorCode: 251,
-        },
+        }
       )
       yield
     ensure

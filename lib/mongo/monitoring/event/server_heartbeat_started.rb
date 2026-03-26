@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Monitoring
     module Event
-
       # Event fired when a server heartbeat is dispatched.
       #
       # @since 2.7.0
       class ServerHeartbeatStarted < Mongo::Event::Base
-
         # @return [ Address ] address The server address.
         attr_reader :address
 
@@ -57,7 +54,7 @@ module Mongo
         # @api experimental
         def summary
           "#<#{short_class_name}" +
-          " address=#{address}>"
+            " address=#{address}>"
         end
       end
     end

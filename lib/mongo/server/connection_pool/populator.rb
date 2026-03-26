@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -47,9 +46,7 @@ module Mongo
           throw(:done) if @pool.closed?
 
           begin
-            unless @pool.populate
-              @pool.populate_semaphore.wait
-            end
+            @pool.populate_semaphore.wait unless @pool.populate
           rescue Error::AuthError, Error => e
             # Errors encountered when trying to add connections to
             # pool; try again later

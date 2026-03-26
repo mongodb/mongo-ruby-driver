@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Operation
-
     # Shared behavior of looking up a class based on the name of
     # the receiver's class.
     #

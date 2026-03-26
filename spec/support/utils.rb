@@ -159,7 +159,6 @@ module Utils
 
   # Transforms an array of CommandStarted events to an array of hashes
   # matching event specification in YAML spec files
-  # rubocop:disable Metrics, Style/IfUnlessModifier
   def yamlify_command_events(events)
     events = events.map do |e|
       command = e.command.dup
@@ -210,9 +209,8 @@ module Utils
 
     events
   end
-  # rubocop:enable Metrics, Style/IfUnlessModifier
+  # rubocop:enable Style/IfUnlessModifier
 
-  # rubocop:disable Metrics
   def convert_operation_options(options)
     if options
       options.filter_map do |k, v|
@@ -263,7 +261,6 @@ module Utils
       {}
     end
   end
-  # rubocop:enable Metrics
 
   def int64_value(value)
     if value.respond_to?(:value)
@@ -284,7 +281,6 @@ module Utils
     ssl_key: 'tlsCertificateKeyFile',
   }.freeze
 
-  # rubocop:disable Metrics
   def create_mongodb_uri(address_strs, **opts)
     creds = opts[:username] ? "#{opts[:username]}:#{opts[:password]}@" : ''
 
@@ -317,13 +313,11 @@ module Utils
 
     uri
   end
-  # rubocop:enable Metrics
 
   # Client-Side encryption tests introduce the $$type syntax for determining
   # equality in command started events. The $$type key specifies which type of
   # BSON object is expected in the result. If the $$type key is present, only
   # check the class of the result.
-  # rubocop:disable Metrics
   def match_with_type?(expected, actual)
     if expected.is_a?(Hash) && expected.key?('$$type')
       case expected['$$type']
@@ -362,7 +356,6 @@ module Utils
       expected == actual
     end
   end
-  # rubocop:enable Metrics
 
   # Takes a timeout and a block. Waits up to the specified timeout until
   # the value of the block is true. If timeout is reached, this method
@@ -439,9 +432,7 @@ module Utils
         warn "Problem retrieving instance profile: #{e.class}: #{e}"
       end
 
-      if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
-        raise 'Instance profile did not get assigned in 15 seconds'
-      end
+      raise 'Instance profile did not get assigned in 15 seconds' if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
 
       sleep 3
     end
@@ -460,9 +451,7 @@ module Utils
         warn "Problem retrieving instance profile: #{e.class}: #{e}"
       end
 
-      if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
-        raise 'Instance profile did not get cleared in 15 seconds'
-      end
+      raise 'Instance profile did not get cleared in 15 seconds' if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
 
       sleep 3
     end
@@ -528,7 +517,6 @@ module Utils
   # If the deployment is a sharded cluster, creates a direct client
   # to each of the mongos nodes and yields each in turn to the
   # provided block. Does nothing in other topologies.
-  # rubocop:disable Metrics
   def mongos_each_direct_client
     return unless ClusterConfig.instance.topology == :sharded
 
@@ -545,9 +533,7 @@ module Utils
       direct_client.close
     end
   end
-  # rubocop:enable Metrics
 
-  # rubocop:disable Metrics
   def permitted_yaml_classes
     @permitted_yaml_classes ||= [
       BigDecimal,
@@ -572,7 +558,6 @@ module Utils
       BSON::Undefined,
     ].freeze
   end
-  # rubocop:enable Metrics
 
   def load_spec_yaml_file(path)
     if RUBY_VERSION < '2.6'
@@ -660,7 +645,6 @@ module Utils
     auto_encrypt_opts[:encrypted_fields_map] = BSON::ExtJSON.parse_obj(opts['encryptedFieldsMap'])
   end
 
-  # rubocop:disable Metrics
   def convert_auto_encryption_extra_options(opts)
     # Spawn mongocryptd on non-default port for sharded cluster tests
     extra_options = {
@@ -690,5 +674,4 @@ module Utils
 
     extra_options
   end
-  # rubocop:enable Metrics
 end

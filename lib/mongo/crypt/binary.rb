@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'ffi'
 
 module Mongo
   module Crypt
-
     # A wrapper around mongocrypt_binary_t, a non-owning buffer of
     # uint-8 byte data. Each Binary instance keeps a copy of the data
     # passed to it in order to keep that data alive.
@@ -43,7 +41,7 @@ module Mongo
 
           # FFI::MemoryPointer automatically frees memory when it goes out of scope
           @data_p = FFI::MemoryPointer.new(bytes.length)
-                    .write_array_of_uint8(bytes)
+                                      .write_array_of_uint8(bytes)
 
           # FFI::AutoPointer uses a custom release strategy to automatically free
           # the pointer once this object goes out of scope
@@ -74,7 +72,7 @@ module Mongo
       #
       # @return [ Mongo::Crypt::Binary ] A new binary object
       def self.from_pointer(pointer)
-        self.new(pointer: pointer)
+        new(pointer: pointer)
       end
 
       # Initialize a Binary object with a string. The Binary object will store a
@@ -85,7 +83,7 @@ module Mongo
       #
       # @return [ Mongo::Crypt::Binary ] A new binary object
       def self.from_data(data)
-        self.new(data: data)
+        new(data: data)
       end
 
       # Overwrite the existing data wrapped by this Binary object
@@ -102,9 +100,7 @@ module Mongo
       # than was originally allocated or when writing to an object that
       # already owns data.
       def write(data)
-        if @data
-          raise ArgumentError, 'Cannot write to an owned Binary'
-        end
+        raise ArgumentError, 'Cannot write to an owned Binary' if @data
 
         # Cannot write a string that's longer than the space currently allocated
         # by the mongocrypt_binary_t object
@@ -145,7 +141,7 @@ module Mongo
       def self.wrap_string(str)
         binary_p = Binding.mongocrypt_binary_new_from_data(
           FFI::MemoryPointer.from_string(str),
-          str.bytesize,
+          str.bytesize
         )
         begin
           yield binary_p

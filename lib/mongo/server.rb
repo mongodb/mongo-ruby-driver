@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,7 +15,6 @@
 # limitations under the License.
 
 module Mongo
-
   # Represents a single server on the server side that can be standalone, part of
   # a replica set, or a mongos.
   #
@@ -29,7 +27,7 @@ module Mongo
     # The default time in seconds to timeout a connection attempt.
     #
     # @since 2.4.3
-    CONNECT_TIMEOUT = 10.freeze
+    CONNECT_TIMEOUT = 10
 
     # Instantiate a new server object. Will start the background refresh and
     # subscribe to the appropriate events.
@@ -82,21 +80,18 @@ module Mongo
       @scan_semaphore = DistinguishingSemaphore.new
       @round_trip_time_calculator = RoundTripTimeCalculator.new
       @description = Description.new(address, {},
-        load_balancer: !!@options[:load_balancer],
-        force_load_balancer: force_load_balancer?,
-      )
+                                     load_balancer: !!@options[:load_balancer],
+                                     force_load_balancer: force_load_balancer?)
       @last_scan = nil
       @last_scan_monotime = nil
       unless options[:monitoring_io] == false
         @monitor = Monitor.new(self, event_listeners, monitoring,
-          options.merge(
-            app_metadata: cluster.monitor_app_metadata,
-            push_monitor_app_metadata: cluster.push_monitor_app_metadata,
-            heartbeat_interval: cluster.heartbeat_interval,
-        ))
-        unless _monitor == false
-          start_monitoring
-        end
+                               options.merge(
+                                 app_metadata: cluster.monitor_app_metadata,
+                                 push_monitor_app_metadata: cluster.push_monitor_app_metadata,
+                                 heartbeat_interval: cluster.heartbeat_interval
+                               ))
+        start_monitoring unless _monitor == false
       end
       @connected = true
       @pool_lock = Mutex.new
@@ -154,14 +149,13 @@ module Mongo
       end
     end
 
-
     # @deprecated
     def heartbeat_frequency
       cluster.heartbeat_interval
     end
 
     # @deprecated
-    alias :heartbeat_frequency_seconds :heartbeat_frequency
+    alias heartbeat_frequency_seconds heartbeat_frequency
 
     # Performs an immediate, synchronous check of the server.
     #
@@ -179,11 +173,9 @@ module Mongo
     #
     # @deprecated
     def compressor
-      if monitor
-        monitor.compressor
-      else
-        nil
-      end
+      return unless monitor
+
+      monitor.compressor
     end
 
     # Delegate convenience methods to the monitor description.
@@ -246,6 +238,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Server)
+
       address == other.address
     end
 
@@ -275,9 +268,7 @@ module Mongo
     #
     # @since 2.0.0
     def disconnect!
-      if monitor
-        monitor.stop!
-      end
+      monitor.stop! if monitor
 
       @connected = false
 
@@ -294,9 +285,7 @@ module Mongo
     end
 
     def close
-      if monitor
-        monitor.stop!
-      end
+      monitor.stop! if monitor
 
       @connected = false
 
@@ -331,9 +320,9 @@ module Mongo
     # @api private
     def start_monitoring
       publish_opening_event
-      if options[:monitoring_io] != false
-        monitor.run!
-      end
+      return unless options[:monitoring_io] != false
+
+      monitor.run!
     end
 
     # Publishes the server opening event.
@@ -362,24 +351,23 @@ module Mongo
     #
     # @api private
     def status
-      case
-      when load_balancer?
+      if load_balancer?
         'LB'
-      when primary?
+      elsif primary?
         'PRIMARY'
-      when secondary?
+      elsif secondary?
         'SECONDARY'
-      when standalone?
+      elsif standalone?
         'STANDALONE'
-      when arbiter?
+      elsif arbiter?
         'ARBITER'
-      when ghost?
+      elsif ghost?
         'GHOST'
-      when other?
+      elsif other?
         'OTHER'
-      when mongos?
+      elsif mongos?
         'MONGOS'
-      when unknown?
+      elsif unknown?
         'UNKNOWN'
       else
         # Since the summary method is often used for debugging, do not raise
@@ -394,23 +382,17 @@ module Mongo
     # @since 2.7.0
     def summary
       status = self.status || ''
-      if replica_set_name
-        status += " replica_set=#{replica_set_name}"
-      end
+      status += " replica_set=#{replica_set_name}" if replica_set_name
 
-      unless monitor&.running?
-        status += " NO-MONITORING"
-      end
+      status += ' NO-MONITORING' unless monitor&.running?
 
-      if @pool
-        status += " pool=#{@pool.summary}"
-      end
+      status += " pool=#{@pool.summary}" if @pool
 
       address_bit = if address
-        "#{address.host}:#{address.port}"
-      else
-        'nil'
-      end
+                      "#{address.host}:#{address.port}"
+                    else
+                      'nil'
+                    end
 
       "#<Server address=#{address_bit} #{status}>"
     end
@@ -424,9 +406,7 @@ module Mongo
     #
     # @since 2.0.0
     def pool
-      if unknown?
-        raise Error::ServerNotUsable, address
-      end
+      raise Error::ServerNotUsable, address if unknown?
 
       @pool_lock.synchronize do
         opts = connected? ? options : options.merge(populator_io: false)
@@ -475,9 +455,7 @@ module Mongo
     #
     # @since 2.1.0
     def reconnect!
-      if options[:monitoring_io] != false
-        monitor.restart!
-      end
+      monitor.restart! if options[:monitoring_io] != false
       @connected = true
     end
 
@@ -511,7 +489,7 @@ module Mongo
         unknown!(
           generation: e.generation,
           service_id: e.service_id,
-          stop_push_monitor: true,
+          stop_push_monitor: true
         )
       end
       raise
@@ -540,7 +518,7 @@ module Mongo
       unknown!(
         generation: e.generation,
         service_id: e.service_id,
-        stop_push_monitor: true,
+        stop_push_monitor: true
       )
       raise
     end
@@ -620,42 +598,30 @@ module Mongo
 
       # NOTE: You cannot use safe navigation here because if pool is nil you end
       # up trying to evaluate Integer < nil which is invalid.
-      if options[:generation] && pool && options[:generation] < pool.generation
-        return
-      end
+      return if options[:generation] && pool && options[:generation] < pool.generation
 
       if options[:topology_version] && description.topology_version &&
-        !options[:topology_version].gt?(description.topology_version)
-      then
+         !options[:topology_version].gt?(description.topology_version)
         return
       end
 
-      if options[:stop_push_monitor]
-        monitor&.stop_push_monitor!
-      end
+      monitor&.stop_push_monitor! if options[:stop_push_monitor]
 
       # SDAM flow will update description on the server without in-place
       # mutations and invoke SDAM transitions as needed.
       config = {}
-      if options[:service_id]
-        config['serviceId'] = options[:service_id]
-      end
-      if options[:topology_version]
-        config['topologyVersion'] = options[:topology_version]
-      end
+      config['serviceId'] = options[:service_id] if options[:service_id]
+      config['topologyVersion'] = options[:topology_version] if options[:topology_version]
       new_description = Description.new(address, config,
-        load_balancer: load_balancer?,
-        force_load_balancer: options[:connect] == :load_balanced,
-      )
+                                        load_balancer: load_balancer?,
+                                        force_load_balancer: options[:connect] == :load_balanced)
       cluster.run_sdam_flow(description, new_description, options)
     end
 
     # @api private
     def update_description(description)
       pool = pool_internal
-      if pool && !description.unknown?
-        pool.ready
-      end
+      pool.ready if pool && !description.unknown?
       @description = description
     end
 

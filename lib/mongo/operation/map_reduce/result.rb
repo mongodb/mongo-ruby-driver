@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,30 +17,28 @@
 module Mongo
   module Operation
     class MapReduce
-
       # Defines custom behavior of results for a map reduce operation.
       #
       # @since 2.0.0
       # @api semiprivate
       class Result < Operation::Result
-
         # The counts field for the map/reduce.
         #
         # @since 2.0.0
         # @api private
-        COUNTS = 'counts'.freeze
+        COUNTS = 'counts'
 
         # The field name for a result without a cursor.
         #
         # @since 2.0.0
         # @api private
-        RESULTS = 'results'.freeze
+        RESULTS = 'results'
 
         # The time the operation took constant.
         #
         # @since 2.0.0
         # @api private
-        TIME = 'timeMillis'.freeze
+        TIME = 'timeMillis'
 
         # Gets the map/reduce counts from the reply.
         #

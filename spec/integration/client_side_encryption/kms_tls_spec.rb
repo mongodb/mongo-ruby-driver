@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -26,7 +25,7 @@ describe 'Client-Side Encryption' do
             aws: default_kms_tls_options_for_provider
           },
           key_vault_namespace: 'keyvault.datakeys',
-        },
+        }
       )
     end
 
@@ -37,11 +36,11 @@ describe 'Client-Side Encryption' do
             'aws',
             {
               master_key: {
-                region: "us-east-1",
-                key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                endpoint: "127.0.0.1:8000",
+                region: 'us-east-1',
+                key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0',
+                endpoint: '127.0.0.1:8000',
               }
-           }
+            }
           )
         end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
       end
@@ -57,11 +56,11 @@ describe 'Client-Side Encryption' do
               'aws',
               {
                 master_key: {
-                  region: "us-east-1",
-                  key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                  endpoint: "127.0.0.1:8001",
+                  region: 'us-east-1',
+                  key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0',
+                  endpoint: '127.0.0.1:8001',
                 }
-            }
+              }
             )
           end.to raise_error(Mongo::Error::KmsError, /certificate verify failed/)
         end
@@ -76,16 +75,15 @@ describe 'Client-Side Encryption' do
               'aws',
               {
                 master_key: {
-                  region: "us-east-1",
-                  key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-                  endpoint: "127.0.0.1:8001",
+                  region: 'us-east-1',
+                  key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0',
+                  endpoint: '127.0.0.1:8001',
                 }
-            }
+              }
             )
           end.to raise_error(Mongo::Error::KmsError, /hostname mismatch/)
         end
       end
     end
-
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -19,12 +18,10 @@ module Mongo
   class Monitoring
     module Event
       module Cmap
-
         # Event published when a connection is unable to be checked out of a pool.
         #
         # @since 2.9.0
         class ConnectionCheckOutFailed < Base
-
           # @return [ Symbol ] POOL_CLOSED Indicates that the connection check
           #   out failed due to the pool already being closed.
           #
@@ -79,7 +76,7 @@ module Mongo
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} address=#{address} " +
-                "reason=#{reason}>"
+              "reason=#{reason}>"
           end
         end
       end

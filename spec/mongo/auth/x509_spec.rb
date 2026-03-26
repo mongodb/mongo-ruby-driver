@@ -1,11 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'support/shared/auth_context'
 
 describe Mongo::Auth::X509 do
-
   let(:server) do
     authorized_client.cluster.next_primary
   end
@@ -17,9 +15,7 @@ describe Mongo::Auth::X509 do
   end
 
   describe '#initialize' do
-
     context 'when user specifies database $external' do
-
       let(:user) do
         Mongo::Auth::User.new(database: '$external')
       end
@@ -30,7 +26,6 @@ describe Mongo::Auth::X509 do
     end
 
     context 'when user specifies database other than $external' do
-
       let(:user) do
         Mongo::Auth::User.new(database: 'foo')
       end
@@ -38,7 +33,8 @@ describe Mongo::Auth::X509 do
       it 'raises InvalidConfiguration' do
         expect do
           described_class.new(user, connection)
-        end.to raise_error(Mongo::Auth::InvalidConfiguration, /User specifies auth source 'foo', but the only valid auth source for X.509 is '\$external'/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration,
+                           /User specifies auth source 'foo', but the only valid auth source for X.509 is '\$external'/)
       end
     end
   end
@@ -49,7 +45,6 @@ describe Mongo::Auth::X509 do
     require_no_external_user
 
     context 'when the user is not authorized for the database' do
-
       before do
         connection.connect!
       end

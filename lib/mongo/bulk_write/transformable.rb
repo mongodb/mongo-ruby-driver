@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,48 +16,46 @@
 
 module Mongo
   class BulkWrite
-
     # Defines behavior around transformations.
     #
     # @api private
     #
     # @since 2.1.0
     module Transformable
-
       # The delete many model constant.
       #
       # @since 2.1.0
-      DELETE_MANY = :delete_many.freeze
+      DELETE_MANY = :delete_many
 
       # The delete one model constant.
       #
       # @since 2.1.0
-      DELETE_ONE = :delete_one.freeze
+      DELETE_ONE = :delete_one
 
       # The insert one model constant.
       #
       # @since 2.1.0
-      INSERT_ONE = :insert_one.freeze
+      INSERT_ONE = :insert_one
 
       # The replace one model constant.
       #
       # @since 2.1.0
-      REPLACE_ONE = :replace_one.freeze
+      REPLACE_ONE = :replace_one
 
       # The update many model constant.
       #
       # @since 2.1.0
-      UPDATE_MANY = :update_many.freeze
+      UPDATE_MANY = :update_many
 
       # The update one model constant.
       #
       # @since 2.1.0
-      UPDATE_ONE = :update_one.freeze
+      UPDATE_ONE = :update_one
 
       # Proc to transform delete many ops.
       #
       # @since 2.1.0
-      DELETE_MANY_TRANSFORM = ->(doc){
+      DELETE_MANY_TRANSFORM = lambda { |doc|
         {
           Operation::Q => doc[:filter],
           Operation::LIMIT => 0,
@@ -71,7 +68,7 @@ module Mongo
       # Proc to transform delete one ops.
       #
       # @since 2.1.0
-      DELETE_ONE_TRANSFORM = ->(doc){
+      DELETE_ONE_TRANSFORM = lambda { |doc|
         {
           Operation::Q => doc[:filter],
           Operation::LIMIT => 1,
@@ -84,14 +81,14 @@ module Mongo
       # Proc to transform insert one ops.
       #
       # @since 2.1.0
-      INSERT_ONE_TRANSFORM = ->(doc){
+      INSERT_ONE_TRANSFORM = lambda { |doc|
         doc
       }
 
       # Proc to transfor replace one ops.
       #
       # @since 2.1.0
-      REPLACE_ONE_TRANSFORM = ->(doc){
+      REPLACE_ONE_TRANSFORM = lambda { |doc|
         {
           Operation::Q => doc[:filter],
           Operation::U => doc[:replacement],
@@ -106,7 +103,7 @@ module Mongo
       # Proc to transform update many ops.
       #
       # @since 2.1.0
-      UPDATE_MANY_TRANSFORM = ->(doc){
+      UPDATE_MANY_TRANSFORM = lambda { |doc|
         {
           Operation::Q => doc[:filter],
           Operation::U => doc[:update],
@@ -122,7 +119,7 @@ module Mongo
       # Proc to transform update one ops.
       #
       # @since 2.1.0
-      UPDATE_ONE_TRANSFORM = ->(doc){
+      UPDATE_ONE_TRANSFORM = lambda { |doc|
         {
           Operation::Q => doc[:filter],
           Operation::U => doc[:update],
@@ -140,11 +137,11 @@ module Mongo
       # @since 2.1.0
       MAPPERS = {
         DELETE_MANY => DELETE_MANY_TRANSFORM,
-        DELETE_ONE  => DELETE_ONE_TRANSFORM,
-        INSERT_ONE  => INSERT_ONE_TRANSFORM,
+        DELETE_ONE => DELETE_ONE_TRANSFORM,
+        INSERT_ONE => INSERT_ONE_TRANSFORM,
         REPLACE_ONE => REPLACE_ONE_TRANSFORM,
         UPDATE_MANY => UPDATE_MANY_TRANSFORM,
-        UPDATE_ONE  => UPDATE_ONE_TRANSFORM
+        UPDATE_ONE => UPDATE_ONE_TRANSFORM
       }.freeze
 
       private

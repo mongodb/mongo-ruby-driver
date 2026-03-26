@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/operation/write_command/op_msg'
 
 module Mongo
   module Operation
-
     # A MongoDB general command operation.
     #
     # @api private

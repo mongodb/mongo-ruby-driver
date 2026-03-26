@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Crypt
-
     # A wrapper around mongocrypt_ctx_t, which manages the
     # state machine for encryption and decription.
     #
@@ -150,7 +148,7 @@ module Mongo
       end
 
       def feed_kms
-        while (kms_context = Binding.ctx_next_kms_ctx(self)) do
+        while (kms_context = Binding.ctx_next_kms_ctx(self))
           begin
             delay = Binding.kms_ctx_usleep(kms_context)
             sleep(delay / 1_000_000.0) unless delay.nil?
@@ -158,15 +156,10 @@ module Mongo
             tls_options = @mongocrypt_handle.kms_tls_options(provider)
             @encryption_io.feed_kms(kms_context, tls_options)
           rescue Error::KmsError => e
-            if e.network_error?
-              if Binding.kms_ctx_fail(kms_context)
-                next
-              else
-                raise
-              end
-            else
-              raise
-            end
+            raise unless e.network_error?
+            next if Binding.kms_ctx_fail(kms_context)
+
+            raise
           end
         end
         Binding.ctx_kms_done(self)
@@ -195,20 +188,20 @@ module Mongo
       #   KMS providers.
       def retrieve_kms_credentials(timeout_holder)
         providers = {}
-        if kms_providers.aws&.empty?
+        if kms_providers.aws && kms_providers.aws.empty?
           begin
             aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials(timeout_holder)
           rescue Auth::Aws::CredentialsNotFound
             raise Error::CryptError.new(
-              "Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)"
+              'Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)'
             )
           end
           providers[:aws] = aws_credentials.to_h
         end
-        if kms_providers.gcp&.empty?
+        if kms_providers.gcp && kms_providers.gcp.empty?
           providers[:gcp] = { access_token: gcp_access_token(timeout_holder) }
         end
-        if kms_providers.azure&.empty?
+        if kms_providers.azure && kms_providers.azure.empty?
           providers[:azure] = { access_token: azure_access_token(timeout_holder) }
         end
         KMS::Credentials.new(providers)

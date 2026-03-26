@@ -1,9 +1,7 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
   module Macros
-
     def config_override(key, value)
       around do |example|
         existing = Mongo.send(key)

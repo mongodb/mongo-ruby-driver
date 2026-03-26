@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,34 +16,32 @@
 
 module Mongo
   class Error
-
     # Raised when an invalid server preference is provided.
     #
     # @since 2.0.0
     class InvalidServerPreference < Error
-
       # Error message when tags are specified for a read preference that cannot support them.
       #
       # @since 2.4.0
-      NO_TAG_SUPPORT = 'This read preference cannot be combined with tags.'.freeze
+      NO_TAG_SUPPORT = 'This read preference cannot be combined with tags.'
 
       # Error message when a max staleness is specified for a read preference that cannot support it.
       #
       # @since 2.4.0
-      NO_MAX_STALENESS_SUPPORT = 'max_staleness cannot be set for this read preference.'.freeze
+      NO_MAX_STALENESS_SUPPORT = 'max_staleness cannot be set for this read preference.'
 
       # Error message when hedge is specified for a read preference that does not support it.
       #
       # @api private
-      NO_HEDGE_SUPPORT = 'The hedge option cannot be set for this read preference'.freeze
+      NO_HEDGE_SUPPORT = 'The hedge option cannot be set for this read preference'
 
       # Error message for when the max staleness is not at least twice the heartbeat frequency.
       #
       # @since 2.4.0
       # @deprecated
-      INVALID_MAX_STALENESS = "`max_staleness` value is too small. It must be at least " +
-        "`ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` and (the cluster's heartbeat_frequency " +
-          "setting + `Cluster::IDLE_WRITE_PERIOD_SECONDS`).".freeze
+      INVALID_MAX_STALENESS = '`max_staleness` value is too small. It must be at least ' +
+                              "`ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` and (the cluster's heartbeat_frequency " +
+                              'setting + `Cluster::IDLE_WRITE_PERIOD_SECONDS`).'
 
       # Instantiate the new exception.
       #
@@ -55,7 +52,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(message)
-        super(message)
+        super
       end
     end
   end

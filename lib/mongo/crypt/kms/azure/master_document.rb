@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -34,18 +33,18 @@ module Mongo
           # @return [ String | nil ] Azure KMS key version.
           attr_reader :key_version
 
-          FORMAT_HINT = "Azure key document  must be in the format: " +
+          FORMAT_HINT = 'Azure key document  must be in the format: ' +
                         "{ key_vault_endpoint: 'KEY_VAULT_ENDPOINT', key_name: 'KEY_NAME' }"
 
-        # Creates a master key document object form a parameters hash.
-        #
-        # @param [ Hash ] opts A hash that contains master key options for
-        #   the Azure KMS provider.
-        # @option opts [ String ] :key_vault_endpoint Azure key vault endpoint.
-        # @option opts [ String ] :key_name Azure KMS key name.
-        # @option opts [ String | nil ] :key_version Azure KMS key version, optional.
-        #
-        # @raise [ ArgumentError ] If required options are missing or incorrectly.
+          # Creates a master key document object form a parameters hash.
+          #
+          # @param [ Hash ] opts A hash that contains master key options for
+          #   the Azure KMS provider.
+          # @option opts [ String ] :key_vault_endpoint Azure key vault endpoint.
+          # @option opts [ String ] :key_name Azure KMS key name.
+          # @option opts [ String | nil ] :key_version Azure KMS key version, optional.
+          #
+          # @raise [ ArgumentError ] If required options are missing or incorrectly.
           def initialize(opts)
             unless opts.is_a?(Hash)
               raise ArgumentError.new(
@@ -62,13 +61,11 @@ module Mongo
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
             BSON::Document.new({
-              provider: 'azure',
-              keyVaultEndpoint: key_vault_endpoint,
-              keyName: key_name,
-            }).tap do |bson|
-              unless key_version.nil?
-                bson.update({ keyVersion: key_version })
-              end
+                                 provider: 'azure',
+                                 keyVaultEndpoint: key_vault_endpoint,
+                                 keyName: key_name,
+                               }).tap do |bson|
+              bson.update({ keyVersion: key_version }) unless key_version.nil?
             end
           end
         end
@@ -76,4 +73,3 @@ module Mongo
     end
   end
 end
-

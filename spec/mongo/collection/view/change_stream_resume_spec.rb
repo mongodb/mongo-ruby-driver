@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -54,7 +53,7 @@ describe Mongo::Collection::View::ChangeStream do
   let(:result) do
     Mongo::Operation::GetMore::Result.new(
       Mongo::Protocol::Message.new,
-      connection_description,
+      connection_description
     )
   end
 
@@ -70,7 +69,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     shared_examples_for 'a resumable change stream' do
-
       before do
         expect(view.send(:server_selector)).to receive(:select_server).twice.and_call_original
         change_stream
@@ -83,9 +81,8 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context 'when provided a session' do
-
         let(:options) do
-          { session: session}
+          { session: session }
         end
 
         let(:session) do
@@ -111,9 +108,7 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when the error is a resumable error' do
-
       context 'when the error is a SocketError' do
-
         let(:error) do
           Mongo::Error::SocketError
         end
@@ -122,7 +117,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context 'when the error is a SocketTimeoutError' do
-
         let(:error) do
           Mongo::Error::SocketTimeoutError
         end
@@ -131,7 +125,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context "when the error is a 'not master' error" do
-
         let(:error) do
           Mongo::Error::OperationFailure.new('not master')
         end
@@ -140,7 +133,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context "when the error is a 'node is recovering' error" do
-
         let(:error) do
           Mongo::Error::OperationFailure.new('node is recovering')
         end
@@ -150,7 +142,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when the error is another server error' do
-
       let(:error) do
         Mongo::Error::MissingResumeToken
       end
@@ -162,9 +153,8 @@ describe Mongo::Collection::View::ChangeStream do
       it_behaves_like 'a non-resumed change stream'
 
       context 'when provided a session' do
-
         let(:options) do
-          { session: session}
+          { session: session }
         end
 
         let(:session) do
@@ -190,9 +180,9 @@ describe Mongo::Collection::View::ChangeStream do
 
       before do
         change_stream
-        collection.insert_one(a:1)
+        collection.insert_one(a: 1)
         enum.next
-        collection.insert_one(a:2)
+        collection.insert_one(a: 2)
       end
 
       let(:enum) do
@@ -200,12 +190,12 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       it 'resumes on a cursor not found error' do
-        original_cursor_id = cursor.id
+        cursor.id
 
         client.use(:admin).command({
-          killCursors: collection.name,
-          cursors: [cursor.id]
-        })
+                                     killCursors: collection.name,
+                                     cursors: [ cursor.id ]
+                                   })
 
         expect do
           enum.next
@@ -216,18 +206,18 @@ describe Mongo::Collection::View::ChangeStream do
     context 'using try_next' do
       before do
         change_stream
-        collection.insert_one(a:1)
+        collection.insert_one(a: 1)
         expect(change_stream.try_next).to be_a(BSON::Document)
-        collection.insert_one(a:2)
+        collection.insert_one(a: 2)
       end
 
       it 'resumes on a cursor not found error' do
-        original_cursor_id = cursor.id
+        cursor.id
 
         client.use(:admin).command({
-          killCursors: collection.name,
-          cursors: [cursor.id]
-        })
+                                     killCursors: collection.name,
+                                     cursors: [ cursor.id ]
+                                   })
 
         expect do
           change_stream.try_next
@@ -264,9 +254,7 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when the error is a resumable error' do
-
       shared_examples_for 'a change stream that encounters an error from a getMore' do
-
         before do
           change_stream
           collection.insert_one(a: 1)
@@ -293,9 +281,8 @@ describe Mongo::Collection::View::ChangeStream do
         end
 
         context 'when provided a session' do
-
           let(:options) do
-            { session: session}
+            { session: session }
           end
 
           let(:session) do
@@ -313,7 +300,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context 'when the error is a SocketError' do
-
         let(:error) do
           Mongo::Error::SocketError
         end
@@ -322,7 +308,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context 'when the error is a SocketTimeoutError' do
-
         let(:error) do
           Mongo::Error::SocketTimeoutError
         end
@@ -331,7 +316,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context "when the error is 'not master'" do
-
         let(:error) do
           Mongo::Error::OperationFailure.new('not master', result)
         end
@@ -340,7 +324,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context "when the error is 'node is recovering'" do
-
         let(:error) do
           Mongo::Error::OperationFailure.new('node is recovering', result)
         end
@@ -350,7 +333,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when the error is another server error' do
-
       before do
         change_stream
         collection.insert_one(a: 1)
@@ -365,15 +347,14 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       it 'does not run the command again and instead raises the error' do
-        expect {
+        expect do
           enum.next
-        }.to raise_exception(Mongo::Error::MissingResumeToken)
+        end.to raise_exception(Mongo::Error::MissingResumeToken)
       end
 
       context 'when provided a session' do
-
         let(:options) do
-          { session: session}
+          { session: session }
         end
 
         let(:session) do

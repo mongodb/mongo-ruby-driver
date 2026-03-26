@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -18,13 +17,11 @@
 module Mongo
   module Operation
     class GetMore
-
       # Defines custom behavior of results for the get more command.
       #
       # @since 2.2.0
       # @api semiprivate
       class Result < Operation::Result
-
         # Get the cursor id.
         #
         # @example Get the cursor id.

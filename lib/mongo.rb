@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -83,7 +82,6 @@ require 'mongo/utils'
 require 'mongo/config'
 
 module Mongo
-
   class << self
     extend Forwardable
 
@@ -127,7 +125,7 @@ module Mongo
   #   an OpenSSL::SSL::SSLContext object as an argument.
   module_function def tls_context_hooks=(hooks)
     unless hooks.is_a?(Array) && hooks.all? { |hook| hook.is_a?(Proc) }
-      raise ArgumentError, "TLS context hooks must be an array of Procs"
+      raise ArgumentError, 'TLS context hooks must be an array of Procs'
     end
 
     @tls_context_hooks = hooks

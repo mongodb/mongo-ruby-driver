@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -23,14 +22,14 @@ describe 'Client-Side Encryption' do
 
     let(:test_schema_map) do
       {
-        "db.coll": {
-          "bsonType": "object",
-          "properties": {
-            "encrypted_placeholder": {
-              "encrypt": {
-                "keyId": "/placeholder",
-                "bsonType": "string",
-                "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
+        'db.coll': {
+          bsonType: 'object',
+          properties: {
+            encrypted_placeholder: {
+              encrypt: {
+                keyId: '/placeholder',
+                bsonType: 'string',
+                algorithm: 'AEAD_AES_256_CBC_HMAC_SHA_512-Random'
               }
             }
           }
@@ -74,7 +73,7 @@ describe 'Client-Side Encryption' do
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },
-          database: 'db',
+          database: 'db'
         )
       )
     end
@@ -110,7 +109,7 @@ describe 'Client-Side Encryption' do
             }
           },
           key_vault_namespace: 'keyvault.datakeys',
-        },
+        }
       )
     end
 
@@ -123,7 +122,7 @@ describe 'Client-Side Encryption' do
       it 'creates a data key and uses it for encryption' do
         data_key_id = client_encryption.create_data_key(
           kms_provider_name,
-          data_key_options.merge(key_alt_names: [key_alt_name])
+          data_key_options.merge(key_alt_names: [ key_alt_name ])
         )
 
         expect(data_key_id).to be_uuid
@@ -151,7 +150,7 @@ describe 'Client-Side Encryption' do
 
         client_encrypted['coll'].insert_one(
           _id: kms_provider_name,
-          value: encrypted,
+          value: encrypted
         )
 
         document = client_encrypted['coll'].find(_id: kms_provider_name).first
@@ -171,13 +170,13 @@ describe 'Client-Side Encryption' do
 
         expect do
           client_encrypted['coll'].insert_one(encrypted_placeholder: encrypted)
-        # With mongocryptd the error comes back as OperationFailure from the
-        # markForEncryption command response; with crypt_shared it is raised
-        # directly by libmongocrypt as a CryptError. Both are Mongo::Error subclasses.
-        end.to raise_error { |error|
+          # With mongocryptd the error comes back as OperationFailure from the
+          # markForEncryption command response; with crypt_shared it is raised
+          # directly by libmongocrypt as a CryptError. Both are Mongo::Error subclasses.
+        end.to(raise_error do |error|
           expect(error).to be_a(Mongo::Error::OperationFailure).or be_a(Mongo::Error::CryptError)
           expect(error.message).to match(/Cannot encrypt element of type(: encrypted binary data| binData)/)
-        }
+        end)
       end
     end
 
@@ -252,7 +251,7 @@ describe 'Client-Side Encryption' do
       let(:data_key_options) do
         {
           master_key: {
-            key_id: "1"
+            key_id: '1'
           }
         }
       end

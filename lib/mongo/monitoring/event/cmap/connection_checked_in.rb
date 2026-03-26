@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -19,12 +18,10 @@ module Mongo
   class Monitoring
     module Event
       module Cmap
-
         # Event published when a connection is returned to a connection pool.
         #
         # @since 2.9.0
         class ConnectionCheckedIn < Base
-
           # @return [ Address ] address The address of the server the connection was connected to.
           #
           # @since 2.9.0
@@ -65,7 +62,7 @@ module Mongo
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
-                "address=#{address} connection_id=#{connection_id} pool=0x#{pool.object_id}>"
+              "address=#{address} connection_id=#{connection_id} pool=0x#{pool.object_id}>"
           end
         end
       end

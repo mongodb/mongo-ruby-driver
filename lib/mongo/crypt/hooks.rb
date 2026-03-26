@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -20,14 +19,12 @@ require 'digest'
 
 module Mongo
   module Crypt
-
     # A helper module that implements cryptography methods required
     # for native Ruby crypto hooks. These methods are passed into FFI
     # as C callbacks and called from the libmongocrypt library.
     #
     # @api private
     module Hooks
-
       # An AES encrypt or decrypt method.
       #
       # @param [ String ] key The 32-byte AES encryption key
@@ -48,7 +45,7 @@ module Mongo
         cipher.iv = iv
         cipher.padding = 0
 
-        encrypted = cipher.update(input)
+        cipher.update(input)
       end
       module_function :aes
 
@@ -98,17 +95,17 @@ module Mongo
       # @return [ String ] The signature.
       def rsaes_pkcs_signature(key, input)
         private_key = if BSON::Environment.jruby?
-          # JRuby cannot read DER format, we need to convert key into PEM first.
-          key_pem = [
-            "-----BEGIN PRIVATE KEY-----",
-            Base64.strict_encode64(Base64.decode64(key)).scan(/.{1,64}/),
-            "-----END PRIVATE KEY-----",
-          ].join("\n")
-          OpenSSL::PKey::RSA.new(key_pem)
-        else
-          OpenSSL::PKey.read(Base64.decode64(key))
-        end
-        private_key.sign(OpenSSL::Digest::SHA256.new, input)
+                        # JRuby cannot read DER format, we need to convert key into PEM first.
+                        key_pem = [
+                          '-----BEGIN PRIVATE KEY-----',
+                          Base64.strict_encode64(Base64.decode64(key)).scan(/.{1,64}/),
+                          '-----END PRIVATE KEY-----',
+                        ].join("\n")
+                        OpenSSL::PKey::RSA.new(key_pem)
+                      else
+                        OpenSSL::PKey.read(Base64.decode64(key))
+                      end
+        private_key.sign(OpenSSL::Digest.new('SHA256'), input)
       end
       module_function :rsaes_pkcs_signature
     end

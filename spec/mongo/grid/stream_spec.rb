@@ -1,22 +1,18 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Grid::FSBucket::Stream do
-
   let(:fs) do
     authorized_client.database.fs
   end
 
   describe '.get' do
-
     let(:stream) do
       described_class.get(fs, mode)
     end
 
     context 'when mode is read' do
-
       let(:mode) do
         Mongo::Grid::FSBucket::Stream::READ_MODE
       end
@@ -27,7 +23,6 @@ describe Mongo::Grid::FSBucket::Stream do
     end
 
     context 'when mode is write' do
-
       let(:mode) do
         Mongo::Grid::FSBucket::Stream::WRITE_MODE
       end
@@ -37,7 +32,6 @@ describe Mongo::Grid::FSBucket::Stream do
       end
 
       context 'when options are provided' do
-
         let(:stream) do
           described_class.get(fs, mode, chunk_size: 100)
         end

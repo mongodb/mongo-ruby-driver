@@ -1,8 +1,6 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 shared_context 'server selector' do
-
   let(:max_staleness) { nil }
   let(:tag_sets) { [] }
   let(:hedge) { nil }
@@ -53,31 +51,25 @@ shared_context 'server selector' do
 end
 
 shared_examples 'a server selector mode' do
-
   describe '#name' do
-
     it 'returns the name' do
       expect(selector.name).to eq(name)
     end
   end
 
   describe '#secondary_ok?' do
-
     it 'returns whether the secondary_ok bit should be set' do
       expect(selector.secondary_ok?).to eq(secondary_ok)
     end
   end
 
   describe '#==' do
-
     context 'when mode is the same' do
-
       let(:other) do
         described_class.new
       end
 
       context 'tag sets are the same' do
-
         it 'returns true' do
           expect(selector).to eq(other)
         end
@@ -85,7 +77,6 @@ shared_examples 'a server selector mode' do
     end
 
     context 'mode is different' do
-
       let(:other) do
         described_class.new.tap do |sel|
           allow(sel).to receive(:name).and_return(:other_mode)
@@ -100,18 +91,14 @@ shared_examples 'a server selector mode' do
 end
 
 shared_examples 'a server selector accepting tag sets' do
-
   describe '#tag_sets' do
-
     context 'tags not provided' do
-
       it 'returns an empty array' do
         expect(selector.tag_sets).to be_empty
       end
     end
 
     context 'tag sets provided' do
-
       let(:tag_sets) do
         [ tag_set ]
       end
@@ -127,7 +114,7 @@ shared_examples 'a server selector accepting tag sets' do
       let(:other) { described_class.new }
 
       context 'tag sets are different' do
-        let(:tag_sets) { { 'other' => 'tag'  } }
+        let(:tag_sets) { { 'other' => 'tag' } }
 
         it 'returns false' do
           expect(selector).not_to eq(other)
@@ -216,13 +203,10 @@ shared_examples 'a server selector accepting hedge' do
 end
 
 shared_examples 'a server selector with sensitive data in its options' do
-
   describe '#inspect' do
-
     context 'when there is sensitive data in the options' do
-
       let(:options) do
-        Mongo::Options::Redacted.new(:mode => name, :password => 'sensitive_data')
+        Mongo::Options::Redacted.new(mode: name, password: 'sensitive_data')
       end
 
       it 'does not print out sensitive data' do

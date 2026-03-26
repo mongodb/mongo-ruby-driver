@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -15,13 +14,11 @@ describe 'DNS Seedlist Discovery' do
   include Mongo::ConnectionString
 
   SEED_LIST_DISCOVERY_TESTS.each do |test_path|
-
-    spec = ::Utils.load_spec_yaml_file(test_path)
+    spec = Utils.load_spec_yaml_file(test_path)
 
     test = Mongo::ConnectionString::Test.new(spec)
 
     context(File.basename(test_path)) do
-
       if test.raise_error?
         context 'the uri is invalid' do
           retry_test
@@ -40,9 +37,9 @@ describe 'DNS Seedlist Discovery' do
           let(:error) do
             begin
               test.client
-            rescue => ex
+            rescue StandardError => e
             end
-            ex
+            e
           end
 
           # In Evergreen sometimes this test fails intermittently.
@@ -88,15 +85,11 @@ describe 'DNS Seedlist Discovery' do
               actual = Utils.downcase_keys(mapped)
               expected = Utils.downcase_keys(test.expected_options)
               # SRV tests use ssl URI option instead of tls one
-              if expected.key?('ssl') && !expected.key?('tls')
-                expected['tls'] = expected.delete('ssl')
-              end
+              expected['tls'] = expected.delete('ssl') if expected.key?('ssl') && !expected.key?('tls')
               # The client object contains auth source in options which
               # isn't asserted in some tests.
-              if actual.key?('authsource') && !expected.key?('authsource')
-                actual.delete('authsource')
-              end
-              actual.should == expected
+              actual.delete('authsource') if actual.key?('authsource') && !expected.key?('authsource')
+              expect(actual).to eq(expected)
             end
           end
 
@@ -104,20 +97,18 @@ describe 'DNS Seedlist Discovery' do
             it 'creates a client with the correct non-uri options' do
               opts = UsingHash[test.non_uri_options]
               if user = opts.use('user')
-                test.client.options[:user].should == user
+                expect(test.client.options[:user]).to eq(user)
               end
               if password = opts.use('password')
-                test.client.options[:password].should == password
+                expect(test.client.options[:password]).to eq(password)
               end
               if db = opts.use('db')
-                test.client.database.name.should == db
+                expect(test.client.database.name).to eq(db)
               end
               if auth_source = opts.use('auth_database')
                 Mongo::Auth::User.new(test.client.options).auth_source == auth_source
               end
-              unless opts.empty?
-                raise "Unhandled keys: #{opts}"
-              end
+              raise "Unhandled keys: #{opts}" unless opts.empty?
             end
           end
         end

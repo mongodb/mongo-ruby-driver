@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Monitoring
-
     # Subscribes to command events and logs them.
     #
     # @since 2.1.0
@@ -56,14 +54,13 @@ module Mongo
       #
       # @since 2.1.0
       def started(event)
-        if logger.debug?
-          _prefix = prefix(event,
-            connection_generation: event.connection_generation,
-            connection_id: event.connection_id,
-            server_connection_id: event.server_connection_id,
-          )
-          log_debug("#{_prefix} | STARTED | #{format_command(event.command)}")
-        end
+        return unless logger.debug?
+
+        _prefix = prefix(event,
+                         connection_generation: event.connection_generation,
+                         connection_id: event.connection_id,
+                         server_connection_id: event.server_connection_id)
+        log_debug("#{_prefix} | STARTED | #{format_command(event.command)}")
       end
 
       # Handle the command succeeded event.
@@ -75,9 +72,9 @@ module Mongo
       #
       # @since 2.1.0
       def succeeded(event)
-        if logger.debug?
-          log_debug("#{prefix(event)} | SUCCEEDED | #{'%.3f' % event.duration}s")
-        end
+        return unless logger.debug?
+
+        log_debug("#{prefix(event)} | SUCCEEDED | #{'%.3f' % event.duration}s")
       end
 
       # Handle the command failed event.
@@ -89,34 +86,29 @@ module Mongo
       #
       # @since 2.1.0
       def failed(event)
-        if logger.debug?
-          log_debug("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
-        end
+        return unless logger.debug?
+
+        log_debug("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
       end
 
       private
 
       def format_command(args)
-        begin
-          truncating? ? truncate(args) : args.inspect
-        rescue Exception
-          '<Unable to inspect arguments>'
-        end
+        truncating? ? truncate(args) : args.inspect
+      rescue Exception
+        '<Unable to inspect arguments>'
       end
 
       def prefix(event, connection_generation: nil, connection_id: nil,
-        server_connection_id: nil
-      )
-        extra = [connection_generation, connection_id].compact.join(':')
-        if extra == ''
-          extra = nil
-        else
-          extra = "conn:#{extra}"
-        end
-        if server_connection_id
-          extra += " sconn:#{server_connection_id}"
-        end
-        "#{event.address.to_s} req:#{event.request_id}#{extra && " #{extra}"} | " +
+                 server_connection_id: nil)
+        extra = [ connection_generation, connection_id ].compact.join(':')
+        extra = if extra == ''
+                  nil
+                else
+                  "conn:#{extra}"
+                end
+        extra += " sconn:#{server_connection_id}" if server_connection_id
+        "#{event.address} req:#{event.request_id}#{extra && " #{extra}"} | " +
           "#{event.database_name}.#{event.command_name}"
       end
 

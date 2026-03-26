@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -69,16 +68,12 @@ describe Mongo::ConditionVariable do
     (Mongo::Utils.monotonic_time - start_time).should > 1
   end
 
-  context "when acquiring the lock and waiting" do
-
-    it "releases the lock while waiting" do
-
+  context 'when acquiring the lock and waiting' do
+    it 'releases the lock while waiting' do
       lock_acquired = false
-      Timeout::timeout(1) do
-        thread = Thread.new do
-          until lock_acquired
-            sleep 0.1
-          end
+      Timeout.timeout(1) do
+        Thread.new do
+          sleep 0.1 until lock_acquired
           lock.synchronize do
             condition_variable.signal
           end
@@ -91,8 +86,8 @@ describe Mongo::ConditionVariable do
     end
   end
 
-  context "when waiting but not signaling" do
-    it "waits until timeout" do
+  context 'when waiting but not signaling' do
+    it 'waits until timeout' do
       lock.synchronize do
         start = Mongo::Utils.monotonic_time
         condition_variable.wait(1)

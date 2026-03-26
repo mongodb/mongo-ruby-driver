@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -24,7 +23,6 @@ module Mongo
       #
       # @api private
       class BitVector
-
         # Initializes a BitVector with a layout
         #
         # @param layout [ Array<Symbol> ] the array of fields in the bit vector
@@ -43,9 +41,9 @@ module Mongo
         #   This option is deprecated and will not be used. It will removed in version 3.0.
         #
         # @return [ String ] Buffer that received the serialized vector
-        def serialize(buffer, value, validating_keys = nil)
+        def serialize(buffer, value, _validating_keys = nil)
           bits = 0
-          value.each { |flag| bits |= (@masks[flag] || 0) }
+          value.each { |flag| bits |= @masks[flag] || 0 }
           buffer.put_int32(bits)
         end
 
@@ -55,7 +53,7 @@ module Mongo
         # @param [ Hash ] options This method does not currently accept any options.
         #
         # @return [ Array<Symbol> ] Flags contained in the vector
-        def deserialize(buffer, options = {})
+        def deserialize(buffer, _options = {})
           vector = buffer.get_int32
           flags = []
           @masks.each do |flag, mask|

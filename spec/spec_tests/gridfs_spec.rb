@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,15 +8,11 @@ describe 'GridFS' do
   include Mongo::GridFS
 
   GRIDFS_TESTS.each do |file|
-
     spec = Mongo::GridFS::Spec.new(file)
 
     context(spec.description) do
-
       spec.tests.each do |test|
-
         context(test.description) do
-
           after do
             fs.files_collection.delete_many
             fs.chunks_collection.delete_many
@@ -33,7 +28,7 @@ describe 'GridFS' do
             authorized_collection.database.fs
           end
 
-          it "raises the correct error", if: test.error? do
+          it 'raises the correct error', if: test.error? do
             expect(result).to match_error(test.expected_error)
           end
 

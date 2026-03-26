@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -108,7 +107,9 @@ describe 'Client authentication options' do
 
     context 'with URI options' do
       let(:credentials) { "#{user}:#{pwd}@" }
-      let(:options) { "?authMechanism=#{auth_mech_string}&tls=true&tlsCAFile=#{ca_file_path}&tlsCertificateKeyFile=#{cert_path}" }
+      let(:options) do
+        "?authMechanism=#{auth_mech_string}&tls=true&tlsCAFile=#{ca_file_path}&tlsCertificateKeyFile=#{cert_path}"
+      end
 
       it 'creates a client with ssl properties' do
         expect(client.options[:ssl]).to be true
@@ -146,9 +147,9 @@ describe 'Client authentication options' do
       let(:options) { "?authMechanism=#{auth_mech_string}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
 
       it 'raises an exception on client creation' do
-        expect {
+        expect do
           client
-        }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
       end
     end
 
@@ -165,9 +166,9 @@ describe 'Client authentication options' do
       end
 
       it 'raises an exception on client creation' do
-        expect {
+        expect do
           client
-        }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
       end
     end
   end
@@ -178,9 +179,9 @@ describe 'Client authentication options' do
       let(:options) { "?authMechanism=#{auth_mech_string}&authSource=foo" }
 
       it 'raises an exception on client creation' do
-        expect {
+        expect do
           client
-        }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
       end
     end
 
@@ -195,9 +196,9 @@ describe 'Client authentication options' do
       end
 
       it 'raises an exception on client creation' do
-        expect {
+        expect do
           client
-        }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
       end
     end
   end
@@ -235,10 +236,10 @@ describe 'Client authentication options' do
     let(:auth_mech_string) { 'GSSAPI' }
     let(:auth_mech_sym) { :gssapi }
 
+    let(:auth_mech_properties) { { canonicalize_host_name: true, service_name: 'other' } }
+
     it_behaves_like 'a supported auth mechanism'
     it_behaves_like 'an auth mechanism that does not support invalid auth sources'
-
-    let(:auth_mech_properties) { { canonicalize_host_name: true, service_name: 'other'} }
 
     context 'with URI options' do
       let(:credentials) { "#{user}:#{pwd}@" }
@@ -276,7 +277,7 @@ describe 'Client authentication options' do
           it 'sets service name to mongodb' do
             expect(client.options[:auth_mech_properties]).to eq(
               'service_name' => 'mongodb',
-              'service_realm' => 'foo',
+              'service_realm' => 'foo'
             )
           end
         end
@@ -297,7 +298,7 @@ describe 'Client authentication options' do
         it 'sets default auth mech properties' do
           expect(client.options[:auth_mech_properties]).to eq(
             'service_name' => 'mongodb',
-            'service_realm' => 'foo',
+            'service_realm' => 'foo'
           )
         end
       end
@@ -362,7 +363,7 @@ describe 'Client authentication options' do
       end
 
       context 'when username is not provided' do
-        let(:client_opts) { { auth_mech: :mongodb_x509} }
+        let(:client_opts) { { auth_mech: :mongodb_x509 } }
 
         it 'recognizes the mechanism with no username' do
           expect(client.options[:user]).to be_nil
@@ -461,7 +462,7 @@ describe 'Client authentication options' do
         expect(client.options[:auth_mech_properties]).to eq(
           'service_name' => service_name,
           'canonicalize_host_name' => canonicalize_host_name,
-          'service_realm' => service_realm,
+          'service_realm' => service_realm
         )
       end
     end
@@ -477,8 +478,7 @@ describe 'Client authentication options' do
     end
 
     context 'with client options' do
-      [:auth_mech_properties, 'auth_mech_properties'].each do |key|
-
+      [ :auth_mech_properties, 'auth_mech_properties' ].each do |key|
         context "using #{key.class} keys" do
           let(:client_opts) { { key => auth_mechanism_properties } }
 
@@ -494,15 +494,13 @@ describe 'Client authentication options' do
             end
 
             context 'using URI and options' do
-
               let(:client) { new_local_client_nmio(uri, client_opts) }
 
               include_examples 'correctly sets auth mechanism properties on the client'
             end
 
             context 'using host and options' do
-
-              let(:client) { new_local_client_nmio(['localhost'], client_opts) }
+              let(:client) { new_local_client_nmio([ 'localhost' ], client_opts) }
 
               include_examples 'correctly sets auth mechanism properties on the client'
             end

@@ -5,7 +5,6 @@ require 'spec_helper'
 require 'opentelemetry'
 
 describe Mongo::Tracing::OpenTelemetry::OperationTracer do
-  # rubocop:disable RSpec/VerifiedDoubles
   let(:otel_tracer) { double('OpenTelemetry::Trace::Tracer') }
   let(:parent_tracer) do
     instance_double(

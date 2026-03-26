@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Server
     class Description
-
       # Represents an assumed description of servers behind load balancers.
       class LoadBalancer
         def initialize(address)

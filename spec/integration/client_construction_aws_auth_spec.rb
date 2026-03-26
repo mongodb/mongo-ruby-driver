@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -8,10 +7,11 @@ describe 'Client construction with AWS auth' do
 
   let(:client) do
     new_local_client(SpecConfig.instance.addresses,
-      SpecConfig.instance.ssl_options.merge(
-        auth_mech: :aws,
-        connect_timeout: 3.44, socket_timeout: 3.45,
-        server_selection_timeout: 3.46))
+                     SpecConfig.instance.ssl_options.merge(
+                       auth_mech: :aws,
+                       connect_timeout: 3.44, socket_timeout: 3.45,
+                       server_selection_timeout: 3.46
+                     ))
   end
 
   let(:authenticated_user_info) do
@@ -29,7 +29,6 @@ describe 'Client construction with AWS auth' do
   end
 
   context 'credentials specified explicitly' do
-
     let(:username) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID') }
     let(:password) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY') }
     let(:session_token) { ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN') }
@@ -41,12 +40,13 @@ describe 'Client construction with AWS auth' do
       context 'via Ruby options' do
         let(:client) do
           new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.ssl_options.merge(
-              auth_mech: :aws,
-              user: username,
-              password: password,
-              connect_timeout: 3.34, socket_timeout: 3.35,
-              server_selection_timeout: 3.36))
+                           SpecConfig.instance.ssl_options.merge(
+                             auth_mech: :aws,
+                             user: username,
+                             password: password,
+                             connect_timeout: 3.34, socket_timeout: 3.35,
+                             server_selection_timeout: 3.36
+                           ))
         end
 
         it_behaves_like 'connects successfully'
@@ -77,15 +77,16 @@ describe 'Client construction with AWS auth' do
       context 'via Ruby options' do
         let(:client) do
           new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.ssl_options.merge(
-              auth_mech: :aws,
-              user: username,
-              password: password,
-              auth_mech_properties: {
-                aws_session_token: session_token,
-              },
-              connect_timeout: 3.34, socket_timeout: 3.35,
-              server_selection_timeout: 3.36))
+                           SpecConfig.instance.ssl_options.merge(
+                             auth_mech: :aws,
+                             user: username,
+                             password: password,
+                             auth_mech_properties: {
+                               aws_session_token: session_token,
+                             },
+                             connect_timeout: 3.34, socket_timeout: 3.35,
+                             server_selection_timeout: 3.36
+                           ))
         end
 
         it_behaves_like 'connects successfully'
@@ -119,7 +120,7 @@ describe 'Client construction with AWS auth' do
         local_env(
           'AWS_ACCESS_KEY_ID' => nil,
           'AWS_SECRET_ACCESS_KEY' => nil,
-          'AWS_SESSION_TOKEN' => nil,
+          'AWS_SESSION_TOKEN' => nil
         )
 
         it 'does not connect' do
@@ -199,5 +200,4 @@ describe 'Client construction with AWS auth' do
       end
     end
   end
-
 end

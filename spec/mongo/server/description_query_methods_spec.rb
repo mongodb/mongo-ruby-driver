@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -19,10 +18,10 @@ describe Mongo::Server::Description do
       expect(description).to be_unknown
     end
 
-    %w(
+    %w[
       arbiter ghost hidden mongos passive primary secondary standalone
       other
-    ).each do |type|
+    ].each do |type|
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
@@ -40,17 +39,19 @@ describe Mongo::Server::Description do
   end
 
   context 'ghost' do
-    let(:desc_options) { {'isreplicaset' => true,
-      'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok} }
+    let(:desc_options) do
+      { 'isreplicaset' => true,
+        'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok }
+    end
 
     it 'is ghost' do
       expect(description).to be_ghost
     end
 
-    %w(
+    %w[
       arbiter hidden mongos passive primary secondary standalone
       other unknown
-    ).each do |type|
+    ].each do |type|
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
@@ -68,17 +69,19 @@ describe Mongo::Server::Description do
   end
 
   context 'mongos' do
-    let(:desc_options) { {'msg' => 'isdbgrid',
-      'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok} }
+    let(:desc_options) do
+      { 'msg' => 'isdbgrid',
+        'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok }
+    end
 
     it 'is mongos' do
       expect(description).to be_mongos
     end
 
-    %w(
+    %w[
       arbiter hidden passive primary secondary standalone
       other unknown ghost
-    ).each do |type|
+    ].each do |type|
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
@@ -96,18 +99,20 @@ describe Mongo::Server::Description do
   end
 
   context 'primary' do
-    let(:desc_options) { {'isWritablePrimary' => true,
-      'minWireVersion' => 2, 'maxWireVersion' => 8,
-      'setName' => 'foo', 'ok' => ok} }
+    let(:desc_options) do
+      { 'isWritablePrimary' => true,
+        'minWireVersion' => 2, 'maxWireVersion' => 8,
+        'setName' => 'foo', 'ok' => ok }
+    end
 
     it 'is primary' do
       expect(description).to be_primary
     end
 
-    %w(
+    %w[
       arbiter hidden passive mongos secondary standalone
       other unknown ghost
-    ).each do |type|
+    ].each do |type|
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
@@ -125,18 +130,20 @@ describe Mongo::Server::Description do
   end
 
   context 'secondary' do
-    let(:desc_options) { {'secondary' => true,
-      'minWireVersion' => 2, 'maxWireVersion' => 8,
-      'setName' => 'foo', 'ok' => ok} }
+    let(:desc_options) do
+      { 'secondary' => true,
+        'minWireVersion' => 2, 'maxWireVersion' => 8,
+        'setName' => 'foo', 'ok' => ok }
+    end
 
     it 'is secondary' do
       expect(description).to be_secondary
     end
 
-    %w(
+    %w[
       arbiter hidden passive mongos primary standalone
       other unknown ghost
-    ).each do |type|
+    ].each do |type|
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
@@ -157,9 +164,11 @@ describe Mongo::Server::Description do
     end
 
     context 'passive' do
-      let(:desc_options) { {'secondary' => true,
-        'minWireVersion' => 2, 'maxWireVersion' => 8,
-        'setName' => 'foo', 'passive' => true, 'ok' => ok} }
+      let(:desc_options) do
+        { 'secondary' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 8,
+          'setName' => 'foo', 'passive' => true, 'ok' => ok }
+      end
 
       it 'is passive' do
         expect(description).to be_passive
@@ -182,18 +191,20 @@ describe Mongo::Server::Description do
   end
 
   context 'arbiter' do
-    let(:desc_options) { {'arbiterOnly' => true,
-      'minWireVersion' => 2, 'maxWireVersion' => 8,
-      'setName' => 'foo', 'ok' => ok} }
+    let(:desc_options) do
+      { 'arbiterOnly' => true,
+        'minWireVersion' => 2, 'maxWireVersion' => 8,
+        'setName' => 'foo', 'ok' => ok }
+    end
 
     it 'is arbiter' do
       expect(description).to be_arbiter
     end
 
-    %w(
+    %w[
       secondary hidden passive mongos primary standalone
       other unknown ghost
-    ).each do |type|
+    ].each do |type|
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
@@ -211,16 +222,16 @@ describe Mongo::Server::Description do
   end
 
   context 'standalone' do
-    let(:desc_options) { {'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok} }
+    let(:desc_options) { { 'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok } }
 
     it 'is standalone' do
       expect(description).to be_standalone
     end
 
-    %w(
+    %w[
       secondary hidden passive mongos primary arbiter
       other unknown ghost
-    ).each do |type|
+    ].each do |type|
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
@@ -238,17 +249,15 @@ describe Mongo::Server::Description do
   end
 
   context 'other' do
-
     shared_examples_for 'is other' do
-
       it 'is other' do
         expect(description).to be_other
       end
 
-      %w(
+      %w[
         secondary passive mongos primary arbiter
         standalone unknown ghost
-      ).each do |type|
+      ].each do |type|
         it "is not #{type}" do
           expect(description.send("#{type}?")).to be false
         end
@@ -266,9 +275,11 @@ describe Mongo::Server::Description do
     end
 
     context 'hidden: true' do
-      let(:desc_options) { {'setName' => 'foo',
-        'minWireVersion' => 2, 'maxWireVersion' => 8,
-        'hidden' => true, 'ok' => ok} }
+      let(:desc_options) do
+        { 'setName' => 'foo',
+          'minWireVersion' => 2, 'maxWireVersion' => 8,
+          'hidden' => true, 'ok' => ok }
+      end
 
       it_behaves_like 'is other'
 
@@ -278,8 +289,10 @@ describe Mongo::Server::Description do
     end
 
     context 'not hidden: true' do
-      let(:desc_options) { {'setName' => 'foo',
-        'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok} }
+      let(:desc_options) do
+        { 'setName' => 'foo',
+          'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok }
+      end
 
       it_behaves_like 'is other'
 

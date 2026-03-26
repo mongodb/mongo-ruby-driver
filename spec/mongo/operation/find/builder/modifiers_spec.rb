@@ -1,16 +1,12 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Operation::Find::Builder::Modifiers do
-
   describe '.map_driver_options' do
-
     shared_examples_for 'transformable driver options' do
-
       it 'maps hint' do
-        expect(transformed[:hint]).to eq("_id" => 1)
+        expect(transformed[:hint]).to eq('_id' => 1)
       end
 
       it 'maps comment' do
@@ -26,11 +22,11 @@ describe Mongo::Operation::Find::Builder::Modifiers do
       end
 
       it 'maps max' do
-        expect(transformed[:max_value]).to eq("name" => 'joe')
+        expect(transformed[:max_value]).to eq('name' => 'joe')
       end
 
       it 'maps min' do
-        expect(transformed[:min_value]).to eq("name" => 'albert')
+        expect(transformed[:min_value]).to eq('name' => 'albert')
       end
 
       it 'maps return key' do
@@ -55,7 +51,6 @@ describe Mongo::Operation::Find::Builder::Modifiers do
     end
 
     context 'when the keys are strings' do
-
       let(:modifiers) do
         {
           '$orderby' => { name: 1 },
@@ -80,7 +75,6 @@ describe Mongo::Operation::Find::Builder::Modifiers do
     end
 
     context 'when the keys are symbols' do
-
       let(:modifiers) do
         {
           :$orderby => { name: 1 },
@@ -106,11 +100,9 @@ describe Mongo::Operation::Find::Builder::Modifiers do
   end
 
   describe '.map_server_modifiers' do
-
     shared_examples_for 'transformable server modifiers' do
-
       it 'maps hint' do
-        expect(transformed[:$hint]).to eq("_id" => 1)
+        expect(transformed[:$hint]).to eq('_id' => 1)
       end
 
       it 'maps comment' do
@@ -126,11 +118,11 @@ describe Mongo::Operation::Find::Builder::Modifiers do
       end
 
       it 'maps max' do
-        expect(transformed[:$max]).to eq("name" => 'joe')
+        expect(transformed[:$max]).to eq('name' => 'joe')
       end
 
       it 'maps min' do
-        expect(transformed[:$min]).to eq("name" => 'albert')
+        expect(transformed[:$min]).to eq('name' => 'albert')
       end
 
       it 'maps return key' do
@@ -159,7 +151,6 @@ describe Mongo::Operation::Find::Builder::Modifiers do
     end
 
     context 'when the keys are strings' do
-
       let(:options) do
         {
           'sort' => { name: 1 },
@@ -185,21 +176,20 @@ describe Mongo::Operation::Find::Builder::Modifiers do
     end
 
     context 'when the keys are symbols' do
-
       let(:options) do
         {
-          :sort => { name: 1 },
-          :hint => { _id: 1 },
-          :comment => 'testing',
-          :snapshot => true,
-          :max_scan => 200,
-          :max_value => { name: 'joe' },
-          :min_value => { name: 'albert' },
-          :max_time_ms => 500,
-          :return_key => true,
-          :show_disk_loc => true,
-          :explain => true,
-          :limit => 10
+          sort: { name: 1 },
+          hint: { _id: 1 },
+          comment: 'testing',
+          snapshot: true,
+          max_scan: 200,
+          max_value: { name: 'joe' },
+          min_value: { name: 'albert' },
+          max_time_ms: 500,
+          return_key: true,
+          show_disk_loc: true,
+          explain: true,
+          limit: 10
         }
       end
 

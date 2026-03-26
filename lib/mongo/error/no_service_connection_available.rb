@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Raised when the driver requires a connection to a particular service
     # but no matching connections exist in the connection pool.
     class NoServiceConnectionAvailable < Error
@@ -41,7 +39,7 @@ module Mongo
         new(
           "The connection pool for #{address} does not have a connection for service #{service_id}",
           address: address,
-          service_id: service_id,
+          service_id: service_id
         )
       end
     end

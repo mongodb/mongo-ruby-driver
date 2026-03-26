@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Collection do
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
@@ -29,7 +27,6 @@ describe Mongo::Collection do
     end
 
     context 'when the collection has no options' do
-
       let(:collection) do
         described_class.new(database, :specs)
       end
@@ -48,17 +45,14 @@ describe Mongo::Collection do
     end
 
     context 'when the collection has options' do
-
       context 'when the collection is capped' do
-
         shared_examples 'a capped collection command' do
-
           let!(:response) do
             collection.create
           end
 
           let(:options) do
-            { :capped => true, :size => 1024 }
+            { capped: true, size: 1024 }
           end
 
           it 'executes the command' do
@@ -75,14 +69,13 @@ describe Mongo::Collection do
         end
 
         shared_examples 'a validated collection command' do
-
           let!(:response) do
             collection.create
           end
 
           let(:options) do
-            { :validator => { fieldName: { '$gte' =>  1024 } },
-              :validationLevel => 'strict' }
+            { validator: { fieldName: { '$gte' => 1024 } },
+              validationLevel: 'strict' }
           end
 
           let(:collection_info) do
@@ -103,7 +96,6 @@ describe Mongo::Collection do
         end
 
         context 'when instantiating a collection directly' do
-
           let(:collection) do
             described_class.new(database, :specs, options)
           end
@@ -113,7 +105,6 @@ describe Mongo::Collection do
         end
 
         context 'when instantiating a collection through the database' do
-
           let(:collection) do
             authorized_client[:specs, options]
           end
@@ -123,7 +114,6 @@ describe Mongo::Collection do
         end
 
         context 'when instantiating a collection using create' do
-
           before do
             authorized_client[:specs].drop
           end
@@ -137,7 +127,7 @@ describe Mongo::Collection do
           end
 
           let(:collstats) do
-            collection.aggregate([ {'$collStats' => { 'storageStats' => {} }} ]).first
+            collection.aggregate([ { '$collStats' => { 'storageStats' => {} } } ]).first
           end
 
           let(:storage_stats) do
@@ -145,7 +135,7 @@ describe Mongo::Collection do
           end
 
           let(:options) do
-            { :capped => true, :size => 4096, :max => 512 }
+            { capped: true, size: 4096, max: 512 }
           end
 
           it 'executes the command' do
@@ -160,16 +150,15 @@ describe Mongo::Collection do
             expect(database.collection_names).to include('specs')
           end
 
-          it "applies the options" do
-            expect(storage_stats["capped"]).to be true
-            expect(storage_stats["max"]).to eq(512)
-            expect(storage_stats["maxSize"]).to eq(4096)
+          it 'applies the options' do
+            expect(storage_stats['capped']).to be true
+            expect(storage_stats['max']).to eq(512)
+            expect(storage_stats['maxSize']).to eq(4096)
           end
         end
       end
 
       context 'when the collection has a write concern' do
-
         before do
           database[:specs].drop
         end
@@ -188,9 +177,9 @@ describe Mongo::Collection do
           require_topology :replica_set
 
           it 'applies the write concern' do
-            expect{
+            expect do
               collection.create
-            }.to raise_exception(Mongo::Error::OperationFailure)
+            end.to raise_exception(Mongo::Error::OperationFailure)
           end
         end
 
@@ -206,7 +195,7 @@ describe Mongo::Collection do
           end
 
           let(:options) do
-            { write_concern: {w: 1} }
+            { write_concern: { w: 1 } }
           end
 
           let!(:collection) do
@@ -214,8 +203,8 @@ describe Mongo::Collection do
           end
 
           let!(:command) do
-            Utils.get_command_event(authorized_client, 'create') do |client|
-              collection.create({ write_concern: {w: 2} })
+            Utils.get_command_event(authorized_client, 'create') do |_client|
+              collection.create({ write_concern: { w: 2 } })
             end.command
           end
 
@@ -227,15 +216,13 @@ describe Mongo::Collection do
       end
 
       context 'when the collection has a collation' do
-
         shared_examples 'a collection command with a collation option' do
-
           let(:response) do
             collection.create
           end
 
           let(:options) do
-            { :collation => { locale: 'fr' } }
+            { collation: { locale: 'fr' } }
           end
 
           let(:collection_info) do
@@ -262,7 +249,6 @@ describe Mongo::Collection do
         end
 
         context 'when instantiating a collection directly' do
-
           let(:collection) do
             described_class.new(database, :specs, options)
           end
@@ -271,7 +257,6 @@ describe Mongo::Collection do
         end
 
         context 'when instantiating a collection through the database' do
-
           let(:collection) do
             authorized_client[:specs, options]
           end
@@ -280,7 +265,6 @@ describe Mongo::Collection do
         end
 
         context 'when passing the options through create' do
-
           let(:collection) do
             authorized_client[:specs]
           end
@@ -290,7 +274,7 @@ describe Mongo::Collection do
           end
 
           let(:options) do
-            { :collation => { locale: 'fr' } }
+            { collation: { locale: 'fr' } }
           end
 
           let(:collection_info) do
@@ -318,7 +302,6 @@ describe Mongo::Collection do
       end
 
       context 'when a session is provided' do
-
         let(:collection) do
           authorized_client[:specs]
         end
@@ -349,14 +332,13 @@ describe Mongo::Collection do
     end
 
     context 'when collation has a strength' do
-
       let(:band_collection) do
         described_class.new(database, :bands)
       end
 
       before do
         band_collection.delete_many
-        band_collection.insert_many([{ name: "Depeche Mode" }, { name: "New Order" }])
+        band_collection.insert_many([ { name: 'Depeche Mode' }, { name: 'New Order' } ])
       end
 
       let(:options) do
@@ -373,7 +355,6 @@ describe Mongo::Collection do
   end
 
   describe '#drop' do
-
     let(:database) do
       authorized_client.database
     end
@@ -383,7 +364,6 @@ describe Mongo::Collection do
     end
 
     context 'when the collection exists' do
-
       before do
         authorized_client[:specs].drop
         collection.create
@@ -392,7 +372,6 @@ describe Mongo::Collection do
       end
 
       context 'when a session is provided' do
-
         let(:operation) do
           collection.drop(session: session)
         end
@@ -419,7 +398,6 @@ describe Mongo::Collection do
       end
 
       context 'when the collection does not have a write concern set' do
-
         let!(:response) do
           collection.drop
         end
@@ -429,7 +407,7 @@ describe Mongo::Collection do
         end
 
         it 'drops the collection from the database' do
-          expect(database.collection_names).to_not include('specs')
+          expect(database.collection_names).not_to include('specs')
         end
 
         context 'when the collection does not exist' do
@@ -443,7 +421,6 @@ describe Mongo::Collection do
       end
 
       context 'when the collection has a write concern' do
-
         let(:write_options) do
           {
             write: INVALID_WRITE_CONCERN
@@ -458,9 +435,9 @@ describe Mongo::Collection do
           require_set_write_concern
 
           it 'applies the write concern' do
-            expect{
+            expect do
               collection_with_write_options.drop
-            }.to raise_exception(Mongo::Error::OperationFailure)
+            end.to raise_exception(Mongo::Error::OperationFailure)
           end
         end
 
@@ -472,7 +449,7 @@ describe Mongo::Collection do
           end
 
           let(:options) do
-            { write_concern: {w: 1} }
+            { write_concern: { w: 1 } }
           end
 
           let!(:collection) do
@@ -480,8 +457,8 @@ describe Mongo::Collection do
           end
 
           let!(:command) do
-            Utils.get_command_event(authorized_client, 'drop') do |client|
-              collection.drop({ write_concern: {w: 0} })
+            Utils.get_command_event(authorized_client, 'drop') do |_client|
+              collection.drop({ write_concern: { w: 0 } })
             end.command
           end
 
@@ -498,10 +475,8 @@ describe Mongo::Collection do
       max_server_fcv '6.99.99'
 
       before do
-        begin
-          collection.drop
-        rescue Mongo::Error::OperationFailure
-        end
+        collection.drop
+      rescue Mongo::Error::OperationFailure
       end
 
       it 'returns false' do
@@ -509,18 +484,17 @@ describe Mongo::Collection do
       end
     end
 
-    context "when providing a pipeline in create" do
-
+    context 'when providing a pipeline in create' do
       let(:options) do
-        { view_on: "specs", pipeline: [ { :'$project' => { "baz": "$bar" } } ] }
+        { view_on: 'specs', pipeline: [ { '$project': { baz: '$bar' } } ] }
       end
 
       before do
-        authorized_client["my_view"].drop
+        authorized_client['my_view'].drop
         authorized_client[:specs].drop
       end
 
-      it "the pipeline gets passed to the command" do
+      it 'the pipeline gets passed to the command' do
         expect(Mongo::Operation::Create).to receive(:new).and_wrap_original do |m, *args|
           expect(args.first.slice(:selector)[:selector]).to have_key(:pipeline)
           expect(args.first.slice(:selector)[:selector]).to have_key(:viewOn)
@@ -533,7 +507,6 @@ describe Mongo::Collection do
   end
 
   describe '#indexes' do
-
     let(:index_spec) do
       { name: 1 }
     end
@@ -549,7 +522,7 @@ describe Mongo::Collection do
     end
 
     it 'returns a list of indexes' do
-      expect(index_names).to include(*'name_1', '_id_')
+      expect(index_names).to include('name_1', '_id_')
     end
 
     context 'when a session is provided' do
@@ -574,11 +547,10 @@ describe Mongo::Collection do
     end
 
     context 'when batch size is specified' do
-
       let(:batch_size) { 1 }
 
       it 'returns a list of indexes' do
-        expect(index_names).to include(*'name_1', '_id_')
+        expect(index_names).to include('name_1', '_id_')
       end
     end
   end

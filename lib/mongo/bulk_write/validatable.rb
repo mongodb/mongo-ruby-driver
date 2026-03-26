@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,14 +16,12 @@
 
 module Mongo
   class BulkWrite
-
     # Defines behavior around validations.
     #
     # @api private
     #
     # @since 2.1.0
     module Validatable
-
       # Validate the document.
       #
       # @api private
@@ -43,33 +40,29 @@ module Mongo
       def validate(name, document)
         validate_operation(name)
         validate_document(name, document)
-        if document.respond_to?(:keys) && (document[:collation] || document[Operation::COLLATION])
-          @has_collation = true
-        end
+        @has_collation = true if document.respond_to?(:keys) && (document[:collation] || document[Operation::COLLATION])
 
-        if document.respond_to?(:keys) && document[:array_filters]
-          @has_array_filters = true
-        end
+        @has_array_filters = true if document.respond_to?(:keys) && document[:array_filters]
 
-        if document.respond_to?(:keys) && document[:hint]
-          @has_hint = true
-        end
+        return unless document.respond_to?(:keys) && document[:hint]
+
+        @has_hint = true
       end
 
       private
 
       def validate_document(name, document)
-        if document.respond_to?(:keys) || document.respond_to?(:data)
-          document
-        else
+        unless document.respond_to?(:keys) || document.respond_to?(:data)
           raise Error::InvalidBulkOperation.new(name, document)
         end
+
+        document
       end
 
       def validate_operation(name)
-        unless Transformable::MAPPERS.key?(name)
-          raise Error::InvalidBulkOperationType.new(name)
-        end
+        return if Transformable::MAPPERS.key?(name)
+
+        raise Error::InvalidBulkOperationType.new(name)
       end
     end
   end

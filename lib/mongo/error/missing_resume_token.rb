@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,16 +16,14 @@
 
 module Mongo
   class Error
-
     # Raised if a change stream document is returned without a resume token.
     #
     # @since 2.5.0
     class MissingResumeToken < Error
-
       # The error message.
       #
       # @since 2.5.0
-      MESSAGE = 'Cannot provide resume functionality when the resume token is missing'.freeze
+      MESSAGE = 'Cannot provide resume functionality when the resume token is missing'
 
       # Create the new exception.
       #

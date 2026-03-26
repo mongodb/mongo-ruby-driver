@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Class for parsing the various forms that errors can come in from MongoDB
     # command responses.
     #
@@ -88,10 +86,10 @@ module Mongo
         @document = document || {}
         @replies = replies
         @options = if options
-          options.dup
-        else
-          {}
-        end.freeze
+                     options.dup
+                   else
+                     {}
+                   end.freeze
         parse!
       end
 
@@ -159,17 +157,15 @@ module Mongo
 
       def parse!
         if document['ok'] != 1 && document['writeErrors']
-          raise ArgumentError, "writeErrors should only be given in successful responses"
+          raise ArgumentError, 'writeErrors should only be given in successful responses'
         end
 
-        @message = +""
+        @message = +''
         parse_single(@message, '$err')
         parse_single(@message, 'err')
         parse_single(@message, 'errmsg')
         parse_multiple(@message, 'writeErrors')
-        if write_concern_error_document
-          parse_single(@message, 'errmsg', write_concern_error_document)
-        end
+        parse_single(@message, 'errmsg', write_concern_error_document) if write_concern_error_document
         parse_flag(@message)
         parse_code
         parse_labels
@@ -179,27 +175,27 @@ module Mongo
         @message = self.class.build_message(
           code: code,
           code_name: code_name,
-          message: @message,
+          message: @message
         )
       end
 
       def parse_single(message, key, doc = document)
-        if error = doc[key]
-          append(message, error)
-        end
+        return unless error = doc[key]
+
+        append(message, error)
       end
 
       def parse_multiple(message, key)
-        if errors = document[key]
-          errors.each do |error|
-            parse_single(message, 'errmsg', error)
-          end
+        return unless errors = document[key]
+
+        errors.each do |error|
+          parse_single(message, 'errmsg', error)
         end
       end
 
       def parse_flag(message)
         if replies && replies.first &&
-            (replies.first.respond_to?(:cursor_not_found?)) && replies.first.cursor_not_found?
+           replies.first.respond_to?(:cursor_not_found?) && replies.first.cursor_not_found?
           append(message, CURSOR_NOT_FOUND)
         end
       end
@@ -224,25 +220,22 @@ module Mongo
         # codes of the top level response with write concern error codes.
         # In practice this should never be an issue as a write concern
         # can only fail after the operation succeeds on the primary.
-        if @code.nil? && @code_name.nil?
-          if subdoc = write_concern_error_document
-            @code = subdoc['code']
-            @code_name = subdoc['codeName']
-          end
+        if @code.nil? && @code_name.nil? && (subdoc = write_concern_error_document)
+          @code = subdoc['code']
+          @code_name = subdoc['codeName']
         end
 
-        if @code.nil? && @code_name.nil?
-          # If we have writeErrors, and all of their codes are the same,
-          # use that code. Otherwise don't set the code
-          if write_errors = document['writeErrors']
-            codes = write_errors.map { |e| e['code'] }.compact
-            if codes.uniq.length == 1
-              @code = codes.first
-              # code name may not be returned by the server
-              @code_name = write_errors.map { |e| e['codeName'] }.compact.first
-            end
-          end
-        end
+        return unless @code.nil? && @code_name.nil?
+        # If we have writeErrors, and all of their codes are the same,
+        # use that code. Otherwise don't set the code
+        return unless write_errors = document['writeErrors']
+
+        codes = write_errors.map { |e| e['code'] }.compact
+        return unless codes.uniq.length == 1
+
+        @code = codes.first
+        # code name may not be returned by the server
+        @code_name = write_errors.map { |e| e['codeName'] }.compact.first
       end
 
       def parse_labels
@@ -251,8 +244,8 @@ module Mongo
 
       def parse_wtimeout
         @wtimeout = write_concern_error_document &&
-          write_concern_error_document['errInfo'] &&
-          write_concern_error_document['errInfo']['wtimeout']
+                    write_concern_error_document['errInfo'] &&
+                    write_concern_error_document['errInfo']['wtimeout']
       end
     end
   end

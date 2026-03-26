@@ -1,14 +1,11 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'runners/cmap/verifier'
 
 module Mongo
   module Cmap
-
     # Represents a specification.
     class Spec
-
       # @return [ String ] description The spec description.
       attr_reader :description
 
@@ -128,7 +125,7 @@ module Mongo
                         'reason' => event.reason,
                         'address' => event.address,
                       }
-                   when Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut
+                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut
                       {
                         'type' => 'ConnectionCheckedOut',
                         'connectionId' => event.connection_id,
@@ -164,12 +161,12 @@ module Mongo
       end
 
       def disable_fail_points
-        if @fail_point_command
-          @client.command(
-            configureFailPoint: @fail_point_command['configureFailPoint'],
-            mode: 'off'
-          )
-        end
+        return unless @fail_point_command
+
+        @client.command(
+          configureFailPoint: @fail_point_command['configureFailPoint'],
+          mode: 'off'
+        )
       end
 
       def kill_remaining_threads
@@ -179,18 +176,10 @@ module Mongo
       def satisfied?
         cc = ClusterConfig.instance
         ok = true
-        if @min_server_version
-          ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(@min_server_version)
-        end
-        if @max_server_version
-          ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(@max_server_version)
-        end
-        if @topologies
-          ok &&= @topologies.include?(cc.topology)
-        end
-        if @oses
-          ok &&= @oses.any? { |os| SpecConfig.instance.send("#{os.to_s}?")}
-        end
+        ok &&= Gem::Version.new(cc.fcv_ish) >= Gem::Version.new(@min_server_version) if @min_server_version
+        ok &&= Gem::Version.new(cc.server_version) <= Gem::Version.new(@max_server_version) if @max_server_version
+        ok &&= @topologies.include?(cc.topology) if @topologies
+        ok &&= @oses.any? { |os| SpecConfig.instance.send("#{os}?") } if @oses
         ok
       end
 
@@ -198,8 +187,8 @@ module Mongo
 
       # Converts the options used by the Ruby driver to the spec test format.
       def normalize_options(options)
-        (options || {}).reduce({}) do |opts, kv|
-         case kv.first
+        (options || {}).each_with_object({}) do |kv, opts|
+          case kv.first
           when :max_idle_time
             opts['maxIdleTimeMS'] = (kv.last * 1000.0).to_i
           when :max_size
@@ -211,8 +200,6 @@ module Mongo
           when :wait_timeout
             opts['waitQueueTimeoutMS'] = (kv.last * 1000.0).to_i
           end
-
-          opts
         end
       end
 
@@ -246,44 +233,40 @@ module Mongo
       end
 
       def process_run_on
-        if run_on = @test['runOn']
-          @min_server_version = run_on.detect do |doc|
-            doc.keys.first == 'minServerVersion'
-          end&.values&.first
-          @max_server_version = run_on.detect do |doc|
-            doc.keys.first == 'maxServerVersion'
-          end&.values&.first
+        return unless run_on = @test['runOn']
 
-          @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }
-            (topologies['topology'] || {}).map do |topology|
-              {
-                'replicaset' => :replica_set,
-                'single' => :single,
-                'sharded' => :sharded,
-                'sharded-replicaset' => :sharded,
-                'load-balanced' => :load_balanced,
-              }[topology].tap do |v|
-                unless v
-                  raise "Unknown topology #{topology}"
-                end
-              end
-            end
-          end
+        @min_server_version = run_on.detect do |doc|
+          doc.keys.first == 'minServerVersion'
+        end&.values&.first
+        @max_server_version = run_on.detect do |doc|
+          doc.keys.first == 'maxServerVersion'
+        end&.values&.first
 
-          @oses = if oses = run_on.detect { |doc| doc.keys.first == 'requireOs' }
-            (oses['requireOs'] || {}).map do |os|
-              {
-                'macos' => :macos,
-                'linux' => :linux,
-                'windows' => :windows,
-              }[os].tap do |v|
-                unless v
-                  raise "Unknown os #{os}"
+        @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }
+                        (topologies['topology'] || {}).map do |topology|
+                          {
+                            'replicaset' => :replica_set,
+                            'single' => :single,
+                            'sharded' => :sharded,
+                            'sharded-replicaset' => :sharded,
+                            'load-balanced' => :load_balanced,
+                          }[topology].tap do |v|
+                            raise "Unknown topology #{topology}" unless v
+                          end
+                        end
+                      end
+
+        @oses = if oses = run_on.detect { |doc| doc.keys.first == 'requireOs' }
+                  (oses['requireOs'] || {}).map do |os|
+                    {
+                      'macos' => :macos,
+                      'linux' => :linux,
+                      'windows' => :windows,
+                    }[os].tap do |v|
+                      raise "Unknown os #{os}" unless v
+                    end
+                  end
                 end
-              end
-            end
-          end
-        end
       end
 
       def configure_fail_point
@@ -397,11 +380,9 @@ module Mongo
             rescue ThreadError
               # Queue is empty
             end
-            if thread_context.stop?
-              break
-            else
-              sleep 0.1
-            end
+            break if thread_context.stop?
+
+            sleep 0.1
           end
         end
         class << thread
@@ -415,9 +396,9 @@ module Mongo
 
         # Since we expect exceptions to occur in some cases, we disable the printing of error
         # messages from the thread if the Ruby version supports it.
-        if state[target].respond_to?(:report_on_exception)
-          state[target].report_on_exception = false
-        end
+        return unless state[target].respond_to?(:report_on_exception)
+
+        state[target].report_on_exception = false
       end
 
       def run_wait_op(_state)
@@ -425,32 +406,31 @@ module Mongo
       end
 
       def run_wait_for_thread_op(state)
-        if thread = state[target]
-          thread.context.signal_stop
-          thread.join
-        else
-          raise "Expected thread for '#{thread}' but none exists."
-        end
+        raise "Expected thread for '#{thread}' but none exists." unless thread = state[target]
+
+        thread.context.signal_stop
+        thread.join
+
         nil
       end
 
-      def run_wait_for_event_op(state)
-        subscriber = @spec.subscriber
+      def run_wait_for_event_op(_state)
+        @spec.subscriber
         looped = 0
         deadline = Utils.monotonic_time + 3
         loop do
           actual_events = @spec.subscriber.published_events.select do |e|
             e.class.name.sub(/.*::/, '').sub(/^ConnectionPool/, 'Pool') == @event.sub(/^ConnectionPool/, 'Pool')
           end
-          if actual_events.length >= @count
-            break
-          end
+          break if actual_events.length >= @count
+
           if looped == 1
             puts("Waiting for #{@count} #{@event} events (have #{actual_events.length}): #{@spec.description}")
           end
           if Utils.monotonic_time > deadline
             raise "Did not receive #{@count} #{@event} events in time (have #{actual_events.length}): #{@spec.description}"
           end
+
           looped += 1
           sleep 0.1
         end
@@ -462,14 +442,12 @@ module Mongo
       end
 
       def run_checkin_op(state)
-        until state[connection]
-          sleep(0.2)
-        end
+        sleep(0.2) until state[connection]
 
         pool.check_in(state[connection])
       end
 
-      def run_clear_op(state)
+      def run_clear_op(_state)
         RSpec::Mocks.with_temporary_scope do
           allow(pool.server).to receive(:unknown?).and_return(true)
 
@@ -477,22 +455,21 @@ module Mongo
         end
       end
 
-      def run_close_op(state)
+      def run_close_op(_state)
         pool.close
       end
 
-      def run_ready_op(state)
+      def run_ready_op(_state)
         pool.ready
       end
 
       def run_on_thread(state)
-        if thd = state[thread]
-          thd.context.operations << self
-          # Sleep to allow the other thread to execute the new command.
-          sleep 0.1
-        else
-          raise "Expected thread for '#{thread}' but none exists."
-        end
+        raise "Expected thread for '#{thread}' but none exists." unless thd = state[thread]
+
+        thd.context.operations << self
+        # Sleep to allow the other thread to execute the new command.
+        sleep 0.1
+
         nil
       end
     end

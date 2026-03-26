@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/session/session_pool'
 require 'mongo/session/server_session'
 
 module Mongo
-
   # A logical session representing a set of sequential operations executed
   # by an application that are related in some way.
   #
@@ -88,10 +86,8 @@ module Mongo
         unless server_session.nil?
           raise ArgumentError, 'Implicit session cannot reference server session during construction'
         end
-      else
-        if server_session.nil?
-          raise ArgumentError, 'Explicit session must reference server session during construction'
-        end
+      elsif server_session.nil?
+        raise ArgumentError, 'Explicit session must reference server session during construction'
       end
 
       @server_session = server_session
@@ -120,9 +116,7 @@ module Mongo
     # @since 2.5.1
     attr_reader :client
 
-    def cluster
-      @cluster
-    end
+    attr_reader :cluster
 
     # @return [ true | false ] Whether the session is configured for snapshot
     #   reads.
@@ -159,7 +153,7 @@ module Mongo
     #
     # @since 2.6.0
     def txn_options
-      @txn_options or raise ArgumentError, "There is no active transaction"
+      @txn_options or raise ArgumentError, 'There is no active transaction'
     end
 
     # Is this session an implicit one (not user-created).
@@ -234,7 +228,7 @@ module Mongo
     # @since 2.6.0
     def txn_read_preference
       rp = txn_options[:read] ||
-        @client.read_preference
+           @client.read_preference
       Mongo::Lint.validate_underscore_read_preference(rp)
       rp
     end
@@ -260,9 +254,7 @@ module Mongo
     #
     # @since 2.5.0
     def session_id
-      if ended?
-        raise Error::SessionEnded
-      end
+      raise Error::SessionEnded if ended?
 
       # An explicit session will always have a session_id, because during
       # construction a server session must be provided. An implicit session
@@ -271,9 +263,7 @@ module Mongo
       # to experience this failure because an implicit session shouldn't be
       # accessible to applications due to its lifetime being constrained to
       # operation execution, which is done entirely by the driver.
-      unless materialized?
-        raise Error::SessionNotMaterialized
-      end
+      raise Error::SessionNotMaterialized unless materialized?
 
       @server_session.session_id
     end
@@ -301,20 +291,20 @@ module Mongo
     #
     # @since 2.5.0
     MISMATCHED_CLUSTER_ERROR_MSG = 'The configuration of the client used to create this session does not match that ' +
-        'of the client owning this operation. Please only use this session for operations through its parent ' +
-        'client.'.freeze
+                                   'of the client owning this operation. Please only use this session for operations through its parent ' +
+                                   'client.'
 
     # Error message describing that the session cannot be used because it has already been ended.
     #
     # @since 2.5.0
-    SESSION_ENDED_ERROR_MSG = 'This session has ended and cannot be used. Please create a new one.'.freeze
+    SESSION_ENDED_ERROR_MSG = 'This session has ended and cannot be used. Please create a new one.'
 
     # Error message describing that sessions are not supported by the server version.
     #
     # @since 2.5.0
     # @deprecated
-    SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the connected servers.'.freeze
-    # Note: SESSIONS_NOT_SUPPORTED is used by Mongoid 7.6 and earlier
+    SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the connected servers.'
+    # NOTE: SESSIONS_NOT_SUPPORTED is used by Mongoid 7.6 and earlier
 
     # The state of a session in which the last operation was not related to
     # any transaction or no operations have yet occurred.
@@ -389,9 +379,7 @@ module Mongo
           rescue Mongo::Error, Error::AuthError
           end
         end
-        if @server_session
-          cluster.session_pool.checkin(@server_session)
-        end
+        cluster.session_pool.checkin(@server_session) if @server_session
       end
     ensure
       @server_session = nil
@@ -461,7 +449,7 @@ module Mongo
                    # CSOT enabled, so we have a customer defined deadline.
                    @with_transaction_deadline
                  else
-                    # CSOT not enabled, so we use the default deadline, 120 seconds.
+                   # CSOT not enabled, so we use the default deadline, 120 seconds.
                    Utils.monotonic_time + 120
                  end
       transaction_in_progress = false
@@ -477,23 +465,21 @@ module Mongo
             if backoff_would_exceed_deadline?(deadline, delay)
               raise Mongo::Error::TimeoutError, 'CSOT timeout expired waiting to retry withTransaction'
             end
-            unless @client.retry_policy.should_retry_overload?(overload_error_count, delay)
-              raise(last_error)
-            end
+            raise(last_error) unless @client.retry_policy.should_retry_overload?(overload_error_count, delay)
+
             sleep(delay)
           else
             backoff = backoff_seconds_for_retry(transaction_attempt)
             if backoff_would_exceed_deadline?(deadline, backoff)
               raise Mongo::Error::TimeoutError, 'CSOT timeout expired waiting to retry withTransaction'
             end
+
             sleep(backoff)
           end
         end
 
         commit_options = {}
-        if options
-          commit_options[:write_concern] = options[:write_concern]
-        end
+        commit_options[:write_concern] = options[:write_concern] if options
         start_transaction(options)
         transaction_in_progress = true
         transaction_attempt += 1
@@ -551,8 +537,7 @@ module Mongo
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
               if deadline_expired?(deadline) ||
-                e.is_a?(Error::OperationFailure::Family) && e.max_time_ms_expired?
-              then
+                 (e.is_a?(Error::OperationFailure::Family) && e.max_time_ms_expired?)
                 transaction_in_progress = false
                 raise
               end
@@ -579,13 +564,13 @@ module Mongo
               end
 
               wc_options = case v = commit_options[:write_concern]
-                when WriteConcern::Base
-                  v.options
-                when nil
-                  {}
-                else
-                  v
-                end
+                           when WriteConcern::Base
+                             v.options
+                           when nil
+                             {}
+                           else
+                             v
+                           end
               commit_options[:write_concern] = wc_options.merge(w: :majority)
               retry
             elsif e.label?('TransientTransactionError')
@@ -668,28 +653,25 @@ module Mongo
       if options
         Lint.validate_read_concern_option(options[:read_concern])
 
-=begin
-        # It would be handy to detect invalid read preferences here, but
-        # some of the spec tests require later detection of invalid read prefs.
-        # Maybe we can do this when lint mode is on.
-        mode = options[:read] && options[:read][:mode].to_s
-        if mode && mode != 'primary'
-          raise Mongo::Error::InvalidTransactionOperation.new(
-            "read preference in a transaction must be primary (requested: #{mode})"
-          )
-        end
-=end
+        #         # It would be handy to detect invalid read preferences here, but
+        #         # some of the spec tests require later detection of invalid read prefs.
+        #         # Maybe we can do this when lint mode is on.
+        #         mode = options[:read] && options[:read][:mode].to_s
+        #         if mode && mode != 'primary'
+        #           raise Mongo::Error::InvalidTransactionOperation.new(
+        #             "read preference in a transaction must be primary (requested: #{mode})"
+        #           )
+        #         end
       end
 
-      if snapshot?
-        raise Mongo::Error::SnapshotSessionTransactionProhibited
-      end
+      raise Mongo::Error::SnapshotSessionTransactionProhibited if snapshot?
 
       check_if_ended!
 
       if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
         raise Mongo::Error::InvalidTransactionOperation.new(
-          Mongo::Error::InvalidTransactionOperation::TRANSACTION_ALREADY_IN_PROGRESS)
+          Mongo::Error::InvalidTransactionOperation::TRANSACTION_ALREADY_IN_PROGRESS
+        )
       end
 
       unpin
@@ -699,7 +681,8 @@ module Mongo
 
       if txn_write_concern && !WriteConcern.get(txn_write_concern).acknowledged?
         raise Mongo::Error::InvalidTransactionOperation.new(
-          Mongo::Error::InvalidTransactionOperation::UNACKNOWLEDGED_WRITE_CONCERN)
+          Mongo::Error::InvalidTransactionOperation::UNACKNOWLEDGED_WRITE_CONCERN
+        )
       end
 
       @state = STARTING_TRANSACTION_STATE
@@ -728,7 +711,7 @@ module Mongo
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
     # @since 2.6.0
-    def commit_transaction(options=nil)
+    def commit_transaction(options = nil)
       QueryCache.clear
       check_if_ended!
       check_if_no_transaction!
@@ -736,7 +719,9 @@ module Mongo
       if within_states?(TRANSACTION_ABORTED_STATE)
         raise Mongo::Error::InvalidTransactionOperation.new(
           Mongo::Error::InvalidTransactionOperation.cannot_call_after_msg(
-            :abortTransaction, :commitTransaction))
+            :abortTransaction, :commitTransaction
+          )
+        )
       end
 
       options ||= {}
@@ -756,9 +741,7 @@ module Mongo
           @committing_transaction = true
 
           write_concern = options[:write_concern] || txn_options[:write_concern]
-          if write_concern && !write_concern.is_a?(WriteConcern::Base)
-            write_concern = WriteConcern.get(write_concern)
-          end
+          write_concern = WriteConcern.get(write_concern) if write_concern && !write_concern.is_a?(WriteConcern::Base)
 
           context = Operation::Context.new(
             client: @client,
@@ -766,15 +749,14 @@ module Mongo
             operation_timeouts: operation_timeouts(options)
           )
           write_with_retry(write_concern, ending_transaction: true,
-            context: context,
-          ) do |connection, txn_num, context|
+                                          context: context) do |connection, txn_num, context|
             if context.retry? && !context.overload_only_retry?
               if write_concern
                 wco = write_concern.options.merge(w: :majority)
-                wco[:wtimeout] ||= 10000
+                wco[:wtimeout] ||= 10_000
                 write_concern = WriteConcern.get(wco)
               else
-                write_concern = WriteConcern.get(w: :majority, wtimeout: 10000)
+                write_concern = WriteConcern.get(w: :majority, wtimeout: 10_000)
               end
             end
             spec = {
@@ -824,12 +806,15 @@ module Mongo
       if within_states?(TRANSACTION_COMMITTED_STATE)
         raise Mongo::Error::InvalidTransactionOperation.new(
           Mongo::Error::InvalidTransactionOperation.cannot_call_after_msg(
-            :commitTransaction, :abortTransaction))
+            :commitTransaction, :abortTransaction
+          )
+        )
       end
 
       if within_states?(TRANSACTION_ABORTED_STATE)
         raise Mongo::Error::InvalidTransactionOperation.new(
-          Mongo::Error::InvalidTransactionOperation.cannot_call_twice_msg(:abortTransaction))
+          Mongo::Error::InvalidTransactionOperation.cannot_call_twice_msg(:abortTransaction)
+        )
       end
 
       options ||= {}
@@ -843,21 +828,18 @@ module Mongo
             operation_timeouts: operation_timeouts(options)
           )
           write_with_retry(txn_options[:write_concern],
-            ending_transaction: true, context: context,
-          ) do |connection, txn_num, context|
-            begin
-              operation = Operation::Command.new(
-                selector: { abortTransaction: 1 },
-                db_name: 'admin',
-                session: self,
-                txn_num: txn_num
-              )
-              tracer.trace_operation(operation, context, op_name: 'abortTransaction') do
-                operation.execute_with_connection(connection, context: context)
-              end
-            ensure
-              unpin
+                           ending_transaction: true, context: context) do |connection, txn_num, context|
+            operation = Operation::Command.new(
+              selector: { abortTransaction: 1 },
+              db_name: 'admin',
+              session: self,
+              txn_num: txn_num
+            )
+            tracer.trace_operation(operation, context, op_name: 'abortTransaction') do
+              operation.execute_with_connection(connection, context: context)
             end
+          ensure
+            unpin
           end
         end
 
@@ -921,14 +903,12 @@ module Mongo
     #
     # @api private
     def pin_to_server(server)
-      if server.nil?
-        raise ArgumentError, 'Cannot pin to a nil server'
+      raise ArgumentError, 'Cannot pin to a nil server' if server.nil?
+
+      if Lint.enabled? && !server.mongos?
+        raise Error::LintError, "Attempted to pin the session to server #{server.summary} which is not a mongos"
       end
-      if Lint.enabled?
-        unless server.mongos?
-          raise Error::LintError, "Attempted to pin the session to server #{server.summary} which is not a mongos"
-        end
-      end
+
       @pinned_server = server
     end
 
@@ -939,9 +919,8 @@ module Mongo
     #
     # @api private
     def pin_to_connection(connection_global_id)
-      if connection_global_id.nil?
-        raise ArgumentError, 'Cannot pin to a nil connection id'
-      end
+      raise ArgumentError, 'Cannot pin to a nil connection id' if connection_global_id.nil?
+
       @pinned_connection_global_id = connection_global_id
     end
 
@@ -970,14 +949,12 @@ module Mongo
     # @api private
     def unpin_maybe(error, connection = nil)
       if !within_states?(Session::NO_TRANSACTION_STATE) &&
-        error.label?('TransientTransactionError')
-      then
+         error.label?('TransientTransactionError')
         unpin(connection)
       end
 
       if committing_transaction? &&
-        error.label?('UnknownTransactionCommitResult')
-      then
+         error.label?('UnknownTransactionCommitResult')
         unpin(connection)
       end
     end
@@ -1008,9 +985,7 @@ module Mongo
     # @api private
     def add_start_transaction!(command)
       command.tap do |c|
-        if starting_transaction?
-          c[:startTransaction] = true
-        end
+        c[:startTransaction] = true if starting_transaction?
       end
     end
 
@@ -1038,7 +1013,7 @@ module Mongo
     #
     # @since 2.6.0
     # @api private
-    def add_txn_opts!(command, read, context)
+    def add_txn_opts!(command, _read, context)
       command.tap do |c|
         # The read concern should be added to any command that starts a transaction.
         if starting_transaction?
@@ -1061,27 +1036,23 @@ module Mongo
           if rc.nil? || rc.empty?
             c.delete(:readConcern)
           else
-            c[:readConcern ] = Options::Mapper.transform_values_to_strings(rc)
+            c[:readConcern] = Options::Mapper.transform_values_to_strings(rc)
           end
         end
 
         # We need to send the read concern level as a string rather than a symbol.
-        if c[:readConcern]
-          c[:readConcern] = Options::Mapper.transform_values_to_strings(c[:readConcern])
-        end
+        c[:readConcern] = Options::Mapper.transform_values_to_strings(c[:readConcern]) if c[:readConcern]
 
-        if c[:commitTransaction]
-          if max_time_ms = txn_options[:max_commit_time_ms]
-            c[:maxTimeMS] = max_time_ms
-          end
+        if c[:commitTransaction] && (max_time_ms = txn_options[:max_commit_time_ms])
+          c[:maxTimeMS] = max_time_ms
         end
 
         # The write concern should be added to any abortTransaction or commitTransaction command.
-        if (c[:abortTransaction] || c[:commitTransaction])
+        if c[:abortTransaction] || c[:commitTransaction]
           if @already_committed
             wc = BSON::Document.new(c[:writeConcern] || txn_write_concern || {})
             wc.merge!(w: :majority)
-            wc[:wtimeout] ||= 10000
+            wc[:wtimeout] ||= 10_000
             c[:writeConcern] = wc
           elsif txn_write_concern
             c[:writeConcern] ||= txn_write_concern
@@ -1094,12 +1065,10 @@ module Mongo
         end
 
         # Ignore wtimeout if csot
-        if context&.csot?
-          c[:writeConcern]&.delete(:wtimeout)
-        end
+        c[:writeConcern]&.delete(:wtimeout) if context&.csot?
 
         # We must not send an empty (server default) write concern.
-        c.delete(:writeConcern) if c[:writeConcern]&.empty?
+        c.delete(:writeConcern) if c[:writeConcern] && c[:writeConcern].empty?
       end
     end
 
@@ -1137,11 +1106,11 @@ module Mongo
 
       mode = command['$readPreference']['mode'] || command['$readPreference'][:mode]
 
-      if mode && mode != 'primary'
-        raise Mongo::Error::InvalidTransactionOperation.new(
-          "read preference in a transaction must be primary (requested: #{mode})"
-        )
-      end
+      return unless mode && mode != 'primary'
+
+      raise Mongo::Error::InvalidTransactionOperation.new(
+        "read preference in a transaction must be primary (requested: #{mode})"
+      )
     end
 
     # Reverts the session state to STARTING_TRANSACTION_STATE.
@@ -1149,9 +1118,9 @@ module Mongo
     # startTransaction: true is preserved on the retry.
     # @api private
     def revert_to_starting_transaction!
-      if within_states?(TRANSACTION_IN_PROGRESS_STATE)
-        @state = STARTING_TRANSACTION_STATE
-      end
+      return unless within_states?(TRANSACTION_IN_PROGRESS_STATE)
+
+      @state = STARTING_TRANSACTION_STATE
     end
 
     # Update the state of the session due to a (non-commit and non-abort) operation being run.
@@ -1206,10 +1175,8 @@ module Mongo
       end
       @server_session.set_last_use!
 
-      if doc = result.reply && result.reply.documents.first
-        if doc[:recoveryToken]
-          self.recovery_token = doc[:recoveryToken]
-        end
+      if (doc = result.reply && result.reply.documents.first) && doc[:recoveryToken]
+        self.recovery_token = doc[:recoveryToken]
       end
 
       result
@@ -1226,11 +1193,11 @@ module Mongo
     #
     # @since 2.5.0
     def advance_operation_time(new_operation_time)
-      if @operation_time
-        @operation_time = [ @operation_time, new_operation_time ].max
-      else
-        @operation_time = new_operation_time
-      end
+      @operation_time = if @operation_time
+                          [ @operation_time, new_operation_time ].max
+                        else
+                          new_operation_time
+                        end
     end
 
     # If not already set, populate a session objects's server_session by
@@ -1240,9 +1207,7 @@ module Mongo
     #
     # @api private
     def materialize_if_needed
-      if ended?
-        raise Error::SessionEnded
-      end
+      raise Error::SessionEnded if ended?
 
       return unless implicit? && !@server_session
 
@@ -1253,9 +1218,7 @@ module Mongo
 
     # @api private
     def materialized?
-      if ended?
-        raise Error::SessionEnded
-      end
+      raise Error::SessionEnded if ended?
 
       !@server_session.nil?
     end
@@ -1270,9 +1233,7 @@ module Mongo
     # @since 2.5.0
     # @api private
     def next_txn_num
-      if ended?
-        raise Error::SessionEnded
-      end
+      raise Error::SessionEnded if ended?
 
       @server_session.next_txn_num
     end
@@ -1286,9 +1247,7 @@ module Mongo
     #
     # @since 2.6.0
     def txn_num
-      if ended?
-        raise Error::SessionEnded
-      end
+      raise Error::SessionEnded if ended?
 
       @server_session.txn_num
     end
@@ -1331,7 +1290,8 @@ module Mongo
       return unless within_states?(NO_TRANSACTION_STATE)
 
       raise Mongo::Error::InvalidTransactionOperation.new(
-        Mongo::Error::InvalidTransactionOperation::NO_TRANSACTION_STARTED)
+        Mongo::Error::InvalidTransactionOperation::NO_TRANSACTION_STARTED
+      )
     end
 
     def txn_write_concern
@@ -1342,25 +1302,23 @@ module Mongo
     # Returns causal consistency document if the last operation time is
     # known and causal consistency is enabled, otherwise returns nil.
     def causal_consistency_doc
-      if operation_time && causal_consistency?
-        {:afterClusterTime => operation_time}
-      else
-        nil
-      end
+      return unless operation_time && causal_consistency?
+
+      { afterClusterTime: operation_time }
     end
 
     def causal_consistency?
-      @causal_consistency ||= (if @options.key?(:causal_consistency)
-                                 !!@options[:causal_consistency]
-                               else
-                                 true
-                               end)
+      @causal_consistency ||= if @options.key?(:causal_consistency)
+                                !!@options[:causal_consistency]
+                              else
+                                true
+                              end
     end
 
     def set_operation_time(result)
-      if result && result.operation_time
-        @operation_time = result.operation_time
-      end
+      return unless result && result.operation_time
+
+      @operation_time = result.operation_time
     end
 
     def check_if_ended!
@@ -1368,13 +1326,13 @@ module Mongo
     end
 
     def check_matching_cluster!(client)
-      if cluster != client.cluster
-        raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
-      end
+      return unless cluster != client.cluster
+
+      raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
     end
 
     def check_transactions_supported!
-      raise Mongo::Error::TransactionsNotSupported, "standalone topology" if cluster.single?
+      raise Mongo::Error::TransactionsNotSupported, 'standalone topology' if cluster.single?
     end
 
     def operation_timeouts(opts)
@@ -1384,20 +1342,18 @@ module Mongo
         if @inside_with_transaction
           if opts[:timeout_ms]
             raise Mongo::Error::InvalidTransactionOperation,
-              'timeoutMS cannot be overridden inside a withTransaction callback'
+                  'timeoutMS cannot be overridden inside a withTransaction callback'
           end
-        else
-          if timeout_ms = opts[:timeout_ms]
-            result[:operation_timeout_ms] = timeout_ms
-          elsif default_timeout_ms = options[:default_timeout_ms]
-            result[:operation_timeout_ms] = default_timeout_ms
-          end
+        elsif timeout_ms = opts[:timeout_ms]
+          result[:operation_timeout_ms] = timeout_ms
+        elsif default_timeout_ms = options[:default_timeout_ms]
+          result[:operation_timeout_ms] = default_timeout_ms
         end
       end
     end
 
     def calculate_with_transaction_deadline(opts)
-      calc = -> (timeout) {
+      calc = lambda { |timeout|
         if timeout == 0
           0
         else
@@ -1427,8 +1383,8 @@ module Mongo
     private_constant :BACKOFF_INITIAL, :BACKOFF_MAX
 
     def backoff_seconds_for_retry(transaction_attempt)
-      exponential = BACKOFF_INITIAL * (1.5 ** (transaction_attempt - 1))
-      Random.rand * [exponential, BACKOFF_MAX].min
+      exponential = BACKOFF_INITIAL * (1.5**(transaction_attempt - 1))
+      Random.rand * [ exponential, BACKOFF_MAX ].min
     end
 
     def backoff_would_exceed_deadline?(deadline, backoff_seconds)

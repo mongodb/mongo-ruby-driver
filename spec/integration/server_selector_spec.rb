@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -27,7 +26,8 @@ describe 'Server selector' do
       it 'raises NoServerAvailable with a message explaining the situation' do
         expect do
           result
-        end.to raise_error(Mongo::Error::NoServerAvailable, "Cluster has no addresses, and therefore will never have a server")
+        end.to raise_error(Mongo::Error::NoServerAvailable,
+                           'Cluster has no addresses, and therefore will never have a server')
       end
 
       it 'does not wait for server selection timeout' do
@@ -69,7 +69,8 @@ describe 'Server selector' do
           it 'raises NoServerAvailable with a message explaining the situation' do
             expect do
               result
-            end.to raise_error(Mongo::Error::NoServerAvailable, /The cluster is disconnected \(client may have been closed\)/)
+            end.to raise_error(Mongo::Error::NoServerAvailable,
+                               /The cluster is disconnected \(client may have been closed\)/)
           end
         end
 
@@ -89,12 +90,10 @@ describe 'Server selector' do
 
       before do
         client.cluster.servers.each do |server|
-          server.monitor.instance_variable_get('@thread').kill
+          server.monitor.instance_variable_get(:@thread).kill
         end
         server = client.cluster.next_primary
-        if server
-          server.instance_variable_set('@description', Mongo::Server::Description.new({}))
-        end
+        server.instance_variable_set(:@description, Mongo::Server::Description.new({})) if server
       end
 
       it 'raises NoServerAvailable with a message explaining the situation' do

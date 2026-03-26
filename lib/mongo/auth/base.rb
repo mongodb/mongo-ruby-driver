@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Auth
-
     # Base class for authenticators.
     #
     # Each authenticator is instantiated for authentication over a particular
@@ -25,7 +23,6 @@ module Mongo
     #
     # @api private
     class Base
-
       # @return [ Mongo::Auth::User ] The user to authenticate.
       attr_reader :user
 
@@ -37,7 +34,7 @@ module Mongo
       # @param [ Auth::User ] user The user to authenticate.
       # @param [ Mongo::Connection ] connection The connection to authenticate
       #   over.
-      def initialize(user, connection, **opts)
+      def initialize(user, connection, **_opts)
         @user = user
         @connection = connection
       end
@@ -74,8 +71,7 @@ module Mongo
       #   value of speculativeAuthenticate field of hello response of
       #   the handshake on the specified connection.
       def converse_multi_step(connection, conversation,
-        speculative_auth_result: nil
-      )
+                              speculative_auth_result: nil)
         # Although the SASL conversation in theory can have any number of
         # steps, all defined authentication methods have a predefined number
         # of steps, and therefore all of our authenticators have a fixed set
@@ -97,26 +93,22 @@ module Mongo
         end
         unless reply_document[:done]
           raise Error::InvalidServerAuthResponse,
-            'Server did not respond with {done: true} after finalizing the conversation'
+                'Server did not respond with {done: true} after finalizing the conversation'
         end
         reply_document
       end
 
       def dispatch_msg(connection, conversation, msg)
         context = Operation::Context.new(options: {
-          server_api: connection.options[:server_api],
-        })
+                                           server_api: connection.options[:server_api],
+                                         })
         if server_api = context.server_api
           msg = msg.maybe_add_server_api(server_api)
         end
-        reply = connection.dispatch([msg], context)
+        reply = connection.dispatch([ msg ], context)
         reply_document = reply.documents.first
         validate_reply!(connection, conversation, reply_document)
-        connection_global_id = if connection.respond_to?(:global_id)
-          connection.global_id
-        else
-          nil
-        end
+        connection_global_id = (connection.global_id if connection.respond_to?(:global_id))
         result = Operation::Result.new(reply, connection.description, connection_global_id, context: context)
         connection.update_cluster_time(result)
         reply_document
@@ -124,21 +116,20 @@ module Mongo
 
       # Checks whether reply is successful (i.e. has {ok: 1} set) and
       # raises Unauthorized if not.
-      def validate_reply!(connection, conversation, doc)
-        if doc[:ok] != 1
-          message = Error::Parser.build_message(
-            code: doc[:code],
-            code_name: doc[:codeName],
-            message: doc[:errmsg],
-          )
+      def validate_reply!(connection, _conversation, doc)
+        return unless doc[:ok] != 1
 
-          raise Unauthorized.new(user,
-            used_mechanism: self.class.const_get(:MECHANISM),
-            message: message,
-            server: connection.server,
-            code: doc[:code]
-          )
-        end
+        message = Error::Parser.build_message(
+          code: doc[:code],
+          code_name: doc[:codeName],
+          message: doc[:errmsg]
+        )
+
+        raise Unauthorized.new(user,
+                               used_mechanism: self.class.const_get(:MECHANISM),
+                               message: message,
+                               server: connection.server,
+                               code: doc[:code])
       end
     end
   end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,22 +18,20 @@ module Mongo
   module Operation
     class Find
       module Builder
-
         # Provides behavior for converting Ruby options to wire protocol flags
         # when sending find and related commands (e.g. explain).
         #
         # @api private
         module Flags
-
           # Options to cursor flags mapping.
           MAPPINGS = {
-            :allow_partial_results => [ :partial ],
-            :oplog_replay => [ :oplog_replay ],
-            :no_cursor_timeout => [ :no_cursor_timeout ],
-            :tailable => [ :tailable_cursor ],
-            :tailable_await => [ :await_data, :tailable_cursor],
-            :await_data => [ :await_data ],
-            :exhaust => [ :exhaust ],
+            allow_partial_results: [ :partial ],
+            oplog_replay: [ :oplog_replay ],
+            no_cursor_timeout: [ :no_cursor_timeout ],
+            tailable: [ :tailable_cursor ],
+            tailable_await: %i[await_data tailable_cursor],
+            await_data: [ :await_data ],
+            exhaust: [ :exhaust ],
           }.freeze
 
           # Converts Ruby find options to an array of flags.
@@ -46,12 +43,9 @@ module Mongo
           #
           # @return [ Array<Symbol> ] The flags.
           module_function def map_flags(options)
-            MAPPINGS.each.reduce(options[:flags] || []) do |flags, (key, value)|
+            MAPPINGS.each.each_with_object(options[:flags] || []) do |(key, value), flags|
               cursor_type = options[:cursor_type]
-              if options[key] || (cursor_type && cursor_type == key)
-                flags.push(*value)
-              end
-              flags
+              flags.push(*value) if options[key] || (cursor_type && cursor_type == key)
             end
           end
         end

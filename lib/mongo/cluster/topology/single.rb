@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,16 +17,14 @@
 module Mongo
   class Cluster
     module Topology
-
       # Defines behavior for when a cluster is in single topology.
       #
       # @since 2.0.0
       class Single < Base
-
         # The display name for the topology.
         #
         # @since 2.0.0
-        NAME = 'Single'.freeze
+        NAME = 'Single'
 
         # Get the display name.
         #
@@ -63,7 +60,9 @@ module Mongo
         # @return [ true ] A standalone always has a readable server.
         #
         # @since 2.4.0
-        def has_readable_server?(cluster, server_selector = nil); true; end
+        def has_readable_server?(_cluster, _server_selector = nil)
+          true
+        end
 
         # Determine if the topology would select a writable server for the
         # provided candidates.
@@ -76,7 +75,9 @@ module Mongo
         # @return [ true ] A standalone always has a writable server.
         #
         # @since 2.4.0
-        def has_writable_server?(cluster); true; end
+        def has_writable_server?(_cluster)
+          true
+        end
 
         # A single topology is not a replica set.
         #
@@ -86,7 +87,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def replica_set?; false; end
+        def replica_set?
+          false
+        end
 
         # Select appropriate servers for this topology.
         #
@@ -98,7 +101,7 @@ module Mongo
         # @return [ Array<Server> ] The single servers.
         #
         # @since 2.0.0
-        def servers(servers, name = nil)
+        def servers(servers, _name = nil)
           servers.reject { |server| server.unknown? }
         end
 
@@ -110,7 +113,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def sharded?; false; end
+        def sharded?
+          false
+        end
 
         # A single topology is single.
         #
@@ -120,7 +125,9 @@ module Mongo
         # @return [ true ] Always true.
         #
         # @since 2.0.0
-        def single?; true; end
+        def single?
+          true
+        end
 
         # An single topology is not unknown.
         #
@@ -130,16 +137,19 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def unknown?; false; end
+        def unknown?
+          false
+        end
 
         private
 
         def validate_options(options, cluster)
           if cluster.servers_list.length > 1
-            raise ArgumentError, "Cannot instantiate a single topology with more than one server in the cluster: #{cluster.servers_list.map(&:address).map(&:seed).join(', ')}"
+            raise ArgumentError,
+                  "Cannot instantiate a single topology with more than one server in the cluster: #{cluster.servers_list.map(&:address).map(&:seed).join(', ')}"
           end
 
-          super(options, cluster)
+          super
         end
       end
     end

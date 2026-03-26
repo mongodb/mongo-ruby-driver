@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -30,8 +29,7 @@ def collection_data(collection)
 end
 
 def crud_execute_operations(spec, test, num_ops, event_subscriber, expect_error,
-  client
-)
+                            client)
   cache_key = "#{test.object_id}:#{num_ops}"
   $crud_result_cache ||= {}
   $crud_result_cache[cache_key] ||= begin
@@ -47,31 +45,31 @@ def crud_execute_operations(spec, test, num_ops, event_subscriber, expect_error,
     event_subscriber.clear_events!
 
     result = if expect_error.nil?
-      res = nil
-      begin
-        res = test.run(client, num_ops)
-      rescue Mongo::Error => e
-        res = e
-      end
-      res
-    elsif expect_error
-      error = nil
-      begin
-        test.run(client, num_ops)
-      rescue => e
-        error = e
-      end
-      error
-    else
-      test.run(client, num_ops)
-    end
+               res = nil
+               begin
+                 res = test.run(client, num_ops)
+               rescue Mongo::Error => e
+                 res = e
+               end
+               res
+             elsif expect_error
+               error = nil
+               begin
+                 test.run(client, num_ops)
+               rescue StandardError => e
+                 error = e
+               end
+               error
+             else
+               test.run(client, num_ops)
+             end
 
     $crud_event_cache ||= {}
     # It only makes sense to assert on events if all operations succeeded,
     # but populate our cache in any event for simplicity
     $crud_event_cache[cache_key] = event_subscriber.started_events.dup
 
-    last_op = test.operations[num_ops-1]
+    last_op = test.operations[num_ops - 1]
     if last_op.outcome && last_op.outcome.collection_data?
       verify_collection = client[last_op.verify_collection_name]
       $crud_collection_data_cache ||= {}
@@ -86,12 +84,10 @@ end
 
 def define_crud_spec_test_examples(spec, req = nil, &block)
   spec.tests.each do |test|
-
     context(test.description) do
-
-      if test.description =~ /ListIndexNames/
+      if /ListIndexNames/.match?(test.description)
         before do
-          skip "Ruby driver does not implement list_index_names"
+          skip 'Ruby driver does not implement list_index_names'
         end
       end
 
@@ -106,12 +102,10 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
       instance_exec(spec, req, test, &block)
 
       test.operations.each_with_index do |operation, index|
-
-        context "operation #{index+1}" do
-
+        context "operation #{index + 1}" do
           let(:result) do
-            crud_execute_operations(spec, test, index+1,
-              event_subscriber, operation.outcome.error?, client)
+            crud_execute_operations(spec, test, index + 1,
+                                    event_subscriber, operation.outcome.error?, client)
           end
 
           let(:verify_collection_name) do
@@ -152,7 +146,8 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
                 result
                 verifier.verify_collection_data(
                   operation.outcome.collection_data,
-                  collection_data(verify_collection))
+                  collection_data(verify_collection)
+                )
               end
             end
 
@@ -170,7 +165,7 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
       if test.expectations
         let(:result) do
           crud_execute_operations(spec, test, test.operations.length,
-            event_subscriber, nil, client)
+                                  event_subscriber, nil, client)
         end
 
         let(:actual_events) do
@@ -182,10 +177,11 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
           verifier.verify_command_started_event_count(test.expectations, actual_events)
         end
 
-        test.expectations.each_with_index do |expectation, i|
-          it "has the correct command_started event #{i+1}" do
+        test.expectations.each_with_index do |_expectation, i|
+          it "has the correct command_started event #{i + 1}" do
             verifier.verify_command_started_event(
-              test.expectations, actual_events, i)
+              test.expectations, actual_events, i
+            )
           end
         end
       end
@@ -193,14 +189,15 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
       if test.outcome && test.outcome.collection_data?
         let(:result) do
           crud_execute_operations(spec, test, test.operations.length,
-            event_subscriber, nil, client)
+                                  event_subscriber, nil, client)
         end
 
         it 'has the correct data in the collection' do
           result
           verifier.verify_collection_data(
             test.outcome.collection_data,
-            collection_data(client[test.outcome.collection_name || spec.collection_name]))
+            collection_data(client[test.outcome.collection_name || spec.collection_name])
+          )
         end
       end
     end
@@ -215,15 +212,9 @@ def define_spec_tests_with_requirements(spec, &block)
     # not tested by CI.
     spec.requirements.each do |req|
       context(req.description) do
-        if req.min_server_version
-          min_server_fcv req.short_min_server_version
-        end
-        if req.max_server_version
-          max_server_version req.short_max_server_version
-        end
-        if req.topologies
-          require_topology *req.topologies
-        end
+        min_server_fcv req.short_min_server_version if req.min_server_version
+        max_server_version req.short_max_server_version if req.max_server_version
+        require_topology(*req.topologies) if req.topologies
 
         # Once `serverless: require` is no longer present in any specs,
         # this can be removed.
@@ -243,7 +234,6 @@ end
 
 def define_crud_spec_tests(test_paths, spec_cls = Mongo::CRUD::Spec, &block)
   test_paths.each do |path|
-
     spec = spec_cls.new(path)
 
     context(spec.description) do

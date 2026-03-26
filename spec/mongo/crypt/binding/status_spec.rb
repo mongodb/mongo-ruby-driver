@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -8,7 +7,7 @@ describe 'Mongo::Crypt::Binding' do
     require_libmongocrypt
 
     let(:status) { Mongo::Crypt::Binding.mongocrypt_status_new }
-    let(:message) { "Operation unauthorized" }
+    let(:message) { 'Operation unauthorized' }
 
     let(:status_with_info) do
       Mongo::Crypt::Binding.mongocrypt_status_set(
@@ -28,7 +27,7 @@ describe 'Mongo::Crypt::Binding' do
 
     describe '#mongocrypt_status_new' do
       it 'returns a pointer' do
-        expect(status).to be_a_kind_of(FFI::Pointer)
+        expect(status).to be_a(FFI::Pointer)
       end
     end
 

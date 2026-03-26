@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'tempfile'
@@ -64,9 +63,9 @@ describe Mongo::Crypt::AutoEncrypter do
       users_collection = client.use(db_name)[collection_name]
       users_collection.drop
       client.use(db_name)[collection_name,
-        {
-          'validator' => { '$jsonSchema' => schema_map }
-        }
+                          {
+                            'validator' => { '$jsonSchema' => schema_map }
+                          }
       ].create
     end
   end
@@ -132,7 +131,7 @@ describe Mongo::Crypt::AutoEncrypter do
           SpecConfig.instance.test_options.merge(
             max_pool_size: 0,
             database: 'auto_encryption'
-          ),
+          )
         )
       end
 
@@ -149,7 +148,7 @@ describe Mongo::Crypt::AutoEncrypter do
           SpecConfig.instance.test_options.merge(
             max_pool_size: 20,
             database: 'auto_encryption'
-          ),
+          )
         )
       end
 
@@ -161,7 +160,7 @@ describe Mongo::Crypt::AutoEncrypter do
 
     context 'when crypt shared library is available' do
       it 'does not create a mongocryptd client' do
-        allow_any_instance_of(Mongo::Crypt::Handle).to receive(:"crypt_shared_lib_available?").and_return true
+        allow_any_instance_of(Mongo::Crypt::Handle).to receive(:crypt_shared_lib_available?).and_return true
         expect(auto_encrypter.mongocryptd_client).to be_nil
       end
     end
@@ -211,10 +210,10 @@ describe Mongo::Crypt::AutoEncrypter do
     let(:schema_map_file) do
       file = Tempfile.new('schema_map.json')
       file.write(JSON.dump(
-        {
-          "#{db_name}.#{collection_name}" => schema_map
-        }
-      ))
+                   {
+                     "#{db_name}.#{collection_name}" => schema_map
+                   }
+                 ))
       file.flush
       file
     end

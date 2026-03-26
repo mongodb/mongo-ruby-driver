@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'fileutils'
@@ -304,7 +303,7 @@ describe Mongo::Server::AppMetadata::Environment do
 
   # have a specific test for this, since the tests that check
   # for Docker use a mocked value for the .dockerenv path.
-  it 'should look for dockerenv in root directory' do
+  it 'looks for dockerenv in root directory' do
     expect(described_class::DOCKERENV_PATH).to be == '/.dockerenv'
   end
 

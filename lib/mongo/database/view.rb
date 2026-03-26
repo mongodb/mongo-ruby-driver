@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/cursor/nontailable'
 
 module Mongo
   class Database
-
     # A class representing a view of a database.
     #
     # @since 2.0.0
@@ -148,7 +146,7 @@ module Mongo
 
         validate_timeout_mode!(options)
 
-        @batch_size =  nil
+        @batch_size = nil
         @limit = nil
         @collection = @database[Database::COMMAND]
       end
@@ -203,7 +201,7 @@ module Mongo
 
       private
 
-      def collections_info(session, server_selector, options = {}, &block)
+      def collections_info(session, server_selector, options = {})
         description = nil
         context = Operation::Context.new(
           client: client,
@@ -213,7 +211,7 @@ module Mongo
         op = initial_query_op(session, options)
         tracer.trace_operation(op, context, op_name: 'listCollections') do
           cursor = read_with_retry_cursor(session, server_selector, self, context: context) do |server|
-            # TODO take description from the connection used to send the query
+            # TODO: take description from the connection used to send the query
             # once https://jira.mongodb.org/browse/RUBY-1601 is fixed.
             description = server.description
             send_initial_query(server, session, context, options)
@@ -229,10 +227,10 @@ module Mongo
       def collections_info_spec(session, options = {})
         { selector: {
             listCollections: 1,
-            cursor: batch_size ? { batchSize: batch_size } : {} },
+            cursor: batch_size ? { batchSize: batch_size } : {}
+          },
           db_name: @database.name,
-          session: session
-        }.tap do |spec|
+          session: session }.tap do |spec|
           spec[:selector][:nameOnly] = true if options[:name_only]
           spec[:selector][:filter] = options[:filter] if options[:filter]
           spec[:selector][:authorizedCollections] = true if options[:authorized_collections]
@@ -272,9 +270,7 @@ module Mongo
       def send_initial_query(server, session, context, options = {})
         opts = options.dup
         execution_opts = {}
-        if opts.key?(:deserialize_as_bson)
-          execution_opts[:deserialize_as_bson] = opts.delete(:deserialize_as_bson)
-        end
+        execution_opts[:deserialize_as_bson] = opts.delete(:deserialize_as_bson) if opts.key?(:deserialize_as_bson)
         if server.load_balancer?
           connection = server.pool.check_out(context: context)
           initial_query_op(session, opts).execute_with_connection(

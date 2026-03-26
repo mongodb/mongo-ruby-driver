@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/auth/user/view'
 
 module Mongo
   module Auth
-
     # Represents a user in MongoDB.
     #
     # @since 2.0.0
@@ -68,6 +66,7 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(User)
+
         name == other.name && database == other.database && password == other.password
       end
 
@@ -96,7 +95,7 @@ module Mongo
       #
       # @since 2.0.0
       def encoded_name
-        name.encode(BSON::UTF8).gsub('=','=3D').gsub(',','=2C')
+        name.encode(BSON::UTF8).gsub('=', '=3D').gsub(',', '=2C')
       end
 
       # Get the hash key for the user.
@@ -120,9 +119,7 @@ module Mongo
       #
       # @since 2.0.0
       def hashed_password
-        unless password
-          raise Error::MissingPassword
-        end
+        raise Error::MissingPassword unless password
 
         @hashed_password ||= Digest::MD5.hexdigest("#{name}:mongo:#{password}").encode(BSON::UTF8)
       end
@@ -131,14 +128,12 @@ module Mongo
       #
       # @api private
       def sasl_prepped_password
-        unless password
-          raise Error::MissingPassword
-        end
+        raise Error::MissingPassword unless password
 
         @sasl_prepped_password ||= StringPrep.prepare(password,
-          StringPrep::Profiles::SASL::MAPPINGS,
-          StringPrep::Profiles::SASL::PROHIBITED,
-          normalize: true, bidi: true).encode(BSON::UTF8)
+                                                      StringPrep::Profiles::SASL::MAPPINGS,
+                                                      StringPrep::Profiles::SASL::PROHIBITED,
+                                                      normalize: true, bidi: true).encode(BSON::UTF8)
       end
 
       # Create the new user.
@@ -176,14 +171,13 @@ module Mongo
             # have not enforced this; warn, reject in lint mode
             if Lint.enabled?
               raise Error::LintError, "Auth mechanism #{@mechanism.inspect} must be specified as a symbol"
-            else
-              log_warn("Auth mechanism #{@mechanism.inspect} should be specified as a symbol")
-              @mechanism = @mechanism.to_sym
             end
+
+            log_warn("Auth mechanism #{@mechanism.inspect} should be specified as a symbol")
+            @mechanism = @mechanism.to_sym
+
           end
-          unless Auth::SOURCES.key?(@mechanism)
-            raise InvalidMechanism.new(options[:auth_mech])
-          end
+          raise InvalidMechanism.new(options[:auth_mech]) unless Auth::SOURCES.key?(@mechanism)
         end
         @auth_mech_properties = options[:auth_mech_properties] || {}
         @roles = options[:roles] || []
@@ -198,14 +192,10 @@ module Mongo
       #
       # @since 2.0.0
       def spec
-        {roles: roles}.tap do |spec|
-          if password
-            spec[:pwd] = password
-          end
+        { roles: roles }.tap do |spec|
+          spec[:pwd] = password if password
         end
       end
-
-      private
 
       # Generate default auth source based on the URI and options
       #

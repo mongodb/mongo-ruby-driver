@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -14,9 +13,7 @@ describe Mongo::Operation::CreateIndex do
   end
 
   describe '#execute' do
-
     context 'when the index is created' do
-
       let(:spec) do
         { key: { random: 1 }, name: 'random_1', unique: true }
       end
@@ -35,7 +32,6 @@ describe Mongo::Operation::CreateIndex do
     end
 
     context 'when index creation fails' do
-
       let(:spec) do
         { key: { random: 1 }, name: 'random_1', unique: true }
       end
@@ -45,7 +41,8 @@ describe Mongo::Operation::CreateIndex do
       end
 
       let(:second_operation) do
-        described_class.new(indexes: [ spec.merge(unique: false) ], db_name: SpecConfig.instance.test_db, coll_name: TEST_COLL)
+        described_class.new(indexes: [ spec.merge(unique: false) ], db_name: SpecConfig.instance.test_db,
+                            coll_name: TEST_COLL)
       end
 
       before do
@@ -53,9 +50,9 @@ describe Mongo::Operation::CreateIndex do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           second_operation.execute(authorized_primary, context: context)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

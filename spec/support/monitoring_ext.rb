@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
   class Monitoring
@@ -9,9 +8,7 @@ module Mongo
     def present_subscribers
       subs = {}
       subscribers.each do |k, v|
-        unless v.empty?
-          subs[k] = v
-        end
+        subs[k] = v unless v.empty?
       end
       subs
     end

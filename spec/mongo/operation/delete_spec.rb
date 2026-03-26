@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -19,18 +18,17 @@ describe Mongo::Operation::Delete do
 
   let(:document) do
     {
-      :q => { :foo => 1 },
-      :limit => 1
+      q: { foo: 1 },
+      limit: 1
     }
   end
 
   let(:spec) do
-    { :deletes        => [ document ],
-      :db_name       => SpecConfig.instance.test_db,
-      :coll_name     => TEST_COLL,
-      :write_concern => Mongo::WriteConcern.get(w: :majority),
-      :ordered       => true
-    }
+    { deletes: [ document ],
+      db_name: SpecConfig.instance.test_db,
+      coll_name: TEST_COLL,
+      write_concern: Mongo::WriteConcern.get(w: :majority),
+      ordered: true }
   end
 
   let(:op) { described_class.new(spec) }
@@ -38,9 +36,7 @@ describe Mongo::Operation::Delete do
   let(:context) { Mongo::Operation::Context.new }
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(op.spec).to eq(spec)
       end
@@ -48,9 +44,7 @@ describe Mongo::Operation::Delete do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two ops have the same specs' do
         let(:other) { described_class.new(spec) }
 
@@ -60,15 +54,14 @@ describe Mongo::Operation::Delete do
       end
 
       context 'when two ops have different specs' do
-        let(:other_doc) { { :q => { :bar => 1 }, :limit => 1 } }
+        let(:other_doc) { { q: { bar: 1 }, limit: 1 } }
 
         let(:other_spec) do
-          { :deletes        => [ other_doc ],
-            :db_name       => SpecConfig.instance.test_db,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(w: :majority),
-            :ordered       => true
-          }
+          { deletes: [ other_doc ],
+            db_name: SpecConfig.instance.test_db,
+            coll_name: TEST_COLL,
+            write_concern: Mongo::WriteConcern.get(w: :majority),
+            ordered: true }
         end
         let(:other) { described_class.new(other_spec) }
 
@@ -80,12 +73,11 @@ describe Mongo::Operation::Delete do
   end
 
   describe '#execute' do
-
     before do
       authorized_collection.insert_many([
-        { name: 'test', field: 'test' },
-        { name: 'testing', field: 'test' }
-      ])
+                                          { name: 'test', field: 'test' },
+                                          { name: 'testing', field: 'test' }
+                                        ])
     end
 
     after do
@@ -93,18 +85,16 @@ describe Mongo::Operation::Delete do
     end
 
     context 'when deleting a single document' do
-
       let(:delete) do
         described_class.new({
-          deletes: [ document ],
-          db_name: SpecConfig.instance.test_db,
-          coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern.get(w: :majority)
-        })
+                              deletes: [ document ],
+                              db_name: SpecConfig.instance.test_db,
+                              coll_name: TEST_COLL,
+                              write_concern: Mongo::WriteConcern.get(w: :majority)
+                            })
       end
 
       context 'when the delete succeeds' do
-
         let(:document) do
           { 'q' => { field: 'test' }, 'limit' => 1 }
         end
@@ -123,32 +113,29 @@ describe Mongo::Operation::Delete do
       end
 
       context 'when the delete fails' do
-
         let(:document) do
           { que: { field: 'test' } }
         end
 
         it 'raises an exception' do
-          expect {
+          expect do
             delete.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
 
     context 'when deleting multiple documents' do
-
       let(:delete) do
         described_class.new({
-          deletes: [ document ],
-          db_name: SpecConfig.instance.test_db,
-          coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern.get(w: :majority)
-        })
+                              deletes: [ document ],
+                              db_name: SpecConfig.instance.test_db,
+                              coll_name: TEST_COLL,
+                              write_concern: Mongo::WriteConcern.get(w: :majority)
+                            })
       end
 
       context 'when the deletes succeed' do
-
         let(:document) do
           { 'q' => { field: 'test' }, 'limit' => 0 }
         end
@@ -167,7 +154,6 @@ describe Mongo::Operation::Delete do
       end
 
       context 'when a delete fails' do
-
         let(:document) do
           { q: { '$set' => { a: 1 } }, limit: 0 }
         end
@@ -177,25 +163,23 @@ describe Mongo::Operation::Delete do
         end
 
         it 'does not delete any documents' do
-
-          expect {
+          expect do
             op.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
 
           expect(authorized_collection.find.count).to eq(2)
         end
       end
 
       context 'when a document exceeds max bson size' do
-
         let(:document) do
-          { 'q' => { field: 't'*17000000 }, 'limit' => 0 }
+          { 'q' => { field: 't' * 17_000_000 }, 'limit' => 0 }
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             op.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::MaxBSONSize)
+          end.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
     end

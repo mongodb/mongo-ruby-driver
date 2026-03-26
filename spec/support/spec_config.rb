@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'singleton'
 require 'pathname'
@@ -28,25 +27,23 @@ class SpecConfig
         @addresses = @mongodb_uri.servers
         @connect_options = { connect: :direct }
       end
-      if @uri_options[:ssl].nil?
-        @ssl = (%w(yes ssl).include?(ENV['SSL'])) || (ENV['SSL_ENABLED'] == 'true')
-      else
-        @ssl = @uri_options[:ssl]
-      end
+      @ssl = if @uri_options[:ssl].nil?
+               %w[yes ssl].include?(ENV['SSL']) || (ENV['SSL_ENABLED'] == 'true')
+             else
+               @uri_options[:ssl]
+             end
     end
 
     @uri_tls_options = {}
     @uri_options.each do |k, v|
       k = k.to_s.downcase
-      if k.start_with?('ssl')
-        @uri_tls_options[k] = v
-      end
+      @uri_tls_options[k] = v if k.start_with?('ssl')
     end
 
     @ssl ||= false
 
     if (server_api = ENV['SERVER_API']) && !server_api.empty?
-      @ruby_options[:server_api] = BSON::Document.new(YAML.load(server_api))
+      @ruby_options[:server_api] = BSON::Document.new(YAML.safe_load(server_api))
       # Since the tests pass options provided by SpecConfig directly to
       # internal driver objects (e.g. connections), transform server api
       # parameters here as they would be transformed by Client constructor.
@@ -59,21 +56,19 @@ class SpecConfig
   attr_reader :uri_options, :ruby_options, :connect_options
 
   def addresses
-    @addresses ||= begin
-      if @mongodb_uri
-        @mongodb_uri.servers
-      else
-        client = Mongo::Client.new(['localhost:27017'], server_selection_timeout: 5.02)
-        begin
-          client.cluster.next_primary
-          @addresses = client.cluster.servers_list.map do |server|
-            server.address.to_s
-          end
-        ensure
-          client.close
-        end
-      end
-    end
+    @addresses ||= if @mongodb_uri
+                     @mongodb_uri.servers
+                   else
+                     client = Mongo::Client.new([ 'localhost:27017' ], server_selection_timeout: 5.02)
+                     begin
+                       client.cluster.next_primary
+                       @addresses = client.cluster.servers_list.map do |server|
+                         server.address.to_s
+                       end
+                     ensure
+                       client.close
+                     end
+                   end
   end
 
   def connect_options
@@ -82,7 +77,7 @@ class SpecConfig
       # TLS options need to be merged for evergreen due to
       # https://github.com/10gen/mongo-orchestration/issues/268
       client = Mongo::Client.new(addresses, Mongo::Options::Redacted.new(
-        server_selection_timeout: 5.03,
+        server_selection_timeout: 5.03
       ).merge(ssl_options).merge(ruby_options))
 
       begin
@@ -96,7 +91,7 @@ class SpecConfig
         when /Single/
           { connect: :direct }
         when /Unknown/
-          raise "Could not detect topology because the test client failed to connect to MongoDB deployment"
+          raise 'Could not detect topology because the test client failed to connect to MongoDB deployment'
         else
           raise "Weird topology #{client.cluster.topology}"
         end
@@ -109,7 +104,7 @@ class SpecConfig
   # Environment
 
   def ci?
-    %w(1 true yes).include?(ENV['CI']&.downcase)
+    %w[1 true yes].include?(ENV['CI']&.downcase)
   end
 
   def mri?
@@ -137,25 +132,25 @@ class SpecConfig
   end
 
   def stress?
-    %w(1 true yes).include?(ENV['STRESS']&.downcase)
+    %w[1 true yes].include?(ENV['STRESS']&.downcase)
   end
 
   def fork?
-    %w(1 true yes).include?(ENV['FORK']&.downcase)
+    %w[1 true yes].include?(ENV['FORK']&.downcase)
   end
 
   # OCSP tests require python and various dependencies.
   # Assumes an OCSP responder is running on port 8100 (configured externally
   # to the test suite).
   def ocsp?
-    %w(1 true yes).include?(ENV['OCSP']&.downcase)
+    %w[1 true yes].include?(ENV['OCSP']&.downcase)
   end
 
   # OCSP tests require python and various dependencies.
   # When testing OCSP verifier, there cannot be a responder running on
   # port 8100 or the tests will fail.
   def ocsp_verifier?
-    %w(1 true yes).include?(ENV['OCSP_VERIFIER']&.downcase)
+    %w[1 true yes].include?(ENV['OCSP_VERIFIER']&.downcase)
   end
 
   def ocsp_connectivity?
@@ -169,7 +164,7 @@ class SpecConfig
   # Test suite configuration
 
   def client_debug?
-    %w(1 true yes).include?(ENV['MONGO_RUBY_DRIVER_CLIENT_DEBUG']&.downcase)
+    %w[1 true yes].include?(ENV['MONGO_RUBY_DRIVER_CLIENT_DEBUG']&.downcase)
   end
 
   def drivers_tools?
@@ -177,7 +172,7 @@ class SpecConfig
   end
 
   def active_support?
-    %w(1 true yes).include?(ENV['WITH_ACTIVE_SUPPORT'])
+    %w[1 true yes].include?(ENV['WITH_ACTIVE_SUPPORT'])
   end
 
   # What compressor to use, if any.
@@ -205,19 +200,12 @@ class SpecConfig
         true
       when 'no', 'false', 'off', '0'
         false
-      else
-        nil
       end
     end
   end
 
   def retry_writes?
-    if retry_writes == false
-      false
-    else
-      # Current default is to retry writes
-      true
-    end
+    !(retry_writes == false)
   end
 
   def ssl?
@@ -245,10 +233,10 @@ class SpecConfig
     puts "Connection options: #{test_options}"
     client = ClientRegistry.instance.global_client('basic')
     client.cluster.next_primary
-    puts <<-EOT
-Topology: #{client.cluster.topology.class}
-connect: #{connect_options[:connect]}
-EOT
+    puts <<~EOT
+      Topology: #{client.cluster.topology.class}
+      connect: #{connect_options[:connect]}
+    EOT
   end
 
   # Derived data
@@ -383,12 +371,12 @@ EOT
 
   # The default test database for all specs.
   def test_db
-    'ruby-driver'.freeze
+    'ruby-driver'
   end
 
   # Whether FLE tests should be enabled
   def fle?
-    %w(1 true yes helper mongocryptd).include?(ENV['FLE']&.downcase)
+    %w[1 true yes helper mongocryptd].include?(ENV['FLE']&.downcase)
   end
 
   # AWS IAM user access key id
@@ -483,7 +471,7 @@ EOT
   end
 
   def fle_kmip_endpoint
-    "localhost:5698"
+    'localhost:5698'
   end
 
   def fle_kmip_tls_ca_file
@@ -496,11 +484,10 @@ EOT
 
   def mongocryptd_port
     if ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'] &&
-      !ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].empty?
-    then
+       !ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].empty?
       ENV['MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT'].to_i
     else
-      27020
+      27_020
     end
   end
 
@@ -554,13 +541,9 @@ EOT
         user: user,
         password: password,
       }.tap do |options|
-        if auth_source
-          options[:auth_source] = auth_source
-        end
-        %i(auth_mech auth_mech_properties).each do |key|
-          if uri_options[key]
-            options[key] = uri_options[key]
-          end
+        options[:auth_source] = auth_source if auth_source
+        %i[auth_mech auth_mech_properties].each do |key|
+          options[key] = uri_options[key] if uri_options[key]
         end
       end
     end
@@ -568,9 +551,10 @@ EOT
 
   def ssl_options
     return {} unless ssl?
+
     {
-        ssl: true,
-        ssl_verify: true,
+      ssl: true,
+      ssl_verify: true,
     }.tap do |options|
       # We should use bundled cetificates for ssl except for testing against
       # Atlas instances. Atlas instances have addresses in domains
@@ -589,14 +573,14 @@ EOT
 
   def compressor_options
     if compressors
-      {compressors: compressors}
+      { compressors: compressors }
     else
       {}
     end
   end
 
   def retry_writes_options
-    {retry_writes: retry_writes?}
+    { retry_writes: retry_writes? }
   end
 
   # The options needed for a successful socket connection to the server(s).
@@ -609,7 +593,7 @@ EOT
   # These exclude options needed to perform operations (e.g. credentials).
   def monitoring_options
     ssl_options.merge(
-      server_api: ruby_options[:server_api],
+      server_api: ruby_options[:server_api]
     )
   end
 
@@ -646,7 +630,7 @@ EOT
 
       # Uncomment to have exceptions in background threads log complete
       # backtraces.
-      #bg_error_backtrace: true,
+      # bg_error_backtrace: true,
     }.merge(ruby_options).merge(
       server_api: ruby_options[:server_api] && ::Utils.underscore_hash(ruby_options[:server_api])
     )
@@ -654,21 +638,21 @@ EOT
 
   # Options for test suite clients.
   def test_options
-    base_test_options.merge(connect_options).
-      merge(ssl_options).merge(compressor_options).merge(retry_writes_options)
+    base_test_options.merge(connect_options)
+                     .merge(ssl_options).merge(compressor_options).merge(retry_writes_options)
   end
 
-  # TODO auth_options should probably be in test_options
+  # TODO: auth_options should probably be in test_options
   def all_test_options
     test_options.merge(auth_options)
   end
 
   def authorized_test_options
     test_options.merge(credentials_or_external_user(
-      user: test_user.name,
-      password: test_user.password,
-      auth_source: auth_options[:auth_source],
-    ))
+                         user: test_user.name,
+                         password: test_user.password,
+                         auth_source: auth_options[:auth_source]
+                       ))
   end
 
   # User objects
@@ -777,7 +761,7 @@ EOT
 
   # Returns whether the test suite was configured with a single mongos.
   def single_mongos?
-    %w(1 true yes).include?(ENV['SINGLE_MONGOS'])
+    %w[1 true yes].include?(ENV['SINGLE_MONGOS'])
   end
 
   # serverless is deprecated, but it still gets called from some places

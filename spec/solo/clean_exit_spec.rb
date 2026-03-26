@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mongo'
 require 'lite_spec_helper'
@@ -9,7 +8,6 @@ describe 'Clean exit' do
   require_solo
 
   context 'with SRV URI' do
-
     let(:uri) do
       'mongodb+srv://test1.test.build.10gen.cc/?tls=false'
     end

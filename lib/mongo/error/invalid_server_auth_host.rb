@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Raised when the server returned an invalid Host value in AWS auth.
     class InvalidServerAuthHost < InvalidServerAuthResponse
     end

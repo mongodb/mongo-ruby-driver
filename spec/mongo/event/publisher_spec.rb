@@ -1,12 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Event::Publisher do
-
   describe '#publish' do
-
     let(:listeners) do
       Mongo::Event::Listeners.new
     end
@@ -30,7 +27,6 @@ describe Mongo::Event::Publisher do
     end
 
     context 'when the event has listeners' do
-
       before do
         listeners.add_listener('test', listener)
         listeners.add_listener('test', listener)
@@ -43,9 +39,8 @@ describe Mongo::Event::Publisher do
     end
 
     context 'when the event has no listeners' do
-
       it 'does not handle anything' do
-        expect(listener).to receive(:handle).never
+        expect(listener).not_to receive(:handle)
         publisher.publish('test', 'test')
       end
     end

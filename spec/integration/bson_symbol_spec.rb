@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -7,7 +6,7 @@ describe 'Symbol encoding to BSON' do
   let(:value) { :foo }
 
   let(:hash) do
-    {'foo' => value}
+    { 'foo' => value }
   end
 
   let(:serialized) do
@@ -19,21 +18,21 @@ describe 'Symbol encoding to BSON' do
   end
 
   it 'encodes symbol to BSON symbol' do
-    serialized.should == expected
+    expect(serialized).to eq(expected)
   end
 
   it 'round-trips symbol values' do
     buffer = BSON::ByteBuffer.new(serialized)
-    Hash.from_bson(buffer).should == hash
+    expect(Hash.from_bson(buffer)).to eq(hash)
   end
 
   it 'round-trips symbol values using the same byte buffer' do
-    if BSON::Environment.jruby? && (BSON::VERSION.split('.').map(&:to_i) <=> [4, 11, 0]) < 0
-      skip 'This test is only relevant to bson versions that increment ByteBuffer '\
-       'read and write positions separately in JRuby, as implemented in ' \
-       'bson version 4.11.0. For more information, see https://jira.mongodb.org/browse/RUBY-2128'
+    if BSON::Environment.jruby? && (BSON::VERSION.split('.').map(&:to_i) <=> [ 4, 11, 0 ]) < 0
+      skip 'This test is only relevant to bson versions that increment ByteBuffer ' \
+           'read and write positions separately in JRuby, as implemented in ' \
+           'bson version 4.11.0. For more information, see https://jira.mongodb.org/browse/RUBY-2128'
     end
 
-    Hash.from_bson(hash.to_bson).should == hash
+    expect(Hash.from_bson(hash.to_bson)).to eq(hash)
   end
 end

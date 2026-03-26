@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module MongoCryptSpecHelper
   def bind_crypto_hooks(mongocrypt)
@@ -20,8 +19,8 @@ module MongoCryptSpecHelper
     bytes = string.unpack('C*')
 
     p = FFI::MemoryPointer
-      .new(bytes.size)
-      .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
+        .new(bytes.size)
+        .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
 
     Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(p, bytes.length)
   end
@@ -43,7 +42,7 @@ module MongoCryptSpecHelper
   module_function :write_to_binary
 
   def aes_encrypt(_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p,
-    response_length_p, status_p)
+                  response_length_p, _status_p)
     key = string_from_binary(key_binary_p)
     iv = string_from_binary(iv_binary_p)
     input = string_from_binary(input_binary_p)
@@ -57,7 +56,7 @@ module MongoCryptSpecHelper
   module_function :aes_encrypt
 
   def aes_decrypt(_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p,
-    response_length_p, status_p)
+                  response_length_p, _status_p)
     key = string_from_binary(key_binary_p)
     iv = string_from_binary(iv_binary_p)
     input = string_from_binary(input_binary_p)
@@ -70,7 +69,7 @@ module MongoCryptSpecHelper
   end
   module_function :aes_decrypt
 
-  def random(_, output_binary_p, num_bytes, status_p)
+  def random(_, output_binary_p, num_bytes, _status_p)
     output = Mongo::Crypt::Hooks.random(num_bytes)
     write_to_binary(output_binary_p, output)
 
@@ -78,7 +77,7 @@ module MongoCryptSpecHelper
   end
   module_function :random
 
-  def hmac_sha_512(_, key_binary_p, input_binary_p, output_binary_p, status_p)
+  def hmac_sha_512(_, key_binary_p, input_binary_p, output_binary_p, _status_p)
     key = string_from_binary(key_binary_p)
     input = string_from_binary(input_binary_p)
 
@@ -89,7 +88,7 @@ module MongoCryptSpecHelper
   end
   module_function :hmac_sha_512
 
-  def hmac_sha_256(_, key_binary_p, input_binary_p, output_binary_p, status_p)
+  def hmac_sha_256(_, key_binary_p, input_binary_p, output_binary_p, _status_p)
     key = string_from_binary(key_binary_p)
     input = string_from_binary(input_binary_p)
 
@@ -100,7 +99,7 @@ module MongoCryptSpecHelper
   end
   module_function :hmac_sha_256
 
-  def hmac_hash(_, input_binary_p, output_binary_p, status_p)
+  def hmac_hash(_, input_binary_p, output_binary_p, _status_p)
     input = string_from_binary(input_binary_p)
     output = Mongo::Crypt::Hooks.hash_sha256(input)
     write_to_binary(output_binary_p, output)

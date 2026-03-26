@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # This exception is raised when the metadata document sent to the server
     #   at the time of a connection handshake is invalid.
     #
     # @since 2.4.0
     class InvalidApplicationName < Error
-
       # Instantiate the new exception.
       #
       # @example Create the exception.

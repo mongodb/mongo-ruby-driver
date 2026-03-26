@@ -1,21 +1,17 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'support/shared/server_selector'
 
 describe Mongo::ServerSelector do
-
   include_context 'server selector'
 
   describe '.get' do
-
     let(:selector) do
-      described_class.get(:mode => name, :tag_sets => tag_sets)
+      described_class.get(mode: name, tag_sets: tag_sets)
     end
 
     context 'when a server selector object is passed' do
-
       let(:name) do
         :primary
       end
@@ -26,7 +22,6 @@ describe Mongo::ServerSelector do
     end
 
     context 'when the mode is primary' do
-
       let(:name) do
         :primary
       end
@@ -36,7 +31,6 @@ describe Mongo::ServerSelector do
       end
 
       context 'when the mode is a string' do
-
         let(:name) do
           'primary'
         end
@@ -57,7 +51,6 @@ describe Mongo::ServerSelector do
       end
 
       context 'when the mode is a string' do
-
         let(:name) do
           'primary_preferred'
         end
@@ -78,7 +71,6 @@ describe Mongo::ServerSelector do
       end
 
       context 'when the mode is a string' do
-
         let(:name) do
           'secondary'
         end
@@ -99,7 +91,6 @@ describe Mongo::ServerSelector do
       end
 
       context 'when the mode is a string' do
-
         let(:name) do
           'secondary_preferred'
         end
@@ -120,7 +111,6 @@ describe Mongo::ServerSelector do
       end
 
       context 'when the mode is a string' do
-
         let(:name) do
           'nearest'
         end
@@ -140,13 +130,12 @@ describe Mongo::ServerSelector do
     end
 
     context 'when tag sets are provided' do
-
       let(:selector) do
-        described_class.get(:mode => :secondary, :tag_sets => tag_sets)
+        described_class.get(mode: :secondary, tag_sets: tag_sets)
       end
 
       let(:tag_sets) do
-        [{ 'test' => 'tag' }]
+        [ { 'test' => 'tag' } ]
       end
 
       it 'sets tag sets on the read preference object' do
@@ -155,9 +144,8 @@ describe Mongo::ServerSelector do
     end
 
     context 'when server_selection_timeout is specified' do
-
       let(:selector) do
-        described_class.get(:mode => :secondary, :server_selection_timeout => 1)
+        described_class.get(mode: :secondary, server_selection_timeout: 1)
       end
 
       it 'sets server selection timeout on the read preference object' do
@@ -166,9 +154,8 @@ describe Mongo::ServerSelector do
     end
 
     context 'when server_selection_timeout is not specified' do
-
       let(:selector) do
-        described_class.get(:mode => :secondary)
+        described_class.get(mode: :secondary)
       end
 
       it 'sets server selection timeout to the default' do
@@ -177,9 +164,8 @@ describe Mongo::ServerSelector do
     end
 
     context 'when local_threshold is specified' do
-
       let(:selector) do
-        described_class.get(:mode => :secondary, :local_threshold => 0.010)
+        described_class.get(mode: :secondary, local_threshold: 0.010)
       end
 
       it 'sets local_threshold on the read preference object' do
@@ -188,9 +174,8 @@ describe Mongo::ServerSelector do
     end
 
     context 'when local_threshold is not specified' do
-
       let(:selector) do
-        described_class.get(:mode => :secondary)
+        described_class.get(mode: :secondary)
       end
 
       it 'sets local threshold to the default' do
@@ -199,7 +184,7 @@ describe Mongo::ServerSelector do
     end
   end
 
-  describe "#select_server" do
+  describe '#select_server' do
     require_no_linting
 
     context 'replica set topology' do
@@ -224,17 +209,17 @@ describe Mongo::ServerSelector do
 
       let(:primary) do
         make_server(:primary).tap do |server|
-          allow(server).to receive(:features).and_return(double("primary features"))
+          allow(server).to receive(:features).and_return(double('primary features'))
         end
       end
 
       let(:secondary) do
         make_server(:secondary).tap do |server|
-          allow(server).to receive(:features).and_return(double("secondary features"))
+          allow(server).to receive(:features).and_return(double('secondary features'))
         end
       end
 
-      context "when #select_in_replica_set returns a list of nils" do
+      context 'when #select_in_replica_set returns a list of nils' do
         let(:servers) do
           [ primary ]
         end
@@ -252,24 +237,23 @@ describe Mongo::ServerSelector do
         end
       end
 
-      context "write_aggregation is true" do
-
+      context 'write_aggregation is true' do
         before do
           # It does not matter for this context whether primary supports secondary wites or not,
           # but we need to mock out this call.
           allow(primary.features).to receive(:merge_out_on_secondary_enabled?).and_return(false)
         end
 
-        context "read preference is primary" do
+        context 'read preference is primary' do
           let(:selector) { Mongo::ServerSelector::Primary.new }
 
           let(:servers) do
             [ primary, secondary ]
           end
 
-          [true, false].each do |secondary_support_writes|
-            context "secondary #{secondary_support_writes ? 'supports' : 'does not support' } writes" do
-              it "selects a primary" do
+          [ true, false ].each do |secondary_support_writes|
+            context "secondary #{secondary_support_writes ? 'supports' : 'does not support'} writes" do
+              it 'selects a primary' do
                 allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(secondary_support_writes)
 
                 expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
@@ -278,16 +262,16 @@ describe Mongo::ServerSelector do
           end
         end
 
-        context "read preference is primary preferred" do
+        context 'read preference is primary preferred' do
           let(:selector) { Mongo::ServerSelector::PrimaryPreferred.new }
 
           let(:servers) do
             [ primary, secondary ]
           end
 
-          [true, false].each do |secondary_support_writes|
-            context "secondary #{secondary_support_writes ? 'supports' : 'does not support' } writes" do
-              it "selects a primary" do
+          [ true, false ].each do |secondary_support_writes|
+            context "secondary #{secondary_support_writes ? 'supports' : 'does not support'} writes" do
+              it 'selects a primary' do
                 allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(secondary_support_writes)
 
                 expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
@@ -296,23 +280,23 @@ describe Mongo::ServerSelector do
           end
         end
 
-        context "read preference is secondary preferred" do
+        context 'read preference is secondary preferred' do
           let(:selector) { Mongo::ServerSelector::SecondaryPreferred.new }
 
           let(:servers) do
             [ primary, secondary ]
           end
 
-          context "secondary supports writes" do
-            it "selects a secondary" do
+          context 'secondary supports writes' do
+            it 'selects a secondary' do
               allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(true)
 
               expect(selector.select_server(cluster, write_aggregation: true)).to eq(secondary)
             end
           end
 
-          context "secondary does not support writes" do
-            it "selects a primary" do
+          context 'secondary does not support writes' do
+            it 'selects a primary' do
               allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(false)
 
               expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
@@ -320,35 +304,35 @@ describe Mongo::ServerSelector do
           end
         end
 
-        context "read preference is secondary" do
+        context 'read preference is secondary' do
           let(:selector) { Mongo::ServerSelector::Secondary.new }
 
           let(:servers) do
             [ primary, secondary ]
           end
 
-          context "secondary supports writes" do
-            it "selects a secondary" do
+          context 'secondary supports writes' do
+            it 'selects a secondary' do
               allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(true)
 
               expect(selector.select_server(cluster, write_aggregation: true)).to eq(secondary)
             end
           end
 
-          context "secondary does not support writes" do
-            it "selects a primary" do
+          context 'secondary does not support writes' do
+            it 'selects a primary' do
               allow(secondary.features).to receive(:merge_out_on_secondary_enabled?).and_return(false)
 
               expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
             end
           end
 
-          context "no secondaries in cluster" do
+          context 'no secondaries in cluster' do
             let(:servers) do
               [ primary ]
             end
 
-            it "selects a primary" do
+            it 'selects a primary' do
               expect(selector.select_server(cluster, write_aggregation: true)).to eq(primary)
             end
           end
@@ -357,7 +341,6 @@ describe Mongo::ServerSelector do
     end
 
     context 'when the cluster has a server_selection_timeout set' do
-
       let(:servers) do
         [ make_server(:secondary), make_server(:primary) ]
       end
@@ -384,14 +367,13 @@ describe Mongo::ServerSelector do
       end
 
       it 'uses the server_selection_timeout of the cluster' do
-        expect{
+        expect do
           read_pref.select_server(cluster)
-        }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
 
     context 'when the cluster has a local_threshold set' do
-
       let(:near_server) do
         make_server(:secondary).tap do |s|
           allow(s).to receive(:connectable?).and_return(true)
@@ -446,8 +428,8 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:connected?).and_return(true)
           allow(c).to receive(:summary)
           allow(c).to receive(:topology).and_return(topology)
-          allow(c).to receive(:servers).and_return([server])
-          allow(c).to receive(:addresses).and_return([server.address])
+          allow(c).to receive(:servers).and_return([ server ])
+          allow(c).to receive(:addresses).and_return([ server.address ])
           allow(c).to receive(:replica_set?).and_return(true)
           allow(c).to receive(:single?).and_return(false)
           allow(c).to receive(:sharded?).and_return(false)
@@ -473,7 +455,6 @@ describe Mongo::ServerSelector do
     end
 
     context 'sharded topology' do
-
       let(:cluster) do
         double('cluster').tap do |c|
           allow(c).to receive(:connected?).and_return(true)
@@ -495,10 +476,10 @@ describe Mongo::ServerSelector do
       context 'unknown and mongos' do
         let(:mongos) { make_server(:mongos, address: Mongo::Address.new('localhost')) }
         let(:unknown) { make_server(:unknown, address: Mongo::Address.new('localhost')) }
-        let(:servers) { [unknown, mongos] }
+        let(:servers) { [ unknown, mongos ] }
         let(:selector) { described_class.primary }
 
-        [true, false].each do |write_aggregation|
+        [ true, false ].each do |write_aggregation|
           context "write_aggregation is #{write_aggregation}" do
             it 'returns the mongos' do
               expect(selector.select_server(cluster, write_aggregation: write_aggregation)).to eq(mongos)
@@ -510,9 +491,7 @@ describe Mongo::ServerSelector do
   end
 
   shared_context 'a ServerSelector' do
-
     context 'when cluster#servers is empty' do
-
       let(:servers) do
         []
       end
@@ -546,7 +525,6 @@ describe Mongo::ServerSelector do
   end
 
   context 'when the cluster has a Single topology' do
-
     let(:single) { true }
     let(:sharded) { false }
 
@@ -554,7 +532,6 @@ describe Mongo::ServerSelector do
   end
 
   context 'when the cluster has a ReplicaSet topology' do
-
     let(:single) { false }
     let(:sharded) { false }
 
@@ -562,7 +539,6 @@ describe Mongo::ServerSelector do
   end
 
   context 'when the cluster has a Sharded topology' do
-
     let(:single) { false }
     let(:sharded) { true }
 
@@ -570,7 +546,6 @@ describe Mongo::ServerSelector do
   end
 
   describe '#inspect' do
-
     let(:options) do
       {}
     end
@@ -580,24 +555,22 @@ describe Mongo::ServerSelector do
     end
 
     context 'when the mode is primary' do
-
       let(:mode) do
         :primary
       end
 
       it 'includes the mode in the inspect string' do
-        expect(read_pref.inspect).to match(/#{mode.to_s}/i)
+        expect(read_pref.inspect).to match(/#{mode}/i)
       end
     end
 
     context 'when there are tag sets' do
-
       let(:mode) do
         :secondary
       end
 
       let(:options) do
-        { tag_sets: [{ 'data_center' => 'nyc' }] }
+        { tag_sets: [ { 'data_center' => 'nyc' } ] }
       end
 
       it 'includes the tag sets in the inspect string' do
@@ -606,7 +579,6 @@ describe Mongo::ServerSelector do
     end
 
     context 'when there is a max staleness set' do
-
       let(:mode) do
         :secondary
       end
@@ -629,8 +601,11 @@ describe Mongo::ServerSelector do
     let(:name) do
       :secondary
     end
-    let(:selector) { Mongo::ServerSelector::Secondary.new(
-      mode: name, max_staleness: max_staleness) }
+    let(:selector) do
+      Mongo::ServerSelector::Secondary.new(
+        mode: name, max_staleness: max_staleness
+      )
+    end
 
     def make_server_with_staleness(last_write_date)
       make_server(:secondary).tap do |server|
@@ -641,7 +616,7 @@ describe Mongo::ServerSelector do
 
     shared_context 'staleness filter' do
       let(:servers) do
-        [recent_server, stale_server]
+        [ recent_server, stale_server ]
       end
 
       context 'when max staleness is not set' do
@@ -649,7 +624,7 @@ describe Mongo::ServerSelector do
 
         it 'filters correctly' do
           result = selector.send(:filter_stale_servers, servers, primary)
-          expect(result).to eq([recent_server, stale_server])
+          expect(result).to eq([ recent_server, stale_server ])
         end
       end
 
@@ -658,7 +633,7 @@ describe Mongo::ServerSelector do
 
         it 'filters correctly' do
           result = selector.send(:filter_stale_servers, servers, primary)
-          expect(result).to eq([recent_server])
+          expect(result).to eq([ recent_server ])
         end
       end
     end
@@ -667,13 +642,13 @@ describe Mongo::ServerSelector do
       let(:primary) do
         make_server(:primary).tap do |server|
           allow(server).to receive(:last_scan).and_return(Time.now)
-          allow(server).to receive(:last_write_date).and_return(Time.now-100)
+          allow(server).to receive(:last_write_date).and_return(Time.now - 100)
         end
       end
 
       # staleness is relative to primary, which itself is 100 seconds stale
-      let(:recent_server) { make_server_with_staleness(Time.now-110) }
-      let(:stale_server) { make_server_with_staleness(Time.now-210) }
+      let(:recent_server) { make_server_with_staleness(Time.now - 110) }
+      let(:stale_server) { make_server_with_staleness(Time.now - 210) }
 
       it_behaves_like 'staleness filter'
     end
@@ -681,8 +656,8 @@ describe Mongo::ServerSelector do
     context 'primary is not given' do
       let(:primary) { nil }
 
-      let(:recent_server) { make_server_with_staleness(Time.now-1) }
-      let(:stale_server) { make_server_with_staleness(Time.now-110) }
+      let(:recent_server) { make_server_with_staleness(Time.now - 1) }
+      let(:stale_server) { make_server_with_staleness(Time.now - 110) }
 
       it_behaves_like 'staleness filter'
     end
@@ -697,7 +672,7 @@ describe Mongo::ServerSelector do
 
     context 'sharded' do
       let(:servers) do
-        [make_server(:mongos)]
+        [ make_server(:mongos) ]
       end
 
       before do
@@ -713,7 +688,7 @@ describe Mongo::ServerSelector do
 
       context 'with local threshold' do
         let(:options) do
-          {local_threshold: 1}
+          { local_threshold: 1 }
         end
 
         it 'returns the servers' do
@@ -722,7 +697,7 @@ describe Mongo::ServerSelector do
 
         context 'when servers become unknown' do
           let(:servers) do
-            [make_server(:unknown)]
+            [ make_server(:unknown) ]
           end
 
           it 'returns an empty list' do

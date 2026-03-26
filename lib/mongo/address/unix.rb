@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Address
-
     # Sets up socket addresses.
     #
     # @since 2.0.0
     class Unix
-
       # @return [ String ] host The host.
       attr_reader :host
 
@@ -56,7 +53,7 @@ module Mongo
       # @param [ String ] host The host.
       #
       # @since 2.0.0
-      def initialize(host, port=nil, host_name=nil)
+      def initialize(host, _port = nil, _host_name = nil)
         @host = host
       end
 

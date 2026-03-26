@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -62,13 +61,11 @@ describe Mongo::Collection::View::ChangeStream do
   end
 
   let(:error) do
-    begin
-      change_stream
-    rescue => e
-      e
-    else
-      nil
-    end
+    change_stream
+  rescue StandardError => e
+    e
+  else
+    nil
   end
 
   before do
@@ -77,13 +74,10 @@ describe Mongo::Collection::View::ChangeStream do
 
   after do
     # Only close the change stream if one was successfully created by the test
-    if @change_stream
-      @change_stream.close
-    end
+    @change_stream.close if @change_stream
   end
 
   describe '#initialize' do
-
     it 'sets the view' do
       expect(change_stream.view).to be(view)
     end
@@ -93,9 +87,7 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when full_document is provided' do
-
       context "when the value is 'default'" do
-
         let(:options) do
           { full_document: 'default' }
         end
@@ -106,7 +98,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context "when the value is 'updateLookup'" do
-
         let(:options) do
           { full_document: 'updateLookup' }
         end
@@ -118,14 +109,12 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when full_document is not provided' do
-
-      it "does not set fullDocument" do
+      it 'does not set fullDocument' do
         expect(change_stream_document).not_to have_key(:fullDocument)
       end
     end
 
     context 'when resume_after is provided' do
-
       let(:options) do
         { resume_after: sample_resume_token }
       end
@@ -136,7 +125,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when max_await_time_ms is provided' do
-
       let(:options) do
         { max_await_time_ms: 10 }
       end
@@ -147,7 +135,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when batch_size is provided' do
-
       let(:options) do
         { batch_size: 5 }
       end
@@ -157,8 +144,7 @@ describe Mongo::Collection::View::ChangeStream do
       end
     end
 
-    context 'when collation is provided'  do
-
+    context 'when collation is provided' do
       let(:options) do
         { 'collation' => { locale: 'en_US', strength: 2 } }
       end
@@ -169,9 +155,8 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when a changeStream operator is provided by the user as well' do
-
       let(:pipeline) do
-        [ { '$changeStream' => { fullDocument: 'default' } }]
+        [ { '$changeStream' => { fullDocument: 'default' } } ]
       end
 
       it 'raises the error from the server' do
@@ -181,10 +166,10 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when the collection has a readConcern' do
-
       let(:collection) do
         client['mcv-change-stream'].with(
-          read_concern: { level: 'majority' })
+          read_concern: { level: 'majority' }
+        )
       end
 
       let(:view) do
@@ -197,18 +182,15 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when no pipeline is supplied' do
-
       it 'uses an empty pipeline' do
-        expect(command_selector[:pipeline][0].keys).to eq(['$changeStream'])
+        expect(command_selector[:pipeline][0].keys).to eq([ '$changeStream' ])
       end
     end
 
     context 'when other pipeline operators are supplied' do
-
       context 'when the other pipeline operators are supported' do
-
         let(:pipeline) do
-          [{ '$project' => { '_id' => 0 }}]
+          [ { '$project' => { '_id' => 0 } } ]
         end
 
         it 'uses the pipeline operators' do
@@ -217,29 +199,27 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context 'when the other pipeline operators are not supported' do
-
         let(:pipeline) do
-          [{ '$unwind' => '$test' }]
+          [ { '$unwind' => '$test' } ]
         end
 
         it 'sends the pipeline to the server without a custom error' do
-          expect {
+          expect do
             change_stream
-          }.to raise_exception(Mongo::Error::OperationFailure)
+          end.to raise_exception(Mongo::Error::OperationFailure)
         end
 
         context 'when the operation fails' do
-
           let!(:before_last_use) do
             session.instance_variable_get(:@server_session).last_use
           end
 
           let!(:before_operation_time) do
-            (session.operation_time || 0)
+            session.operation_time || 0
           end
 
           let(:pipeline) do
-            [ { '$invalid' => '$test' }]
+            [ { '$invalid' => '$test' } ]
           end
 
           let(:options) do
@@ -247,7 +227,7 @@ describe Mongo::Collection::View::ChangeStream do
           end
 
           let!(:operation_result) do
-            begin; change_stream; rescue => e; e; end
+            change_stream; rescue StandardError => e; e
           end
 
           let(:session) do
@@ -270,7 +250,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when the initial batch is empty' do
-
       before do
         change_stream
       end
@@ -282,7 +261,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when provided a session' do
-
       let(:options) do
         { session: session }
       end
@@ -294,7 +272,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context 'when the session is created from the same client used for the operation' do
-
         let(:session) do
           client.start_session
         end
@@ -308,7 +285,7 @@ describe Mongo::Collection::View::ChangeStream do
         end
 
         let!(:before_operation_time) do
-          (session.operation_time || 0)
+          session.operation_time || 0
         end
 
         let!(:operation_result) do
@@ -329,7 +306,6 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       context 'when a session from another client is provided' do
-
         let(:session) do
           another_authorized_client.with(retry_reads: false).start_session
         end
@@ -339,14 +315,13 @@ describe Mongo::Collection::View::ChangeStream do
         end
 
         it 'raises an exception' do
-          expect {
+          expect do
             operation_result
-          }.to raise_exception(Mongo::Error::InvalidSession)
+          end.to raise_exception(Mongo::Error::InvalidSession)
         end
       end
 
       context 'when the session is ended before it is used' do
-
         let(:session) do
           client.start_session
         end
@@ -360,16 +335,15 @@ describe Mongo::Collection::View::ChangeStream do
         end
 
         it 'raises an exception' do
-          expect {
+          expect do
             operation_result
-          }.to raise_exception(Mongo::Error::InvalidSession)
+          end.to raise_exception(Mongo::Error::InvalidSession)
         end
       end
     end
   end
 
   describe '#close' do
-
     context 'ignores any exceptions or errors' do
       [
         Mongo::Error::OperationFailure,
@@ -384,21 +358,20 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when documents have not been retrieved and the stream is closed' do
-
       before do
         expect(cursor).to receive(:close).and_call_original
         change_stream.close
       end
 
       it 'closes the cursor' do
-        expect(change_stream.instance_variable_get(:@cursor)).to be(nil)
+        expect(change_stream.instance_variable_get(:@cursor)).to be_nil
         expect(change_stream.closed?).to be(true)
       end
 
       it 'raises an error when the stream is attempted to be iterated' do
-        expect {
+        expect do
           change_stream.to_enum.next
-        }.to raise_exception(StopIteration)
+        end.to raise_exception(StopIteration)
       end
     end
 
@@ -417,24 +390,21 @@ describe Mongo::Collection::View::ChangeStream do
       end
 
       it 'raises an error' do
-        expect {
+        expect do
           enum.next
-        }.to raise_exception(StopIteration)
+        end.to raise_exception(StopIteration)
       end
     end
   end
 
   describe '#closed?' do
-
     context 'when the change stream has not been closed' do
-
       it 'returns false' do
         expect(change_stream.closed?).to be(false)
       end
     end
 
     context 'when the change stream has been closed' do
-
       before do
         change_stream.close
       end
@@ -446,11 +416,10 @@ describe Mongo::Collection::View::ChangeStream do
   end
 
   context 'when the first response does not contain the resume token' do
-
     let(:pipeline) do
       # This removes id from change stream document which is used as
       # resume token
-      [{ '$project' => { _id: 0 } }]
+      [ { '$project' => { _id: 0 } } ]
     end
 
     before do
@@ -460,20 +429,19 @@ describe Mongo::Collection::View::ChangeStream do
 
     it 'server errors, driver closes the cursor' do
       expect(cursor).to receive(:close).and_call_original
-      expect {
+      expect do
         change_stream.to_enum.next
-      }.to raise_exception(Mongo::Error::OperationFailure, /Encountered an event whose _id field, which contains the resume token, was modified by the pipeline. Modifying the _id field of an event makes it impossible to resume the stream from that point. Only transformations that retain the unmodified _id field are allowed./)
+      end.to raise_exception(Mongo::Error::OperationFailure,
+                             /Encountered an event whose _id field, which contains the resume token, was modified by the pipeline. Modifying the _id field of an event makes it impossible to resume the stream from that point. Only transformations that retain the unmodified _id field are allowed./)
     end
   end
 
   describe '#inspect' do
-
     it 'includes the Ruby object_id in the formatted string' do
       expect(change_stream.inspect).to include(change_stream.object_id.to_s)
     end
 
     context 'when resume_after is provided' do
-
       let(:options) do
         { resume_after: sample_resume_token }
       end
@@ -484,7 +452,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when max_await_time_ms is provided' do
-
       let(:options) do
         { max_await_time_ms: 10 }
       end
@@ -495,7 +462,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when batch_size is provided' do
-
       let(:options) do
         { batch_size: 5 }
       end
@@ -505,8 +471,7 @@ describe Mongo::Collection::View::ChangeStream do
       end
     end
 
-    context 'when collation is provided'  do
-
+    context 'when collation is provided' do
       let(:options) do
         { 'collation' => { locale: 'en_US', strength: 2 } }
       end
@@ -517,13 +482,12 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when pipeline operators are provided' do
-
       let(:pipeline) do
-        [{ '$project' => { '_id' => 0 }}]
+        [ { '$project' => { '_id' => 0 } } ]
       end
 
       it 'includes the filters in the formatted string' do
-        expect(change_stream.inspect).to include([{ '$project' => { '_id' => 0 }}].to_s)
+        expect(change_stream.inspect).to include([ { '$project' => { '_id' => 0 } } ].to_s)
       end
     end
   end
