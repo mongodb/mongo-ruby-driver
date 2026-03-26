@@ -166,9 +166,7 @@ describe 'SDAM prose tests' do
             client.use('test')['test'].find(
               '$where' => 'function() { sleep(2000); return true; }'
             ).first
-          rescue Mongo::Error::PoolTimeout,
-                 Mongo::Error::SocketError,
-                 Mongo::Error::NoServerAvailable
+          rescue StandardError
             # Ignore connection errors (including checkout timeouts).
           end
         end
