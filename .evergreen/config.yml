@@ -1273,7 +1273,7 @@ buildvariants:
   - matrix_name: CSOT
     matrix_spec:
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: ["8.0", "rapid"]
       topology: replica-set-single-node
       os: ubuntu2204
     display_name: "CSOT - ${mongodb-version}"
@@ -1532,7 +1532,7 @@ buildvariants:
       auth-and-ssl: "noauth-and-nossl"
       ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "ruby-3.2", "ruby-3.1"]
       topology: [replica-set, sharded-cluster]
-      mongodb-version: [ '6.0', '7.0', '8.0' ]
+      mongodb-version: [ '6.0', '7.0', '8.0', 'rapid' ]
       os: ubuntu2204
       fle: helper
     display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
