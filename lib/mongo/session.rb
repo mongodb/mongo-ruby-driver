@@ -17,6 +17,7 @@
 
 require 'mongo/session/session_pool'
 require 'mongo/session/server_session'
+require 'mongo/session/with_transaction_runner'
 
 module Mongo
 
