@@ -136,7 +136,7 @@ describe Mongo::Session do
         allow(session).to receive('check_transactions_supported!').and_return true
 
         expect do
-          session.with_transaction do
+          session.with_transaction(timeout_ms: 5000) do
             exc = Mongo::Error::OperationFailure.new('timeout test')
             exc.add_label('TransientTransactionError')
             raise exc
