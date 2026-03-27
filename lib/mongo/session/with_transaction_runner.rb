@@ -75,6 +75,28 @@ module Mongo
         end
       end
 
+      # -- Pre-retry backoff -------------------------------------------------
+
+      # Sleeps before the next transaction attempt, checking the deadline first.
+      # Two branches: overload path (adaptive) and normal path (exponential).
+      def pre_retry_backoff
+        if @overload_encountered
+          delay = @session.client.retry_policy.backoff_delay(@overload_error_count)
+          if backoff_would_exceed_deadline?(delay)
+            make_timeout_error_from(@last_error, 'CSOT timeout expired waiting to retry withTransaction')
+          end
+          raise @last_error unless @session.client.retry_policy.should_retry_overload?(@overload_error_count, delay)
+
+          sleep(delay)
+        else
+          backoff = backoff_seconds_for_retry
+          if backoff_would_exceed_deadline?(backoff)
+            make_timeout_error_from(@last_error, 'CSOT timeout expired waiting to retry withTransaction')
+          end
+          sleep(backoff)
+        end
+      end
+
       # -- Commit helpers ----------------------------------------------------
 
       def build_commit_options
