@@ -43,7 +43,7 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
     allow(session).to receive(:commit_transaction) do
       session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_COMMITTED_STATE)
     end
-    allow(session).to receive(:sleep)
+    allow(Kernel).to receive(:sleep)
   end
 
   # Stubs Mongo::Utils.monotonic_time: first `initial_calls` invocations
@@ -221,6 +221,28 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
             expect(e).not_to be_a(Mongo::Error::TimeoutError)
           end
         end
+      end
+    end
+
+    # Regression test: the original with_transaction used `Utils.monotonic_time >= deadline`
+    # for the TransientTransactionError commit check, which is always true when
+    # deadline == 0 (timeout_ms: 0 = infinite CSOT). WithTransactionRunner fixes
+    # this with deadline_expired? that guards on @deadline.zero?.
+    context 'when timeout_ms: 0 (infinite CSOT) and commit raises TransientTransactionError' do
+      let(:commit_error) { make_commit_transient_error }
+      let(:success_return_value) { 42 }
+
+      it 'retries and succeeds (does not raise TimeoutError)' do
+        allow(Mongo::Utils).to receive(:monotonic_time).and_return(0.0)
+        calls = 0
+        allow(session).to receive(:commit_transaction) do
+          calls += 1
+          raise commit_error if calls == 1
+
+          session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_COMMITTED_STATE)
+        end
+        result = session.with_transaction(timeout_ms: 0) { success_return_value }
+        expect(result).to eq(success_return_value)
       end
     end
 
