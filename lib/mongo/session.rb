@@ -475,7 +475,7 @@ module Mongo
           if overload_encountered
             delay = @client.retry_policy.backoff_delay(overload_error_count)
             if backoff_would_exceed_deadline?(deadline, delay)
-              make_timeout_error_from(last_error)
+              make_timeout_error_from(last_error, 'CSOT timeout expired waiting to retry withTransaction')
             end
             unless @client.retry_policy.should_retry_overload?(overload_error_count, delay)
               raise(last_error)
@@ -484,7 +484,7 @@ module Mongo
           else
             backoff = backoff_seconds_for_retry(transaction_attempt)
             if backoff_would_exceed_deadline?(deadline, backoff)
-              make_timeout_error_from(last_error)
+              make_timeout_error_from(last_error, 'CSOT timeout expired waiting to retry withTransaction')
             end
             sleep(backoff)
           end
@@ -513,11 +513,7 @@ module Mongo
 
           if deadline_expired?(deadline)
             transaction_in_progress = false
-            if @with_transaction_timeout_ms
-              raise Mongo::Error::TimeoutError, 'CSOT timeout expired during withTransaction callback'
-            else
-              raise
-            end
+            make_timeout_error_from(e, 'CSOT timeout expired during withTransaction callback')
           end
 
           if e.is_a?(Mongo::Error) && e.label?('TransientTransactionError')
@@ -559,7 +555,7 @@ module Mongo
               then
                 transaction_in_progress = false
                 if @with_transaction_timeout_ms && deadline_expired?(deadline)
-                  raise Mongo::Error::TimeoutError, 'CSOT timeout expired during withTransaction commit'
+                  make_timeout_error_from(e, 'CSOT timeout expired during withTransaction commit')
                 else
                   raise
                 end
@@ -577,11 +573,7 @@ module Mongo
                 delay = @client.retry_policy.backoff_delay(overload_error_count)
                 if backoff_would_exceed_deadline?(deadline, delay)
                   transaction_in_progress = false
-                  if @with_transaction_timeout_ms
-                    raise Mongo::Error::TimeoutError, 'CSOT timeout expired during withTransaction commit'
-                  else
-                    raise
-                  end
+                  make_timeout_error_from(e, 'CSOT timeout expired during withTransaction commit')
                 end
                 unless @client.retry_policy.should_retry_overload?(overload_error_count, delay)
                   transaction_in_progress = false
@@ -603,11 +595,7 @@ module Mongo
             elsif e.label?('TransientTransactionError')
               if Utils.monotonic_time >= deadline
                 transaction_in_progress = false
-                if @with_transaction_timeout_ms
-                  raise Mongo::Error::TimeoutError, 'CSOT timeout expired during withTransaction commit'
-                else
-                  raise
-                end
+                make_timeout_error_from(e, 'CSOT timeout expired during withTransaction commit')
               end
               last_error = e
               if e.label?('SystemOverloadedError')
@@ -1454,23 +1442,15 @@ module Mongo
     end
 
     # Implements makeTimeoutError(lastError) from the transactions-convenient-api spec.
-    # Called when the withTransaction retry loop cannot continue because backoff would
-    # exceed the deadline.
-    #
-    # - CSOT mode: raises TimeoutError with lastError as Ruby's .cause
-    # - non-CSOT mode: re-raises lastError directly
-    #
-    # Must be called from outside a rescue block; raises unconditionally.
-    def make_timeout_error_from(last_error)
+    # In CSOT mode raises TimeoutError with last_error's message included as a substring.
+    # In non-CSOT mode re-raises last_error directly.
+    def make_timeout_error_from(last_error, timeout_message)
       if @with_transaction_timeout_ms
-        begin
-          raise last_error
-        rescue
-          raise Mongo::Error::TimeoutError, 'CSOT timeout expired waiting to retry withTransaction'
-        end
+        raise Mongo::Error::TimeoutError, "#{timeout_message}: #{last_error}"
       else
         raise last_error
       end
     end
+
   end
 end

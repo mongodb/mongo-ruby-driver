@@ -120,10 +120,10 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
     context 'when callback raises TransientTransactionError and retry timeout is exceeded' do
       let(:transient_error) { make_transient_error }
 
-      it 'propagates the error as TimeoutError with the transient error as cause' do
+      it 'propagates the error as TimeoutError including the transient error message' do
         with_expired_deadline_after(initial_calls: 1) do
           ex = expect { session.with_transaction(timeout_ms: 1) { raise transient_error } }
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.cause).to eq(transient_error) }
+          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(transient_error.message) }
         end
       end
     end
@@ -133,14 +133,14 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
 
       before { allow(session).to receive(:commit_transaction) { raise commit_error } }
 
-      it 'propagates the error as TimeoutError with the commit error as cause' do
+      it 'propagates the error as TimeoutError including the commit error message' do
         with_expired_deadline_after(initial_calls: 2) do
           ex = expect do
             session.with_transaction(timeout_ms: 1) do
               session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_IN_PROGRESS_STATE)
             end
           end
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.cause).to eq(commit_error) }
+          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(commit_error.message) }
         end
       end
     end
@@ -150,14 +150,14 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
 
       before { allow(session).to receive(:commit_transaction) { raise commit_error } }
 
-      it 'propagates the error as TimeoutError with the commit error as cause' do
+      it 'propagates the error as TimeoutError including the commit error message' do
         with_expired_deadline_after(initial_calls: 2) do
           ex = expect do
             session.with_transaction(timeout_ms: 1) do
               session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_IN_PROGRESS_STATE)
             end
           end
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.cause).to eq(commit_error) }
+          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(commit_error.message) }
         end
       end
     end
@@ -177,10 +177,10 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
     context 'when regular backoff would exceed CSOT deadline' do
       let(:last_error) { make_transient_error }
 
-      it 'raises TimeoutError with last_error as cause' do
+      it 'raises TimeoutError including last_error message' do
         with_csot_backoff_time_control do
           ex = expect { session.with_transaction(timeout_ms: 1) { raise last_error } }
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.cause).to eq(last_error) }
+          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(last_error.message) }
         end
       end
     end
@@ -202,10 +202,10 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
     context 'when overload backoff would exceed CSOT deadline' do
       let(:last_error) { make_transient_overload_error }
 
-      it 'raises TimeoutError with last_error as cause' do
+      it 'raises TimeoutError including last_error message' do
         with_csot_backoff_time_control do
           ex = expect { session.with_transaction(timeout_ms: 1) { raise last_error } }
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.cause).to eq(last_error) }
+          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(last_error.message) }
         end
       end
     end
@@ -229,14 +229,14 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
 
       before { allow(session).to receive(:commit_transaction) { raise commit_error } }
 
-      it 'raises TimeoutError with the commit error as cause' do
+      it 'raises TimeoutError including the commit error message' do
         with_csot_backoff_time_control do
           ex = expect do
             session.with_transaction(timeout_ms: 1) do
               session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_IN_PROGRESS_STATE)
             end
           end
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.cause).to eq(commit_error) }
+          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(commit_error.message) }
         end
       end
     end
