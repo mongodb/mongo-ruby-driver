@@ -1310,6 +1310,30 @@ module Mongo
       @inside_with_transaction
     end
 
+    # Nils the with_transaction deadline, allowing subsequent operations
+    # (e.g. abort_transaction) to use a fresh timeout rather than an
+    # already-expired one. Called by WithTransactionRunner.
+    def clear_with_transaction_deadline!
+      @with_transaction_deadline = nil
+    end
+
+    protected
+
+    # Readable by WithTransactionRunner to detect CSOT mode.
+    attr_reader :with_transaction_timeout_ms
+
+    # Resets transaction state to NO_TRANSACTION_STATE without calling
+    # abort_transaction. Used by WithTransactionRunner after a
+    # TransientTransactionError during commit — the server has already
+    # rolled back, so no server-side cleanup is needed.
+    def reset_transaction_state!
+      @state = NO_TRANSACTION_STATE
+    end
+
+    def within_states?(*states)
+      states.include?(@state)
+    end
+
     private
 
     # Get the read concern the session will use when starting a transaction.
@@ -1325,10 +1349,6 @@ module Mongo
     def txn_read_concern
       # Read concern is inherited from client but not db or collection.
       txn_options[:read_concern] || @client.read_concern
-    end
-
-    def within_states?(*states)
-      states.include?(@state)
     end
 
     def check_if_no_transaction!
