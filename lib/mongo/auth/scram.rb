@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,14 +16,12 @@
 
 module Mongo
   module Auth
-
     # Defines behavior for SCRAM authentication.
     #
     # @api private
     class Scram < Base
-
       # The authentication mechanism string.
-      MECHANISM = 'SCRAM-SHA-1'.freeze
+      MECHANISM = 'SCRAM-SHA-1'
 
       # Initializes the Scram authenticator.
       #
@@ -53,7 +50,8 @@ module Mongo
 
       def conversation
         @conversation ||= self.class.const_get(:Conversation).new(
-          user, connection, client_nonce: speculative_auth_client_nonce)
+          user, connection, client_nonce: speculative_auth_client_nonce
+        )
       end
 
       # Log the user in on the current connection.
@@ -61,11 +59,8 @@ module Mongo
       # @return [ BSON::Document ] The document of the authentication response.
       def login
         converse_multi_step(connection, conversation,
-          speculative_auth_result: speculative_auth_result,
-        ).tap do
-          unless conversation.server_verified?
-            raise Error::MissingScramServerSignature
-          end
+                            speculative_auth_result: speculative_auth_result).tap do
+          raise Error::MissingScramServerSignature unless conversation.server_verified?
         end
       end
     end

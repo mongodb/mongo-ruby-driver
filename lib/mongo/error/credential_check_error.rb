@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Credential check for MONGODB-AWS authentication mechanism failed.
     #
     # This exception is raised when the driver attempts to verify the

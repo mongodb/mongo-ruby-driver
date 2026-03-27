@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -18,26 +17,24 @@
 module Mongo
   class Monitoring
     module Event
-
       # Provides behavior to redact sensitive information from commands and
       # replies.
       #
       # @since 2.1.0
       module Secure
-
         # The list of commands that has the data redacted for security.
         #
         # @since 2.1.0
-        REDACTED_COMMANDS = [
-          'authenticate',
-          'saslStart',
-          'saslContinue',
-          'getnonce',
-          'createUser',
-          'updateUser',
-          'copydbgetnonce',
-          'copydbsaslstart',
-          'copydb'
+        REDACTED_COMMANDS = %w[
+          authenticate
+          saslStart
+          saslContinue
+          getnonce
+          createUser
+          updateUser
+          copydbgetnonce
+          copydbsaslstart
+          copydb
         ].freeze
 
         # Check whether the command is sensitive in terms of command monitoring
@@ -52,9 +49,8 @@ module Mongo
         def sensitive?(command_name:, document:)
           if REDACTED_COMMANDS.include?(command_name.to_s)
             true
-          elsif %w(hello ismaster isMaster).include?(command_name.to_s) &&
-            document['speculativeAuthenticate']
-            then
+          elsif %w[hello ismaster isMaster].include?(command_name.to_s) &&
+                document['speculativeAuthenticate']
             # According to Command Monitoring spec,for hello/legacy hello commands
             # when speculativeAuthenticate is present, their commands AND replies
             # MUST be redacted from the events.
@@ -81,17 +77,16 @@ module Mongo
         #
         # @since 2.1.0
         def redacted(command_name, document)
-          if %w(1 true yes).include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS']&.downcase)
+          if %w[1 true yes].include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS']&.downcase)
             document
           elsif respond_to?(:started_event) && started_event.sensitive
-            return BSON::Document.new
+            BSON::Document.new
           elsif sensitive?(command_name: command_name, document: document)
             BSON::Document.new
           else
             document
           end
         end
-
 
         # Is compression allowed for a given command message.
         #

@@ -1,10 +1,7 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Unified
-
   module SupportOperations
-
     def run_command(op)
       database = entities.get(:database, op.use!('object'))
 
@@ -40,7 +37,7 @@ module Unified
         address = primary_server&.address || ClusterConfig.instance.primary_address
 
         $disable_fail_points ||= []
-        $disable_fail_points << [fp, address]
+        $disable_fail_points << [ fp, address ]
       end
     end
 
@@ -54,7 +51,7 @@ module Unified
         end
 
         client = ClusterTools.instance.direct_client(session.pinned_server.address,
-          database: 'admin')
+                                                     database: 'admin')
         client.command(fp = args.use!('failPoint'))
         args.clear
 
@@ -95,17 +92,16 @@ module Unified
         unless subscriber.started_events.length >= 2
           raise Error::ResultMismatch, "Must have at least 2 events, have #{subscriber.started_events.length}"
         end
+
         lsids = subscriber.started_events[-2..-1].map do |cmd|
           cmd.command.fetch('lsid')
         end
         if expected
           unless lsids.first == lsids.last
-            raise Error::ResultMismatch, "lsids differ but they were expected to be the same"
+            raise Error::ResultMismatch, 'lsids differ but they were expected to be the same'
           end
-        else
-          if lsids.first == lsids.last
-            raise Error::ResultMismatch, "lsids are the same but they were expected to be different"
-          end
+        elsif lsids.first == lsids.last
+          raise Error::ResultMismatch, 'lsids are the same but they were expected to be different'
         end
       end
     end
@@ -209,13 +205,9 @@ module Unified
         session = entities.get(:session, args.use!('session'))
 
         if state
-          unless session.pinned_server
-            raise Error::ResultMismatch, 'Expected session to be pinned but it is not'
-          end
-        else
-          if session.pinned_server
-            raise Error::ResultMismatch, 'Expected session to be not pinned but it is'
-          end
+          raise Error::ResultMismatch, 'Expected session to be pinned but it is not' unless session.pinned_server
+        elsif session.pinned_server
+          raise Error::ResultMismatch, 'Expected session to be not pinned but it is'
         end
       end
     end
@@ -244,6 +236,7 @@ module Unified
 
         loop do
           break if stop?
+
           begin
             ops.map(&:dup).each do |op|
               execute_operation(op)
@@ -251,13 +244,13 @@ module Unified
             end
           rescue Unified::Error::ResultMismatch => e
             if store_failures
-              STDERR.puts "Failure: #{e.class}: #{e}"
+              warn "Failure: #{e.class}: #{e}"
               entities.get(:failure_list, store_failures) << {
                 error: "#{e.class}: #{e}",
                 time: Time.now.to_f,
               }
             elsif store_errors
-              STDERR.puts "Failure: #{e.class}: #{e} (reporting as error)"
+              warn "Failure: #{e.class}: #{e} (reporting as error)"
               entities.get(:error_list, store_errors) << {
                 error: "#{e.class}: #{e}",
                 time: Time.now.to_f,
@@ -267,15 +260,15 @@ module Unified
             end
           rescue Interrupt
             raise
-          rescue => e
+          rescue StandardError => e
             if store_failures
-              STDERR.puts "Error: #{e.class}: #{e} (reporting as failure)"
+              warn "Error: #{e.class}: #{e} (reporting as failure)"
               entities.get(:failure_list, store_failures) << {
                 error: "#{e.class}: #{e}",
                 time: Time.now.to_f,
               }
             elsif store_errors
-              STDERR.puts "Error: #{e.class}: #{e}"
+              warn "Error: #{e.class}: #{e}"
               entities.get(:error_list, store_errors) << {
                 error: "#{e.class}: #{e}",
                 time: Time.now.to_f,
@@ -287,12 +280,8 @@ module Unified
           iterations += 1
         end
 
-        if store_iterations
-          entities.set(:iteration_count, store_iterations, iterations)
-        end
-        if store_successes
-          entities.set(:success_count, store_successes, successes)
-        end
+        entities.set(:iteration_count, store_iterations, iterations) if store_iterations
+        entities.set(:success_count, store_successes, successes) if store_successes
       end
     end
 
@@ -306,15 +295,17 @@ module Unified
         count = args.use!('count')
 
         events = select_events(subscriber, event)
-        if %w(serverDescriptionChangedEvent poolClearedEvent).include?(event.keys.first)
+        if %w[serverDescriptionChangedEvent poolClearedEvent].include?(event.keys.first)
           # We publish SDAM events from both regular and push monitors.
           # This means sometimes there are two ServerMarkedUnknownEvent
           # events published for the same server transition.
           # Allow actual event count to be at least the expected event count
           # in case there are multiple transitions in a single test.
-          assert_gte(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
+          assert_gte(events.length, count,
+                     "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
         else
-          assert_eq(events.length, count, "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
+          assert_eq(events.length, count,
+                    "Expected event #{event} to occur #{count} times but received it #{events.length} times.")
         end
       end
     end
@@ -334,25 +325,22 @@ module Unified
 
     def select_events(subscriber, event)
       expected_name, opts = event.first
-      expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { $1.upcase }
+      expected_name = expected_name.sub(/Event$/, '').sub(/^(.)/) { ::Regexp.last_match(1).upcase }
       subscriber.wanted_events.select do |wevent|
-        if wevent.class.name.sub(/.*::/, '') == expected_name
-          spec = UsingHash[opts]
-          result = true
-          if new_desc = spec.use('newDescription')
-            if type = new_desc.use('type')
-              expected_type = SDAM_SERVER_TYPE_MAP[type] || type.downcase.to_sym
-              result &&= wevent.new_description.server_type == expected_type
-            end
-          end
-          if command_name = spec.use('commandName')
-            result &&= wevent.respond_to?(:command_name) && wevent.command_name == command_name
-          end
-          unless spec.empty?
-            raise NotImplementedError, "Unhandled keys: #{spec}"
-          end
-          result
+        next unless wevent.class.name.sub(/.*::/, '') == expected_name
+
+        spec = UsingHash[opts]
+        result = true
+        if (new_desc = spec.use('newDescription')) && (type = new_desc.use('type'))
+          expected_type = SDAM_SERVER_TYPE_MAP[type] || type.downcase.to_sym
+          result &&= wevent.new_description.server_type == expected_type
         end
+        if command_name = spec.use('commandName')
+          result &&= wevent.respond_to?(:command_name) && wevent.command_name == command_name
+        end
+        raise NotImplementedError, "Unhandled keys: #{spec}" unless spec.empty?
+
+        result
       end
     end
 
@@ -364,7 +352,8 @@ module Unified
         actual_c = client.cluster.servers.map(&:pool_internal).compact.sum do |p|
           p.instance_variable_get(:@checked_out_connections).length
         end
-        assert_eq(actual_c, connections, "Expected client #{client} to have #{connections} checked out connections but there are #{actual_c}.")
+        assert_eq(actual_c, connections,
+                  "Expected client #{client} to have #{connections} checked out connections but there are #{actual_c}.")
       end
     end
 
@@ -397,20 +386,20 @@ module Unified
     end
 
     def mdb_name_to_ruby(name)
-      name.to_s.gsub(/([a-z])([A-Z])/) { "#{$1}_#{$2}" }.downcase.to_sym
+      name.to_s.gsub(/([a-z])([A-Z])/) { "#{::Regexp.last_match(1)}_#{::Regexp.last_match(2)}" }.downcase.to_sym
     end
 
     def assert_no_arguments(op)
-      if op.key?('arguments')
-        raise NotimplementedError, "Arguments are not allowed"
-      end
+      return unless op.key?('arguments')
+
+      raise NotimplementedError, 'Arguments are not allowed'
     end
 
     def consume_test_runner(op)
       v = op.use!('object')
-      unless v == 'testRunner'
-        raise NotImplementedError, 'Expected object to be testRunner'
-      end
+      return if v == 'testRunner'
+
+      raise NotImplementedError, 'Expected object to be testRunner'
     end
 
     def decode_hex_bytes(value)

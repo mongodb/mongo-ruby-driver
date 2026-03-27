@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'singleton'
 
@@ -52,14 +51,13 @@ class ClusterTools
 
   def force_step_down
     admin_client.database.command(
-      replSetStepDown: 1, force: true)
+      replSetStepDown: 1, force: true
+    )
   end
 
   # https://mongodb.com/docs/manual/reference/parameters/#param.enableElectionHandoff
   def set_election_handoff(value)
-    unless [true, false].include?(value)
-      raise ArgumentError, 'Value must be true or false'
-    end
+    raise ArgumentError, 'Value must be true or false' unless [ true, false ].include?(value)
 
     direct_client_for_each_data_bearing_server do |client|
       client.use(:admin).database.command(setParameter: 1, enableElectionHandoff: value)
@@ -97,14 +95,12 @@ class ClusterTools
   # Requests that the current primary in the RS steps down.
   def step_down
     admin_client.database.command(
-      replSetStepDown: 4, secondaryCatchUpPeriodSecs: 2)
+      replSetStepDown: 4, secondaryCatchUpPeriodSecs: 2
+    )
   rescue Mongo::Error::OperationFailure::Family => e
     # While waiting for secondaries to catch up before stepping down, this node decided to step down for other reasons (189)
-    if e.code == 189
-      # success
-    else
-      raise
-    end
+    raise unless e.code == 189
+    # success
   end
 
   # Attempts to elect the server at the specified address as the new primary
@@ -115,23 +111,16 @@ class ClusterTools
     client = direct_client(address)
     start = Mongo::Utils.monotonic_time
     loop do
-      begin
-        client.database.command(replSetStepUp: 1)
-        break
-      rescue Mongo::Error::OperationFailure::Family => e
-        # Election failed. (125)
-        if e.code == 125
-          # Possible reason is the node we are trying to elect has deny-listed
-          # itself. This is where {replSetFreeze: 0} should make it eligible
-          # for election again but this seems to not always work.
-        else
-          raise
-        end
+      client.database.command(replSetStepUp: 1)
+      break
+    rescue Mongo::Error::OperationFailure::Family => e
+      # Election failed. (125)
+      raise unless e.code == 125
+      # Possible reason is the node we are trying to elect has deny-listed
+      # itself. This is where {replSetFreeze: 0} should make it eligible
+      # for election again but this seems to not always work.
 
-        if Mongo::Utils.monotonic_time > start + 10
-          raise e
-        end
-      end
+      raise e if Mongo::Utils.monotonic_time > start + 10
     end
     reset_server_states
   end
@@ -156,13 +145,13 @@ class ClusterTools
     cfg = get_rs_config
     cfg['members'].each do |member|
       member['priority'] = case member['host']
-      when existing_primary_address.to_s
-        1
-      when target.address.to_s
-        10
-      else
-        0
-      end
+                           when existing_primary_address.to_s
+                             1
+                           when target.address.to_s
+                             10
+                           else
+                             0
+                           end
     end
     set_rs_config(cfg)
 
@@ -185,13 +174,9 @@ class ClusterTools
 
       step_up(address)
 
-      if admin_client.cluster.next_primary.address == address
-        break
-      end
+      break if admin_client.cluster.next_primary.address == address
 
-      if Mongo::Utils.monotonic_time - start > 10
-        raise "Unable to get #{address} instated as primary after 10 seconds"
-      end
+      raise "Unable to get #{address} instated as primary after 10 seconds" if Mongo::Utils.monotonic_time - start > 10
     end
   end
 
@@ -204,9 +189,8 @@ class ClusterTools
   # @param [ Mongo::Address ] address
   def force_primary(address)
     current_primary = admin_client.cluster.next_primary
-    if current_primary.address == address
-      raise "Attempting to set primary to #{address} but it is already the primary"
-    end
+    raise "Attempting to set primary to #{address} but it is already the primary" if current_primary.address == address
+
     encourage_primary(address)
 
     if unfreeze_server(address)
@@ -218,9 +202,9 @@ class ClusterTools
     persistently_step_up(address)
     admin_client.cluster.next_primary.unknown!
     new_primary = admin_client.cluster.next_primary
-    if new_primary.address != address
-      raise "Elected primary #{new_primary.address} is not what we wanted (#{address})"
-    end
+    return unless new_primary.address != address
+
+    raise "Elected primary #{new_primary.address} is not what we wanted (#{address})"
   end
 
   # Adjusts replica set configuration so that the next election is likely
@@ -245,9 +229,7 @@ class ClusterTools
         member['priority'] = 0
       end
     end
-    unless found
-      raise "No RS member for #{address}"
-    end
+    raise "No RS member for #{address}" unless found
 
     set_rs_config(cfg)
   end
@@ -283,12 +265,11 @@ class ClusterTools
   def unfreeze_all
     admin_client.cluster.servers_list.each do |server|
       next if server.arbiter?
+
       client = direct_client(server.address)
       # Primary refuses to be unfrozen with this message:
       # cannot freeze node when primary or running for election. state: Primary (95)
-      if server != admin_client.cluster.next_primary
-        client.use('admin').database.command(replSetFreeze: 0)
-      end
+      client.use('admin').database.command(replSetFreeze: 0) if server != admin_client.cluster.next_primary
     end
   end
 
@@ -296,9 +277,8 @@ class ClusterTools
   def get_rs_config
     result = admin_client.database.command(replSetGetConfig: 1)
     doc = result.reply.documents.first
-    if doc['ok'] != 1
-      raise 'Failed to get RS config'
-    end
+    raise 'Failed to get RS config' if doc['ok'] != 1
+
     doc['config']
   end
 
@@ -307,16 +287,16 @@ class ClusterTools
   def set_rs_config(config)
     config = config.dup
     config['version'] += 1
-    cmd = {replSetReconfig: config}
+    cmd = { replSetReconfig: config }
     if ClusterConfig.instance.fcv_ish >= '4.4'
       # Workaround for https://jira.mongodb.org/browse/SERVER-46894
       cmd[:force] = true
     end
     result = admin_client.database.command(cmd)
     doc = result.reply.documents.first
-    if doc['ok'] != 1
-      raise 'Failed to reconfigure RS'
-    end
+    return unless doc['ok'] != 1
+
+    raise 'Failed to reconfigure RS'
   end
 
   def admin_client
@@ -324,8 +304,8 @@ class ClusterTools
     # selection timeout applied. The default timeout for tests assumes a
     # stable deployment.
     (
-      @admin_client ||= ClientRegistry.instance.global_client('root_authorized').
-        with(server_selection_timeout: 15).use(:admin)
+      @admin_client ||= ClientRegistry.instance.global_client('root_authorized')
+        .with(server_selection_timeout: 15).use(:admin)
     ).tap do |client|
       ClientRegistry.reconnect_client_if_perished(client)
     end
@@ -333,18 +313,21 @@ class ClusterTools
 
   def direct_client(address, options = {})
     connect = if SpecConfig.instance.connect_options[:connect] == :load_balanced
-      :load_balanced
-    else
-      :direct
-    end
+                :load_balanced
+              else
+                :direct
+              end
     @direct_clients ||= {}
-    cache_key = {address: address}.update(options)
+    cache_key = { address: address }.update(options)
     (
       @direct_clients[cache_key] ||= ClientRegistry.instance.new_local_client(
-        [address.to_s],
+        [ address.to_s ],
         SpecConfig.instance.test_options.merge(
-          SpecConfig.instance.auth_options).merge(
-          connect: connect, server_selection_timeout: 10).merge(options))
+          SpecConfig.instance.auth_options
+        ).merge(
+          connect: connect, server_selection_timeout: 10
+        ).merge(options)
+      )
     ).tap do |client|
       ClientRegistry.reconnect_client_if_perished(client)
     end
@@ -355,21 +338,22 @@ class ClusterTools
       @admin_client.close
       @admin_client = nil
     end
-    if @direct_clients
-      @direct_clients.each do |cache_key, client|
-        client.close
-      end
-      @direct_clients = nil
+    return unless @direct_clients
+
+    @direct_clients.each do |_cache_key, client|
+      client.close
     end
+    @direct_clients = nil
   end
 
   def each_server(&block)
     admin_client.cluster.servers_list.each(&block)
   end
 
-  def direct_client_for_each_data_bearing_server(&block)
+  def direct_client_for_each_data_bearing_server
     each_server do |server|
       next if server.arbiter?
+
       yield direct_client(server.address)
     end
   end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,19 +8,18 @@ describe Mongo::Operation::Update do
   let(:context) { Mongo::Operation::Context.new }
 
   let(:document) do
-    { :q => { :foo => 1 },
-      :u => { :$set => { :bar => 1 } },
-      :multi => true,
-      :upsert => false }
+    { q: { foo: 1 },
+      u: { :$set => { bar: 1 } },
+      multi: true,
+      upsert: false }
   end
 
   let(:spec) do
-    { :updates        => [ document ],
-      :db_name       => SpecConfig.instance.test_db,
-      :coll_name     => TEST_COLL,
-      :write_concern => Mongo::WriteConcern.get(:w => 1),
-      :ordered       => true
-    }
+    { updates: [ document ],
+      db_name: SpecConfig.instance.test_db,
+      coll_name: TEST_COLL,
+      write_concern: Mongo::WriteConcern.get(w: 1),
+      ordered: true }
   end
 
   let(:update) do
@@ -29,9 +27,7 @@ describe Mongo::Operation::Update do
   end
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(update.spec).to eq(spec)
       end
@@ -39,11 +35,8 @@ describe Mongo::Operation::Update do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two ops have the same specs' do
-
         let(:other) { described_class.new(spec) }
 
         it 'returns true' do
@@ -52,17 +45,18 @@ describe Mongo::Operation::Update do
       end
 
       context 'when two ops have different specs' do
-        let(:other_doc) { {:q => { :foo => 1 },
-                           :u => { :$set => { :bar => 1 } },
-                           :multi => true,
-                           :upsert => true } }
+        let(:other_doc) do
+          { q: { foo: 1 },
+            u: { :$set => { bar: 1 } },
+            multi: true,
+            upsert: true }
+        end
         let(:other_spec) do
-          { :update        => other_doc,
-            :db_name       => SpecConfig.instance.test_db,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(:w => 1),
-            :ordered       => true
-          }
+          { update: other_doc,
+            db_name: SpecConfig.instance.test_db,
+            coll_name: TEST_COLL,
+            write_concern: Mongo::WriteConcern.get(w: 1),
+            ordered: true }
         end
 
         let(:other) { described_class.new(other_spec) }
@@ -75,13 +69,12 @@ describe Mongo::Operation::Update do
   end
 
   describe '#execute' do
-
     before do
       authorized_collection.drop
       authorized_collection.insert_many([
-        { name: 'test', field: 'test', other: 'test' },
-        { name: 'testing', field: 'test', other: 'test' }
-      ])
+                                          { name: 'test', field: 'test', other: 'test' },
+                                          { name: 'testing', field: 'test', other: 'test' }
+                                        ])
     end
 
     after do
@@ -89,20 +82,18 @@ describe Mongo::Operation::Update do
     end
 
     context 'when updating a single document' do
-
       let(:update) do
         described_class.new({
-          updates: [ document ],
-          db_name: SpecConfig.instance.test_db,
-          coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern.get(:w => 1)
-        })
+                              updates: [ document ],
+                              db_name: SpecConfig.instance.test_db,
+                              coll_name: TEST_COLL,
+                              write_concern: Mongo::WriteConcern.get(w: 1)
+                            })
       end
 
       context 'when the update succeeds' do
-
         let(:document) do
-          { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' }} }
+          { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' } } }
         end
 
         let(:result) do
@@ -127,34 +118,31 @@ describe Mongo::Operation::Update do
       end
 
       context 'when the update fails' do
-
         let(:document) do
           { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' } } }
         end
 
         it 'raises an exception' do
-          expect {
+          expect do
             update.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
 
     context 'when updating multiple documents' do
-
       let(:update) do
         described_class.new({
-          updates: [ document ],
-          db_name: SpecConfig.instance.test_db,
-          coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern.get(:w => 1)
-        })
+                              updates: [ document ],
+                              db_name: SpecConfig.instance.test_db,
+                              coll_name: TEST_COLL,
+                              write_concern: Mongo::WriteConcern.get(w: 1)
+                            })
       end
 
       context 'when the updates succeed' do
-
         let(:document) do
-          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' }}, 'multi' => true }
+          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' } }, 'multi' => true }
         end
 
         let(:result) do
@@ -179,35 +167,32 @@ describe Mongo::Operation::Update do
       end
 
       context 'when an update fails' do
-
         let(:document) do
           { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' } }, 'multi' => true }
         end
 
         it 'raises an exception' do
-          expect {
+          expect do
             update.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
 
       context 'when a document exceeds max bson size' do
-
         let(:document) do
-          { 'q' => { name: 't'*17000000}, 'u' => { '$set' => { field: 'blah' } } }
+          { 'q' => { name: 't' * 17_000_000 }, 'u' => { '$set' => { field: 'blah' } } }
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             update.execute(authorized_primary, context: context)
-          }.to raise_error(Mongo::Error::MaxBSONSize)
+          end.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
 
       context 'when upsert is true' do
-
         let(:document) do
-          { 'q' => { field: 'non-existent' }, 'u' => { '$set' => { other: 'blah' }}, 'upsert' => true }
+          { 'q' => { field: 'non-existent' }, 'u' => { '$set' => { other: 'blah' } }, 'upsert' => true }
         end
 
         let(:result) do

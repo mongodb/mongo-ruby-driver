@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -21,7 +20,7 @@ describe Mongo::Operation::Insert do
   end
 
   let(:documents) do
-    [{ :name => 'test' }]
+    [ { name: 'test' } ]
   end
 
   let(:write_concern) do
@@ -32,8 +31,7 @@ describe Mongo::Operation::Insert do
     { documents: documents,
       db_name: authorized_collection.database.name,
       coll_name: authorized_collection.name,
-      write_concern: write_concern
-    }
+      write_concern: write_concern }
   end
 
   let(:op) do
@@ -45,9 +43,7 @@ describe Mongo::Operation::Insert do
   end
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(op.spec).to eq(spec)
       end
@@ -55,11 +51,8 @@ describe Mongo::Operation::Insert do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two inserts have the same specs' do
-
         let(:other) do
           described_class.new(spec)
         end
@@ -70,18 +63,16 @@ describe Mongo::Operation::Insert do
       end
 
       context 'when two inserts have different specs' do
-
         let(:other_docs) do
-          [{ :bar => 1 }]
+          [ { bar: 1 } ]
         end
 
         let(:other_spec) do
-          { :documents     => other_docs,
-            :db_name       => 'test',
-            :coll_name     => 'coll_name',
-            :write_concern => { 'w' => 1 },
-            :ordered       => true
-          }
+          { documents: other_docs,
+            db_name: 'test',
+            coll_name: 'coll_name',
+            write_concern: { 'w' => 1 },
+            ordered: true }
         end
 
         let(:other) do
@@ -96,12 +87,10 @@ describe Mongo::Operation::Insert do
   end
 
   describe 'document ids' do
-
     context 'when documents do not contain an id' do
-
       let(:documents) do
-        [{ 'field' => 'test' },
-         { 'field' => 'test' }]
+        [ { 'field' => 'test' },
+          { 'field' => 'test' } ]
       end
 
       let(:inserted_ids) do
@@ -121,7 +110,6 @@ describe Mongo::Operation::Insert do
   end
 
   describe '#bulk_execute' do
-
     before do
       authorized_collection.indexes.create_one({ name: 1 }, { unique: true })
     end
@@ -132,9 +120,7 @@ describe Mongo::Operation::Insert do
     end
 
     context 'when inserting a single document' do
-
       context 'when the insert succeeds' do
-
         let(:response) do
           authorized_primary.with_connection do |connection|
             op.bulk_execute(connection, context: context)
@@ -148,11 +134,9 @@ describe Mongo::Operation::Insert do
     end
 
     context 'when inserting multiple documents' do
-
       context 'when the insert succeeds' do
-
         let(:documents) do
-          [{ name: 'test1' }, { name: 'test2' }]
+          [ { name: 'test1' }, { name: 'test2' } ]
         end
 
         let(:response) do
@@ -168,9 +152,8 @@ describe Mongo::Operation::Insert do
     end
 
     context 'when the inserts are ordered' do
-
       let(:documents) do
-        [{ name: 'test' }, { name: 'test' }, { name: 'test1' }]
+        [ { name: 'test' }, { name: 'test' }, { name: 'test1' } ]
       end
 
       let(:spec) do
@@ -178,8 +161,7 @@ describe Mongo::Operation::Insert do
           db_name: authorized_collection.database.name,
           coll_name: authorized_collection.name,
           write_concern: write_concern,
-          ordered: true
-        }
+          ordered: true }
       end
 
       let(:failing_insert) do
@@ -187,13 +169,11 @@ describe Mongo::Operation::Insert do
       end
 
       context 'when write concern is acknowledged' do
-
         let(:write_concern) do
           Mongo::WriteConcern.get(w: 1)
         end
 
         context 'when the insert fails' do
-
           it 'aborts after first error' do
             authorized_primary.with_connection do |connection|
               failing_insert.bulk_execute(connection, context: context)
@@ -209,7 +189,6 @@ describe Mongo::Operation::Insert do
         end
 
         context 'when the insert fails' do
-
           it 'aborts after first error' do
             authorized_primary.with_connection do |connection|
               failing_insert.bulk_execute(connection, context: context)
@@ -221,9 +200,8 @@ describe Mongo::Operation::Insert do
     end
 
     context 'when the inserts are unordered' do
-
       let(:documents) do
-        [{ name: 'test' }, { name: 'test' }, { name: 'test1' }]
+        [ { name: 'test' }, { name: 'test' }, { name: 'test1' } ]
       end
 
       let(:spec) do
@@ -231,8 +209,7 @@ describe Mongo::Operation::Insert do
           db_name: authorized_collection.database.name,
           coll_name: authorized_collection.name,
           write_concern: write_concern,
-          ordered: false
-        }
+          ordered: false }
       end
 
       let(:failing_insert) do
@@ -240,9 +217,7 @@ describe Mongo::Operation::Insert do
       end
 
       context 'when write concern is acknowledged' do
-
         context 'when the insert fails' do
-
           it 'does not abort after first error' do
             authorized_primary.with_connection do |connection|
               failing_insert.bulk_execute(connection, context: context)
@@ -253,13 +228,11 @@ describe Mongo::Operation::Insert do
       end
 
       context 'when write concern is unacknowledged' do
-
         let(:write_concern) do
           Mongo::WriteConcern.get(w: 0)
         end
 
         context 'when the insert fails' do
-
           it 'does not after first error' do
             authorized_primary.with_connection do |connection|
               failing_insert.bulk_execute(connection, context: context)

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2022 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # A module encapsulating functionality to indicate whether errors are
     # retryable.
     #
@@ -27,24 +25,23 @@ module Mongo
     #
     # @api semipublic
     module ReadWriteRetryable
-
       # Error codes and code names that should result in a failing write
       # being retried.
       #
       # @api private
       WRITE_RETRY_ERRORS = [
-        {:code_name => 'HostUnreachable', :code => 6},
-        {:code_name => 'HostNotFound', :code => 7},
-        {:code_name => 'NetworkTimeout', :code => 89},
-        {:code_name => 'ShutdownInProgress', :code => 91},
-        {:code_name => 'PrimarySteppedDown', :code => 189},
-        {:code_name => 'ExceededTimeLimit', :code => 262},
-        {:code_name => 'SocketException', :code => 9001},
-        {:code_name => 'NotMaster', :code => 10107},
-        {:code_name => 'InterruptedAtShutdown', :code => 11600},
-        {:code_name => 'InterruptedDueToReplStateChange', :code => 11602},
-        {:code_name => 'NotPrimaryNoSecondaryOk', :code => 13435},
-        {:code_name => 'NotMasterOrSecondary', :code => 13436},
+        { code_name: 'HostUnreachable', code: 6 },
+        { code_name: 'HostNotFound', code: 7 },
+        { code_name: 'NetworkTimeout', code: 89 },
+        { code_name: 'ShutdownInProgress', code: 91 },
+        { code_name: 'PrimarySteppedDown', code: 189 },
+        { code_name: 'ExceededTimeLimit', code: 262 },
+        { code_name: 'SocketException', code: 9001 },
+        { code_name: 'NotMaster', code: 10_107 },
+        { code_name: 'InterruptedAtShutdown', code: 11_600 },
+        { code_name: 'InterruptedDueToReplStateChange', code: 11_602 },
+        { code_name: 'NotPrimaryNoSecondaryOk', code: 13_435 },
+        { code_name: 'NotMasterOrSecondary', code: 13_436 },
       ].freeze
 
       # These are magic error messages that could indicate a master change.
@@ -80,7 +77,7 @@ module Mongo
       # @deprecated
       def retryable?
         write_retryable? ||
-        code.nil? && RETRY_MESSAGES.any?{ |m| message.include?(m) }
+          (code.nil? && RETRY_MESSAGES.any? { |m| message.include?(m) })
       end
 
       # Whether the error is a retryable error according to the modern retryable
@@ -92,7 +89,7 @@ module Mongo
       # @return [ true, false ]
       def write_retryable?
         write_retryable_code? ||
-        code.nil? && WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
+          (code.nil? && WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) })
       end
 
       private def write_retryable_code?

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,19 +15,16 @@
 # limitations under the License.
 
 module Mongo
-
   module ServerSelector
-
     # Encapsulates specifications for selecting servers, with the
     #   primary preferred, given a list of candidates.
     #
     # @since 2.0.0
     class PrimaryPreferred < Base
-
       # Name of the this read preference in the server's format.
       #
       # @since 2.5.0
-      SERVER_FORMATTED_NAME = 'primaryPreferred'.freeze
+      SERVER_FORMATTED_NAME = 'primaryPreferred'
 
       # Get the name of the server mode type.
       #
@@ -87,7 +83,7 @@ module Mongo
       #   command field value.
       #
       # @since 2.0.0
-      alias :to_mongos :to_doc
+      alias to_mongos to_doc
 
       private
 

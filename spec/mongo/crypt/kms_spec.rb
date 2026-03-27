@@ -1,12 +1,11 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mongo'
 require 'lite_spec_helper'
 
 describe Mongo::Crypt::KMS do
   context 'Validations' do
-    context '.validate_tls_options' do
+    describe '.validate_tls_options' do
       it 'returns valid options for nil parameter' do
         expect(
           Mongo::Crypt::KMS::Validations.validate_tls_options(nil)
@@ -20,27 +19,27 @@ describe Mongo::Crypt::KMS do
       end
 
       it 'does not allow disabled ssl' do
-        expect {
+        expect do
           Mongo::Crypt::KMS::Validations.validate_tls_options(
             {
-              aws: {ssl: false}
+              aws: { ssl: false }
             }
           )
-        }.to raise_error(ArgumentError, /TLS is required/)
+        end.to raise_error(ArgumentError, /TLS is required/)
       end
 
       it 'does not allow insecure tls options' do
-        %i(
+        %i[
           ssl_verify_certificate
           ssl_verify_hostname
-        ).each do |insecure_opt|
-          expect {
+        ].each do |insecure_opt|
+          expect do
             Mongo::Crypt::KMS::Validations.validate_tls_options(
               {
-                aws: {insecure_opt => false}
+                aws: { insecure_opt => false }
               }
             )
-          }.to raise_error(ArgumentError, /Insecure TLS options prohibited/)
+          end.to raise_error(ArgumentError, /Insecure TLS options prohibited/)
         end
       end
 

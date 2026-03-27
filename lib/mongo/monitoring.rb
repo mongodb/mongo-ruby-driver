@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -16,7 +15,6 @@
 # limitations under the License.
 
 module Mongo
-
   # The class defines behavior for the performance monitoring API.
   #
   # @since 2.1.0
@@ -26,47 +24,47 @@ module Mongo
     # The command topic.
     #
     # @since 2.1.0
-    COMMAND = 'Command'.freeze
+    COMMAND = 'Command'
 
     # The connection pool topic.
     #
     # @since 2.9.0
-    CONNECTION_POOL = 'ConnectionPool'.freeze
+    CONNECTION_POOL = 'ConnectionPool'
 
     # Server closed topic.
     #
     # @since 2.4.0
-    SERVER_CLOSED = 'ServerClosed'.freeze
+    SERVER_CLOSED = 'ServerClosed'
 
     # Server description changed topic.
     #
     # @since 2.4.0
-    SERVER_DESCRIPTION_CHANGED = 'ServerDescriptionChanged'.freeze
+    SERVER_DESCRIPTION_CHANGED = 'ServerDescriptionChanged'
 
     # Server opening topic.
     #
     # @since 2.4.0
-    SERVER_OPENING = 'ServerOpening'.freeze
+    SERVER_OPENING = 'ServerOpening'
 
     # Topology changed topic.
     #
     # @since 2.4.0
-    TOPOLOGY_CHANGED = 'TopologyChanged'.freeze
+    TOPOLOGY_CHANGED = 'TopologyChanged'
 
     # Topology closed topic.
     #
     # @since 2.4.0
-    TOPOLOGY_CLOSED = 'TopologyClosed'.freeze
+    TOPOLOGY_CLOSED = 'TopologyClosed'
 
     # Topology opening topic.
     #
     # @since 2.4.0
-    TOPOLOGY_OPENING = 'TopologyOpening'.freeze
+    TOPOLOGY_OPENING = 'TopologyOpening'
 
     # Server heartbeat started topic.
     #
     # @since 2.7.0
-    SERVER_HEARTBEAT = 'ServerHeartbeat'.freeze
+    SERVER_HEARTBEAT = 'ServerHeartbeat'
 
     # Used for generating unique operation ids to link events together.
     #
@@ -77,7 +75,7 @@ module Mongo
     #
     # @since 2.1.0
     def self.next_operation_id
-      self.next_id
+      next_id
     end
 
     # Contains subscription methods common between monitoring and
@@ -138,9 +136,9 @@ module Mongo
       def unsubscribe(topic, subscriber)
         subs = subscribers_for(topic)
         index = subs.index(subscriber)
-        if index
-          subs.delete_at(index)
-        end
+        return unless index
+
+        subs.delete_at(index)
       end
 
       # Get all the subscribers.
@@ -219,23 +217,23 @@ module Mongo
     # @api private
     def initialize(options = {})
       @options = options
-      if options[:monitoring] != false
-        Global.subscribers.each do |topic, subscribers|
-          subscribers.each do |subscriber|
-            subscribe(topic, subscriber)
-          end
+      return unless options[:monitoring] != false
+
+      Global.subscribers.each do |topic, subscribers|
+        subscribers.each do |subscriber|
+          subscribe(topic, subscriber)
         end
-        subscribe(COMMAND, CommandLogSubscriber.new(options))
-        # CMAP events are not logged by default because this will create
-        # log entries for every operation performed by the driver.
-        #subscribe(CONNECTION_POOL, CmapLogSubscriber.new(options))
-        subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options))
-        subscribe(SERVER_CLOSED, ServerClosedLogSubscriber.new(options))
-        subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))
-        subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
-        subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
-        subscribe(TOPOLOGY_CLOSED, TopologyClosedLogSubscriber.new(options))
       end
+      subscribe(COMMAND, CommandLogSubscriber.new(options))
+      # CMAP events are not logged by default because this will create
+      # log entries for every operation performed by the driver.
+      # subscribe(CONNECTION_POOL, CmapLogSubscriber.new(options))
+      subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options))
+      subscribe(SERVER_CLOSED, ServerClosedLogSubscriber.new(options))
+      subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))
+      subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
+      subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
+      subscribe(TOPOLOGY_CLOSED, TopologyClosedLogSubscriber.new(options))
     end
 
     # @api private
@@ -256,7 +254,7 @@ module Mongo
     #
     # @since 2.9.0
     def published(topic, event)
-      subscribers_for(topic).each{ |subscriber| subscriber.published(event) }
+      subscribers_for(topic).each { |subscriber| subscriber.published(event) }
     end
 
     # Publish a started event.
@@ -272,7 +270,7 @@ module Mongo
     #
     # @since 2.1.0
     def started(topic, event)
-      subscribers_for(topic).each{ |subscriber| subscriber.started(event) }
+      subscribers_for(topic).each { |subscriber| subscriber.started(event) }
     end
 
     # Publish a succeeded event.
@@ -288,7 +286,7 @@ module Mongo
     #
     # @since 2.1.0
     def succeeded(topic, event)
-      subscribers_for(topic).each{ |subscriber| subscriber.succeeded(event) }
+      subscribers_for(topic).each { |subscriber| subscriber.succeeded(event) }
     end
 
     # Publish a failed event.
@@ -304,14 +302,15 @@ module Mongo
     #
     # @since 2.1.0
     def failed(topic, event)
-      subscribers_for(topic).each{ |subscriber| subscriber.failed(event) }
+      subscribers_for(topic).each { |subscriber| subscriber.failed(event) }
     end
 
     # @api private
     def publish_heartbeat(server, awaited: false)
       if monitoring?
         started_event = Event::ServerHeartbeatStarted.new(
-          server.address, awaited: awaited)
+          server.address, awaited: awaited
+        )
         started(SERVER_HEARTBEAT, started_event)
       end
 
@@ -328,14 +327,14 @@ module Mongo
 
       begin
         result = yield
-      rescue => exc
+      rescue StandardError => e
         if monitoring?
           event = Event::ServerHeartbeatFailed.new(
             server.address,
             Utils.monotonic_time - start_time,
-            exc,
+            e,
             awaited: awaited,
-            started_event: started_event,
+            started_event: started_event
           )
           failed(SERVER_HEARTBEAT, event)
         end
@@ -346,7 +345,7 @@ module Mongo
             server.address,
             Utils.monotonic_time - start_time,
             awaited: awaited,
-            started_event: started_event,
+            started_event: started_event
           )
           succeeded(SERVER_HEARTBEAT, event)
         end

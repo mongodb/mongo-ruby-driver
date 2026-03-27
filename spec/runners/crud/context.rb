@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -24,7 +23,7 @@ module Mongo
       :session1,
       :sdam_subscriber,
       :threads,
-      :primary_address,
+      :primary_address
     )
   end
 end

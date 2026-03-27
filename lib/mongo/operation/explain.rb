@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -20,7 +19,6 @@ require 'mongo/operation/explain/op_msg'
 
 module Mongo
   module Operation
-
     # A MongoDB explain operation.
     #
     # @api private

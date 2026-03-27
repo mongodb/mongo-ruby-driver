@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'webrick'
@@ -58,9 +57,10 @@ describe Mongo::Socket::OcspVerifier do
 
           lambda do
             verifier.verify
-          # Redirect tests receive responses from port 8101,
-          # tests without redirects receive responses from port 8100.
-          end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
+            # Redirect tests receive responses from port 8101,
+            # tests without redirects receive responses from port 8100.
+          end.should raise_error(Mongo::Error::ServerCertificateRevoked,
+                                 %r{TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status'})
         end
 
         RSpec::Mocks.with_temporary_scope do
@@ -68,9 +68,10 @@ describe Mongo::Socket::OcspVerifier do
 
           lambda do
             verifier.verify
-          # Redirect tests receive responses from port 8101,
-          # tests without redirects receive responses from port 8100.
-          end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
+            # Redirect tests receive responses from port 8101,
+            # tests without redirects receive responses from port 8100.
+          end.should raise_error(Mongo::Error::ServerCertificateRevoked,
+                                 %r{TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status'})
         end
       end
     end
@@ -136,7 +137,7 @@ describe Mongo::Socket::OcspVerifier do
   include_context 'verifier', algorithm: 'rsa'
   algorithm = 'rsa'
 
-  %w(ca delegate).each do |responder_cert|
+  %w[ca delegate].each do |responder_cert|
     responder_cert_file_name = {
       'ca' => 'ca',
       'delegate' => 'ocsp-responder',
@@ -147,7 +148,7 @@ describe Mongo::Socket::OcspVerifier do
         with_ocsp_mock(
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
-          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
+          SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key")
         )
 
         include_examples 'verifies'
@@ -175,7 +176,7 @@ describe Mongo::Socket::OcspVerifier do
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
-          fault: 'unknown',
+          fault: 'unknown'
         )
 
         include_examples 'does not verify'

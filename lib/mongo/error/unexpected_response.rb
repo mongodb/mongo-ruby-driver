@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Raised if the response read from the socket does not match the latest query.
     #
     # @since 2.2.6
     class UnexpectedResponse < Error
-
       # Create the new exception.
       #
       # @example Create the new exception.
@@ -34,7 +31,7 @@ module Mongo
       # @since 2.2.6
       def initialize(expected_response_to, response_to)
         super("Unexpected response. Got response for request ID #{response_to} " +
-              "but expected response for request ID #{expected_response_to}")
+          "but expected response for request ID #{expected_response_to}")
       end
     end
   end

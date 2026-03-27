@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,20 +8,19 @@ describe Mongo::Operation::UpdateUser do
   let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
-
     let(:user) do
       Mongo::Auth::User.new(
-          user: 'durran',
-          password: 'password',
-          roles: [ Mongo::Auth::Roles::READ_WRITE ]
+        user: 'durran',
+        password: 'password',
+        roles: [ Mongo::Auth::Roles::READ_WRITE ]
       )
     end
 
     let(:user_updated) do
       Mongo::Auth::User.new(
-          user: 'durran',
-          password: '123',
-          roles: [ Mongo::Auth::Roles::READ ]
+        user: 'durran',
+        password: '123',
+        roles: [ Mongo::Auth::Roles::READ ]
       )
     end
 
@@ -32,14 +30,11 @@ describe Mongo::Operation::UpdateUser do
 
     before do
       users = root_authorized_client.database.users
-      if users.info('durran').any?
-        users.remove('durran')
-      end
+      users.remove('durran') if users.info('durran').any?
       users.create(user)
     end
 
     context 'when user update was successful' do
-
       let!(:response) do
         operation.execute(root_authorized_primary, context: context)
       end

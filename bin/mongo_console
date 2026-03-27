@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# rubocop:todo all
 
 $LOAD_PATH[0, 0] = File.join(File.dirname(__FILE__), '..', 'lib')
 

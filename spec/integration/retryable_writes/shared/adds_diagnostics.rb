@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module AddsDiagnostics
   shared_examples 'it adds diagnostics' do

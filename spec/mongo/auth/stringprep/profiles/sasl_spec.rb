@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -95,9 +94,9 @@ describe Mongo::Auth::StringPrep::Profiles::SASL do
       end
 
       it 'raises an error' do
-        expect {
+        expect do
           prepared_data
-        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        end.to raise_error(Mongo::Error::FailedStringPrepValidation)
       end
     end
 
@@ -107,9 +106,9 @@ describe Mongo::Auth::StringPrep::Profiles::SASL do
       end
 
       it 'raises an error' do
-        expect {
+        expect do
           prepared_data
-        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        end.to raise_error(Mongo::Error::FailedStringPrepValidation)
       end
     end
   end

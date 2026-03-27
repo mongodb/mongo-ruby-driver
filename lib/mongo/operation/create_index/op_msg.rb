@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class CreateIndex
-
       # A MongoDB createindex operation sent as an op message.
       #
       # @api private
@@ -41,9 +39,8 @@ module Mongo
               # (see SERVER-47193). As a result, the drivers specifications require
               # drivers to perform validation and raise an error when the commitQuorum
               # option is passed to servers that don't support it.
-              unless connection.features.commit_quorum_enabled?
-                raise Error::UnsupportedOption.commit_quorum_error
-              end
+              raise Error::UnsupportedOption.commit_quorum_error unless connection.features.commit_quorum_enabled?
+
               selector[:commitQuorum] = commit_quorum
             end
           end

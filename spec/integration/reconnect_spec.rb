@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -20,7 +19,7 @@ describe 'Client after reconnect' do
     require_topology :single, :replica_set, :sharded
 
     it 'recreates monitor thread' do
-      thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+      thread = client.cluster.servers.first.monitor.instance_variable_get(:@thread)
       expect(thread).to be_alive
 
       thread.kill
@@ -30,7 +29,7 @@ describe 'Client after reconnect' do
 
       client.reconnect
 
-      new_thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+      new_thread = client.cluster.servers.first.monitor.instance_variable_get(:@thread)
       expect(new_thread).not_to eq(thread)
       expect(new_thread).to be_alive
     end
@@ -40,13 +39,13 @@ describe 'Client after reconnect' do
     require_topology :load_balanced
 
     it 'does not recreate monitor thread' do
-      thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
-      expect(thread).to be nil
+      thread = client.cluster.servers.first.monitor.instance_variable_get(:@thread)
+      expect(thread).to be_nil
 
       client.reconnect
 
-      new_thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
-      expect(new_thread).to be nil
+      new_thread = client.cluster.servers.first.monitor.instance_variable_get(:@thread)
+      expect(new_thread).to be_nil
     end
   end
 
@@ -58,7 +57,7 @@ describe 'Client after reconnect' do
 
     it 'recreates connection pool populator thread' do
       server = client.cluster.next_primary
-      thread = server.pool.populator.instance_variable_get('@thread')
+      thread = server.pool.populator.instance_variable_get(:@thread)
       expect(thread).to be_alive
 
       thread.kill
@@ -69,7 +68,7 @@ describe 'Client after reconnect' do
       client.reconnect
 
       new_server = client.cluster.next_primary
-      new_thread = new_server.pool.populator.instance_variable_get('@thread')
+      new_thread = new_server.pool.populator.instance_variable_get(:@thread)
       expect(new_thread).not_to eq(thread)
       expect(new_thread).to be_alive
     end
@@ -84,14 +83,15 @@ describe 'Client after reconnect' do
 
     # Debug logging to troubleshoot failures in Evergreen
     let(:logger) do
-      Logger.new(STDERR). tap do |logger|
+      Logger.new(STDERR).tap do |logger|
         logger.level = :debug
       end
     end
 
     let(:client) do
       new_local_client(uri, SpecConfig.instance.monitoring_options.merge(
-        server_selection_timeout: 3.86, logger: logger))
+                              server_selection_timeout: 3.86, logger: logger
+                            ))
     end
 
     let(:wait_for_discovery) do
@@ -118,7 +118,7 @@ describe 'Client after reconnect' do
         wait_for_discovery
 
         expect(client.cluster.topology).to be_a(expected_topology_cls)
-        thread = client.cluster.srv_monitor.instance_variable_get('@thread')
+        thread = client.cluster.srv_monitor.instance_variable_get(:@thread)
         expect(thread).to be_alive
 
         thread.kill
@@ -130,7 +130,7 @@ describe 'Client after reconnect' do
 
         wait_for_discovery_again
 
-        new_thread = client.cluster.srv_monitor.instance_variable_get('@thread')
+        new_thread = client.cluster.srv_monitor.instance_variable_get(:@thread)
         expect(new_thread).not_to eq(thread)
         expect(new_thread).to be_alive
       end
@@ -155,20 +155,21 @@ describe 'Client after reconnect' do
       fails_on_jruby
 
       let(:uri) do
-        "mongodb+srv://test-fake.test.build.10gen.cc/"
+        'mongodb+srv://test-fake.test.build.10gen.cc/'
       end
 
       let(:client) do
         ClientRegistry.instance.register_local_client(
           Mongo::Client.new(uri,
-            timeout: 5,
-            connect_timeout: 5,
-            server_selection_timeout: 3.89,
-            resolv_options: {
-              nameserver: 'localhost',
-              nameserver_port: [['localhost', 5300], ['127.0.0.1', 5300]],
-            },
-            logger: logger))
+                            timeout: 5,
+                            connect_timeout: 5,
+                            server_selection_timeout: 3.89,
+                            resolv_options: {
+                              nameserver: 'localhost',
+                              nameserver_port: [ [ 'localhost', 5300 ], [ '127.0.0.1', 5300 ] ],
+                            },
+                            logger: logger)
+        )
       end
 
       let(:expected_topology_cls) { Mongo::Cluster::Topology::Unknown }
@@ -185,9 +186,8 @@ describe 'Client after reconnect' do
 
       around do |example|
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 2799, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 2799, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do

@@ -1,22 +1,21 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 RSpec::Matchers.define :be_int32 do |num|
   match do |actual|
-    actual == [num].pack('l<')
+    actual == [ num ].pack('l<')
   end
 end
 
 RSpec::Matchers.define :be_int64 do |num|
   match do |actual|
-    actual == [num].pack('q<')
+    actual == [ num ].pack('q<')
   end
 end
 
 RSpec::Matchers.define :be_int64_sequence do |array|
   match do |actual|
     actual == array.reduce(String.new) do |buffer, num|
-      buffer << [num].pack('q<')
+      buffer << [ num ].pack('q<')
     end
   end
 end
@@ -44,7 +43,6 @@ RSpec::Matchers.define :be_ciphertext do
     object.is_a?(BSON::Binary) && object.type == :ciphertext
   end
 end
-
 
 RSpec::Matchers.define :match_with_type do |event|
   match do |actual|
@@ -76,7 +74,7 @@ end
 
 RSpec::Matchers.define :be_explain_output do
   match do |actual|
-    Hash === actual && (
+    actual.is_a?(Hash) && (
       actual.key?('queryPlanner') ||
       actual.key?('allPlans')
     )

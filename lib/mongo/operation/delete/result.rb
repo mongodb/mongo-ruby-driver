@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,13 +17,11 @@
 module Mongo
   module Operation
     class Delete
-
       # Defines custom behavior of results for a delete.
       #
       # @since 2.0.0
       # @api semiprivate
       class Result < Operation::Result
-
         # Get the number of documents deleted.
         #
         # @example Get the deleted count.

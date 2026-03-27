@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Crypt
-
     # A Context object initialized specifically for the purpose of creating
     # a data key in the key management system.
     #
     # @api private
     class DataKeyContext < Context
-
       # Create a new DataKeyContext object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
@@ -50,14 +47,12 @@ module Mongo
 
       # Set the alt names option on the context
       def set_key_alt_names(key_alt_names)
-        unless key_alt_names.is_a?(Array)
-          raise ArgumentError.new, 'The :key_alt_names option must be an Array'
-        end
+        raise ArgumentError.new, 'The :key_alt_names option must be an Array' unless key_alt_names.is_a?(Array)
 
         unless key_alt_names.all? { |key_alt_name| key_alt_name.is_a?(String) }
           raise ArgumentError.new(
             "#{key_alt_names} contains an invalid alternate key name. All " +
-            "values of the :key_alt_names option Array must be Strings"
+            'values of the :key_alt_names option Array must be Strings'
           )
         end
 

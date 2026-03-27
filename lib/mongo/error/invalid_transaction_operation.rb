@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,33 +16,31 @@
 
 module Mongo
   class Error
-
     # Exception raised if an invalid operation is attempted as part of a transaction.
     #
     # @since 2.6.0
     class InvalidTransactionOperation < Error
-
       # The error message for when a user attempts to commit or abort a transaction when none is in
       # progress.
       #
       # @since 2.6.0
-      NO_TRANSACTION_STARTED = 'no transaction started'.freeze
+      NO_TRANSACTION_STARTED = 'no transaction started'
 
       # The error message for when a user attempts to start a transaction when one is already in
       # progress.
       #
       # @since 2.6.0.
-      TRANSACTION_ALREADY_IN_PROGRESS = 'transaction already in progress'.freeze
+      TRANSACTION_ALREADY_IN_PROGRESS = 'transaction already in progress'
 
       # The error message for when a transaction read operation uses a non-primary read preference.
       #
       # @since 2.6.0
-      INVALID_READ_PREFERENCE = 'read preference in a transaction must be primary'.freeze
+      INVALID_READ_PREFERENCE = 'read preference in a transaction must be primary'
 
       # The error message for when a transaction is started with an unacknowledged write concern.
       #
       # @since 2.6.0
-      UNACKNOWLEDGED_WRITE_CONCERN = 'transactions do not support unacknowledged write concern'.freeze
+      UNACKNOWLEDGED_WRITE_CONCERN = 'transactions do not support unacknowledged write concern'
 
       # Instantiate the new exception.
       #
@@ -52,7 +49,7 @@ module Mongo
       #
       # @since 2.6.0
       def initialize(msg)
-        super(msg)
+        super
       end
 
       # Create an error message for incorrectly running a transaction operation twice.

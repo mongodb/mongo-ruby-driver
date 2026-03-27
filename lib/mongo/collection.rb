@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ require 'mongo/collection/helpers'
 require 'mongo/collection/queryable_encryption'
 
 module Mongo
-
   # Represents a collection in the database and operations that can directly be
   # applied to one.
   #
@@ -35,12 +33,12 @@ module Mongo
     # The capped option.
     #
     # @since 2.1.0
-    CAPPED = 'capped'.freeze
+    CAPPED = 'capped'
 
     # The ns field constant.
     #
     # @since 2.1.0
-    NS = 'ns'.freeze
+    NS = 'ns'
 
     # @return [ Mongo::Database ] The database the collection resides in.
     attr_reader :database
@@ -62,19 +60,19 @@ module Mongo
     # Options that can be updated on a new Collection instance via the #with method.
     #
     # @since 2.1.0
-    CHANGEABLE_OPTIONS = [ :read, :read_concern, :write, :write_concern ].freeze
+    CHANGEABLE_OPTIONS = %i[read read_concern write write_concern].freeze
 
     # Options map to transform create collection options.
     #
     # @api private
     CREATE_COLLECTION_OPTIONS = {
-      :time_series => :timeseries,
-      :expire_after => :expireAfterSeconds,
-      :clustered_index => :clusteredIndex,
-      :change_stream_pre_and_post_images => :changeStreamPreAndPostImages,
-      :encrypted_fields => :encryptedFields,
-      :validator => :validator,
-      :view_on => :viewOn
+      time_series: :timeseries,
+      expire_after: :expireAfterSeconds,
+      clustered_index: :clusteredIndex,
+      change_stream_pre_and_post_images: :changeStreamPreAndPostImages,
+      encrypted_fields: :encryptedFields,
+      validator: :validator,
+      view_on: :viewOn
     }
 
     # Check if a collection is equal to another object. Will check the name and
@@ -90,6 +88,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Collection)
+
       name == other.name && database == other.database && options == other.options
     end
 
@@ -166,17 +165,17 @@ module Mongo
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
+
       @database = database
       @name = name.to_s.freeze
       @options = options.dup
       @timeout_ms = options.delete(:timeout_ms)
-=begin WriteConcern object support
-      if @options[:write_concern].is_a?(WriteConcern::Base)
-        # Cache the instance so that we do not needlessly reconstruct it.
-        @write_concern = @options[:write_concern]
-        @options[:write_concern] = @write_concern.options
-      end
-=end
+      # WriteConcern object support
+      #       if @options[:write_concern].is_a?(WriteConcern::Base)
+      #         # Cache the instance so that we do not needlessly reconstruct it.
+      #         @write_concern = @options[:write_concern]
+      #         @options[:write_concern] = @write_concern.options
+      #       end
       @options.freeze
     end
 
@@ -238,7 +237,8 @@ module Mongo
     # @since 2.0.0
     def write_concern
       @write_concern ||= WriteConcern.get(
-        options[:write_concern] || options[:write] || database.write_concern)
+        options[:write_concern] || options[:write] || database.write_concern
+      )
     end
 
     # Get the write concern to use for an operation on this collection,
@@ -254,12 +254,10 @@ module Mongo
     # @api private
     def write_concern_with_session(session)
       wc = write_concern
-      if session && session.in_transaction?
-        if wc && !wc.acknowledged?
-          opts = wc.options.dup
-          opts.delete(:w)
-          return WriteConcern.get(opts)
-        end
+      if session && session.in_transaction? && wc && !wc.acknowledged?
+        opts = wc.options.dup
+        opts.delete(:w)
+        return WriteConcern.get(opts)
       end
       wc
     end
@@ -303,12 +301,8 @@ module Mongo
         raise Error::UnchangeableCollectionOption.new(k) unless CHANGEABLE_OPTIONS.include?(k)
       end
       options = @options.dup
-      if options[:write] && new_options[:write_concern]
-        options.delete(:write)
-      end
-      if options[:write_concern] && new_options[:write]
-        options.delete(:write_concern)
-      end
+      options.delete(:write) if options[:write] && new_options[:write_concern]
+      options.delete(:write_concern) if options[:write_concern] && new_options[:write]
       Collection.new(database, name, options.update(new_options))
     end
 
@@ -322,8 +316,8 @@ module Mongo
     # @since 2.0.0
     def capped?
       database.list_collections(filter: { name: name })
-        .first
-        &.dig('options', CAPPED) || false
+              .first
+              &.dig('options', CAPPED) || false
     end
 
     # Force the collection to be created in the database.
@@ -389,24 +383,22 @@ module Mongo
       # serialization.
       # TODO put the list of read options in a class-level constant when
       # we figure out what the full set of them is.
-      options = Hash[self.options.merge(opts).reject do |key, value|
-        %w(read read_preference read_concern session).include?(key.to_s)
+      options = Hash[self.options.merge(opts).reject do |key, _value|
+        %w[read read_preference read_concern session].include?(key.to_s)
       end]
       # Converting Ruby options to server style.
       CREATE_COLLECTION_OPTIONS.each do |ruby_key, server_key|
-        if options.key?(ruby_key)
-          options[server_key] = options.delete(ruby_key)
-        end
+        options[server_key] = options.delete(ruby_key) if options.key?(ruby_key)
       end
-      operation = { :create => name }.merge(options)
+      operation = { create: name }.merge(options)
       operation.delete(:write)
       operation.delete(:write_concern)
       client.send(:with_session, opts) do |session|
         write_concern = if opts[:write_concern]
-          WriteConcern.get(opts[:write_concern])
-        else
-          self.write_concern
-        end
+                          WriteConcern.get(opts[:write_concern])
+                        else
+                          self.write_concern
+                        end
 
         context = Operation::Context.new(
           client: client,
@@ -420,7 +412,7 @@ module Mongo
           # Note that these are collection options, collation isn't
           # taken from options passed to the create method.
           collation: options[:collation] || options['collation'],
-          validator: options[:validator],
+          validator: options[:validator]
         )
         tracer.trace_operation(operation, context, op_name: 'createCollection') do
           maybe_create_qe_collections(opts[:encrypted_fields], client, session) do |encrypted_fields|
@@ -470,11 +462,11 @@ module Mongo
                           temp_write_concern
                         end
         operation = Operation::Drop.new({
-          selector: { :drop => name },
-          db_name: database.name,
-          write_concern: write_concern,
-          session: session,
-        })
+                                          selector: { drop: name },
+                                          db_name: database.name,
+                                          write_concern: write_concern,
+                                          session: session,
+                                        })
         tracer.trace_operation(operation, context, op_name: 'dropCollection') do
           maybe_drop_emm_collections(opts[:encrypted_fields], client, session) do
             do_drop(operation, session, context)
@@ -855,31 +847,29 @@ module Mongo
 
       client.with_session(opts) do |session|
         write_concern = if opts[:write_concern]
-          WriteConcern.get(opts[:write_concern])
-        else
-          write_concern_with_session(session)
-        end
+                          WriteConcern.get(opts[:write_concern])
+                        else
+                          write_concern_with_session(session)
+                        end
 
-        if document.nil?
-          raise ArgumentError, "Document to be inserted cannot be nil"
-        end
+        raise ArgumentError, 'Document to be inserted cannot be nil' if document.nil?
 
         context = Operation::Context.new(
           client: client,
           session: session,
           operation_timeouts: operation_timeouts(opts)
-          )
+        )
         operation = Operation::Insert.new(
-              :documents => [ document ],
-              :db_name => database.name,
-              :coll_name => name,
-              :write_concern => write_concern,
-              :bypass_document_validation => !!opts[:bypass_document_validation],
-              :options => opts,
-              :id_generator => client.options[:id_generator],
-              :session => session,
-              :comment => opts[:comment]
-            )
+          documents: [ document ],
+          db_name: database.name,
+          coll_name: name,
+          write_concern: write_concern,
+          bypass_document_validation: !!opts[:bypass_document_validation],
+          options: opts,
+          id_generator: client.options[:id_generator],
+          session: session,
+          comment: opts[:comment]
+        )
         tracer.trace_operation(operation, context) do
           write_with_retry(write_concern, context: context) do |connection, txn_num, context|
             operation.txn_num = txn_num
@@ -917,7 +907,7 @@ module Mongo
     def insert_many(documents, options = {})
       QueryCache.clear_namespace(namespace)
 
-      inserts = documents.map{ |doc| { :insert_one => doc }}
+      inserts = documents.map { |doc| { insert_one: doc } }
       bulk_write(inserts, options)
     end
 

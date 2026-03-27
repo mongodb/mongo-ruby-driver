@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class Update
-
       # Defines custom behavior of results for an udpate when sent as part of a bulk write.
       #
       # @since 2.0.0
@@ -28,12 +26,12 @@ module Mongo
         # The number of modified docs field in the result.
         #
         # @since 2.0.0
-        MODIFIED = 'nModified'.freeze
+        MODIFIED = 'nModified'
 
         # The upserted docs field in the result.
         #
         # @since 2.0.0
-        UPSERTED = 'upserted'.freeze
+        UPSERTED = 'upserted'
 
         # Gets the number of documents upserted.
         #
@@ -45,9 +43,10 @@ module Mongo
         # @since 2.0.0
         def n_upserted
           return 0 unless acknowledged?
+
           @replies.reduce(0) do |n, reply|
             if upsert?(reply)
-              n += reply.documents.first[UPSERTED].size
+              n + reply.documents.first[UPSERTED].size
             else
               n
             end
@@ -64,15 +63,14 @@ module Mongo
         # @since 2.0.0
         def n_matched
           return 0 unless acknowledged?
+
           @replies.reduce(0) do |n, reply|
             if upsert?(reply)
               reply.documents.first[N] - n_upserted
+            elsif reply.documents.first[N]
+              n + reply.documents.first[N]
             else
-              if reply.documents.first[N]
-                n += reply.documents.first[N]
-              else
-                n
-              end
+              n
             end
           end
         end
@@ -87,9 +85,10 @@ module Mongo
         # @since 2.0.0
         def n_modified
           return 0 unless acknowledged?
+
           @replies.reduce(0) do |n, reply|
             if n && reply.documents.first[MODIFIED]
-              n += reply.documents.first[MODIFIED]
+              n + reply.documents.first[MODIFIED]
             else
               0
             end
@@ -106,6 +105,7 @@ module Mongo
         # @since 2.1.0
         def upserted
           return [] unless acknowledged?
+
           @replies.reduce([]) do |ids, reply|
             if upserted_ids = reply.documents.first[UPSERTED]
               ids += upserted_ids
@@ -116,7 +116,7 @@ module Mongo
 
         private
 
-        def upsert?(reply)
+        def upsert?(_reply)
           upserted.any?
         end
       end

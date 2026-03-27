@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Collection::View::Writable do
-
   let(:selector) do
     {}
   end
@@ -26,9 +24,8 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#find_one_and_delete' do
-
     before do
-      authorized_collection.insert_many([{ field: 'test1' }])
+      authorized_collection.insert_many([ { field: 'test1' } ])
     end
 
     context 'when hint option is provided and the write concern is unacknowledged' do
@@ -37,35 +34,34 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context "on 4.4+ servers" do
+      context 'on 4.4+ servers' do
         min_server_version '4.4'
 
         it "doesn't raise an error" do
           expect do
             view.find_one_and_delete(hint: '_id_')
-          end.to_not raise_error
+          end.not_to raise_error
         end
       end
 
-      context "on <=4.2 servers" do
+      context 'on <=4.2 servers' do
         max_server_version '4.2'
 
         it 'raises a client-side error' do
           expect do
             view.find_one_and_delete(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+          end.to raise_error(Mongo::Error::UnsupportedOption,
+                             /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
 
     context 'when a matching document is found' do
-
       let(:selector) do
         { field: 'test1' }
       end
 
       context 'when no options are provided' do
-
         let!(:document) do
           view.find_one_and_delete
         end
@@ -80,7 +76,6 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when a projection is provided' do
-
         let!(:document) do
           view.projection(_id: 1).find_one_and_delete
         end
@@ -91,12 +86,11 @@ describe Mongo::Collection::View::Writable do
 
         it 'returns the document with limited fields' do
           expect(document['field']).to be_nil
-          expect(document['_id']).to_not be_nil
+          expect(document['_id']).not_to be_nil
         end
       end
 
       context 'when a sort is provided' do
-
         let!(:document) do
           view.sort(field: 1).find_one_and_delete
         end
@@ -111,7 +105,6 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when collation is specified' do
-
         let(:selector) do
           { name: 'BANG' }
         end
@@ -134,7 +127,6 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when collation is not specified' do
-
         let(:selector) do
           { name: 'BANG' }
         end
@@ -153,7 +145,6 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when collation is specified as a method option' do
-
         let(:selector) do
           { name: 'BANG' }
         end
@@ -177,7 +168,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no matching document is found' do
-
       let(:selector) do
         { field: 'test5' }
       end
@@ -193,9 +183,8 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#find_one_and_replace' do
-
     before do
-      authorized_collection.insert_many([{ field: 'test1', other: 'sth' }])
+      authorized_collection.insert_many([ { field: 'test1', other: 'sth' } ])
     end
 
     context 'when hint option is provided and the write concern is unacknowledged' do
@@ -204,35 +193,34 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context "on 4.4+ servers" do
+      context 'on 4.4+ servers' do
         min_server_version '4.4'
 
         it "doesn't raise an error" do
           expect do
             view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-          end.to_not raise_error
+          end.not_to raise_error
         end
       end
 
-      context "on <=4.2 servers" do
+      context 'on <=4.2 servers' do
         max_server_version '4.2'
 
         it 'raises a client-side error' do
           expect do
             view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+          end.to raise_error(Mongo::Error::UnsupportedOption,
+                             /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
 
     context 'when a matching document is found' do
-
       let(:selector) do
         { field: 'test1' }
       end
 
       context 'when no options are provided' do
-
         let(:document) do
           view.find_one_and_replace({ field: 'testing' })
         end
@@ -243,9 +231,8 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when return_document options are provided' do
-
         let(:document) do
-          view.find_one_and_replace({ field: 'testing' }, :return_document => :after)
+          view.find_one_and_replace({ field: 'testing' }, return_document: :after)
         end
 
         it 'returns the new document' do
@@ -258,19 +245,17 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when a projection is provided' do
-
         let(:document) do
           view.projection(_id: 1).find_one_and_replace({ field: 'testing' })
         end
 
         it 'returns the document with limited fields' do
           expect(document['field']).to be_nil
-          expect(document['_id']).to_not be_nil
+          expect(document['_id']).not_to be_nil
         end
       end
 
       context 'when a sort is provided' do
-
         let(:document) do
           view.sort(field: 1).find_one_and_replace({ field: 'testing' })
         end
@@ -281,7 +266,6 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when collation is provided' do
-
         let(:selector) do
           { name: 'BANG' }
         end
@@ -305,7 +289,6 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when collation is provided as a method option' do
-
         let(:selector) do
           { name: 'BANG' }
         end
@@ -329,7 +312,6 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when collation is not provided' do
-
         let(:selector) do
           { name: 'BANG' }
         end
@@ -349,9 +331,7 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no matching document is found' do
-
       context 'when no upsert options are provided' do
-
         let(:selector) do
           { field: 'test5' }
         end
@@ -366,13 +346,12 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when upsert options are provided' do
-
         let(:selector) do
           { field: 'test5' }
         end
 
         let(:document) do
-          view.find_one_and_replace({ field: 'testing' }, :upsert => true, :return_document => :after)
+          view.find_one_and_replace({ field: 'testing' }, upsert: true, return_document: :after)
         end
 
         it 'returns the new document' do
@@ -383,9 +362,8 @@ describe Mongo::Collection::View::Writable do
   end
 
   describe '#find_one_and_update' do
-
     before do
-      authorized_collection.insert_many([{ field: 'test1' }])
+      authorized_collection.insert_many([ { field: 'test1' } ])
     end
 
     context 'when hint option is provided and the write concern is unacknowledged' do
@@ -394,37 +372,36 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context "on 4.4+ servers" do
+      context 'on 4.4+ servers' do
         min_server_version '4.4'
 
         it "doesn't raise an error" do
           expect do
             view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to_not raise_error
+          end.not_to raise_error
         end
       end
 
-      context "on <=4.2 servers" do
+      context 'on <=4.2 servers' do
         max_server_version '4.2'
 
         it 'raises a client-side error' do
           expect do
             view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+          end.to raise_error(Mongo::Error::UnsupportedOption,
+                             /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
 
     context 'when a matching document is found' do
-
       let(:selector) do
         { field: 'test1' }
       end
 
       context 'when no options are provided' do
-
         let(:document) do
-          view.find_one_and_update({ '$set' => { field: 'testing' }})
+          view.find_one_and_update({ '$set' => { field: 'testing' } })
         end
 
         it 'returns the original document' do
@@ -433,9 +410,8 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when return_document options are provided' do
-
         let(:document) do
-          view.find_one_and_update({ '$set' => { field: 'testing' }}, :return_document => :after)
+          view.find_one_and_update({ '$set' => { field: 'testing' } }, return_document: :after)
         end
 
         it 'returns the new document' do
@@ -444,19 +420,17 @@ describe Mongo::Collection::View::Writable do
       end
 
       context 'when a projection is provided' do
-
         let(:document) do
-          view.projection(_id: 1).find_one_and_update({ '$set' => { field: 'testing' }})
+          view.projection(_id: 1).find_one_and_update({ '$set' => { field: 'testing' } })
         end
 
         it 'returns the document with limited fields' do
           expect(document['field']).to be_nil
-          expect(document['_id']).to_not be_nil
+          expect(document['_id']).not_to be_nil
         end
       end
 
       context 'when a sort is provided' do
-
         let(:document) do
           view.sort(field: 1).find_one_and_update({ '$set' => { field: 'testing' } })
         end
@@ -468,7 +442,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -492,7 +465,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is specified as a method option' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -516,7 +488,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no collation is specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -535,13 +506,12 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no matching document is found' do
-
       let(:selector) do
         { field: 'test5' }
       end
 
       let(:document) do
-        view.find_one_and_update({ '$set' => { field: 'testing' }})
+        view.find_one_and_update({ '$set' => { field: 'testing' } })
       end
 
       it 'returns nil' do
@@ -557,35 +527,35 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context "on 4.4+ servers" do
+      context 'on 4.4+ servers' do
         min_server_version '4.4'
 
         it "doesn't raise an error" do
           expect do
             view.delete_many(hint: '_id_')
-          end.to_not raise_error
+          end.not_to raise_error
         end
       end
 
-      context "on <=4.2 servers" do
+      context 'on <=4.2 servers' do
         max_server_version '4.2'
 
         it 'raises a client-side error' do
           expect do
             view.delete_many(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+          end.to raise_error(Mongo::Error::UnsupportedOption,
+                             /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
 
     context 'when a selector was provided' do
-
       let(:selector) do
         { field: 'test1' }
       end
 
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([ { field: 'test1' }, { field: 'test2' } ])
       end
 
       let(:response) do
@@ -598,9 +568,8 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no selector was provided' do
-
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([ { field: 'test1' }, { field: 'test2' } ])
       end
 
       let(:response) do
@@ -613,7 +582,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -638,7 +606,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is specified as a method option' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -663,7 +630,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is not specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -691,39 +657,39 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context "on 4.4+ servers" do
+      context 'on 4.4+ servers' do
         min_server_version '4.4'
 
         it "doesn't raise an error" do
           expect do
             view.delete_one(hint: '_id_')
-          end.to_not raise_error
+          end.not_to raise_error
         end
       end
 
-      context "on <=4.2 servers" do
+      context 'on <=4.2 servers' do
         max_server_version '4.2'
 
         it 'raises a client-side error' do
           expect do
             view.delete_one(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption, /The hint option cannot be specified on an unacknowledged write operation/)
+          end.to raise_error(Mongo::Error::UnsupportedOption,
+                             /The hint option cannot be specified on an unacknowledged write operation/)
         end
       end
     end
 
     context 'when a selector was provided' do
-
       let(:selector) do
         { field: 'test1' }
       end
 
       before do
         authorized_collection.insert_many([
-          { field: 'test1' },
-          { field: 'test1' },
-          { field: 'test1' }
-        ])
+                                            { field: 'test1' },
+                                            { field: 'test1' },
+                                            { field: 'test1' }
+                                          ])
       end
 
       let(:response) do
@@ -736,9 +702,8 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no selector was provided' do
-
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([ { field: 'test1' }, { field: 'test2' } ])
       end
 
       let(:response) do
@@ -751,7 +716,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is provided' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -775,7 +739,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is provided as a method_option' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -799,9 +762,8 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is not specified' do
-
       let(:selector) do
-        {name: 'BANG'}
+        { name: 'BANG' }
       end
 
       let(:result) do
@@ -829,18 +791,17 @@ describe Mongo::Collection::View::Writable do
       it "doesn't raise an error" do
         expect do
           view.replace_one({ field: 'testing' }, { hint: '_id_' })
-        end.to_not raise_error
+        end.not_to raise_error
       end
     end
 
     context 'when a selector was provided' do
-
       let(:selector) do
         { field: 'test1' }
       end
 
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+        authorized_collection.insert_many([ { field: 'test1' }, { field: 'test1' } ])
       end
 
       let!(:response) do
@@ -861,9 +822,8 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no selector was provided' do
-
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([ { field: 'test1' }, { field: 'test2' } ])
       end
 
       let!(:response) do
@@ -884,7 +844,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is false' do
-
       let!(:response) do
         view.replace_one({ field: 'test1' }, upsert: false)
       end
@@ -903,7 +862,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is true' do
-
       let!(:response) do
         view.replace_one({ field: 'test1' }, upsert: true)
       end
@@ -922,7 +880,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is not specified' do
-
       let!(:response) do
         view.replace_one({ field: 'test1' })
       end
@@ -941,7 +898,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -965,7 +921,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is specified as method option' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -989,7 +944,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is not specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -1019,22 +973,21 @@ describe Mongo::Collection::View::Writable do
       it "doesn't raise an error" do
         expect do
           view.update_many({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-        end.to_not raise_error
+        end.not_to raise_error
       end
     end
 
     context 'when a selector was provided' do
-
       let(:selector) do
         { field: 'test' }
       end
 
       before do
-        authorized_collection.insert_many([{ field: 'test' }, { field: 'test' }])
+        authorized_collection.insert_many([ { field: 'test' }, { field: 'test' } ])
       end
 
       let!(:response) do
-        view.update_many('$set'=> { field: 'testing' })
+        view.update_many('$set' => { field: 'testing' })
       end
 
       let(:updated) do
@@ -1051,13 +1004,12 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no selector was provided' do
-
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([ { field: 'test1' }, { field: 'test2' } ])
       end
 
       let!(:response) do
-        view.update_many('$set'=> { field: 'testing' })
+        view.update_many('$set' => { field: 'testing' })
       end
 
       let(:updated) do
@@ -1076,10 +1028,9 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is false' do
-
       let(:response) do
-        view.update_many({ '$set'=> { field: 'testing' } },
-                           upsert: false)
+        view.update_many({ '$set' => { field: 'testing' } },
+                         upsert: false)
       end
 
       let(:updated) do
@@ -1096,10 +1047,9 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is true' do
-
       let!(:response) do
-        view.update_many({ '$set'=> { field: 'testing' } },
-                           upsert: true)
+        view.update_many({ '$set' => { field: 'testing' } },
+                         upsert: true)
       end
 
       let(:updated) do
@@ -1116,9 +1066,8 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is not specified' do
-
       let(:response) do
-        view.update_many({ '$set'=> { field: 'testing' } })
+        view.update_many({ '$set' => { field: 'testing' } })
       end
 
       let(:updated) do
@@ -1135,7 +1084,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -1160,7 +1108,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is specified as a method option' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -1185,13 +1132,12 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when collation is not specified' do
-
       let(:selector) do
-        {name: 'BANG'}
+        { name: 'BANG' }
       end
 
       let(:result) do
-        view.update_many('$set' => {other: 'doink'})
+        view.update_many('$set' => { other: 'doink' })
       end
 
       before do
@@ -1215,22 +1161,21 @@ describe Mongo::Collection::View::Writable do
       it "doesn't raise an error" do
         expect do
           view.update_one({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-        end.to_not raise_error
+        end.not_to raise_error
       end
     end
 
     context 'when a selector was provided' do
-
       let(:selector) do
         { field: 'test1' }
       end
 
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+        authorized_collection.insert_many([ { field: 'test1' }, { field: 'test1' } ])
       end
 
       let!(:response) do
-        view.update_one('$set'=> { field: 'testing' })
+        view.update_one('$set' => { field: 'testing' })
       end
 
       let(:updated) do
@@ -1247,13 +1192,12 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when no selector was provided' do
-
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([ { field: 'test1' }, { field: 'test2' } ])
       end
 
       let!(:response) do
-        view.update_one('$set'=> { field: 'testing' })
+        view.update_one('$set' => { field: 'testing' })
       end
 
       let(:updated) do
@@ -1270,10 +1214,9 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is false' do
-
       let(:response) do
-        view.update_one({ '$set'=> { field: 'testing' } },
-                          upsert: false)
+        view.update_one({ '$set' => { field: 'testing' } },
+                        upsert: false)
       end
 
       let(:updated) do
@@ -1290,10 +1233,9 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is true' do
-
       let!(:response) do
-        view.update_one({ '$set'=> { field: 'testing' } },
-                          upsert: true)
+        view.update_one({ '$set' => { field: 'testing' } },
+                        upsert: true)
       end
 
       let(:updated) do
@@ -1310,9 +1252,8 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when upsert is not specified' do
-
       let(:response) do
-        view.update_one({ '$set'=> { field: 'testing' } })
+        view.update_one({ '$set' => { field: 'testing' } })
       end
 
       let(:updated) do
@@ -1329,7 +1270,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when there is a collation specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -1353,7 +1293,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when there is a collation specified as a method option' do
-
       let(:selector) do
         { name: 'BANG' }
       end
@@ -1377,7 +1316,6 @@ describe Mongo::Collection::View::Writable do
     end
 
     context 'when a collation is not specified' do
-
       let(:selector) do
         { name: 'BANG' }
       end

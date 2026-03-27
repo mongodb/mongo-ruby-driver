@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,12 @@
 
 module Mongo
   class Error
-
     # Raised if the array filters option is specified for an operation but the server
     # selected does not support array filters.
     #
     # @since 2.5.0
     #
-    # @deprecated RUBY-2260 In driver version 3.0, this error class will be 
+    # @deprecated RUBY-2260 In driver version 3.0, this error class will be
     #   replaced with UnsupportedOption. To handle this error, catch
     #   Mongo::Error::UnsupportedOption, which will prevent any breaking changes
     #   in your application when upgrading to version 3.0 of the driver.
@@ -33,8 +31,8 @@ module Mongo
       # @return [ String ] A message describing that array filters cannot be used when write concern is unacknowledged.
       #
       # @since 2.5.0
-      UNACKNOWLEDGED_WRITES_MESSAGE = "The array_filters option cannot be specified when using unacknowledged writes. " +
-        "Either remove the array_filters option or use acknowledged writes (w >= 1).".freeze
+      UNACKNOWLEDGED_WRITES_MESSAGE = 'The array_filters option cannot be specified when using unacknowledged writes. ' +
+                                      'Either remove the array_filters option or use acknowledged writes (w >= 1).'
     end
   end
 end

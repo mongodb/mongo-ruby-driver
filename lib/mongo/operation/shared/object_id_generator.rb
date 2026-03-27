@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Operation
-
     # The default generator of ids for documents.
     #
     # @since 2.2.0
     # @api private
     class ObjectIdGenerator
-
       # Generate a new id.
       #
       # @example Generate the id.

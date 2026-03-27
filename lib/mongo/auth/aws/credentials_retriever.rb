@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -23,7 +22,7 @@ module Mongo
       # @api private
       class CredentialsNotFound < Mongo::Error::AuthError
         def initialize
-          super("Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, ECS and EC2 metadata, and Web Identity)")
+          super('Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, ECS and EC2 metadata, and Web Identity)')
         end
       end
 
@@ -110,7 +109,7 @@ module Mongo
             user.password,
             user.auth_mech_properties['aws_session_token']
           )
-          return credentials if credentials_valid?(credentials, 'Mongo::Client URI or Ruby options')
+          credentials if credentials_valid?(credentials, 'Mongo::Client URI or Ruby options')
         end
 
         # Returns credentials from environment variables.
@@ -141,11 +140,14 @@ module Mongo
         # @ raise Error::TimeoutError if credentials cannot be retrieved within
         #   the timeout defined on the operation context.
         def obtain_credentials_from_endpoints(timeout_holder = nil)
-          if (credentials = web_identity_credentials(timeout_holder)) && credentials_valid?(credentials, 'Web identity token')
+          if (credentials = web_identity_credentials(timeout_holder)) && credentials_valid?(credentials,
+                                                                                            'Web identity token')
             credentials
-          elsif (credentials = ecs_metadata_credentials(timeout_holder)) && credentials_valid?(credentials, 'ECS task metadata')
+          elsif (credentials = ecs_metadata_credentials(timeout_holder)) && credentials_valid?(credentials,
+                                                                                               'ECS task metadata')
             credentials
-          elsif (credentials = ec2_metadata_credentials(timeout_holder)) && credentials_valid?(credentials, 'EC2 instance metadata')
+          elsif (credentials = ec2_metadata_credentials(timeout_holder)) && credentials_valid?(credentials,
+                                                                                               'EC2 instance metadata')
             credentials
           end
         end
@@ -163,33 +165,29 @@ module Mongo
           timeout_holder&.check_timeout!
           http = Net::HTTP.new('169.254.169.254')
           req = Net::HTTP::Put.new('/latest/api/token',
-            # The TTL is required in order to obtain the metadata token.
-            {'x-aws-ec2-metadata-token-ttl-seconds' => '30'})
+                                   # The TTL is required in order to obtain the metadata token.
+                                   { 'x-aws-ec2-metadata-token-ttl-seconds' => '30' })
           resp = with_timeout(timeout_holder) do
             http.request(req)
           end
-          if resp.code != '200'
-            return nil
-          end
+          return nil if resp.code != '200'
+
           metadata_token = resp.body
           resp = with_timeout(timeout_holder) do
             http_get(http, '/latest/meta-data/iam/security-credentials', metadata_token)
           end
-          if resp.code != '200'
-            return nil
-          end
+          return nil if resp.code != '200'
+
           role_name = resp.body
           escaped_role_name = CGI.escape(role_name).gsub('+', '%20')
           resp = with_timeout(timeout_holder) do
             http_get(http, "/latest/meta-data/iam/security-credentials/#{escaped_role_name}", metadata_token)
           end
-          if resp.code != '200'
-            return nil
-          end
+          return nil if resp.code != '200'
+
           payload = JSON.parse(resp.body)
-          unless payload['Code'] == 'Success'
-            return nil
-          end
+          return nil unless payload['Code'] == 'Success'
+
           Credentials.new(
             payload['AccessKeyId'],
             payload['SecretAccessKey'],
@@ -199,7 +197,7 @@ module Mongo
         # When trying to use the EC2 metadata endpoint on ECS:
         # Errno::EINVAL: Failed to open TCP connection to 169.254.169.254:80 (Invalid argument - connect(2) for "169.254.169.254" port 80)
         rescue ::Timeout::Error, IOError, SystemCallError, TypeError
-          return nil
+          nil
         end
 
         # Returns credentials from the ECS metadata endpoint. The credentials
@@ -214,9 +212,7 @@ module Mongo
         def ecs_metadata_credentials(timeout_holder = nil)
           timeout_holder&.check_timeout!
           relative_uri = ENV['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI']
-          if relative_uri.nil? || relative_uri.empty?
-            return nil
-          end
+          return nil if relative_uri.nil? || relative_uri.empty?
 
           http = Net::HTTP.new('169.254.170.2')
           # Per https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
@@ -229,9 +225,8 @@ module Mongo
           resp = with_timeout(timeout_holder) do
             http.request(req)
           end
-          if resp.code != '200'
-            return nil
-          end
+          return nil if resp.code != '200'
+
           payload = JSON.parse(resp.body)
           Credentials.new(
             payload['AccessKeyId'],
@@ -240,7 +235,7 @@ module Mongo
             DateTime.parse(payload['Expiration']).to_time
           )
         rescue ::Timeout::Error, IOError, SystemCallError, TypeError
-          return nil
+          nil
         end
 
         # Returns credentials associated with web identity token that is
@@ -255,10 +250,12 @@ module Mongo
         def web_identity_credentials(timeout_holder = nil)
           web_identity_token, role_arn, role_session_name = prepare_web_identity_inputs
           return nil if web_identity_token.nil?
+
           response = request_web_identity_credentials(
             web_identity_token, role_arn, role_session_name, timeout_holder
           )
           return if response.nil?
+
           credentials_from_web_identity_response(response)
         end
 
@@ -269,15 +266,12 @@ module Mongo
         def prepare_web_identity_inputs
           token_file = ENV['AWS_WEB_IDENTITY_TOKEN_FILE']
           role_arn = ENV['AWS_ROLE_ARN']
-          if token_file.nil? || role_arn.nil?
-            return nil
-          end
-          web_identity_token = File.open(token_file).read
+          return nil if token_file.nil? || role_arn.nil?
+
+          web_identity_token = File.read(token_file)
           role_session_name = ENV['AWS_ROLE_SESSION_NAME']
-          if role_session_name.nil?
-            role_session_name = "ruby-app-#{SecureRandom.alphanumeric(50)}"
-          end
-          [web_identity_token, role_arn, role_session_name]
+          role_session_name = "ruby-app-#{SecureRandom.alphanumeric(50)}" if role_session_name.nil?
+          [ web_identity_token, role_arn, role_session_name ]
         rescue Errno::ENOENT, IOError, SystemCallError
           nil
         end
@@ -316,9 +310,8 @@ module Mongo
               https.request(req)
             end
           end
-          if resp.code != '200'
-            return nil
-          end
+          return nil if resp.code != '200'
+
           resp
         rescue Errno::ENOENT, IOError, SystemCallError
           nil
@@ -349,7 +342,7 @@ module Mongo
 
         def http_get(http, uri, metadata_token)
           req = Net::HTTP::Get.new(uri,
-            {'x-aws-ec2-metadata-token' => metadata_token})
+                                   { 'x-aws-ec2-metadata-token' => metadata_token })
           http.request(req)
         end
 
@@ -360,25 +353,24 @@ module Mongo
         # incomplete (i.e. some of the components are missing).
         def credentials_valid?(credentials, source)
           unless credentials.access_key_id || credentials.secret_access_key ||
-            credentials.session_token
-          then
+                 credentials.session_token
             return false
           end
 
           if credentials.access_key_id || credentials.secret_access_key
             if credentials.access_key_id && !credentials.secret_access_key
               raise Auth::InvalidConfiguration,
-                "Access key ID is provided without secret access key (source: #{source})"
+                    "Access key ID is provided without secret access key (source: #{source})"
             end
 
             if credentials.secret_access_key && !credentials.access_key_id
               raise Auth::InvalidConfiguration,
-                "Secret access key is provided without access key ID (source: #{source})"
+                    "Secret access key is provided without access key ID (source: #{source})"
             end
 
           elsif credentials.session_token
             raise Auth::InvalidConfiguration,
-              "Session token is provided without access key ID or secret access key (source: #{source})"
+                  "Session token is provided without access key ID or secret access key (source: #{source})"
           end
 
           true
@@ -393,16 +385,10 @@ module Mongo
         # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
         #
         # @ raise Error::TimeoutError if deadline exceeded.
-        def with_timeout(timeout_holder)
+        def with_timeout(timeout_holder, &block)
           timeout = timeout_holder&.remaining_timeout_sec! || METADATA_TIMEOUT
-          exception_class = if timeout_holder&.csot?
-                              Error::TimeoutError
-                            else
-                              nil
-                            end
-          ::Timeout.timeout(timeout, exception_class) do
-            yield
-          end
+          exception_class = (Error::TimeoutError if timeout_holder&.csot?)
+          ::Timeout.timeout(timeout, exception_class, &block)
         end
       end
     end

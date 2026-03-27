@@ -1,12 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
   module Config
-
     # Encapsulates logic for setting options.
     module Options
-
       # Get the defaults or initialize a new empty hash.
       #
       # @return [ Hash ] The default options.

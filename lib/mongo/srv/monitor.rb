@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Srv
-
     # Periodically retrieves SRV records for the cluster's SRV URI, and
     # sets the cluster's server list to the SRV lookup result.
     #
@@ -44,18 +42,15 @@ module Mongo
       #   Options to pass through to Resolv::DNS constructor for SRV lookups.
       def initialize(cluster, **opts)
         @cluster = cluster
-        unless @srv_uri = opts.delete(:srv_uri)
-          raise ArgumentError, 'SRV URI is required'
-        end
+        raise ArgumentError, 'SRV URI is required' unless @srv_uri = opts.delete(:srv_uri)
+
         @options = opts.freeze
         @resolver = Srv::Resolver.new(**opts)
         @last_result = @srv_uri.srv_result
         @stop_semaphore = Semaphore.new
       end
 
-      attr_reader :options
-
-      attr_reader :cluster
+      attr_reader :options, :cluster
 
       # @return [ Srv::Result ] Last known SRV lookup result. Used for
       #   determining intervals between SRV lookups, which depend on SRV DNS
@@ -73,7 +68,7 @@ module Mongo
         begin
           last_result = Timeout.timeout(timeout) do
             @resolver.get_records(
-              @srv_uri.query_hostname, 
+              @srv_uri.query_hostname,
               @srv_uri.uri_options[:srv_service_name] || options[:srv_service_name],
               @srv_uri.uri_options[:srv_max_hosts] || @options[:srv_max_hosts]
             )
@@ -99,11 +94,11 @@ module Mongo
 
       def scan_interval
         if last_result.empty?
-          [cluster.heartbeat_interval, MIN_SCAN_INTERVAL].min
+          [ cluster.heartbeat_interval, MIN_SCAN_INTERVAL ].min
         elsif last_result.min_ttl.nil?
           MIN_SCAN_INTERVAL
         else
-          [last_result.min_ttl, MIN_SCAN_INTERVAL].max
+          [ last_result.min_ttl, MIN_SCAN_INTERVAL ].max
         end
       end
 

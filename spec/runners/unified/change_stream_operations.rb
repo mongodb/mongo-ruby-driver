@@ -1,18 +1,15 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Unified
-
   module ChangeStreamOperations
-
     def create_change_stream(op)
       object_id = op.use!('object')
       object = entities.get_any(object_id)
       use_arguments(op) do |args|
         pipeline = args.use!('pipeline')
         opts = extract_options(args, 'batchSize', 'comment', 'fullDocument',
-          'fullDocumentBeforeChange', 'showExpandedEvents', 'timeoutMS',
-          'maxAwaitTimeMS')
+                               'fullDocumentBeforeChange', 'showExpandedEvents', 'timeoutMS',
+                               'maxAwaitTimeMS')
         cs = object.watch(pipeline, **opts)
         if name = op.use('saveResultAsEntity')
           entities.set(:change_stream, name, cs)

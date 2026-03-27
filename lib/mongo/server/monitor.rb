@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Server
-
     # Responsible for periodically polling a server via hello commands to
     # keep the server's status up to date.
     #
@@ -35,19 +33,19 @@ module Mongo
       # The default interval between server status refreshes is 10 seconds.
       #
       # @since 2.0.0
-      DEFAULT_HEARTBEAT_INTERVAL = 10.freeze
+      DEFAULT_HEARTBEAT_INTERVAL = 10
 
       # The minimum time between forced server scans. Is
       # minHeartbeatFrequencyMS in the SDAM spec.
       #
       # @since 2.0.0
-      MIN_SCAN_INTERVAL = 0.5.freeze
+      MIN_SCAN_INTERVAL = 0.5
 
       # The weighting factor (alpha) for calculating the average moving round trip time.
       #
       # @since 2.0.0
       # @deprecated Will be removed in version 3.0.
-      RTT_WEIGHT_FACTOR = 0.2.freeze
+      RTT_WEIGHT_FACTOR = 0.2
 
       # Create the new server monitor.
       #
@@ -76,15 +74,10 @@ module Mongo
       # @since 2.0.0
       # @api private
       def initialize(server, event_listeners, monitoring, options = {})
-        unless monitoring.is_a?(Monitoring)
-          raise ArgumentError, "Wrong monitoring type: #{monitoring.inspect}"
-        end
-        unless options[:app_metadata]
-          raise ArgumentError, 'App metadata is required'
-        end
-        unless options[:push_monitor_app_metadata]
-          raise ArgumentError, 'Push monitor app metadata is required'
-        end
+        raise ArgumentError, "Wrong monitoring type: #{monitoring.inspect}" unless monitoring.is_a?(Monitoring)
+        raise ArgumentError, 'App metadata is required' unless options[:app_metadata]
+        raise ArgumentError, 'Push monitor app metadata is required' unless options[:push_monitor_app_metadata]
+
         @server = server
         @event_listeners = event_listeners
         @monitoring = monitoring
@@ -142,14 +135,10 @@ module Mongo
         # thread exits when requested.
         loop do
           delta = @next_wanted_scan - Time.now
-          if delta > 0
-            signaled = server.scan_semaphore.wait(delta)
-            if signaled || @stop_requested
-              break
-            end
-          else
-            break
-          end
+          break unless delta > 0
+
+          signaled = server.scan_semaphore.wait(delta)
+          break if signaled || @stop_requested
         end
       end
 
@@ -172,19 +161,17 @@ module Mongo
 
       def create_push_monitor!(topology_version)
         @update_mutex.synchronize do
-          if @push_monitor && !@push_monitor.running?
-            @push_monitor = nil
-          end
+          @push_monitor = nil if @push_monitor && !@push_monitor.running?
 
           @push_monitor ||= PushMonitor.new(
             self,
             topology_version,
             monitoring,
             **Utils.shallow_symbolize_keys(options.merge(
-              socket_timeout: heartbeat_interval + connection.socket_timeout,
-              app_metadata: options[:push_monitor_app_metadata],
-              check_document: @connection.check_document
-            )),
+                                             socket_timeout: heartbeat_interval + connection.socket_timeout,
+                                             app_metadata: options[:push_monitor_app_metadata],
+                                             check_document: @connection.check_document
+                                           ))
           )
         end
       end
@@ -225,7 +212,7 @@ module Mongo
 
           begin
             result = do_scan
-          rescue => e
+          rescue StandardError => e
             run_sdam_flow({}, scan_error: e)
           else
             run_sdam_flow(result)
@@ -286,19 +273,16 @@ module Mongo
       end
 
       def do_scan
-        begin
-          monitoring.publish_heartbeat(server) do
-            check
-          end
-        rescue => exc
-          msg = "Error checking #{server.address}"
-          Utils.warn_bg_exception(msg, exc,
-            logger: options[:logger],
-            log_prefix: options[:log_prefix],
-            bg_error_backtrace: options[:bg_error_backtrace],
-          )
-          raise exc
+        monitoring.publish_heartbeat(server) do
+          check
         end
+      rescue StandardError => e
+        msg = "Error checking #{server.address}"
+        Utils.warn_bg_exception(msg, e,
+                                logger: options[:logger],
+                                log_prefix: options[:log_prefix],
+                                bg_error_backtrace: options[:bg_error_backtrace])
+        raise e
       end
 
       def check
@@ -310,18 +294,16 @@ module Mongo
 
         if @connection
           result = server.round_trip_time_calculator.measure do
-            begin
-              doc = @connection.check_document
-              cmd = Protocol::Query.new(
-                Database::ADMIN, Database::COMMAND, doc, :limit => -1
-              )
-              message = @connection.dispatch_bytes(cmd.serialize.to_s)
-              message.documents.first
-            rescue Mongo::Error
-              @connection.disconnect!
-              @connection = nil
-              raise
-            end
+            doc = @connection.check_document
+            cmd = Protocol::Query.new(
+              Database::ADMIN, Database::COMMAND, doc, limit: -1
+            )
+            message = @connection.dispatch_bytes(cmd.serialize.to_s)
+            message.documents.first
+          rescue Mongo::Error
+            @connection.disconnect!
+            @connection = nil
+            raise
           end
         else
           connection = Connection.new(server.address, options)
@@ -350,9 +332,9 @@ module Mongo
       #   can sleep for a very long time.
       def throttle_scan_frequency!
         delta = @next_earliest_scan - Time.now
-        if delta > 0
-          sleep(delta)
-        end
+        return unless delta > 0
+
+        sleep(delta)
       end
 
       # Returns whether the streaming protocol is enabled, based on the

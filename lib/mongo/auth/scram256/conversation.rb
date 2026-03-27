@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -18,13 +17,11 @@
 module Mongo
   module Auth
     class Scram256
-
       # Defines behavior around a single SCRAM-SHA-256 conversation between
       # the client and server.
       #
       # @api private
       class Conversation < ScramConversationBase
-
         private
 
         # HI algorithm implementation.
@@ -40,7 +37,7 @@ module Mongo
             salt,
             iterations,
             digest.size,
-            digest,
+            digest
           )
         end
 
@@ -58,7 +55,7 @@ module Mongo
         end
 
         def digest
-          @digest ||= OpenSSL::Digest::SHA256.new.freeze
+          @digest ||= OpenSSL::Digest.new('SHA256').freeze
         end
       end
     end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/cursor/nontailable'
 
 module Mongo
   module Index
-
     # A class representing a view of indexes.
     #
     # @since 2.0.0
@@ -50,39 +48,39 @@ module Mongo
       # The index key field.
       #
       # @since 2.0.0
-      KEY = 'key'.freeze
+      KEY = 'key'
 
       # The index name field.
       #
       # @since 2.0.0
-      NAME = 'name'.freeze
+      NAME = 'name'
 
       # The mappings of Ruby index options to server options.
       #
       # @since 2.0.0
       OPTIONS = {
-        :background => :background,
-        :bits => :bits,
-        :bucket_size => :bucketSize,
-        :default_language => :default_language,
-        :expire_after => :expireAfterSeconds,
-        :expire_after_seconds => :expireAfterSeconds,
-        :key => :key,
-        :language_override => :language_override,
-        :max => :max,
-        :min => :min,
-        :name => :name,
-        :partial_filter_expression => :partialFilterExpression,
-        :sparse => :sparse,
-        :sphere_version => :'2dsphereIndexVersion',
-        :storage_engine => :storageEngine,
-        :text_version => :textIndexVersion,
-        :unique => :unique,
-        :version => :v,
-        :weights => :weights,
-        :collation => :collation,
-        :comment => :comment,
-        :wildcard_projection => :wildcardProjection,
+        background: :background,
+        bits: :bits,
+        bucket_size: :bucketSize,
+        default_language: :default_language,
+        expire_after: :expireAfterSeconds,
+        expire_after_seconds: :expireAfterSeconds,
+        key: :key,
+        language_override: :language_override,
+        max: :max,
+        min: :min,
+        name: :name,
+        partial_filter_expression: :partialFilterExpression,
+        sparse: :sparse,
+        sphere_version: :'2dsphereIndexVersion',
+        storage_engine: :storageEngine,
+        text_version: :textIndexVersion,
+        unique: :unique,
+        version: :v,
+        weights: :weights,
+        collation: :collation,
+        comment: :comment,
+        wildcard_projection: :wildcardProjection,
       }.freeze
 
       # Drop an index by its name.
@@ -101,6 +99,7 @@ module Mongo
       # @since 2.0.0
       def drop_one(name, options = {})
         raise Error::MultiIndexDrop.new if name == Index::ALL
+
         drop_by_name(name, options)
       end
 
@@ -172,7 +171,7 @@ module Mongo
         if session = @options[:session]
           create_options[:session] = session
         end
-        %i(commit_quorum session comment timeout_ms max_time_ms).each do |key|
+        %i[commit_quorum session comment timeout_ms max_time_ms].each do |key|
           if value = options.delete(key)
             create_options[key] = value
           end
@@ -214,15 +213,13 @@ module Mongo
       def create_many(*models)
         models = models.flatten
         options = {}
-        if models && !models.last.key?(:key)
-          options = models.pop
-        end
+        options = models.pop if models && !models.last.key?(:key)
 
         client.with_session(@options.merge(options)) do |session|
           indexes = normalize_models(models)
           indexes.each do |index|
             if index[:bucketSize] || index['bucketSize']
-              client.log_warn("Haystack indexes (bucketSize index option) are deprecated as of MongoDB 4.4")
+              client.log_warn('Haystack indexes (bucketSize index option) are deprecated as of MongoDB 4.4')
             end
           end
 
@@ -292,9 +289,7 @@ module Mongo
             send_initial_query(op, server, session, context)
           end
           if block_given?
-            cursor.each do |doc|
-              yield doc
-            end
+            cursor.each(&block)
           else
             cursor.to_enum
           end
@@ -370,7 +365,7 @@ module Mongo
             operation_timeouts: operation_timeouts(opts)
           )
           op = Operation::DropIndex.new(spec)
-          op_name = name == Index::ALL ? 'dropIndexes' : 'dropIndex'
+          op_name = (name == Index::ALL) ? 'dropIndexes' : 'dropIndex'
           tracer.trace_operation(op, context, op_name: op_name) do
             retry_enabled = collection.client.options[:retry_writes] != false
             with_overload_retry(context: context, retry_enabled: retry_enabled) do
@@ -388,21 +383,24 @@ module Mongo
       def indexes_spec(session)
         { selector: {
             listIndexes: collection.name,
-            cursor: batch_size ? { batchSize: batch_size } : {} },
+            cursor: batch_size ? { batchSize: batch_size } : {}
+          },
           coll_name: collection.name,
           db_name: database.name,
-          session: session
-        }
+          session: session }
       end
 
       def initial_query_op(session)
         Operation::Indexes.new(indexes_spec(session))
       end
 
-      def limit; -1; end
+      def limit
+        -1
+      end
 
       def normalize_keys(spec)
         return false if spec.is_a?(String)
+
         Options::Mapper.transform_keys_to_strings(spec)
       end
 
@@ -415,7 +413,7 @@ module Mongo
         end
       end
 
-      def send_initial_query(op, server, session, context)
+      def send_initial_query(op, server, _session, context)
         if server.load_balancer?
           connection = server.pool.check_out(context: context)
           op.execute_with_connection(connection, context: context)

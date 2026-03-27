@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/operation/shared/result/aggregatable'
 
 module Mongo
   module Operation
-
     # Result wrapper for wire protocol replies.
     #
     # An operation has zero or one replies. The only operations producing zero
@@ -38,49 +36,49 @@ module Mongo
       #
       # @since 2.2.0
       # @api private
-      CURSOR = 'cursor'.freeze
+      CURSOR = 'cursor'
 
       # The cursor id field in the cursor document.
       #
       # @since 2.2.0
       # @api private
-      CURSOR_ID = 'id'.freeze
+      CURSOR_ID = 'id'
 
       # The field name for the first batch of a cursor.
       #
       # @since 2.2.0
       # @api private
-      FIRST_BATCH = 'firstBatch'.freeze
+      FIRST_BATCH = 'firstBatch'
 
       # The field name for the next batch of a cursor.
       #
       # @since 2.2.0
       # @api private
-      NEXT_BATCH = 'nextBatch'.freeze
+      NEXT_BATCH = 'nextBatch'
 
       # The namespace field in the cursor document.
       #
       # @since 2.2.0
       # @api private
-      NAMESPACE = 'ns'.freeze
+      NAMESPACE = 'ns'
 
       # The number of documents updated in the write.
       #
       # @since 2.0.0
       # @api private
-      N = 'n'.freeze
+      N = 'n'
 
       # The ok status field in the result.
       #
       # @since 2.0.0
       # @api private
-      OK = 'ok'.freeze
+      OK = 'ok'
 
       # The result field constant.
       #
       # @since 2.2.0
       # @api private
-      RESULT = 'result'.freeze
+      RESULT = 'result'
 
       # Initialize a new result.
       #
@@ -109,23 +107,23 @@ module Mongo
         # TODO: older versions of MongoDB (2.4 and below?) could sometimes end
         # up with nil here, which indicated an unackowledged write. Is that
         # still the case? Can we simplify this?
-        if replies
-          if replies.is_a?(Array)
-            if replies.length != 1
-              raise ArgumentError, "Only one (or zero) reply is supported, given #{replies.length}"
-            end
-            reply = replies.first
-          else
-            reply = replies
-          end
-          unless reply.is_a?(Protocol::Message)
-            raise ArgumentError, "Argument must be a Message instance, but is a #{reply.class}: #{reply.inspect}"
-          end
-          @replies = [ reply ]
-          @connection_description = connection_description
-          @connection_global_id = connection_global_id
-          @connection = connection
+        return unless replies
+
+        if replies.is_a?(Array)
+          raise ArgumentError, "Only one (or zero) reply is supported, given #{replies.length}" if replies.length != 1
+
+          reply = replies.first
+        else
+          reply = replies
         end
+        unless reply.is_a?(Protocol::Message)
+          raise ArgumentError, "Argument must be a Message instance, but is a #{reply.class}: #{reply.inspect}"
+        end
+
+        @replies = [ reply ]
+        @connection_description = connection_description
+        @connection_global_id = connection_global_id
+        @connection = connection
       end
 
       # @return [ Array<Protocol::Message> ] replies The wrapped wire protocol replies.
@@ -155,7 +153,7 @@ module Mongo
 
       # @api private
       def_delegators :parser,
-        :not_master?, :node_recovering?, :node_shutting_down?
+                     :not_master?, :node_recovering?, :node_shutting_down?
 
       # Is the result acknowledged?
       #
@@ -259,11 +257,9 @@ module Mongo
       # @since 2.0.0
       # @api private
       def reply
-        if acknowledged?
-          replies.first
-        else
-          nil
-        end
+        return unless acknowledged?
+
+        replies.first
       end
 
       # Get the number of documents returned by the server in this batch.
@@ -294,7 +290,8 @@ module Mongo
       # @since 2.0.0
       # @api public
       def successful?
-        return true if !acknowledged?
+        return true unless acknowledged?
+
         if first_document.has_key?(OK)
           ok? && parser.message.empty?
         else
@@ -336,7 +333,7 @@ module Mongo
       # @since 2.0.0
       # @api private
       def validate!
-        !successful? ? raise_operation_failure : self
+        successful? ? self : raise_operation_failure
       end
 
       # The exception instance (of Error::OperationFailure::Family)
@@ -361,7 +358,7 @@ module Mongo
           wtimeout: parser.wtimeout,
           connection_description: connection_description,
           document: parser.document,
-          server_message: parser.server_message,
+          server_message: parser.server_message
         )
       end
 
@@ -379,7 +376,7 @@ module Mongo
       def topology_version
         unless defined?(@topology_version)
           @topology_version = first_document['topologyVersion'] &&
-            TopologyVersion.new(first_document['topologyVersion'])
+                              TopologyVersion.new(first_document['topologyVersion'])
         end
         @topology_version
       end
@@ -402,7 +399,7 @@ module Mongo
       end
 
       # @api public
-      alias :n :written_count
+      alias n written_count
 
       # Get the operation time reported in the server response.
       #
@@ -455,9 +452,9 @@ module Mongo
       end
 
       def snapshot_timestamp
-        if doc = reply.documents.first
-          doc['cursor']&.[]('atClusterTime') || doc['atClusterTime']
-        end
+        return unless doc = reply.documents.first
+
+        doc['cursor']&.[]('atClusterTime') || doc['atClusterTime']
       end
 
       private
@@ -479,7 +476,7 @@ module Mongo
 
       def aggregate_written_count
         documents.reduce(0) do |n, document|
-          n += (document[N] || 0)
+          n += document[N] || 0
           n
         end
       end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Raised when authentication is aborted on the client because the server
     # responded in an unacceptable manner.
     class InvalidServerAuthResponse < AuthError

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -33,9 +32,7 @@ require 'mongo/auth/x509'
 require 'mongo/error/read_write_retryable'
 require 'mongo/error/labelable'
 
-
 module Mongo
-
   # This namespace contains all authentication related behavior.
   #
   # @since 2.0.0
@@ -46,7 +43,7 @@ module Mongo
     #
     # @since 2.0.0
     # @api private
-    EXTERNAL = '$external'.freeze
+    EXTERNAL = '$external'
 
     # Constant for the nonce command.
     #
@@ -58,7 +55,7 @@ module Mongo
     #
     # @since 2.0.0
     # @api private
-    NONCE = 'nonce'.freeze
+    NONCE = 'nonce'
 
     # Map the symbols parsed from the URI connection string to strategies.
     #
@@ -96,7 +93,8 @@ module Mongo
     # @api private
     def get(user, connection, **opts)
       mechanism = user.mechanism
-      raise InvalidMechanism.new(mechanism) if !SOURCES.has_key?(mechanism)
+      raise InvalidMechanism.new(mechanism) unless SOURCES.has_key?(mechanism)
+
       SOURCES[mechanism].new(user, connection, **opts)
     end
 
@@ -109,7 +107,6 @@ module Mongo
     #
     # @since 2.0.0
     class InvalidMechanism < InvalidConfiguration
-
       # Instantiate the new error.
       #
       # @example Instantiate the error.
@@ -151,8 +148,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(user, used_mechanism: nil, message: nil,
-        server: nil, code: nil
-      )
+                     server: nil, code: nil)
         @code = code
 
         configured_bits = []
@@ -160,36 +156,28 @@ module Mongo
           "auth source: #{user.auth_source}",
         ]
 
-        if user.mechanism
-          configured_bits << "mechanism: #{user.mechanism}"
-        end
+        configured_bits << "mechanism: #{user.mechanism}" if user.mechanism
 
-        if used_mechanism
-          used_bits << "used mechanism: #{used_mechanism}"
-        end
+        used_bits << "used mechanism: #{used_mechanism}" if used_mechanism
 
-        if server
-          used_bits << "used server: #{server.address} (#{server.status})"
-        end
+        used_bits << "used server: #{server.address} (#{server.status})" if server
 
         used_user = if user.mechanism == :mongodb_x509
-          'Client certificate'
-        else
-          "User #{user.name}"
-        end
+                      'Client certificate'
+                    else
+                      "User #{user.name}"
+                    end
 
-        if configured_bits.empty?
-          configured_bits = ''
-        else
-          configured_bits = " (#{configured_bits.join(', ')})"
-        end
+        configured_bits = if configured_bits.empty?
+                            ''
+                          else
+                            " (#{configured_bits.join(', ')})"
+                          end
 
         used_bits = " (#{used_bits.join(', ')})"
 
         msg = "#{used_user}#{configured_bits} is not authorized to access #{user.database}#{used_bits}"
-        if message
-          msg += ': ' + message
-        end
+        msg += ': ' + message if message
         super(msg)
       end
     end

@@ -1,11 +1,10 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'singleton'
 
 module Mongo
   class Client
-    alias :with_without_registry :with
+    alias with_without_registry with
     def with(*args)
       with_without_registry(*args).tap do |client|
         ClientRegistry.instance.register_local_client(client)
@@ -60,10 +59,8 @@ class ClientRegistry
       else
         perished = false
         client.cluster.servers_list.each do |server|
-          thread = server.monitor.instance_variable_get('@thread')
-          if thread.nil? || !thread.alive?
-            perished = true
-          end
+          thread = server.monitor.instance_variable_get(:@thread)
+          perished = true if thread.nil? || !thread.alive?
         end
         perished
       end
@@ -71,9 +68,9 @@ class ClientRegistry
     private :client_perished?
 
     def reconnect_client_if_perished(client)
-      if client_perished?(client)
-        client.reconnect
-      end
+      return unless client_perished?(client)
+
+      client.reconnect
     end
   end
 
@@ -96,13 +93,13 @@ class ClientRegistry
     when 'basic'
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
+        SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db)
       )
     # Provides an unauthorized mongo client on the default test database.
     when 'unauthorized'
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
+        SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db)
       )
     # Provides an authorized mongo client on the default test database for the
     # default test user.
@@ -110,10 +107,10 @@ class ClientRegistry
       client_options = {
         database: SpecConfig.instance.test_db,
       }.update(SpecConfig.instance.credentials_or_external_user(
-        user: SpecConfig.instance.test_user.name,
-        password: SpecConfig.instance.test_user.password,
-        auth_source: 'admin',
-      ))
+                 user: SpecConfig.instance.test_user.name,
+                 password: SpecConfig.instance.test_user.password,
+                 auth_source: 'admin'
+               ))
 
       Mongo::Client.new(
         SpecConfig.instance.addresses,
@@ -123,33 +120,33 @@ class ClientRegistry
     when 'authorized_with_retry_writes'
       global_client('authorized').with(
         retry_writes: true,
-        server_selection_timeout: 4.97,
+        server_selection_timeout: 4.97
       )
     # Provides an authorized mongo client that uses legacy read retry logic.
     when 'authorized_without_retry_reads'
       global_client('authorized').with(
         retry_reads: false,
-        server_selection_timeout: 4.27,
+        server_selection_timeout: 4.27
       )
     # Provides an authorized mongo client that does not retry reads at all.
     when 'authorized_without_any_retry_reads'
       global_client('authorized').with(
         retry_reads: false, max_read_retries: 0,
-        server_selection_timeout: 4.27,
+        server_selection_timeout: 4.27
       )
     # Provides an authorized mongo client that does not retry writes,
     # overriding global test suite option to retry writes if necessary.
     when 'authorized_without_retry_writes'
       global_client('authorized').with(
         retry_writes: false,
-        server_selection_timeout: 4.99,
+        server_selection_timeout: 4.99
       )
     # Provides an authorized mongo client that does not retry writes
     # using either modern or legacy mechanisms.
     when 'authorized_without_any_retry_writes'
       global_client('authorized').with(
         retry_writes: false, max_write_retries: 0,
-        server_selection_timeout: 4.99,
+        server_selection_timeout: 4.99
       )
     # Provides an authorized mongo client that does not retry reads or writes
     # at all.
@@ -157,7 +154,7 @@ class ClientRegistry
       global_client('authorized').with(
         retry_reads: false, max_read_retries: 0,
         retry_writes: false, max_write_retries: 0,
-        server_selection_timeout: 4.27,
+        server_selection_timeout: 4.27
       )
     # Provides an unauthorized mongo client on the admin database, for use in
     # setting up the first admin root user.
@@ -166,28 +163,29 @@ class ClientRegistry
         SpecConfig.instance.addresses,
         SpecConfig.instance.test_options.merge(
           database: Mongo::Database::ADMIN,
-          monitoring: false),
+          monitoring: false
+        )
       )
     # Get an authorized client on the test database logged in as the admin
     # root user.
     when 'root_authorized'
-      if SpecConfig.instance.x509_auth?
-        client_options = SpecConfig.instance.auth_options.merge(
-          database: SpecConfig.instance.test_db,
-        )
-      else
-        client_options = {
-          database: SpecConfig.instance.test_db,
-        }.update(SpecConfig.instance.credentials_or_external_user(
-          user: SpecConfig.instance.root_user.name,
-          password: SpecConfig.instance.root_user.password,
-          auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
-        ))
-      end
+      client_options = if SpecConfig.instance.x509_auth?
+                         SpecConfig.instance.auth_options.merge(
+                           database: SpecConfig.instance.test_db
+                         )
+                       else
+                         {
+                           database: SpecConfig.instance.test_db,
+                         }.update(SpecConfig.instance.credentials_or_external_user(
+                                    user: SpecConfig.instance.root_user.name,
+                                    password: SpecConfig.instance.root_user.password,
+                                    auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN
+                                  ))
+                       end
 
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(client_options),
+        SpecConfig.instance.test_options.merge(client_options)
       )
     else
       raise "Don't know how to construct global client #{name}"
@@ -231,9 +229,9 @@ class ClientRegistry
         # This is done either as part of #close if #close is invoked, or
         # explicitly if #close is not invoked due to cluster sharing.
         cluster = client.cluster
-        if @global_clients.none? { |name, global_client|
-          cluster.object_id == global_client.cluster.object_id
-        }
+        if @global_clients.none? do |_name, global_client|
+          cluster.equal?(global_client.cluster)
+        end
           # Cluster not shared, disconnect cluster and clean up encryption.
           client.close
         else
@@ -250,7 +248,7 @@ class ClientRegistry
     ClusterTools.instance.close_clients
     close_local_clients
     @lock.synchronize do
-      @global_clients.each do |name, client|
+      @global_clients.each do |_name, client|
         client.close
       end
     end

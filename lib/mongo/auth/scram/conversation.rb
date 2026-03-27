@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,13 +17,11 @@
 module Mongo
   module Auth
     class Scram
-
       # Defines behavior around a single SCRAM-SHA-1 conversation between
       # the client and server.
       #
       # @api private
       class Conversation < ScramConversationBase
-
         private
 
         # HI algorithm implementation.
@@ -39,7 +36,7 @@ module Mongo
             data,
             salt,
             iterations,
-            digest.size,
+            digest.size
           )
         end
 
@@ -57,7 +54,7 @@ module Mongo
         end
 
         def digest
-          @digest ||= OpenSSL::Digest::SHA1.new.freeze
+          @digest ||= OpenSSL::Digest.new('SHA1').freeze
         end
       end
     end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,17 +16,15 @@
 
 module Mongo
   class Error
-
     # Exception that is raised when trying to serialize a document that
     # exceeds max BSON object size.
     #
     # @since 2.0.0
     class MaxBSONSize < Error
-
       # The message is constant.
       #
       # @since 2.0.0
-      MESSAGE = "The document exceeds maximum allowed BSON size".freeze
+      MESSAGE = 'The document exceeds maximum allowed BSON size'
 
       # Instantiate the new exception.
       #
@@ -40,13 +37,13 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(max_size_or_msg = nil)
-        if max_size_or_msg.is_a?(Numeric)
-          msg = "#{MESSAGE}. The maximum allowed size is #{max_size_or_msg}"
-        elsif max_size_or_msg
-          msg = max_size_or_msg
-        else
-          msg = MESSAGE
-        end
+        msg = if max_size_or_msg.is_a?(Numeric)
+                "#{MESSAGE}. The maximum allowed size is #{max_size_or_msg}"
+              elsif max_size_or_msg
+                max_size_or_msg
+              else
+                MESSAGE
+              end
         super(msg)
       end
     end

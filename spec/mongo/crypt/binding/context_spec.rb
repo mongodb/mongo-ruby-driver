@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require_relative '../helpers/mongo_crypt_spec_helper'
@@ -9,10 +8,10 @@ shared_context 'initialized for data key creation' do
 
   let(:kms_providers) do
     BSON::Document.new({
-      local: {
-        key: BSON::Binary.new(master_key, :generic),
-      }
-    })
+                         local: {
+                           key: BSON::Binary.new(master_key, :generic),
+                         }
+                       })
   end
 
   let(:binary) do
@@ -21,7 +20,8 @@ shared_context 'initialized for data key creation' do
 
   let(:key_document) do
     MongoCryptSpecHelper.mongocrypt_binary_t_from(
-      BSON::Document.new({provider: 'local'}).to_bson.to_s)
+      BSON::Document.new({ provider: 'local' }).to_bson.to_s
+    )
   end
 
   before do
@@ -44,7 +44,7 @@ shared_context 'initialized for explicit encryption' do
   let(:key_id_binary) { MongoCryptSpecHelper.mongocrypt_binary_t_from(key_id) }
 
   let(:value) do
-    { 'v': 'Hello, world!' }.to_bson.to_s
+    { v: 'Hello, world!' }.to_bson.to_s
   end
 
   let(:value_binary) { MongoCryptSpecHelper.mongocrypt_binary_t_from(value) }
@@ -82,7 +82,7 @@ describe 'Mongo::Crypt::Binding' do
 
     describe '#mongocrypt_ctx_new' do
       it 'returns a pointer' do
-        expect(context).to be_a_kind_of(FFI::Pointer)
+        expect(context).to be_a(FFI::Pointer)
       end
     end
 
@@ -232,7 +232,7 @@ describe 'Mongo::Crypt::Binding' do
           len = Mongo::Crypt::Binding.get_binary_len_direct(out_binary)
 
           response = data.get_array_of_uint8(0, len).pack('C*')
-          expect(response).to be_a_kind_of(String)
+          expect(response).to be_a(String)
         end
       end
     end
@@ -270,7 +270,7 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'with equality query type' do
         let(:query_type) do
-          "equality"
+          'equality'
         end
 
         it 'returns true' do

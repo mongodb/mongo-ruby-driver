@@ -1,18 +1,16 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-require_relative './adds_diagnostics'
+require_relative 'adds_diagnostics'
 
 module PerformsModernRetries
   shared_examples 'it performs modern retries' do
-
     context 'for connection error' do
       before do
         client.use('admin').command(
           configureFailPoint: 'failCommand',
           mode: { times: times },
           data: {
-            failCommands: [command_name],
+            failCommands: [ command_name ],
             closeConnection: true,
           }
         )
@@ -58,7 +56,7 @@ module PerformsModernRetries
           configureFailPoint: 'failCommand',
           mode: { times: times },
           data: {
-            failCommands: [command_name],
+            failCommands: [ command_name ],
             blockConnection: true,
             blockTimeMS: 1100,
           }
@@ -78,6 +76,12 @@ module PerformsModernRetries
       context 'when error occurs twice' do
         let(:times) { 2 }
 
+        after do
+          # Assure that the server has completed the operation before moving
+          # on to the next test.
+          sleep 1
+        end
+
         it 'retries and the operation and fails' do
           expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
 
@@ -87,12 +91,6 @@ module PerformsModernRetries
         end
 
         it_behaves_like 'it adds diagnostics'
-
-        after do
-          # Assure that the server has completed the operation before moving
-          # on to the next test.
-          sleep 1
-        end
       end
     end
 
@@ -105,9 +103,9 @@ module PerformsModernRetries
             configureFailPoint: 'failCommand',
             mode: { times: times },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 5, # normally NOT a retryable error code
-              errorLabels: ['RetryableWriteError']
+              errorLabels: [ 'RetryableWriteError' ]
             }
           )
         end
@@ -145,7 +143,7 @@ module PerformsModernRetries
             configureFailPoint: 'failCommand',
             mode: { times: 1 },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 91, # normally a retryable error code
               errorLabels: [],
             }
@@ -173,7 +171,7 @@ module PerformsModernRetries
             configureFailPoint: 'failCommand',
             mode: { times: times },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 91, # a retryable error code
             }
           )
@@ -212,7 +210,7 @@ module PerformsModernRetries
             configureFailPoint: 'failCommand',
             mode: { times: times },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 5, # a non-retryable error code
             }
           )

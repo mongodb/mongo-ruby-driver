@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Operation
-
     # Shared behavior of operations that require its documents to each have an id.
     #
     # @since 2.5.2
     # @api private
     module Limited
-
       private
 
       # Get the options for executing the operation on a particular connection.

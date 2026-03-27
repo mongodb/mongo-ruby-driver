@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -29,12 +28,12 @@ describe 'Auto Encryption' do
             }
           },
           database: 'auto_encryption'
-        ),
+        )
       )
     end
 
-    let(:server_selector) { double("ServerSelector") }
-    let(:cluster) { double("Cluster") }
+    let(:server_selector) { double('ServerSelector') }
+    let(:cluster) { double('Cluster') }
 
     before do
       key_vault_collection.drop
@@ -58,9 +57,9 @@ describe 'Auto Encryption' do
             'lsid' => kind_of(Hash),
             'documents' => kind_of(Array),
             'jsonSchema' => kind_of(Hash),
-            'isRemoteSchema' => false,
+            'isRemoteSchema' => false
           ),
-          { execution_options: { deserialize_as_bson: true }, timeout_ms: nil },
+          { execution_options: { deserialize_as_bson: true }, timeout_ms: nil }
 
         )
         .and_raise(Mongo::Error::NoServerAvailable.new(server_selector, cluster))

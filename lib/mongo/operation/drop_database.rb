@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/operation/drop_database/op_msg'
 
 module Mongo
   module Operation
-
     # A MongoDB drop database operation.
     #
     # @api private

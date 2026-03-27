@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2022 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # A module encapsulating functionality to manage labels added to errors.
     #
     # @note Although methods of this module are part of the public API,
@@ -26,7 +24,6 @@ module Mongo
     #
     # @api semipublic
     module Labelable
-
       # Does the error have the given label?
       #
       # @example

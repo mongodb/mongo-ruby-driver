@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Raised if the requested file revision is not found.
     #
     # @since 2.1.0
     class InvalidFileRevision < Error
-
       # Create the new exception.
       #
       # @example Create the new exception.

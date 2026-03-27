@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Collection
     class View
-
       # Defines behavior around views being configurable and immutable.
       #
       # @since 2.0.0
       module Immutable
-
         # @return [ Hash ] options The additional query options.
         attr_reader :options
 
@@ -31,6 +28,7 @@ module Mongo
 
         def configure(field, value)
           return options[field] if value.nil?
+
           new(options.merge(field => value))
         end
       end

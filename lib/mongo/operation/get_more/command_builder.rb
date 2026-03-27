@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -18,10 +17,8 @@
 module Mongo
   module Operation
     class GetMore
-
       # @api private
       module CommandBuilder
-
         private
 
         def selector(connection)
@@ -31,9 +28,7 @@ module Mongo
             batchSize: spec[:batch_size],
             maxTimeMS: spec[:max_time_ms],
           }.compact.tap do |sel|
-            if spec[:comment] && connection.features.get_more_comment_enabled?
-              sel[:comment] = spec[:comment]
-            end
+            sel[:comment] = spec[:comment] if spec[:comment] && connection.features.get_more_comment_enabled?
           end
         end
       end

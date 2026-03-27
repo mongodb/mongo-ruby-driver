@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -15,9 +14,7 @@ describe Mongo::Session do
   end
 
   describe '#initialize' do
-
     context 'when options are provided' do
-
       it 'duplicates and freezes the options' do
         expect(session.options).not_to be(options)
         expect(session.options.frozen?).to be(true)
@@ -29,7 +26,7 @@ describe Mongo::Session do
     end
 
     it 'sets the cluster time to nil' do
-      expect(session.cluster_time).to be(nil)
+      expect(session.cluster_time).to be_nil
     end
 
     it 'sets the cluster' do
@@ -38,7 +35,6 @@ describe Mongo::Session do
   end
 
   describe '#inspect' do
-
     it 'includes the Ruby object_id in the formatted string' do
       expect(session.inspect).to include(session.object_id.to_s)
     end
@@ -48,7 +44,6 @@ describe Mongo::Session do
     end
 
     context 'when options are provided' do
-
       let(:options) do
         { causal_consistency: true }
       end
@@ -61,13 +56,11 @@ describe Mongo::Session do
   end
 
   describe '#advance_cluster_time' do
-
     let(:new_cluster_time) do
       { 'clusterTime' => BSON::Timestamp.new(0, 5) }
     end
 
     context 'when the session does not have a cluster time' do
-
       before do
         session.advance_cluster_time(new_cluster_time)
       end
@@ -78,9 +71,7 @@ describe Mongo::Session do
     end
 
     context 'when the session already has a cluster time' do
-
       context 'when the original cluster time is less than the new cluster time' do
-
         let(:original_cluster_time) do
           Mongo::ClusterTime.new('clusterTime' => BSON::Timestamp.new(0, 1))
         end
@@ -96,7 +87,6 @@ describe Mongo::Session do
       end
 
       context 'when the original cluster time is equal or greater than the new cluster time' do
-
         let(:original_cluster_time) do
           Mongo::ClusterTime.new('clusterTime' => BSON::Timestamp.new(0, 6))
         end
@@ -114,13 +104,11 @@ describe Mongo::Session do
   end
 
   describe '#advance_operation_time' do
-
     let(:new_operation_time) do
       BSON::Timestamp.new(0, 5)
     end
 
     context 'when the session does not have an operation time' do
-
       before do
         session.advance_operation_time(new_operation_time)
       end
@@ -131,9 +119,7 @@ describe Mongo::Session do
     end
 
     context 'when the session already has an operation time' do
-
       context 'when the original operation time is less than the new operation time' do
-
         let(:original_operation_time) do
           BSON::Timestamp.new(0, 1)
         end
@@ -149,7 +135,6 @@ describe Mongo::Session do
       end
 
       context 'when the original operation time is equal or greater than the new operation time' do
-
         let(:original_operation_time) do
           BSON::Timestamp.new(0, 6)
         end
@@ -167,16 +152,13 @@ describe Mongo::Session do
   end
 
   describe 'ended?' do
-
     context 'when the session has not been ended' do
-
       it 'returns false' do
         expect(session.ended?).to be(false)
       end
     end
 
     context 'when the session has been ended' do
-
       before do
         session.end_session
       end
@@ -188,7 +170,6 @@ describe Mongo::Session do
   end
 
   describe 'end_session' do
-
     let!(:server_session) do
       session.instance_variable_get(:@server_session)
     end
@@ -203,7 +184,6 @@ describe Mongo::Session do
     end
 
     context 'when #end_session is called multiple times' do
-
       before do
         session.end_session
       end
@@ -215,9 +195,7 @@ describe Mongo::Session do
   end
 
   describe '#retry_writes?' do
-
     context 'when the option is set to true' do
-
       let(:client) do
         authorized_client_with_retry_writes
       end
@@ -228,7 +206,6 @@ describe Mongo::Session do
     end
 
     context 'when the option is set to false' do
-
       let(:client) do
         authorized_client.with(retry_writes: false)
       end
@@ -268,15 +245,14 @@ describe Mongo::Session do
       end
     end
 
-    context "when the sesion is not materialized" do
+    context 'when the sesion is not materialized' do
       let(:session) { authorized_client.get_session(implicit: true) }
 
       before do
         expect(session.materialized?).to be false
       end
 
-      it "raises SessionNotMaterialized" do
-
+      it 'raises SessionNotMaterialized' do
         expect do
           session.session_id
         end.to raise_error(Mongo::Error::SessionNotMaterialized)
@@ -352,7 +328,7 @@ describe Mongo::Session do
 
     context 'when block returns value' do
       it 'is returned by the function' do
-        res = authorized_client.start_session do |session|
+        res = authorized_client.start_session do |_session|
           4
         end
         expect(res).to be 4

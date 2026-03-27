@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Raised if an unknown payload type is encountered when an OP_MSG is created or read.
     #
     # @since 2.5.0
     class UnknownPayloadType < Error
-
       # The error message.
       #
       # @since 2.5.0

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -10,11 +9,11 @@ describe 'Mongo::Crypt::Binding' do
     let(:version) { Mongo::Crypt::Binding.mongocrypt_version(nil) }
 
     it 'is a string' do
-      expect(version).to be_a_kind_of(String)
+      expect(version).to be_a(String)
     end
 
     it 'is in the x.y.z-tag format' do
-      expect(version).to match(/\A(\d+.){2}(\d+)?(-[A-Za-z\+\d]+)?\z/)
+      expect(version).to match(/\A(\d+.){2}(\d+)?(-[A-Za-z+\d]+)?\z/)
     end
   end
 
@@ -35,6 +34,7 @@ describe 'Mongo::Crypt::Binding' do
       let(:newer_version) do
         Mongo::Crypt::Binding::MIN_LIBMONGOCRYPT_VERSION.bump.to_s
       end
+
       it 'does not raise and error' do
         expect do
           Mongo::Crypt::Binding.validate_version(newer_version)
@@ -55,11 +55,13 @@ describe 'Mongo::Crypt::Binding' do
 
       context 'when the version is MAJOR.MINOR.PATH-dev+datecommit' do
         let(:version) { "#{base_version}-dev+20220730git8f8675fa11" }
+
         include_examples 'non-standard version format'
       end
 
       context 'when the version is MAJOR.MINOR.PATH-date+commit' do
         let(:version) { "#{base_version}-20230601+git9b07846bef" }
+
         include_examples 'non-standard version format'
       end
     end

@@ -1,12 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Monitoring do
-
   describe '#dup' do
-
     let(:monitoring) do
       described_class.new
     end
@@ -16,7 +13,7 @@ describe Mongo::Monitoring do
     end
 
     it 'dups the subscribers' do
-      expect(monitoring.subscribers).to_not equal(copy.subscribers)
+      expect(monitoring.subscribers).not_to equal(copy.subscribers)
     end
 
     it 'keeps the same subscriber instances' do
@@ -24,7 +21,6 @@ describe Mongo::Monitoring do
     end
 
     context 'when adding to the copy' do
-
       let(:subscriber) do
         double('subscriber')
       end
@@ -34,15 +30,13 @@ describe Mongo::Monitoring do
       end
 
       it 'does not modify the original subscribers' do
-        expect(monitoring.subscribers).to_not eq(copy.subscribers)
+        expect(monitoring.subscribers).not_to eq(copy.subscribers)
       end
     end
   end
 
   describe '#initialize' do
-
     context 'when no monitoring options provided' do
-
       let(:monitoring) do
         described_class.new
       end
@@ -53,9 +47,7 @@ describe Mongo::Monitoring do
     end
 
     context 'when monitoring options provided' do
-
       context 'when monitoring is true' do
-
         let(:monitoring) do
           described_class.new(monitoring: true)
         end
@@ -66,7 +58,6 @@ describe Mongo::Monitoring do
       end
 
       context 'when monitoring is false' do
-
         let(:monitoring) do
           described_class.new(monitoring: false)
         end
@@ -79,7 +70,6 @@ describe Mongo::Monitoring do
   end
 
   describe '#subscribe' do
-
     let(:monitoring) do
       described_class.new(monitoring: false)
     end
@@ -101,7 +91,6 @@ describe Mongo::Monitoring do
   end
 
   describe '#unsubscribe' do
-
     let(:monitoring) do
       described_class.new(monitoring: false)
     end
@@ -113,17 +102,16 @@ describe Mongo::Monitoring do
     it 'unsubscribes from the topic' do
       monitoring.subscribe('topic', subscriber)
       monitoring.unsubscribe('topic', subscriber)
-      expect(monitoring.subscribers['topic']).to eq([ ])
+      expect(monitoring.subscribers['topic']).to eq([])
     end
 
     it 'unsubscribes from the topic when not subscribed' do
       monitoring.unsubscribe('topic', subscriber)
-      expect(monitoring.subscribers['topic']).to eq([ ])
+      expect(monitoring.subscribers['topic']).to eq([])
     end
   end
 
   describe '#started' do
-
     let(:monitoring) do
       described_class.new(monitoring: false)
     end
@@ -147,7 +135,6 @@ describe Mongo::Monitoring do
   end
 
   describe '#succeeded' do
-
     let(:monitoring) do
       described_class.new(monitoring: false)
     end
@@ -171,7 +158,6 @@ describe Mongo::Monitoring do
   end
 
   describe '#failed' do
-
     let(:monitoring) do
       described_class.new(monitoring: false)
     end

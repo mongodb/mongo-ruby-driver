@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,10 +16,8 @@
 
 module Mongo
   class Error
-
     # Abstract base class for connection pool-related exceptions.
     class PoolError < Error
-
       # @return [ Mongo::Address ] address The address of the server the
       # pool's connections connect to.
       #

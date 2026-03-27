@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -15,14 +14,19 @@ describe 'SDAM prose tests' do
 
     let(:client) do
       new_local_client(SpecConfig.instance.addresses,
-        # Heartbeat interval is bound by 500 ms
-        SpecConfig.instance.test_options.merge(
-          heartbeat_frequency: 0.5,
-          app_name: 'streamingRttTest',
-        ),
-      ).tap do |client|
+                       # Heartbeat interval is bound by 500 ms
+                       SpecConfig.instance.test_options.merge(
+                         heartbeat_frequency: 0.5,
+                         app_name: 'streamingRttTest'
+                       )).tap do |client|
         client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       end
+    end
+
+    after do
+      root_authorized_client.use('admin').database.command(
+        configureFailPoint: 'failCommand', mode: 'off'
+      )
     end
 
     it 'updates RTT' do
@@ -38,33 +42,26 @@ describe 'SDAM prose tests' do
 
       root_authorized_client.use('admin').database.command(
         configureFailPoint: 'failCommand',
-        mode: {times: 1000},
+        mode: { times: 1000 },
         data: {
-          failCommands: %w(isMaster hello),
+          failCommands: %w[isMaster hello],
           blockConnection: true,
           blockTimeMS: 500,
-          appName: "streamingRttTest",
-        },
+          appName: 'streamingRttTest',
+        }
       )
 
       deadline = Mongo::Utils.monotonic_time + 10
       loop do
-        if server.average_round_trip_time > 0.25
-          break
-        end
-        if Mongo::Utils.monotonic_time >= deadline
-          raise "Failed to witness RTT growing to >= 250 ms in 10 seconds"
-        end
+        break if server.average_round_trip_time > 0.25
+        raise 'Failed to witness RTT growing to >= 250 ms in 10 seconds' if Mongo::Utils.monotonic_time >= deadline
+
         sleep 0.2
       end
     end
-
-    after do
-      root_authorized_client.use('admin').database.command(
-        configureFailPoint: 'failCommand', mode: 'off')
-    end
   end
 
+  # rubocop:disable Naming/VariableName, RSpec/InstanceVariable
   describe 'Connection Pool Backpressure' do
     min_server_fcv '8.2'
     require_topology :single
@@ -76,8 +73,8 @@ describe 'SDAM prose tests' do
         SpecConfig.instance.addresses,
         SpecConfig.instance.all_test_options.merge(
           max_connecting: 100,
-          max_pool_size: 100,
-        ),
+          max_pool_size: 100
+        )
       ).tap do |client|
         client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
       end
@@ -93,25 +90,25 @@ describe 'SDAM prose tests' do
          defined?(@prev_ingressConnectionEstablishmentMaxQueueDepth)
         admin_db.command(
           setParameter: 1,
-          ingressConnectionEstablishmentRateLimiterEnabled: @prev_ingressConnectionEstablishmentRateLimiterEnabled,
+          ingressConnectionEstablishmentRateLimiterEnabled: @prev_ingressConnectionEstablishmentRateLimiterEnabled
         )
         admin_db.command(
           setParameter: 1,
-          ingressConnectionEstablishmentRatePerSec: @prev_ingressConnectionEstablishmentRatePerSec,
+          ingressConnectionEstablishmentRatePerSec: @prev_ingressConnectionEstablishmentRatePerSec
         )
         admin_db.command(
           setParameter: 1,
-          ingressConnectionEstablishmentBurstCapacitySecs: @prev_ingressConnectionEstablishmentBurstCapacitySecs,
+          ingressConnectionEstablishmentBurstCapacitySecs: @prev_ingressConnectionEstablishmentBurstCapacitySecs
         )
         admin_db.command(
           setParameter: 1,
-          ingressConnectionEstablishmentMaxQueueDepth: @prev_ingressConnectionEstablishmentMaxQueueDepth,
+          ingressConnectionEstablishmentMaxQueueDepth: @prev_ingressConnectionEstablishmentMaxQueueDepth
         )
       else
         # Fallback: at least disable the limiter if previous values were not captured.
         admin_db.command(
           setParameter: 1,
-          ingressConnectionEstablishmentRateLimiterEnabled: false,
+          ingressConnectionEstablishmentRateLimiterEnabled: false
         )
       end
     end
@@ -125,7 +122,7 @@ describe 'SDAM prose tests' do
         ingressConnectionEstablishmentRateLimiterEnabled: 1,
         ingressConnectionEstablishmentRatePerSec: 1,
         ingressConnectionEstablishmentBurstCapacitySecs: 1,
-        ingressConnectionEstablishmentMaxQueueDepth: 1,
+        ingressConnectionEstablishmentMaxQueueDepth: 1
       ).first
 
       @prev_ingressConnectionEstablishmentRateLimiterEnabled =
@@ -140,19 +137,19 @@ describe 'SDAM prose tests' do
       # Enable the ingress rate limiter with test-specific values.
       admin_db.command(
         setParameter: 1,
-        ingressConnectionEstablishmentRateLimiterEnabled: true,
+        ingressConnectionEstablishmentRateLimiterEnabled: true
       )
       admin_db.command(
         setParameter: 1,
-        ingressConnectionEstablishmentRatePerSec: 20,
+        ingressConnectionEstablishmentRatePerSec: 20
       )
       admin_db.command(
         setParameter: 1,
-        ingressConnectionEstablishmentBurstCapacitySecs: 1,
+        ingressConnectionEstablishmentBurstCapacitySecs: 1
       )
       admin_db.command(
         setParameter: 1,
-        ingressConnectionEstablishmentMaxQueueDepth: 1,
+        ingressConnectionEstablishmentMaxQueueDepth: 1
       )
 
       # Add a document so $where has something to process.
@@ -160,15 +157,13 @@ describe 'SDAM prose tests' do
       client.use('test')['test'].insert_one({})
 
       # Run 100 parallel find_one operations that contend for connections.
-      threads = 100.times.map do
+      threads = Array.new(100) do
         Thread.new do
-          begin
-            client.use('test')['test'].find(
-              '$where' => 'function() { sleep(2000); return true; }'
-            ).first
-          rescue StandardError
-            # Ignore connection errors (including checkout timeouts).
-          end
+          client.use('test')['test'].find(
+            '$where' => 'function() { sleep(2000); return true; }'
+          ).first
+        rescue StandardError
+          # Ignore connection errors (including checkout timeouts).
         end
       end
       threads.each(&:join)
@@ -180,4 +175,5 @@ describe 'SDAM prose tests' do
       expect(checkout_failed.length).to be >= 10
     end
   end
+  # rubocop:enable Naming/VariableName, RSpec/InstanceVariable
 end

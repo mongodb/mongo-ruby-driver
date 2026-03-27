@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Monitoring
-
     # Subscribes to SDAM events and logs them.
     #
     # @since 2.11.0
@@ -50,7 +48,7 @@ module Mongo
         log_debug("EVENT: #{event.summary}") if logger.debug?
       end
 
-      alias :succeeded :published
+      alias succeeded published
 
       def subscribe(client)
         client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, self)

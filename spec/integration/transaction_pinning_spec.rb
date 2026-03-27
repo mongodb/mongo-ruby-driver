@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -11,7 +10,7 @@ describe 'Transaction pinning' do
   let(:collection) { client[collection_name] }
 
   before do
-    authorized_client[collection_name].insert_many([{test: 1}] * 200)
+    authorized_client[collection_name].insert_many([ { test: 1 } ] * 200)
   end
 
   let(:server) { client.cluster.next_primary }
@@ -46,20 +45,20 @@ describe 'Transaction pinning' do
       4.times do |i|
         session = client.start_session
         session.start_transaction
-        client["tx_pin_t#{i}"].insert_one({test: 1}, session: session)
+        client["tx_pin_t#{i}"].insert_one({ test: 1 }, session: session)
         session.pinned_server.should be_a(Mongo::Server)
         sessions << session
         connections << server.pool.check_out
       end
 
-      server.pool.size.should == 4
+      expect(server.pool.size).to eq(4)
 
       connections.each do |c|
         server.pool.check_in(c)
       end
 
       sessions.each_with_index do |session, i|
-        client["tx_pin_t#{i}"].insert_one({test: 2}, session: session)
+        client["tx_pin_t#{i}"].insert_one({ test: 2 }, session: session)
         session.commit_transaction
       end
     end
@@ -76,30 +75,29 @@ describe 'Transaction pinning' do
 
       before do
         client.reconnect if client.closed?
-        client["tx_pin"].drop
-        client["tx_pin"].create
+        client['tx_pin'].drop
+        client['tx_pin'].create
       end
 
       it 'raises MissingConnection' do
         session = client.start_session
         session.start_transaction
-        client["tx_pin"].insert_one({test: 1}, session: session)
-        session.pinned_server.should be nil
-        session.pinned_connection_global_id.should_not be nil
+        client['tx_pin'].insert_one({ test: 1 }, session: session)
+        session.pinned_server.should be_nil
+        session.pinned_connection_global_id.should_not be_nil
 
-        server.pool.size.should == 1
+        expect(server.pool.size).to eq(1)
         service_id = server.pool.instance_variable_get(:@available_connections).first.service_id
         server.pool.clear(service_id: service_id)
-        server.pool.size.should == 0
+        expect(server.pool.size).to eq(0)
 
         lambda do
-          client["tx_pin"].insert_one({test: 2}, session: session)
+          client['tx_pin'].insert_one({ test: 2 }, session: session)
         end.should raise_error(Mongo::Error::MissingConnection)
       end
     end
 
     context 'when connection is available' do
-
       before do
         client.reconnect if client.closed?
       end
@@ -111,21 +109,21 @@ describe 'Transaction pinning' do
         4.times do |i|
           session = client.start_session
           session.start_transaction
-          client["tx_pin_t#{i}"].insert_one({test: 1}, session: session)
-          session.pinned_server.should be nil
-          session.pinned_connection_global_id.should_not be nil
+          client["tx_pin_t#{i}"].insert_one({ test: 1 }, session: session)
+          session.pinned_server.should be_nil
+          session.pinned_connection_global_id.should_not be_nil
           sessions << session
           connections << server.pool.check_out
         end
 
-        server.pool.size.should == 4
+        expect(server.pool.size).to eq(4)
 
         connections.each do |c|
           server.pool.check_in(c)
         end
 
         sessions.each_with_index do |session, i|
-          client["tx_pin_t#{i}"].insert_one({test: 2}, session: session)
+          client["tx_pin_t#{i}"].insert_one({ test: 2 }, session: session)
           session.commit_transaction
         end
       end

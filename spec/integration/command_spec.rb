@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe 'Command' do
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   describe 'payload' do
@@ -13,9 +11,7 @@ describe 'Command' do
     let(:payload) do
       server.with_connection do |connection|
         command.send(:final_operation).send(:message, connection).payload.dup.tap do |payload|
-          if payload['request_id'].is_a?(Integer)
-            payload['request_id'] = 42
-          end
+          payload['request_id'] = 42 if payload['request_id'].is_a?(Integer)
           # $clusterTime may be present depending on the client's state
           payload['command'].delete('$clusterTime')
           # The contents of this field duplicates the rest of the response
@@ -40,7 +36,7 @@ describe 'Command' do
           db_name: 'admin',
           session: session,
           txn_num: 123,
-          write_concern: write_concern,
+          write_concern: write_concern
         )
       end
 
@@ -96,7 +92,7 @@ describe 'Command' do
             'command' => {
               '$db' => 'admin',
               'commitTransaction' => 1,
-              'writeConcern' => {'w' => 'majority'},
+              'writeConcern' => { 'w' => 'majority' },
             },
             'command_name' => 'commitTransaction',
             'database_name' => 'admin',
@@ -119,7 +115,7 @@ describe 'Command' do
         Mongo::Operation::Command.new(
           selector: selector,
           db_name: 'foo',
-          session: session,
+          session: session
         )
       end
 
@@ -139,7 +135,5 @@ describe 'Command' do
         expect(payload).to eq(expected_payload)
       end
     end
-
   end
-
 end

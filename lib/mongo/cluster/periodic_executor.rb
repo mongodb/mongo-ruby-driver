@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,9 +15,7 @@
 # limitations under the License.
 
 module Mongo
-
   class Cluster
-
     # A manager that calls #execute on its executors at a regular interval.
     #
     # @api private
@@ -53,7 +50,7 @@ module Mongo
 
       attr_reader :options
 
-      alias :restart! :run!
+      alias restart! run!
 
       def do_work
         execute
@@ -69,7 +66,7 @@ module Mongo
 
         begin
           flush
-        rescue
+        rescue StandardError
         end
 
         true

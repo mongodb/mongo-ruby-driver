@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class Insert
-
       # Defines custom behavior of results for an insert when sent as part of a bulk write.
       #
       # @since 2.0.0
@@ -49,7 +47,7 @@ module Mongo
         # @since 2.0.0
         # @api private
         def initialize(replies, connection_description, connection_global_id, ids)
-          @replies = [*replies] if replies
+          @replies = [ *replies ] if replies
           @connection_description = connection_description
           @connection_global_id = connection_global_id
           if replies && replies.first && (doc = replies.first.documents.first)
@@ -61,9 +59,7 @@ module Mongo
               end
               @inserted_ids = []
               ids.each_with_index do |id, index|
-                if bad_indices[index].nil?
-                  @inserted_ids << id
-                end
+                @inserted_ids << id if bad_indices[index].nil?
               end
             # I don't know if acknowledged? check here is necessary,
             # as best as I can tell it doesn't hurt

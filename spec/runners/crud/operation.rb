@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,9 +16,7 @@
 
 module Mongo
   module CRUD
-
     class Operation
-
       # Instantiate the operation.
       #
       # @param [ Hash ] spec The operation specification.
@@ -31,15 +28,15 @@ module Mongo
         @crud_test = crud_test
         @spec = IceNine.deep_freeze(spec)
         @name = spec['name']
-        if spec['arguments']
-          @arguments = BSON::ExtJSON.parse_obj(spec['arguments'], mode: :bson)
-        else
-          @arguments = {}
-        end
+        @arguments = if spec['arguments']
+                       BSON::ExtJSON.parse_obj(spec['arguments'], mode: :bson)
+                     else
+                       {}
+                     end
         @outcome = Outcome.new(outcome_spec || spec)
       end
 
-      attr_reader :spec
+      attr_reader :spec, :arguments, :outcome
 
       # The operation name.
       #
@@ -47,10 +44,6 @@ module Mongo
       #
       # @since 2.0.0
       attr_reader :name
-
-      attr_reader :arguments
-
-      attr_reader :outcome
 
       def object
         @spec['object'] || 'collection'
@@ -77,7 +70,7 @@ module Mongo
       # @since 2.0.0
       def has_results?
         !(name == 'aggregate' &&
-            pipeline.find {|op| op.keys.include?('$out') })
+            pipeline.find { |op| op.keys.include?('$out') })
       end
 
       # Execute the operation.
@@ -101,11 +94,9 @@ module Mongo
       end
 
       def database_options
-        if opts = @spec['databaseOptions']
-          ::Utils.convert_operation_options(opts)
-        else
-          nil
-        end
+        return unless opts = @spec['databaseOptions']
+
+        ::Utils.convert_operation_options(opts)
       end
 
       def collection_options
@@ -142,12 +133,8 @@ module Mongo
 
       def find(collection, context)
         opts = transformed_options(context)
-        if arguments['modifiers']
-          opts = opts.merge(modifiers: BSON::Document.new(arguments['modifiers']))
-        end
-        if read_preference
-          collection = collection.with(read: read_preference)
-        end
+        opts = opts.merge(modifiers: BSON::Document.new(arguments['modifiers'])) if arguments['modifiers']
+        collection = collection.with(read: read_preference) if read_preference
         collection.find(arguments['filter'], opts).to_a
       end
 
@@ -155,29 +142,29 @@ module Mongo
         find(collection, context).first
       end
 
-      def watch(collection, context)
+      def watch(collection, _context)
         collection.watch
       end
 
-      def db_watch(database, context)
+      def db_watch(database, _context)
         database.watch
       end
 
-      def client_watch(client, context)
+      def client_watch(client, _context)
         client.watch
       end
 
-      def download(fs_bucket, context)
+      def download(fs_bucket, _context)
         stream = fs_bucket.open_download_stream(arguments['id'])
         stream.read
       end
 
-      def download_by_name(fs_bucket, context)
+      def download_by_name(fs_bucket, _context)
         stream = fs_bucket.open_download_stream_by_name(arguments['filename'])
         stream.read
       end
 
-      def map_reduce(collection, context)
+      def map_reduce(collection, _context)
         view = Mongo::Collection::View.new(collection)
         mr = Mongo::Collection::View::MapReduce.new(view, arguments['map'].javascript, arguments['reduce'].javascript)
         mr.to_a
@@ -248,27 +235,27 @@ module Mongo
 
       # ddl
 
-      def client_list_databases(client, context)
+      def client_list_databases(client, _context)
         client.list_databases
       end
 
-      def client_list_database_names(client, context)
+      def client_list_database_names(client, _context)
         client.list_databases({}, true)
       end
 
-      def client_list_database_objects(client, context)
+      def client_list_database_objects(client, _context)
         client.list_mongo_databases
       end
 
-      def db_list_collections(database, context)
+      def db_list_collections(database, _context)
         database.list_collections
       end
 
-      def db_list_collection_names(database, context)
+      def db_list_collection_names(database, _context)
         database.collection_names
       end
 
-      def db_list_collection_objects(database, context)
+      def db_list_collection_objects(database, _context)
         database.collections
       end
 
@@ -284,11 +271,11 @@ module Mongo
           )
       end
 
-      def rename(collection, context)
+      def rename(collection, _context)
         collection.client.use(:admin).command({
-          renameCollection: "#{collection.database.name}.#{collection.name}",
-          to: "#{collection.database.name}.#{arguments['to']}"
-        })
+                                                renameCollection: "#{collection.database.name}.#{collection.name}",
+                                                to: "#{collection.database.name}.#{arguments['to']}"
+                                              })
       end
 
       def drop(collection, context)
@@ -305,42 +292,39 @@ module Mongo
         # The Ruby driver method uses `key` while the createIndexes server
         # command and the test specifiecation use 'keys`.
         opts = BSON::Document.new(options)
-        if opts.key?(:keys)
-          opts[:key] = opts.delete(:keys)
-        end
+        opts[:key] = opts.delete(:keys) if opts.key?(:keys)
         session = opts.delete(:session)
-        collection.indexes(session: session && context.send(session)).create_many([opts])
+        collection.indexes(session: session && context.send(session)).create_many([ opts ])
       end
 
-      def drop_index(collection, context)
-        unless options.keys == %i(name)
-          raise "Only name is allowed when dropping the index"
-        end
+      def drop_index(collection, _context)
+        raise 'Only name is allowed when dropping the index' unless options.keys == %i[name]
+
         name = options[:name]
         collection.indexes.drop_one(name)
       end
 
-      def list_indexes(collection, context)
+      def list_indexes(collection, _context)
         collection.indexes.to_a
       end
 
       # special
 
-      def assert_collection_exists(client, context)
+      def assert_collection_exists(client, _context)
         c = client.use(dn = arguments.fetch('database'))
         unless c.database.collection_names.include?(cn = arguments.fetch('collection'))
           raise "Collection #{cn} does not exist in database #{dn}, but must"
         end
       end
 
-      def assert_collection_not_exists(client, context)
+      def assert_collection_not_exists(client, _context)
         c = client.use(dn = arguments.fetch('database'))
         if c.database.collection_names.include?(cn = arguments.fetch('collection'))
           raise "Collection #{cn} exists in database #{dn}, but must not"
         end
       end
 
-      def assert_index_exists(client, context)
+      def assert_index_exists(client, _context)
         c = client.use(dn = arguments.fetch('database'))
         coll = c[cn = arguments.fetch('collection')]
         unless coll.indexes.map { |doc| doc['name'] }.include?(ixn = arguments.fetch('index'))
@@ -348,7 +332,7 @@ module Mongo
         end
       end
 
-      def assert_index_not_exists(client, context)
+      def assert_index_not_exists(client, _context)
         c = client.use(dn = arguments.fetch('database'))
         coll = c[cn = arguments.fetch('collection')]
         begin
@@ -356,15 +340,12 @@ module Mongo
             raise "Index #{ixn} exists in collection #{cn} in database #{dn}, but must not"
           end
         rescue Mongo::Error::OperationFailure::Family => e
-          if e.to_s =~ /ns does not exist/
-            # Success.
-          else
-            raise
-          end
+          raise unless /ns does not exist/.match?(e.to_s)
+          # Success.
         end
       end
 
-      def configure_fail_point(client, context)
+      def configure_fail_point(client, _context)
         fp = arguments.fetch('failPoint')
         $disable_fail_points ||= []
         $disable_fail_points << [
@@ -391,9 +372,7 @@ module Mongo
             show_record_id: :show_disk_loc
           }[ruby_k] || ruby_k
 
-          if respond_to?("transform_#{ruby_k}", true)
-            v = send("transform_#{ruby_k}", v)
-          end
+          v = send("transform_#{ruby_k}", v) if respond_to?("transform_#{ruby_k}", true)
 
           out[ruby_k] = v
         end
@@ -403,12 +382,12 @@ module Mongo
       def requests
         arguments['requests'].map do |request|
           case request.keys.first
-          when 'insertOne' then
+          when 'insertOne'
             { insert_one: request['insertOne']['document'] }
-          when 'updateOne' then
+          when 'updateOne'
             update = request['updateOne']
             { update_one: { filter: update['filter'], update: update['update'] } }
-          when 'name' then
+          when 'name'
             bulk_request(request)
           end
         end
@@ -418,9 +397,8 @@ module Mongo
         op_name = ::Utils.underscore(request['name'])
         args = ::Utils.shallow_snakeize_hash(request['arguments'])
         if args[:document]
-          unless args.keys == [:document]
-            raise "If :document is given, it must be the only key"
-          end
+          raise 'If :document is given, it must be the only key' unless args.keys == [ :document ]
+
           args = args[:document]
         end
         { op_name => args }
@@ -459,19 +437,17 @@ module Mongo
         opts = options.dup
         if opts[:session]
           opts[:session] = case opts[:session]
-          when 'session0'
-            unless context.session0
-              raise "Trying to use session0 but it is not in context"
-            end
-            context.session0
-          when 'session1'
-            unless context.session1
-              raise "Trying to use session1 but it is not in context"
-            end
-            context.session1
-          else
-            raise "Invalid session name '#{opts[:session]}'"
-          end
+                           when 'session0'
+                             raise 'Trying to use session0 but it is not in context' unless context.session0
+
+                             context.session0
+                           when 'session1'
+                             raise 'Trying to use session1 but it is not in context' unless context.session1
+
+                             context.session1
+                           else
+                             raise "Invalid session name '#{opts[:session]}'"
+                           end
         end
         opts
       end

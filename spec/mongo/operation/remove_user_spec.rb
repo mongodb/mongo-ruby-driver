@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,12 +8,9 @@ describe Mongo::Operation::RemoveUser do
   let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
-
     before do
       users = root_authorized_client.database.users
-      if users.info('durran').any?
-        users.remove('durran')
-      end
+      users.remove('durran') if users.info('durran').any?
       users.create(
         'durran',
         password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
@@ -26,7 +22,6 @@ describe Mongo::Operation::RemoveUser do
     end
 
     context 'when user removal was successful' do
-
       let!(:response) do
         operation.execute(root_authorized_primary, context: context)
       end
@@ -37,15 +32,14 @@ describe Mongo::Operation::RemoveUser do
     end
 
     context 'when removal was not successful' do
-
       before do
         operation.execute(root_authorized_primary, context: context)
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           operation.execute(root_authorized_primary, context: context)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

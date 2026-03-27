@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require_relative '../shared/csot/examples'
@@ -15,11 +14,10 @@ describe Mongo::Operation::Create::OpMsg do
 
   let(:session) { nil }
   let(:spec) do
-    { :selector       => { :create => authorized_collection.name },
-      :db_name       => authorized_collection.database.name,
-      :write_concern => write_concern,
-      :session       => session
-    }
+    { selector: { create: authorized_collection.name },
+      db_name: authorized_collection.database.name,
+      write_concern: write_concern,
+      session: session }
   end
 
   let(:op) { described_class.new(spec) }
@@ -34,9 +32,7 @@ describe Mongo::Operation::Create::OpMsg do
   end
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(op.spec).to eq(spec)
       end
@@ -44,9 +40,7 @@ describe Mongo::Operation::Create::OpMsg do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two ops have the same specs' do
         let(:other) { described_class.new(spec) }
 
@@ -57,15 +51,14 @@ describe Mongo::Operation::Create::OpMsg do
 
       context 'when two ops have different specs' do
         let(:other_selector) do
-           { :create => "other_collection_name" }
+          { create: 'other_collection_name' }
         end
 
         let(:other_spec) do
-          { :selector       => other_selector,
-            :db_name       => authorized_collection.database.name,
-            :write_concern => write_concern,
-            :ordered       => true
-          }
+          { selector: other_selector,
+            db_name: authorized_collection.database.name,
+            write_concern: write_concern,
+            ordered: true }
         end
         let(:other) { described_class.new(other_spec) }
 
@@ -91,10 +84,10 @@ describe Mongo::Operation::Create::OpMsg do
 
     let(:global_args) do
       {
-          create: TEST_COLL,
-          writeConcern: write_concern.options,
-          '$db' => SpecConfig.instance.test_db,
-          lsid: session.session_id
+        create: TEST_COLL,
+        writeConcern: write_concern.options,
+        '$db' => SpecConfig.instance.test_db,
+        lsid: session.session_id
       }
     end
 
@@ -110,7 +103,7 @@ describe Mongo::Operation::Create::OpMsg do
       end
 
       it 'creates the correct OP_MSG message' do
-        authorized_client.command(ping:1)
+        authorized_client.command(ping: 1)
         expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args)
         op.send(:message, connection)
       end
@@ -124,7 +117,7 @@ describe Mongo::Operation::Create::OpMsg do
       end
 
       it 'creates the correct OP_MSG message' do
-        authorized_client.command(ping:1)
+        authorized_client.command(ping: 1)
         expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args)
         op.send(:message, connection)
       end
@@ -151,7 +144,7 @@ describe Mongo::Operation::Create::OpMsg do
             # mimic lack of session support
             allow(authorized_primary.description).to receive(:logical_session_timeout).and_return(nil)
 
-            expect(expected_global_args[:session]).to be nil
+            expect(expected_global_args[:session]).to be_nil
             expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args)
             op.send(:message, connection)
           end
@@ -160,13 +153,11 @@ describe Mongo::Operation::Create::OpMsg do
     end
 
     context 'when the write concern is 0' do
-
       let(:write_concern) do
         Mongo::WriteConcern.get(w: 0)
       end
 
       context 'when the session is implicit' do
-
         let(:session) do
           Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
             allow(session).to receive(:session_id).and_return(42)
@@ -185,8 +176,8 @@ describe Mongo::Operation::Create::OpMsg do
           end
 
           it 'does not send a session id in the command' do
-            authorized_client.command(ping:1)
-            expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args)
+            authorized_client.command(ping: 1)
+            expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args)
             op.send(:message, connection)
           end
         end
@@ -201,8 +192,8 @@ describe Mongo::Operation::Create::OpMsg do
           end
 
           it 'creates the correct OP_MSG message' do
-            authorized_client.command(ping:1)
-            expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args)
+            authorized_client.command(ping: 1)
+            expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args)
             op.send(:message, connection)
           end
         end
@@ -227,9 +218,9 @@ describe Mongo::Operation::Create::OpMsg do
         end
 
         it 'does not send a session id in the command' do
-          authorized_client.command(ping:1)
+          authorized_client.command(ping: 1)
           RSpec::Mocks.with_temporary_scope do
-            expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args)
+            expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args)
             op.send(:message, connection)
           end
         end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,23 +16,21 @@
 
 module Mongo
   module Options
-
     # Class for wrapping options that could be sensitive.
     # When printed, the sensitive values will be redacted.
     #
     # @since 2.1.0
     class Redacted < BSON::Document
-
       # The options whose values will be redacted.
       #
       # @since 2.1.0
-      SENSITIVE_OPTIONS = [ :password,
-                            :pwd ].freeze
+      SENSITIVE_OPTIONS = %i[password
+                             pwd].freeze
 
       # The replacement string used in place of the value for sensitive keys.
       #
       # @since 2.1.0
-      STRING_REPLACEMENT = '<REDACTED>'.freeze
+      STRING_REPLACEMENT = '<REDACTED>'
 
       # Get a string representation of the options.
       #
@@ -66,7 +63,7 @@ module Mongo
       def has_key?(key)
         super(convert_key(key))
       end
-      alias_method :key?, :has_key?
+      alias key? has_key?
 
       # Returns a new options object consisting of pairs for which the block returns false.
       #
@@ -99,7 +96,7 @@ module Mongo
           keys.each do |key|
             delete(key) if yield(key, self[key])
           end
-          n_keys == keys.size ? nil : self
+          (n_keys == keys.size) ? nil : self
         else
           to_enum
         end
@@ -136,7 +133,7 @@ module Mongo
           keys.each do |key|
             delete(key) unless yield(key, self[key])
           end
-          n_keys == keys.size ? nil : self
+          (n_keys == keys.size) ? nil : self
         else
           to_enum
         end
@@ -152,6 +149,7 @@ module Mongo
 
       def redact(k, v, method)
         return STRING_REPLACEMENT if SENSITIVE_OPTIONS.include?(k.to_sym)
+
         v.send(method)
       end
     end

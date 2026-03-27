@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -14,9 +13,7 @@ describe Mongo::Operation::DropIndex do
   let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
-
     context 'when the index exists' do
-
       let(:spec) do
         { another: -1 }
       end
@@ -43,7 +40,6 @@ describe Mongo::Operation::DropIndex do
     end
 
     context 'when the index does not exist' do
-
       let(:operation) do
         described_class.new(
           db_name: SpecConfig.instance.test_db,
@@ -53,9 +49,9 @@ describe Mongo::Operation::DropIndex do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           operation.execute(authorized_primary, context: context)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

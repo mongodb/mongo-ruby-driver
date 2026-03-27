@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Raised when the driver is in load-balancing mode but a connection
     # is established to something other than a mongos.
     class BadLoadBalancerTarget < Error

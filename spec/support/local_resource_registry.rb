@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'singleton'
 
@@ -11,13 +10,13 @@ class LocalResourceRegistry
   end
 
   def register(resource, finalizer)
-    @resources << [resource, finalizer]
+    @resources << [ resource, finalizer ]
     # Return resource for chaining
     resource
   end
 
   def unregister(resource)
-    @resources.delete_if do |_resource, finalizer|
+    @resources.delete_if do |_resource, _finalizer|
       _resource == resource
     end
   end

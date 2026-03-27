@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength
 def standard_dependencies
   gem 'yard', '>= 0.9.35'
   gem 'ffi'
@@ -71,4 +70,4 @@ def standard_dependencies
 
   gem 'libmongocrypt-helper', '~> 1.14.0' if %w[helper mongocryptd].include?(ENV['FLE'])
 end
-# rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength
+# rubocop:enable Metrics/MethodLength

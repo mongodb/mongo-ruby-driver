@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Cluster
     module Topology
-
       # Defines behavior for when a cluster is in an unknown state.
       #
       # @since 2.0.0
@@ -28,7 +26,7 @@ module Mongo
         # The display name for the topology.
         #
         # @since 2.0.0
-        NAME = 'Unknown'.freeze
+        NAME = 'Unknown'
 
         # Get the display name.
         #
@@ -64,7 +62,9 @@ module Mongo
         # @return [ false ] An Unknown topology will never have a readable server.
         #
         # @since 2.4.0
-        def has_readable_server?(cluster, server_selector = nil); false; end
+        def has_readable_server?(_cluster, _server_selector = nil)
+          false
+        end
 
         # Determine if the topology would select a writable server for the
         # provided candidates.
@@ -77,7 +77,9 @@ module Mongo
         # @return [ false ] An Unknown topology will never have a writable server.
         #
         # @since 2.4.0
-        def has_writable_server?(cluster); false; end
+        def has_writable_server?(_cluster)
+          false
+        end
 
         # An unknown topology is not a replica set.
         #
@@ -87,7 +89,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def replica_set?; false; end
+        def replica_set?
+          false
+        end
 
         # Select appropriate servers for this topology.
         #
@@ -100,7 +104,7 @@ module Mongo
         #   unknown.
         #
         # @since 2.0.0
-        def servers(servers)
+        def servers(_servers)
           []
         end
 
@@ -112,7 +116,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def sharded?; false; end
+        def sharded?
+          false
+        end
 
         # An unknown topology is not single.
         #
@@ -122,7 +128,9 @@ module Mongo
         # @return [ true ] Always false.
         #
         # @since 2.0.0
-        def single?; false; end
+        def single?
+          false
+        end
 
         # An unknown topology is unknown.
         #
@@ -132,7 +140,9 @@ module Mongo
         # @return [ true ] Always true.
         #
         # @since 2.0.0
-        def unknown?; true; end
+        def unknown?
+          true
+        end
       end
     end
   end

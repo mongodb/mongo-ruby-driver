@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Auth
-
     # Defines common behavior around SASL conversations between
     # the client and the server.
     #
     # @api private
     class SaslConversationBase < ConversationBase
-
       # The base client first message.
       CLIENT_FIRST_MESSAGE = { saslStart: 1, autoAuthorize: 1 }.freeze
 
@@ -66,14 +63,13 @@ module Mongo
 
       def client_first_document
         payload = client_first_payload
-        if Lint.enabled?
-          unless payload.is_a?(String)
-            raise Error::LintError, "Payload must be a string but is a #{payload.class}: #{payload}"
-          end
+        if Lint.enabled? && !payload.is_a?(String)
+          raise Error::LintError, "Payload must be a string but is a #{payload.class}: #{payload}"
         end
+
         doc = CLIENT_FIRST_MESSAGE.merge(
           mechanism: auth_mechanism_name,
-          payload: BSON::Binary.new(payload),
+          payload: BSON::Binary.new(payload)
         )
         if options = client_first_message_options
           # Short SCRAM conversation,
@@ -93,9 +89,9 @@ module Mongo
           raise ArgumentError, 'Cannot validate server nonce when client nonce is nil or empty'
         end
 
-        unless server_nonce.start_with?(client_nonce)
-          raise Error::InvalidNonce.new(client_nonce, server_nonce)
-        end
+        return if server_nonce.start_with?(client_nonce)
+
+        raise Error::InvalidNonce.new(client_nonce, server_nonce)
       end
     end
   end

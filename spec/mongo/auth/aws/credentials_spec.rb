@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -19,9 +18,11 @@ describe Mongo::Auth::Aws::Credentials do
       before do
         Timecop.freeze
       end
+
       after do
         Timecop.return
       end
+
       context 'when the expiration is more than five minutes away' do
         let(:credentials) do
           described_class.new('access_key_id', 'secret_access_key', nil, Time.now.utc + 400)

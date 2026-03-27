@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Auth
     class CR
-
       # Defines behavior around a single MONGODB-CR conversation between the
       # client and server.
       #
@@ -28,7 +26,6 @@ module Mongo
       #   removed in driver version 3.0. Please use SCRAM instead.
       # @api private
       class Conversation < ConversationBase
-
         # The login message base.
         #
         # @since 2.0.0

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Protocol::Compressed do
-
   let(:original_message) { Mongo::Protocol::Query.new(SpecConfig.instance.test_db, 'protocol-test', { ping: 1 }) }
   let(:compressor) { 'zlib' }
   let(:level)      { nil }
@@ -20,29 +18,27 @@ describe Mongo::Protocol::Compressed do
   end
 
   describe '#serialize' do
-
-    context "when using the snappy compressor" do
+    context 'when using the snappy compressor' do
       require_snappy_compression
       let(:compressor) { 'snappy' }
 
-      it "uses snappy" do
+      it 'uses snappy' do
         expect(Snappy).to receive(:deflate).with(original_message_bytes).and_call_original
         message.serialize
       end
     end
 
-    context "when using the zstd compressor" do
+    context 'when using the zstd compressor' do
       require_zstd_compression
       let(:compressor) { 'zstd' }
 
-      it "uses zstd with default compression level" do
+      it 'uses zstd with default compression level' do
         expect(Zstd).to receive(:compress).with(original_message_bytes).and_call_original
         message.serialize
       end
     end
 
     context 'when zlib compression level is not provided' do
-
       it 'does not set a compression level' do
         expect(Zlib::Deflate).to receive(:deflate).with(original_message_bytes, nil).and_call_original
         message.serialize
@@ -50,7 +46,6 @@ describe Mongo::Protocol::Compressed do
     end
 
     context 'when zlib compression level is provided' do
-
       let(:level) { 1 }
 
       it 'uses the compression level' do
@@ -61,18 +56,15 @@ describe Mongo::Protocol::Compressed do
   end
 
   describe '#replyable?' do
-
     context 'when the original message is replyable' do
-
       it 'returns true' do
         expect(message.replyable?).to be(true)
       end
     end
 
     context 'when the original message is not replyable' do
-
       let(:original_message) do
-        Mongo::Protocol::Msg.new([:more_to_come], {}, { ping: 1 })
+        Mongo::Protocol::Msg.new([ :more_to_come ], {}, { ping: 1 })
       end
 
       it 'returns false' do

@@ -1,11 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
   module CRUD
     # Represents a CRUD specification test.
     class Spec
-
       # Instantiate the new spec.
       #
       # @param [ String ] test_path The path to the file.
@@ -23,14 +21,12 @@ module Mongo
         @encrypted_fields = BSON::ExtJSON.parse_obj(@spec['encrypted_fields'], mode: :bson)
 
         @requirements = if run_on = @spec['runOn']
-          run_on.map do |spec|
-            Requirement.new(spec)
-          end
-        elsif Requirement::YAML_KEYS.any? { |key| @spec.key?(key) }
-          [Requirement.new(@spec)]
-        else
-          nil
-        end
+                          run_on.map do |spec|
+                            Requirement.new(spec)
+                          end
+                        elsif Requirement::YAML_KEYS.any? { |key| @spec.key?(key) }
+                          [ Requirement.new(@spec) ]
+                        end
       end
 
       # @return [ String ] description The spec description.

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'support/aws_utils'
@@ -40,7 +39,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
           secret_access_key: credentials.secret_access_key,
           session_token: credentials.session_token,
           host: 'sts.amazonaws.com',
-          server_nonce: 'test',
+          server_nonce: 'test'
         )
       end
 
@@ -54,9 +53,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
       require_ec2_host
 
       before(:all) do
-        unless ENV['AUTH'] == 'aws-ec2'
-          skip "Set AUTH=aws-ec2 in environment to run EC2 instance role tests"
-        end
+        skip 'Set AUTH=aws-ec2 in environment to run EC2 instance role tests' unless ENV['AUTH'] == 'aws-ec2'
       end
 
       context 'when instance profile is not assigned' do
@@ -64,7 +61,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
           orchestrator = AwsUtils::Orchestrator.new(
             region: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_REGION'),
             access_key_id: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID'),
-            secret_access_key: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY'),
+            secret_access_key: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY')
           )
 
           orchestrator.clear_instance_profile(Utils.ec2_instance_id)
@@ -83,13 +80,12 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
           orchestrator = AwsUtils::Orchestrator.new(
             region: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_REGION'),
             access_key_id: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID'),
-            secret_access_key: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY'),
+            secret_access_key: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY')
           )
 
           orchestrator.set_instance_profile(Utils.ec2_instance_id,
-            instance_profile_name: nil,
-            instance_profile_arn: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_INSTANCE_PROFILE_ARN'),
-          )
+                                            instance_profile_name: nil,
+                                            instance_profile_arn: ENV.fetch('MONGO_RUBY_DRIVER_AWS_AUTH_INSTANCE_PROFILE_ARN'))
           Utils.wait_for_instance_profile
         end
 
@@ -99,9 +95,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
 
     context 'ecs task role' do
       before(:all) do
-        unless ENV['AUTH'] == 'aws-ecs'
-          skip "Set AUTH=aws-ecs in environment to run ECS task role tests"
-        end
+        skip 'Set AUTH=aws-ecs in environment to run ECS task role tests' unless ENV['AUTH'] == 'aws-ecs'
       end
 
       it_behaves_like 'retrieves the credentials'
@@ -110,7 +104,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
     context 'web identity' do
       before(:all) do
         unless ENV['AUTH'] == 'aws-web-identity'
-          skip "Set AUTH=aws-web-identity in environment to run Wed identity tests"
+          skip 'Set AUTH=aws-web-identity in environment to run Wed identity tests'
         end
       end
 

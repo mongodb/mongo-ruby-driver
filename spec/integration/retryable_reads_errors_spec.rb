@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -12,7 +11,7 @@ describe 'Retryable reads errors tests' do
     client['retryable-reads-error-spec']
   end
 
-  context "PoolClearedError retryability test" do
+  context 'PoolClearedError retryability test' do
     require_topology :single, :replica_set, :sharded
     require_no_multi_mongos
     min_server_version '4.2.9'
@@ -21,10 +20,10 @@ describe 'Retryable reads errors tests' do
 
     let(:failpoint) do
       {
-        configureFailPoint: "failCommand",
+        configureFailPoint: 'failCommand',
         mode: { times: 1 },
         data: {
-          failCommands: [ "find" ],
+          failCommands: [ 'find' ],
           errorCode: 91,
           blockConnection: true,
           blockTimeMS: 1000
@@ -46,7 +45,7 @@ describe 'Retryable reads errors tests' do
     end
 
     let(:find_events) do
-      subscriber.started_events.select { |e| e.command_name == "find" }
+      subscriber.started_events.select { |e| e.command_name == 'find' }
     end
 
     let(:cmap_events) do
@@ -75,7 +74,7 @@ describe 'Retryable reads errors tests' do
     end
 
     shared_examples_for 'retries on PoolClearedError' do
-      it "retries on PoolClearedError" do
+      it 'retries on PoolClearedError' do
         # After the first find fails, the pool is paused and retry is triggered.
         # Now, a race is started between the second find acquiring a connection,
         # and the first retrying the read. Now, retry reads cause the cluster to
@@ -83,7 +82,7 @@ describe 'Retryable reads errors tests' do
         # to succeed (when it should fail). Therefore we want the second find's
         # check out to win the race. This gives the check out a little head start.
         allow_any_instance_of(Mongo::Server::ConnectionPool).to receive(:ready).and_wrap_original do |m, *args, &block|
-          ::Utils.wait_for_condition(5) do
+          Utils.wait_for_condition(5) do
             # check_out_results should contain:
             # - find1 connection check out successful
             # - pool cleared
@@ -103,20 +102,19 @@ describe 'Retryable reads errors tests' do
       end
     end
 
+    after do
+      authorized_client.use(:admin).command({
+                                              configureFailPoint: 'failCommand',
+                                              mode: 'off',
+                                            })
+    end
+
     it_behaves_like 'retries on PoolClearedError'
 
     context 'legacy read retries' do
-
       let(:client) { authorized_client.with(options.merge(retry_reads: false, max_read_retries: 1)) }
 
       it_behaves_like 'retries on PoolClearedError'
-    end
-
-    after do
-      authorized_client.use(:admin).command({
-        configureFailPoint: "failCommand",
-        mode: "off",
-      })
     end
   end
 
@@ -127,22 +125,21 @@ describe 'Retryable reads errors tests' do
     let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:find_started_events) do
-      subscriber.started_events.select { |e| e.command_name == "find" }
+      subscriber.started_events.select { |e| e.command_name == 'find' }
     end
 
     let(:find_failed_events) do
-      subscriber.failed_events.select { |e| e.command_name == "find" }
+      subscriber.failed_events.select { |e| e.command_name == 'find' }
     end
 
     let(:find_succeeded_events) do
-      subscriber.succeeded_events.select { |e| e.command_name == "find" }
+      subscriber.succeeded_events.select { |e| e.command_name == 'find' }
     end
 
     context 'when another mongos is available' do
-
       let(:first_mongos) do
         Mongo::Client.new(
-          [SpecConfig.instance.addresses.first],
+          [ SpecConfig.instance.addresses.first ],
           direct_connection: true,
           database: 'admin'
         )
@@ -150,7 +147,7 @@ describe 'Retryable reads errors tests' do
 
       let(:second_mongos) do
         Mongo::Client.new(
-          [SpecConfig.instance.addresses.last],
+          [ SpecConfig.instance.addresses.last ],
           direct_connection: false,
           database: 'admin'
         )
@@ -180,7 +177,7 @@ describe 'Retryable reads errors tests' do
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: %w(find),
+            failCommands: %w[find],
             closeConnection: false,
             errorCode: 6
           }
@@ -190,7 +187,7 @@ describe 'Retryable reads errors tests' do
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: %w(find),
+            failCommands: %w[find],
             closeConnection: false,
             errorCode: 6
           }
@@ -198,7 +195,7 @@ describe 'Retryable reads errors tests' do
       end
 
       after do
-        [first_mongos, second_mongos].each do |admin_client|
+        [ first_mongos, second_mongos ].each do |admin_client|
           admin_client.database.command(
             configureFailPoint: 'failCommand',
             mode: 'off'
@@ -219,7 +216,7 @@ describe 'Retryable reads errors tests' do
     context 'when no other mongos is available' do
       let(:mongos) do
         Mongo::Client.new(
-          [SpecConfig.instance.addresses.first],
+          [ SpecConfig.instance.addresses.first ],
           direct_connection: true,
           database: 'admin'
         )
@@ -239,7 +236,7 @@ describe 'Retryable reads errors tests' do
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: %w(find),
+            failCommands: %w[find],
             closeConnection: false,
             errorCode: 6
           }
@@ -259,15 +256,15 @@ describe 'Retryable reads errors tests' do
         client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
         expect { collection.find.first }.not_to raise_error
         expect(find_started_events.map { |e| e.address.to_s }.sort).to eq([
-          SpecConfig.instance.addresses.first.to_s,
-          SpecConfig.instance.addresses.first.to_s
-        ])
+                                                                            SpecConfig.instance.addresses.first.to_s,
+                                                                            SpecConfig.instance.addresses.first.to_s
+                                                                          ])
         expect(find_failed_events.map { |e| e.address.to_s }.sort).to eq([
-          SpecConfig.instance.addresses.first.to_s
-        ])
+                                                                           SpecConfig.instance.addresses.first.to_s
+                                                                         ])
         expect(find_succeeded_events.map { |e| e.address.to_s }.sort).to eq([
-          SpecConfig.instance.addresses.first.to_s
-        ])
+                                                                              SpecConfig.instance.addresses.first.to_s
+                                                                            ])
       end
     end
   end
@@ -309,9 +306,9 @@ describe 'Retryable reads errors tests' do
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: %w(find),
+            failCommands: %w[find],
             errorCode: 6,
-            errorLabels: %w(RetryableError SystemOverloadedError)
+            errorLabels: %w[RetryableError SystemOverloadedError]
           }
         )
       end
@@ -339,9 +336,9 @@ describe 'Retryable reads errors tests' do
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: %w(find),
+            failCommands: %w[find],
             errorCode: 6,
-            errorLabels: %w(RetryableError)
+            errorLabels: %w[RetryableError]
           }
         )
       end

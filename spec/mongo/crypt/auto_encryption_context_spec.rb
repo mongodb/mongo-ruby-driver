@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mongo'
 require 'lite_spec_helper'
@@ -14,13 +13,13 @@ describe Mongo::Crypt::AutoEncryptionContext do
 
   let(:logger) { nil }
 
-  let(:io) { double("Mongo::ClientEncryption::IO") }
+  let(:io) { double('Mongo::ClientEncryption::IO') }
   let(:db_name) { 'admin' }
   let(:command) do
     {
-      "find": "test",
-      "filter": {
-          "ssn": "457-55-5462"
+      find: 'test',
+      filter: {
+        ssn: '457-55-5462'
       }
     }
   end
@@ -60,7 +59,7 @@ describe Mongo::Crypt::AutoEncryptionContext do
       end
 
       context 'with non-document command' do
-      let(:command) { 'command-to-encrypt' }
+        let(:command) { 'command-to-encrypt' }
 
         it 'raises an exception' do
           expect do
@@ -108,12 +107,12 @@ describe Mongo::Crypt::AutoEncryptionContext do
         # For now, skip this test by default and revisit once we have determined how we want to
         # package libmongocrypt with the Ruby driver (see: https://jira.mongodb.org/browse/RUBY-1966)
         skip "These tests require libmongocrypt to be built with the '-DENABLE_TRACE=ON' cmake option." +
-          " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
+             " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
       end
 
       let(:logger) do
-        ::Logger.new(STDOUT).tap do |logger|
-          logger.level = ::Logger::DEBUG
+        Logger.new(STDOUT).tap do |logger|
+          logger.level = Logger::DEBUG
         end
       end
 

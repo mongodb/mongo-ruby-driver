@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-present MongoDB Inc.
 #
@@ -19,10 +18,8 @@ module Mongo
   class Monitoring
     module Event
       module Cmap
-
         # Event published when a connection pool is marked ready.
         class PoolReady < Base
-
           # @return [ Mongo::Address ] address The address of the server the pool's connections will
           #   connect to.
           attr_reader :address
@@ -58,7 +55,7 @@ module Mongo
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
-                "address=#{address} options=#{options} pool=0x#{pool.object_id}>"
+              "address=#{address} options=#{options} pool=0x#{pool.object_id}>"
           end
         end
       end

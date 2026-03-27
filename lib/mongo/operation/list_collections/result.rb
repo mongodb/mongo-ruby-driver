@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,14 +17,12 @@
 module Mongo
   module Operation
     class ListCollections
-
       # Defines custom behavior of results when using the
       # listCollections command.
       #
       # @since 2.0.0
       # @api semiprivate
       class Result < Operation::Result
-
         # Get the cursor id for the result.
         #
         # @example Get the cursor id.
@@ -93,7 +90,7 @@ module Mongo
               labels: parser.labels,
               wtimeout: parser.wtimeout,
               document: parser.document,
-              server_message: parser.server_message,
+              server_message: parser.server_message
             )
           end
         end

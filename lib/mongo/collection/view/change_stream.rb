@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ require 'mongo/collection/view/change_stream/retryable'
 module Mongo
   class Collection
     class View
-
       # Provides behavior around a `$changeStream` pipeline stage in the
       # aggregation framework. Specifying this stage allows users to request
       # that notifications are sent for all changes to a particular collection
@@ -35,7 +33,7 @@ module Mongo
         # @return [ String ] The fullDocument option default value.
         #
         # @since 2.5.0
-        FULL_DOCUMENT_DEFAULT = 'default'.freeze
+        FULL_DOCUMENT_DEFAULT = 'default'
 
         # @return [ Symbol ] Used to indicate that the change stream should listen for changes on
         #   the entire database rather than just the collection.
@@ -170,12 +168,13 @@ module Mongo
         # @yieldparam [ BSON::Document ] Each change stream document.
         def each
           raise StopIteration.new if closed?
+
           loop do
             document = try_next
             yield document if document
           end
         rescue StopIteration
-          return self
+          self
         end
 
         # Return one document from the change stream, if one is available.
@@ -220,9 +219,8 @@ module Mongo
 
           # We need to verify each doc has an _id, so we
           # have a resume token to work with
-          if doc && doc['_id'].nil?
-            raise Error::MissingResumeToken
-          end
+          raise Error::MissingResumeToken if doc && doc['_id'].nil?
+
           doc
         end
 
@@ -254,14 +252,14 @@ module Mongo
         #
         # @since 2.5.0
         def close(opts = {})
-          unless closed?
-            begin
-              @cursor.close(opts)
-            rescue Error::OperationFailure::Family, Error::SocketError, Error::SocketTimeoutError, Error::MissingConnection
-              # ignore
-            end
-            @cursor = nil
+          return if closed?
+
+          begin
+            @cursor.close(opts)
+          rescue Error::OperationFailure::Family, Error::SocketError, Error::SocketTimeoutError, Error::MissingConnection
+            # ignore
           end
+          @cursor = nil
         end
 
         # Is the change stream closed?
@@ -343,7 +341,8 @@ module Mongo
           # clear the cache because we may get a newer or an older server
           # (rolling upgrades)
           session = client.get_session(@options)
-          context = Operation::Context.new(client: client, session: session, view: self, operation_timeouts: timeout_ms ? { operation_timeout_ms: timeout_ms } : operation_timeouts)
+          context = Operation::Context.new(client: client, session: session, view: self,
+                                           operation_timeouts: timeout_ms ? { operation_timeout_ms: timeout_ms } : operation_timeouts)
 
           start_at_operation_time = nil
 
@@ -351,16 +350,16 @@ module Mongo
             server.with_connection do |connection|
               result = send_initial_query(connection, context)
 
-              if doc = result.replies.first && result.replies.first.documents.first
-                start_at_operation_time = doc['operationTime']
-              else
-                # The above may set @start_at_operation_time to nil
-                # if it was not in the document for some reason,
-                # for consistency set it to nil here as well.
-                # NB: since this block may be executed more than once, each
-                # execution must write to start_at_operation_time either way.
-                start_at_operation_time = nil
-              end
+              start_at_operation_time = if doc = result.replies.first && result.replies.first.documents.first
+                                          doc['operationTime']
+                                        else
+                                          # The above may set @start_at_operation_time to nil
+                                          # if it was not in the document for some reason,
+                                          # for consistency set it to nil here as well.
+                                          # NB: since this block may be executed more than once, each
+                                          # execution must write to start_at_operation_time either way.
+                                          nil
+                                        end
               result
             end
           end
@@ -369,28 +368,24 @@ module Mongo
         end
 
         def pipeline
-          [{ '$changeStream' => change_doc }] + @change_stream_filters
+          [ { '$changeStream' => change_doc } ] + @change_stream_filters
         end
 
         def aggregate_spec(session, read_preference)
-          super(session, read_preference).tap do |spec|
+          super.tap do |spec|
             spec[:selector][:aggregate] = 1 unless for_collection?
           end
         end
 
         def change_doc
           {}.tap do |doc|
-            if @options[:full_document]
-              doc[:fullDocument] = @options[:full_document]
-            end
+            doc[:fullDocument] = @options[:full_document] if @options[:full_document]
 
             if @options[:full_document_before_change]
               doc[:fullDocumentBeforeChange] = @options[:full_document_before_change]
             end
 
-            if @options.key?(:show_expanded_events)
-              doc[:showExpandedEvents] = @options[:show_expanded_events]
-            end
+            doc[:showExpandedEvents] = @options[:show_expanded_events] if @options.key?(:show_expanded_events)
 
             if resuming?
               # We have a resume token once we retrieved any documents.
@@ -417,7 +412,8 @@ module Mongo
 
               if options[:start_at_operation_time]
                 doc[:startAtOperationTime] = time_to_bson_timestamp(
-                  options[:start_at_operation_time])
+                  options[:start_at_operation_time]
+                )
               end
             end
 
@@ -429,14 +425,14 @@ module Mongo
           initial_query_op(context.session, view.read_preference)
             .execute_with_connection(
               connection,
-              context: context,
+              context: context
             )
         end
 
         def time_to_bson_timestamp(time)
           if time.is_a?(Time)
             seconds = time.to_f
-            BSON::Timestamp.new(seconds.to_i, ((seconds - seconds.to_i) * 1000000).to_i)
+            BSON::Timestamp.new(seconds.to_i, ((seconds - seconds.to_i) * 1_000_000).to_i)
           elsif time.is_a?(BSON::Timestamp)
             time
           else

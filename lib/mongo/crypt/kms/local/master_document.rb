@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -23,21 +22,18 @@ module Mongo
         #
         # @api private
         class MasterKeyDocument
-
           # Creates a master key document object form a parameters hash.
           # This empty method is to keep a uniform interface for all KMS providers.
-          def initialize(_opts)
-          end
+          def initialize(_opts); end
 
           # Convert master key document object to a BSON document in libmongocrypt format.
           #
           # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
           def to_document
-            BSON::Document.new({ provider: "local" })
+            BSON::Document.new({ provider: 'local' })
           end
         end
       end
     end
   end
 end
-

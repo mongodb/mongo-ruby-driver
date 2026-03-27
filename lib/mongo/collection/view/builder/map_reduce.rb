@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ module Mongo
   class Collection
     class View
       module Builder
-
         # Builds a map/reduce specification from the view and options.
         #
         # @since 2.2.0
@@ -36,7 +34,7 @@ module Mongo
             scope: 'scope',
             verbose: 'verbose',
             bypass_document_validation: 'bypassDocumentValidation',
-            collation: 'collation',
+            collation: 'collation'
           ).freeze
 
           def_delegators :@view, :collection, :database, :filter, :read, :write_concern
@@ -94,24 +92,25 @@ module Mongo
           private
 
           def write?(spec)
-            if out = spec[:selector][:out]
-              out.is_a?(String) ||
-                (out.respond_to?(:keys) && out.keys.first.to_s.downcase != View::MapReduce::INLINE)
-            end
+            return unless out = spec[:selector][:out]
+
+            out.is_a?(String) ||
+              (out.respond_to?(:keys) && out.keys.first.to_s.downcase != View::MapReduce::INLINE)
           end
 
           def map_reduce_command
             command = BSON::Document.new(
-              :mapReduce => collection.name,
-              :map => map,
-              :reduce => reduce,
-              :query => filter,
-              :out => { inline: 1 },
+              mapReduce: collection.name,
+              map: map,
+              reduce: reduce,
+              query: filter,
+              out: { inline: 1 }
             )
             # Shouldn't this use self.read ?
             if collection.read_concern
               command[:readConcern] = Options::Mapper.transform_values_to_strings(
-                collection.read_concern)
+                collection.read_concern
+              )
             end
             command.update(view_options)
             command.update(options.slice(:collation))
@@ -121,16 +120,18 @@ module Mongo
             # Ideally it should be removed here, however due to Mongoid 7
             # using this method and requiring :read to be returned from it,
             # we cannot do this just yet - see RUBY-2932.
-            #command.delete(:read)
+            # command.delete(:read)
 
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
           end
 
           def view_options
-            @view_options ||= (opts = view.options.dup
-                               opts.delete(:session)
-                               opts)
+            @view_options ||= begin
+              opts = view.options.dup
+              opts.delete(:session)
+              opts
+            end
           end
         end
       end

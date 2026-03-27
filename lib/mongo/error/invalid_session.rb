@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # This exception is raised when a session is attempted to be used and it
     # is invalid.
     #
     # @since 2.5.0
     class InvalidSession < Error
-
       # Create the new exception.
       #
       # @example Create the new exception.
@@ -33,7 +30,7 @@ module Mongo
       #
       # @since 2.5.0
       def initialize(message)
-        super(message)
+        super
       end
     end
   end

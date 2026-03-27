@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -16,11 +15,8 @@
 # limitations under the License.
 
 module Mongo
-
   module ServerSelector
-
     class Base
-
       # Initialize the server selector.
       #
       # @example Initialize the selector.
@@ -48,9 +44,7 @@ module Mongo
       # @api private
       def initialize(options = nil)
         options = options ? options.dup : {}
-        if options[:max_staleness] == -1
-          options.delete(:max_staleness)
-        end
+        options.delete(:max_staleness) if options[:max_staleness] == -1
         @options = options
         @tag_sets = options[:tag_sets] || []
         @max_staleness = options[:max_staleness]
@@ -88,7 +82,7 @@ module Mongo
       #   a server is selected. Will be removed in version 3.0.
       def server_selection_timeout
         @server_selection_timeout ||=
-          (options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT)
+          options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
       end
 
       # Get the local threshold boundary for nearest selection in seconds.
@@ -103,7 +97,7 @@ module Mongo
       # @deprecated This setting is now taken from the cluster options when
       #   a server is selected. Will be removed in version 3.0.
       def local_threshold
-        @local_threshold ||= (options[:local_threshold] || ServerSelector::LOCAL_THRESHOLD)
+        @local_threshold ||= options[:local_threshold] || ServerSelector::LOCAL_THRESHOLD
       end
 
       # @api private
@@ -196,15 +190,13 @@ module Mongo
 
       # Parameters and return values are the same as for select_server, only
       # the +timeout+ param is renamed to +csot_timeout+.
-      private def select_server_impl(cluster, ping, session, write_aggregation, deprioritized, csot_timeout)
-        if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
-          return cluster.servers.first
-        end
+      private def select_server_impl(cluster, _ping, session, write_aggregation, deprioritized, csot_timeout)
+        return cluster.servers.first if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
 
         timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
 
         server_selection_timeout = if csot_timeout && csot_timeout > 0
-                                     [timeout, csot_timeout].min
+                                     [ timeout, csot_timeout ].min
                                    else
                                      timeout
                                    end
@@ -213,23 +205,19 @@ module Mongo
         # and the timeout is zero, fail immediately (since server selection
         # will take some non-zero amount of time in any case).
         if server_selection_timeout == 0
-          msg = "Failing server selection due to zero timeout. " +
-            " Requested #{name} in cluster: #{cluster.summary}"
+          msg = 'Failing server selection due to zero timeout. ' +
+                " Requested #{name} in cluster: #{cluster.summary}"
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
 
         deadline = Utils.monotonic_time + server_selection_timeout
 
         if session && session.pinned_server
-          if Mongo::Lint.enabled?
-            unless cluster.sharded?
-              raise Error::LintError, "Session has a pinned server in a non-sharded topology: #{topology}"
-            end
+          if Mongo::Lint.enabled? && !cluster.sharded?
+            raise Error::LintError, "Session has a pinned server in a non-sharded topology: #{topology}"
           end
 
-          if !session.in_transaction?
-            session.unpin
-          end
+          session.unpin unless session.in_transaction?
 
           if server = session.pinned_server
             # Here we assume that a mongos stays in the topology indefinitely.
@@ -242,7 +230,7 @@ module Mongo
 
               unless server.mongos?
                 msg = "The session being used is pinned to the server which is not a mongos: #{server.summary} " +
-                  "(after #{server_selection_timeout} seconds)"
+                      "(after #{server_selection_timeout} seconds)"
                 raise Error::NoServerAvailable.new(self, cluster, msg)
               end
             end
@@ -251,26 +239,22 @@ module Mongo
           end
         end
 
-        if cluster.replica_set?
-          validate_max_staleness_value_early!
-        end
+        validate_max_staleness_value_early! if cluster.replica_set?
 
         if cluster.addresses.empty?
-          if Lint.enabled?
-            unless cluster.servers.empty?
-              raise Error::LintError, "Cluster has no addresses but has servers: #{cluster.servers.map(&:inspect).join(', ')}"
-            end
+          if Lint.enabled? && !cluster.servers.empty?
+            raise Error::LintError,
+                  "Cluster has no addresses but has servers: #{cluster.servers.map(&:inspect).join(', ')}"
           end
-          msg = "Cluster has no addresses, and therefore will never have a server"
+          msg = 'Cluster has no addresses, and therefore will never have a server'
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
 
-=begin Add this check in version 3.0.0
-        unless cluster.connected?
-          msg = 'Cluster is disconnected'
-          raise Error::NoServerAvailable.new(self, cluster, msg)
-        end
-=end
+        # Add this check in version 3.0.0
+        #         unless cluster.connected?
+        #           msg = 'Cluster is disconnected'
+        #           raise Error::NoServerAvailable.new(self, cluster, msg)
+        #         end
 
         loop do
           if Lint.enabled?
@@ -295,9 +279,7 @@ module Mongo
               raise Error::UnsupportedFeatures, cluster.topology.compatibility_error.to_s
             end
 
-            if session && session.starting_transaction? && cluster.sharded?
-              session.pin_to_server(server)
-            end
+            session.pin_to_server(server) if session && session.starting_transaction? && cluster.sharded?
 
             return server
           end
@@ -305,34 +287,28 @@ module Mongo
           cluster.scan!(false)
 
           time_remaining = deadline - Utils.monotonic_time
-          if time_remaining > 0
-            wait_for_server_selection(cluster, time_remaining)
+          break unless time_remaining > 0
 
-            # If we wait for server selection, perform another round of
-            # attempting to locate a suitable server. Otherwise server selection
-            # can raise NoServerAvailable message when the diagnostics
-            # reports an available server of the requested type.
-          else
-            break
-          end
+          wait_for_server_selection(cluster, time_remaining)
+
+          # If we wait for server selection, perform another round of
+          # attempting to locate a suitable server. Otherwise server selection
+          # can raise NoServerAvailable message when the diagnostics
+          # reports an available server of the requested type.
         end
 
         msg = "No #{name} server"
-        if is_a?(ServerSelector::Secondary) && !tag_sets.empty?
-          msg += " with tag sets: #{tag_sets}"
-        end
+        msg += " with tag sets: #{tag_sets}" if is_a?(ServerSelector::Secondary) && !tag_sets.empty?
         msg += " is available in cluster: #{cluster.summary} " +
-                "with timeout=#{server_selection_timeout}, " +
-                "LT=#{local_threshold_with_cluster(cluster)}"
+               "with timeout=#{server_selection_timeout}, " +
+               "LT=#{local_threshold_with_cluster(cluster)}"
         msg += server_selection_diagnostic_message(cluster)
         raise Error::NoServerAvailable.new(self, cluster, msg)
       rescue Error::NoServerAvailable => e
         if session && session.in_transaction? && !session.committing_transaction?
           e.add_label('TransientTransactionError')
         end
-        if session && session.committing_transaction?
-          e.add_label('UnknownTransactionCommitResult')
-        end
+        e.add_label('UnknownTransactionCommitResult') if session && session.committing_transaction?
         raise e
       end
 
@@ -353,21 +329,21 @@ module Mongo
       # @api private
       def try_select_server(cluster, write_aggregation: false, deprioritized: [])
         servers = if write_aggregation && cluster.replica_set?
-          # 1. Check if ALL servers in cluster support secondary writes.
-          is_write_supported = cluster.servers.reduce(true) do |res, server|
-            res && server.features.merge_out_on_secondary_enabled?
-          end
+                    # 1. Check if ALL servers in cluster support secondary writes.
+                    is_write_supported = cluster.servers.reduce(true) do |res, server|
+                      res && server.features.merge_out_on_secondary_enabled?
+                    end
 
-          if is_write_supported
-            # 2. If all servers support secondary writes, we respect read preference.
-            suitable_servers(cluster, deprioritized)
-          else
-            # 3. Otherwise we fallback to primary for replica set.
-            [cluster.servers.detect(&:primary?)]
-          end
-        else
-          suitable_servers(cluster, deprioritized)
-        end
+                    if is_write_supported
+                      # 2. If all servers support secondary writes, we respect read preference.
+                      suitable_servers(cluster, deprioritized)
+                    else
+                      # 3. Otherwise we fallback to primary for replica set.
+                      [ cluster.servers.detect(&:primary?) ]
+                    end
+                  else
+                    suitable_servers(cluster, deprioritized)
+                  end
 
         # This list of servers may be ordered in a specific way
         # by the selector (e.g. for secondary preferred, the first
@@ -375,18 +351,14 @@ module Mongo
         # and we should take the first server here respecting the order
         server = suitable_server(servers)
 
-        if server
-          if Lint.enabled?
-            # It is possible for a server to have a nil average RTT here
-            # because the ARTT comes from description which may be updated
-            # by a background thread while server selection is running.
-            # Currently lint mode is not a public feature, if/when this
-            # changes (https://jira.mongodb.org/browse/RUBY-1576) the
-            # requirement for ARTT to be not nil would need to be removed.
-            if server.average_round_trip_time.nil?
-              raise Error::LintError, "Server #{server.address} has nil average rtt"
-            end
-          end
+        if server && Lint.enabled? && server.average_round_trip_time.nil?
+          # It is possible for a server to have a nil average RTT here
+          # because the ARTT comes from description which may be updated
+          # by a background thread while server selection is running.
+          # Currently lint mode is not a public feature, if/when this
+          # changes (https://jira.mongodb.org/browse/RUBY-1576) the
+          # requirement for ARTT to be not nil would need to be removed.
+          raise Error::LintError, "Server #{server.address} has nil average rtt"
         end
 
         server
@@ -429,9 +401,7 @@ module Mongo
       # @api private
       def suitable_servers(cluster, deprioritized = [])
         result = suitable_servers_impl(cluster, deprioritized)
-        if result.empty? && deprioritized.any?
-          result = suitable_servers_impl(cluster, [])
-        end
+        result = suitable_servers_impl(cluster, []) if result.empty? && deprioritized.any?
         result
       end
 
@@ -482,7 +452,7 @@ module Mongo
       # @since 2.0.0
       def full_doc
         @full_doc ||= begin
-          preference = { :mode => self.class.const_get(:SERVER_FORMATTED_NAME) }
+          preference = { mode: self.class.const_get(:SERVER_FORMATTED_NAME) }
           preference.update(tags: tag_sets) unless tag_sets.empty?
           preference.update(maxStalenessSeconds: max_staleness) if max_staleness
           preference.update(hedge: hedge) if hedge
@@ -543,7 +513,7 @@ module Mongo
         # of this method.
 
         candidates = candidates.map do |server|
-          {server: server, artt: server.average_round_trip_time}
+          { server: server, artt: server.average_round_trip_time }
         end.reject do |candidate|
           candidate[:artt].nil?
         end
@@ -593,7 +563,7 @@ module Mongo
         if primary
           candidates.select do |server|
             staleness = (server.last_scan - server.last_write_date) -
-                        (primary.last_scan - primary.last_write_date)  +
+                        (primary.last_scan - primary.last_write_date) +
                         server.cluster.heartbeat_interval
             staleness <= @max_staleness
           end
@@ -613,43 +583,39 @@ module Mongo
           raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_SUPPORT)
         end
 
-        if @hedge
-          unless hedge_allowed?
-            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_HEDGE_SUPPORT)
-          end
+        return unless @hedge
+        raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_HEDGE_SUPPORT) unless hedge_allowed?
 
-          unless @hedge.is_a?(Hash) && @hedge.key?(:enabled) &&
-              [true, false].include?(@hedge[:enabled])
-            raise Error::InvalidServerPreference.new(
-              "`hedge` value (#{hedge}) is invalid - hedge must be a Hash in the " \
-              "format { enabled: true }"
-            )
-          end
+        unless @hedge.is_a?(Hash) && @hedge.key?(:enabled) &&
+               [ true, false ].include?(@hedge[:enabled])
+          raise Error::InvalidServerPreference.new(
+            "`hedge` value (#{hedge}) is invalid - hedge must be a Hash in the " \
+            'format { enabled: true }'
+          )
         end
       end
 
       def validate_max_staleness_value_early!
-        if @max_staleness
-          unless @max_staleness >= SMALLEST_MAX_STALENESS_SECONDS
-            msg = "`max_staleness` value (#{@max_staleness}) is too small - it must be at least " +
+        return unless @max_staleness
+        return if @max_staleness >= SMALLEST_MAX_STALENESS_SECONDS
+
+        msg = "`max_staleness` value (#{@max_staleness}) is too small - it must be at least " +
               "`Mongo::ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` (#{ServerSelector::SMALLEST_MAX_STALENESS_SECONDS})"
-            raise Error::InvalidServerPreference.new(msg)
-          end
-        end
+        raise Error::InvalidServerPreference.new(msg)
       end
 
       def validate_max_staleness_value!(cluster)
-        if @max_staleness
-          heartbeat_interval = cluster.heartbeat_interval
-          unless @max_staleness >= [
-            SMALLEST_MAX_STALENESS_SECONDS,
-            min_cluster_staleness = heartbeat_interval + Cluster::IDLE_WRITE_PERIOD_SECONDS,
-          ].max
-            msg = "`max_staleness` value (#{@max_staleness}) is too small - it must be at least " +
-              "`Mongo::ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` (#{ServerSelector::SMALLEST_MAX_STALENESS_SECONDS}) and (the cluster's heartbeat_frequency " +
-              "setting + `Mongo::Cluster::IDLE_WRITE_PERIOD_SECONDS`) (#{min_cluster_staleness})"
-            raise Error::InvalidServerPreference.new(msg)
-          end
+        return unless @max_staleness
+
+        heartbeat_interval = cluster.heartbeat_interval
+        unless @max_staleness >= [
+          SMALLEST_MAX_STALENESS_SECONDS,
+          min_cluster_staleness = heartbeat_interval + Cluster::IDLE_WRITE_PERIOD_SECONDS,
+        ].max
+          msg = "`max_staleness` value (#{@max_staleness}) is too small - it must be at least " +
+                "`Mongo::ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` (#{ServerSelector::SMALLEST_MAX_STALENESS_SECONDS}) and (the cluster's heartbeat_frequency " +
+                "setting + `Mongo::Cluster::IDLE_WRITE_PERIOD_SECONDS`) (#{min_cluster_staleness})"
+          raise Error::InvalidServerPreference.new(msg)
         end
       end
 
@@ -675,12 +641,13 @@ module Mongo
           # the servers list earlier and the wait call below, we should not
           # wait for the full remaining time - wait for up to 0.5 second, then
           # recheck the state.
-          cluster.server_selection_semaphore.wait([time_remaining, 0.5].min)
+          cluster.server_selection_semaphore.wait([ time_remaining, 0.5 ].min)
         else
           if Lint.enabled?
             raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'
           end
-          sleep [time_remaining, 0.25].min
+
+          sleep [ time_remaining, 0.25 ].min
         end
       end
 
@@ -702,17 +669,13 @@ module Mongo
         msg = ''
         dead_monitors = []
         cluster.servers_list.each do |server|
-          thread = server.monitor.instance_variable_get('@thread')
-          if thread.nil? || !thread.alive?
-            dead_monitors << server
-          end
+          thread = server.monitor.instance_variable_get(:@thread)
+          dead_monitors << server if thread.nil? || !thread.alive?
         end
         if dead_monitors.any?
           msg += ". The following servers have dead monitor threads: #{dead_monitors.map(&:summary).join(', ')}"
         end
-        unless cluster.connected?
-          msg += ". The cluster is disconnected (client may have been closed)"
-        end
+        msg += '. The cluster is disconnected (client may have been closed)' unless cluster.connected?
         msg
       end
     end

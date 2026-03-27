@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ require 'mongo/operation/find/builder'
 
 module Mongo
   module Operation
-
     # A MongoDB find operation.
     #
     # @api private

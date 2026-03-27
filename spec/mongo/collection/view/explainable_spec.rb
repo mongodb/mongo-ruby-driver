@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Collection::View::Explainable do
-
   let(:selector) do
     {}
   end
@@ -22,13 +20,12 @@ describe Mongo::Collection::View::Explainable do
   end
 
   describe '#explain' do
-
     shared_examples 'executes the explain' do
       context 'not sharded' do
         require_topology :single, :replica_set
 
         it 'executes the explain' do
-          explain[:queryPlanner][:namespace].should == authorized_collection.namespace
+          expect(explain[:queryPlanner][:namespace]).to eq(authorized_collection.namespace)
         end
       end
 
@@ -37,7 +34,7 @@ describe Mongo::Collection::View::Explainable do
 
         it 'executes the explain' do
           skip 'https://jira.mongodb.org/browse/RUBY-3399'
-          explain[:queryPlanner][:mongosPlannerVersion].should == 1
+          expect(explain[:queryPlanner][:mongosPlannerVersion]).to eq(1)
         end
       end
     end
@@ -59,7 +56,8 @@ describe Mongo::Collection::View::Explainable do
         it 'triggers server error' do
           lambda do
             explain
-          end.should raise_error(Mongo::Error::OperationFailure, /verbosity string must be|value .* for field .*verbosity.* is not a valid value/)
+          end.should raise_error(Mongo::Error::OperationFailure,
+                                 /verbosity string must be|value .* for field .*verbosity.* is not a valid value/)
         end
       end
 

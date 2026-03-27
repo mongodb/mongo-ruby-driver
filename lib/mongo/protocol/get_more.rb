@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Protocol
-
     # MongoDB Wire protocol getMore message.
     #
     # This is a client request message that is sent to the server in order
@@ -29,7 +27,6 @@ module Mongo
     #
     # @api semipublic
     class GetMore < Message
-
       # Creates a new getMore message
       #
       # @example Get 15 additional documents from cursor 123 in 'xgen.users'.
@@ -81,8 +78,6 @@ module Mongo
 
       attr_reader :upconverter
 
-      private
-
       # The operation code required to specify a getMore message.
       # @return [Fixnum] the operation code.
       #
@@ -109,12 +104,11 @@ module Mongo
       #
       # @since 2.1.0
       class Upconverter
-
         # The get more constant.
         #
         # @since 2.2.0
         # @deprecated
-        GET_MORE = 'getMore'.freeze
+        GET_MORE = 'getMore'
 
         # @return [ String ] collection The name of the collection.
         attr_reader :collection

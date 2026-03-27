@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -44,4 +43,3 @@ describe 'On-demand GCP Credentials' do
     end
   end
 end
-

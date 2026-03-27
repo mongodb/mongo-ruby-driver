@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,16 +15,14 @@
 # limitations under the License.
 
 module Mongo
-
   # Allows objects to easily log operations.
   #
   # @since 2.0.0
   module Loggable
-
     # The standard MongoDB log prefix.
     #
     # @since 2.0.0
-    PREFIX = 'MONGODB'.freeze
+    PREFIX = 'MONGODB'
 
     # Convenience method to log debug messages with the standard prefix.
     #
@@ -96,13 +93,13 @@ module Mongo
     #
     # @since 2.1.0
     def logger
-      ((respond_to?(:options) && options && options[:logger]) || Logger.logger)
+      (respond_to?(:options) && options && options[:logger]) || Logger.logger
     end
 
     private
 
     def format_message(message)
-      format("%s | %s".freeze, _mongo_log_prefix, message)
+      format('%s | %s', _mongo_log_prefix, message)
     end
 
     def _mongo_log_prefix

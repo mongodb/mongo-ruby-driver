@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Operation::Specifiable do
-
   let(:spec) do
     {}
   end
@@ -16,11 +14,8 @@ describe Mongo::Operation::Specifiable do
   end
 
   describe '#==' do
-
     context 'when the other object is a specifiable' do
-
       context 'when the specs are equal' do
-
         let(:other) do
           Class.new do
             include Mongo::Operation::Specifiable
@@ -33,34 +28,30 @@ describe Mongo::Operation::Specifiable do
       end
 
       context 'when the specs are not equal' do
-
         let(:other) do
           Class.new do
             include Mongo::Operation::Specifiable
-          end.new({ :db_name => 'test' })
+          end.new({ db_name: 'test' })
         end
 
         it 'returns false' do
-          expect(specifiable).to_not eq(other)
+          expect(specifiable).not_to eq(other)
         end
       end
     end
 
     context 'when the other object is not a specifiable' do
-
       it 'returns false' do
-        expect(specifiable).to_not eq('test')
+        expect(specifiable).not_to eq('test')
       end
     end
   end
 
   describe '#read' do
-
     context 'when read is specified' do
-
       let(:spec) do
         {
-          read: { mode: :secondary}
+          read: { mode: :secondary }
         }
       end
 
@@ -78,7 +69,6 @@ describe Mongo::Operation::Specifiable do
     end
 
     context 'when read is not specified' do
-
       it 'returns nil' do
         expect(specifiable.read).to be_nil
       end

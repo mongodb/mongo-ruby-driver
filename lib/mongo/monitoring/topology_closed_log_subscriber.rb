@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Monitoring
-
     # Subscribes to Topology Closed events and logs them.
     #
     # @since 2.7.0
     class TopologyClosedLogSubscriber < SDAMLogSubscriber
-
       private
 
       def log_event(event)

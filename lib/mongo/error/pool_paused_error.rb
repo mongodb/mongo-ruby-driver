@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Exception raised if an operation is attempted on a paused connection pool.
     class PoolPausedError < PoolError
       include WriteRetryable

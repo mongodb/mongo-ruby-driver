@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Operation
-
     # Shared behavior of applying transaction error label to execution result.
     #
     # @note This module should be included after ExecutableNoValidate,

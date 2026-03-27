@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -18,10 +17,8 @@
 module Mongo
   class Server
     class ConnectionPool
-
       # @api private
       class GenerationManager
-
         def initialize(server:)
           @map = Hash.new { |hash, key| hash[key] = 1 }
           @pipe_fds = Hash.new { |hash, key| hash[key] = { 1 => IO.pipe } }
@@ -82,7 +79,7 @@ module Mongo
               #    increment the generation for each service.
               #
               # Incrementing everything in the map accomplishes both tasks.
-              @map.each do |k, v|
+              @map.each do |k, _v|
                 gen = @map[k] += 1
                 @pipe_fds[service_id] ||= {}
                 @pipe_fds[service_id][gen] = IO.pipe
@@ -112,19 +109,17 @@ module Mongo
           end
         end
 
-
         private
-
 
         def validate_service_id!(service_id)
           if service_id
             unless server.load_balancer?
-              raise ArgumentError, "Generation scoping to services is only available in load-balanced mode, but the server at #{server.address} is not a load balancer"
+              raise ArgumentError,
+                    "Generation scoping to services is only available in load-balanced mode, but the server at #{server.address} is not a load balancer"
             end
-          else
-            if server.load_balancer?
-              raise ArgumentError, "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
-            end
+          elsif server.load_balancer?
+            raise ArgumentError,
+                  "The server at #{server.address} is a load balancer and therefore does not have a single global generation"
           end
         end
 

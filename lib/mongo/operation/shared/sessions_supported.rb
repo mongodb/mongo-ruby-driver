@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,28 +16,26 @@
 
 module Mongo
   module Operation
-
     # Shared behavior of operations that support a session.
     #
     # @since 2.5.2
     # @api private
     module SessionsSupported
-
       private
 
       ZERO_TIMESTAMP = BSON::Timestamp.new(0, 0)
 
-      READ_COMMANDS = [
-        :aggregate,
-        :count,
-        :dbStats,
-        :distinct,
-        :find,
-        :geoNear,
-        :geoSearch,
-        :group,
-        :mapReduce,
-        :parallelCollectionScan
+      READ_COMMANDS = %i[
+        aggregate
+        count
+        dbStats
+        distinct
+        find
+        geoNear
+        geoSearch
+        group
+        mapReduce
+        parallelCollectionScan
       ].freeze
 
       # Adds causal consistency document to the selector, if one can be
@@ -62,31 +59,32 @@ module Mongo
       # must have the current operation time. Also, topology must be
       # replica set or sharded cluster.
       def apply_causal_consistency_if_possible(selector, connection)
-        if !connection.description.standalone?
-          cc_doc = session.send(:causal_consistency_doc)
-          if cc_doc
-            rc_doc = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
-            selector[:readConcern] = Options::Mapper.transform_values_to_strings(
-              rc_doc)
-          end
-        end
+        return if connection.description.standalone?
+
+        cc_doc = session.send(:causal_consistency_doc)
+        return unless cc_doc
+
+        rc_doc = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
+        selector[:readConcern] = Options::Mapper.transform_values_to_strings(
+          rc_doc
+        )
       end
 
       def flags
-        acknowledged_write? ? [] : [:more_to_come]
+        acknowledged_write? ? [] : [ :more_to_come ]
       end
 
       def apply_cluster_time!(selector, connection)
-        if !connection.description.standalone?
-          cluster_time = [
-            connection.cluster_time,
-            session&.cluster_time,
-          ].compact.max
+        return if connection.description.standalone?
 
-          if cluster_time
-            selector['$clusterTime'] = cluster_time
-          end
-        end
+        cluster_time = [
+          connection.cluster_time,
+          session&.cluster_time,
+        ].compact.max
+
+        return unless cluster_time
+
+        selector['$clusterTime'] = cluster_time
       end
 
       def read_command?(sel)
@@ -126,10 +124,8 @@ module Mongo
       end
 
       def command(connection)
-        if Lint.enabled?
-          unless connection.is_a?(Server::Connection)
-            raise Error::LintError, "Connection is not a Connection instance: #{connection}"
-          end
+        if Lint.enabled? && !connection.is_a?(Server::Connection)
+          raise Error::LintError, "Connection is not a Connection instance: #{connection}"
         end
 
         sel = BSON::Document.new(selector(connection))
@@ -140,9 +136,7 @@ module Mongo
 
         if connection.description.logical_session_timeout
           apply_cluster_time!(sel, connection)
-          if session && (acknowledged_write? || session.in_transaction?)
-            apply_session_options(sel, connection)
-          end
+          apply_session_options(sel, connection) if session && (acknowledged_write? || session.in_transaction?)
         elsif session && session.explicit?
           apply_session_options(sel, connection)
         end
@@ -169,47 +163,45 @@ module Mongo
 
         # https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.md#topology-type-single
         read_doc = if connection.description.standalone?
-          # Read preference is never sent to standalones.
-          nil
-        elsif connection.server.load_balancer?
-          read&.to_mongos
-        elsif connection.description.mongos?
-          # When server is a mongos:
-          # - $readPreference is never sent when mode is 'primary'
-          # - Otherwise $readPreference is sent
-          # When mode is 'secondaryPreferred' $readPreference is currently
-          # required to only be sent when a non-mode field (i.e. tag_sets)
-          # is present, but this causes wrong behavior (DRIVERS-1642).
-          read&.to_mongos
-        elsif connection.server.cluster.single?
-          # In Single topology:
-          # - If no read preference is specified by the application, the driver
-          #   adds mode: primaryPreferred.
-          # - If a read preference is specified by the application, the driver
-          #   replaces the mode with primaryPreferred.
-          read_doc = if read
-            BSON::Document.new(read.to_doc)
-          else
-            BSON::Document.new
-          end
-          if [nil, 'primary'].include?(read_doc['mode'])
-            read_doc['mode'] = 'primaryPreferred'
-          end
-          read_doc
-        else
-          # In replica sets, read preference is passed to the server if one
-          # is specified by the application, except for primary read preferences.
-          read_doc = BSON::Document.new(read&.to_doc || {})
-          if [nil, 'primary'].include?(read_doc['mode'])
-            nil
-          else
-            read_doc
-          end
-        end
+                     # Read preference is never sent to standalones.
+                     nil
+                   elsif connection.server.load_balancer?
+                     read&.to_mongos
+                   elsif connection.description.mongos?
+                     # When server is a mongos:
+                     # - $readPreference is never sent when mode is 'primary'
+                     # - Otherwise $readPreference is sent
+                     # When mode is 'secondaryPreferred' $readPreference is currently
+                     # required to only be sent when a non-mode field (i.e. tag_sets)
+                     # is present, but this causes wrong behavior (DRIVERS-1642).
+                     read&.to_mongos
+                   elsif connection.server.cluster.single?
+                     # In Single topology:
+                     # - If no read preference is specified by the application, the driver
+                     #   adds mode: primaryPreferred.
+                     # - If a read preference is specified by the application, the driver
+                     #   replaces the mode with primaryPreferred.
+                     read_doc = if read
+                                  BSON::Document.new(read.to_doc)
+                                else
+                                  BSON::Document.new
+                                end
+                     read_doc['mode'] = 'primaryPreferred' if [ nil, 'primary' ].include?(read_doc['mode'])
+                     read_doc
+                   else
+                     # In replica sets, read preference is passed to the server if one
+                     # is specified by the application, except for primary read preferences.
+                     read_doc = BSON::Document.new(read&.to_doc || {})
+                     if [ nil, 'primary' ].include?(read_doc['mode'])
+                       nil
+                     else
+                       read_doc
+                     end
+                   end
 
-        if read_doc
-          sel['$readPreference'] = read_doc
-        end
+        return unless read_doc
+
+        sel['$readPreference'] = read_doc
       end
 
       def apply_session_options(sel, connection)
@@ -224,27 +216,24 @@ module Mongo
         validate_read_preference!(sel)
         apply_txn_num!(sel)
         if session.recovery_token &&
-          (sel[:commitTransaction] || sel[:abortTransaction])
-        then
+           (sel[:commitTransaction] || sel[:abortTransaction])
           sel[:recoveryToken] = session.recovery_token
         end
 
-        if session.snapshot?
-          unless connection.description.server_version_gte?('5.0')
-            raise Error::SnapshotSessionInvalidServerVersion
-          end
+        return unless session.snapshot?
+        raise Error::SnapshotSessionInvalidServerVersion unless connection.description.server_version_gte?('5.0')
 
-          sel[:readConcern] = {level: 'snapshot'}
-          if session.snapshot_timestamp
-            sel[:readConcern][:atClusterTime] = session.snapshot_timestamp
-          end
-        end
+        sel[:readConcern] = { level: 'snapshot' }
+        return unless session.snapshot_timestamp
+
+        sel[:readConcern][:atClusterTime] = session.snapshot_timestamp
       end
 
       def build_message(connection, context)
-        if self.session != context.session
-          if self.session
-            raise Error::InternalDriverError, "Operation session #{self.session.inspect} does not match context session #{context.session.inspect}"
+        if session != context.session
+          if session
+            raise Error::InternalDriverError,
+                  "Operation session #{session.inspect} does not match context session #{context.session.inspect}"
           else
             # Some operations are not constructed with sessions but are
             # executed in a context where a session is available.
@@ -261,9 +250,8 @@ module Mongo
             # later prior to being sent to the connection.
             buf = BSON::ByteBuffer.new
             message.serialize(buf)
-            if buf.length > connection.max_message_size
-              raise Error::MaxMessageSize.new(connection.max_message_size)
-            end
+            raise Error::MaxMessageSize.new(connection.max_message_size) if buf.length > connection.max_message_size
+
             session.update_state!
           end
         end

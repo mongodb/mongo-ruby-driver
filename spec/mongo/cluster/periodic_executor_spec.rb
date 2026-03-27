@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Cluster::PeriodicExecutor do
-
   let(:cluster) { double('cluster') }
 
   let(:executor) do

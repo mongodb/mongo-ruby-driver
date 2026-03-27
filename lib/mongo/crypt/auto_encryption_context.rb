@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   module Crypt
-
     # A Context object initialized for auto encryption
     #
     # @api private
     class AutoEncryptionContext < Context
-
       # Create a new AutoEncryptionContext object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that

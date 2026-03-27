@@ -1,24 +1,21 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'support/shared/protocol'
 
 describe Mongo::Protocol::Query do
-
   let(:opcode)   { 2004 }
   let(:db)       { SpecConfig.instance.test_db }
   let(:collection_name) { 'protocol-test' }
   let(:ns)       { "#{db}.#{collection_name}" }
-  let(:selector) { { :name => 'Tyler' } }
-  let(:options)     { Hash.new }
+  let(:selector) { { name: 'Tyler' } }
+  let(:options) { {} }
 
   let(:message) do
     described_class.new(db, collection_name, selector, options)
   end
 
   describe '#initialize' do
-
     it 'sets the namespace' do
       expect(message.namespace).to eq(ns)
     end
@@ -28,9 +25,8 @@ describe Mongo::Protocol::Query do
     end
 
     context 'when options are provided' do
-
       context 'when flags are provided' do
-        let(:options) { { :flags => [:secondary_ok] } }
+        let(:options) { { flags: [ :secondary_ok ] } }
 
         it 'sets the flags' do
           expect(message.flags).to eq(options[:flags])
@@ -38,7 +34,7 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when a limit is provided' do
-        let(:options) { { :limit => 5 } }
+        let(:options) { { limit: 5 } }
 
         it 'sets the limit' do
           expect(message.limit).to eq(options[:limit])
@@ -46,7 +42,7 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when a skip is provided' do
-        let(:options) { { :skip => 13 } }
+        let(:options) { { skip: 13 } }
 
         it 'sets the flags' do
           expect(message.skip).to eq(options[:skip])
@@ -54,7 +50,7 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when a projection is provided' do
-        let(:options) { { :project => { :_id => 0 } } }
+        let(:options) { { project: { _id: 0 } } }
 
         it 'sets the projection' do
           expect(message.project).to eq(options[:project])
@@ -64,9 +60,7 @@ describe Mongo::Protocol::Query do
   end
 
   describe '#==' do
-
     context 'when the other is a query' do
-
       context 'when the fields are equal' do
         let(:other) do
           described_class.new(db, collection_name, selector, options)
@@ -99,7 +93,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the selector is not equal' do
         let(:other) do
-          described_class.new(db, collection_name, { :a => 1 }, options)
+          described_class.new(db, collection_name, { a: 1 }, options)
         end
 
         it 'returns false' do
@@ -109,7 +103,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the options are not equal' do
         let(:other) do
-          described_class.new(db, collection_name, selector, :skip => 2)
+          described_class.new(db, collection_name, selector, skip: 2)
         end
 
         it 'returns false' do
@@ -138,7 +132,6 @@ describe Mongo::Protocol::Query do
   end
 
   describe '#replyable?' do
-
     it 'returns true' do
       expect(message).to be_replyable
     end
@@ -159,59 +152,67 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when flags are provided' do
-        let(:options) { { :flags => flags } }
+        let(:options) { { flags: flags } }
 
         context 'tailable cursor flag' do
-          let(:flags) { [:tailable_cursor] }
+          let(:flags) { [ :tailable_cursor ] }
+
           it 'sets the second bit' do
             expect(field).to be_int32(2)
           end
         end
 
         context 'slave ok flag' do
-          let(:flags) { [:secondary_ok] }
+          let(:flags) { [ :secondary_ok ] }
+
           it 'sets the third bit' do
             expect(field).to be_int32(4)
           end
         end
 
         context 'oplog replay flag' do
-          let(:flags) { [:oplog_replay] }
+          let(:flags) { [ :oplog_replay ] }
+
           it 'sets the fourth bit' do
             expect(field).to be_int32(8)
           end
         end
 
         context 'no cursor timeout flag' do
-          let(:flags) { [:no_cursor_timeout] }
+          let(:flags) { [ :no_cursor_timeout ] }
+
           it 'sets the fifth bit' do
             expect(field).to be_int32(16)
           end
         end
 
         context 'await data flag' do
-          let(:flags) { [:await_data] }
+          let(:flags) { [ :await_data ] }
+
           it 'sets the sixth bit' do
             expect(field).to be_int32(32)
           end
         end
 
         context 'exhaust flag' do
-          let(:flags) { [:exhaust] }
+          let(:flags) { [ :exhaust ] }
+
           it 'sets the seventh bit' do
             expect(field).to be_int32(64)
           end
         end
 
         context 'partial flag' do
-          let(:flags) { [:partial] }
+          let(:flags) { [ :partial ] }
+
           it 'sets the eigth bit' do
             expect(field).to be_int32(128)
           end
         end
 
         context 'multiple flags' do
-          let(:flags) { [:await_data, :secondary_ok] }
+          let(:flags) { %i[await_data secondary_ok] }
+
           it 'sets the correct bits' do
             expect(field).to be_int32(36)
           end
@@ -221,6 +222,7 @@ describe Mongo::Protocol::Query do
 
     describe 'namespace' do
       let(:field) { bytes.to_s[20..36] }
+
       it 'serializes the namespace' do
         expect(field).to be_cstring(ns)
       end
@@ -235,7 +237,6 @@ describe Mongo::Protocol::Query do
         it 'serializes the namespace' do
           expect(field).to be_cstring(ns)
         end
-
       end
     end
 
@@ -249,7 +250,7 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when skip is provided' do
-        let(:options) { { :skip => 5 } }
+        let(:options) { { skip: 5 } }
 
         it 'serializes the skip' do
           expect(field).to be_int32(options[:skip])
@@ -267,7 +268,8 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when limit is provided' do
-        let(:options) { { :limit => 123 } }
+        let(:options) { { limit: 123 } }
+
         it 'serializes the limit' do
           expect(field).to be_int32(options[:limit])
         end
@@ -276,6 +278,7 @@ describe Mongo::Protocol::Query do
 
     describe 'selector' do
       let(:field) { bytes.to_s[45..65] }
+
       it 'serializes the selector' do
         expect(field).to be_bson(selector)
       end
@@ -283,6 +286,7 @@ describe Mongo::Protocol::Query do
 
     describe 'project' do
       let(:field) { bytes.to_s[66..-1] }
+
       context 'when no projection is provided' do
         it 'does not serialize a projection' do
           expect(field).to be_empty
@@ -290,8 +294,8 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when projection is provided' do
-        let(:options) { { :project => projection } }
-        let(:projection) { { :_id => 0 } }
+        let(:options) { { project: projection } }
+        let(:projection) { { _id: 0 } }
 
         it 'serializes the projection' do
           expect(field).to be_bson(projection)
@@ -301,9 +305,7 @@ describe Mongo::Protocol::Query do
   end
 
   describe '#registry' do
-
     context 'when the class is loaded' do
-
       it 'registers the op code in the Protocol Registry' do
         expect(Mongo::Protocol::Registry.get(described_class::OP_CODE)).to be(described_class)
       end
@@ -315,9 +317,7 @@ describe Mongo::Protocol::Query do
   end
 
   describe '#compress' do
-
     context 'when the selector represents a command that can be compressed' do
-
       let(:selector) do
         { ping: 1 }
       end
@@ -328,15 +328,12 @@ describe Mongo::Protocol::Query do
     end
 
     context 'when the selector represents a command for which compression is not allowed' do
-
       Mongo::Monitoring::Event::Secure::REDACTED_COMMANDS.each do |command|
-
         let(:selector) do
           { command => 1 }
         end
 
         context "when the command is #{command}" do
-
           it 'does not allow compression for the command' do
             expect(message.maybe_compress('zlib')).to be(message)
           end

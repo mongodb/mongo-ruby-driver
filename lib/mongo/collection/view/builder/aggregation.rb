@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ module Mongo
   class Collection
     class View
       module Builder
-
         # Builds an aggregation command specification from the view and options.
         #
         # @since 2.2.0
@@ -40,7 +38,7 @@ module Mongo
             # This is intentional; max_await_time_ms is an alias for maxTimeMS
             # used on getMore commands for change streams.
             max_await_time_ms: 'maxTimeMS',
-            max_time_ms: 'maxTimeMS',
+            max_time_ms: 'maxTimeMS'
           ).freeze
 
           def_delegators :@view, :collection, :database, :read, :write_concern
@@ -83,9 +81,7 @@ module Mongo
               session: @options[:session],
               collation: @options[:collation],
             }
-            if write?
-              spec.update(write_concern: write_concern)
-            end
+            spec.update(write_concern: write_concern) if write?
             spec
           end
 
@@ -94,7 +90,7 @@ module Mongo
           def write?
             pipeline.any? do |operator|
               operator[:$out] || operator['$out'] ||
-              operator[:$merge] || operator['$merge']
+                operator[:$merge] || operator['$merge']
             end
           end
 
@@ -111,7 +107,8 @@ module Mongo
             command[:pipeline] = pipeline
             if read_concern = view.read_concern
               command[:readConcern] = Options::Mapper.transform_values_to_strings(
-                read_concern)
+                read_concern
+              )
             end
             command[:cursor] = batch_size_doc
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
@@ -123,7 +120,7 @@ module Mongo
             if value == 0 && write?
               {}
             elsif value
-              { :batchSize => value }
+              { batchSize: value }
             else
               {}
             end

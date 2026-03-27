@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Monitoring
     module Event
-
       # Event fired when a server heartbeat is dispatched.
       #
       # @since 2.7.0
       class ServerHeartbeatSucceeded < Mongo::Event::Base
-
         # Create the event.
         #
         # @example Create the event.
@@ -37,9 +34,7 @@ module Mongo
         #
         # @since 2.7.0
         # @api private
-        def initialize(address, round_trip_time, awaited: false,
-          started_event:
-        )
+        def initialize(address, round_trip_time, started_event:, awaited: false)
           @address = address
           @round_trip_time = round_trip_time
           @awaited = !!awaited
@@ -53,7 +48,7 @@ module Mongo
         attr_reader :round_trip_time
 
         # Alias of round_trip_time.
-        alias :duration :round_trip_time
+        alias duration round_trip_time
 
         # @return [ true | false ] Whether the heartbeat was awaited.
         def awaited?
@@ -76,7 +71,7 @@ module Mongo
         # @api experimental
         def summary
           "#<#{short_class_name}" +
-          " address=#{address}>"
+            " address=#{address}>"
         end
       end
     end

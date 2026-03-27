@@ -1,20 +1,17 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Unified
-
   module GridFsOperations
-
     def gridfs_find(op)
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
         filter = args.use!('filter')
 
         opts = extract_options(args, 'allowDiskUse',
-          'skip', 'hint','timeoutMS',
-          'noCursorTimeout', 'sort', 'limit')
+                               'skip', 'hint', 'timeoutMS',
+                               'noCursorTimeout', 'sort', 'limit')
 
-        bucket.find(filter,opts).to_a
+        bucket.find(filter, opts).to_a
       end
     end
 
@@ -96,19 +93,14 @@ module Unified
     private
 
     def transform_contents(contents)
-      if Hash === contents
-        if contents.length != 1
-          raise NotImplementedError, "Wanted hash with one element"
-        end
-        if contents.keys.first != '$$hexBytes'
-          raise NotImplementedError, "$$hexBytes is the only key supported"
-        end
+      if contents.is_a?(Hash)
+        raise NotImplementedError, 'Wanted hash with one element' if contents.length != 1
+        raise NotImplementedError, '$$hexBytes is the only key supported' if contents.keys.first != '$$hexBytes'
 
         decode_hex_bytes(contents.values.first)
       else
         contents
       end
     end
-
   end
 end

@@ -10,10 +10,8 @@ SINGLE_CLIENT = [ '127.0.0.1:27017' ].freeze
 # possible future work: re-enable these one at a time and do the hard work of
 # making them right.
 #
-# rubocop:disable RSpec/ExpectInHook, RSpec/ExampleLength
-# rubocop:disable RSpec/ContextWording, RSpec/RepeatedExampleGroupDescription
-# rubocop:disable RSpec/ExampleWording, Style/BlockComments, RSpec/AnyInstance
-# rubocop:disable RSpec/VerifiedDoubles
+# rubocop:disable RSpec/RepeatedExampleGroupDescription
+# rubocop:disable RSpec/ExampleWording, Style/BlockComments
 describe Mongo::Client do
   clean_slate
 

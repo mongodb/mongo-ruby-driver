@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Address
-
     # Sets up resolution with IPv4 support if the address is an ip
     # address.
     #
     # @since 2.0.0
     class IPv4
-
       # @return [ String ] host The host.
       attr_reader :host
 
@@ -41,7 +38,7 @@ module Mongo
       # Split value constant.
       #
       # @since 2.1.0
-      SPLIT = ':'.freeze
+      SPLIT = ':'
 
       # Parse an IPv4 address into its host and port.
       #
@@ -56,7 +53,7 @@ module Mongo
       def self.parse(address)
         parts = address.split(SPLIT)
         host = parts[0]
-        port = (parts[1] || 27017).to_i
+        port = (parts[1] || 27_017).to_i
         [ host, port ]
       end
 
@@ -69,7 +66,7 @@ module Mongo
       # @param [ Integer ] port The port.
       #
       # @since 2.0.0
-      def initialize(host, port, host_name=nil)
+      def initialize(host, port, host_name = nil)
         @host = host
         @port = port
         @host_name = host_name

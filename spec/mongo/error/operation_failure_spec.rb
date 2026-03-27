@@ -1,25 +1,23 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Error::OperationFailure do
-
   describe '#code' do
     subject do
       described_class.new('not master (10107)', nil,
-        :code => 10107, :code_name => 'NotMaster')
+                          code: 10_107, code_name: 'NotMaster')
     end
 
     it 'returns the code' do
-      expect(subject.code).to eq(10107)
+      expect(subject.code).to eq(10_107)
     end
   end
 
   describe '#code_name' do
     subject do
       described_class.new('not master (10107)', nil,
-        :code => 10107, :code_name => 'NotMaster')
+                          code: 10_107, code_name: 'NotMaster')
     end
 
     it 'returns the code name' do
@@ -53,8 +51,10 @@ describe Mongo::Error::OperationFailure do
     end
 
     context 'when there is a retryable code' do
-      let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
-        :code => 91, :code_name => 'ShutdownInProgress') }
+      let(:error) do
+        Mongo::Error::OperationFailure.new('no message', nil,
+                                           code: 91, code_name: 'ShutdownInProgress')
+      end
 
       it 'returns true' do
         expect(error.write_retryable?).to eql(true)
@@ -62,8 +62,10 @@ describe Mongo::Error::OperationFailure do
     end
 
     context 'when there is a non-retryable code' do
-      let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
-        :code => 43, :code_name => 'SomethingHappened') }
+      let(:error) do
+        Mongo::Error::OperationFailure.new('no message', nil,
+                                           code: 43, code_name: 'SomethingHappened')
+      end
 
       it 'returns false' do
         expect(error.write_retryable?).to eql(false)
@@ -76,12 +78,15 @@ describe Mongo::Error::OperationFailure do
       context 'getMore response' do
         let(:result) do
           Mongo::Operation::GetMore::Result.new(
-            Mongo::Protocol::Message.new, description)
+            Mongo::Protocol::Message.new, description
+          )
         end
 
-        let(:error) { Mongo::Error::OperationFailure.new('no message',
-          result,
-          :code => 91, :code_name => 'ShutdownInProgress') }
+        let(:error) do
+          Mongo::Error::OperationFailure.new('no message',
+                                             result,
+                                             code: 91, code_name: 'ShutdownInProgress')
+        end
 
         context 'wire protocol version < 9' do
           let(:description) do
@@ -120,11 +125,14 @@ describe Mongo::Error::OperationFailure do
       context 'not a getMore response' do
         let(:result) do
           Mongo::Operation::Result.new(
-            Mongo::Protocol::Message.new, description)
+            Mongo::Protocol::Message.new, description
+          )
         end
 
-        let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
-          :code => 91, :code_name => 'ShutdownInProgress') }
+        let(:error) do
+          Mongo::Error::OperationFailure.new('no message', nil,
+                                             code: 91, code_name: 'ShutdownInProgress')
+        end
 
         context 'wire protocol version < 9' do
           let(:description) do
@@ -148,12 +156,15 @@ describe Mongo::Error::OperationFailure do
       context 'getMore response' do
         let(:result) do
           Mongo::Operation::GetMore::Result.new(
-            Mongo::Protocol::Message.new, description)
+            Mongo::Protocol::Message.new, description
+          )
         end
 
-        let(:error) { Mongo::Error::OperationFailure.new('no message',
-          result,
-          :code => 136, :code_name => 'CappedPositionLost') }
+        let(:error) do
+          Mongo::Error::OperationFailure.new('no message',
+                                             result,
+                                             code: 136, code_name: 'CappedPositionLost')
+        end
 
         context 'wire protocol version < 9' do
           let(:description) do
@@ -191,11 +202,14 @@ describe Mongo::Error::OperationFailure do
       context 'not a getMore response' do
         let(:result) do
           Mongo::Operation::Result.new(
-            Mongo::Protocol::Message.new, description)
+            Mongo::Protocol::Message.new, description
+          )
         end
 
-        let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
-          :code => 136, :code_name => 'CappedPositionLost') }
+        let(:error) do
+          Mongo::Error::OperationFailure.new('no message', nil,
+                                             code: 136, code_name: 'CappedPositionLost')
+        end
 
         it 'returns false' do
           expect(error.change_stream_resumable?).to eql(false)
@@ -207,13 +221,16 @@ describe Mongo::Error::OperationFailure do
       context 'getMore response' do
         let(:result) do
           Mongo::Operation::GetMore::Result.new(
-            Mongo::Protocol::Message.new, description)
+            Mongo::Protocol::Message.new, description
+          )
         end
 
-        let(:error) { Mongo::Error::OperationFailure.new('no message',
-          result,
-          :code => 91, :code_name => 'ShutdownInProgress',
-          :labels => ['NonResumableChangeStreamError']) }
+        let(:error) do
+          Mongo::Error::OperationFailure.new('no message',
+                                             result,
+                                             code: 91, code_name: 'ShutdownInProgress',
+                                             labels: [ 'NonResumableChangeStreamError' ])
+        end
 
         context 'wire protocol version < 9' do
           let(:description) do
@@ -255,7 +272,8 @@ describe Mongo::Error::OperationFailure do
         let(:error) { Mongo::Error::OperationFailure.new(nil, result, code: 43, code_name: 'CursorNotFound') }
         let(:result) do
           Mongo::Operation::GetMore::Result.new(
-            Mongo::Protocol::Message.new, description)
+            Mongo::Protocol::Message.new, description
+          )
         end
 
         context 'wire protocol < 9' do
@@ -300,13 +318,16 @@ describe Mongo::Error::OperationFailure do
       context 'not a getMore response' do
         let(:result) do
           Mongo::Operation::Result.new(
-            Mongo::Protocol::Message.new, description)
+            Mongo::Protocol::Message.new, description
+          )
         end
 
-        let(:error) { Mongo::Error::OperationFailure.new('no message',
-          result,
-          :code => 91, :code_name => 'ShutdownInProgress',
-          :labels => ['NonResumableChangeStreamError']) }
+        let(:error) do
+          Mongo::Error::OperationFailure.new('no message',
+                                             result,
+                                             code: 91, code_name: 'ShutdownInProgress',
+                                             labels: [ 'NonResumableChangeStreamError' ])
+        end
 
         context 'wire protocol version < 9' do
           let(:description) do
@@ -328,12 +349,10 @@ describe Mongo::Error::OperationFailure do
   end
 
   describe '#labels' do
-
     context 'when the result is nil' do
-
       subject do
         described_class.new('not master (10107)', nil,
-          :code => 10107, :code_name => 'NotMaster')
+                            code: 10_107, code_name: 'NotMaster')
       end
 
       it 'has no labels' do
@@ -342,12 +361,17 @@ describe Mongo::Error::OperationFailure do
     end
 
     context 'when the result is not nil' do
+      subject do
+        result.send(:raise_operation_failure)
+      rescue StandardError => e
+        e
+      end
 
       let(:reply_document) do
         {
-            'code' => 251,
-            'codeName' => 'NoSuchTransaction',
-            'errorLabels' => labels,
+          'code' => 251,
+          'codeName' => 'NoSuchTransaction',
+          'errorLabels' => labels,
         }
       end
 
@@ -355,7 +379,7 @@ describe Mongo::Error::OperationFailure do
         Mongo::Protocol::Reply.new.tap do |r|
           # Because this was not created by Mongo::Protocol::Reply::deserialize, we need to manually
           # initialize the fields.
-          r.instance_variable_set(:@documents, [reply_document])
+          r.instance_variable_set(:@documents, [ reply_document ])
           r.instance_variable_set(:@flags, [])
         end
       end
@@ -364,16 +388,7 @@ describe Mongo::Error::OperationFailure do
         Mongo::Operation::Result.new(reply, Mongo::Server::Description.new(''))
       end
 
-      subject do
-        begin
-          result.send(:raise_operation_failure)
-        rescue => e
-          e
-        end
-      end
-
       context 'when the error has no labels' do
-
         let(:labels) do
           []
         end
@@ -383,11 +398,9 @@ describe Mongo::Error::OperationFailure do
         end
       end
 
-
       context 'when the error has labels' do
-
         let(:labels) do
-          %w(TransientTransactionError)
+          %w[TransientTransactionError]
         end
 
         it 'has the correct labels' do
@@ -398,11 +411,11 @@ describe Mongo::Error::OperationFailure do
   end
 
   describe '#not_master?' do
-    [10107, 13435].each do |code|
+    [ 10_107, 13_435 ].each do |code|
       context "error code #{code}" do
         subject do
           described_class.new("thingy (#{code})", nil,
-            :code => code, :code_name => 'thingy')
+                              code: code, code_name: 'thingy')
         end
 
         it 'is true' do
@@ -412,11 +425,11 @@ describe Mongo::Error::OperationFailure do
     end
 
     # node is recovering error codes
-    [11600, 11602, 13436, 189, 91].each do |code|
+    [ 11_600, 11_602, 13_436, 189, 91 ].each do |code|
       context "error code #{code}" do
         subject do
           described_class.new("thingy (#{code})", nil,
-            :code => code, :code_name => 'thingy')
+                              code: code, code_name: 'thingy')
         end
 
         it 'is false' do
@@ -428,7 +441,7 @@ describe Mongo::Error::OperationFailure do
     context 'another error code' do
       subject do
         described_class.new('some error (123)', nil,
-          :code => 123, :code_name => 'SomeError')
+                            code: 123, code_name: 'SomeError')
       end
 
       it 'is false' do
@@ -439,7 +452,7 @@ describe Mongo::Error::OperationFailure do
     context 'not master in message with different code' do
       subject do
         described_class.new('not master (999)', nil,
-          :code => 999, :code_name => nil)
+                            code: 999, code_name: nil)
       end
 
       it 'is false' do
@@ -460,7 +473,7 @@ describe Mongo::Error::OperationFailure do
     context 'not master or secondary text' do
       subject do
         described_class.new('not master or secondary (999)', nil,
-          :code => 999, :code_name => nil)
+                            code: 999, code_name: nil)
       end
 
       it 'is false' do
@@ -470,11 +483,11 @@ describe Mongo::Error::OperationFailure do
   end
 
   describe '#node_recovering?' do
-    [11600, 11602, 13436, 189, 91].each do |code|
+    [ 11_600, 11_602, 13_436, 189, 91 ].each do |code|
       context "error code #{code}" do
         subject do
           described_class.new("thingy (#{code})", nil,
-            :code => code, :code_name => 'thingy')
+                              code: code, code_name: 'thingy')
         end
 
         it 'is true' do
@@ -484,11 +497,11 @@ describe Mongo::Error::OperationFailure do
     end
 
     # not master error codes
-    [10107, 13435].each do |code|
+    [ 10_107, 13_435 ].each do |code|
       context "error code #{code}" do
         subject do
           described_class.new("thingy (#{code})", nil,
-            :code => code, :code_name => 'thingy')
+                              code: code, code_name: 'thingy')
         end
 
         it 'is false' do
@@ -500,7 +513,7 @@ describe Mongo::Error::OperationFailure do
     context 'another error code' do
       subject do
         described_class.new('some error (123)', nil,
-          :code => 123, :code_name => 'SomeError')
+                            code: 123, code_name: 'SomeError')
       end
 
       it 'is false' do
@@ -511,7 +524,7 @@ describe Mongo::Error::OperationFailure do
     context 'node is recovering in message with different code' do
       subject do
         described_class.new('node is recovering (999)', nil,
-          :code => 999, :code_name => nil)
+                            code: 999, code_name: nil)
       end
 
       it 'is false' do
@@ -532,7 +545,7 @@ describe Mongo::Error::OperationFailure do
     context 'not master or secondary text with a code' do
       subject do
         described_class.new('not master or secondary (999)', nil,
-          :code => 999, :code_name => nil)
+                            code: 999, code_name: nil)
       end
 
       it 'is false' do

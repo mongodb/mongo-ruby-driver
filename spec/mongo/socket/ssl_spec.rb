@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -14,15 +13,16 @@ describe Mongo::Socket::SSL do
 
   let(:socket) do
     described_class.new('127.0.0.1', default_address.port,
-      host_name, 1, :INET, ssl_options.merge(
-        connect_timeout: 2.4))
+                        host_name, 1, :INET, ssl_options.merge(
+                                               connect_timeout: 2.4
+                                             ))
   end
 
   let(:ssl_options) do
     SpecConfig.instance.ssl_options
   end
 
-  let (:cert_string) do
+  let(:cert_string) do
     File.read(SpecConfig.instance.client_cert_path)
   end
 
@@ -30,7 +30,7 @@ describe Mongo::Socket::SSL do
     cert_string
   end
 
-  let (:ca_cert_string) do
+  let(:ca_cert_string) do
     File.read(SpecConfig.instance.ca_cert_path)
   end
 
@@ -54,18 +54,18 @@ describe Mongo::Socket::SSL do
       # https://github.com/jruby/jruby-openssl/issues/221
       fails_on_jruby
 
-      let(:proc) do
-        Proc.new do |context|
-          if BSON::Environment.jruby?
-            context.ciphers = ["AES256-SHA256"]
-          else
-            context.ciphers = ["AES256-SHA"]
-          end
+      let(:callback) do
+        proc do |context|
+          context.ciphers = if BSON::Environment.jruby?
+                              [ 'AES256-SHA256' ]
+                            else
+                              [ 'AES256-SHA' ]
+                            end
         end
       end
 
       before do
-        Mongo.tls_context_hooks = [ proc ]
+        Mongo.tls_context_hooks = [ callback ]
       end
 
       after do
@@ -73,11 +73,9 @@ describe Mongo::Socket::SSL do
       end
 
       it 'runs the TLS context hook before connecting' do
-        if ENV['OCSP_ALGORITHM']
-          skip "OCSP configurations use different certificates which this test does not handle"
-        end
+        skip 'OCSP configurations use different certificates which this test does not handle' if ENV['OCSP_ALGORITHM']
 
-        expect(proc).to receive(:call).and_call_original
+        expect(callback).to receive(:call).and_call_original
         socket
         # Even though we are requesting a single cipher in the hook,
         # there may be multiple ciphers available in the context.
@@ -92,9 +90,7 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when a certificate is provided' do
-
       context 'when connecting the tcp socket is successful' do
-
         it 'connects to the server' do
           expect(socket).to be_alive
         end
@@ -102,13 +98,12 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when a certificate and key are provided as strings' do
-
       let(:ssl_options) do
         {
-          :ssl => true,
-          :ssl_cert_string => cert_string,
-          :ssl_key_string => key_string,
-          :ssl_verify => false
+          ssl: true,
+          ssl_cert_string: cert_string,
+          ssl_key_string: key_string,
+          ssl_verify: false
         }
       end
 
@@ -118,13 +113,12 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when a certificate and key are provided as objects' do
-
       let(:ssl_options) do
         {
-          :ssl => true,
-          :ssl_cert_object => cert_object,
-          :ssl_key_object => key_object,
-          :ssl_verify => false
+          ssl: true,
+          ssl_cert_object: cert_object,
+          ssl_key_object: key_object,
+          ssl_verify: false
         }
       end
 
@@ -134,10 +128,9 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when the certificate is specified using both a file and a PEM-encoded string' do
-
       let(:ssl_options) do
         super().merge(
-          :ssl_cert_string => 'This is a random string, not a PEM-encoded certificate'
+          ssl_cert_string: 'This is a random string, not a PEM-encoded certificate'
         )
       end
 
@@ -148,10 +141,9 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when the certificate is specified using both a file and an object' do
-
       let(:ssl_options) do
         super().merge(
-          :ssl_cert_object => 'This is a string, not a certificate'
+          ssl_cert_object: 'This is a string, not a certificate'
         )
       end
 
@@ -162,14 +154,13 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when the certificate is specified using both a PEM-encoded string and an object' do
-
       let(:ssl_options) do
         {
-          :ssl => true,
-          :ssl_cert_string => cert_string,
-          :ssl_cert_object => 'This is a string, not a Certificate',
-          :ssl_key => SpecConfig.instance.client_key_path,
-          :ssl_verify => false
+          ssl: true,
+          ssl_cert_string: cert_string,
+          ssl_cert_object: 'This is a string, not a Certificate',
+          ssl_key: SpecConfig.instance.client_key_path,
+          ssl_verify: false
         }
       end
 
@@ -180,10 +171,9 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when the key is specified using both a file and a PEM-encoded string' do
-
       let(:ssl_options) do
         super().merge(
-          :ssl_key_string => 'This is a normal string, not a PEM-encoded key'
+          ssl_key_string: 'This is a normal string, not a PEM-encoded key'
         )
       end
 
@@ -194,10 +184,9 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when the key is specified using both a file and an object' do
-
       let(:ssl_options) do
         super().merge(
-          :ssl_cert_object => 'This is a string, not a key'
+          ssl_cert_object: 'This is a string, not a key'
         )
       end
 
@@ -208,14 +197,13 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when the key is specified using both a PEM-encoded string and an object' do
-
       let(:ssl_options) do
         {
-          :ssl => true,
-          :ssl_cert => SpecConfig.instance.client_cert_path,
-          :ssl_key_string => key_string,
-          :ssl_key_object => 'This is a string, not a PKey',
-          :ssl_verify => false
+          ssl: true,
+          ssl_cert: SpecConfig.instance.client_cert_path,
+          ssl_key_string: key_string,
+          ssl_key_object: 'This is a string, not a PKey',
+          ssl_verify: false
         }
       end
 
@@ -226,14 +214,13 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when a certificate is passed, but it is not of the right type' do
-
       let(:ssl_options) do
-        cert = "This is a string, not an X.509 Certificate"
+        cert = 'This is a string, not an X.509 Certificate'
         {
-          :ssl => true,
-          :ssl_cert_object => cert,
-          :ssl_key => SpecConfig.instance.client_key_path,
-          :ssl_verify => false
+          ssl: true,
+          ssl_cert_object: cert,
+          ssl_key: SpecConfig.instance.client_key_path,
+          ssl_verify: false
         }
       end
 
@@ -250,7 +237,6 @@ describe Mongo::Socket::SSL do
       end
 
       context 'when the hostname is verified' do
-
         let(:ssl_options) do
           SpecConfig.instance.ssl_options.merge(ssl_verify: false, ssl_verify_hostname: true)
         end
@@ -280,14 +266,13 @@ describe Mongo::Socket::SSL do
     # In jruby 9.2 a TypeError is raised.
     # In jruby 9.1 a OpenSSL::PKey::PKeyError is raised.
     context 'when a key is passed, but it is not of the right type' do
-
       let(:ssl_options) do
-        key = "This is a string not a key"
+        key = 'This is a string not a key'
         {
-            :ssl => true,
-            :ssl_key_object => key,
-            :ssl_cert => SpecConfig.instance.client_cert_path,
-            :ssl_verify => false
+          ssl: true,
+          ssl_key_object: key,
+          ssl_cert: SpecConfig.instance.client_cert_path,
+          ssl_verify: false
         }
       end
 
@@ -300,13 +285,11 @@ describe Mongo::Socket::SSL do
             # jruby 9.1
             OpenSSL::OpenSSLError
           end
-        else
+        elsif RUBY_VERSION >= '3.1.0'
           # MRI
-          if RUBY_VERSION >= '3.1.0'
-            TypeError
-          else
-            NoMethodError
-          end
+          TypeError
+        else
+          NoMethodError
         end
       end
 
@@ -318,7 +301,6 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when a bad certificate/key is provided' do
-
       shared_examples_for 'raises an exception' do
         it 'raises an exception' do
           expect do
@@ -331,21 +313,20 @@ describe Mongo::Socket::SSL do
         require_mri
 
         context 'when a bad certificate is provided' do
-
           let(:expected_exception) do
             if RUBY_VERSION >= '3.1.0'
               # OpenSSL::X509::CertificateError: PEM_read_bio_X509: no start line
               OpenSSL::X509::CertificateError
             else
               # OpenSSL::X509::CertificateError: nested asn1 error
-              [OpenSSL::OpenSSLError, /asn1 error/i]
+              [ OpenSSL::OpenSSLError, /asn1 error/i ]
             end
           end
 
           let(:ssl_options) do
             super().merge(
-              :ssl_cert => CRUD_TESTS.first,
-              :ssl_key => nil,
+              ssl_cert: CRUD_TESTS.first,
+              ssl_key: nil
             )
           end
 
@@ -353,16 +334,15 @@ describe Mongo::Socket::SSL do
         end
 
         context 'when a bad key is provided' do
-
           let(:expected_exception) do
             # OpenSSL::PKey::PKeyError: Could not parse PKey: no start line
-            [OpenSSL::OpenSSLError, /Could not parse PKey/]
+            [ OpenSSL::OpenSSLError, /Could not parse PKey/ ]
           end
 
           let(:ssl_options) do
             super().merge(
-              :ssl_cert => nil,
-              :ssl_key => CRUD_TESTS.first,
+              ssl_cert: nil,
+              ssl_key: CRUD_TESTS.first
             )
           end
 
@@ -377,18 +357,17 @@ describe Mongo::Socket::SSL do
         # specifying the bad certificate produces an error.
 
         context 'when a bad certificate is provided' do
-
           let(:ssl_options) do
             super().merge(
-              :ssl_cert => CRUD_TESTS.first,
-              :ssl_key => nil,
+              ssl_cert: CRUD_TESTS.first,
+              ssl_key: nil
             )
           end
 
           let(:expected_exception) do
             # java.lang.ClassCastException: org.bouncycastle.asn1.DERApplicationSpecific cannot be cast to org.bouncycastle.asn1.ASN1Sequence
             # OpenSSL::X509::CertificateError: parsing issue: malformed PEM data: no header found
-            [OpenSSL::OpenSSLError, /malformed pem data/i]
+            [ OpenSSL::OpenSSLError, /malformed pem data/i ]
           end
 
           it_behaves_like 'raises an exception'
@@ -400,11 +379,10 @@ describe Mongo::Socket::SSL do
       require_local_tls
 
       context 'as a path to a file' do
-
         let(:ssl_options) do
           super().merge(
-            :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
-            :ssl_verify => true
+            ssl_ca_cert: SpecConfig.instance.ca_cert_path,
+            ssl_verify: true
           )
         end
 
@@ -414,11 +392,10 @@ describe Mongo::Socket::SSL do
       end
 
       context 'as a string containing the PEM-encoded certificate' do
-
         let(:ssl_options) do
           super().merge(
-            :ssl_ca_cert_string => ca_cert_string,
-            :ssl_verify => true
+            ssl_ca_cert_string: ca_cert_string,
+            ssl_verify: true
           )
         end
 
@@ -429,10 +406,10 @@ describe Mongo::Socket::SSL do
 
       context 'as an array of Certificate objects' do
         let(:ssl_options) do
-          cert = [OpenSSL::X509::Certificate.new(ca_cert_string)]
+          cert = [ OpenSSL::X509::Certificate.new(ca_cert_string) ]
           super().merge(
-            :ssl_ca_cert_object => cert,
-            :ssl_verify => true
+            ssl_ca_cert_object: cert,
+            ssl_verify: true
           )
         end
 
@@ -442,12 +419,11 @@ describe Mongo::Socket::SSL do
       end
 
       context 'both as a file and a PEM-encoded parameter' do
-
         let(:ssl_options) do
           super().merge(
-            :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
-            :ssl_ca_cert_string => 'This is a string, not a certificate',
-            :ssl_verify => true
+            ssl_ca_cert: SpecConfig.instance.ca_cert_path,
+            ssl_ca_cert_string: 'This is a string, not a certificate',
+            ssl_verify: true
           )
         end
 
@@ -458,12 +434,11 @@ describe Mongo::Socket::SSL do
       end
 
       context 'both as a file and as object parameter' do
-
         let(:ssl_options) do
           super().merge(
-            :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
-            :ssl_ca_cert_object => 'This is a string, not an array of certificates',
-            :ssl_verify => true
+            ssl_ca_cert: SpecConfig.instance.ca_cert_path,
+            ssl_ca_cert_object: 'This is a string, not an array of certificates',
+            ssl_verify: true
           )
         end
 
@@ -473,13 +448,12 @@ describe Mongo::Socket::SSL do
       end
 
       context 'both as a PEM-encoded string and as object parameter' do
-
         let(:ssl_options) do
           cert = File.read(SpecConfig.instance.ca_cert_path)
           super().merge(
-            :ssl_ca_cert_string => cert,
-            :ssl_ca_cert_object => 'This is a string, not an array of certificates',
-            :ssl_verify => true
+            ssl_ca_cert_string: cert,
+            ssl_ca_cert_object: 'This is a string, not an array of certificates',
+            ssl_verify: true
           )
         end
 
@@ -507,7 +481,7 @@ describe Mongo::Socket::SSL do
             ssl_cert: SpecConfig.instance.client_cert_path,
             ssl_key: SpecConfig.instance.client_key_path,
             ssl_ca_cert: SpecConfig.instance.ssl_certs_dir.join('python-ca.crt').to_s,
-            ssl_verify: true,
+            ssl_verify: true
           )
         end
 
@@ -525,7 +499,7 @@ describe Mongo::Socket::SSL do
 
       let(:ssl_options) do
         super().merge(
-          :ssl_verify => true
+          ssl_verify: true
         )
       end
 
@@ -556,7 +530,7 @@ describe Mongo::Socket::SSL do
               ssl_cert: SpecConfig.instance.second_level_cert_path,
               ssl_key: SpecConfig.instance.second_level_key_path,
               ssl_ca_cert: SpecConfig.instance.ca_cert_path,
-              ssl_verify: true,
+              ssl_verify: true
             )
           end
 
@@ -585,7 +559,7 @@ describe Mongo::Socket::SSL do
               ssl_key: nil,
               ssl_key_string: File.read(SpecConfig.instance.second_level_key_path),
               ssl_ca_cert: SpecConfig.instance.ca_cert_path,
-              ssl_verify: true,
+              ssl_verify: true
             )
           end
 
@@ -616,7 +590,7 @@ describe Mongo::Socket::SSL do
           ssl_cert: SpecConfig.instance.client_pem_path,
           ssl_key: SpecConfig.instance.client_pem_path,
           ssl_ca_cert: SpecConfig.instance.ca_cert_path,
-          ssl_verify: true,
+          ssl_verify: true
         )
       end
 
@@ -633,7 +607,7 @@ describe Mongo::Socket::SSL do
 
       let(:ssl_options) do
         super().merge(
-          :ssl_ca_cert => SpecConfig.instance.ca_cert_path
+          ssl_ca_cert: SpecConfig.instance.ca_cert_path
         ).tap { |options| options.delete(:ssl_verify) }
       end
 
@@ -647,8 +621,8 @@ describe Mongo::Socket::SSL do
 
       let(:ssl_options) do
         super().merge(
-          :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
-          :ssl_verify => true
+          ssl_ca_cert: SpecConfig.instance.ca_cert_path,
+          ssl_verify: true
         )
       end
 
@@ -658,11 +632,10 @@ describe Mongo::Socket::SSL do
     end
 
     context 'when ssl_verify is false' do
-
       let(:ssl_options) do
         super().merge(
-          :ssl_ca_cert => 'invalid',
-          :ssl_verify => false
+          ssl_ca_cert: 'invalid',
+          ssl_verify: false
         )
       end
 
@@ -671,11 +644,9 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when OpenSSL allows disabling renegotiation 'do
+    context 'when OpenSSL allows disabling renegotiation' do
       before do
-        unless OpenSSL::SSL.const_defined?(:OP_NO_RENEGOTIATION)
-          skip 'OpenSSL::SSL::OP_NO_RENEGOTIATION is not defined'
-        end
+        skip 'OpenSSL::SSL::OP_NO_RENEGOTIATION is not defined' unless OpenSSL::SSL.const_defined?(:OP_NO_RENEGOTIATION)
       end
 
       it 'disables TLS renegotiation' do
@@ -685,7 +656,6 @@ describe Mongo::Socket::SSL do
   end
 
   describe '#readbyte' do
-
     before do
       allow_message_expectations_on_nil
 
@@ -695,31 +665,28 @@ describe Mongo::Socket::SSL do
     end
 
     context 'with the socket providing "abc"' do
+      let(:socket_content) { 'abc' }
 
-      let(:socket_content) { "abc" }
-
-      it 'should return 97 (the byte for "a")' do
+      it 'returns 97 (the byte for "a")' do
         expect(socket.readbyte).to eq(97)
       end
     end
 
     context 'with the socket providing "\x00" (NULL_BYTE)' do
-
       let(:socket_content) { "\x00" }
 
-      it 'should return 0' do
+      it 'returns 0' do
         expect(socket.readbyte).to eq(0)
       end
     end
 
     context 'with the socket providing no data' do
-
-      let(:socket_content) { "" }
+      let(:socket_content) { '' }
 
       let(:remote_address) { socket.instance_variable_get(:@tcp_socket).remote_address }
       let(:address_str) { "#{remote_address.ip_address}:#{remote_address.ip_port} (#{default_address}, TLS)" }
 
-      it 'should raise EOFError' do
+      it 'raises EOFError' do
         expect do
           socket.readbyte
         end.to raise_error(Mongo::Error::SocketError).with_message("EOFError: EOFError (for #{address_str})")

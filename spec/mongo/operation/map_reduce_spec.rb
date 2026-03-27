@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,14 +8,14 @@ describe Mongo::Operation::MapReduce do
   let(:context) { Mongo::Operation::Context.new }
 
   let(:map) do
-  %Q{
+    %{
   function() {
     emit(this.name, { population: this.population });
   }}
   end
 
   let(:reduce) do
-    %Q{
+    %{
     function(key, values) {
       var result = { population: 0 };
       values.forEach(function(value) {
@@ -31,19 +30,17 @@ describe Mongo::Operation::MapReduce do
   end
 
   let(:selector) do
-    { :mapreduce => TEST_COLL,
-      :map => map,
-      :reduce => reduce,
-      :query => {},
-      :out => { inline: 1 }
-    }
+    { mapreduce: TEST_COLL,
+      map: map,
+      reduce: reduce,
+      query: {},
+      out: { inline: 1 } }
   end
 
   let(:spec) do
-    { :selector => selector,
-      :options  => options,
-      :db_name  => SpecConfig.instance.test_db
-    }
+    { selector: selector,
+      options: options,
+      db_name: SpecConfig.instance.test_db }
   end
 
   let(:op) do
@@ -51,9 +48,7 @@ describe Mongo::Operation::MapReduce do
   end
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(op.spec).to be(spec)
       end
@@ -61,19 +56,16 @@ describe Mongo::Operation::MapReduce do
   end
 
   describe '#==' do
-
-    context ' when two ops have different specs' do
+    context 'when two ops have different specs' do
       let(:other_selector) do
-        { :mapreduce => 'other_test_coll',
-          :map => '',
-          :reduce => '',
-        }
+        { mapreduce: 'other_test_coll',
+          map: '',
+          reduce: '', }
       end
       let(:other_spec) do
-        { :selector => other_selector,
-          :options => {},
-          :db_name => SpecConfig.instance.test_db,
-        }
+        { selector: other_selector,
+          options: {},
+          db_name: SpecConfig.instance.test_db, }
       end
       let(:other) { described_class.new(other_spec) }
 
@@ -84,11 +76,10 @@ describe Mongo::Operation::MapReduce do
   end
 
   describe '#execute' do
-
     let(:documents) do
       [
-        { name: 'Berlin', population: 3000000 },
-        { name: 'London', population: 9000000 }
+        { name: 'Berlin', population: 3_000_000 },
+        { name: 'London', population: 9_000_000 }
       ]
     end
 
@@ -101,7 +92,6 @@ describe Mongo::Operation::MapReduce do
     end
 
     context 'when the map/reduce succeeds' do
-
       let(:response) do
         op.execute(authorized_primary, context: context)
       end
@@ -112,19 +102,17 @@ describe Mongo::Operation::MapReduce do
     end
 
     context 'when the map/reduce fails' do
-
       let(:selector) do
-        { :mapreduce => TEST_COLL,
-          :map => map,
-          :reduce => reduce,
-          :query => {}
-        }
+        { mapreduce: TEST_COLL,
+          map: map,
+          reduce: reduce,
+          query: {} }
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           op.execute(authorized_primary, context: context)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Database do
-
   shared_context 'more than 100 collections' do
     let(:client) do
       root_authorized_client.use('many-collections')
@@ -27,13 +25,11 @@ describe Mongo::Database do
   end
 
   describe '#==' do
-
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     context 'when the names are the same' do
-
       let(:other) do
         described_class.new(authorized_client, SpecConfig.instance.test_db)
       end
@@ -44,32 +40,28 @@ describe Mongo::Database do
     end
 
     context 'when the names are not the same' do
-
       let(:other) do
         described_class.new(authorized_client, :other)
       end
 
       it 'returns false' do
-        expect(database).to_not eq(other)
+        expect(database).not_to eq(other)
       end
     end
 
     context 'when the object is not a database' do
-
       it 'returns false' do
-        expect(database).to_not eq('test')
+        expect(database).not_to eq('test')
       end
     end
   end
 
   describe '#[]' do
-
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     context 'when providing a valid name' do
-
       let(:collection) do
         database[:users]
       end
@@ -80,7 +72,6 @@ describe Mongo::Database do
     end
 
     context 'when providing an invalid name' do
-
       it 'raises an error' do
         expect do
           database[nil]
@@ -89,9 +80,8 @@ describe Mongo::Database do
     end
 
     context 'when the client has options' do
-
       let(:client) do
-        new_local_client([default_address.host], SpecConfig.instance.test_options.merge(read: { mode: :secondary }))
+        new_local_client([ default_address.host ], SpecConfig.instance.test_options.merge(read: { mode: :secondary }))
       end
 
       let(:database) do
@@ -108,14 +98,13 @@ describe Mongo::Database do
       end
 
       context ':server_api option' do
-
         let(:client) do
-          new_local_client_nmio(['localhost'], server_api: {version: '1'})
+          new_local_client_nmio([ 'localhost' ], server_api: { version: '1' })
         end
 
         it 'is not transfered to the collection' do
-          client.options[:server_api].should == {'version' => '1'}
-          collection.options[:server_api].should be nil
+          expect(client.options[:server_api]).to eq({ 'version' => '1' })
+          collection.options[:server_api].should be_nil
         end
       end
     end
@@ -123,14 +112,14 @@ describe Mongo::Database do
     context 'when providing :server_api option' do
       it 'is rejected' do
         lambda do
-          database['foo', server_api: {version: '1'}]
-        end.should raise_error(ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level')
+          database['foo', server_api: { version: '1' }]
+        end.should raise_error(ArgumentError,
+                               'The :server_api option cannot be specified for collection objects. It can only be specified on Client level')
       end
     end
   end
 
   describe '#collection_names' do
-
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
@@ -149,8 +138,8 @@ describe Mongo::Database do
     end
 
     it 'does not include system collections' do
-      expect(actual).to_not include('version')
-      expect(actual).to_not include('system.version')
+      expect(actual).not_to include('version')
+      expect(actual).not_to include('system.version')
     end
 
     it 'does not include collections with $ in names' do
@@ -158,7 +147,6 @@ describe Mongo::Database do
     end
 
     context 'when provided a session' do
-
       let(:operation) do
         database.collection_names(session: session)
       end
@@ -171,14 +159,12 @@ describe Mongo::Database do
     end
 
     context 'when specifying a batch size' do
-
       it 'returns the stripped names of the collections' do
         expect(database.collection_names(batch_size: 1).to_a).to include('users')
       end
     end
 
     context 'when there are more collections than the initial batch size' do
-
       before do
         2.times do |i|
           database["#{i}_dalmatians"].drop
@@ -270,7 +256,7 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        collection_names.length.should == 120
+        expect(collection_names.length).to eq(120)
         collection_names.should include('coll-0')
         collection_names.should include('coll-119')
       end
@@ -281,16 +267,15 @@ describe Mongo::Database do
 
       it 'returns collection names and send comment' do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
-        database.collection_names(comment: "comment")
-        command = subscriber.command_started_events("listCollections").last&.command
+        database.collection_names(comment: 'comment')
+        command = subscriber.command_started_events('listCollections').last&.command
         expect(command).not_to be_nil
-        expect(command["comment"]).to eq("comment")
+        expect(command['comment']).to eq('comment')
       end
     end
   end
 
   describe '#list_collections' do
-
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
@@ -424,7 +409,6 @@ describe Mongo::Database do
       end
 
       context 'when no options provided' do
-
         let!(:result) do
           database.list_collections
         end
@@ -454,7 +438,7 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        collections.length.should == 120
+        expect(collections.length).to eq(120)
         collection_names.should include('coll-0')
         collection_names.should include('coll-119')
       end
@@ -465,18 +449,16 @@ describe Mongo::Database do
 
       it 'returns collection names and send comment' do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
-        database.list_collections(comment: "comment")
-        command = subscriber.command_started_events("listCollections").last&.command
+        database.list_collections(comment: 'comment')
+        command = subscriber.command_started_events('listCollections').last&.command
         expect(command).not_to be_nil
-        expect(command["comment"]).to eq("comment")
+        expect(command['comment']).to eq('comment')
       end
     end
   end
 
   describe '#collections' do
-
     context 'when the database exists' do
-
       let(:database) do
         described_class.new(authorized_client, SpecConfig.instance.test_db)
       end
@@ -500,7 +482,6 @@ describe Mongo::Database do
     end
 
     context 'on admin database' do
-
       let(:database) do
         described_class.new(root_authorized_client, 'admin')
       end
@@ -513,7 +494,6 @@ describe Mongo::Database do
     end
 
     context 'when the database does not exist' do
-
       let(:database) do
         described_class.new(authorized_client, 'invalid_database')
       end
@@ -531,9 +511,9 @@ describe Mongo::Database do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           database.collections
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
 
@@ -648,7 +628,7 @@ describe Mongo::Database do
       end
 
       it 'lists all collections' do
-        collections.length.should == 120
+        expect(collections.length).to eq(120)
         collection_names.should include('coll-0')
         collection_names.should include('coll-119')
       end
@@ -659,35 +639,34 @@ describe Mongo::Database do
 
       it 'returns collection names and send comment' do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
-        database.collections(comment: "comment")
-        command = subscriber.command_started_events("listCollections").last&.command
+        database.collections(comment: 'comment')
+        command = subscriber.command_started_events('listCollections').last&.command
         expect(command).not_to be_nil
-        expect(command["comment"]).to eq("comment")
+        expect(command['comment']).to eq('comment')
       end
     end
   end
 
   describe '#command' do
-
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     it 'sends the query command to the cluster' do
-      expect(database.command(:ping => 1).written_count).to eq(0)
+      expect(database.command(ping: 1).written_count).to eq(0)
     end
 
     it 'does not mutate the command selector' do
-      expect(database.command({:ping => 1}.freeze).written_count).to eq(0)
+      expect(database.command({ ping: 1 }.freeze).written_count).to eq(0)
     end
 
     context 'when provided a session' do
       let(:operation) do
-        client.database.command({ :ping => 1 }, session: session)
+        client.database.command({ ping: 1 }, session: session)
       end
 
       let(:failed_operation) do
-        client.database.command({ :invalid => 1 }, session: session)
+        client.database.command({ invalid: 1 }, session: session)
       end
 
       let(:session) do
@@ -702,13 +681,12 @@ describe Mongo::Database do
         end
       end
 
-      it_behaves_like 'an operation using a session'
-      it_behaves_like 'a failed operation using a session'
-
-
       let(:full_command) do
         subscriber.started_events.find { |cmd| cmd.command_name == 'ping' }.command
       end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
 
       it 'does not add a afterClusterTime field' do
         # Ensure that the session has an operation time
@@ -720,11 +698,10 @@ describe Mongo::Database do
 
     context 'when a read concern is provided' do
       context 'when the read concern is valid' do
-
         it 'sends the read concern' do
-          expect {
-            database.command(:ping => 1, readConcern: { level: 'local' })
-          }.to_not raise_error
+          expect do
+            database.command(ping: 1, readConcern: { level: 'local' })
+          end.not_to raise_error
         end
       end
 
@@ -732,9 +709,9 @@ describe Mongo::Database do
         require_topology :single, :replica_set
 
         it 'raises an exception' do
-          expect {
-            database.command(:ping => 1, readConcern: { level: 'yay' })
-          }.to raise_error(Mongo::Error::OperationFailure)
+          expect do
+            database.command(ping: 1, readConcern: { level: 'yay' })
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
@@ -763,7 +740,7 @@ describe Mongo::Database do
       end
 
       let(:read_preference) do
-        { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+        { mode: :secondary, tag_sets: [ { 'non' => 'existent' } ] }
       end
 
       let(:client) do
@@ -774,7 +751,7 @@ describe Mongo::Database do
         described_class.new(client, SpecConfig.instance.test_db, client.options)
       end
 
-      it 'does not use the client read preference 'do
+      it 'does not use the client read preference' do
         RSpec::Mocks.with_temporary_scope do
           expect(primary_server).to receive(:with_connection).with(any_args).and_call_original
 
@@ -787,7 +764,7 @@ describe Mongo::Database do
       require_topology :single, :replica_set
 
       let(:read_preference) do
-        { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+        { mode: :secondary, tag_sets: [ { 'non' => 'existent' } ] }
       end
 
       let(:client) do
@@ -803,9 +780,9 @@ describe Mongo::Database do
       end
 
       it 'uses the read preference argument' do
-        expect {
+        expect do
           database.command({ ping: 1 }, read: read_preference)
-        }.to raise_error(Mongo::Error::NoServerAvailable)
+        end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
 
@@ -821,35 +798,33 @@ describe Mongo::Database do
       end
 
       it 'uses the client server_selection_timeout' do
-        expect {
+        expect do
           database.command(ping: 1)
-        }.to raise_error(Mongo::Error::NoServerAvailable)
+        end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
 
     context 'when a write concern is not defined on the client/database object' do
-
       context 'when a write concern is provided in the selector' do
         require_topology :single
 
         let(:cmd) do
           {
-              insert: TEST_COLL,
-              documents: [ { a: 1 } ],
-              writeConcern: INVALID_WRITE_CONCERN
+            insert: TEST_COLL,
+            documents: [ { a: 1 } ],
+            writeConcern: INVALID_WRITE_CONCERN
           }
         end
 
         it 'uses the write concern' do
-          expect {
+          expect do
             database.command(cmd)
-          }.to raise_exception(Mongo::Error::OperationFailure)
+          end.to raise_exception(Mongo::Error::OperationFailure)
         end
       end
     end
 
     context 'when a write concern is defined on the client/database object' do
-
       let(:client_options) do
         {
           write: INVALID_WRITE_CONCERN
@@ -861,11 +836,10 @@ describe Mongo::Database do
       end
 
       context 'when a write concern is not in the command selector' do
-
         let(:cmd) do
           {
-              insert: TEST_COLL,
-              documents: [ { a: 1 } ]
+            insert: TEST_COLL,
+            documents: [ { a: 1 } ]
           }
         end
 
@@ -879,16 +853,16 @@ describe Mongo::Database do
 
         let(:cmd) do
           {
-              insert: TEST_COLL,
-              documents: [ { a: 1 } ],
-              writeConcern: INVALID_WRITE_CONCERN
+            insert: TEST_COLL,
+            documents: [ { a: 1 } ],
+            writeConcern: INVALID_WRITE_CONCERN
           }
         end
 
         it 'uses the write concern' do
-          expect {
+          expect do
             database.command(cmd)
-          }.to raise_exception(Mongo::Error::OperationFailure)
+          end.to raise_exception(Mongo::Error::OperationFailure)
         end
       end
     end
@@ -901,7 +875,8 @@ describe Mongo::Database do
         lambda do
           database.command(ping: 1, apiVersion: 'does-not-exist')
         end.should raise_error(
-          an_instance_of(Mongo::Error::OperationFailure).and having_attributes(code: 322))
+          an_instance_of(Mongo::Error::OperationFailure).and(having_attributes(code: 322))
+        )
       end
     end
 
@@ -918,7 +893,6 @@ describe Mongo::Database do
   end
 
   describe '#drop' do
-
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
@@ -928,7 +902,6 @@ describe Mongo::Database do
     end
 
     context 'when provided a session' do
-
       let(:operation) do
         database.drop(session: session)
       end
@@ -941,7 +914,6 @@ describe Mongo::Database do
     end
 
     context 'when the client/database has a write concern' do
-
       let(:client_options) do
         {
           write: INVALID_WRITE_CONCERN,
@@ -961,9 +933,9 @@ describe Mongo::Database do
         require_topology :single
 
         it 'applies the write concern' do
-          expect{
+          expect do
             database_with_write_options.drop
-          }.to raise_exception(Mongo::Error::OperationFailure)
+          end.to raise_exception(Mongo::Error::OperationFailure)
         end
       end
 
@@ -972,7 +944,7 @@ describe Mongo::Database do
 
         let(:client_options) do
           {
-            write_concern: {w: 0},
+            write_concern: { w: 0 },
             database: :test
           }
         end
@@ -998,14 +970,14 @@ describe Mongo::Database do
         end
 
         let!(:command) do
-          Utils.get_command_event(client, 'dropDatabase') do |client|
-            database_test_wc.drop({ write_concern: {w: 'majority'} })
+          Utils.get_command_event(client, 'dropDatabase') do |_client|
+            database_test_wc.drop({ write_concern: { w: 'majority' } })
           end.command
         end
 
         it 'applies the write concern passed in as an option' do
           expect(events.length).to eq(1)
-          expect(command).to_not be_nil
+          expect(command).not_to be_nil
           expect(command[:writeConcern][:w]).to eq('majority')
         end
       end
@@ -1013,9 +985,7 @@ describe Mongo::Database do
   end
 
   describe '#initialize' do
-
     context 'when provided a valid name' do
-
       let(:database) do
         described_class.new(authorized_client, SpecConfig.instance.test_db)
       end
@@ -1030,7 +1000,6 @@ describe Mongo::Database do
     end
 
     context 'when the name is nil' do
-
       it 'raises an error' do
         expect do
           described_class.new(authorized_client, nil)
@@ -1040,7 +1009,6 @@ describe Mongo::Database do
   end
 
   describe '#inspect' do
-
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
@@ -1062,15 +1030,13 @@ describe Mongo::Database do
     end
 
     shared_context 'a GridFS database' do
-
       it 'returns a Grid::FS for the db' do
         expect(fs).to be_a(Mongo::Grid::FSBucket)
       end
 
       context 'when operating on the fs' do
-
         let(:file) do
-          Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
+          Mongo::Grid::File.new('Hello!', filename: 'test.txt')
         end
 
         before do
@@ -1089,8 +1055,7 @@ describe Mongo::Database do
       end
     end
 
-    context  'when no options are provided' do
-
+    context 'when no options are provided' do
       let(:fs) do
         database.fs
       end
@@ -1099,11 +1064,9 @@ describe Mongo::Database do
     end
 
     context 'when a custom prefix is provided' do
-
       context 'when the option is fs_name' do
-
         let(:fs) do
-          database.fs(:fs_name => 'grid')
+          database.fs(fs_name: 'grid')
         end
 
         it 'sets the custom prefix' do
@@ -1114,9 +1077,8 @@ describe Mongo::Database do
       end
 
       context 'when the option is bucket_name' do
-
         let(:fs) do
-          database.fs(:bucket_name => 'grid')
+          database.fs(bucket_name: 'grid')
         end
 
         it 'sets the custom prefix' do
@@ -1129,18 +1091,16 @@ describe Mongo::Database do
   end
 
   describe '#write_concern' do
-
     let(:client) do
-      new_local_client(['127.0.0.1:27017'],
-        {monitoring_io: false}.merge(client_options))
+      new_local_client([ '127.0.0.1:27017' ],
+                       { monitoring_io: false }.merge(client_options))
     end
 
     let(:database) { client.database }
 
     context 'when client write concern uses :write' do
-
       let(:client_options) do
-        { :write => { :w => 1 } }
+        { write: { w: 1 } }
       end
 
       it 'is the correct write concern' do
@@ -1150,9 +1110,8 @@ describe Mongo::Database do
     end
 
     context 'when client write concern uses :write_concern' do
-
       let(:client_options) do
-        { :write_concern => { :w => 1 } }
+        { write_concern: { w: 1 } }
       end
 
       it 'is the correct write concern' do
@@ -1170,7 +1129,7 @@ describe Mongo::Database do
     let(:database) { client.database }
 
     let(:pipeline) do
-      [{'$currentOp' => {}}]
+      [ { '$currentOp' => {} } ]
     end
 
     describe 'updating cluster time' do
@@ -1203,9 +1162,8 @@ describe Mongo::Database do
     end
 
     context 'when options are provided' do
-
       let(:options) do
-        { :allow_disk_use => true, :bypass_document_validation => true }
+        { allow_disk_use: true, bypass_document_validation: true }
       end
 
       it 'sets the options on the Aggregation object' do
@@ -1213,9 +1171,8 @@ describe Mongo::Database do
       end
 
       context 'when the :comment option is provided' do
-
         let(:options) do
-          { :comment => 'testing' }
+          { comment: 'testing' }
         end
 
         it 'sets the options on the Aggregation object' do
@@ -1224,7 +1181,6 @@ describe Mongo::Database do
       end
 
       context 'when a session is provided' do
-
         let(:session) do
           client.start_session
         end
@@ -1234,7 +1190,7 @@ describe Mongo::Database do
         end
 
         let(:failed_operation) do
-          database.aggregate([ { '$invalid' => 1 }], session: session).to_a
+          database.aggregate([ { '$invalid' => 1 } ], session: session).to_a
         end
 
         it_behaves_like 'an operation using a session'
@@ -1242,7 +1198,6 @@ describe Mongo::Database do
       end
 
       context 'when a hint is provided' do
-
         let(:options) do
           { 'hint' => { 'y' => 1 } }
         end
@@ -1253,9 +1208,8 @@ describe Mongo::Database do
       end
 
       context 'when collation is provided' do
-
         let(:pipeline) do
-          [{ "$currentOp" => {} }]
+          [ { '$currentOp' => {} } ]
         end
 
         let(:options) do
@@ -1267,7 +1221,7 @@ describe Mongo::Database do
         end
 
         it 'applies the collation' do
-          expect(result.uniq).to eq(['host'])
+          expect(result.uniq).to eq([ 'host' ])
         end
       end
     end

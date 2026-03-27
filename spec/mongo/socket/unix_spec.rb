@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -19,7 +18,6 @@ describe Mongo::Socket::Unix do
   end
 
   describe '#connect!' do
-
     after do
       socket.close
     end
@@ -30,9 +28,7 @@ describe Mongo::Socket::Unix do
   end
 
   describe '#alive?' do
-
     context 'when the socket is connected' do
-
       after do
         socket.close
       end
@@ -43,7 +39,6 @@ describe Mongo::Socket::Unix do
     end
 
     context 'when the socket is not connected' do
-
       before do
         socket.close
       end

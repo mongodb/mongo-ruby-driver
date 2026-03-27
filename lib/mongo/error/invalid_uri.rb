@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # Exception that is raised when trying to parse a URI that does not match
     # the specification.
     #
     # @since 2.0.0
     class InvalidURI < Error
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
@@ -32,7 +29,7 @@ module Mongo
       # @since 2.0.0
       def initialize(uri, details, format = nil)
         message = "Bad URI: #{uri}\n" +
-                    "#{details}\n"
+                  "#{details}\n"
         message += "MongoDB URI must be in the following format: #{format}\n" if format
         message += "Please see the following URL for more information: #{Mongo::URI::HELP}\n"
         super(message)

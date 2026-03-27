@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -30,15 +29,15 @@ describe 'Client-Side Encryption' do
               tenant_id: SpecConfig.instance.fle_azure_tenant_id,
               client_id: SpecConfig.instance.fle_azure_client_id,
               client_secret: SpecConfig.instance.fle_azure_client_secret,
-              identity_platform_endpoint: "127.0.0.1:8002"
+              identity_platform_endpoint: '127.0.0.1:8002'
             },
             gcp: {
               email: SpecConfig.instance.fle_gcp_email,
               private_key: SpecConfig.instance.fle_gcp_private_key,
-              endpoint: "127.0.0.1:8002"
+              endpoint: '127.0.0.1:8002'
             },
             kmip: {
-              endpoint: "127.0.0.1:5698"
+              endpoint: '127.0.0.1:5698'
             }
           },
           kms_tls_options: {
@@ -56,7 +55,7 @@ describe 'Client-Side Encryption' do
             }
           },
           key_vault_namespace: 'keyvault.datakeys',
-        },
+        }
       )
     end
 
@@ -73,15 +72,15 @@ describe 'Client-Side Encryption' do
               tenant_id: SpecConfig.instance.fle_azure_tenant_id,
               client_id: SpecConfig.instance.fle_azure_client_id,
               client_secret: SpecConfig.instance.fle_azure_client_secret,
-              identity_platform_endpoint: "127.0.0.1:8002"
+              identity_platform_endpoint: '127.0.0.1:8002'
             },
             gcp: {
               email: SpecConfig.instance.fle_gcp_email,
               private_key: SpecConfig.instance.fle_gcp_private_key,
-              endpoint: "127.0.0.1:8002"
+              endpoint: '127.0.0.1:8002'
             },
             kmip: {
-              endpoint: "127.0.0.1:5698"
+              endpoint: '127.0.0.1:5698'
             }
           },
           kms_tls_options: {
@@ -107,7 +106,7 @@ describe 'Client-Side Encryption' do
             }
           },
           key_vault_namespace: 'keyvault.datakeys',
-        },
+        }
       )
     end
 
@@ -124,15 +123,15 @@ describe 'Client-Side Encryption' do
               tenant_id: SpecConfig.instance.fle_azure_tenant_id,
               client_id: SpecConfig.instance.fle_azure_client_id,
               client_secret: SpecConfig.instance.fle_azure_client_secret,
-              identity_platform_endpoint: "127.0.0.1:8000"
+              identity_platform_endpoint: '127.0.0.1:8000'
             },
             gcp: {
               email: SpecConfig.instance.fle_gcp_email,
               private_key: SpecConfig.instance.fle_gcp_private_key,
-              endpoint: "127.0.0.1:8000"
+              endpoint: '127.0.0.1:8000'
             },
             kmip: {
-              endpoint: "127.0.0.1:8000"
+              endpoint: '127.0.0.1:8000'
             }
           },
           kms_tls_options: {
@@ -150,7 +149,7 @@ describe 'Client-Side Encryption' do
             }
           },
           key_vault_namespace: 'keyvault.datakeys',
-        },
+        }
       )
     end
 
@@ -167,15 +166,15 @@ describe 'Client-Side Encryption' do
               tenant_id: SpecConfig.instance.fle_azure_tenant_id,
               client_id: SpecConfig.instance.fle_azure_client_id,
               client_secret: SpecConfig.instance.fle_azure_client_secret,
-              identity_platform_endpoint: "127.0.0.1:8001"
+              identity_platform_endpoint: '127.0.0.1:8001'
             },
             gcp: {
               email: SpecConfig.instance.fle_gcp_email,
               private_key: SpecConfig.instance.fle_gcp_private_key,
-              endpoint: "127.0.0.1:8001"
+              endpoint: '127.0.0.1:8001'
             },
             kmip: {
-              endpoint: "127.0.0.1:8001"
+              endpoint: '127.0.0.1:8001'
             }
           },
           kms_tls_options: {
@@ -193,7 +192,7 @@ describe 'Client-Side Encryption' do
             }
           },
           key_vault_namespace: 'keyvault.datakeys',
-        },
+        }
       )
     end
 
@@ -201,8 +200,8 @@ describe 'Client-Side Encryption' do
     context 'AWS' do
       let(:master_key_template) do
         {
-          region: "us-east-1",
-          key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
+          region: 'us-east-1',
+          key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0',
         }
       end
 
@@ -212,7 +211,7 @@ describe 'Client-Side Encryption' do
             client_encryption_no_client_cert.create_data_key(
               'aws',
               {
-                master_key: master_key_template.merge({endpoint: "127.0.0.1:8002"})
+                master_key: master_key_template.merge({ endpoint: '127.0.0.1:8002' })
               }
             )
           end.to raise_error(Mongo::Error::KmsError, /(certificate_required|SocketError|ECONNRESET)/)
@@ -225,8 +224,8 @@ describe 'Client-Side Encryption' do
             client_encryption_with_tls.create_data_key(
               'aws',
               {
-                master_key: master_key_template.merge({endpoint: "127.0.0.1:8002"})
-             }
+                master_key: master_key_template.merge({ endpoint: '127.0.0.1:8002' })
+              }
             )
           end.to raise_error(Mongo::Error::KmsError, /libmongocrypt error code/)
         end
@@ -246,7 +245,7 @@ describe 'Client-Side Encryption' do
             client_encryption_expired.create_data_key(
               'aws',
               {
-                master_key: master_key_template.merge({endpoint: "127.0.0.1:8000"})
+                master_key: master_key_template.merge({ endpoint: '127.0.0.1:8000' })
               }
             )
           end.to raise_error(Mongo::Error::KmsError, error_regex)
@@ -267,7 +266,7 @@ describe 'Client-Side Encryption' do
             client_encryption_invalid_hostname.create_data_key(
               'aws',
               {
-                master_key: master_key_template.merge({endpoint: "127.0.0.1:8001"})
+                master_key: master_key_template.merge({ endpoint: '127.0.0.1:8001' })
               }
             )
           end.to raise_error(Mongo::Error::KmsError, error_regex)
@@ -283,7 +282,7 @@ describe 'Client-Side Encryption' do
               kms_provider,
               {
                 master_key: master_key
-             }
+              }
             )
           end.to raise_error(Mongo::Error::KmsError, /(certificate_required|SocketError|ECONNRESET)/)
         end
@@ -297,7 +296,7 @@ describe 'Client-Side Encryption' do
                 kms_provider,
                 {
                   master_key: master_key
-              }
+                }
               )
             end.to raise_error(Mongo::Error::KmsError, /libmongocrypt error code/)
           else
@@ -306,7 +305,7 @@ describe 'Client-Side Encryption' do
                 kms_provider,
                 {
                   master_key: master_key
-              }
+                }
               )
             end.not_to raise_error
           end
@@ -319,13 +318,13 @@ describe 'Client-Side Encryption' do
                 kms_provider,
                 {
                   master_key: master_key
-              }
+                }
               )
-            rescue Mongo::Error::KmsError => exc
-              expect(exc.message).to include('libmongocrypt error code')
-              expect(exc.message).not_to include('CryptError')
+            rescue Mongo::Error::KmsError => e
+              expect(e.message).to include('libmongocrypt error code')
+              expect(e.message).not_to include('CryptError')
             else
-              fail 'Expected to raise KmsError'
+              raise 'Expected to raise KmsError'
             end
           end
         end
@@ -346,7 +345,7 @@ describe 'Client-Side Encryption' do
               kms_provider,
               {
                 master_key: master_key
-            }
+              }
             )
           end.to raise_error(Mongo::Error::KmsError, error_regex)
         end
@@ -429,6 +428,5 @@ describe 'Client-Side Encryption' do
 
       it_behaves_like 'it respect KMS TLS options'
     end
-
   end
 end

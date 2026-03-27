@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -18,9 +17,7 @@
 require 'mongo/session/server_session/dirtyable'
 
 module Mongo
-
   class Session
-
     # An object representing the server-side session.
     #
     # @api private
@@ -32,12 +29,12 @@ module Mongo
       # Regex for removing dashes from the UUID string.
       #
       # @since 2.5.0
-      DASH_REGEX = /\-/.freeze
+      DASH_REGEX = /-/.freeze
 
       # Pack directive for the UUID.
       #
       # @since 2.5.0
-      UUID_PACK = 'H*'.freeze
+      UUID_PACK = 'H*'
 
       # The last time the server session was used.
       #
@@ -96,8 +93,10 @@ module Mongo
       #
       # @since 2.5.0
       def session_id
-        @session_id ||= (bytes = [SecureRandom.uuid.gsub(DASH_REGEX, '')].pack(UUID_PACK)
-                          BSON::Document.new(id: BSON::Binary.new(bytes, :uuid)))
+        @session_id ||= begin
+          bytes = [ SecureRandom.uuid.gsub(DASH_REGEX, '') ].pack(UUID_PACK)
+          BSON::Document.new(id: BSON::Binary.new(bytes, :uuid))
+        end
       end
 
       # Increment the current transaction number and return the new value.

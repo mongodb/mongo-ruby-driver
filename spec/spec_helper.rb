@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -20,9 +19,7 @@ RSpec.configure do |config|
   config.extend(Constraints)
 
   config.before(:all) do
-    if SpecConfig.instance.kill_all_server_sessions?
-      kill_all_server_sessions
-    end
+    kill_all_server_sessions if SpecConfig.instance.kill_all_server_sessions?
   end
 
   config.after do

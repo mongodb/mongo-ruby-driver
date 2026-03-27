@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,13 +18,11 @@ require 'mongo/error'
 
 module Mongo
   module Operation
-
     # Shared executable behavior of operations.
     #
     # @since 2.5.2
     # @api private
     module Executable
-
       include ResponseHandling
 
       # @return [ Operation::Context | nil ] the operation context used to
@@ -48,8 +45,7 @@ module Mongo
                 get_result(connection, context, options) do |result|
                   if session
                     if session.in_transaction? &&
-                      connection.description.load_balancer?
-                    then
+                       connection.description.load_balancer?
                       if session.pinned_connection_global_id
                         unless session.pinned_connection_global_id == connection.global_id
                           raise(
@@ -69,8 +65,7 @@ module Mongo
                   end
 
                   if result.has_cursor_id? &&
-                    connection.description.load_balancer?
-                  then
+                     connection.description.load_balancer?
                     if result.cursor_id == 0
                       connection.unpin
                     else
@@ -86,10 +81,8 @@ module Mongo
       end
 
       def execute(connection, context:, options: {})
-        if Lint.enabled?
-          unless connection.is_a?(Mongo::Server::Connection)
-            raise Error::LintError, "Connection argument is of wrong type: #{connection}"
-          end
+        if Lint.enabled? && !connection.is_a?(Mongo::Server::Connection)
+          raise Error::LintError, "Connection argument is of wrong type: #{connection}"
         end
 
         do_execute(connection, context, options).tap do |result|
@@ -106,7 +99,8 @@ module Mongo
       def get_result(connection, context, options = {})
         message = build_message(connection, context)
         connection.tracer.trace_command(message, context, connection) do
-          result = result_class.new(*dispatch_message(message, connection, context, options), context: context, connection: connection)
+          result = result_class.new(*dispatch_message(message, connection, context, options), context: context,
+                                                                                              connection: connection)
           if block_given?
             yield result
           else
@@ -119,7 +113,7 @@ module Mongo
       def dispatch_message(message, connection, context, options = {})
         message = message.maybe_encrypt(connection, context)
         reply = connection.dispatch([ message ], context, options)
-        [reply, connection.description, connection.global_id]
+        [ reply, connection.description, connection.global_id ]
       end
 
       # @param [ Mongo::Server::Connection ] connection The connection on which
@@ -138,29 +132,26 @@ module Mongo
 
         process_result_for_sdam(result, connection)
 
-        if session
-          session.process(result)
-        end
+        session.process(result) if session
 
         result
       end
 
       def process_result_for_sdam(result, connection)
         if (result.not_master? || result.node_recovering?) &&
-          connection.generation >= connection.server.pool.generation(service_id: connection.service_id)
-        then
-          if result.node_shutting_down?
-            keep_pool = false
-          else
-            # Max wire version needs to be examined while the server is known
-            keep_pool = connection.description.server_version_gte?('4.2')
-          end
+           connection.generation >= connection.server.pool.generation(service_id: connection.service_id)
+          keep_pool = if result.node_shutting_down?
+                        false
+                      else
+                        # Max wire version needs to be examined while the server is known
+                        connection.description.server_version_gte?('4.2')
+                      end
 
           connection.server.unknown!(
             keep_connection_pool: keep_pool,
             generation: connection.generation,
             service_id: connection.service_id,
-            topology_version: result.topology_version,
+            topology_version: result.topology_version
           )
 
           connection.server.scan_semaphore.signal

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Monitoring
     module Event
-
       # Event that is fired when a command operation fails.
       #
       # @since 2.1.0
@@ -83,9 +81,8 @@ module Mongo
         #
         # @api private
         def initialize(command_name, database_name, address,
-          request_id, operation_id, message, failure, duration,
-          started_event:, server_connection_id: nil, service_id: nil
-        )
+                       request_id, operation_id, message, failure, duration,
+                       started_event:, server_connection_id: nil, service_id: nil)
           @command_name = command_name.to_s
           @database_name = database_name
           @address = address
@@ -130,9 +127,8 @@ module Mongo
         # @since 2.1.0
         # @api private
         def self.generate(address, operation_id, payload, message,
-          failure, duration, started_event:, server_connection_id: nil,
-          service_id: nil
-        )
+                          failure, duration, started_event:, server_connection_id: nil,
+                          service_id: nil)
           new(
             payload[:command_name],
             payload[:database_name],
@@ -144,7 +140,7 @@ module Mongo
             duration,
             started_event: started_event,
             server_connection_id: server_connection_id,
-            service_id: service_id,
+            service_id: service_id
           )
         end
       end

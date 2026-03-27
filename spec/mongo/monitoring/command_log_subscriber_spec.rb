@@ -1,16 +1,12 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Monitoring::CommandLogSubscriber do
-
   describe '#started' do
-
     let(:filter) do
-      (1...100).reduce({}) do |hash, i|
+      (1...100).each_with_object({}) do |i, hash|
         hash[i] = i
-        hash
       end
     end
 
@@ -23,8 +19,8 @@ describe Mongo::Monitoring::CommandLogSubscriber do
         'find',
         'users',
         Mongo::Address.new('127.0.0.1:27017'),
-        12345,
-        67890,
+        12_345,
+        67_890,
         command
       )
     end
@@ -38,9 +34,7 @@ describe Mongo::Monitoring::CommandLogSubscriber do
     end
 
     context 'when truncating the logs' do
-
       context 'when no option is provided' do
-
         let(:subscriber) do
           described_class.new
         end
@@ -52,7 +46,6 @@ describe Mongo::Monitoring::CommandLogSubscriber do
       end
 
       context 'when true option is provided' do
-
         let(:subscriber) do
           described_class.new(truncate_logs: true)
         end
@@ -65,13 +58,12 @@ describe Mongo::Monitoring::CommandLogSubscriber do
     end
 
     context 'when not truncating the logs' do
-
       let(:subscriber) do
         described_class.new(truncate_logs: false)
       end
 
       it 'does not truncate the logs' do
-        expect(subscriber).to_not receive(:truncate)
+        expect(subscriber).not_to receive(:truncate)
         subscriber.started(event)
       end
     end

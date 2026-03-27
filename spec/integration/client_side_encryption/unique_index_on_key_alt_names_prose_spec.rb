@@ -4,7 +4,6 @@ require 'spec_helper'
 
 # No need to rewrite legacy tests to use shorter examples, unless/until we
 # revisit these tests and need to make more significant changes.
-# rubocop:disable RSpec/ExampleLength
 describe 'Decryption events' do
   require_enterprise
   require_libmongocrypt

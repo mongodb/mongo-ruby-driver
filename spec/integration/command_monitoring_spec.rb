@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe 'Command monitoring' do
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
@@ -43,7 +41,7 @@ describe 'Command monitoring' do
 
   it 'notifies on failed commands' do
     expect do
-      result = client.database.command(:bogus => 1)
+      client.database.command(bogus: 1)
     end.to raise_error(Mongo::Error::OperationFailure, /no such c(om)?m(an)?d/)
 
     started_events = subscriber.started_events.select do |event|
@@ -79,7 +77,7 @@ describe 'Command monitoring' do
         expect(subscriber.started_events.length).to eq 0
         client['test-collection'].find(a: 1).first
         command_names = subscriber.started_events.map(&:command_name)
-        command_names.should == expected_command_names
+        expect(command_names).to eq(expected_command_names)
       end
     end
 
@@ -88,7 +86,7 @@ describe 'Command monitoring' do
 
       let(:expected_command_names) do
         # Long SCRAM conversation.
-        %w(saslStart saslContinue saslContinue find)
+        %w[saslStart saslContinue saslContinue find]
       end
 
       it_behaves_like 'does not nest auth and find'
@@ -99,7 +97,7 @@ describe 'Command monitoring' do
 
       let(:expected_command_names) do
         # Speculative auth + short SCRAM conversation.
-        %w(saslContinue find)
+        %w[saslContinue find]
       end
 
       it_behaves_like 'does not nest auth and find'
@@ -112,7 +110,7 @@ describe 'Command monitoring' do
     let(:collection) do
       client['command-monitoring-test']
     end
-    let(:write_concern) { Mongo::WriteConcern.get({w: 42}) }
+    let(:write_concern) { Mongo::WriteConcern.get({ w: 42 }) }
     let(:session) { client.start_session }
     let(:command) do
       Mongo::Operation::Command.new(
@@ -120,7 +118,7 @@ describe 'Command monitoring' do
         db_name: 'admin',
         session: session,
         txn_num: 123,
-        write_concern: write_concern,
+        write_concern: write_concern
       )
     end
 
@@ -128,7 +126,7 @@ describe 'Command monitoring' do
       server = client.cluster.next_primary
       collection.insert_one(a: 1)
       session.start_transaction
-      collection.insert_one({a: 1}, session: session)
+      collection.insert_one({ a: 1 }, session: session)
 
       subscriber.clear_events!
       expect do

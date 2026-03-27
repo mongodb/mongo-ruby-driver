@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -15,12 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Matcher for determining whether the operation completed successfully.
 #
 # @since 2.1.0
 RSpec::Matchers.define :completes_successfully do |test|
-
   match do |actual|
     actual == test.expected_result || test.expected_result.nil?
   end
@@ -31,9 +28,9 @@ end
 #
 # @since 2.1.0
 RSpec::Matchers.define :match_chunks_collection do |expected|
-
   match do |actual|
     return true if expected.nil?
+
     if expected.find.to_a.empty?
       actual.find.to_a.empty?
     else
@@ -55,9 +52,9 @@ end
 #
 # @since 2.1.0
 RSpec::Matchers.define :match_files_collection do |expected|
-
   match do |actual|
     return true if expected.nil?
+
     actual.find.all? do |doc|
       if matching_doc = expected.find(_id: doc['_id']).first
         matching_doc.all? do |k, v|
@@ -74,21 +71,17 @@ end
 #
 # @since 2.1.0
 RSpec::Matchers.define :match_error do |error|
-
   match do |actual|
     Mongo::GridFS::Test::ERROR_MAPPING[error] == actual.class
   end
 end
 
-
 module Mongo
   module GridFS
-
     # Represents a GridFS specification test.
     #
     # @since 2.1.0
     class Spec
-
       # @return [ String ] description The spec description.
       #
       # @since 2.1.0
@@ -124,7 +117,6 @@ module Mongo
     #
     # @since 2.1.0
     module Convertible
-
       # Convert an integer to the corresponding CRUD method suffix.
       #
       # @param [ Integer ] int The limit.
@@ -133,7 +125,7 @@ module Mongo
       #
       # @since 2.1.0
       def limit(int)
-        int == 0 ? 'many' : 'one'
+        (int == 0) ? 'many' : 'one'
       end
 
       # Convert an id value to a BSON::ObjectId.
@@ -158,8 +150,12 @@ module Mongo
       # @return [ Time ] The upload date time value.
       #
       # @since 2.1.0
-      def convert_uploadDate(v, opts = {})
-        v.is_a?(Time) ? v : v['$date'] ? Time.parse(v['$date']) : upload_date
+      def convert_uploadDate(v, _opts = {}) # rubocop:disable Naming/MethodName
+        if v.is_a?(Time)
+          v
+        else
+          v['$date'] ? Time.parse(v['$date']) : upload_date
+        end
       end
 
       # Convert an file id value to a BSON::ObjectId.
@@ -213,7 +209,7 @@ module Mongo
       # @return [ String ] The hex value.
       #
       # @since 2.1.0
-      def to_hex(string, opts = {})
+      def to_hex(string, _opts = {})
         [ string ].pack('H*')
       end
 
@@ -244,12 +240,11 @@ module Mongo
       #
       # @since 2.1.0
       def options
-        @act['arguments']['options'].reduce({}) do |opts, (k, v)|
-          opts.merge!(chunk_size: v) if k == "chunkSizeBytes"
+        @act['arguments']['options'].each_with_object({}) do |(k, v), opts|
+          opts.merge!(chunk_size: v) if k == 'chunkSizeBytes'
           opts.merge!(upload_date: upload_date)
-          opts.merge!(content_type: v) if k == "contentType"
-          opts.merge!(metadata: v) if k == "metadata"
-          opts
+          opts.merge!(content_type: v) if k == 'contentType'
+          opts.merge!(metadata: v) if k == 'metadata'
         end
       end
     end
@@ -262,11 +257,11 @@ module Mongo
       extend Forwardable
 
       def_delegators :@operation, :expected_files_collection,
-                                  :expected_chunks_collection,
-                                  :result,
-                                  :expected_error,
-                                  :expected_result,
-                                  :error?
+                     :expected_chunks_collection,
+                     :result,
+                     :expected_error,
+                     :expected_result,
+                     :error?
 
       # The test description.
       #
@@ -286,11 +281,11 @@ module Mongo
       #
       # @since 2.1.0
       ERROR_MAPPING = {
-          'FileNotFound' => Mongo::Error::FileNotFound,
-          'ChunkIsMissing' => Mongo::Error::MissingFileChunk,
-          'ChunkIsWrongSize' => Mongo::Error::UnexpectedChunkLength,
-          'ExtraChunk' => Mongo::Error::ExtraFileChunk,
-          'RevisionNotFound' => Mongo::Error::InvalidFileRevision
+        'FileNotFound' => Mongo::Error::FileNotFound,
+        'ChunkIsMissing' => Mongo::Error::MissingFileChunk,
+        'ChunkIsWrongSize' => Mongo::Error::UnexpectedChunkLength,
+        'ExtraChunk' => Mongo::Error::ExtraFileChunk,
+        'RevisionNotFound' => Mongo::Error::InvalidFileRevision
       }
 
       # Instantiate the new GridFS::Test.
@@ -307,11 +302,11 @@ module Mongo
         @pre_data = data
         @description = test['description']
         @upload_date = Time.now
-        if test['assert']['error']
-          @operation = UnsuccessfulOp.new(self, test)
-        else
-          @operation = SuccessfulOp.new(self, test)
-        end
+        @operation = if test['assert']['error']
+                       UnsuccessfulOp.new(self, test)
+                     else
+                       SuccessfulOp.new(self, test)
+                     end
         @result = nil
       end
 
@@ -348,10 +343,18 @@ module Mongo
       # @since 2.1.0
       def clear_collections(fs)
         fs.files_collection.delete_many
-        fs.files_collection.indexes.drop_all rescue nil
+        begin
+          fs.files_collection.indexes.drop_all
+        rescue StandardError
+          nil
+        end
         fs.chunks_collection.delete_many
-        fs.chunks_collection.indexes.drop_all rescue nil
-        #@operation.clear_collections(fs)
+        begin
+          fs.chunks_collection.indexes.drop_all
+        rescue StandardError
+          nil
+        end
+        # @operation.clear_collections(fs)
       end
 
       private
@@ -456,10 +459,10 @@ module Mongo
         #
         # @since 2.1.0
         def arrange(fs)
-          if @arrange
-            @arrange['data'].each do |data|
-              send("#{data.keys.first}_exp_data", fs, data)
-            end
+          return unless @arrange
+
+          @arrange['data'].each do |data|
+            send("#{data.keys.first}_exp_data", fs, data)
           end
         end
 
@@ -484,21 +487,21 @@ module Mongo
         private
 
         def prepare_expected_collections(fs)
-          if @test.assert_data?
-            @assert['data'].each do |data|
-              op = "#{data.keys.first}_exp_data"
-              send(op, fs, data)
-            end
+          return unless @test.assert_data?
+
+          @assert['data'].each do |data|
+            op = "#{data.keys.first}_exp_data"
+            send(op, fs, data)
           end
         end
 
         def insert_exp_data(fs, data)
           coll = fs.database[data['insert']]
-          if coll.name =~ /.files/
-            opts = { id: @result }
-          else
-            opts = { files_id: @result }
-          end
+          opts = if /.files/.match?(coll.name)
+                   { id: @result }
+                 else
+                   { files_id: @result }
+                 end
           coll.insert_many(transform_docs(data['documents'], opts))
         end
 
@@ -629,11 +632,9 @@ module Mongo
         #
         # @since 2.1.0
         def act(fs)
-          begin
-            send(op, fs)
-          rescue => ex
-            @result = ex
-          end
+          send(op, fs)
+        rescue StandardError => e
+          @result = e
         end
       end
     end

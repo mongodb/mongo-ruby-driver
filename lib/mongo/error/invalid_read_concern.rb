@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,14 +16,13 @@
 
 module Mongo
   class Error
-
     # Raised when an invalid read concern is provided.
     class InvalidReadConcern < Error
       # Instantiate the new exception.
       def initialize(msg = nil)
         super(msg || 'Invalid read concern option provided.' \
-              'The only valid key is :level, for which accepted values are' \
-              ':local, :majority, and :snapshot')
+                     'The only valid key is :level, for which accepted values are' \
+                     ':local, :majority, and :snapshot')
       end
     end
   end

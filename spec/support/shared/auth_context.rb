@@ -1,4 +1,3 @@
-# rubocop:todo all
 shared_context 'auth unit tests' do
   let(:generation_manager) do
     Mongo::Server::ConnectionPool::GenerationManager.new(server: server)
@@ -12,6 +11,7 @@ shared_context 'auth unit tests' do
 
   let(:connection) do
     Mongo::Server::Connection.new(server, SpecConfig.instance.monitoring_options.merge(
-      connection_pool: pool))
+                                            connection_pool: pool
+                                          ))
   end
 end

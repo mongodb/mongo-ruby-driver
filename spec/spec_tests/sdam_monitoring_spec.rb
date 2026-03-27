@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -10,11 +9,9 @@ describe 'SDAM Monitoring' do
   include Mongo::SDAM
 
   SDAM_MONITORING_TESTS.each do |file|
-
     spec = Mongo::SDAM::Spec.new(file)
 
-    context("#{spec.description} (#{file.sub(%r'.*/data/sdam_monitoring/', '')})") do
-
+    context("#{spec.description} (#{file.sub(%r{.*/data/sdam_monitoring/}, '')})") do
       before(:all) do
         @subscriber = Mrss::PhasedEventSubscriber.new
         sdam_proc = lambda do |client|
@@ -25,8 +22,8 @@ describe 'SDAM Monitoring' do
           client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, @subscriber)
         end
         @client = new_local_client_nmio(spec.uri_string,
-          sdam_proc: sdam_proc,
-          heartbeat_frequency: 100, connect_timeout: 0.1)
+                                        sdam_proc: sdam_proc,
+                                        heartbeat_frequency: 100, connect_timeout: 0.1)
         # We do not want to create servers when an event referencing them
         # is processed, because this may result in server duplication
         # when events are processed for servers that had been removed
@@ -43,9 +40,7 @@ describe 'SDAM Monitoring' do
           #
           # If the server is a load balancer, it doesn't normally get monitored
           # so don't start here either.
-          unless server.load_balancer?
-            server.start_monitoring
-          end
+          server.start_monitoring unless server.load_balancer?
         end
       end
 
@@ -54,17 +49,13 @@ describe 'SDAM Monitoring' do
       end
 
       spec.phases.each_with_index do |phase, phase_index|
-
         context("Phase: #{phase_index + 1}") do
-
           before(:all) do
             phase.responses&.each do |response|
               # For each response in the phase, we need to change that server's description.
               server = find_server(@client, response.address)
               server ||= @servers_cache[response.address.to_s]
-              if server.nil?
-                raise "Server should have been found"
-              end
+              raise 'Server should have been found' if server.nil?
 
               result = response.hello
               # Spec tests do not always specify wire versions, but the
@@ -73,25 +64,26 @@ describe 'SDAM Monitoring' do
               result['minWireVersion'] ||= 0
               result['maxWireVersion'] ||= 0
               new_description = Mongo::Server::Description.new(
-                server.description.address, result, average_round_trip_time: 0.5)
+                server.description.address, result, average_round_trip_time: 0.5
+              )
               @client.cluster.run_sdam_flow(server.description, new_description)
             end
             @subscriber.phase_finished(phase_index)
-          end
-
-          it "expects #{phase.outcome.events.length} events to be published" do
-            expect(@subscriber.phase_events(phase_index).length).to eq(phase.outcome.events.length)
           end
 
           let(:verifier) do
             Sdam::Verifier.new
           end
 
-          phase.outcome.events.each_with_index do |expectation, index|
+          it "expects #{phase.outcome.events.length} events to be published" do
+            expect(@subscriber.phase_events(phase_index).length).to eq(phase.outcome.events.length)
+          end
 
-            it "expects event #{index+1} to be #{expectation.name}" do
+          phase.outcome.events.each_with_index do |expectation, index|
+            it "expects event #{index + 1} to be #{expectation.name}" do
               verifier.verify_sdam_event(
-                phase.outcome.events, @subscriber.phase_events(phase_index), index)
+                phase.outcome.events, @subscriber.phase_events(phase_index), index
+              )
             end
           end
         end

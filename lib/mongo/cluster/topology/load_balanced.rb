@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Cluster
     module Topology
-
       # Defines behavior for when a cluster is in load-balanced topology.
       class LoadBalanced < Base
-
         # The display name for the topology.
-        NAME = 'LoadBalanced'.freeze
+        NAME = 'LoadBalanced'
 
         # Get the display name.
         #
@@ -48,7 +45,9 @@ module Mongo
         #   selector.
         #
         # @return [ true ] A standalone always has a readable server.
-        def has_readable_server?(cluster, server_selector = nil); true; end
+        def has_readable_server?(_cluster, _server_selector = nil)
+          true
+        end
 
         # Determine if the topology would select a writable server for the
         # provided candidates.
@@ -56,45 +55,56 @@ module Mongo
         # @param [ Cluster ] cluster The cluster.
         #
         # @return [ true ] A standalone always has a writable server.
-        def has_writable_server?(cluster); true; end
+        def has_writable_server?(_cluster)
+          true
+        end
 
         # Returns whether this topology is one of the replica set ones.
         #
         # @return [ false ] Always false.
-        def replica_set?; false; end
+        def replica_set?
+          false
+        end
 
         # Select appropriate servers for this topology.
         #
         # @param [ Array<Server> ] servers The known servers.
         #
         # @return [ Array<Server> ] All of the known servers.
-        def servers(servers, name = nil)
+        def servers(servers, _name = nil)
           servers
         end
 
         # Returns whether this topology is sharded.
         #
         # @return [ false ] Always false.
-        def sharded?; false; end
+        def sharded?
+          false
+        end
 
         # Returns whether this topology is Single.
         #
         # @return [ true ] Always false.
-        def single?; false; end
+        def single?
+          false
+        end
 
         # Returns whether this topology is Unknown.
         #
         # @return [ false ] Always false.
-        def unknown?; false; end
+        def unknown?
+          false
+        end
 
         private
 
         def validate_options(options, cluster)
           if cluster.servers_list.length > 1
-            raise ArgumentError, "Cannot instantiate a load-balanced topology with more than one server in the cluster: #{cluster.servers_list.map(&:address).map(&:seed).join(', ')}"
+            raise ArgumentError,
+                  "Cannot instantiate a load-balanced topology with more than one server in the cluster: #{cluster.servers_list.map(&:address).map(&:seed).join(', ')}"
           end
 
-          super(options, cluster)
+          super
         end
       end
     end

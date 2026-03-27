@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # This exception is raised when the URI Parser's DNS query returns SRV record(s)
     #   whose parent domain does not match the hostname used for the query.
     #

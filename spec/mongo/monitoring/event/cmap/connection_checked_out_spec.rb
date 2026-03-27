@@ -1,12 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut do
-
   describe '#summary' do
-
     let(:address) do
       Mongo::Address.new('127.0.0.1:27017')
     end

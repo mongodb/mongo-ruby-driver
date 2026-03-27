@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -23,7 +22,6 @@ require 'mongo/server_selector/secondary'
 require 'mongo/server_selector/secondary_preferred'
 
 module Mongo
-
   # Functionality for getting an object able to select a server, given a preference.
   #
   # @since 2.0.0
@@ -34,12 +32,12 @@ module Mongo
     # considered for selection.
     #
     # @since 2.0.0
-    LOCAL_THRESHOLD = 0.015.freeze
+    LOCAL_THRESHOLD = 0.015
 
     # How long to block for server selection before throwing an exception.
     #
     # @since 2.0.0
-    SERVER_SELECTION_TIMEOUT = 30.freeze
+    SERVER_SELECTION_TIMEOUT = 30
 
     # The smallest allowed max staleness value, in seconds.
     #
@@ -74,6 +72,7 @@ module Mongo
     # @since 2.0.0
     def get(preference = {})
       return preference if PREFERENCES.values.include?(preference.class)
+
       Mongo::Lint.validate_underscore_read_preference(preference)
       PREFERENCES.fetch((preference[:mode] || :primary).to_sym).new(preference)
     end

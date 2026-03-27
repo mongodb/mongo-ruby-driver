@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -16,9 +15,7 @@
 # limitations under the License.
 
 module Mongo
-
   class URI
-
     # Parser for a URI using the mongodb+srv protocol, which specifies a DNS to query for SRV records.
     # The driver will query the DNS server for SRV records on <hostname>.<domainname>,
     # prefixed with _mongodb._tcp
@@ -35,7 +32,6 @@ module Mongo
     #
     # @since 2.5.0
     class SRVProtocol < URI
-
       attr_reader :srv_records
 
       # Gets the options hash that needs to be passed to a Mongo::Client on instantiation, so we
@@ -50,7 +46,7 @@ module Mongo
       # @since 2.5.0
       def client_options
         opts = @txt_options.merge(ssl: true)
-        opts = opts.merge(uri_options).merge(:database => database)
+        opts = opts.merge(uri_options).merge(database: database)
         @user ? opts.merge(credentials) : opts
       end
 
@@ -77,33 +73,33 @@ module Mongo
       #   hostname.
       #
       # @deprecated
-      DOT_PARTITION = '.'.freeze
+      DOT_PARTITION = '.'
 
       # @return [ Array<String> ] VALID_TXT_OPTIONS The valid options for a TXT record to specify.
-      VALID_TXT_OPTIONS = %w(replicaset authsource loadbalanced).freeze
+      VALID_TXT_OPTIONS = %w[replicaset authsource loadbalanced].freeze
 
       # @return [ String ] INVALID_HOST Error message format string indicating that the hostname in
       #   in the URI does not fit the expected form.
-      INVALID_HOST = "One and only one host is required in a connection string with the " +
-                       "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
+      INVALID_HOST = 'One and only one host is required in a connection string with the ' +
+                     "'#{MONGODB_SRV_SCHEME}' protocol."
 
       # @return [ String ] INVALID_PORT Error message format string indicating that a port was
       #   included with an SRV hostname.
-      INVALID_PORT = "It is not allowed to specify a port in a connection string with the " +
-                       "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
+      INVALID_PORT = 'It is not allowed to specify a port in a connection string with the ' +
+                     "'#{MONGODB_SRV_SCHEME}' protocol."
 
       # @return [ String ] INVALID_DOMAIN Error message format string indicating that the domain name
       #   of the hostname does not fit the expected form.
       # @deprecated
-      INVALID_DOMAIN = "The domain name must consist of at least two parts: the domain name, " +
-                         "and a TLD.".freeze
+      INVALID_DOMAIN = 'The domain name must consist of at least two parts: the domain name, ' +
+                       'and a TLD.'
 
       # @return [ String ] NO_SRV_RECORDS Error message format string indicating that no SRV records
       #   were found.
-      NO_SRV_RECORDS = "The DNS query returned no SRV records for '%s'".freeze
+      NO_SRV_RECORDS = "The DNS query returned no SRV records for '%s'"
 
       # @return [ String ] FORMAT The expected SRV URI format.
-      FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'.freeze
+      FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'
 
       # Gets the MongoDB SRV URI scheme.
       #
@@ -130,7 +126,7 @@ module Mongo
         @resolver ||= Srv::Resolver.new(
           raise_on_invalid: false,
           resolv_options: options[:resolv_options],
-          timeout: options[:connect_timeout],
+          timeout: options[:connect_timeout]
         )
       end
 
@@ -142,9 +138,7 @@ module Mongo
       def parse!(remaining)
         super
 
-        if @servers.length != 1
-          raise_invalid_error!(INVALID_HOST)
-        end
+        raise_invalid_error!(INVALID_HOST) if @servers.length != 1
         hostname = @servers.first
         validate_srv_hostname(hostname)
         @query_hostname = hostname
@@ -156,9 +150,8 @@ module Mongo
           uri_options[:srv_service_name] || options[:srv_service_name],
           uri_options[:srv_max_hosts] || options[:srv_max_hosts]
         )
-        if srv_result.empty?
-          raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname)
-        end
+        raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname) if srv_result.empty?
+
         @txt_options = get_txt_options(hostname) || {}
         records = srv_result.address_strs
         records.each do |record|
@@ -180,19 +173,13 @@ module Mongo
       def validate_srv_hostname(hostname)
         raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
 
-        if hostname.start_with?('.')
-          raise_invalid_error!("Hostname cannot start with a dot: #{hostname}")
-        end
-        if hostname.end_with?('.')
-          raise_invalid_error!("Hostname cannot end with a dot: #{hostname}")
-        end
+        raise_invalid_error!("Hostname cannot start with a dot: #{hostname}") if hostname.start_with?('.')
+        raise_invalid_error!("Hostname cannot end with a dot: #{hostname}") if hostname.end_with?('.')
         parts = hostname.split('.')
-        if parts.any?(&:empty?)
-          raise_invalid_error!("Hostname cannot have consecutive dots: #{hostname}")
-        end
-        if parts.length < 1
-          raise_invalid_error!("Hostname cannot be empty: #{hostname}")
-        end
+        raise_invalid_error!("Hostname cannot have consecutive dots: #{hostname}") if parts.any?(&:empty?)
+        return unless parts.length < 1
+
+        raise_invalid_error!("Hostname cannot be empty: #{hostname}")
       end
 
       # Obtains the TXT options of a host.
@@ -222,21 +209,21 @@ module Mongo
       # @raise [ Mongo::Error::InvalidTXTRecord ] If the TXT record does not fit the expected form
       #   or the option specified is not a valid TXT option.
       def parse_txt_options!(string)
-        string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |txt_options, opt|
+        string.split(INDIV_URI_OPTS_DELIM).each_with_object({}) do |opt, txt_options|
           raise Error::InvalidTXTRecord.new(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
+
           key, value = opt.split('=')
           unless VALID_TXT_OPTIONS.include?(key.downcase)
             msg = "TXT records can only specify the options [#{VALID_TXT_OPTIONS.join(', ')}]: #{string}"
             raise Error::InvalidTXTRecord.new(msg)
           end
           options_mapper.add_uri_option(key, value, txt_options)
-          txt_options
         end
       end
 
       def validate_uri_options!
         if uri_options[:direct_connection]
-          raise_invalid_error_no_fmt!("directConnection=true is incompatible with SRV URIs")
+          raise_invalid_error_no_fmt!('directConnection=true is incompatible with SRV URIs')
         end
 
         super

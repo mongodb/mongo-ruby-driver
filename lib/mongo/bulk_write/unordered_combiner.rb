@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class BulkWrite
-
     # Combines groups of bulk write operations in no order.
     #
     # @api private

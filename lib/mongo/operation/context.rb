@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Operation
-
     # Context for operations.
     #
     # Holds various objects needed to make decisions about operation execution
@@ -44,17 +42,14 @@ module Mongo
         options: nil
       )
         if options
-          if client
-            raise ArgumentError, 'Client and options cannot both be specified'
-          end
+          raise ArgumentError, 'Client and options cannot both be specified' if client
 
-          if session
-            raise ArgumentError, 'Session and options cannot both be specified'
-          end
+          raise ArgumentError, 'Session and options cannot both be specified' if session
         end
 
         if connection_global_id && session&.pinned_connection_global_id
-          raise ArgumentError, 'Trying to pin context to a connection when the session is already pinned to a connection.'
+          raise ArgumentError,
+                'Trying to pin context to a connection when the session is already pinned to a connection.'
         end
 
         @client = client
@@ -65,10 +60,7 @@ module Mongo
         super(session: session, operation_timeouts: operation_timeouts)
       end
 
-      attr_reader :client
-      attr_reader :session
-      attr_reader :view
-      attr_reader :options
+      attr_reader :client, :session, :view, :options
 
       # Returns a new Operation::Context with the deadline refreshed
       # and relative to the current moment.
@@ -166,11 +158,11 @@ module Mongo
       end
 
       def encrypter
-        if client&.encrypter
-          client.encrypter
-        else
+        unless client&.encrypter
           raise Error::InternalDriverError, 'Encrypter should only be accessed when encryption is to be performed'
         end
+
+        client.encrypter
       end
 
       def inspect

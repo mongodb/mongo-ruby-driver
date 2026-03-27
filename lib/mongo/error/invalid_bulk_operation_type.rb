@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Exception raised if an non-existent operation type is used.
     #
     # @since 2.0.0
     class InvalidBulkOperationType < Error
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.

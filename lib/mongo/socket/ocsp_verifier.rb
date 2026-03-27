@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ end
 
 module Mongo
   class Socket
-
     # OCSP endpoint verifier.
     #
     # After a TLS connection is established, this verifier inspects the
@@ -56,11 +54,7 @@ module Mongo
         @options = opts
       end
 
-      attr_reader :host_name
-      attr_reader :cert
-      attr_reader :ca_cert
-      attr_reader :cert_store
-      attr_reader :options
+      attr_reader :host_name, :cert, :ca_cert, :cert_store, :options
 
       def timeout
         options[:timeout] || 5
@@ -92,7 +86,7 @@ module Mongo
         @cert_id ||= OpenSSL::OCSP::CertificateId.new(
           cert,
           ca_cert,
-          OpenSSL::Digest::SHA1.new,
+          OpenSSL::Digest.new('SHA1')
         )
       end
 
@@ -101,15 +95,11 @@ module Mongo
           return false if ocsp_uris.empty?
 
           resp = OcspCache.get(cert_id)
-          if resp
-            return return_ocsp_response(resp)
-          end
+          return return_ocsp_response(resp) if resp
 
           resp, errors = do_verify
 
-          if resp
-            OcspCache.set(cert_id, resp)
-          end
+          OcspCache.set(cert_id, resp) if resp
 
           return_ocsp_response(resp, errors)
         end
@@ -169,7 +159,7 @@ module Mongo
         threads.map(&:kill)
         threads.map(&:join)
 
-        [resp, @resp_errors]
+        [ resp, @resp_errors ]
       end
 
       def verify_one_responder(uri)
@@ -181,11 +171,9 @@ module Mongo
             uri = URI(uri)
             Net::HTTP.start(uri.hostname, uri.port) do |http|
               path = uri.path
-              if path.empty?
-                path = '/'
-              end
+              path = '/' if path.empty?
               http.post(path, @serialized_req,
-                'content-type' => 'application/ocsp-request')
+                        'content-type' => 'application/ocsp-request')
             end
           rescue IOError, SystemCallError => e
             @resp_errors << "OCSP request to #{report_uri(original_uri, uri)} failed: #{e.class}: #{e}"
@@ -205,14 +193,16 @@ module Mongo
           end
 
           if code >= 400
-            @resp_errors << "OCSP request to #{report_uri(original_uri, uri)} failed with HTTP status code #{http_response.code}" + report_response_body(http_response.body)
+            @resp_errors << ("OCSP request to #{report_uri(original_uri,
+                                                           uri)} failed with HTTP status code #{http_response.code}" + report_response_body(http_response.body))
             return false
           end
 
           if code != 200
             # There must be a body provided with the response, if one isn't
             # provided the response cannot be verified.
-            @resp_errors << "OCSP request to #{report_uri(original_uri, uri)} failed with unexpected HTTP status code #{http_response.code}" + report_response_body(http_response.body)
+            @resp_errors << ("OCSP request to #{report_uri(original_uri,
+                                                           uri)} failed with unexpected HTTP status code #{http_response.code}" + report_response_body(http_response.body))
             return false
           end
 
@@ -225,10 +215,11 @@ module Mongo
           return false
         end
         resp = resp.basic
-        unless resp.verify([ca_cert], cert_store)
+        unless resp.verify([ ca_cert ], cert_store)
           # Ruby's OpenSSL binding discards error information - see
           # https://github.com/ruby/openssl/issues/395
-          @resp_errors << "OCSP response from #{report_uri(original_uri, uri)} failed signature verification; set `OpenSSL.debug = true` to see why"
+          @resp_errors << "OCSP response from #{report_uri(original_uri,
+                                                           uri)} failed signature verification; set `OpenSSL.debug = true` to see why"
           return false
         end
 
@@ -239,18 +230,20 @@ module Mongo
 
         resp = resp.find_response(cert_id)
         unless resp
-          @resp_errors << "OCSP response from #{report_uri(original_uri, uri)} did not include information about the requested certificate"
+          @resp_errors << "OCSP response from #{report_uri(original_uri,
+                                                           uri)} did not include information about the requested certificate"
           return false
         end
-        # TODO make a new class instead of patching the stdlib one?
-        resp.instance_variable_set('@uri', uri)
-        resp.instance_variable_set('@original_uri', original_uri)
+        # TODO: make a new class instead of patching the stdlib one?
+        resp.instance_variable_set(:@uri, uri)
+        resp.instance_variable_set(:@original_uri, original_uri)
         class << resp
           attr_reader :uri, :original_uri
         end
 
         unless resp.check_validity
-          @resp_errors << "OCSP response from #{report_uri(original_uri, uri)} was invalid: this_update was in the future or next_update time has passed"
+          @resp_errors << "OCSP response from #{report_uri(original_uri,
+                                                           uri)} was invalid: this_update was in the future or next_update time has passed"
           return false
         end
 
@@ -258,70 +251,66 @@ module Mongo
           OpenSSL::OCSP::V_CERTSTATUS_GOOD,
           OpenSSL::OCSP::V_CERTSTATUS_REVOKED,
         ].include?(resp.cert_status)
-          @resp_errors << "OCSP response from #{report_uri(original_uri, uri)} had a non-definitive status: #{resp.cert_status}"
+          @resp_errors << "OCSP response from #{report_uri(original_uri,
+                                                           uri)} had a non-definitive status: #{resp.cert_status}"
           return false
         end
 
         # Note this returns the redirected URI
         @resp_queue << resp
-      rescue => exc
-        Utils.warn_bg_exception("Error performing OCSP verification for '#{host_name}' via '#{uri}'", exc,
-          logger: options[:logger],
-          log_prefix: options[:log_prefix],
-          bg_error_backtrace: options[:bg_error_backtrace],
-        )
+      rescue StandardError => e
+        Utils.warn_bg_exception("Error performing OCSP verification for '#{host_name}' via '#{uri}'", e,
+                                logger: options[:logger],
+                                log_prefix: options[:log_prefix],
+                                bg_error_backtrace: options[:bg_error_backtrace])
         false
       ensure
         @outstanding_requests_lock.synchronize do
           @outstanding_requests -= 1
-          if @outstanding_requests == 0
-            @resp_queue << nil
-          end
+          @resp_queue << nil if @outstanding_requests == 0
         end
       end
 
       def return_ocsp_response(resp, errors = nil)
         if resp
-          if resp.cert_status == OpenSSL::OCSP::V_CERTSTATUS_REVOKED
-            raise_revoked_error(resp)
-          end
+          raise_revoked_error(resp) if resp.cert_status == OpenSSL::OCSP::V_CERTSTATUS_REVOKED
           true
         else
           reasons = []
           errors.length.times do
             reasons << errors.shift
           end
-          if reasons.empty?
-            msg = "No responses from responders: #{ocsp_uris.join(', ')} within #{timeout} seconds"
-          else
-            msg = "For responders #{ocsp_uris.join(', ')} with a timeout of #{timeout} seconds: #{reasons.join(', ')}"
-          end
+          msg = if reasons.empty?
+                  "No responses from responders: #{ocsp_uris.join(', ')} within #{timeout} seconds"
+                else
+                  "For responders #{ocsp_uris.join(', ')} with a timeout of #{timeout} seconds: #{reasons.join(', ')}"
+                end
           log_warn("TLS certificate of '#{host_name}' could not be definitively verified via OCSP: #{msg}")
           false
         end
       end
 
       def handle_exceptions
-        begin
-          yield
-        rescue Error::ServerCertificateRevoked
-          raise
-        rescue => exc
-          Utils.warn_bg_exception(
-            "Error performing OCSP verification for '#{host_name}'",
-            exc,
-            **options)
-          false
-        end
+        yield
+      rescue Error::ServerCertificateRevoked
+        raise
+      rescue StandardError => e
+        Utils.warn_bg_exception(
+          "Error performing OCSP verification for '#{host_name}'",
+          e,
+          **options
+        )
+        false
       end
 
       def raise_revoked_error(resp)
-        if resp.uri == resp.original_uri
-          redirect = ''
-        else
-          redirect = " (redirected from #{resp.original_uri})"
-        end
-        raise Error::ServerCertificateRevoked, "TLS certificate of '#{host_name}' has been revoked according to '#{resp.uri}'#{redirect} for reason '#{resp.revocation_reason}' at '#{resp.revocation_time}'"
+        redirect = if resp.uri == resp.original_uri
+                     ''
+                   else
+                     " (redirected from #{resp.original_uri})"
+                   end
+        raise Error::ServerCertificateRevoked,
+              "TLS certificate of '#{host_name}' has been revoked according to '#{resp.uri}'#{redirect} for reason '#{resp.revocation_reason}' at '#{resp.revocation_time}'"
       end
 
       def report_uri(original_uri, uri)

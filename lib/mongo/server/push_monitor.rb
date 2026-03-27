@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Server
-
     # A monitor utilizing server-pushed hello requests.
     #
     # When a Monitor handshakes with a 4.4+ server, it creates an instance
@@ -33,15 +31,10 @@ module Mongo
       include BackgroundThread
 
       def initialize(monitor, topology_version, monitoring, **options)
-        if topology_version.nil?
-          raise ArgumentError, 'Topology version must be provided but it was nil'
-        end
-        unless options[:app_metadata]
-          raise ArgumentError, 'App metadata is required'
-        end
-        unless options[:check_document]
-          raise ArgumentError, 'Check document is required'
-        end
+        raise ArgumentError, 'Topology version must be provided but it was nil' if topology_version.nil?
+        raise ArgumentError, 'App metadata is required' unless options[:app_metadata]
+        raise ArgumentError, 'Check document is required' unless options[:check_document]
+
         @app_metadata = options[:app_metadata]
         @check_document = options[:check_document]
         @monitor = monitor
@@ -78,7 +71,11 @@ module Mongo
           if @connection
             # Interrupt any in-progress exhausted hello reads by
             # disconnecting the connection.
-            @connection.send(:socket).close rescue nil
+            begin
+              @connection.send(:socket).close
+            rescue StandardError
+              nil
+            end
           end
         end
         super.tap do
@@ -107,10 +104,8 @@ module Mongo
         # https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-monitoring.md#streamable-hello-or-legacy-hello-command
         # says that topologyVersion should only be updated from successful
         # hello responses.
-        if new_description.topology_version
-          @topology_version = new_description.topology_version
-        end
-      rescue IOError, SocketError, SystemCallError, Mongo::Error => exc
+        @topology_version = new_description.topology_version if new_description.topology_version
+      rescue IOError, SocketError, SystemCallError, Mongo::Error => e
         stop_requested = @lock.synchronize { @stop_requested }
         if stop_requested
           # Ignore the exception, see RUBY-2771.
@@ -118,11 +113,10 @@ module Mongo
         end
 
         msg = "Error running awaited hello on #{server.address}"
-        Utils.warn_bg_exception(msg, exc,
-          logger: options[:logger],
-          log_prefix: options[:log_prefix],
-          bg_error_backtrace: options[:bg_error_backtrace],
-        )
+        Utils.warn_bg_exception(msg, e,
+                                logger: options[:logger],
+                                log_prefix: options[:log_prefix],
+                                bg_error_backtrace: options[:bg_error_backtrace])
 
         # If a request failed on a connection, stop push monitoring.
         # In case the server is dead we don't want to have two connections
@@ -153,9 +147,7 @@ module Mongo
         end
 
         resp_msg = begin
-          unless @server_pushing
-            write_check_command
-          end
+          write_check_command unless @server_pushing
           read_response
         rescue Mongo::Error
           @lock.synchronize do
@@ -173,10 +165,10 @@ module Mongo
       def write_check_command
         document = @check_document.merge(
           topologyVersion: topology_version.to_doc,
-          maxAwaitTimeMS: monitor.heartbeat_interval * 1000,
+          maxAwaitTimeMS: monitor.heartbeat_interval * 1000
         )
         command = Protocol::Msg.new(
-          [:exhaust_allowed], {}, document.merge({'$db' => Database::ADMIN})
+          [ :exhaust_allowed ], {}, document.merge({ '$db' => Database::ADMIN })
         )
         @lock.synchronize { @connection }.write_bytes(command.serialize.to_s)
       end
@@ -184,14 +176,15 @@ module Mongo
       def read_response
         if timeout = options[:connect_timeout]
           if timeout < 0
-            raise Mongo::SocketTimeoutError, "Requested to read with a negative timeout: #{}"
+            raise Mongo::SocketTimeoutError, 'Requested to read with a negative timeout: '
           elsif timeout > 0
             timeout += options[:heartbeat_frequency] || Monitor::DEFAULT_HEARTBEAT_INTERVAL
           end
         end
         # We set the timeout twice: once passed into read_socket which applies
         # to each individual read operation, and again around the entire read.
-        Timeout.timeout(timeout, Error::SocketTimeoutError, "Failed to read an awaited hello response in #{timeout} seconds") do
+        Timeout.timeout(timeout, Error::SocketTimeoutError,
+                        "Failed to read an awaited hello response in #{timeout} seconds") do
           @lock.synchronize { @connection }.read_response(socket_timeout: timeout)
         end
       end
@@ -199,7 +192,6 @@ module Mongo
       def to_s
         "#<#{self.class.name}:#{object_id} #{server.address}>"
       end
-
     end
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -19,9 +18,8 @@ module Mongo
   module CRUD
     class Outcome
       def initialize(spec)
-        if spec.nil?
-          raise ArgumentError, 'Outcome specification cannot be nil'
-        end
+        raise ArgumentError, 'Outcome specification cannot be nil' if spec.nil?
+
         @result = spec['result']
         @collection = spec['collection']
         @error = spec['error']

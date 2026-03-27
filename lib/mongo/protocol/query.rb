@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Protocol
-
     # MongoDB Wire protocol Query message.
     #
     # This is a client request message that is sent to the server in order
@@ -64,20 +62,19 @@ module Mongo
       def initialize(database, collection, selector, options = {})
         @database = database
         @namespace = "#{database}.#{collection}"
-        if selector.nil?
-          raise ArgumentError, 'Selector cannot be nil'
-        end
+        raise ArgumentError, 'Selector cannot be nil' if selector.nil?
+
         @selector = selector
         @options = options
         @project = options[:project]
         @limit = determine_limit
-        @skip = options[:skip]  || 0
+        @skip = options[:skip] || 0
         @flags = options[:flags] || []
         @upconverter = Upconverter.new(
           collection,
           BSON::Document.new(selector),
           BSON::Document.new(options),
-          flags,
+          flags
         )
         super
       end
@@ -163,9 +160,9 @@ module Mongo
           doc.to_bson.length > max_bson_size
         end
 
-        if contains_too_large_document
-          raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size after serialization')
-        end
+        return unless contains_too_large_document
+
+        raise Error::MaxBSONSize.new('The document exceeds maximum allowed BSON object size after serialization')
       end
 
       # The operation code required to specify a Query message.
@@ -180,15 +177,15 @@ module Mongo
 
       # Available flags for a Query message.
       # @api private
-      FLAGS = [
-        :reserved,
-        :tailable_cursor,
-        :secondary_ok,
-        :oplog_replay,
-        :no_cursor_timeout,
-        :await_data,
-        :exhaust,
-        :partial
+      FLAGS = %i[
+        reserved
+        tailable_cursor
+        secondary_ok
+        oplog_replay
+        no_cursor_timeout
+        await_data
+        exhaust
+        partial
       ]
 
       # @!attribute
@@ -220,15 +217,14 @@ module Mongo
       #
       # @since 2.1.0
       class Upconverter
-
         # Mappings of the options to the find command options.
         #
         # @since 2.1.0
         OPTION_MAPPINGS = {
-          :project => 'projection',
-          :skip => 'skip',
-          :limit => 'limit',
-          :batch_size => 'batchSize'
+          project: 'projection',
+          skip: 'skip',
+          limit: 'limit',
+          batch_size: 'batchSize'
         }.freeze
 
         SPECIAL_FIELD_MAPPINGS = {
@@ -250,11 +246,11 @@ module Mongo
         #
         # @since 2.1.0
         FLAG_MAPPINGS = {
-          :tailable_cursor => 'tailable',
-          :oplog_replay => 'oplogReplay',
-          :no_cursor_timeout => 'noCursorTimeout',
-          :await_data => 'awaitData',
-          :partial => 'allowPartialResults'
+          tailable_cursor: 'tailable',
+          oplog_replay: 'oplogReplay',
+          no_cursor_timeout: 'noCursorTimeout',
+          await_data: 'awaitData',
+          partial: 'allowPartialResults'
         }.freeze
 
         # @return [ String ] collection The name of the collection.
@@ -284,12 +280,9 @@ module Mongo
           # Although the docstring claims both hashes and BSON::Documents
           # are acceptable, this class expects the filter and options to
           # contain symbol keys which isn't what the operation layer produces.
-          unless BSON::Document === filter
-            raise ArgumentError, 'Filter must provide indifferent access'
-          end
-          unless BSON::Document === options
-            raise ArgumentError, 'Options must provide indifferent access'
-          end
+          raise ArgumentError, 'Filter must provide indifferent access' unless filter.is_a?(BSON::Document)
+          raise ArgumentError, 'Options must provide indifferent access' unless options.is_a?(BSON::Document)
+
           @collection = collection
           @filter = filter
           @options = options
@@ -342,16 +335,14 @@ module Mongo
         def find_command
           document = BSON::Document.new(
             find: collection,
-            filter: query_filter,
+            filter: query_filter
           )
           OPTION_MAPPINGS.each do |legacy, option|
             document.store(option, options[legacy]) unless options[legacy].nil?
           end
           if Lint.enabled?
-            filter.each do |k, v|
-              unless String === k
-                raise Error::LintError, "All keys in filter must be strings: #{filter.inspect}"
-              end
+            filter.each do |k, _v|
+              raise Error::LintError, "All keys in filter must be strings: #{filter.inspect}" unless k.is_a?(String)
             end
           end
           Lint.validate_camel_case_read_preference(filter['readPreference'])

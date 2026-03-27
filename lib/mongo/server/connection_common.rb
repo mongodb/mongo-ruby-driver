@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Server
-
     # Common methods used by both monitoring and non-monitoring connections.
     #
     # @note Although methods of this module are part of the public API,
@@ -26,7 +24,6 @@ module Mongo
     #
     # @api semipublic
     class ConnectionCommon
-
       # The compressor negotiated during the handshake for this connection,
       # if any.
       #
@@ -73,12 +70,8 @@ module Mongo
                      LEGACY_HELLO_DOC
                    end
         document.merge(app_metadata.validated_document).tap do |doc|
-          if speculative_auth_doc
-            doc.update(speculativeAuthenticate: speculative_auth_doc)
-          end
-          if load_balancer
-            doc.update(loadBalanced: true)
-          end
+          doc.update(speculativeAuthenticate: speculative_auth_doc) if speculative_auth_doc
+          doc.update(loadBalanced: true) if load_balancer
         end
       end
 
@@ -94,18 +87,17 @@ module Mongo
       def handshake_command(handshake_document)
         if handshake_document['apiVersion'] || handshake_document['loadBalanced']
           Protocol::Msg.new(
-            [], {}, handshake_document.merge({'$db' => Database::ADMIN})
+            [], {}, handshake_document.merge({ '$db' => Database::ADMIN })
           )
         else
           Protocol::Query.new(
             Database::ADMIN,
             Database::COMMAND,
             handshake_document,
-            :limit => -1
+            limit: -1
           )
         end
       end
-
 
       private
 
@@ -118,22 +110,22 @@ module Mongo
       def set_compressor!(reply)
         server_compressors = reply['compression']
 
-        if options[:compressors]
-          if intersection = (server_compressors & options[:compressors])
-            @compressor = intersection.first
-          else
-            msg = if server_compressors
-              "The server at #{address} has no compression algorithms in common with those requested. " +
-                "Server algorithms: #{server_compressors.join(', ')}; " +
-                "Requested algorithms: #{options[:compressors].join(', ')}. " +
-                "Compression will not be used"
-            else
-              "The server at #{address} did not advertise compression support. " +
-                "Requested algorithms: #{options[:compressors].join(', ')}. " +
-                "Compression will not be used"
-            end
-            log_warn(msg)
-          end
+        return unless options[:compressors]
+
+        if intersection = (server_compressors & options[:compressors])
+          @compressor = intersection.first
+        else
+          msg = if server_compressors
+                  "The server at #{address} has no compression algorithms in common with those requested. " +
+                    "Server algorithms: #{server_compressors.join(', ')}; " +
+                    "Requested algorithms: #{options[:compressors].join(', ')}. " +
+                    'Compression will not be used'
+                else
+                  "The server at #{address} did not advertise compression support. " +
+                    "Requested algorithms: #{options[:compressors].join(', ')}. " +
+                    'Compression will not be used'
+                end
+          log_warn(msg)
         end
       end
 
@@ -151,57 +143,42 @@ module Mongo
         # knows its address. Server::Connection delegates the address to its
         # server.
         note = +"on #{address.seed}"
-        if respond_to?(:id)
-          note << ", connection #{generation}:#{id}"
-        end
+        note << ", connection #{generation}:#{id}" if respond_to?(:id)
         # Non-monitoring connections have service id.
         # Monitoring connections do not.
-        if respond_to?(:service_id) && service_id
-          note << ", service id #{service_id}"
-        end
+        note << ", service id #{service_id}" if respond_to?(:service_id) && service_id
         e.add_note(note)
         if respond_to?(:generation)
           # Non-monitoring connections
           e.generation = generation
-          if respond_to?(:global_id)
-            e.connection_global_id = global_id
-          end
-          if respond_to?(:description)
-            e.service_id = service_id
-          end
+          e.connection_global_id = global_id if respond_to?(:global_id)
+          e.service_id = service_id if respond_to?(:description)
         end
         raise e
       end
 
       def ssl_options
         @ssl_options ||= if options[:ssl]
-          options.select { |k, v| k.to_s.start_with?('ssl') }
-        else
-          # Due to the way options are propagated from the client, if we
-          # decide that we don't want to use TLS we need to have the :ssl
-          # option explicitly set to false or the value provided to the
-          # connection might be overwritten by the default inherited from
-          # the client.
-          {ssl: false}
-        end.freeze
+                           options.select { |k, _v| k.to_s.start_with?('ssl') }
+                         else
+                           # Due to the way options are propagated from the client, if we
+                           # decide that we don't want to use TLS we need to have the :ssl
+                           # option explicitly set to false or the value provided to the
+                           # connection might be overwritten by the default inherited from
+                           # the client.
+                           { ssl: false }
+                         end.freeze
       end
 
       def ensure_connected
-        begin
-          unless socket
-            raise ArgumentError, "Connection #{generation}:#{id} for #{address.seed} is not connected"
-          end
-          if @error
-            raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished"
-          end
-          result = yield socket
-          success = true
-          result
-        ensure
-          unless success
-            @error = true
-          end
-        end
+        raise ArgumentError, "Connection #{generation}:#{id} for #{address.seed} is not connected" unless socket
+        raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished" if @error
+
+        result = yield socket
+        success = true
+        result
+      ensure
+        @error = true unless success
       end
     end
   end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 $sdam_formatter_lock = Mutex.new
 
@@ -41,24 +40,24 @@ module SdamFormatterIntegration
     topology_closed_subscriber = TopologyClosedLogSubscriber.new
 
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING,
-      topology_opening_subscriber)
+                                        topology_opening_subscriber)
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::SERVER_OPENING,
-      server_opening_subscriber)
+                                        server_opening_subscriber)
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED,
-      server_description_changed_subscriber)
+                                        server_description_changed_subscriber)
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED,
-      topology_changed_subscriber)
+                                        topology_changed_subscriber)
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::SERVER_CLOSED,
-      server_closed_subscriber)
+                                        server_closed_subscriber)
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::TOPOLOGY_CLOSED,
-      topology_closed_subscriber)
+                                        topology_closed_subscriber)
   end
   module_function :subscribe
 
   class SDAMLogSubscriber
     def succeeded(event)
       SdamFormatterIntegration.log_entries <<
-        Time.now.strftime('%Y-%m-%d %H:%M:%S.%L %z') + ' | ' + format_event(event)
+        (Time.now.strftime('%Y-%m-%d %H:%M:%S.%L %z') + ' | ' + format_event(event))
     end
   end
 
@@ -83,7 +82,7 @@ module SdamFormatterIntegration
 
     def format_event(event)
       "Server description for #{event.address} changed from " +
-      "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'."
+        "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'."
     end
   end
 
@@ -91,12 +90,12 @@ module SdamFormatterIntegration
     private
 
     def format_event(event)
-      if event.previous_topology != event.new_topology
-        "Topology type '#{event.previous_topology.display_name}' changed to " +
-        "type '#{event.new_topology.display_name}'."
-      else
+      if event.previous_topology == event.new_topology
         "There was a change in the members of the '#{event.new_topology.display_name}' " +
-        "topology."
+          'topology.'
+      else
+        "Topology type '#{event.previous_topology.display_name}' changed to " +
+          "type '#{event.new_topology.display_name}'."
       end
     end
   end

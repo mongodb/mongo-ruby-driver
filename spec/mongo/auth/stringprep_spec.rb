@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -46,11 +45,11 @@ describe Mongo::Auth::StringPrep do
     end
 
     context 'with options specified' do
-      let (:mappings) do
-        [Mongo::Auth::StringPrep::Tables::B1, Mongo::Auth::StringPrep::Tables::B2]
+      let(:mappings) do
+        [ Mongo::Auth::StringPrep::Tables::B1, Mongo::Auth::StringPrep::Tables::B2 ]
       end
 
-      let (:prohibited) do
+      let(:prohibited) do
         [
           Mongo::Auth::StringPrep::Tables::C1_1,
           Mongo::Auth::StringPrep::Tables::C1_2,
@@ -58,7 +57,7 @@ describe Mongo::Auth::StringPrep do
         ]
       end
 
-      let (:options) do
+      let(:options) do
         {
           normalize: true,
           bidi: true,
@@ -121,9 +120,9 @@ describe Mongo::Auth::StringPrep do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             prepared_data
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end.to raise_error(Mongo::Error::FailedStringPrepValidation)
         end
       end
 
@@ -145,9 +144,9 @@ describe Mongo::Auth::StringPrep do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             prepared_data
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end.to raise_error(Mongo::Error::FailedStringPrepValidation)
         end
       end
 
@@ -157,9 +156,9 @@ describe Mongo::Auth::StringPrep do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             prepared_data
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end.to raise_error(Mongo::Error::FailedStringPrepValidation)
         end
       end
 
@@ -169,9 +168,9 @@ describe Mongo::Auth::StringPrep do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             prepared_data
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end.to raise_error(Mongo::Error::FailedStringPrepValidation)
         end
       end
 
@@ -181,9 +180,9 @@ describe Mongo::Auth::StringPrep do
         end
 
         it 'raises an error' do
-          expect {
+          expect do
             prepared_data
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end.to raise_error(Mongo::Error::FailedStringPrepValidation)
         end
       end
     end

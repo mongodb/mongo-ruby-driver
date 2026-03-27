@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Operation
-
     # Shared executable behavior of operations for operations
     # whose result should not be validated.
     #
     # @api private
     module ExecutableNoValidate
-
       def execute(connection, context:)
         do_execute(connection, context)
       end

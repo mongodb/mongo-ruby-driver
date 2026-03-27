@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2023 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Retryable
-
     # The abstract superclass for workers employed by Mongo::Retryable.
     #
     # @api private
@@ -25,9 +23,9 @@ module Mongo
       extend Forwardable
 
       def_delegators :retryable,
-        :client,
-        :cluster,
-        :select_server
+                     :client,
+                     :cluster,
+                     :select_server
 
       # @return [ Mongo::Retryable ] retryable A reference to the client object
       #   that instatiated this worker.
@@ -79,7 +77,6 @@ module Mongo
         ].freeze
       end
 
-
       # Tests to see if the given exception instance is of a type that can
       # be retried with modern retry mechanism.
       #
@@ -95,19 +92,20 @@ module Mongo
       def is_legacy_retryable_exception?(e)
         legacy_retryable_exceptions.any? { |klass| klass === e }
       end
+
       # Logs the given deprecation warning the first time it is called for a
       # given key; after that, it does nothing when given the same key.
       def deprecation_warning(key, warning)
         $_deprecation_warnings ||= {}
-        unless $_deprecation_warnings[key]
-          $_deprecation_warnings[key] = true
-          Logger.logger.warn(warning)
-        end
+        return if $_deprecation_warnings[key]
+
+        $_deprecation_warnings[key] = true
+        Logger.logger.warn(warning)
       end
 
       # Log a warning so that any application slow down is immediately obvious.
       def log_retry(e, options = nil)
-        message = (options || {}).fetch(:message, "Retry")
+        message = (options || {}).fetch(:message, 'Retry')
         Logger.logger.warn "#{message} due to: #{e.class.name}: #{e.message}"
       end
 
@@ -140,6 +138,5 @@ module Mongo
           e.respond_to?(:label?) && e.label?('RetryableError')
       end
     end
-
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,7 +15,6 @@
 # limitations under the License.
 
 module Mongo
-
   # Client-side representation of an iterator over a query result set on
   # the server.
   #
@@ -82,9 +80,8 @@ module Mongo
       @namespace = result.namespace
       @remaining = limit if limited?
       set_cursor_id(result)
-      if @cursor_id.nil?
-        raise ArgumentError, 'Cursor id must be present in the result'
-      end
+      raise ArgumentError, 'Cursor id must be present in the result' if @cursor_id.nil?
+
       @options = options
       @session = @options[:session]
       @connection_global_id = result.connection_global_id
@@ -126,9 +123,8 @@ module Mongo
     #
     # @api private
     def self.finalize(kill_spec, cluster)
-      unless KillSpec === kill_spec
-        raise ArgumentError, "First argument must be a KillSpec: #{kill_spec.inspect}"
-      end
+      raise ArgumentError, "First argument must be a KillSpec: #{kill_spec.inspect}" unless kill_spec.is_a?(KillSpec)
+
       proc do
         cluster.schedule_kill_cursor(kill_spec)
       end
@@ -161,7 +157,6 @@ module Mongo
     #
     # @since 2.0.0
     def each
-
       # If we already iterated past the first batch (i.e., called get_more
       # at least once), the cursor on the server side has advanced past
       # the first batch and restarting iteration from the beginning by
@@ -184,9 +179,8 @@ module Mongo
         # StopIteration raised by try_next ends this loop.
         loop do
           document = try_next
-          if explicitly_closed?
-            raise Error::InvalidCursorOperation, 'Cursor was explicitly closed'
-          end
+          raise Error::InvalidCursorOperation, 'Cursor was explicitly closed' if explicitly_closed?
+
           yield document if document
         end
         self
@@ -195,9 +189,8 @@ module Mongo
         # StopIteration raised by try_next ends this loop.
         loop do
           document = try_next
-          if explicitly_closed?
-            raise Error::InvalidCursorOperation, 'Cursor was explicitly closed'
-          end
+          raise Error::InvalidCursorOperation, 'Cursor was explicitly closed' if explicitly_closed?
+
           documents << document if document
         end
         documents
@@ -235,16 +228,16 @@ module Mongo
         # On empty batches, we cache the batch resume token
         cache_batch_resume_token
 
-        unless closed?
+        if closed?
+          @fully_iterated = true
+          raise StopIteration
+        else
           if exhausted?
             close
             @fully_iterated = true
             raise StopIteration
           end
           @documents = get_more
-        else
-          @fully_iterated = true
-          raise StopIteration
         end
       else
         # cursor is closed here
@@ -252,20 +245,16 @@ module Mongo
       end
 
       # If there is at least one document, cache its _id
-      if @documents[0]
-        cache_resume_token(@documents[0])
-      end
+      cache_resume_token(@documents[0]) if @documents[0]
 
       # Cache the batch resume token if we are iterating
       # over the last document, or if the batch is empty
       if @documents.size <= 1
         cache_batch_resume_token
-        if closed?
-          @fully_iterated = true
-        end
+        @fully_iterated = true if closed?
       end
 
-      return @documents.shift
+      @documents.shift
     end
 
     # Get the batch size.
@@ -277,7 +266,7 @@ module Mongo
     #
     # @since 2.2.0
     def batch_size
-      value = @view.batch_size && @view.batch_size > 0 ? @view.batch_size : limit
+      value = (@view.batch_size && @view.batch_size > 0) ? @view.batch_size : limit
       if value == 0
         nil
       else
@@ -312,7 +301,7 @@ module Mongo
         spec = {
           coll_name: collection_name,
           db_name: database.name,
-          cursor_ids: [id],
+          cursor_ids: [ id ],
         }
         op = Operation::KillCursors.new(spec)
         execute_operation(op, context: ctx)
@@ -437,7 +426,7 @@ module Mongo
 
     def batch_size_for_get_more
       if batch_size && use_limit?
-        [batch_size, @remaining].min
+        [ batch_size, @remaining ].min
       else
         batch_size
       end
@@ -448,9 +437,9 @@ module Mongo
     end
 
     def cache_resume_token(doc)
-      if doc[:_id] && doc[:_id].is_a?(Hash)
-        @resume_token = doc[:_id] && doc[:_id].dup.freeze
-      end
+      return unless doc[:_id] && doc[:_id].is_a?(Hash)
+
+      @resume_token = doc[:_id] && doc[:_id].dup.freeze
     end
 
     def cache_batch_resume_token
@@ -465,8 +454,8 @@ module Mongo
         cursor_id: id,
         batch_size: batch_size_for_get_more,
       }
-      if view.respond_to?(:options) && view.options.is_a?(Hash)
-        spec[:comment] = view.options[:comment] unless view.options[:comment].nil?
+      if view.respond_to?(:options) && view.options.is_a?(Hash) && !view.options[:comment].nil?
+        spec[:comment] = view.options[:comment]
       end
       Operation::GetMore.new(spec)
     end
@@ -491,9 +480,7 @@ module Mongo
       end
       @cursor_id = set_cursor_id(result)
 
-      if result.respond_to?(:post_batch_resume_token)
-        @post_batch_resume_token = result.post_batch_resume_token
-      end
+      @post_batch_resume_token = result.post_batch_resume_token if result.respond_to?(:post_batch_resume_token)
 
       end_session if closed?
 
@@ -538,6 +525,7 @@ module Mongo
       # all getMore commands (cumulative). Only update the view reference; keep
       # the same deadline so remaining time decreases across getMores.
       return context.with(view: view) if view.cursor_type == :tailable_await
+
       context.refresh(view: view)
     end
 

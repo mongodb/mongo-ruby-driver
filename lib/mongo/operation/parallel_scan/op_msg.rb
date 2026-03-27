@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class ParallelScan
-
       # A MongoDB parallelscan operation sent as an op message.
       #
       # @api private
@@ -31,12 +29,13 @@ module Mongo
 
         private
 
-        def selector(connection)
-          sel = { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
+        def selector(_connection)
+          sel = { parallelCollectionScan: coll_name, numCursors: cursor_count }
           sel[:maxTimeMS] = max_time_ms if max_time_ms
           if read_concern
             sel[:readConcern] = Options::Mapper.transform_values_to_strings(
-              read_concern)
+              read_concern
+            )
           end
           sel
         end

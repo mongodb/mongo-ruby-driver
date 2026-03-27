@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -41,10 +40,9 @@ describe Mongo::Server::ConnectionPool::Populator do
     end
   end
 
-
   describe '#run!' do
     context 'when the min_pool_size is zero' do
-      let(:options) { {min_pool_size: 0} }
+      let(:options) { { min_pool_size: 0 } }
 
       it 'calls populate on pool once' do
         expect(pool).to receive(:populate).once.and_call_original
@@ -55,7 +53,7 @@ describe Mongo::Server::ConnectionPool::Populator do
     end
 
     context 'when the min_pool_size is greater than zero' do
-      let(:options) { {min_pool_size: 2, max_pool_size: 3} }
+      let(:options) { { min_pool_size: 2, max_pool_size: 3 } }
 
       it 'calls populate on the pool multiple times' do
         expect(pool).to receive(:populate).at_least(:once).and_call_original
@@ -67,7 +65,7 @@ describe Mongo::Server::ConnectionPool::Populator do
       it 'populates the pool up to min_size' do
         pool.instance_variable_set(:@ready, true)
         populator.run!
-        ::Utils.wait_for_condition(3) do
+        Utils.wait_for_condition(3) do
           pool.size >= 2
         end
         expect(pool.size).to eq 2
@@ -77,7 +75,7 @@ describe Mongo::Server::ConnectionPool::Populator do
 
     context 'when populate raises a non socket related error' do
       it 'does not terminate the thread' do
-        expect(pool).to receive(:populate).once.and_raise(Mongo::Auth::InvalidMechanism.new(""))
+        expect(pool).to receive(:populate).once.and_raise(Mongo::Auth::InvalidMechanism.new(''))
         populator.run!
         sleep 0.5
         expect(populator.running?).to be true
@@ -93,8 +91,8 @@ describe Mongo::Server::ConnectionPool::Populator do
       end
     end
 
-    context "when clearing the pool" do
-      it "the populator is run one extra time" do
+    context 'when clearing the pool' do
+      it 'the populator is run one extra time' do
         expect(pool).to receive(:populate).twice
         populator.run!
         sleep 0.5

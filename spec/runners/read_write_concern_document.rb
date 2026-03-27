@@ -1,10 +1,7 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module ReadWriteConcernDocument
-
   class Spec
-
     attr_reader :description
 
     # Instantiate the new spec.
@@ -41,13 +38,9 @@ module ReadWriteConcernDocument
       (@spec['readConcern'] || @spec['writeConcern']).tap do |concern|
         # Documented Ruby API matches the server API, and Ruby prohibits
         # journal key as used in the spec tests...
-        if concern.key?('journal')
-          concern['j'] = concern.delete('journal')
-        end
+        concern['j'] = concern.delete('journal') if concern.key?('journal')
         # ... and uses wtimeout instead of wtimeoutMS
-        if concern.key?('wtimeoutMS')
-          concern['wtimeout'] = concern.delete('wtimeoutMS')
-        end
+        concern['wtimeout'] = concern.delete('wtimeoutMS') if concern.key?('wtimeoutMS')
       end
     end
 

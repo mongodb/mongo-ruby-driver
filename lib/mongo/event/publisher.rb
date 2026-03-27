@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   module Event
-
     # This module is included for objects that need to publish events.
     #
     # @since 2.0.0
     module Publisher
-
       # @return [ Event::Listeners ] event_listeners The listeners.
       attr_reader :event_listeners
 

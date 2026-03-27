@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,7 +8,7 @@ describe Mongo::Server::RoundTripTimeCalculator do
   describe '#update_average_round_trip_time' do
     context 'no existing average rtt' do
       it 'updates average rtt' do
-        calculator.instance_variable_set('@last_round_trip_time', 5)
+        calculator.instance_variable_set(:@last_round_trip_time, 5)
         calculator.update_average_round_trip_time
         expect(calculator.average_round_trip_time).to eq(5)
       end
@@ -17,8 +16,8 @@ describe Mongo::Server::RoundTripTimeCalculator do
 
     context 'with existing average rtt' do
       it 'averages with existing average rtt' do
-        calculator.instance_variable_set('@last_round_trip_time', 5)
-        calculator.instance_variable_set('@average_round_trip_time', 10)
+        calculator.instance_variable_set(:@last_round_trip_time, 5)
+        calculator.instance_variable_set(:@average_round_trip_time, 10)
         calculator.update_average_round_trip_time
         expect(calculator.average_round_trip_time).to eq(9)
       end
@@ -35,7 +34,7 @@ describe Mongo::Server::RoundTripTimeCalculator do
 
     context 'with one sample' do
       before do
-        calculator.instance_variable_set('@last_round_trip_time', 5)
+        calculator.instance_variable_set(:@last_round_trip_time, 5)
       end
 
       it 'sets minimum_round_trip_time to zero' do
@@ -46,8 +45,8 @@ describe Mongo::Server::RoundTripTimeCalculator do
 
     context 'with two samples' do
       before do
-        calculator.instance_variable_set('@last_round_trip_time', 10)
-        calculator.instance_variable_set('@rtts', [5])
+        calculator.instance_variable_set(:@last_round_trip_time, 10)
+        calculator.instance_variable_set(:@rtts, [ 5 ])
       end
 
       it 'sets minimum_round_trip_time to zero' do
@@ -58,8 +57,8 @@ describe Mongo::Server::RoundTripTimeCalculator do
 
     context 'with samples less than maximum' do
       before do
-        calculator.instance_variable_set('@last_round_trip_time', 10)
-        calculator.instance_variable_set('@rtts', [5, 4, 120])
+        calculator.instance_variable_set(:@last_round_trip_time, 10)
+        calculator.instance_variable_set(:@rtts, [ 5, 4, 120 ])
       end
 
       it 'properly sets minimum_round_trip_time' do
@@ -70,8 +69,8 @@ describe Mongo::Server::RoundTripTimeCalculator do
 
     context 'with more than maximum samples' do
       before do
-        calculator.instance_variable_set('@last_round_trip_time', 2)
-        calculator.instance_variable_set('@rtts', [1, 20, 15, 4, 5, 6, 7, 39, 8, 4])
+        calculator.instance_variable_set(:@last_round_trip_time, 2)
+        calculator.instance_variable_set(:@rtts, [ 1, 20, 15, 4, 5, 6, 7, 39, 8, 4 ])
       end
 
       it 'properly sets minimum_round_trip_time' do
@@ -79,7 +78,6 @@ describe Mongo::Server::RoundTripTimeCalculator do
         expect(calculator.minimum_round_trip_time).to eq(2)
       end
     end
-
   end
 
   describe '#measure' do
@@ -102,7 +100,7 @@ describe Mongo::Server::RoundTripTimeCalculator do
         expect(calculator).not_to receive(:update_average_round_trip_time)
         expect do
           calculator.measure do
-            raise "Problem"
+            raise 'Problem'
           end
         end.to raise_error(/Problem/)
       end
@@ -111,7 +109,7 @@ describe Mongo::Server::RoundTripTimeCalculator do
         expect(calculator).not_to receive(:update_minimum_round_trip_time)
         expect do
           calculator.measure do
-            raise "Problem"
+            raise 'Problem'
           end
         end.to raise_error(/Problem/)
       end

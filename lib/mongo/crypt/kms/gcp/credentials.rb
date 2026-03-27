@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -42,8 +41,8 @@ module Mongo
           # @api private
           def_delegator :@opts, :empty?
 
-          FORMAT_HINT = "GCP KMS provider options must be in the format: " +
-              "{ email: 'EMAIL', private_key: 'PRIVATE-KEY' }"
+          FORMAT_HINT = 'GCP KMS provider options must be in the format: ' +
+                        "{ email: 'EMAIL', private_key: 'PRIVATE-KEY' }"
 
           # Creates an GCP KMS credentials object form a parameters hash.
           #
@@ -77,10 +76,10 @@ module Mongo
                   pkey = OpenSSL::PKey::RSA.new(private_key_opt)
                   # PEM it is, need to be converted to base64 encoded DER.
                   der = if pkey.respond_to?(:private_to_der)
-                    pkey.private_to_der
-                  else
-                    pkey.to_der
-                  end
+                          pkey.private_to_der
+                        else
+                          pkey.to_der
+                        end
                   Base64.encode64(der)
                 end
               rescue OpenSSL::PKey::RSAError
@@ -91,7 +90,7 @@ module Mongo
                   private_key_opt
                 rescue OpenSSL::PKey::PKeyError
                   raise ArgumentError.new(
-                    "The private_key option must be either either base64 encoded DER format, or PEM format."
+                    'The private_key option must be either either base64 encoded DER format, or PEM format.'
                   )
                 end
               end
@@ -107,16 +106,15 @@ module Mongo
           # @return [ BSON::Document ] Azure KMS credentials in libmongocrypt format.
           def to_document
             return BSON::Document.new if empty?
+
             if access_token
               BSON::Document.new({ accessToken: access_token })
             else
               BSON::Document.new({
-                email: email,
-                privateKey: BSON::Binary.new(private_key, :generic),
-              }).tap do |bson|
-                unless endpoint.nil?
-                  bson.update({ endpoint: endpoint })
-                end
+                                   email: email,
+                                   privateKey: BSON::Binary.new(private_key, :generic),
+                                 }).tap do |bson|
+                bson.update({ endpoint: endpoint }) unless endpoint.nil?
               end
             end
           end

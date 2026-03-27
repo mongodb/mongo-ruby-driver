@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 class UsingHash < Hash
   class UsingHashKeyError < KeyError

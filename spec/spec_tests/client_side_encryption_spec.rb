@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -10,7 +9,7 @@ SPECS_IGNORING_BSON_TYPES = %w[ fle2v2-CreateCollection.yml ]
 
 # expect bson types for all specs EXCEPT those mentioned in
 # SPECS_IGNORING_BSON_TYPES
-EXPECTATIONS_BSON_TYPES = -> (test) { !SPECS_IGNORING_BSON_TYPES.include?(test.spec.description) }
+EXPECTATIONS_BSON_TYPES = ->(test) { !SPECS_IGNORING_BSON_TYPES.include?(test.spec.description) }
 
 describe 'Client-Side Encryption' do
   require_libmongocrypt

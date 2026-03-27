@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,21 +16,19 @@
 
 module Mongo
   class Error
-
     # This exception is raised when a session is attempted to be used and the
     # deployment does not support sessions.
     #
     # @note The subclassing of InvalidSession only exists for backwards
     #   compatibility and will be removed in driver version 3.0.
     class SessionsNotSupported < InvalidSession
-
       # Create the new exception.
       #
       # @param [ String ] message The error message.
       #
       # @api private
       def initialize(message)
-        super(message)
+        super
       end
     end
   end

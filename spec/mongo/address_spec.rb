@@ -1,14 +1,10 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Address do
-
   describe '#==' do
-
     context 'when the other host and port are the same' do
-
       let(:address) do
         described_class.new('127.0.0.1:27017')
       end
@@ -23,7 +19,6 @@ describe Mongo::Address do
     end
 
     context 'when the other port is different' do
-
       let(:address) do
         described_class.new('127.0.0.1:27017')
       end
@@ -33,12 +28,11 @@ describe Mongo::Address do
       end
 
       it 'returns false' do
-        expect(address).to_not eq(other)
+        expect(address).not_to eq(other)
       end
     end
 
     context 'when the other host is different' do
-
       let(:address) do
         described_class.new('127.0.0.1:27017')
       end
@@ -48,23 +42,21 @@ describe Mongo::Address do
       end
 
       it 'returns false' do
-        expect(address).to_not eq(other)
+        expect(address).not_to eq(other)
       end
     end
 
     context 'when the other object is not an address' do
-
       let(:address) do
         described_class.new('127.0.0.1:27017')
       end
 
       it 'returns false' do
-        expect(address).to_not eq('test')
+        expect(address).not_to eq('test')
       end
     end
 
     context 'when the addresses are identical unix sockets' do
-
       let(:address) do
         described_class.new('/path/to/socket.sock')
       end
@@ -80,28 +72,24 @@ describe Mongo::Address do
   end
 
   describe '#hash' do
-
     let(:address) do
       described_class.new('127.0.0.1:27017')
     end
 
     it 'hashes on the host and port' do
-      expect(address.hash).to eq([ '127.0.0.1', 27017 ].hash)
+      expect(address.hash).to eq([ '127.0.0.1', 27_017 ].hash)
     end
   end
 
   describe '#initialize' do
-
     context 'when providing an ipv4 host' do
-
       context 'when a port is provided' do
-
         let(:address) do
           described_class.new('127.0.0.1:27017')
         end
 
         it 'sets the port' do
-          expect(address.port).to eq(27017)
+          expect(address.port).to eq(27_017)
         end
 
         it 'sets the host' do
@@ -110,13 +98,12 @@ describe Mongo::Address do
       end
 
       context 'when no port is provided' do
-
         let(:address) do
           described_class.new('127.0.0.1')
         end
 
         it 'sets the port to 27017' do
-          expect(address.port).to eq(27017)
+          expect(address.port).to eq(27_017)
         end
 
         it 'sets the host' do
@@ -126,15 +113,13 @@ describe Mongo::Address do
     end
 
     context 'when providing an ipv6 host' do
-
       context 'when a port is provided' do
-
         let(:address) do
           described_class.new('[::1]:27017')
         end
 
         it 'sets the port' do
-          expect(address.port).to eq(27017)
+          expect(address.port).to eq(27_017)
         end
 
         it 'sets the host' do
@@ -143,13 +128,12 @@ describe Mongo::Address do
       end
 
       context 'when no port is provided' do
-
         let(:address) do
           described_class.new('[::1]')
         end
 
         it 'sets the port to 27017' do
-          expect(address.port).to eq(27017)
+          expect(address.port).to eq(27_017)
         end
 
         it 'sets the host' do
@@ -159,15 +143,13 @@ describe Mongo::Address do
     end
 
     context 'when providing a DNS entry' do
-
       context 'when a port is provided' do
-
         let(:address) do
           described_class.new('localhost:27017')
         end
 
         it 'sets the port' do
-          expect(address.port).to eq(27017)
+          expect(address.port).to eq(27_017)
         end
 
         it 'sets the host' do
@@ -176,13 +158,12 @@ describe Mongo::Address do
       end
 
       context 'when a port is not provided' do
-
         let(:address) do
           described_class.new('localhost')
         end
 
         it 'sets the port to 27017' do
-          expect(address.port).to eq(27017)
+          expect(address.port).to eq(27_017)
         end
 
         it 'sets the host' do
@@ -192,7 +173,6 @@ describe Mongo::Address do
     end
 
     context 'when providing a socket path' do
-
       let(:address) do
         described_class.new('/path/to/socket.sock')
       end
@@ -207,8 +187,7 @@ describe Mongo::Address do
     end
   end
 
-  describe "#socket" do
-
+  describe '#socket' do
     let(:address) do
       default_address
     end
@@ -218,8 +197,8 @@ describe Mongo::Address do
     end
 
     let(:addr_info) do
-      family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
-      ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
+      family = (host == 'localhost') ? Socket::AF_INET : Socket::AF_UNSPEC
+      Socket.getaddrinfo(host, nil, family, Socket::SOCK_STREAM)
     end
 
     let(:socket_address_or_host) do
@@ -227,7 +206,6 @@ describe Mongo::Address do
     end
 
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
-
       # In JRuby 9.3.2.0 Socket::PF_INET6 is nil, causing IPv6 tests to fail.
       # https://github.com/jruby/jruby/issues/7069
       # JRuby 9.2 works correctly, this test is skipped on all JRuby versions
@@ -248,29 +226,28 @@ describe Mongo::Address do
       end
 
       before do
-        allow(::Socket).to receive(:getaddrinfo).and_return(
-          [ ["AF_INET6", 0, '::2', '::2', ::Socket::AF_INET6, 1, 6],
-            ["AF_INET", 0, custom_hostname, ip, ::Socket::AF_INET, 1, 6]]
+        allow(Socket).to receive(:getaddrinfo).and_return(
+          [ [ 'AF_INET6', 0, '::2', '::2', Socket::AF_INET6, 1, 6 ],
+            [ 'AF_INET', 0, custom_hostname, ip, Socket::AF_INET, 1, 6 ] ]
         )
       end
 
-      it "attempts to use IPv6 and fallbacks to IPv4" do
+      it 'attempts to use IPv6 and fallbacks to IPv4' do
         expect(address.socket(0.0).host).to eq(ip)
       end
     end
 
     context 'when creating a socket' do
-
-      it 'uses the host, not the IP address' do
-        expect(address.socket(0.0).host).to eq(socket_address_or_host)
-      end
-
       let(:socket) do
         if SpecConfig.instance.ssl?
           address.socket(0.0, SpecConfig.instance.ssl_options).instance_variable_get(:@tcp_socket)
         else
           address.socket(0.0).instance_variable_get(:@socket)
         end
+      end
+
+      it 'uses the host, not the IP address' do
+        expect(address.socket(0.0).host).to eq(socket_address_or_host)
       end
 
       context 'keep-alive options' do
@@ -311,7 +288,7 @@ describe Mongo::Address do
         RSpec::Mocks.with_temporary_scope do
           resolved_address = double('address')
           # This test's expectation
-          expect(resolved_address).to receive(:socket).with(0, {connect_timeout: 10})
+          expect(resolved_address).to receive(:socket).with(0, { connect_timeout: 10 })
 
           expect(Mongo::Address::IPv4).to receive(:new).and_return(resolved_address)
 
@@ -319,15 +296,16 @@ describe Mongo::Address do
         end
       end
     end
+
     context 'when a SocketError occurs' do
       before do
-        allow(address).to receive(:getaddrinfo).and_raise(::SocketError)
+        allow(address).to receive(:getaddrinfo).and_raise(SocketError)
       end
 
       it 'raises a Mongo::Error::SocketError' do
-        expect {
+        expect do
           address.socket(0.0)
-        }.to raise_error(Mongo::Error::SocketError)
+        end.to raise_error(Mongo::Error::SocketError)
       end
     end
   end

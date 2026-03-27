@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,17 +16,15 @@
 
 module Mongo
   module Auth
-
     # Defines behavior for X.509 authentication.
     #
     # @since 2.0.0
     # @api private
     class X509 < Base
-
       # The authentication mechanism string.
       #
       # @since 2.0.0
-      MECHANISM = 'MONGODB-X509'.freeze
+      MECHANISM = 'MONGODB-X509'
 
       # Initializes the X.509 authenticator.
       #
@@ -37,11 +34,12 @@ module Mongo
         # The only valid database for X.509 authentication is $external.
         if user.auth_source != '$external'
           user_name_msg = if user.name
-            " #{user.name}"
-          else
-            ''
-          end
-          raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for X.509 is '$external'"
+                            " #{user.name}"
+                          else
+                            ''
+                          end
+          raise Auth::InvalidConfiguration,
+                "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for X.509 is '$external'"
         end
 
         super

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -13,19 +12,16 @@ describe Mongo::Operation::Delete do
   end
 
   let(:spec) do
-    { :deletes       => documents,
-      :db_name       => SpecConfig.instance.test_db,
-      :coll_name     => TEST_COLL,
-      :ordered       => true
-    }
+    { deletes: documents,
+      db_name: SpecConfig.instance.test_db,
+      coll_name: TEST_COLL,
+      ordered: true }
   end
 
   let(:op) { described_class.new(spec) }
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(op.spec).to eq(spec)
       end
@@ -33,9 +29,7 @@ describe Mongo::Operation::Delete do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two ops have the same specs' do
         let(:other) { described_class.new(spec) }
 
@@ -50,11 +44,10 @@ describe Mongo::Operation::Delete do
         end
 
         let(:other_spec) do
-          { :deletes       => other_docs,
-            :db_name       => SpecConfig.instance.test_db,
-            :coll_name     => TEST_COLL,
-            :ordered       => true
-          }
+          { deletes: other_docs,
+            db_name: SpecConfig.instance.test_db,
+            coll_name: TEST_COLL,
+            ordered: true }
         end
         let(:other) { described_class.new(other_spec) }
 
@@ -66,7 +59,6 @@ describe Mongo::Operation::Delete do
   end
 
   describe '#bulk_execute' do
-
     before do
       begin
         authorized_collection.delete_many
@@ -78,9 +70,9 @@ describe Mongo::Operation::Delete do
       end
 
       authorized_collection.insert_many([
-        { name: 'test', field: 'test' },
-        { name: 'testing', field: 'test' }
-      ])
+                                          { name: 'test', field: 'test' },
+                                          { name: 'testing', field: 'test' }
+                                        ])
     end
 
     after do
@@ -88,20 +80,18 @@ describe Mongo::Operation::Delete do
     end
 
     context 'when deleting a single document' do
-
       let(:op) do
         described_class.new({
-          deletes: documents,
-          db_name: SpecConfig.instance.test_db,
-          coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern.get(w: 1)
-        })
+                              deletes: documents,
+                              db_name: SpecConfig.instance.test_db,
+                              coll_name: TEST_COLL,
+                              write_concern: Mongo::WriteConcern.get(w: 1)
+                            })
       end
 
       context 'when the delete succeeds' do
-
         let(:documents) do
-          [{ 'q' => { field: 'test' }, 'limit' => 1 }]
+          [ { 'q' => { field: 'test' }, 'limit' => 1 } ]
         end
 
         it 'deletes the document from the database' do
@@ -114,19 +104,17 @@ describe Mongo::Operation::Delete do
     end
 
     context 'when deleting multiple documents' do
-
       let(:op) do
         described_class.new({
-          deletes: documents,
-          db_name: SpecConfig.instance.test_db,
-          coll_name: TEST_COLL,
-        })
+                              deletes: documents,
+                              db_name: SpecConfig.instance.test_db,
+                              coll_name: TEST_COLL,
+                            })
       end
 
       context 'when the deletes succeed' do
-
         let(:documents) do
-          [{ 'q' => { field: 'test' }, 'limit' => 0 }]
+          [ { 'q' => { field: 'test' }, 'limit' => 0 } ]
         end
 
         it 'deletes the documents from the database' do
@@ -139,19 +127,16 @@ describe Mongo::Operation::Delete do
     end
 
     context 'when the deletes are ordered' do
-
       let(:documents) do
         [ { q: { '$set' => { a: 1 } }, limit: 0 },
-          { 'q' => { field: 'test' }, 'limit' => 1 }
-        ]
+          { 'q' => { field: 'test' }, 'limit' => 1 } ]
       end
 
       let(:spec) do
-        { :deletes       => documents,
-          :db_name       => SpecConfig.instance.test_db,
-          :coll_name     => TEST_COLL,
-          :ordered       => true
-        }
+        { deletes: documents,
+          db_name: SpecConfig.instance.test_db,
+          coll_name: TEST_COLL,
+          ordered: true }
       end
 
       let(:failing_delete) do
@@ -159,9 +144,7 @@ describe Mongo::Operation::Delete do
       end
 
       context 'when the delete fails' do
-
         context 'when write concern is acknowledged' do
-
           let(:write_concern) do
             Mongo::WriteConcern.get(w: :majority)
           end
@@ -175,7 +158,6 @@ describe Mongo::Operation::Delete do
         end
 
         context 'when write concern is unacknowledged' do
-
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 0)
           end
@@ -191,19 +173,16 @@ describe Mongo::Operation::Delete do
     end
 
     context 'when the deletes are unordered' do
-
       let(:documents) do
         [ { q: { '$set' => { a: 1 } }, limit: 0 },
-          { 'q' => { field: 'test' }, 'limit' => 1 }
-        ]
+          { 'q' => { field: 'test' }, 'limit' => 1 } ]
       end
 
       let(:spec) do
-        { :deletes       => documents,
-          :db_name       => SpecConfig.instance.test_db,
-          :coll_name     => TEST_COLL,
-          :ordered       => false
-        }
+        { deletes: documents,
+          db_name: SpecConfig.instance.test_db,
+          coll_name: TEST_COLL,
+          ordered: false }
       end
 
       let(:failing_delete) do
@@ -211,9 +190,7 @@ describe Mongo::Operation::Delete do
       end
 
       context 'when the delete fails' do
-
         context 'when write concern is acknowledged' do
-
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 1)
           end
@@ -227,7 +204,6 @@ describe Mongo::Operation::Delete do
         end
 
         context 'when write concern is unacknowledged' do
-
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 0)
           end

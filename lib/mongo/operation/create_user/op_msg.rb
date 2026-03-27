@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class CreateUser
-
       # A MongoDB createuser operation sent as an op message.
       #
       # @api private
@@ -29,8 +27,8 @@ module Mongo
 
         private
 
-        def selector(connection)
-          { :createUser => user.name }.merge(user.spec)
+        def selector(_connection)
+          { createUser: user.name }.merge(user.spec)
         end
       end
     end

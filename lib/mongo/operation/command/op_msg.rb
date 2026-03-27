@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,15 +17,13 @@
 module Mongo
   module Operation
     class Command
-
       # A MongoDB command operation sent as an op message.
       #
       # @api private
       #
       # @since 2.5.2
       class OpMsg < OpMsgBase
-
-        def selector(connection)
+        def selector(_connection)
           spec[:selector].dup.tap do |sel|
             sel[:comment] = spec[:comment] unless spec[:comment].nil?
           end

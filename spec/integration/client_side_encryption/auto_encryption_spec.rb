@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'bson'
@@ -31,7 +30,7 @@ describe 'Auto Encryption' do
         database: 'auto_encryption',
         max_pool_size: max_pool_size,
         timeout_ms: timeout_ms
-      ),
+      )
     )
   end
 
@@ -56,15 +55,15 @@ describe 'Auto Encryption' do
 
     before do
       client['users',
-        {
-          'validator' => { '$jsonSchema' => schema_map }
-        }
+             {
+               'validator' => { '$jsonSchema' => schema_map }
+             }
       ].create
     end
   end
 
   shared_context 'schema map in client options' do
-    let(:local_schema) { { "auto_encryption.users" => schema_map } }
+    let(:local_schema) { { 'auto_encryption.users' => schema_map } }
 
     before do
       client['users'].create
@@ -90,7 +89,7 @@ describe 'Auto Encryption' do
     end
   end
 
-  before(:each) do
+  before do
     client['users'].drop
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
@@ -193,7 +192,7 @@ describe 'Auto Encryption' do
     end
   end
 
-  [nil, 0].each do |timeout_ms|
+  [ nil, 0 ].each do |timeout_ms|
     context "with timeout_ms #{timeout_ms}" do
       let(:timeout_ms) { timeout_ms }
 
@@ -203,13 +202,13 @@ describe 'Auto Encryption' do
 
           let(:result) do
             encryption_client['users'].aggregate([
-              { '$match' => { 'ssn' => ssn } }
-            ]).first
+                                                   { '$match' => { 'ssn' => ssn } }
+                                                 ]).first
           end
 
           it 'encrypts the command and decrypts the response' do
             result.should_not be_nil
-            result['ssn'].should == ssn
+            expect(result['ssn']).to eq(ssn)
           end
 
           context 'when bypass_auto_encryption=true' do
@@ -221,11 +220,11 @@ describe 'Auto Encryption' do
 
             it 'does auto decrypt the response' do
               result = encryption_client['users'].aggregate([
-                { '$match' => { 'ssn' => encrypted_ssn_binary } }
-              ]).first
+                                                              { '$match' => { 'ssn' => encrypted_ssn_binary } }
+                                                            ]).first
 
               result.should_not be_nil
-              result['ssn'].should == ssn
+              expect(result['ssn']).to eq(ssn)
             end
           end
         end
@@ -427,7 +426,7 @@ describe 'Auto Encryption' do
               encryption_client['users'].find_one_and_replace(
                 { ssn: encrypted_ssn_binary },
                 { name: name },
-                :return_document => :before
+                return_document: :before
               )
             end
 
@@ -544,8 +543,7 @@ describe 'Auto Encryption' do
             it_behaves_like 'it obeys bypass_auto_encryption option'
           end
 
-
-          context 'with local KMS provider and ' do
+          context 'with local KMS provider and' do
             include_context 'with local kms_providers'
             it_behaves_like 'it obeys bypass_auto_encryption option'
           end
@@ -652,7 +650,7 @@ describe 'Auto Encryption' do
               document.should_not be_nil
               # Auto-encryption with key alt names only works with random encryption,
               # so it will not generate the same result on every test run.
-              expect(document['ssn']).to be_a_kind_of(BSON::Binary)
+              expect(document['ssn']).to be_a(BSON::Binary)
             end
           end
         end
@@ -725,7 +723,7 @@ describe 'Auto Encryption' do
           end
 
           let(:result) do
-            encryption_client['users'].update_many({ ssn: ssn }, { "$inc" => { :age =>  1 } })
+            encryption_client['users'].update_many({ ssn: ssn }, { '$inc' => { age: 1 } })
           end
 
           it 'encrypts the ssn field' do

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -16,22 +15,19 @@
 # limitations under the License.
 
 module Mongo
-
   class Address
-
     # @api private
     module Validator
-
       # Takes an address string in ipv4/ipv6/hostname/socket path format and
       # validates its format.
       def validate_address_str!(address_str)
         case address_str
         when /\A\[[\d:]+\](?::(\d+))?\z/
           # ipv6 with optional port
-          if port_str = $1
+          if port_str = ::Regexp.last_match(1)
             validate_port_str!(port_str)
           end
-        when /\A\//, /\.sock\z/
+        when %r{\A/}, /\.sock\z/
           # Unix socket path.
           # Spec requires us to validate that the path has no unescaped
           # slashes, but if this were to be the case, parsing would have
@@ -41,27 +37,23 @@ module Mongo
           # socket paths end in ".sock". We accept all paths but special case
           # the .sock extension to avoid relative paths falling into the
           # host:port case below.
-        when /[\/\[\]]/
+        when %r{[/\[\]]}
           # Not a host:port nor an ipv4 address with optional port.
           # Possibly botched ipv6 address with e.g. port delimiter present and
           # port missing, or extra junk before or after.
           raise Error::InvalidAddress,
-            "Invalid hostname: #{address_str}"
+                "Invalid hostname: #{address_str}"
         when /:.*:/m
           raise Error::InvalidAddress,
-            "Multiple port delimiters are not allowed: #{address_str}"
+                "Multiple port delimiters are not allowed: #{address_str}"
         else
           # host:port or ipv4 address with optional port number
           host, port = address_str.split(':')
-          if host.empty?
-            raise Error::InvalidAddress, "Host is empty: #{address_str}"
-          end
+          raise Error::InvalidAddress, "Host is empty: #{address_str}" if host.empty?
 
           validate_hostname!(host)
 
-          if port && port.empty?
-            raise Error::InvalidAddress, "Port is empty: #{address_str}"
-          end
+          raise Error::InvalidAddress, "Port is empty: #{address_str}" if port && port.empty?
 
           validate_port_str!(port)
         end
@@ -80,22 +72,18 @@ module Mongo
         # and runs of multiple dots. DNS resolution of SRV records yields
         # hostnames with trailing dots, those trailing dots are removed
         # during normalization process prior to validation.
-        if host.start_with?('.')
-          raise Error::InvalidAddress, "Hostname cannot start with a dot: #{host}"
-        end
-        if host.end_with?('.')
-          raise Error::InvalidAddress, "Hostname cannot end with a dot: #{host}"
-        end
-        if host.include?('..')
-          raise Error::InvalidAddress, "Runs of multiple dots are not allowed in hostname: #{host}"
-        end
+        raise Error::InvalidAddress, "Hostname cannot start with a dot: #{host}" if host.start_with?('.')
+        raise Error::InvalidAddress, "Hostname cannot end with a dot: #{host}" if host.end_with?('.')
+        return unless host.include?('..')
+
+        raise Error::InvalidAddress, "Runs of multiple dots are not allowed in hostname: #{host}"
       end
 
       def validate_port_str!(port)
-        unless port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65535)
-          raise Error::InvalidAddress,
-            "Invalid port: #{port}. Port must be an integer greater than 0 and less than 65536"
-        end
+        return if port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65_535)
+
+        raise Error::InvalidAddress,
+              "Invalid port: #{port}. Port must be an integer greater than 0 and less than 65536"
       end
     end
   end

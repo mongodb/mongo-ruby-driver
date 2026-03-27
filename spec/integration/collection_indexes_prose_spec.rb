@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -11,14 +10,14 @@ describe 'Mongo::Collection#indexes / listIndexes prose tests' do
   before do
     collection.drop
     collection.create
-    collection.indexes.create_one({name: 1}, name: 'simple')
-    collection.indexes.create_one({hello: 1, world: -1}, name: 'compound')
-    collection.indexes.create_one({test: 1}, unique: true, name: 'unique')
+    collection.indexes.create_one({ name: 1 }, name: 'simple')
+    collection.indexes.create_one({ hello: 1, world: -1 }, name: 'compound')
+    collection.indexes.create_one({ test: 1 }, unique: true, name: 'unique')
     collection.insert_one(
       name: 'Stanley',
       hello: 'Yes',
       world: 'No',
-      test: 'Always',
+      test: 'Always'
     )
   end
 
@@ -27,7 +26,7 @@ describe 'Mongo::Collection#indexes / listIndexes prose tests' do
   end
 
   it 'returns all index names' do
-    %w(simple compound unique).each do |name|
+    %w[simple compound unique].each do |name|
       index_list.detect do |spec|
         spec['name'] = name
       end.should be_a(Hash)
@@ -37,7 +36,7 @@ describe 'Mongo::Collection#indexes / listIndexes prose tests' do
   it 'does not return duplicate or nonexistent index names' do
     # There are 4 total indexes: 3 that we explicitly defined + the
     # implicit index on _id.
-    index_list.length.should == 4
+    expect(index_list.length).to eq(4)
   end
 
   it 'returns the unique flag for unique index' do
@@ -48,11 +47,11 @@ describe 'Mongo::Collection#indexes / listIndexes prose tests' do
   end
 
   it 'does not return the unique flag for non-unique index' do
-    %w(simple compound).each do |name|
+    %w[simple compound].each do |name|
       index = index_list.detect do |spec|
         spec['name'] == name
       end
-      index['unique'].should be nil
+      index['unique'].should be_nil
     end
   end
 end

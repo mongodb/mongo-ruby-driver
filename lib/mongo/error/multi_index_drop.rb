@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Exception raised if '*' is passed to drop_one on indexes.
     #
     # @since 2.0.0
     class MultiIndexDrop < Error
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.

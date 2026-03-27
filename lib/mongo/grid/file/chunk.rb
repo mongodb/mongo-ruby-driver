@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,21 +17,19 @@
 module Mongo
   module Grid
     class File
-
       # Encapsulates behavior around GridFS chunks of file data.
       #
       # @since 2.0.0
       class Chunk
-
         # Name of the chunks collection.
         #
         # @since 2.0.0
-        COLLECTION = 'chunks'.freeze
+        COLLECTION = 'chunks'
 
         # Default size for chunks of data.
         #
         # @since 2.0.0
-        DEFAULT_SIZE = (255 * 1024).freeze
+        DEFAULT_SIZE = (255 * 1024)
 
         # @return [ BSON::Document ] document The document to store for the
         #   chunk.
@@ -50,6 +47,7 @@ module Mongo
         # @since 2.0.0
         def ==(other)
           return false unless other.is_a?(Chunk)
+
           document == other.document
         end
 
@@ -123,7 +121,7 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(document)
-          @document = BSON::Document.new(:_id => BSON::ObjectId.new).merge(document)
+          @document = BSON::Document.new(_id: BSON::ObjectId.new).merge(document)
         end
 
         # Conver the chunk to BSON for storage.
@@ -138,12 +136,11 @@ module Mongo
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
-        def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
+        def to_bson(buffer = BSON::ByteBuffer.new, _validating_keys = nil)
           document.to_bson(buffer)
         end
 
         class << self
-
           # Takes an array of chunks and assembles them back into the full
           # piece of raw data.
           #
@@ -157,7 +154,7 @@ module Mongo
           # @since 2.0.0
           # @api private
           def assemble(chunks)
-            chunks.reduce(+''){ |data, chunk| data << chunk.data.data }
+            chunks.reduce(+'') { |data, chunk| data << chunk.data.data }
           end
 
           # Split the provided data into multiple chunks.

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -13,7 +12,8 @@ describe 'SRV Monitoring' do
       double('srv result').tap do |result|
         allow(result).to receive(:empty?).and_return(false)
         allow(result).to receive(:address_strs).and_return(
-          [ClusterConfig.instance.primary_address_str])
+          [ ClusterConfig.instance.primary_address_str ]
+        )
       end
     end
 
@@ -32,12 +32,12 @@ describe 'SRV Monitoring' do
 
         client.cluster.run_sdam_flow(
           Mongo::Server::Description.new(ClusterConfig.instance.primary_address_str),
-          ClusterConfig.instance.primary_description,
+          ClusterConfig.instance.primary_description
         )
 
         expect(client.cluster.topology).not_to be_a(Mongo::Cluster::Topology::Unknown)
 
-        expect(client.cluster.instance_variable_get('@srv_monitor')).to be nil
+        expect(client.cluster.instance_variable_get(:@srv_monitor)).to be_nil
       end
     end
 
@@ -49,16 +49,16 @@ describe 'SRV Monitoring' do
 
         # Since we force the cluster to run sdam flow which creates a monitor,
         # we need to manually adjust its state.
-        client.cluster.instance_variable_set('@connecting', true)
+        client.cluster.instance_variable_set(:@connecting, true)
 
         client.cluster.run_sdam_flow(
           Mongo::Server::Description.new(ClusterConfig.instance.primary_address_str),
-          ClusterConfig.instance.primary_description,
+          ClusterConfig.instance.primary_description
         )
 
         expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Sharded)
 
-        expect(client.cluster.instance_variable_get('@srv_monitor')).to be_a(Mongo::Srv::Monitor)
+        expect(client.cluster.instance_variable_get(:@srv_monitor)).to be_a(Mongo::Srv::Monitor)
 
         # Close the client in the test rather than allowing our post-test cleanup
         # to take care of it, since the client references test doubles.
@@ -84,14 +84,19 @@ describe 'SRV Monitoring' do
       done = false
 
       servers = []
-      threads = [27998, 27999].map do |port|
+      threads = [ 27_998, 27_999 ].map do |port|
         Thread.new do
           server = TCPServer.open(port)
           servers << server
           begin
             loop do
               break if done
-              server.accept.close rescue nil
+
+              begin
+                server.accept.close
+              rescue StandardError
+                nil
+              end
             end
           ensure
             server.close
@@ -120,22 +125,21 @@ describe 'SRV Monitoring' do
 
     let(:client) do
       new_local_client(uri,
-        SpecConfig.instance.monitoring_options.merge(
-          server_selection_timeout: 3.16,
-          socket_timeout: 8.11,
-          connect_timeout: 8.12,
-          resolv_options: {
-            # Using localhost instead of 127.0.0.1 here causes Ruby's resolv
-            # client to drop responses.
-            nameserver: '127.0.0.1',
-            # TODO figure out why the address & port here need to be given
-            # twice - if given once, DNS resolution fails.
-            nameserver_port: [['127.0.0.1', 5300], ['127.0.0.1', 5300]],
-          },
-          logger: logger,
-          populator_io: false,
-        ),
-      )
+                       SpecConfig.instance.monitoring_options.merge(
+                         server_selection_timeout: 3.16,
+                         socket_timeout: 8.11,
+                         connect_timeout: 8.12,
+                         resolv_options: {
+                           # Using localhost instead of 127.0.0.1 here causes Ruby's resolv
+                           # client to drop responses.
+                           nameserver: '127.0.0.1',
+                           # TODO: figure out why the address & port here need to be given
+                           # twice - if given once, DNS resolution fails.
+                           nameserver_port: [ [ '127.0.0.1', 5300 ], [ '127.0.0.1', 5300 ] ],
+                         },
+                         logger: logger,
+                         populator_io: false
+                       ))
     end
 
     before do
@@ -148,11 +152,9 @@ describe 'SRV Monitoring' do
       require_multi_mongos
 
       it 'updates topology via SRV records' do
-
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27017, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_017, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
@@ -160,9 +162,9 @@ describe 'SRV Monitoring' do
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Sharded)
 
           address_strs = client.cluster.servers.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27017
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27017
+                                     ])
         end
 
         # In Evergreen there are replica set nodes on the next port number
@@ -170,57 +172,55 @@ describe 'SRV Monitoring' do
         # reflect how many mongos we have.
 
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27018, 'localhost.test.build.10gen.cc'],
-            [0, 0, 27017, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_018, 'localhost.test.build.10gen.cc' ],
+            [ 0, 0, 27_017, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           15.times do
             address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-            if address_strs == %w(
-                localhost.test.build.10gen.cc:27017
-                localhost.test.build.10gen.cc:27018
-              )
-            then
+            if address_strs == %w[
+              localhost.test.build.10gen.cc:27017
+              localhost.test.build.10gen.cc:27018
+            ]
               break
             end
+
             sleep 1
           end
 
           address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27017
-            localhost.test.build.10gen.cc:27018
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27017
+                                       localhost.test.build.10gen.cc:27018
+                                     ])
         end
 
         # And because we have only two mongos in Evergreen, test removal
         # separately here.
 
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27018, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_018, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           15.times do
             address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-            if address_strs == %w(
-                localhost.test.build.10gen.cc:27018
-              )
-            then
+            if address_strs == %w[
+              localhost.test.build.10gen.cc:27018
+            ]
               break
             end
+
             sleep 1
           end
 
           address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27018
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27018
+                                     ])
 
           expect(client.cluster.srv_monitor).to be_running
         end
@@ -228,73 +228,68 @@ describe 'SRV Monitoring' do
     end
 
     context 'unknown topology' do
-
       it 'updates topology via SRV records' do
-
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27999, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_999, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Unknown)
 
           address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27999
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27999
+                                     ])
         end
 
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27998, 'localhost.test.build.10gen.cc'],
-            [0, 0, 27999, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_998, 'localhost.test.build.10gen.cc' ],
+            [ 0, 0, 27_999, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           15.times do
             address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-            if address_strs == %w(
-                localhost.test.build.10gen.cc:27998
-                localhost.test.build.10gen.cc:27999
-              )
-            then
+            if address_strs == %w[
+              localhost.test.build.10gen.cc:27998
+              localhost.test.build.10gen.cc:27999
+            ]
               break
             end
+
             sleep 1
           end
 
           address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27998
-            localhost.test.build.10gen.cc:27999
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27998
+                                       localhost.test.build.10gen.cc:27999
+                                     ])
         end
 
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27997, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_997, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           15.times do
             address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-            if address_strs == %w(
-                localhost.test.build.10gen.cc:27997
-              )
-            then
+            if address_strs == %w[
+              localhost.test.build.10gen.cc:27997
+            ]
               break
             end
+
             sleep 1
           end
 
           address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27997
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27997
+                                     ])
 
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Unknown)
 
@@ -309,42 +304,40 @@ describe 'SRV Monitoring' do
       it 'updates topology via SRV records' do
         skip 'https://jira.mongodb.org/browse/RUBY-3749'
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27999, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_999, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Unknown)
 
           address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27999
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27999
+                                     ])
         end
 
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27017, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_017, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           15.times do
             address_strs = client.cluster.servers.map(&:address).map(&:seed).sort
-            if address_strs == %w(
-                localhost.test.build.10gen.cc:27017
-              )
-            then
+            if address_strs == %w[
+              localhost.test.build.10gen.cc:27017
+            ]
               break
             end
+
             sleep 1
           end
 
           address_strs = client.cluster.servers.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27017
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27017
+                                     ])
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Sharded)
 
           expect(client.cluster.srv_monitor).to be_running
@@ -358,35 +351,33 @@ describe 'SRV Monitoring' do
       it 'updates topology via SRV records then stops SRV monitor' do
         skip 'https://jira.mongodb.org/browse/RUBY-3749'
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27999, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_999, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Unknown)
 
           address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27999
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27999
+                                     ])
         end
 
         rules = [
-          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27017, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_017, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           15.times do
             address_strs = client.cluster.servers.map(&:address).map(&:seed).sort
-            if address_strs == %w(
-                localhost.test.build.10gen.cc:27017
-              )
-            then
+            if address_strs == %w[
+              localhost.test.build.10gen.cc:27017
+            ]
               break
             end
+
             sleep 1
           end
 
@@ -405,38 +396,35 @@ describe 'SRV Monitoring' do
     end
 
     context 'when the client mocks the srvServiceName' do
-
       let(:uri) do
         "mongodb+srv://test-fake.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}&tlsInsecure=true&srvServiceName=customname"
       end
 
       it 'finds the records using the custom service name' do
-
         rules = [
-          ['_customname._tcp.test-fake.test.build.10gen.cc', :srv,
-            [0, 0, 27998, 'localhost.test.build.10gen.cc'],
-            [0, 0, 27999, 'localhost.test.build.10gen.cc'],
-          ],
+          [ '_customname._tcp.test-fake.test.build.10gen.cc', :srv,
+            [ 0, 0, 27_998, 'localhost.test.build.10gen.cc' ],
+            [ 0, 0, 27_999, 'localhost.test.build.10gen.cc' ], ],
         ]
 
         mock_dns(rules) do
           15.times do
             address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-            if address_strs == %w(
-                localhost.test.build.10gen.cc:27998
-                localhost.test.build.10gen.cc:27999
-              )
-            then
+            if address_strs == %w[
+              localhost.test.build.10gen.cc:27998
+              localhost.test.build.10gen.cc:27999
+            ]
               break
             end
+
             sleep 1
           end
 
           address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
-          expect(address_strs).to eq(%w(
-            localhost.test.build.10gen.cc:27998
-            localhost.test.build.10gen.cc:27999
-          ))
+          expect(address_strs).to eq(%w[
+                                       localhost.test.build.10gen.cc:27998
+                                       localhost.test.build.10gen.cc:27999
+                                     ])
         end
       end
     end

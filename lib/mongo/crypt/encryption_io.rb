@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Crypt
-
     # A class that implements I/O methods between the driver and
     # the MongoDB server or mongocryptd.
     #
     # @api private
     class EncryptionIO
-
       # Timeout used for TLS socket connection, reading, and writing.
       # There is no specific timeout written in the spec. See SPEC-1394
       # for a discussion and updates on what this timeout should be.
@@ -55,8 +52,7 @@ module Mongo
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format.
       def initialize(
-        client: nil, mongocryptd_client: nil, key_vault_namespace:,
-        key_vault_client:, metadata_client:, mongocryptd_options: {}
+        key_vault_namespace:, key_vault_client:, metadata_client:, client: nil, mongocryptd_client: nil, mongocryptd_options: {}
       )
         validate_key_vault_client!(key_vault_client)
         validate_key_vault_namespace!(key_vault_namespace)
@@ -104,7 +100,8 @@ module Mongo
       # @return [ Hash ] The collection information
       def collection_info(db_name, filter, timeout_ms: nil)
         unless @metadata_client
-          raise ArgumentError, 'collection_info requires metadata_client to have been passed to the constructor, but it was not'
+          raise ArgumentError,
+                'collection_info requires metadata_client to have been passed to the constructor, but it was not'
         end
 
         @metadata_client
@@ -124,7 +121,8 @@ module Mongo
       # @return [ Hash ] The marked command
       def mark_command(cmd, timeout_ms: nil)
         unless @mongocryptd_client
-          raise ArgumentError, 'mark_command requires mongocryptd_client to have been passed to the constructor, but it was not'
+          raise ArgumentError,
+                'mark_command requires mongocryptd_client to have been passed to the constructor, but it was not'
         end
 
         # Ensure the response from mongocryptd is deserialized with { mode: :bson }
@@ -143,7 +141,7 @@ module Mongo
           response = @mongocryptd_client.database.command(cmd, options)
         end
 
-        return response.first
+        response.first
       end
 
       # Get information about the remote KMS encryption key and feed it to the the
@@ -161,16 +159,14 @@ module Mongo
       def feed_kms(kms_context, tls_options, timeout_ms: nil)
         with_ssl_socket(kms_context.endpoint, tls_options) do |ssl_socket|
           Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
-            'Socket write operation timed out'
-          ) do
+                          'Socket write operation timed out') do
             ssl_socket.syswrite(kms_context.message)
           end
 
           bytes_needed = kms_context.bytes_needed
-          while bytes_needed > 0 do
+          while bytes_needed > 0
             bytes = Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
-              'Socket read operation timed out'
-            ) do
+                                    'Socket read operation timed out') do
               ssl_socket.sysread(bytes_needed)
             end
 
@@ -227,7 +223,7 @@ module Mongo
                     {
                       '$filter' => {
                         input: '$keyAltNames',
-                        cond: { '$ne' =>  [ '$$this', key_alt_name ] }
+                        cond: { '$ne' => [ '$$this', key_alt_name ] }
                       }
                     }
                   ]
@@ -251,28 +247,24 @@ module Mongo
       private
 
       def validate_key_vault_client!(key_vault_client)
-        unless key_vault_client
-          raise ArgumentError.new('The :key_vault_client option cannot be nil')
-        end
+        raise ArgumentError.new('The :key_vault_client option cannot be nil') unless key_vault_client
 
-        unless key_vault_client.is_a?(Client)
-          raise ArgumentError.new(
-            'The :key_vault_client option must be an instance of Mongo::Client'
-          )
-        end
+        return if key_vault_client.is_a?(Client)
+
+        raise ArgumentError.new(
+          'The :key_vault_client option must be an instance of Mongo::Client'
+        )
       end
 
       def validate_key_vault_namespace!(key_vault_namespace)
-        unless key_vault_namespace
-          raise ArgumentError.new('The :key_vault_namespace option cannot be nil')
-        end
+        raise ArgumentError.new('The :key_vault_namespace option cannot be nil') unless key_vault_namespace
 
-        unless key_vault_namespace.split('.').length == 2
-          raise ArgumentError.new(
-            "#{key_vault_namespace} is an invalid key vault namespace." +
-            "The :key_vault_namespace option must be in the format database.collection"
-          )
-        end
+        return if key_vault_namespace.split('.').length == 2
+
+        raise ArgumentError.new(
+          "#{key_vault_namespace} is an invalid key vault namespace." +
+          'The :key_vault_namespace option must be in the format database.collection'
+        )
       end
 
       # Use the provided key vault client and namespace to construct a
@@ -309,8 +301,7 @@ module Mongo
         end
 
         if mongocryptd_spawn_path.nil? ||
-          mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
-        then
+           mongocryptd_spawn_args.nil? || mongocryptd_spawn_args.empty?
           raise ArgumentError.new(
             'Cannot spawn mongocryptd process when no :mongocryptd_spawn_args ' +
             'option is provided. To start mongocryptd without arguments, pass ' +
@@ -322,7 +313,7 @@ module Mongo
           Process.spawn(
             mongocryptd_spawn_path,
             *mongocryptd_spawn_args,
-            [:out, :err]=>'/dev/null'
+            %i[out err] => '/dev/null'
           )
         rescue Errno::ENOENT => e
           raise Error::MongocryptdSpawnError.new(
@@ -351,12 +342,10 @@ module Mongo
         address = begin
           host, port = endpoint.split(':')
           port ||= 443 # All supported KMS APIs use this port by default.
-          Address.new([host, port].join(':'))
+          Address.new([ host, port ].join(':'))
         end
         socket_options = { ssl: true, csot: csot }.tap do |opts|
-          if csot
-            opts[:connect_timeout] = (timeout_ms / 1_000.0)
-          end
+          opts[:connect_timeout] = (timeout_ms / 1_000.0) if csot
         end
         mongo_socket = address.socket(
           SOCKET_TIMEOUT,
@@ -366,7 +355,8 @@ module Mongo
       rescue Error::KmsError
         raise
       rescue StandardError => e
-        raise Error::KmsError.new("Error when connecting to KMS provider: #{e.class}: #{e.message}", network_error: true)
+        raise Error::KmsError.new("Error when connecting to KMS provider: #{e.class}: #{e.message}",
+                                  network_error: true)
       ensure
         mongo_socket&.close
       end

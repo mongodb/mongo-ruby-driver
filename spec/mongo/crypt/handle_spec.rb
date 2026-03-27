@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mongo'
 require 'base64'
@@ -21,7 +20,7 @@ describe Mongo::Crypt::Handle do
         bypass_query_analysis: bypass_query_analysis,
         crypt_shared_lib_path: crypt_shared_lib_path,
         crypt_shared_lib_required: crypt_shared_lib_required,
-        explicit_encryption_only: explicit_encryption_only,
+        explicit_encryption_only: explicit_encryption_only
       )
     end
 
@@ -98,9 +97,7 @@ describe Mongo::Crypt::Handle do
         min_server_version '6.0.0'
 
         before(:all) do
-          if ENV['FLE'] == 'mongocryptd'
-            skip 'FLE=mongocryptd is incompatible with unloaded binding tests'
-          end
+          skip 'FLE=mongocryptd is incompatible with unloaded binding tests' if ENV['FLE'] == 'mongocryptd'
         end
 
         context 'with correct path' do
@@ -128,9 +125,7 @@ describe Mongo::Crypt::Handle do
         min_server_version '6.0.0'
 
         before(:all) do
-          if ENV['FLE'] == 'mongocryptd'
-            skip 'FLE=mongocryptd is incompatible with unloaded binding tests'
-          end
+          skip 'FLE=mongocryptd is incompatible with unloaded binding tests' if ENV['FLE'] == 'mongocryptd'
         end
 
         context 'set to true' do
@@ -198,7 +193,9 @@ describe Mongo::Crypt::Handle do
         end
 
         it 'raises an exception' do
-          expect { handle }.to raise_error(Mongo::Error::CryptError, /local key must be 96 bytes \(libmongocrypt error code 1\)/)
+          expect do
+            handle
+          end.to raise_error(Mongo::Error::CryptError, /local key must be 96 bytes \(libmongocrypt error code 1\)/)
         end
       end
 
@@ -206,7 +203,6 @@ describe Mongo::Crypt::Handle do
         include_context 'with local kms_providers'
         it_behaves_like 'a functioning Mongo::Crypt::Handle'
       end
-
     end
 
     context 'AWS' do

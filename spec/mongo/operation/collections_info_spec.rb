@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -8,12 +7,11 @@ describe Mongo::Operation::CollectionsInfo do
 
   let(:spec) do
     { selector: { listCollections: 1 },
-      db_name: SpecConfig.instance.test_db
-    }
+      db_name: SpecConfig.instance.test_db }
   end
 
   let(:names) do
-    [ 'berlin', 'london' ]
+    %w[berlin london]
   end
 
   let(:op) do
@@ -23,7 +21,6 @@ describe Mongo::Operation::CollectionsInfo do
   let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
-
     before do
       names.each do |name|
         authorized_client[name].insert_one(x: 1)

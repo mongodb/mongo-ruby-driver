@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Monitoring
     module Event
-
       # Event fired when the server is closed.
       #
       # @since 2.4.0
       class ServerClosed < Mongo::Event::Base
-
         # @return [ Address ] address The server address.
         attr_reader :address
 
@@ -54,7 +51,7 @@ module Mongo
         # @api experimental
         def summary
           "#<#{short_class_name}" +
-          " address=#{address} topology=#{topology.summary}>"
+            " address=#{address} topology=#{topology.summary}>"
         end
       end
     end

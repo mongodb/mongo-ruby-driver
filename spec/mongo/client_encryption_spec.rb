@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -16,9 +15,9 @@ describe Mongo::ClientEncryption do
 
   let(:client_encryption) do
     described_class.new(client, {
-      key_vault_namespace: key_vault_namespace,
-      kms_providers: kms_providers
-    })
+                          key_vault_namespace: key_vault_namespace,
+                          kms_providers: kms_providers
+                        })
   end
 
   describe '#initialize' do
@@ -97,17 +96,20 @@ describe Mongo::ClientEncryption do
       let(:options) { base_options.merge(key_alt_names: key_alt_names) }
 
       context 'with one value in key_alt_names' do
-        let(:key_alt_names) { ['keyAltName1'] }
-        it_behaves_like 'it creates a data key', **{ with_key_alt_names: true }
+        let(:key_alt_names) { [ 'keyAltName1' ] }
+
+        it_behaves_like 'it creates a data key', with_key_alt_names: true
       end
 
       context 'with multiple values in key_alt_names' do
-        let(:key_alt_names) { ['keyAltName1', 'keyAltName2'] }
-        it_behaves_like 'it creates a data key', **{ with_key_alt_names: true }
+        let(:key_alt_names) { %w[keyAltName1 keyAltName2] }
+
+        it_behaves_like 'it creates a data key', with_key_alt_names: true
       end
 
       context 'with empty key_alt_names' do
         let(:key_alt_names) { [] }
+
         it_behaves_like 'it creates a data key'
       end
 
@@ -122,7 +124,7 @@ describe Mongo::ClientEncryption do
       end
 
       context 'with invalid key_alt_names values' do
-        let(:key_alt_names) { ['keyAltNames1', 3] }
+        let(:key_alt_names) { [ 'keyAltNames1', 3 ] }
 
         it 'raises an exception' do
           expect do
@@ -136,6 +138,7 @@ describe Mongo::ClientEncryption do
       include_context 'with AWS kms_providers'
 
       let(:base_options) { { master_key: { region: aws_region, key: aws_arn } } }
+
       it_behaves_like 'it supports key_alt_names'
 
       context 'with nil options' do
@@ -154,7 +157,8 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /Key document options must contain a key named :master_key with a Hash value/)
+          end.to raise_error(ArgumentError,
+                             /Key document options must contain a key named :master_key with a Hash value/)
         end
       end
 
@@ -164,7 +168,8 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /Key document options must contain a key named :master_key with a Hash value/)
+          end.to raise_error(ArgumentError,
+                             /Key document options must contain a key named :master_key with a Hash value/)
         end
       end
 
@@ -174,7 +179,8 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /The specified KMS provider options are invalid: {}. AWS key document  must be in the format: { region: 'REGION', key: 'KEY' }/)
+          end.to raise_error(ArgumentError,
+                             /The specified KMS provider options are invalid: {}. AWS key document  must be in the format: { region: 'REGION', key: 'KEY' }/)
         end
       end
 
@@ -184,7 +190,8 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /The region option must be a String with at least one character; currently have nil/)
+          end.to raise_error(ArgumentError,
+                             /The region option must be a String with at least one character; currently have nil/)
         end
       end
 
@@ -194,7 +201,8 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /The region option must be a String with at least one character; currently have 5/)
+          end.to raise_error(ArgumentError,
+                             /The region option must be a String with at least one character; currently have 5/)
         end
       end
 
@@ -204,7 +212,8 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /The key option must be a String with at least one character; currently have nil/)
+          end.to raise_error(ArgumentError,
+                             /The key option must be a String with at least one character; currently have nil/)
         end
       end
 
@@ -214,7 +223,8 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /The key option must be a String with at least one character; currently have 5/)
+          end.to raise_error(ArgumentError,
+                             /The key option must be a String with at least one character; currently have 5/)
         end
       end
 
@@ -224,7 +234,8 @@ describe Mongo::ClientEncryption do
         it 'raises an exception' do
           expect do
             data_key_id
-          end.to raise_error(ArgumentError, /The endpoint option must be a String with at least one character; currently have 5/)
+          end.to raise_error(ArgumentError,
+                             /The endpoint option must be a String with at least one character; currently have 5/)
         end
       end
 
@@ -258,6 +269,7 @@ describe Mongo::ClientEncryption do
 
       context 'with valid endpoint' do
         let(:options) { data_key_options }
+
         it_behaves_like 'it creates a data key'
       end
 
@@ -281,7 +293,7 @@ describe Mongo::ClientEncryption do
             master_key: {
               key: aws_arn,
               region: aws_region,
-              endpoint: "invalid-nonsense-endpoint.com"
+              endpoint: 'invalid-nonsense-endpoint.com'
             }
           }
         end

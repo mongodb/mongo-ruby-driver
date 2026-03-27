@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -23,13 +22,12 @@ describe Mongo::Auth::Gssapi::Conversation do
   end
 
   before do
-    expect(Mongo::Auth::Gssapi::Authenticator).to receive(:new).
-      with(user, 'test.example.com').
-      and_return(authenticator)
+    expect(Mongo::Auth::Gssapi::Authenticator).to receive(:new)
+      .with(user, 'test.example.com')
+      .and_return(authenticator)
   end
 
   context 'when the user has a realm', if: RUBY_PLATFORM == 'java' do
-
     let(:user) do
       Mongo::Auth::User.new(user: 'user1@MYREALM.ME')
     end
@@ -40,7 +38,6 @@ describe Mongo::Auth::Gssapi::Conversation do
   end
 
   describe '#start' do
-
     let(:query) do
       conversation.start(connection)
     end
@@ -75,19 +72,17 @@ describe Mongo::Auth::Gssapi::Conversation do
   end
 
   describe '#finalize' do
-
     let(:continue_token) do
       BSON::Environment.jruby? ? BSON::Binary.new('testing') : 'testing'
     end
 
     context 'when the conversation is a success' do
-
       let(:reply_document) do
         BSON::Document.new(
           'conversationId' => 1,
           'done' => false,
           'payload' => continue_token,
-          'ok' => 1.0,
+          'ok' => 1.0
         )
       end
 
@@ -100,8 +95,8 @@ describe Mongo::Auth::Gssapi::Conversation do
       end
 
       before do
-        expect(authenticator).to receive(:evaluate_challenge).
-          with('testing').and_return(continue_token)
+        expect(authenticator).to receive(:evaluate_challenge)
+          .with('testing').and_return(continue_token)
       end
 
       it 'sets the conversation id' do

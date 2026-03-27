@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module CommonShortcuts
   module ClassMethods
@@ -51,9 +50,7 @@ module CommonShortcuts
     # thus this workaround.
     def clean_slate_on_evergreen
       before(:all) do
-        if SpecConfig.instance.ci?
-          ClientRegistry.instance.close_all_clients
-        end
+        ClientRegistry.instance.close_all_clients if SpecConfig.instance.ci?
       end
     end
 
@@ -70,9 +67,9 @@ module CommonShortcuts
     # but are determined at test execution time, pass a block instead of
     # the +env+ parameter and return the desired environment variables as
     # a Hash from the block.
-    def local_env(env = nil, &block)
+    def local_env(env = nil)
       around do |example|
-        env ||= block.call
+        env ||= yield
 
         # This duplicates ENV.
         # Note that ENV.dup produces an Object which does not behave like
@@ -89,7 +86,7 @@ module CommonShortcuts
         begin
           example.run
         ensure
-          env.each do |k, v|
+          env.each do |k, _v|
             if saved_env.key?(k)
               ENV[k] = saved_env[k]
             else
@@ -107,8 +104,7 @@ module CommonShortcuts
     end
 
     def with_ocsp_mock(ca_file_path, responder_cert_path, responder_key_path,
-      fault: nil, port: 8100
-    )
+                       fault: nil, port: 8100)
       clear_ocsp_cache
 
       around do |example|
@@ -123,9 +119,7 @@ module CommonShortcuts
           # Use when debugging - tests run faster without -v.
           args << '-v'
         end
-        if fault
-          args += ['--fault', fault]
-        end
+        args += [ '--fault', fault ] if fault
         process = ChildProcess.new(*args)
 
         process.io.inherit!
@@ -133,23 +127,19 @@ module CommonShortcuts
         retried = false
         begin
           process.start
-        rescue
-          if retried
-            raise
-          else
-            sleep 1
-            retried = true
-            retry
-          end
+        rescue StandardError
+          raise if retried
+
+          sleep 1
+          retried = true
+          retry
         end
 
         begin
           sleep 0.4
           example.run
         ensure
-          if process.exited?
-            raise "Spawned process exited before we stopped it"
-          end
+          raise 'Spawned process exited before we stopped it' if process.exited?
 
           process.stop
           process.wait
@@ -172,16 +162,12 @@ module CommonShortcuts
 
   module InstanceMethods
     def kill_all_server_sessions
-      begin
-        ClientRegistry.instance.global_client('root_authorized').command(killAllSessions: [])
-      # killAllSessions also kills the implicit session which the driver uses
-      # to send this command, as a result it always fails
-      rescue Mongo::Error::OperationFailure::Family => e
-        # "operation was interrupted"
-        unless e.code == 11601
-          raise
-        end
-      end
+      ClientRegistry.instance.global_client('root_authorized').command(killAllSessions: [])
+    # killAllSessions also kills the implicit session which the driver uses
+    # to send this command, as a result it always fails
+    rescue Mongo::Error::OperationFailure::Family => e
+      # "operation was interrupted"
+      raise unless e.code == 11_601
     end
 
     def wait_for_all_servers(cluster)
@@ -204,10 +190,10 @@ module CommonShortcuts
     def make_server(mode, options = {})
       tags = options[:tags] || {}
       average_round_trip_time = if mode == :unknown
-        nil
-      else
-        options[:average_round_trip_time] || 0
-      end
+                                  nil
+                                else
+                                  options[:average_round_trip_time] || 0
+                                end
 
       if mode == :unknown
         config = {}
@@ -218,14 +204,12 @@ module CommonShortcuts
           'arbiterOnly' => mode == :arbiter,
           'isreplicaset' => mode == :ghost,
           'hidden' => mode == :other,
-          'msg' => mode == :mongos ? 'isdbgrid' : nil,
+          'msg' => (mode == :mongos) ? 'isdbgrid' : nil,
           'tags' => tags,
           'ok' => 1,
           'minWireVersion' => 2, 'maxWireVersion' => 8,
         }
-        if [:primary, :secondary, :arbiter, :other].include?(mode)
-          config['setName'] = 'mongodb_set'
-        end
+        config['setName'] = 'mongodb_set' if %i[primary secondary arbiter other].include?(mode)
       end
 
       listeners = Mongo::Event::Listeners.new
@@ -241,13 +225,13 @@ module CommonShortcuts
       allow(cluster).to receive(:push_monitor_app_metadata)
       allow(cluster).to receive(:heartbeat_interval).and_return(10)
       server = Mongo::Server.new(address, cluster, monitoring, listeners,
-        monitoring_io: false)
+                                 monitoring_io: false)
       # Since the server references a double for the cluster, the server
       # must be closed in the scope of the example.
       register_server(server)
       description = Mongo::Server::Description.new(
         address, config,
-        average_round_trip_time: average_round_trip_time,
+        average_round_trip_time: average_round_trip_time
       )
       server.tap do |s|
         allow(s).to receive(:description).and_return(description)
@@ -256,20 +240,20 @@ module CommonShortcuts
 
     def make_protocol_reply(payload)
       Mongo::Protocol::Reply.new.tap do |reply|
-        reply.instance_variable_set('@flags', [])
-        reply.instance_variable_set('@documents', [payload])
+        reply.instance_variable_set(:@flags, [])
+        reply.instance_variable_set(:@documents, [ payload ])
       end
     end
 
     def make_not_master_reply
       make_protocol_reply(
-        'ok' => 0, 'code' => 10107, 'errmsg' => 'not master'
+        'ok' => 0, 'code' => 10_107, 'errmsg' => 'not master'
       )
     end
 
     def make_node_recovering_reply
       make_protocol_reply(
-        'ok' => 0, 'code' => 11602, 'errmsg' => 'InterruptedDueToStepDown'
+        'ok' => 0, 'code' => 11_602, 'errmsg' => 'InterruptedDueToStepDown'
       )
     end
 
@@ -288,9 +272,7 @@ module CommonShortcuts
 
     def register_server(server)
       finalizer = lambda do |server|
-        if server.connected?
-          server.close
-        end
+        server.close if server.connected?
       end
       LocalResourceRegistry.instance.register(server, finalizer)
     end
@@ -304,9 +286,7 @@ module CommonShortcuts
 
     def register_pool(pool)
       finalizer = lambda do |pool|
-        if !pool.closed?
-          pool.close(wait: true)
-        end
+        pool.close(wait: true) unless pool.closed?
       end
       LocalResourceRegistry.instance.register(pool, finalizer)
     end
@@ -323,24 +303,24 @@ module CommonShortcuts
         # background. These tests perform operations which requires the pools
         # to function. See also RUBY-3102.
         client.cluster.servers_list.each do |server|
-          if pool = server.pool
-            pool.instance_variable_set('@closed', false)
-            # Stop the populator so that we don't have leftover threads.
-            pool.instance_variable_get('@populator').stop!
-          end
+          next unless pool = server.pool
+
+          pool.instance_variable_set(:@closed, false)
+          # Stop the populator so that we don't have leftover threads.
+          pool.instance_variable_get(:@populator).stop!
         end
       end
     end
 
     DNS_INTERFACES = [
-      [:udp, "0.0.0.0", 5300],
-      [:tcp, "0.0.0.0", 5300],
+      [ :udp, '0.0.0.0', 5300 ],
+      [ :tcp, '0.0.0.0', 5300 ],
     ]
 
     # Starts the DNS server and returns it; should be run from within an
     # Async block. Prefer #mock_dns instead, which does the setup for you.
     def start_dns_server(config)
-      RubyDNS::run_server(DNS_INTERFACES) do
+      RubyDNS.run_server(DNS_INTERFACES) do
         config.each do |(query, type, *answers)|
           resource_cls = Resolv::DNS::Resource::IN.const_get(type.to_s.upcase)
           resources = answers.map do |answer|
@@ -359,7 +339,7 @@ module CommonShortcuts
       # only require rubydns when we need it; it's MRI-only.
       require 'rubydns'
 
-      Async do |task|
+      Async do |_task|
         server = start_dns_server(config)
         yield
       ensure
@@ -376,15 +356,11 @@ module CommonShortcuts
       start_time = Mongo::Utils.monotonic_time
       begin
         client.start_session(snapshot: true) do |session|
-          client[collection].aggregate([{'$match': {any: true}}], session: session).to_a
+          client[collection].aggregate([ { '$match': { any: true } } ], session: session).to_a
         end
       rescue Mongo::Error::OperationFailure::Family => e
         # Retry them as the server demands...
-        if e.code == 246 # SnapshotUnavailable
-          if Mongo::Utils.monotonic_time < start_time + 10
-            retry
-          end
-        end
+        retry if (e.code == 246) && (Mongo::Utils.monotonic_time < start_time + 10) # SnapshotUnavailable
         raise
       end
     end
@@ -396,7 +372,7 @@ module CommonShortcuts
       if pool = server.pool_internal
         pool.close
       end
-      server.remove_instance_variable('@pool')
+      server.remove_instance_variable(:@pool)
       server.pool.ready
     end
   end

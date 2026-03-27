@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,7 +8,7 @@ describe 'read concern' do
   end
 
   let(:specified_read_concern) do
-    { :level => :local }
+    { level: :local }
   end
 
   let(:expected_read_concern) do
@@ -35,7 +34,6 @@ describe 'read concern' do
   end
 
   context 'when the client has no read concern specified' do
-
     let(:client) do
       authorized_client.tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
@@ -43,7 +41,6 @@ describe 'read concern' do
     end
 
     context 'when the collection has no read concern specified' do
-
       let(:collection) do
         client[TEST_COLL]
       end
@@ -52,7 +49,6 @@ describe 'read concern' do
     end
 
     context 'when the collection has a read concern specified' do
-
       let(:collection) do
         client[TEST_COLL].with(read_concern: specified_read_concern)
       end
@@ -62,7 +58,6 @@ describe 'read concern' do
   end
 
   context 'when the client has a read concern specified' do
-
     let(:client) do
       authorized_client.with(read_concern: specified_read_concern).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
@@ -70,7 +65,6 @@ describe 'read concern' do
     end
 
     context 'when the collection has no read concern specified' do
-
       let(:collection) do
         client[TEST_COLL]
       end
@@ -79,7 +73,6 @@ describe 'read concern' do
     end
 
     context 'when the collection has a read concern specified' do
-
       let(:collection) do
         client[TEST_COLL].with(read_concern: specified_read_concern)
       end

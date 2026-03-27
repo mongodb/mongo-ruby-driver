@@ -1,14 +1,11 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 class RetryableTestConsumer
   include Mongo::Retryable
 
-  attr_reader :client
-  attr_reader :cluster
-  attr_reader :operation
+  attr_reader :client, :cluster, :operation
 
   def initialize(operation, cluster, client)
     @operation = operation
@@ -94,7 +91,6 @@ class RetryableHost
 end
 
 describe Mongo::Retryable do
-
   let(:operation) do
     double('operation')
   end
@@ -117,7 +113,7 @@ describe Mongo::Retryable do
       allow(cluster).to receive(:replica_set?).and_return(true)
       allow(cluster).to receive(:sharded?).and_return(false)
       allow(cluster).to receive(:load_balanced?).and_return(false)
-      allow(cluster).to receive(:addresses).and_return(['x'])
+      allow(cluster).to receive(:addresses).and_return([ 'x' ])
     end
   end
 
@@ -155,9 +151,7 @@ describe Mongo::Retryable do
   end
 
   shared_examples_for 'reads with retries' do
-
     context 'when no exception occurs' do
-
       before do
         expect(operation).to receive(:execute).and_return(true)
       end
@@ -177,14 +171,13 @@ describe Mongo::Retryable do
       it 'raises ArgumentError' do
         expect do
           retryable.write_with_retry(nil, ending_transaction: true, context: context) do
-            fail 'Expected not to get here'
+            raise 'Expected not to get here'
           end
         end.to raise_error(ArgumentError, 'Cannot end a transaction without a session')
       end
     end
 
     context 'when a socket error occurs' do
-
       before do
         expect(retryable).to receive(:select_server).ordered
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
@@ -198,7 +191,6 @@ describe Mongo::Retryable do
     end
 
     context 'when a socket timeout error occurs' do
-
       before do
         expect(retryable).to receive(:select_server).ordered
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketTimeoutError).ordered
@@ -212,9 +204,7 @@ describe Mongo::Retryable do
     end
 
     context 'when an operation failure occurs' do
-
       context 'when the operation failure is not retryable' do
-
         let(:error) do
           Mongo::Error::OperationFailure.new('not authorized')
         end
@@ -224,20 +214,18 @@ describe Mongo::Retryable do
         end
 
         it 'raises the exception' do
-          expect {
+          expect do
             read_operation
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
 
       context 'when the operation failure is retryable' do
-
         let(:error) do
           Mongo::Error::OperationFailure.new('not master')
         end
 
         context 'when the retry succeeds' do
-
           before do
             expect(retryable).to receive(:select_server).ordered
             expect(operation).to receive(:execute).and_raise(error).ordered
@@ -285,7 +273,6 @@ describe Mongo::Retryable do
     it_behaves_like 'reads with retries'
 
     context 'zero argument legacy invocation' do
-
       before do
         allow_any_instance_of(Mongo::ServerSelector::PrimaryPreferred).to receive(:select_server).and_return(server)
       end
@@ -321,7 +308,7 @@ describe Mongo::Retryable do
         end
 
         context 'hash write concern with w: 0' do
-          let(:write_concern) { {w: 0} }
+          let(:write_concern) { { w: 0 } }
 
           it 'returns false' do
             expect(session).to receive(:retry_writes?).and_return(true)
@@ -330,7 +317,7 @@ describe Mongo::Retryable do
         end
 
         context 'hash write concern with w: :majority' do
-          let(:write_concern) { {w: :majority} }
+          let(:write_concern) { { w: :majority } }
 
           it 'returns true' do
             expect(session).to receive(:retry_writes?).and_return(true)
@@ -367,14 +354,12 @@ describe Mongo::Retryable do
   end
 
   describe '#write_with_retry - legacy' do
-
     before do
       # Quick sanity check that the expected code path is being exercised
       expect(retryable.retry_write_allowed_as_configured?).to be false
     end
 
     context 'when no exception occurs' do
-
       before do
         expect(operation).to receive(:execute).and_return(true)
       end
@@ -392,7 +377,7 @@ describe Mongo::Retryable do
 
     context 'when an operation failure error occurs with a RetryableWriteError label' do
       let(:error) do
-        Mongo::Error::OperationFailure.new(nil, nil, labels: ['RetryableWriteError'])
+        Mongo::Error::OperationFailure.new(nil, nil, labels: [ 'RetryableWriteError' ])
       end
 
       before do
@@ -410,9 +395,9 @@ describe Mongo::Retryable do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           retryable.write
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
 
@@ -428,9 +413,9 @@ describe Mongo::Retryable do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           retryable.write
-        }.to raise_error(Mongo::Error::SocketError)
+        end.to raise_error(Mongo::Error::SocketError)
       end
     end
 
@@ -446,29 +431,28 @@ describe Mongo::Retryable do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           retryable.write
-        }.to raise_error(Mongo::Error::SocketTimeoutError)
+        end.to raise_error(Mongo::Error::SocketTimeoutError)
       end
     end
 
     context 'when a non-retryable exception occurs' do
-
       before do
         expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::MaxBSONSize).ordered
+          Mongo::Error::MaxBSONSize
+        ).ordered
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           retryable.write
-        }.to raise_error(Mongo::Error::MaxBSONSize)
+        end.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end
   end
 
   describe '#write_with_retry - modern' do
-
     let(:retryable) do
       ModernRetryableTestConsumer.new(operation, cluster, client)
     end
@@ -482,7 +466,6 @@ describe Mongo::Retryable do
     end
 
     context 'when no exception occurs' do
-
       before do
         expect(operation).to receive(:execute).and_return(true)
       end
@@ -500,11 +483,11 @@ describe Mongo::Retryable do
 
     context 'when an operation failure error occurs with a RetryableWriteError label' do
       let(:error) do
-        Mongo::Error::OperationFailure.new(nil, nil, labels: ['RetryableWriteError'])
+        Mongo::Error::OperationFailure.new(nil, nil, labels: [ 'RetryableWriteError' ])
       end
 
       before do
-        server = cluster.next_primary
+        cluster.next_primary
         expect(operation).to receive(:execute).and_raise(error).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
@@ -518,9 +501,9 @@ describe Mongo::Retryable do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           retryable.write
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
 
@@ -553,9 +536,9 @@ describe Mongo::Retryable do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           retryable.write
-        }.to raise_error(Mongo::Error::SocketError)
+        end.to raise_error(Mongo::Error::SocketError)
       end
     end
 
@@ -589,23 +572,23 @@ describe Mongo::Retryable do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           retryable.write
-        }.to raise_error(Mongo::Error::SocketTimeoutError)
+        end.to raise_error(Mongo::Error::SocketTimeoutError)
       end
     end
 
     context 'when a non-retryable exception occurs' do
-
       before do
         expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::MaxBSONSize).ordered
+          Mongo::Error::MaxBSONSize
+        ).ordered
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           retryable.write
-        }.to raise_error(Mongo::Error::MaxBSONSize)
+        end.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end
   end

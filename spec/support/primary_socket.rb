@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module PrimarySocket
   def self.included(base)
     base.class_eval do
-
       let(:primary_server) do
         client.cluster.next_primary
       end

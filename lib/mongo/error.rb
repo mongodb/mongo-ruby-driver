@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -29,41 +28,41 @@ module Mongo
     # The error code field.
     #
     # @since 2.0.0
-    CODE = 'code'.freeze
+    CODE = 'code'
 
     # The standard error message field
     #
     # @since 2.0.0
     # @deprecated
-    ERRMSG = 'errmsg'.freeze
+    ERRMSG = 'errmsg'
 
     # The constant for the writeErrors array.
     #
     # @since 2.0.0
     # @deprecated
-    WRITE_ERRORS = 'writeErrors'.freeze
+    WRITE_ERRORS = 'writeErrors'
 
     # The constant for a write concern error.
     #
     # @since 2.0.0
     # @deprecated
-    WRITE_CONCERN_ERROR = 'writeConcernError'.freeze
+    WRITE_CONCERN_ERROR = 'writeConcernError'
 
     # The constant for write concern errors.
     #
     # @since 2.1.0
     # @deprecated
-    WRITE_CONCERN_ERRORS = 'writeConcernErrors'.freeze
+    WRITE_CONCERN_ERRORS = 'writeConcernErrors'
 
     # Constant for an unknown error.
     #
     # @since 2.0.0
-    UNKNOWN_ERROR = 8.freeze
+    UNKNOWN_ERROR = 8
 
     # Constant for a bad value error.
     #
     # @since 2.0.0
-    BAD_VALUE = 2.freeze
+    BAD_VALUE = 2
 
     # Constant for a Cursor not found error.
     #
@@ -88,14 +87,14 @@ module Mongo
     #
     # @since 2.6.0
     # @deprecated
-    UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult'.freeze
+    UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult'
 
     # Error label describing errors that will likely not occur if a transaction is manually retried
     # from the start.
     #
     # @since 2.6.0
     # @deprecated
-    TRANSIENT_TRANSACTION_ERROR_LABEL = 'TransientTransactionError'.freeze
+    TRANSIENT_TRANSACTION_ERROR_LABEL = 'TransientTransactionError'
 
     def initialize(msg = nil)
       super

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   module Event
-
     # The queue of events getting processed in the client.
     #
     # @since 2.0.0
     class Listeners
-
       # Initialize the event listeners.
       #
       # @example Initialize the event listeners.

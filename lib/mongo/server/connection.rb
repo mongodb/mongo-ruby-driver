@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Server
-
     # This class models the socket connections for servers and their behavior.
     #
     # @since 2.0.0
@@ -32,7 +30,7 @@ module Mongo
       # @since 2.1.0
       #
       # @deprecated No longer necessary with Server Selection specification.
-      PING = { :ping => 1 }.freeze
+      PING = { ping: 1 }.freeze
 
       # The ping command for an OP_MSG
       #
@@ -91,7 +89,7 @@ module Mongo
       # @since 2.0.0
       def initialize(server, options = {})
         if server.load_balancer? && options[:generation]
-          raise ArgumentError, "Generation cannot be set when server is a load balancer"
+          raise ArgumentError, 'Generation cannot be set when server is a load balancer'
         end
 
         @id = server.next_connection_id
@@ -222,10 +220,9 @@ module Mongo
           @description, @compressor = do_connect
 
           if server.load_balancer?
-            if Lint.enabled?
-              unless service_id
-                raise Error::InternalDriverError, "The connection is to a load balancer and it must have service_id set here, but does not"
-              end
+            if Lint.enabled? && !service_id
+              raise Error::InternalDriverError,
+                    'The connection is to a load balancer and it must have service_id set here, but does not'
             end
             @generation = connection_pool.generation_manager.generation(service_id: service_id)
           end
@@ -266,7 +263,8 @@ module Mongo
         raise_if_closed!
         begin
           pending_connection = PendingConnection.new(
-            socket, @server, monitoring, options.merge(id: id))
+            socket, @server, monitoring, options.merge(id: id)
+          )
           pending_connection.handshake_and_authenticate!
         rescue Exception
           socket&.close
@@ -274,7 +272,7 @@ module Mongo
           raise
         end
 
-        [pending_connection.description, pending_connection.compressor]
+        [ pending_connection.description, pending_connection.compressor ]
       end
 
       # Disconnect the connection.
@@ -297,12 +295,16 @@ module Mongo
       #
       # @since 2.0.0
       def disconnect!(options = nil)
-        # Note: @closed may be true here but we also may have a socket.
+        # NOTE: @closed may be true here but we also may have a socket.
         # Check the socket and not @closed flag.
         @auth_mechanism = nil
         @last_checkin = nil
         if socket
-          socket.close rescue nil
+          begin
+            socket.close
+          rescue StandardError
+            nil
+          end
           @socket = nil
         end
         @closed = true
@@ -319,8 +321,8 @@ module Mongo
             Monitoring::Event::Cmap::ConnectionClosed.new(
               address,
               id,
-              reason,
-            ),
+              reason
+            )
           )
           @close_event_published = true
         end
@@ -360,7 +362,7 @@ module Mongo
         @timeout ||= options[:socket_timeout]
       end
       # @deprecated Please use :socket_timeout instead. Will be removed in 3.0.0
-      alias :timeout :socket_timeout
+      alias timeout socket_timeout
 
       # Record the last checkin time.
       #
@@ -400,31 +402,31 @@ module Mongo
       end
 
       def handle_errors
-        begin
-          yield
-        rescue Error::SocketError => e
-          @error = e
-          @server.unknown!(
-            generation: e.generation,
-            # or description.service_id?
-            service_id: e.service_id,
-            stop_push_monitor: true,
-          )
-          raise
-        rescue Error::SocketTimeoutError => e
-          @error = e
-          raise
-        end
+        yield
+      rescue Error::SocketError => e
+        @error = e
+        @server.unknown!(
+          generation: e.generation,
+          # or description.service_id?
+          service_id: e.service_id,
+          stop_push_monitor: true
+        )
+        raise
+      rescue Error::SocketTimeoutError => e
+        @error = e
+        raise
       end
 
       def raise_if_closed!
         if error?
-          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
+          raise Error::ConnectionPerished,
+                "Connection #{generation}:#{id} for #{address.seed} is perished. Reconnecting closed or errored connections is no longer supported"
         end
 
-        if closed?
-          raise Error::ConnectionPerished, "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
-        end
+        return unless closed?
+
+        raise Error::ConnectionPerished,
+              "Connection #{generation}:#{id} for #{address.seed} is closed. Reconnecting closed or errored connections is no longer supported"
       end
     end
   end

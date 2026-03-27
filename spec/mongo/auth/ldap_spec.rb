@@ -1,11 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'support/shared/auth_context'
 
 describe Mongo::Auth::LDAP do
-
   let(:server) do
     authorized_client.cluster.next_primary
   end
@@ -16,18 +14,16 @@ describe Mongo::Auth::LDAP do
     Mongo::Auth::User.new(
       database: '$external',
       user: 'driver',
-      password: 'password',
+      password: 'password'
     )
   end
 
   describe '#login' do
-
     before do
       connection.connect!
     end
 
     context 'when the user is not authorized for the database' do
-
       let(:cr) do
         described_class.new(user, connection)
       end
@@ -37,9 +33,9 @@ describe Mongo::Auth::LDAP do
       end
 
       it 'attempts to log the user into the connection' do
-        expect {
+        expect do
           cr.login
-        }.to raise_error(Mongo::Auth::Unauthorized)
+        end.to raise_error(Mongo::Auth::Unauthorized)
       end
     end
   end

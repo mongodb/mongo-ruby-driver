@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Socket
-
     # Wrapper for Unix sockets.
     #
     # @since 2.0.0
     class Unix < Socket
-
       # Initializes a new Unix socket.
       #
       # @example Create the Unix socket.
@@ -60,4 +57,3 @@ module Mongo
     end
   end
 end
-

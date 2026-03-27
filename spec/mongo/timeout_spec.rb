@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -15,7 +14,7 @@ describe Mongo::Timeout do
           Mongo::Timeout.timeout(0.1) do
             sleep 1
           end
-        end.to raise_error(::Timeout::Error, default_error_message)
+        end.to raise_error(Timeout::Error, default_error_message)
       end
     end
 

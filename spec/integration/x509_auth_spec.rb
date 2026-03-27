@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -29,33 +28,33 @@ describe 'X.509 auth integration tests' do
     end
 
     it 'does not authenticate' do
-      authenticated_user_info.should be nil
+      authenticated_user_info.should be_nil
     end
   end
 
   context 'certificate matching a defined user' do
     let(:common_name) do
-      "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost".freeze
+      'C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost'
     end
 
     let(:subscriber) { Mrss::EventSubscriber.new }
 
     shared_examples 'authenticates successfully' do
       it 'authenticates successfully' do
-        authenticated_user_name.should == common_name
+        expect(authenticated_user_name).to eq(common_name)
       end
 
       let(:commands) do
         client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
         authenticated_user_name
-        commands = subscriber.started_events.map(&:command_name)
+        subscriber.started_events.map(&:command_name)
       end
 
       context 'server 4.2 and lower' do
         max_server_version '4.2'
 
         it 'uses the authenticate command to authenticate' do
-          commands.should == %w(authenticate connectionStatus)
+          expect(commands).to eq(%w[authenticate connectionStatus])
         end
       end
 
@@ -63,7 +62,7 @@ describe 'X.509 auth integration tests' do
         min_server_fcv '4.4'
 
         it 'uses speculative authentication in hello to authenticate' do
-          commands.should == %w(connectionStatus)
+          expect(commands).to eq(%w[connectionStatus])
         end
       end
     end
@@ -105,7 +104,7 @@ describe 'X.509 auth integration tests' do
           authenticated_user_name
         end.should raise_error(Mongo::Auth::Unauthorized, /Client certificate.*is not authorized/)
         commands = subscriber.started_events.map(&:command_name)
-        commands.should == %w(authenticate)
+        expect(commands).to eq(%w[authenticate])
       end
     end
   end

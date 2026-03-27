@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Operation
-
     # Shared behavior of operations that write (update, insert, delete).
     #
     # @since 2.5.2
     # @api private
     module Write
-
       include ResponseHandling
 
       # Execute the operation.
@@ -79,16 +76,18 @@ module Mongo
       private
 
       def validate!(connection)
-        if !acknowledged_write?
-          if collation
-            raise Error::UnsupportedCollation.new(
-                Error::UnsupportedCollation::UNACKNOWLEDGED_WRITES_MESSAGE)
-          end
-          if array_filters(connection)
-            raise Error::UnsupportedArrayFilters.new(
-                Error::UnsupportedArrayFilters::UNACKNOWLEDGED_WRITES_MESSAGE)
-          end
+        return if acknowledged_write?
+
+        if collation
+          raise Error::UnsupportedCollation.new(
+            Error::UnsupportedCollation::UNACKNOWLEDGED_WRITES_MESSAGE
+          )
         end
+        return unless array_filters(connection)
+
+        raise Error::UnsupportedArrayFilters.new(
+          Error::UnsupportedArrayFilters::UNACKNOWLEDGED_WRITES_MESSAGE
+        )
       end
     end
   end

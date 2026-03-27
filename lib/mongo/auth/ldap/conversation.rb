@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,14 +17,12 @@
 module Mongo
   module Auth
     class LDAP
-
       # Defines behavior around a single PLAIN conversation between the
       # client and server.
       #
       # @since 2.0.0
       # @api private
       class Conversation < ConversationBase
-
         # The login message.
         #
         # @since 2.0.0

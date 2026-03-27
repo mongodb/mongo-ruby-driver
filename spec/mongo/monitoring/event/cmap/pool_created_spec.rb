@@ -1,20 +1,17 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Monitoring::Event::Cmap::PoolCreated do
-
   describe '#summary' do
-
     let(:address) do
       Mongo::Address.new('127.0.0.1:27017')
     end
 
     let(:options) do
       {
-         wait_queue_timeout: 3,
-         min_pool_size: 5,
+        wait_queue_timeout: 3,
+        min_pool_size: 5,
       }
     end
 

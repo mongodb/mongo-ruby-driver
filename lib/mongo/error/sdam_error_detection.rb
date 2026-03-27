@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
   class Error
@@ -10,15 +9,14 @@ module Mongo
     #
     # @api semipublic
     module SdamErrorDetection
+      # @api private
+      NOT_MASTER_CODES = [ 10_107, 13_435 ].freeze
 
       # @api private
-      NOT_MASTER_CODES = [10107, 13435].freeze
+      NODE_RECOVERING_CODES = [ 11_600, 11_602, 13_436, 189, 91, 10_058 ].freeze
 
       # @api private
-      NODE_RECOVERING_CODES = [11600, 11602, 13436, 189, 91, 10058].freeze
-
-      # @api private
-      NODE_SHUTTING_DOWN_CODES = [11600, 91].freeze
+      NODE_SHUTTING_DOWN_CODES = [ 11_600, 91 ].freeze
 
       # Whether the error is a "not master" error, or one of its variants.
       #

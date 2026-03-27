@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Monitoring::Event::CommandFailed do
-
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
   end
@@ -24,7 +22,7 @@ describe Mongo::Monitoring::Event::CommandFailed do
 
         let(:event) do
           described_class.new(
-            'copydb', 'admin', address, 1, 2, "msg", failure, 0.5, started_event: started_event
+            'copydb', 'admin', address, 1, 2, 'msg', failure, 0.5, started_event: started_event
           )
         end
 
@@ -42,7 +40,7 @@ describe Mongo::Monitoring::Event::CommandFailed do
 
         let(:event) do
           described_class.new(
-            'find', 'admin', address, 1, 2, "msg", failure, 0.5, started_event: started_event
+            'find', 'admin', address, 1, 2, 'msg', failure, 0.5, started_event: started_event
           )
         end
 

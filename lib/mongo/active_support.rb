@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,4 +16,4 @@
 
 # Require this file if using the Ruby drver with ActiveSupport.
 
-require "bson/active_support"
+require 'bson/active_support'

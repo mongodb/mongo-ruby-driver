@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Exception raised if there are write errors upon executing a bulk
     # operation.
     #
@@ -33,7 +31,6 @@ module Mongo
     #
     # @since 2.0.0
     class BulkWriteError < Error
-
       # @return [ BSON::Document ] result The error result.
       attr_reader :result
 
@@ -48,9 +45,11 @@ module Mongo
       # @since 2.0.0
       def initialize(result)
         @result = result
+
         # Exception constructor behaves differently for a nil argument and
         # for no argument. Avoid passing nil explicitly.
-        super(*[build_message])
+        message = build_message
+        message ? super(message) : super()
       end
 
       private
@@ -77,24 +76,22 @@ module Mongo
         errors = @result['writeErrors']
         return nil unless errors
 
-        fragment = ""
+        fragment = ''
         cut_short = false
         errors.first(10).each_with_index do |error, i|
-          fragment += "; " if fragment.length > 0
+          fragment += '; ' if fragment.length > 0
           fragment += "[#{error['code']}]: #{error['errmsg']}"
           fragment += " -- #{error['errInfo'].to_json}" if error['errInfo']
 
           if fragment.length > 3000
-            cut_short = i < [9, errors.length].min
+            cut_short = i < [ 9, errors.length ].min
             break
           end
         end
 
         fragment += '...' if errors.length > 10 || cut_short
 
-        if errors.length > 1
-          fragment = "Multiple errors: #{fragment}"
-        end
+        fragment = "Multiple errors: #{fragment}" if errors.length > 1
 
         fragment
       end

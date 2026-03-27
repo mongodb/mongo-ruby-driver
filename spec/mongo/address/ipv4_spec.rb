@@ -1,41 +1,34 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Address::IPv4 do
-
   let(:resolver) do
     described_class.new(*described_class.parse(address))
   end
 
   describe 'self.parse' do
-
     context 'when a port is provided' do
-
       it 'returns the host and port' do
-        expect(described_class.parse('127.0.0.1:27017')).to eq(['127.0.0.1', 27017])
+        expect(described_class.parse('127.0.0.1:27017')).to eq([ '127.0.0.1', 27_017 ])
       end
     end
 
     context 'when no port is provided' do
-
       it 'returns the host and port' do
-        expect(described_class.parse('127.0.0.1')).to eq(['127.0.0.1', 27017])
+        expect(described_class.parse('127.0.0.1')).to eq([ '127.0.0.1', 27_017 ])
       end
     end
   end
 
   describe '#initialize' do
-
     context 'when a port is provided' do
-
       let(:address) do
         '127.0.0.1:27017'
       end
 
       it 'sets the port' do
-        expect(resolver.port).to eq(27017)
+        expect(resolver.port).to eq(27_017)
       end
 
       it 'sets the host' do
@@ -44,13 +37,12 @@ describe Mongo::Address::IPv4 do
     end
 
     context 'when no port is provided' do
-
       let(:address) do
         '127.0.0.1'
       end
 
       it 'sets the port to 27017' do
-        expect(resolver.port).to eq(27017)
+        expect(resolver.port).to eq(27_017)
       end
 
       it 'sets the host' do
@@ -60,13 +52,11 @@ describe Mongo::Address::IPv4 do
   end
 
   describe '#socket' do
-
     let(:address) do
       '127.0.0.1'
     end
 
     context 'when ssl options are provided' do
-
       let(:socket) do
         resolver.socket(5, ssl: true)
       end
@@ -83,7 +73,6 @@ describe Mongo::Address::IPv4 do
     end
 
     context 'when ssl options are not provided' do
-
       let(:socket) do
         resolver.socket(5)
       end

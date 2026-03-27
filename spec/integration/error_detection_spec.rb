@@ -1,11 +1,10 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe 'Error detection' do
   context 'document contains a not master/node recovering code' do
-    let(:document) { {code: 91} }
+    let(:document) { { code: 91 } }
 
     let(:coll) { authorized_client_without_any_retries['error-detection'] }
 
@@ -14,7 +13,6 @@ describe 'Error detection' do
     end
 
     context 'cursors not used' do
-
       before do
         coll.insert_one(document)
       end
@@ -26,7 +24,6 @@ describe 'Error detection' do
     end
 
     context 'cursors used' do
-
       before do
         10.times do
           coll.insert_one(document)

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -14,8 +13,8 @@ describe 'Connection pool stress test' do
 
   let(:documents) do
     [].tap do |documents|
-      10000.times do |i|
-        documents << { a: i}
+      10_000.times do |i|
+        documents << { a: i }
       end
     end
   end
@@ -25,9 +24,9 @@ describe 'Connection pool stress test' do
       thread_count.times do |i|
         threads << Thread.new do
           100.times do |j|
-            collection.find(a: i+j).to_a
+            collection.find(a: i + j).to_a
             sleep 0.1
-            collection.find(a: i+j).to_a
+            collection.find(a: i + j).to_a
           end
         end
       end
@@ -49,9 +48,9 @@ describe 'Connection pool stress test' do
     it 'does not raise error' do
       collection
 
-      expect {
+      expect do
         threads.collect { |t| t.join }
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
 

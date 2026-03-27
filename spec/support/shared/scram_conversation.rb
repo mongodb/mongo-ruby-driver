@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 shared_context 'scram conversation context' do
   let(:connection) do
@@ -11,21 +10,20 @@ shared_context 'scram conversation context' do
 end
 
 shared_examples 'scram conversation' do
-
   describe '#parse_payload' do
     let(:user) { double('user') }
     let(:mechanism) { :scram }
 
     shared_examples_for 'parses as expected' do
       it 'parses as expected' do
-        conversation.send(:parse_payload, payload).should == expected
+        expect(conversation.send(:parse_payload, payload)).to eq(expected)
       end
     end
 
     context 'regular payload' do
       let(:payload) { 'foo=bar,hello=world' }
       let(:expected) do
-        {'foo' => 'bar', 'hello' => 'world'}
+        { 'foo' => 'bar', 'hello' => 'world' }
       end
 
       it_behaves_like 'parses as expected'
@@ -34,7 +32,7 @@ shared_examples 'scram conversation' do
     context 'equal signs in value' do
       let(:payload) { 'foo=bar==,hello=world=is=great' }
       let(:expected) do
-        {'foo' => 'bar==', 'hello' => 'world=is=great'}
+        { 'foo' => 'bar==', 'hello' => 'world=is=great' }
       end
 
       it_behaves_like 'parses as expected'
@@ -43,7 +41,7 @@ shared_examples 'scram conversation' do
     context 'missing value' do
       let(:payload) { 'foo=,hello=' }
       let(:expected) do
-        {'foo' => '', 'hello' => ''}
+        { 'foo' => '', 'hello' => '' }
       end
 
       it_behaves_like 'parses as expected'
@@ -52,7 +50,7 @@ shared_examples 'scram conversation' do
     context 'missing key/value pair' do
       let(:payload) { 'foo=,,hello=' }
       let(:expected) do
-        {'foo' => '', 'hello' => ''}
+        { 'foo' => '', 'hello' => '' }
       end
 
       it_behaves_like 'parses as expected'
@@ -80,7 +78,6 @@ shared_examples 'scram conversation' do
 end
 
 shared_context 'scram continue and finalize replies' do
-
   let(:continue_document) do
     BSON::Document.new(
       'conversationId' => 1,

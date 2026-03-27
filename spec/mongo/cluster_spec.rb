@@ -9,8 +9,7 @@ require 'support/recording_logger'
 # possible future work: re-enable these one at a time and do the hard work of
 # making them right.
 #
-# rubocop:disable RSpec/ContextWording, RSpec/VerifiedDoubles, RSpec/MessageSpies
-# rubocop:disable RSpec/ExpectInHook, RSpec/ExampleLength
+# rubocop:disable RSpec/MessageSpies
 describe Mongo::Cluster do
   let(:monitoring) do
     Mongo::Monitoring.new(monitoring: false)

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Monitoring::Event::ServerDescriptionChanged do
-
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
   end
@@ -13,7 +11,7 @@ describe Mongo::Monitoring::Event::ServerDescriptionChanged do
 
   let(:cluster) do
     double('cluster').tap do |cluster|
-      allow(cluster).to receive(:addresses).and_return([address])
+      allow(cluster).to receive(:addresses).and_return([ address ])
       allow(cluster).to receive(:servers_list).and_return([])
     end
   end
@@ -30,9 +28,8 @@ describe Mongo::Monitoring::Event::ServerDescriptionChanged do
   end
 
   describe '#summary' do
-
     it 'renders correctly' do
-      expect(event.summary).to eq("#<ServerDescriptionChanged address=127.0.0.1:27017 prev=UNKNOWN new=UNKNOWN>")
+      expect(event.summary).to eq('#<ServerDescriptionChanged address=127.0.0.1:27017 prev=UNKNOWN new=UNKNOWN>')
     end
   end
 end

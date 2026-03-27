@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Cluster
     module Topology
-
       # Defines behavior for when a cluster is in sharded topology.
       #
       # @since 2.0.0
@@ -28,7 +26,7 @@ module Mongo
         # The display name for the topology.
         #
         # @since 2.0.0
-        NAME = 'Sharded'.freeze
+        NAME = 'Sharded'
 
         # Get the display name.
         #
@@ -64,7 +62,9 @@ module Mongo
         # @return [ true ] A Sharded cluster always has a readable server.
         #
         # @since 2.4.0
-        def has_readable_server?(cluster, server_selector = nil); true; end
+        def has_readable_server?(_cluster, _server_selector = nil)
+          true
+        end
 
         # Determine if the topology would select a writable server for the
         # provided candidates.
@@ -77,7 +77,9 @@ module Mongo
         # @return [ true ] A Sharded cluster always has a writable server.
         #
         # @since 2.4.0
-        def has_writable_server?(cluster); true; end
+        def has_writable_server?(_cluster)
+          true
+        end
 
         # A sharded topology is not a replica set.
         #
@@ -87,7 +89,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def replica_set?; false; end
+        def replica_set?
+          false
+        end
 
         # Select appropriate servers for this topology.
         #
@@ -111,7 +115,9 @@ module Mongo
         # @return [ true ] Always true.
         #
         # @since 2.0.0
-        def sharded?; true; end
+        def sharded?
+          true
+        end
 
         # A sharded topology is not single.
         #
@@ -121,7 +127,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def single?; false; end
+        def single?
+          false
+        end
 
         # A sharded topology is not unknown.
         #
@@ -131,7 +139,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def unknown?; false; end
+        def unknown?
+          false
+        end
       end
     end
   end

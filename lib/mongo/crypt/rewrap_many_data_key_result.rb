@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2022 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ module Mongo
     #
     # @api semiprivate
     class RewrapManyDataKeyResult
-
       # @returns [ BulkWrite::Result ] the result of the bulk write operation
       #   used to update the key vault collection with rewrapped data keys.
       attr_reader :bulk_write_result

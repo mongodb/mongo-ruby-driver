@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -31,14 +30,10 @@ module Mongo
         expect(actual).to be_a(Hash)
 
         actual_modified = actual.dup
-        if actual['reason']
-          actual_modified['reason'] = actual['reason'].to_s.gsub(/_[a-z]/) { |m| m[1].upcase }
-        end
+        actual_modified['reason'] = actual['reason'].to_s.gsub(/_[a-z]/) { |m| m[1].upcase } if actual['reason']
 
         actual.each do |k, v|
-          if expected.key?(k) && expected[k] == 42 && v
-            actual_modified[k] = 42
-          end
+          actual_modified[k] = 42 if expected.key?(k) && expected[k] == 42 && v
         end
 
         expect(actual_modified.slice(*expected.keys)).to eq(expected)

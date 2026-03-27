@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ module Mongo
   module Crypt
     module KMS
       module AWS
-
         # AWS KMS Credentials object contains credentials for using AWS KMS provider.
         #
         # @api private
@@ -39,8 +37,8 @@ module Mongo
           # @api private
           def_delegator :@opts, :empty?
 
-          FORMAT_HINT = "AWS KMS provider options must be in the format: " +
-            "{ access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' }"
+          FORMAT_HINT = 'AWS KMS provider options must be in the format: ' +
+                        "{ access_key_id: 'YOUR-ACCESS-KEY-ID', secret_access_key: 'SECRET-ACCESS-KEY' }"
 
           # Creates an AWS KMS credentials object form a parameters hash.
           #
@@ -54,11 +52,11 @@ module Mongo
           #   formatted.
           def initialize(opts)
             @opts = opts
-            unless empty?
-              @access_key_id = validate_param(:access_key_id, opts, FORMAT_HINT)
-              @secret_access_key = validate_param(:secret_access_key, opts, FORMAT_HINT)
-              @session_token = validate_param(:session_token, opts, FORMAT_HINT, required: false)
-            end
+            return if empty?
+
+            @access_key_id = validate_param(:access_key_id, opts, FORMAT_HINT)
+            @secret_access_key = validate_param(:secret_access_key, opts, FORMAT_HINT)
+            @session_token = validate_param(:session_token, opts, FORMAT_HINT, required: false)
           end
 
           # Convert credentials object to a BSON document in libmongocrypt format.
@@ -66,13 +64,12 @@ module Mongo
           # @return [ BSON::Document ] AWS KMS credentials in libmongocrypt format.
           def to_document
             return BSON::Document.new if empty?
+
             BSON::Document.new({
-              accessKeyId: access_key_id,
-              secretAccessKey: secret_access_key,
-            }).tap do |bson|
-              unless session_token.nil?
-                bson.update({ sessionToken: session_token })
-              end
+                                 accessKeyId: access_key_id,
+                                 secretAccessKey: secret_access_key,
+                               }).tap do |bson|
+              bson.update({ sessionToken: session_token }) unless session_token.nil?
             end
           end
         end
@@ -80,4 +77,3 @@ module Mongo
     end
   end
 end
-

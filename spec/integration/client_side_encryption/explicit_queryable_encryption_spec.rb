@@ -4,7 +4,6 @@ require 'spec_helper'
 
 # No need to rewrite existing specs to make the examples shorter, until/unless
 # we revisit these specs and need to make substantial changes.
-# rubocop:disable RSpec/ExampleLength
 describe 'Explicit Queryable Encryption' do
   require_libmongocrypt
   min_server_version '7.0.0-rc0'

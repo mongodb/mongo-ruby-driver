@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -21,7 +20,7 @@ describe 'Bulk writes' do
 
     context 'in transaction' do
       require_transaction_support
-      min_server_version "4.4"
+      min_server_version '4.4'
 
       it 'succeeds' do
         authorized_collection.create
@@ -50,7 +49,7 @@ describe 'Bulk writes' do
     end
 
     let(:operations) do
-      [{ insert_one: { text: 'a' * (max_bson_size/2) } }] * 6
+      [ { insert_one: { text: 'a' * (max_bson_size / 2) } } ] * 6
     end
 
     before do

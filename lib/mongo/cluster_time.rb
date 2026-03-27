@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -30,9 +29,9 @@ module Mongo
     def initialize(elements = nil)
       super
 
-      if Lint.enabled? && !self['clusterTime']
-        raise ArgumentError, 'Creating a cluster time without clusterTime field'
-      end
+      return unless Lint.enabled? && !self['clusterTime']
+
+      raise ArgumentError, 'Creating a cluster time without clusterTime field'
     end
 
     # Advances the cluster time in the receiver to the cluster time in +other+.
@@ -44,8 +43,7 @@ module Mongo
     # Return value is nil or a ClusterTime instance.
     def advance(other)
       if self['clusterTime'] && other['clusterTime'] &&
-        other['clusterTime'] > self['clusterTime']
-      then
+         other['clusterTime'] > self['clusterTime']
         ClusterTime[other]
       else
         self
@@ -58,7 +56,8 @@ module Mongo
         self['clusterTime'] <=> other['clusterTime']
       elsif !self['clusterTime']
         raise ArgumentError, "Cannot compare cluster times when receiver is missing clusterTime key: #{inspect}"
-      else other['clusterTime']
+      else
+        other['clusterTime']
         raise ArgumentError, "Cannot compare cluster times when other is missing clusterTime key: #{other.inspect}"
       end
     end
@@ -69,12 +68,15 @@ module Mongo
     def >=(other)
       (self <=> other) != -1
     end
+
     def >(other)
       (self <=> other) == 1
     end
+
     def <=(other)
       (self <=> other) != 1
     end
+
     def <(other)
       (self <=> other) == -1
     end
@@ -82,8 +84,7 @@ module Mongo
     # Compares two ClusterTime instances by comparing their timestamps.
     def ==(other)
       if self['clusterTime'] && other['clusterTime'] &&
-        self['clusterTime'] == other['clusterTime']
-      then
+         self['clusterTime'] == other['clusterTime']
         true
       else
         false
@@ -110,7 +111,6 @@ module Mongo
     #   the methods are defined on this module and not directly on the
     #   including classes is not part of the public API.
     module Consumer
-
       # The cluster time tracked by the object including this module.
       #
       # @return [ nil | ClusterTime ] The cluster time.
@@ -131,11 +131,11 @@ module Mongo
       #
       # @since 2.5.0
       def advance_cluster_time(new_cluster_time)
-        if @cluster_time
-          @cluster_time = @cluster_time.advance(new_cluster_time)
-        else
-          @cluster_time = ClusterTime[new_cluster_time]
-        end
+        @cluster_time = if @cluster_time
+                          @cluster_time.advance(new_cluster_time)
+                        else
+                          ClusterTime[new_cluster_time]
+                        end
       end
     end
   end

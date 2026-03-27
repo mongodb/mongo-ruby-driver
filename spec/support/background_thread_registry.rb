@@ -1,13 +1,11 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'singleton'
 require 'ostruct'
 
 module Mongo
   module BackgroundThread
-
-    alias :start_without_tracking! :start!
+    alias start_without_tracking! start!
 
     def start!
       start_without_tracking!.tap do |thread|
@@ -31,7 +29,7 @@ class BackgroundThreadRegistry
         thread: thread,
         object: object,
         # When rake spec:prepare is run, the current_example method is not defined
-        example: RSpec.respond_to?(:current_example) ? RSpec.current_example : nil,
+        example: RSpec.respond_to?(:current_example) ? RSpec.current_example : nil
       )
     end
   end
@@ -40,17 +38,15 @@ class BackgroundThreadRegistry
     @lock.synchronize do
       alive_thread_records = @records.select { |record| record.thread.alive? }
       if alive_thread_records.any?
-        msg = +"Live background threads after closing all clients:"
+        msg = +'Live background threads after closing all clients:'
         alive_thread_records.each do |record|
           msg << "\n  #{record.object}"
-          if record.object.respond_to?(:options)
-            msg << "\n  with options: #{record.object.options}"
-          end
-          if record.example
-            msg << "\n  in #{record.example.id}: #{record.example.full_description}"
-          else
-            msg << "\n  not in an example"
-          end
+          msg << "\n  with options: #{record.object.options}" if record.object.respond_to?(:options)
+          msg << if record.example
+                   "\n  in #{record.example.id}: #{record.example.full_description}"
+                 else
+                   "\n  not in an example"
+                 end
         end
         raise msg
       end

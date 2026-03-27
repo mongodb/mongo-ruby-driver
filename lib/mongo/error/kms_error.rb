@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # A KMS-related error during client-side encryption.
     class KmsError < CryptError
       def initialize(message, code: nil, network_error: nil)

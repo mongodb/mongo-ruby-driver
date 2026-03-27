@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -13,7 +12,7 @@ describe 'Cursor pinning' do
   let(:collection) { client[collection_name] }
 
   before do
-    authorized_client[collection_name].insert_many([{test: 1}] * 200)
+    authorized_client[collection_name].insert_many([ { test: 1 } ] * 200)
   end
 
   let(:server) { client.cluster.next_primary }
@@ -28,23 +27,23 @@ describe 'Cursor pinning' do
     # new connections as needed.
 
     it 'creates new connections for iteration' do
-      server.pool.size.should == 0
+      expect(server.pool.size).to eq(0)
 
       # Use batch_size of 2 until RUBY-2727 is fixed.
       enum = collection.find({}, batch_size: 2).to_enum
       # Still zero because we haven't iterated
-      server.pool.size.should == 0
+      expect(server.pool.size).to eq(0)
 
       enum.next
       enum.next
-      server.pool.size.should == 1
+      expect(server.pool.size).to eq(1)
 
       # Grab the connection that was used
       server.with_connection do
         # This requires a new connection
         enum.next
 
-        server.pool.size.should == 2
+        expect(server.pool.size).to eq(2)
       end
     end
   end

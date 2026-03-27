@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/error/timeout_error'
 
 module Mongo
   class Error
-
     # Raised when a socket connection times out.
     #
     # @since 2.0.0

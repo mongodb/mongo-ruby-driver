@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   module Event
-
     # Adds convenience methods for adding listeners to event publishers.
     #
     # @since 2.0.0
     module Subscriber
-
       # @return [ Event::Listeners ] event_listeners The listeners.
       attr_reader :event_listeners
 
@@ -41,4 +38,3 @@ module Mongo
     end
   end
 end
-

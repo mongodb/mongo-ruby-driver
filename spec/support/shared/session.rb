@@ -1,13 +1,10 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 shared_examples 'an operation using a session' do
-
   describe 'operation execution' do
     require_topology :replica_set, :sharded
 
     context 'when the session is created from the same client used for the operation' do
-
       let(:session) do
         client.start_session
       end
@@ -21,7 +18,7 @@ shared_examples 'an operation using a session' do
       end
 
       let!(:before_operation_time) do
-        (session.operation_time || 0)
+        session.operation_time || 0
       end
 
       let!(:operation_result) do
@@ -46,7 +43,6 @@ shared_examples 'an operation using a session' do
     end
 
     context 'when a session from another client is provided' do
-
       let(:session) do
         another_authorized_client.start_session
       end
@@ -63,7 +59,6 @@ shared_examples 'an operation using a session' do
     end
 
     context 'when the session is ended before it is used' do
-
       let(:session) do
         client.start_session
       end
@@ -77,9 +72,9 @@ shared_examples 'an operation using a session' do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           operation_result
-        }.to raise_exception(Mongo::Error::InvalidSession)
+        end.to raise_exception(Mongo::Error::InvalidSession)
       end
     end
   end
@@ -93,12 +88,12 @@ shared_examples 'a failed operation using a session' do
   end
 
   let!(:before_operation_time) do
-    (session.operation_time || 0)
+    session.operation_time || 0
   end
 
   let!(:operation_result) do
     sleep 0.2
-    begin; failed_operation; rescue => e; e; end
+    begin; failed_operation; rescue StandardError => e; e; end
   end
 
   let(:session) do
@@ -106,8 +101,8 @@ shared_examples 'a failed operation using a session' do
   end
 
   it 'raises an error' do
-    expect([Mongo::Error::OperationFailure::Family,
-            Mongo::Error::BulkWriteError].any? { |e| e === operation_result }).to be true
+    expect([ Mongo::Error::OperationFailure::Family,
+             Mongo::Error::BulkWriteError ].any? { |e| e === operation_result }).to be true
   end
 
   it 'updates the last use value' do
@@ -127,8 +122,10 @@ shared_examples 'an explicit session with an unacknowledged write' do
   it 'does not add a session id to the operation' do
     subscriber.clear_events!
     operation
-    subscriber.non_auth_command_started_events.length.should == 1
-    expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+    expect(subscriber.non_auth_command_started_events.length).to eq(1)
+    expect(subscriber.non_auth_command_started_events.collect(&:command).collect do |cmd|
+      cmd['lsid']
+    end.compact).to be_empty
   end
 end
 
@@ -136,13 +133,14 @@ shared_examples 'an implicit session with an unacknowledged write' do
   it 'does not add a session id to the operation' do
     subscriber.clear_events!
     operation
-    subscriber.non_auth_command_started_events.length.should == 1
-    expect(subscriber.non_auth_command_started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+    expect(subscriber.non_auth_command_started_events.length).to eq(1)
+    expect(subscriber.non_auth_command_started_events.collect(&:command).collect do |cmd|
+      cmd['lsid']
+    end.compact).to be_empty
   end
 end
 
 shared_examples 'an operation supporting causally consistent reads' do
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
@@ -155,13 +153,11 @@ shared_examples 'an operation supporting causally consistent reads' do
     require_topology :single
 
     context 'when the collection specifies a read concern' do
-
       let(:collection) do
         client[TEST_COLL, read_concern: { level: 'majority' }]
       end
 
       context 'when the session has causal_consistency set to true' do
-
         let(:session) do
           client.start_session(causal_consistency: true)
         end
@@ -172,7 +168,6 @@ shared_examples 'an operation supporting causally consistent reads' do
       end
 
       context 'when the session has causal_consistency set to false' do
-
         let(:session) do
           client.start_session(causal_consistency: false)
         end
@@ -183,7 +178,6 @@ shared_examples 'an operation supporting causally consistent reads' do
       end
 
       context 'when the session has causal_consistency not set' do
-
         let(:session) do
           client.start_session
         end
@@ -195,13 +189,11 @@ shared_examples 'an operation supporting causally consistent reads' do
     end
 
     context 'when the collection does not specify a read concern' do
-
       let(:collection) do
         client[TEST_COLL]
       end
 
       context 'when the session has causal_consistency set to true' do
-
         let(:session) do
           client.start_session(causal_consistency: true)
         end
@@ -212,7 +204,6 @@ shared_examples 'an operation supporting causally consistent reads' do
       end
 
       context 'when the session has causal_consistency set to false' do
-
         let(:session) do
           client.start_session(causal_consistency: false)
         end
@@ -223,7 +214,6 @@ shared_examples 'an operation supporting causally consistent reads' do
       end
 
       context 'when the session has causal_consistency not set' do
-
         let(:session) do
           client.start_session
         end
@@ -239,19 +229,16 @@ shared_examples 'an operation supporting causally consistent reads' do
     require_topology :replica_set, :sharded
 
     context 'when the collection specifies a read concern' do
-
       let(:collection) do
         client[TEST_COLL, read_concern: { level: 'majority' }]
       end
 
       context 'when the session has causal_consistency set to true' do
-
         let(:session) do
           client.start_session(causal_consistency: true)
         end
 
         context 'when the session has an operation time' do
-
           before do
             client.database.command({ ping: 1 }, session: session)
           end
@@ -270,7 +257,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the session does not have an operation time' do
-
           let(:expected_read_concern) do
             BSON::Document.new(level: 'majority')
           end
@@ -281,7 +267,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the operation time is advanced' do
-
           before do
             session.advance_operation_time(operation_time)
           end
@@ -301,13 +286,11 @@ shared_examples 'an operation supporting causally consistent reads' do
       end
 
       context 'when the session has causal_consistency set to false' do
-
         let(:session) do
           client.start_session(causal_consistency: false)
         end
 
         context 'when the session does not have an operation time' do
-
           let(:expected_read_concern) do
             BSON::Document.new(level: 'majority')
           end
@@ -318,7 +301,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the session has an operation time' do
-
           before do
             client.database.command({ ping: 1 }, session: session)
           end
@@ -333,7 +315,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the operation time is advanced' do
-
           before do
             session.advance_operation_time(operation_time)
           end
@@ -353,13 +334,11 @@ shared_examples 'an operation supporting causally consistent reads' do
       end
 
       context 'when the session has causal_consistency not set' do
-
         let(:session) do
           client.start_session
         end
 
         context 'when the session does not have an operation time' do
-
           let(:expected_read_concern) do
             BSON::Document.new(level: 'majority')
           end
@@ -370,7 +349,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the session has an operation time' do
-
           before do
             client.database.command({ ping: 1 }, session: session)
           end
@@ -389,7 +367,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the operation time is advanced' do
-
           before do
             session.advance_operation_time(operation_time)
           end
@@ -410,26 +387,22 @@ shared_examples 'an operation supporting causally consistent reads' do
     end
 
     context 'when the collection does not specify a read concern' do
-
       let(:collection) do
         client[TEST_COLL]
       end
 
       context 'when the session has causal_consistency set to true' do
-
         let(:session) do
           client.start_session(causal_consistency: true)
         end
 
         context 'when the session does not have an operation time' do
-
           it 'does not include the read concern in the command' do
             expect(command['readConcern']).to be_nil
           end
         end
 
         context 'when the session has an operation time' do
-
           before do
             client.database.command({ ping: 1 }, session: session)
           end
@@ -448,7 +421,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the operation time is advanced' do
-
           before do
             session.advance_operation_time(operation_time)
           end
@@ -468,20 +440,17 @@ shared_examples 'an operation supporting causally consistent reads' do
       end
 
       context 'when the session has causal_consistency set to false' do
-
         let(:session) do
           client.start_session(causal_consistency: false)
         end
 
         context 'when the session does not have an operation time' do
-
           it 'does not include the read concern in the command' do
             expect(command['readConcern']).to be_nil
           end
         end
 
         context 'when the session has an operation time' do
-
           before do
             client.database.command({ ping: 1 }, session: session)
           end
@@ -492,7 +461,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the operation time is advanced' do
-
           before do
             session.advance_operation_time(operation_time)
           end
@@ -512,20 +480,17 @@ shared_examples 'an operation supporting causally consistent reads' do
       end
 
       context 'when the session has causal_consistency not set' do
-
         let(:session) do
           client.start_session
         end
 
         context 'when the session does not have an operation time' do
-
           it 'does not include the read concern in the command' do
             expect(command['readConcern']).to be_nil
           end
         end
 
         context 'when the session has an operation time' do
-
           before do
             client.database.command({ ping: 1 }, session: session)
           end
@@ -544,7 +509,6 @@ shared_examples 'an operation supporting causally consistent reads' do
         end
 
         context 'when the operation time is advanced' do
-
           before do
             session.advance_operation_time(operation_time)
           end
@@ -569,7 +533,6 @@ end
 # Since background operatons can advance cluster time, exact cluster time
 # comparisons sometimes fail. Work around this by retrying the tests.
 shared_examples 'an operation updating cluster time' do
-
   let(:cluster) do
     client.cluster
   end
@@ -589,7 +552,7 @@ shared_examples 'an operation updating cluster time' do
   shared_examples_for 'does not update the cluster time of the cluster' do
     retry_test
     it 'does not update the cluster time of the cluster' do
-      bct = before_cluster_time
+      before_cluster_time
       reply_cluster_time
       expect(client.cluster.cluster_time).to eq(before_cluster_time)
     end
@@ -639,7 +602,6 @@ shared_examples 'an operation updating cluster time' do
   end
 
   context 'when the command is run twice' do
-
     let(:reply_cluster_time) do
       operation_with_session
       subscriber.succeeded_events[-1].reply['$clusterTime']
@@ -649,7 +611,6 @@ shared_examples 'an operation updating cluster time' do
       require_topology :replica_set, :sharded
 
       context 'when the session cluster time is advanced' do
-
         before do
           session.advance_cluster_time(advanced_cluster_time)
         end
@@ -660,7 +621,6 @@ shared_examples 'an operation updating cluster time' do
         end
 
         context 'when the advanced cluster time is greater than the existing cluster time' do
-
           let(:advanced_cluster_time) do
             new_timestamp = BSON::Timestamp.new(reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].seconds,
                                                 reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].increment + 1)
@@ -675,7 +635,6 @@ shared_examples 'an operation updating cluster time' do
         end
 
         context 'when the advanced cluster time is not greater than the existing cluster time' do
-
           let(:advanced_cluster_time) do
             expect(reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].increment > 0).to be true
 
@@ -693,7 +652,6 @@ shared_examples 'an operation updating cluster time' do
       end
 
       context 'when the session cluster time is not advanced' do
-
         let(:second_command_cluster_time) do
           second_operation
           subscriber.non_auth_command_started_events[-1].command['$clusterTime']

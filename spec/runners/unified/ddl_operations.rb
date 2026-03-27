@@ -1,10 +1,7 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Unified
-
   module DdlOperations
-
     def list_databases(op)
       list_dbs(op, name_only: false)
     end
@@ -87,7 +84,7 @@ module Unified
           opts[:timeout_ms] = timeout_ms
         end
 
-        database.list_collections(**opts.merge(name_only: name_only))
+        database.list_collections(**opts, name_only: name_only)
       end
     end
 
@@ -108,9 +105,7 @@ module Unified
           to: "#{collection.database.name}.#{to}"
         }
 
-        if args.key?("dropTarget")
-          cmd[:dropTarget] = args.use("dropTarget")
-        end
+        cmd[:dropTarget] = args.use('dropTarget') if args.key?('dropTarget')
 
         collection.client.use(:admin).command(**cmd)
       end
@@ -126,10 +121,8 @@ module Unified
           unless database.collection_names.include?(collection_name)
             raise Error::ResultMismatch, "Expected collection #{collection_name} to exist, but it does not"
           end
-        else
-          if database.collection_names.include?(collection_name)
-            raise Error::ResultMismatch, "Expected collection #{collection_name} to not exist, but it does"
-          end
+        elsif database.collection_names.include?(collection_name)
+          raise Error::ResultMismatch, "Expected collection #{collection_name} to not exist, but it does"
         end
       end
     end
@@ -167,9 +160,7 @@ module Unified
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
-        if args.key?('unique')
-          opts[:unique] = args.use('unique')
-        end
+        opts[:unique] = args.use('unique') if args.key?('unique')
         if timeout_ms = args.use('timeoutMS')
           opts[:timeout_ms] = timeout_ms
         end
@@ -179,7 +170,7 @@ module Unified
         collection.indexes.create_one(
           args.use!('keys'),
           name: args.use('name'),
-          **opts,
+          **opts
         )
       end
     end
@@ -194,11 +185,10 @@ module Unified
 
         collection.indexes.drop_one(
           args.use!('name'),
-          **opts,
+          **opts
         )
       end
     end
-
 
     def assert_index_exists(op)
       consume_test_runner(op)
@@ -206,7 +196,7 @@ module Unified
         client = ClientRegistry.instance.global_client('authorized')
         database = client.use(args.use!('databaseName'))
         collection = database[args.use!('collectionName')]
-        index = collection.indexes.get(args.use!('indexName'))
+        collection.indexes.get(args.use!('indexName'))
       end
     end
 
@@ -217,14 +207,11 @@ module Unified
         database = client.use(args.use!('databaseName'))
         collection = database[args.use!('collectionName')]
         begin
-          index = collection.indexes.get(args.use!('indexName'))
-          raise Error::ResultMismatch, "Index found"
+          collection.indexes.get(args.use!('indexName'))
+          raise Error::ResultMismatch, 'Index found'
         rescue Mongo::Error::OperationFailure::Family => e
-          if e.code == 26
-            # OK
-          else
-            raise
-          end
+          raise unless e.code == 26
+          # OK
         end
       end
     end
@@ -256,7 +243,7 @@ module Unified
     end
 
     def retrieve_primary(topology)
-      topology.server_descriptions.detect { |k, desc| desc.primary? }&.first
+      topology.server_descriptions.detect { |_k, desc| desc.primary? }&.first
     end
 
     def wait_for_primary_change(op)
@@ -264,21 +251,19 @@ module Unified
       use_arguments(op) do |args|
         client = entities.get(:client, args.use!('client'))
         topology = entities.get(:topology, args.use!('priorTopologyDescription'))
-        timeout_ms = args.use('timeoutMS') || 10000
+        timeout_ms = args.use('timeoutMS') || 10_000
         old_primary = retrieve_primary(topology)
 
-        deadline = Mongo::Utils.monotonic_time + timeout_ms / 1000.0
+        deadline = Mongo::Utils.monotonic_time + (timeout_ms / 1000.0)
         loop do
           client.cluster.scan!
           new_primary = client.cluster.next_primary.address
-          if new_primary && old_primary != new_primary
-            break
-          end
+          break if new_primary && old_primary != new_primary
           if Mongo::Utils.monotonic_time >= deadline
             raise "Did not receive a change in primary from #{old_primary} in 10 seconds"
-          else
-            sleep 0.1
           end
+
+          sleep 0.1
         end
       end
     end

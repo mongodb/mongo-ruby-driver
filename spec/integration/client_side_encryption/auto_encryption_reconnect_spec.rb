@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -64,10 +63,10 @@ describe 'Client with auto encryption #reconnect' do
         insert: 'users',
         ordered: true,
         lsid: { id: BSON::Binary.new("\x00" * 16, :uuid) },
-        documents: [{
+        documents: [ {
           ssn: '123-456-7890',
           _id: BSON::ObjectId.new,
-        }],
+        } ],
         jsonSchema: schema_map,
         isRemoteSchema: false
       )
@@ -79,7 +78,8 @@ describe 'Client with auto encryption #reconnect' do
 
   shared_examples 'a functioning key vault client' do
     it 'can perform a find command' do
-      doc = key_vault_client.use(key_vault_db)[key_vault_coll, read_concern: { level: :majority}].find(_id: data_key_id).first
+      doc = key_vault_client.use(key_vault_db)[key_vault_coll,
+                                               read_concern: { level: :majority }].find(_id: data_key_id).first
       expect(doc).not_to be_nil
       expect(doc['_id']).to eq(data_key_id)
     end
@@ -123,7 +123,7 @@ describe 'Client with auto encryption #reconnect' do
 
     context 'after killing client monitor thread' do
       before do
-        thread = client.cluster.servers.first.monitor.instance_variable_get('@thread')
+        thread = client.cluster.servers.first.monitor.instance_variable_get(:@thread)
         expect(thread).to be_alive
 
         thread.kill
@@ -156,7 +156,7 @@ describe 'Client with auto encryption #reconnect' do
       before do
         # don't use the mongocryptd_client variable yet so that it will be computed
         # after the client reconnects
-        thread = client.encrypter.mongocryptd_client.cluster.servers.first.monitor.instance_variable_get('@thread')
+        thread = client.encrypter.mongocryptd_client.cluster.servers.first.monitor.instance_variable_get(:@thread)
         expect(thread).to be_alive
 
         thread.kill
@@ -185,7 +185,7 @@ describe 'Client with auto encryption #reconnect' do
 
     context 'after killing key_vault_client monitor thread and reconnecting' do
       before do
-        thread = key_vault_client.cluster.servers.first.monitor.instance_variable_get('@thread')
+        thread = key_vault_client.cluster.servers.first.monitor.instance_variable_get(:@thread)
         expect(thread).to be_alive
 
         thread.kill

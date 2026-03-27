@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -59,11 +58,28 @@ describe 'Step down behavior' do
     let(:collection) { subscribed_client['step-down'] }
 
     before do
-      collection.insert_many([{test: 1}] * 100)
+      collection.insert_many([ { test: 1 } ] * 100)
     end
 
-    let(:view) { collection.find({test: 1}, batch_size: 10) }
+    let(:view) { collection.find({ test: 1 }, batch_size: 10) }
     let(:enum) { view.to_enum }
+
+    after do
+      # The tests normally operate with a low server selection timeout,
+      # but since this test caused a cluster election we may need to wait
+      # longer for the cluster to reestablish itself.
+      # To keep all other tests' timeouts low, wait for primary to be
+      # elected at the end of this test
+      test_client.cluster.servers.each do |server|
+        server.unknown!
+      end
+      test_client.cluster.next_primary
+
+      # Since we are changing which server is primary, close all clients
+      # to prevent subsequent tests setting fail points on servers which
+      # are not primary
+      ClientRegistry.instance.close_all_clients
+    end
 
     it 'continues through step down' do
       server = subscribed_client.cluster.next_primary
@@ -80,7 +96,7 @@ describe 'Step down behavior' do
       end
       expect(connection_created_events).not_to be_empty
 
-      current_primary = subscribed_client.cluster.next_primary
+      subscribed_client.cluster.next_primary
       ClusterTools.instance.change_primary
 
       subscriber.clear_events!
@@ -106,23 +122,6 @@ describe 'Step down behavior' do
       end
       expect(connection_created_events).to be_empty
     end
-
-    after do
-      # The tests normally operate with a low server selection timeout,
-      # but since this test caused a cluster election we may need to wait
-      # longer for the cluster to reestablish itself.
-      # To keep all other tests' timeouts low, wait for primary to be
-      # elected at the end of this test
-      test_client.cluster.servers.each do |server|
-        server.unknown!
-      end
-      test_client.cluster.next_primary
-
-      # Since we are changing which server is primary, close all clients
-      # to prevent subsequent tests setting fail points on servers which
-      # are not primary
-      ClientRegistry.instance.close_all_clients
-    end
   end
 
   describe 'writes on connections' do
@@ -136,7 +135,7 @@ describe 'Step down behavior' do
       {
         configureFailPoint: 'failCommand',
         data: {
-          failCommands: ['insert'],
+          failCommands: [ 'insert' ],
           errorCode: fail_point_code,
         },
         mode: { times: 1 }
@@ -153,10 +152,10 @@ describe 'Step down behavior' do
     end
 
     describe 'not master' do
-      let(:write_concern) { {:w => 1} }
+      let(:write_concern) { { w: 1 } }
 
       # not master
-      let(:fail_point_code) { 10107 }
+      let(:fail_point_code) { 10_107 }
 
       it 'keeps connection open' do
         subscriber.clear_events!
@@ -169,15 +168,15 @@ describe 'Step down behavior' do
 
         expect do
           collection.insert_one(test: 1)
-        end.to_not raise_error
+        end.not_to raise_error
       end
     end
 
     describe 'node shutting down' do
-      let(:write_concern) { {:w => 1} }
+      let(:write_concern) { { w: 1 } }
 
       # interrupted at shutdown
-      let(:fail_point_code) { 11600 }
+      let(:fail_point_code) { 11_600 }
 
       it 'closes the connection' do
         subscriber.clear_events!
@@ -190,7 +189,7 @@ describe 'Step down behavior' do
 
         expect do
           collection.insert_one(test: 1)
-        end.to_not raise_error
+        end.not_to raise_error
       end
     end
   end

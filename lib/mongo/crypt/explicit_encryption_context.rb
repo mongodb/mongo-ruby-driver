@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   module Crypt
-
     # A Context object initialized for explicit encryption
     #
     # @api private
     class ExplicitEncryptionContext < Context
-
       # Create a new ExplicitEncryptionContext object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
@@ -76,6 +73,7 @@ module Mongo
       end
 
       private
+
       def set_key_opts(options)
         if options[:key_id].nil? && options[:key_alt_name].nil?
           raise ArgumentError.new(
@@ -99,31 +97,26 @@ module Mongo
 
       def set_key_id(key_id)
         unless key_id.is_a?(BSON::Binary) &&
-            key_id.type == :uuid
-              raise ArgumentError.new(
-                "Expected the :key_id option to be a BSON::Binary object with " +
-                "type :uuid. #{key_id} is an invalid :key_id option"
-              )
-          end
-          Binding.ctx_setopt_key_id(self, key_id.data)
+               key_id.type == :uuid
+          raise ArgumentError.new(
+            'Expected the :key_id option to be a BSON::Binary object with ' +
+            "type :uuid. #{key_id} is an invalid :key_id option"
+          )
+        end
+        Binding.ctx_setopt_key_id(self, key_id.data)
       end
 
       def set_key_alt_name(key_alt_name)
-        unless key_alt_name.is_a?(String)
-            raise ArgumentError.new(':key_alt_name option must be a String')
-          end
-          Binding.ctx_setopt_key_alt_names(self, [key_alt_name])
+        raise ArgumentError.new(':key_alt_name option must be a String') unless key_alt_name.is_a?(String)
+
+        Binding.ctx_setopt_key_alt_names(self, [ key_alt_name ])
       end
 
       def set_algorithm_opts(options)
         Binding.ctx_setopt_algorithm(self, options[:algorithm])
-        if %w(Indexed Range).include?(options[:algorithm])
-          if options[:contention_factor]
-            Binding.ctx_setopt_contention_factor(self, options[:contention_factor])
-          end
-          if options[:query_type]
-            Binding.ctx_setopt_query_type(self, options[:query_type])
-          end
+        if %w[Indexed Range].include?(options[:algorithm])
+          Binding.ctx_setopt_contention_factor(self, options[:contention_factor]) if options[:contention_factor]
+          Binding.ctx_setopt_query_type(self, options[:query_type]) if options[:query_type]
         else
           if options[:contention_factor]
             raise ArgumentError.new(':contention_factor is allowed only for "Indexed" or "Range" algorithms')
@@ -132,19 +125,15 @@ module Mongo
             raise ArgumentError.new(':query_type is allowed only for "Indexed" or "Range" algorithms')
           end
         end
-        if options[:algorithm] == 'Range'
-          Binding.ctx_setopt_algorithm_range(self, convert_range_opts(options[:range_opts]))
-        end
+        return unless options[:algorithm] == 'Range'
+
+        Binding.ctx_setopt_algorithm_range(self, convert_range_opts(options[:range_opts]))
       end
 
       def convert_range_opts(range_opts)
         range_opts.dup.tap do |opts|
-          if opts[:sparsity] && !opts[:sparsity].is_a?(BSON::Int64)
-            opts[:sparsity] = BSON::Int64.new(opts[:sparsity])
-          end
-          if opts[:trim_factor]
-            opts[:trimFactor] = opts.delete(:trim_factor)
-          end
+          opts[:sparsity] = BSON::Int64.new(opts[:sparsity]) if opts[:sparsity] && !opts[:sparsity].is_a?(BSON::Int64)
+          opts[:trimFactor] = opts.delete(:trim_factor) if opts[:trim_factor]
         end
       end
     end

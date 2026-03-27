@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -19,22 +18,18 @@ module Mongo
   class Collection
     class View
       class ChangeStream < Aggregation
-
         # Behavior around resuming a change stream.
         #
         # @since 2.5.0
         module Retryable
-
           private
 
           def read_with_one_retry
             yield
           rescue Mongo::Error => e
-            if e.change_stream_resumable?
-              yield
-            else
-              raise(e)
-            end
+            raise(e) unless e.change_stream_resumable?
+
+            yield
           end
         end
       end

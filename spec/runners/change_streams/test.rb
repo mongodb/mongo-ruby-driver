@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -21,9 +20,7 @@ require 'runners/change_streams/outcome'
 
 module Mongo
   module ChangeStreams
-
     class ChangeStreamsTest < Mongo::CRUD::CRUDTestBase
-
       def initialize(crud_spec, test, collection_name, collection2_name, database_name, database2_name)
         @spec = crud_spec
         @description = test['description']
@@ -34,7 +31,7 @@ module Mongo
         @max_server_version = test['maxServerVersion']
         @target_type = test['target']
         @topologies = test['topology'].map do |topology|
-          {'single' => :single, 'replicaset' => :replica_set, 'sharded' => :sharded}[topology]
+          { 'single' => :single, 'replicaset' => :replica_set, 'sharded' => :sharded }[topology]
         end
         @pipeline = test['changeStreamPipeline'] || []
         @options = test['changeStreamOptions'] || {}
@@ -44,7 +41,7 @@ module Mongo
         end
 
         @expectations = test['expectations'] &&
-          BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
+                        BSON::ExtJSON.parse_obj(test['expectations'], mode: :bson)
 
         @result = BSON::ExtJSON.parse_obj(test['result'], mode: :bson)
         @collection_name = collection_name
@@ -55,37 +52,29 @@ module Mongo
         @outcome = Outcome.new(test.fetch('result'))
       end
 
-      attr_reader :topologies
-
-      attr_reader :outcome
-
-      attr_reader :result
+      attr_reader :topologies, :outcome, :result
 
       def setup_test
         clear_fail_point(global_client)
 
         @database = global_client.use(@database_name).database.tap(&:drop)
-        if @database2_name
-          @database2 = global_client.use(@database2_name).database.tap(&:drop)
-        end
+        @database2 = global_client.use(@database2_name).database.tap(&:drop) if @database2_name
 
         # Work around https://jira.mongodb.org/browse/SERVER-17397
         if ClusterConfig.instance.server_version < '4.4' &&
-          global_client.cluster.servers.length > 1
-        then
+           global_client.cluster.servers.length > 1
           ::Utils.mongos_each_direct_client do |client|
             client.database.command(flushRouterConfig: 1)
           end
         end
 
         @database[@collection_name].create
-        if @collection2_name
-          @database2[@collection2_name].create
-        end
+        @database2[@collection2_name].create if @collection2_name
 
         client = ClientRegistry.instance.global_client('root_authorized').with(
           database: @database_name,
-          app_name: 'this is used solely to force the new client to create its own cluster')
+          app_name: 'this is used solely to force the new client to create its own cluster'
+        )
 
         setup_fail_point(client)
 
@@ -93,19 +82,19 @@ module Mongo
         client.subscribe(Mongo::Monitoring::COMMAND, @subscriber)
 
         @target = case @target_type
-                 when 'client'
-                   client
-                 when 'database'
-                   client.database
-                 when 'collection'
-                   client[@collection_name]
-                 end
+                  when 'client'
+                    client
+                  when 'database'
+                    client.database
+                  when 'collection'
+                    client[@collection_name]
+                  end
       end
 
       def teardown_test
-        if @fail_point_command
-          clear_fail_point(global_client)
-        end
+        return unless @fail_point_command
+
+        clear_fail_point(global_client)
       end
 
       def run
@@ -129,13 +118,13 @@ module Mongo
 
         @operations.each do |op|
           db = case op.spec['database']
-            when @database_name
-              @database
-            when @database2_name
-              @database2
-            else
-              raise "Unknown database name #{op.spec['database']}"
-            end
+               when @database_name
+                 @database
+               when @database2_name
+                 @database2
+               else
+                 raise "Unknown database name #{op.spec['database']}"
+               end
           collection = db[op.spec['collection']]
           op.execute(collection)
         end
@@ -161,9 +150,7 @@ module Mongo
         # continue until changeStream has received as many changes as there
         # are in result.success
         if @result['success'] && changes.length < @result['success'].length
-          while changes.length < @result['success'].length
-            changes << enum.next
-          end
+          changes << enum.next while changes.length < @result['success'].length
         end
 
         change_stream.close
@@ -180,7 +167,7 @@ module Mongo
 
       private
 
-      IGNORE_COMMANDS = %w(saslStart saslContinue killCursors)
+      IGNORE_COMMANDS = %w[saslStart saslContinue killCursors]
 
       def global_client
         @global_client ||= ClientRegistry.instance.global_client('root_authorized').use('admin')
@@ -217,14 +204,16 @@ module Mongo
         @server_version ||= client.database.command(buildInfo: 1).first['version']
       end
 
-      def upper_bound_satisfied?(client)
+      def upper_bound_satisfied?(_client)
         return true unless @max_server_version
+
         ClusterConfig.instance.server_version <= @max_server_version
       end
 
-      def lower_bound_satisfied?(client)
+      def lower_bound_satisfied?(_client)
         return true unless @min_server_version
-        #@min_server_version <= server_version(client)
+
+        # @min_server_version <= server_version(client)
         @min_server_version <= ClusterConfig.instance.fcv_ish
       end
     end

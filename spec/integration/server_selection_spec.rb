@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -13,7 +12,7 @@ describe 'Server selection' do
       # one of them.
 
       let(:desired_index) do
-        if authorized_client.cluster.next_primary.address.port == 27017
+        if authorized_client.cluster.next_primary.address.port == 27_017
           1
         else
           0
@@ -22,14 +21,14 @@ describe 'Server selection' do
 
       let(:client) do
         new_local_client(SpecConfig.instance.addresses,
-          SpecConfig.instance.authorized_test_options.merge(
-            server_selection_timeout: 4,
-            read: {mode: :secondary, tag_sets: [nodeIndex: desired_index.to_s]},
-          ))
+                         SpecConfig.instance.authorized_test_options.merge(
+                           server_selection_timeout: 4,
+                           read: { mode: :secondary, tag_sets: [ { nodeIndex: desired_index.to_s } ] }
+                         ))
       end
 
       it 'selects the server' do
-        client['nonexistent'].count.should == 0
+        expect(client['nonexistent'].count).to eq(0)
       end
     end
   end

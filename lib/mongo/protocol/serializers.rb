@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Protocol
-
     # Container for various serialization strategies
     #
     # Each strategy must have a serialization method named +serailize+
@@ -31,14 +29,11 @@ module Mongo
     #
     # @api private
     module Serializers
-
-      private
-
-      ZERO = 0.freeze
+      ZERO = 0
       NULL = 0.chr.freeze
-      INT32_PACK = 'l<'.freeze
-      INT64_PACK = 'q<'.freeze
-      HEADER_PACK = 'l<l<l<l<'.freeze
+      INT32_PACK = 'l<'
+      INT64_PACK = 'q<'
+      HEADER_PACK = 'l<l<l<l<'
 
       # MongoDB wire protocol serialization strategy for message headers.
       #
@@ -46,7 +41,6 @@ module Mongo
       # of the length of the message, the request id, the response id,
       # and the op code for the operation.
       module Header
-
         # Serializes the header value into the buffer
         #
         # @param buffer [ String ] Buffer to receive the serialized value.
@@ -55,7 +49,7 @@ module Mongo
         #   This option is deprecated and will not be used. It will removed in version 3.0.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = nil)
+        def self.serialize(buffer, value, _validating_keys = nil)
           buffer.put_bytes(value.pack(HEADER_PACK))
         end
 
@@ -66,7 +60,7 @@ module Mongo
         #
         # @return [ Array<Fixnum> ] Array consisting of the deserialized
         #   length, request id, response id, and op code.
-        def self.deserialize(buffer, options = {})
+        def self.deserialize(buffer, _options = {})
           buffer.get_bytes(16).unpack(HEADER_PACK)
         end
       end
@@ -75,14 +69,13 @@ module Mongo
       #
       # Serializes and de-serializes C style strings (null terminated).
       module CString
-
         # Serializes a C style string into the buffer
         #
         # @param buffer [ String ] Buffer to receive the serialized CString.
         # @param value [ String ] The string to be serialized.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = nil)
+        def self.serialize(buffer, value, _validating_keys = nil)
           buffer.put_cstring(value)
         end
       end
@@ -91,14 +84,13 @@ module Mongo
       #
       # Serializes and de-serializes one 32-bit Zero.
       module Zero
-
         # Serializes a 32-bit Zero into the buffer
         #
         # @param buffer [ String ] Buffer to receive the serialized Zero.
         # @param value [ Fixnum ] Ignored value.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = nil)
+        def self.serialize(buffer, _value, _validating_keys = nil)
           buffer.put_int32(ZERO)
         end
       end
@@ -107,21 +99,20 @@ module Mongo
       #
       # Serializes and de-serializes one 32-bit integer.
       module Int32
-
         # Serializes a number to a 32-bit integer
         #
         # @param buffer [ String ] Buffer to receive the serialized Int32.
         # @param value [ Integer | BSON::Int32 ] 32-bit integer to be serialized.
         #
         # @return [String] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = nil)
+        def self.serialize(buffer, value, _validating_keys = nil)
           if value.is_a?(BSON::Int32)
-            if value.respond_to?(:value)
-              # bson-ruby >= 4.6.0
-              value = value.value
-            else
-              value = value.instance_variable_get('@integer')
-            end
+            value = if value.respond_to?(:value)
+                      # bson-ruby >= 4.6.0
+                      value.value
+                    else
+                      value.instance_variable_get(:@integer)
+                    end
           end
           buffer.put_int32(value)
         end
@@ -132,7 +123,7 @@ module Mongo
         # @param [ Hash ] options This method currently accepts no options.
         #
         # @return [ Fixnum ] Deserialized Int32
-        def self.deserialize(buffer, options = {})
+        def self.deserialize(buffer, _options = {})
           buffer.get_int32
         end
       end
@@ -141,21 +132,20 @@ module Mongo
       #
       # Serializes and de-serializes one 64-bit integer.
       module Int64
-
         # Serializes a number to a 64-bit integer
         #
         # @param buffer [ String ] Buffer to receive the serialized Int64.
         # @param value [ Integer | BSON::Int64 ] 64-bit integer to be serialized.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, validating_keys = nil)
+        def self.serialize(buffer, value, _validating_keys = nil)
           if value.is_a?(BSON::Int64)
-            if value.respond_to?(:value)
-              # bson-ruby >= 4.6.0
-              value = value.value
-            else
-              value = value.instance_variable_get('@integer')
-            end
+            value = if value.respond_to?(:value)
+                      # bson-ruby >= 4.6.0
+                      value.value
+                    else
+                      value.instance_variable_get(:@integer)
+                    end
           end
           buffer.put_int64(value)
         end
@@ -166,7 +156,7 @@ module Mongo
         # @param [ Hash ] options This method currently accepts no options.
         #
         # @return [Fixnum] Deserialized Int64.
-        def self.deserialize(buffer, options = {})
+        def self.deserialize(buffer, _options = {})
           buffer.get_int64
         end
       end
@@ -177,7 +167,6 @@ module Mongo
       #
       # @since 2.5.0
       module Sections
-
         # Serializes the sections of an OP_MSG, payload type 0 or 1.
         #
         # @param [ BSON::ByteBuffer ] buffer Buffer to receive the serialized Sections.
@@ -189,7 +178,7 @@ module Mongo
         # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #
         # @since 2.5.0
-        def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
+        def self.serialize(buffer, value, max_bson_size = nil, _validating_keys = nil)
           value.each do |section|
             case section[:type]
             when PayloadZero::TYPE
@@ -217,7 +206,7 @@ module Mongo
         #
         # @since 2.5.0
         def self.deserialize(buffer, options = {})
-          end_length = (@flag_bits & Msg::FLAGS.index(:checksum_present)) == 1 ? 32 : 0
+          end_length = ((@flag_bits & Msg::FLAGS.index(:checksum_present)) == 1) ? 32 : 0
           sections = []
           until buffer.length == end_length
             case byte = buffer.get_byte
@@ -245,7 +234,6 @@ module Mongo
         #
         # @since 2.5.0
         module PayloadZero
-
           # The byte identifier for this payload type.
           #
           # @since 2.5.0
@@ -267,7 +255,7 @@ module Mongo
           # @return [ BSON::ByteBuffer ] Buffer with serialized value.
           #
           # @since 2.5.0
-          def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
+          def self.serialize(buffer, value, max_bson_size = nil, _validating_keys = nil)
             buffer.put_byte(TYPE_BYTE)
             Serializers::Document.serialize(buffer, value, max_bson_size)
           end
@@ -286,7 +274,7 @@ module Mongo
           # @since 2.5.0
           def self.deserialize(buffer, options = {})
             mode = options[:deserialize_as_bson] ? :bson : nil
-            BSON::Document.from_bson(buffer, **{ mode: mode })
+            BSON::Document.from_bson(buffer, mode: mode)
           end
         end
 
@@ -294,7 +282,6 @@ module Mongo
         #
         # @since 2.5.0
         module PayloadOne
-
           # The byte identifier for this payload type.
           #
           # @since 2.5.0
@@ -316,7 +303,7 @@ module Mongo
           # @return [ BSON::ByteBuffer ] Buffer with serialized value.
           #
           # @since 2.5.0
-          def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
+          def self.serialize(buffer, value, max_bson_size = nil, _validating_keys = nil)
             buffer.put_byte(TYPE_BYTE)
             start = buffer.length
             buffer.put_int32(0) # hold for size
@@ -342,9 +329,7 @@ module Mongo
             end_size = start_size - section_size
             buffer.get_cstring # get the identifier
             documents = []
-            until buffer.length == end_size
-              documents << BSON::Document.from_bson(buffer)
-            end
+            documents << BSON::Document.from_bson(buffer) until buffer.length == end_size
             documents
           end
         end
@@ -354,21 +339,20 @@ module Mongo
       #
       # Serializes and de-serializes a single document.
       module Document
-
         # Serializes a document into the buffer
         #
         # @param buffer [ String ] Buffer to receive the BSON encoded document.
         # @param value [ Hash ] Document to serialize as BSON.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
+        def self.serialize(buffer, value, max_bson_size = nil, _validating_keys = nil)
           start_size = buffer.length
           value.to_bson(buffer)
           serialized_size = buffer.length - start_size
-          if max_bson_size && serialized_size > max_bson_size
-            raise Error::MaxBSONSize,
-              "The document exceeds maximum allowed BSON object size after serialization. Serialized size: #{serialized_size} bytes, maximum allowed size: #{max_bson_size} bytes"
-          end
+          return unless max_bson_size && serialized_size > max_bson_size
+
+          raise Error::MaxBSONSize,
+                "The document exceeds maximum allowed BSON object size after serialization. Serialized size: #{serialized_size} bytes, maximum allowed size: #{max_bson_size} bytes"
         end
 
         # Deserializes a document from the IO stream
@@ -383,7 +367,7 @@ module Mongo
         # @return [ Hash ] The decoded BSON document.
         def self.deserialize(buffer, options = {})
           mode = options[:deserialize_as_bson] ? :bson : nil
-          BSON::Document.from_bson(buffer, **{ mode: mode })
+          BSON::Document.from_bson(buffer, mode: mode)
         end
 
         # Whether there can be a size limit on this type after serialization.
@@ -400,7 +384,6 @@ module Mongo
       #
       # Writes and fetches a single byte from the byte buffer.
       module Byte
-
         # Writes a byte into the buffer.
         #
         # @param [ BSON::ByteBuffer ] buffer Buffer to receive the single byte.
@@ -411,7 +394,7 @@ module Mongo
         # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #
         # @since 2.5.0
-        def self.serialize(buffer, value, validating_keys = nil)
+        def self.serialize(buffer, value, _validating_keys = nil)
           buffer.put_byte(value)
         end
 
@@ -423,7 +406,7 @@ module Mongo
         # @return [ String ] The byte.
         #
         # @since 2.5.0
-        def self.deserialize(buffer, options = {})
+        def self.deserialize(buffer, _options = {})
           buffer.get_byte
         end
       end
@@ -432,7 +415,6 @@ module Mongo
       #
       # Writes and fetches bytes from the byte buffer.
       module Bytes
-
         # Writes bytes into the buffer.
         #
         # @param [ BSON::ByteBuffer ] buffer Buffer to receive the bytes.
@@ -443,7 +425,7 @@ module Mongo
         # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #
         # @since 2.5.0
-        def self.serialize(buffer, value, validating_keys = nil)
+        def self.serialize(buffer, value, _validating_keys = nil)
           buffer.put_bytes(value)
         end
 

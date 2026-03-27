@@ -1,15 +1,12 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
   module ServerSelection
     module Read
-
       # Represents a Server Selection specification test.
       #
       # @since 2.0.0
       class Spec
-
         # Mapping of read preference modes.
         #
         # @since 2.0.0
@@ -111,18 +108,14 @@ module Mongo
         # @return [ Array<Hash> ] The servers within the latency window.
         #
         # @since 2.0.0
-        def in_latency_window
-          @in_latency_window
-        end
+        attr_reader :in_latency_window
 
         # The servers a topology would return as candidates for selection.
         #
         # @return [ Array<Hash> ] candidate_servers The candidate servers.
         #
         # @since 2.0.0
-        def candidate_servers
-          @candidate_servers
-        end
+        attr_reader :candidate_servers
       end
     end
   end
@@ -134,13 +127,13 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
   require_no_linting
 
   test_paths.each do |file|
-
     spec = Mongo::ServerSelection::Read::Spec.new(file)
 
     if skipped_tests.keys.include?(File.basename(file))
       it spec.description do
         skip("Skipped due to #{skipped_tests[File.basename(file)]}")
       end
+
       next
     end
 
@@ -155,10 +148,10 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
 
       let(:topology) do
         options = if spec.type <= Mongo::Cluster::Topology::ReplicaSetNoPrimary
-          {replica_set_name: 'foo'}
-        else
-          {}
-        end
+                    { replica_set_name: 'foo' }
+                  else
+                    {}
+                  end
         spec.type.new(options, monitoring, temp_cluster)
       end
 
@@ -172,9 +165,9 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
 
       let(:options) do
         if spec.heartbeat_frequency
-          {server_selection_timeout: 0.1, heartbeat_frequency: spec.heartbeat_frequency}
+          { server_selection_timeout: 0.1, heartbeat_frequency: spec.heartbeat_frequency }
         else
-          {server_selection_timeout: 0.1}
+          { server_selection_timeout: 0.1 }
         end
       end
 
@@ -192,7 +185,8 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:app_metadata).and_return(app_metadata)
           allow(c).to receive(:heartbeat_interval).and_return(
-            spec.heartbeat_frequency || Mongo::Server::Monitor::DEFAULT_HEARTBEAT_INTERVAL)
+            spec.heartbeat_frequency || Mongo::Server::Monitor::DEFAULT_HEARTBEAT_INTERVAL
+          )
         end
       end
 
@@ -212,8 +206,7 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
           end
           address = Mongo::Address.new(server['address'])
           Mongo::Server.new(address, cluster, monitoring, listeners,
-            {monitoring_io: false}.update(options)
-          ).tap do |s|
+                            { monitoring_io: false }.update(options)).tap do |s|
             allow(s).to receive(:average_round_trip_time) do
               if ignore_latency
                 0
@@ -228,10 +221,14 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
             allow(s).to receive(:standalone?).and_return(server['type'] == 'Standalone')
             allow(s).to receive(:unknown?).and_return(server['type'] == 'Unknown')
             allow(s).to receive(:connectable?).and_return(true)
-            allow(s).to receive(:last_write_date).and_return(
-              Time.at(server['lastWrite']['lastWriteDate']['$numberLong'].to_f / 1000)) if server['lastWrite']
+            if server['lastWrite']
+              allow(s).to receive(:last_write_date).and_return(
+                Time.at(server['lastWrite']['lastWriteDate']['$numberLong'].to_f / 1000)
+              )
+            end
             allow(s).to receive(:last_scan).and_return(
-              Time.at(server['lastUpdateTime'].to_f / 1000))
+              Time.at(server['lastUpdateTime'].to_f / 1000)
+            )
             allow(s).to receive(:features).and_return(features)
             allow(s).to receive(:replica_set_name).and_return('foo')
           end
@@ -241,21 +238,21 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
       let(:suitable_servers) do
         spec.suitable_servers.collect do |server|
           Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners,
-            options.merge(monitoring_io: false))
+                            options.merge(monitoring_io: false))
         end
       end
 
       let(:deprioritized_servers) do
         spec.deprioritized_servers.collect do |server|
           Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners,
-            options.merge(monitoring_io: false))
+                            options.merge(monitoring_io: false))
         end
       end
 
       let(:in_latency_window) do
         spec.in_latency_window.collect do |server|
           Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners,
-            options.merge(monitoring_io: false))
+                            options.merge(monitoring_io: false))
         end
       end
 
@@ -286,104 +283,101 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
       if spec.error?
 
         it 'Raises an InvalidServerPreference exception' do
-
           expect do
             server_selector.select_server(cluster)
           end.to raise_exception(Mongo::Error::InvalidServerPreference)
         end
 
-      else
+      elsif spec.server_available?
 
-        if spec.server_available?
+        it 'has non-empty suitable servers' do
+          spec.suitable_servers.should be_a(Array)
+          spec.suitable_servers.should_not be_empty
+        end
 
-          it 'has non-empty suitable servers' do
-            spec.suitable_servers.should be_a(Array)
-            spec.suitable_servers.should_not be_empty
-          end
+        if spec.in_latency_window.length == 1
 
-          if spec.in_latency_window.length == 1
-
-            it 'selects the expected server' do
-              [
-                server_selector.select_server(cluster, deprioritized: deprioritized_servers)
-              ].should == in_latency_window
-            end
-
-          else
-
-            it 'selects a server in the suitable list' do
-              expect(in_latency_window)
-                .to include(
-                      server_selector.select_server(
-                        cluster,
-                        deprioritized: deprioritized_servers)
-                    )
-            end
-
-            let(:expected_addresses) do
-              in_latency_window.map(&:address).map(&:seed).sort
-            end
-
-            let(:actual_addresses) do
-              server_selector.suitable_servers(cluster, deprioritized_servers).map(&:address).map(&:seed).sort
-            end
-
-            it 'identifies expected suitable servers' do
-              actual_addresses.should == expected_addresses
-            end
-
-          end
-
-          context 'candidate servers without taking latency into account' do
-            let(:ignore_latency) { true }
-
-            let(:expected_addresses) do
-              suitable_servers.map(&:address).map(&:seed).sort
-            end
-
-            let(:actual_addresses) do
-              servers = server_selector.send(:suitable_servers, cluster, deprioritized_servers)
-
-              # The tests expect that only secondaries are "suitable" for
-              # server selection with secondary preferred read preference.
-              # In actuality, primaries are also suitable, and the driver
-              # returns the primaries also. Remove primaries from the
-              # actual set when read preference is secondary preferred.
-              # HOWEVER, if a test ends up selecting a primary, then it
-              # includes that primary into its suitable servers. Therefore
-              # only remove primaries when the number of suitable servers
-              # is greater than 1.
-              servers.delete_if do |server|
-                server_selector.is_a?(Mongo::ServerSelector::SecondaryPreferred) &&
-                  server.primary? &&
-                  servers.length > 1
-              end
-
-              # Since we remove the latency requirement, the servers
-              # may be returned in arbitrary order.
-              servers.map(&:address).map(&:seed).sort
-            end
-
-            it 'identifies expected suitable servers' do
-              actual_addresses.should == expected_addresses
-            end
+          it 'selects the expected server' do
+            expect([
+                     server_selector.select_server(cluster, deprioritized: deprioritized_servers)
+                   ]).to eq(in_latency_window)
           end
 
         else
 
-          # Runner does not handle non-empty suitable servers with
-          # no servers in latency window.
-          it 'has empty suitable servers' do
-            expect(spec.suitable_servers).to eq([])
+          it 'selects a server in the suitable list' do
+            expect(in_latency_window)
+              .to include(
+                server_selector.select_server(
+                  cluster,
+                  deprioritized: deprioritized_servers
+                )
+              )
           end
 
-          it 'Raises a NoServerAvailable Exception' do
-            expect do
-              server_selector.select_server(cluster, deprioritized: deprioritized_servers)
-            end.to raise_exception(Mongo::Error::NoServerAvailable)
+          let(:expected_addresses) do
+            in_latency_window.map(&:address).map(&:seed).sort
+          end
+
+          let(:actual_addresses) do
+            server_selector.suitable_servers(cluster, deprioritized_servers).map(&:address).map(&:seed).sort
+          end
+
+          it 'identifies expected suitable servers' do
+            expect(actual_addresses).to eq(expected_addresses)
           end
 
         end
+
+        context 'candidate servers without taking latency into account' do
+          let(:ignore_latency) { true }
+
+          let(:expected_addresses) do
+            suitable_servers.map(&:address).map(&:seed).sort
+          end
+
+          let(:actual_addresses) do
+            servers = server_selector.send(:suitable_servers, cluster, deprioritized_servers)
+
+            # The tests expect that only secondaries are "suitable" for
+            # server selection with secondary preferred read preference.
+            # In actuality, primaries are also suitable, and the driver
+            # returns the primaries also. Remove primaries from the
+            # actual set when read preference is secondary preferred.
+            # HOWEVER, if a test ends up selecting a primary, then it
+            # includes that primary into its suitable servers. Therefore
+            # only remove primaries when the number of suitable servers
+            # is greater than 1.
+            servers.delete_if do |server|
+              server_selector.is_a?(Mongo::ServerSelector::SecondaryPreferred) &&
+                server.primary? &&
+                servers.length > 1
+            end
+
+            # Since we remove the latency requirement, the servers
+            # may be returned in arbitrary order.
+            servers.map(&:address).map(&:seed).sort
+          end
+
+          it 'identifies expected suitable servers' do
+            expect(actual_addresses).to eq(expected_addresses)
+          end
+        end
+
+      else
+
+        # Runner does not handle non-empty suitable servers with
+        # no servers in latency window.
+        it 'has empty suitable servers' do
+          expect(spec.suitable_servers).to eq([])
+        end
+
+        it 'Raises a NoServerAvailable Exception' do
+          expect do
+            server_selector.select_server(cluster, deprioritized: deprioritized_servers)
+          end.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
+
       end
     end
   end

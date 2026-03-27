@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Auth::User::View do
-
   let(:database) { root_authorized_client.database }
 
   let(:view) do
@@ -21,7 +19,6 @@ describe Mongo::Auth::User::View do
   end
 
   shared_context 'testing write concern' do
-
     let(:subscriber) do
       Mrss::EventSubscriber.new
     end
@@ -37,7 +34,7 @@ describe Mongo::Auth::User::View do
     end
 
     before do
-      allow_any_instance_of(Mongo::Monitoring::Event::CommandStarted).to receive(:redacted) do |instance, command_name, document|
+      allow_any_instance_of(Mongo::Monitoring::Event::CommandStarted).to receive(:redacted) do |_instance, _command_name, document|
         document
       end
     end
@@ -55,9 +52,7 @@ describe Mongo::Auth::User::View do
   end
 
   describe '#create' do
-
     context 'when password is not provided' do
-
       let(:database) { root_authorized_client.use('$external').database }
 
       let(:username) { 'passwordless-user' }
@@ -66,43 +61,39 @@ describe Mongo::Auth::User::View do
         view.create(
           username,
           # https://stackoverflow.com/questions/55939832/mongodb-external-database-cannot-create-new-user-with-user-defined-role
-          roles: [{role: 'read', db: 'admin'}],
+          roles: [ { role: 'read', db: 'admin' } ]
         )
       end
 
       before do
-        begin
-          view.remove(username)
-        rescue Mongo::Error::OperationFailure
-          # can be user not found, ignore
-        end
+        view.remove(username)
+      rescue Mongo::Error::OperationFailure
+        # can be user not found, ignore
       end
 
       it 'creates the user' do
-        view.info(username).should == []
+        expect(view.info(username)).to eq([])
 
         lambda do
           response
         end.should_not raise_error
 
-        view.info(username).first['user'].should == username
+        expect(view.info(username).first['user']).to eq(username)
       end
     end
 
     context 'when a session is not used' do
-
       let!(:response) do
         view.create(
           'durran',
           {
             password: 'password',
-            roles: [Mongo::Auth::Roles::READ_WRITE],
+            roles: [ Mongo::Auth::Roles::READ_WRITE ],
           }
         )
       end
 
       context 'when user creation was successful' do
-
         it 'saves the user in the database' do
           expect(response).to be_successful
         end
@@ -118,23 +109,21 @@ describe Mongo::Auth::User::View do
       end
 
       context 'when creation was not successful' do
-
         it 'raises an exception' do
-          expect {
+          expect do
             view.create('durran', password: 'password')
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
 
     context 'when a session is used' do
-
       let(:operation) do
         view.create(
-            'durran',
-            password: 'password',
-            roles: [Mongo::Auth::Roles::READ_WRITE],
-            session: session
+          'durran',
+          password: 'password',
+          roles: [ Mongo::Auth::Roles::READ_WRITE ],
+          session: session
         )
       end
 
@@ -156,8 +145,8 @@ describe Mongo::Auth::User::View do
         view.create(
           'durran',
           password: 'password',
-          roles: [Mongo::Auth::Roles::READ_WRITE],
-          write_concern: {w: 2},
+          roles: [ Mongo::Auth::Roles::READ_WRITE ],
+          write_concern: { w: 2 }
         )
       end
 
@@ -170,22 +159,19 @@ describe Mongo::Auth::User::View do
   end
 
   describe '#update' do
-
     before do
       view.create(
-          'durran',
-          password: 'password', roles: [Mongo::Auth::Roles::READ_WRITE]
+        'durran',
+        password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
       )
     end
 
     context 'when a user password is updated' do
-
       context 'when a session is not used' do
-
         let!(:response) do
           view.update(
-              'durran',
-              password: '123', roles: [ Mongo::Auth::Roles::READ_WRITE ]
+            'durran',
+            password: '123', roles: [ Mongo::Auth::Roles::READ_WRITE ]
           )
         end
 
@@ -204,13 +190,12 @@ describe Mongo::Auth::User::View do
       end
 
       context 'when a session is used' do
-
         let(:operation) do
           view.update(
-              'durran',
-              password: '123',
-              roles: [ Mongo::Auth::Roles::READ_WRITE ],
-              session: session
+            'durran',
+            password: '123',
+            roles: [ Mongo::Auth::Roles::READ_WRITE ],
+            session: session
           )
         end
 
@@ -227,13 +212,11 @@ describe Mongo::Auth::User::View do
     end
 
     context 'when the roles of a user are updated' do
-
       context 'when a session is not used' do
-
         let!(:response) do
           view.update(
-              'durran',
-              password: 'password', roles: [ Mongo::Auth::Roles::READ ]
+            'durran',
+            password: 'password', roles: [ Mongo::Auth::Roles::READ ]
           )
         end
 
@@ -252,13 +235,12 @@ describe Mongo::Auth::User::View do
       end
 
       context 'when a session is used' do
-
         let(:operation) do
           view.update(
-              'durran',
-              password: 'password',
-              roles: [ Mongo::Auth::Roles::READ ],
-              session: session
+            'durran',
+            password: 'password',
+            roles: [ Mongo::Auth::Roles::READ ],
+            session: session
           )
         end
 
@@ -281,8 +263,8 @@ describe Mongo::Auth::User::View do
         view.update(
           'durran',
           password: 'password1',
-          roles: [Mongo::Auth::Roles::READ_WRITE],
-          write_concern: {w: 2},
+          roles: [ Mongo::Auth::Roles::READ_WRITE ],
+          write_concern: { w: 2 }
         )
       end
 
@@ -295,15 +277,12 @@ describe Mongo::Auth::User::View do
   end
 
   describe '#remove' do
-
     context 'when a session is not used' do
-
       context 'when user removal was successful' do
-
         before do
           view.create(
-              'durran',
-              password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
+            'durran',
+            password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
           )
         end
 
@@ -317,23 +296,20 @@ describe Mongo::Auth::User::View do
       end
 
       context 'when removal was not successful' do
-
         it 'raises an exception' do
-          expect {
+          expect do
             view.remove('notauser')
-          }.to raise_error(Mongo::Error::OperationFailure)
+          end.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
 
     context 'when a session is used' do
-
       context 'when user removal was successful' do
-
         before do
           view.create(
-              'durran',
-              password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
+            'durran',
+            password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
           )
         end
 
@@ -353,7 +329,6 @@ describe Mongo::Auth::User::View do
       end
 
       context 'when removal was not successful' do
-
         let(:failed_operation) do
           view.remove('notauser', session: session)
         end
@@ -375,15 +350,15 @@ describe Mongo::Auth::User::View do
 
       before do
         view.create(
-            'durran',
-            password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
+          'durran',
+          password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
         )
       end
 
       let(:response) do
         view.remove(
           'durran',
-          write_concern: {w: 2},
+          write_concern: { w: 2 }
         )
       end
 
@@ -396,29 +371,27 @@ describe Mongo::Auth::User::View do
   end
 
   describe '#info' do
-
     context 'when a session is not used' do
-
       before do
-        view.remove('emily') rescue nil
+        view.remove('emily')
+      rescue StandardError
+        nil
       end
 
       context 'when a user exists in the database' do
-
         before do
           view.create(
-              'emily',
-              password: 'password'
+            'emily',
+            password: 'password'
           )
         end
 
         it 'returns information for that user' do
-          expect(view.info('emily')).to_not be_empty
+          expect(view.info('emily')).not_to be_empty
         end
       end
 
       context 'when a user does not exist in the database' do
-
         it 'returns nil' do
           expect(view.info('emily')).to be_empty
         end
@@ -440,13 +413,11 @@ describe Mongo::Auth::User::View do
     end
 
     context 'when a session is used' do
-
       context 'when a user exists in the database' do
-
         before do
           view.create(
-              'durran',
-              password: 'password'
+            'durran',
+            password: 'password'
           )
         end
 
@@ -466,7 +437,6 @@ describe Mongo::Auth::User::View do
       end
 
       context 'when a user does not exist in the database' do
-
         let(:operation) do
           view.info('emily', session: session)
         end
@@ -484,59 +454,55 @@ describe Mongo::Auth::User::View do
     end
   end
 
-  context "when the result is a write concern error" do
+  context 'when the result is a write concern error' do
     require_topology :replica_set
 
     let(:user) do
       Mongo::Auth::User.new({
-        user: 'user',
-        roles: [ Mongo::Auth::Roles::READ_WRITE ],
-        password: 'password'
-      })
+                              user: 'user',
+                              roles: [ Mongo::Auth::Roles::READ_WRITE ],
+                              password: 'password'
+                            })
     end
 
     before do
       authorized_client.use('admin').database.command(
-        configureFailPoint: "failCommand",
+        configureFailPoint: 'failCommand',
         mode: { times: 1 },
         data: {
           failCommands: [ failCommand ],
           writeConcernError: {
-              code: 64,
-              codeName: "WriteConcernFailed",
-              errmsg: "waiting for replication timed out",
-              errInfo: { wtimeout: true }
+            code: 64,
+            codeName: 'WriteConcernFailed',
+            errmsg: 'waiting for replication timed out',
+            errInfo: { wtimeout: true }
           }
         }
       )
     end
 
-    shared_examples "raises the correct write concern error" do
-
-      it "raises a write concern error" do
+    shared_examples 'raises the correct write concern error' do
+      it 'raises a write concern error' do
         expect do
           view.send(method, input)
-        end.to raise_error(Mongo::Error::OperationFailure, /[64:WriteConcernFailed]/)
+        end.to raise_error(Mongo::Error::OperationFailure, /[64:WriteConcFald]/)
       end
 
-      it "raises and reports the write concern error correctly" do
-        begin
-          view.send(method, input)
-        rescue Mongo::Error::OperationFailure::Family => e
-          expect(e.write_concern_error?).to be true
-          expect(e.write_concern_error_document).to eq(
-            "code" => 64,
-            "codeName" => "WriteConcernFailed",
-            "errmsg" => "waiting for replication timed out",
-            "errInfo" => { "wtimeout" => true }
-          )
-        end
+      it 'raises and reports the write concern error correctly' do
+        view.send(method, input)
+      rescue Mongo::Error::OperationFailure::Family => e
+        expect(e.write_concern_error?).to be true
+        expect(e.write_concern_error_document).to eq(
+          'code' => 64,
+          'codeName' => 'WriteConcernFailed',
+          'errmsg' => 'waiting for replication timed out',
+          'errInfo' => { 'wtimeout' => true }
+        )
       end
     end
 
-    context "when creating a user" do
-
-      let(:failCommand) { "createUser" }
+    context 'when creating a user' do
+      let(:failCommand) { 'createUser' }
       let(:method) { :create }
       let(:input) { user }
 
@@ -544,12 +510,11 @@ describe Mongo::Auth::User::View do
         view.remove(user.name)
       end
 
-      include_examples "raises the correct write concern error"
+      include_examples 'raises the correct write concern error'
     end
 
-    context "when updating a user" do
-
-      let(:failCommand) { "updateUser" }
+    context 'when updating a user' do
+      let(:failCommand) { 'updateUser' }
       let(:method) { :update }
       let(:input) { user.name }
 
@@ -561,12 +526,11 @@ describe Mongo::Auth::User::View do
         view.remove(user.name)
       end
 
-      include_examples "raises the correct write concern error"
+      include_examples 'raises the correct write concern error'
     end
 
-    context "when removing a user" do
-
-      let(:failCommand) { "dropUser" }
+    context 'when removing a user' do
+      let(:failCommand) { 'dropUser' }
       let(:method) { :remove }
       let(:input) { user.name }
 
@@ -574,7 +538,7 @@ describe Mongo::Auth::User::View do
         view.create(user)
       end
 
-      include_examples "raises the correct write concern error"
+      include_examples 'raises the correct write concern error'
     end
   end
 end
