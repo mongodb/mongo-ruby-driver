@@ -67,7 +67,16 @@ describe Mongo::Retryable::TokenBucket do
   end
 
   describe 'thread safety' do
-    let(:bucket) { described_class.new(capacity: 1000) }
+    # Use capacity 2000, start at 1000 tokens.
+    # With 500 consumes and 500 deposits, floor/ceiling cannot be hit:
+    #   min possible = 1000 - 500 = 500 > 0 (all consumes succeed)
+    #   max possible = 1000 + 500 = 1500 < 2000 (all deposits effective)
+    # So the net change is guaranteed to be 0, making the assertion reliable.
+    let(:bucket) do
+      b = described_class.new(capacity: 2000)
+      b.consume(1000)
+      b
+    end
 
     def run_concurrent_operations(bucket)
       threads = []

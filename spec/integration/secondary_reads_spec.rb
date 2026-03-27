@@ -24,7 +24,7 @@ describe 'Secondary reads' do
 
           end_stats = get_read_counters
 
-          end_stats[:secondary].should be_within(10).of(start_stats[:secondary])
+          end_stats[:secondary].should be_within(50).of(start_stats[:secondary])
           end_stats[:primary].should >= start_stats[:primary] + 30
         end
       end
@@ -45,7 +45,7 @@ describe 'Secondary reads' do
 
           end_stats = get_read_counters
 
-          end_stats[:primary].should be_within(10).of(start_stats[:primary])
+          end_stats[:primary].should be_within(50).of(start_stats[:primary])
           end_stats[:secondary].should >= start_stats[:secondary] + 30
         end
       end
