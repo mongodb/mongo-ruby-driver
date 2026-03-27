@@ -54,7 +54,7 @@ describe Mongo::Socket::SSL do
       # https://github.com/jruby/jruby-openssl/issues/221
       fails_on_jruby
 
-      let(:proc) do
+      let(:callback) do
         proc do |context|
           context.ciphers = if BSON::Environment.jruby?
                               [ 'AES256-SHA256' ]
@@ -65,7 +65,7 @@ describe Mongo::Socket::SSL do
       end
 
       before do
-        Mongo.tls_context_hooks = [ proc ]
+        Mongo.tls_context_hooks = [ callback ]
       end
 
       after do
@@ -75,7 +75,7 @@ describe Mongo::Socket::SSL do
       it 'runs the TLS context hook before connecting' do
         skip 'OCSP configurations use different certificates which this test does not handle' if ENV['OCSP_ALGORITHM']
 
-        expect(proc).to receive(:call).and_call_original
+        expect(callback).to receive(:call).and_call_original
         socket
         # Even though we are requesting a single cipher in the hook,
         # there may be multiple ciphers available in the context.
