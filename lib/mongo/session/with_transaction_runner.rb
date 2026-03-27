@@ -15,6 +15,28 @@ module Mongo
       BACKOFF_MAX     = 0.5
       private_constant :BACKOFF_INITIAL, :BACKOFF_MAX
 
+      # Runs one transaction attempt: pre-backoff, start, callback, commit.
+      def run_attempt(&block)
+        pre_retry_backoff if @transaction_attempt.positive?
+        @session.start_transaction(@options)
+        @transaction_in_progress = true
+        @transaction_attempt += 1
+        result = execute_callback(&block)
+        @transaction_in_progress = false
+        commit(result)
+      end
+
+      # Outer retry loop. Returns the callback's return value on success.
+      # The ensure fires only on raise/break — NOT on throw :retry (which is
+      # caught by catch(:retry) within this method).
+      def run(&block)
+        loop do
+          catch(:retry) { return run_attempt(&block) }
+        end
+      ensure
+        abort_if_in_progress
+      end
+
       def initialize(session, options)
         @session  = session
         @options  = options
@@ -32,8 +54,6 @@ module Mongo
 
       private
 
-      # -- Deadline helpers --------------------------------------------------
-
       def deadline_expired?
         @deadline.zero? ? false : Utils.monotonic_time >= @deadline
       end
@@ -41,8 +61,6 @@ module Mongo
       def backoff_would_exceed_deadline?(secs)
         @deadline.zero? ? false : Utils.monotonic_time + secs >= @deadline
       end
-
-      # -- Backoff -----------------------------------------------------------
 
       def backoff_seconds_for_retry
         exponential = BACKOFF_INITIAL * (1.5**(@transaction_attempt - 1))
@@ -52,19 +70,14 @@ module Mongo
       # -- Timeout error -----------------------------------------------------
 
       # Raises TimeoutError (CSOT) or re-raises last_error (non-CSOT).
-      # @csot mirrors the original `if @with_transaction_timeout_ms` check:
-      # in Ruby, 0 is truthy, so timeout_ms: 0 (infinite CSOT) sets @csot = true
-      # just as `if 0` evaluates to true — the semantics are identical.
+      # Note: `0` is truthy in Ruby so timeout_ms:0 (infinite CSOT) → @csot = true.
       def make_timeout_error_from(last_error, message)
         raise Mongo::Error::TimeoutError, "#{message}: #{last_error}" if @csot
 
         raise last_error
       end
 
-      # -- Overload tracking -------------------------------------------------
-
       # Updates @overload_encountered and @overload_error_count.
-      # Does not raise or return a meaningful value.
       def track_overload(err)
         if err.label?('SystemOverloadedError')
           @overload_encountered = true
@@ -123,8 +136,7 @@ module Mongo
 
       # -- Pre-retry backoff -------------------------------------------------
 
-      # Sleeps before the next transaction attempt, checking the deadline first.
-      # Two branches: overload path (adaptive) and normal path (exponential).
+      # Sleeps before the next attempt; overload path uses adaptive delay, normal path uses exponential.
       def pre_retry_backoff
         if @overload_encountered
           delay = @session.client.retry_policy.backoff_delay(@overload_error_count)
@@ -238,7 +250,7 @@ module Mongo
       # Error::AuthError < RuntimeError (not < Mongo::Error), so it requires
       # its own rescue clause.
       def commit_with_escalation(result)
-        commit_options = build_commit_options
+        commit_options = @options ? { write_concern: @options[:write_concern] } : {}
         loop do
           @session.commit_transaction(commit_options)
           @transaction_in_progress = false
@@ -259,10 +271,6 @@ module Mongo
 
         check_deadline_before_commit!
         commit_with_escalation(result)
-      end
-
-      def build_commit_options
-        @options ? { write_concern: @options[:write_concern] } : {}
       end
 
       # Escalates write concern to w: :majority for commit retries.
