@@ -1,7 +1,7 @@
 ---
 name: Rubocop
 
-on: [ push ]
+on: [ pull_request, push ]
 
 jobs:
   build:
@@ -11,6 +11,7 @@ jobs:
       TESTOPTS: "-v"
     steps:
       - uses: actions/checkout@v2
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
           submodules: recursive
       - name: Set up Ruby 3.0
