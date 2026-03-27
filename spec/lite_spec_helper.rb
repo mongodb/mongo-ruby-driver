@@ -1,10 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "shared", "lib"))
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'shared', 'lib'))
 
 COVERAGE_MIN = 90
-CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
+CURRENT_PATH = __dir__
 
 SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/sdam/**/*.yml").sort
 SDAM_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/sdam_monitoring/*.yml").sort
@@ -30,7 +29,7 @@ end
 STDOUT.sync = true
 STDERR.sync = true
 
-if %w(1 true yes).include?(ENV['CI']&.downcase)
+if %w[1 true yes].include?(ENV['CI']&.downcase)
   autoload :Byebug, 'byebug'
 else
   # Load debuggers before loading the driver code, so that breakpoints
@@ -73,9 +72,7 @@ require 'support/utils'
 require 'support/spec_config'
 
 Mongo::Logger.logger = Logger.new(STDOUT)
-unless SpecConfig.instance.client_debug?
-  Mongo::Logger.logger.level = Logger::INFO
-end
+Mongo::Logger.logger.level = Logger::INFO unless SpecConfig.instance.client_debug?
 Encoding.default_external = Encoding::UTF_8
 
 module Mrss
@@ -118,7 +115,7 @@ STANDARD_TIMEOUTS = {
 def timeout_type
   if ENV['EXAMPLE_TIMEOUT'].to_i > 0
     :custom
-  elsif %w(1 true yes).include?(ENV['STRESS']&.downcase)
+  elsif %w[1 true yes].include?(ENV['STRESS']&.downcase)
     :stress
   elsif BSON::Environment.jruby?
     :jruby
@@ -145,9 +142,7 @@ RSpec.configure do |config|
   # Used for spec/solo/*
   def require_solo
     before(:all) do
-      unless %w(1 true yes).include?(ENV['SOLO'])
-        skip 'Set SOLO=1 in environment to run solo tests'
-      end
+      skip 'Set SOLO=1 in environment to run solo tests' unless %w[1 true yes].include?(ENV['SOLO'])
     end
   end
 
@@ -161,7 +156,7 @@ RSpec.configure do |config|
     SdamFormatterIntegration.subscribe
     config.add_formatter(JsonExtFormatter, File.join(File.dirname(__FILE__), '../tmp/rspec.json'))
 
-    config.around(:each) do |example|
+    config.around do |example|
       SdamFormatterIntegration.assign_log_entries(nil)
       begin
         example.run
@@ -171,38 +166,32 @@ RSpec.configure do |config|
     end
   end
 
-  if SpecConfig.instance.ci?
-    if defined?(Rfc::Rif)
-      unless BSON::Environment.jruby?
-        Rfc::Rif.output_object_space_stats = true
-      end
+  if SpecConfig.instance.ci? && defined?(Rfc::Rif) && !BSON::Environment.jruby?
+    Rfc::Rif.output_object_space_stats = true
 
-      # Uncomment this line to log memory and CPU statistics during
-      # test suite execution to diagnose issues potentially related to
-      # system resource exhaustion.
-      #Rfc::Rif.output_system_load = true
-    end
+    # Uncomment this line to log memory and CPU statistics during
+    # test suite execution to diagnose issues potentially related to
+    # system resource exhaustion.
+    # Rfc::Rif.output_system_load = true
   end
 
   config.expect_with :rspec do |c|
-    c.syntax = [:should, :expect]
-    c.max_formatted_output_length = 10000
+    c.syntax = %i[should expect]
+    c.max_formatted_output_length = 10_000
   end
 
-  if config.respond_to?(:fuubar_output_pending_results=)
-    config.fuubar_output_pending_results = false
-  end
+  config.fuubar_output_pending_results = false if config.respond_to?(:fuubar_output_pending_results=)
 end
 
 if SpecConfig.instance.active_support?
-  require "active_support/version"
+  require 'active_support/version'
   if ActiveSupport.version >= Gem::Version.new(7)
     # ActiveSupport wants us to require ALL of it all of the time.
     # See: https://github.com/rails/rails/issues/43851,
     # https://github.com/rails/rails/issues/43889, etc.
     require 'active_support'
   end
-  require "active_support/time"
+  require 'active_support/time'
   require 'mongo/active_support'
 end
 

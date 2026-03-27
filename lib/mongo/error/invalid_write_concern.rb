@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Raised when an invalid write concern is provided.
     #
     # @since 2.2.0
     class InvalidWriteConcern < Error
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
@@ -30,8 +27,8 @@ module Mongo
       #
       # @since 2.2.0
       def initialize(msg = nil)
-        super(msg || 'Invalid write concern options. If w is an Integer, it must be greater than or equal to 0. ' +
-              'If w is 0, it cannot be combined with a true value for fsync or j (journal).')
+        super(msg || ('Invalid write concern options. If w is an Integer, it must be greater than or equal to 0. ' +
+          'If w is 0, it cannot be combined with a true value for fsync or j (journal).'))
       end
     end
   end

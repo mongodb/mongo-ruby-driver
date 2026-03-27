@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,19 +17,17 @@
 module Mongo
   class Cluster
     module Topology
-
       # Defines behavior when a cluster is in replica set topology,
       # and there is no primary or the primary has not yet been discovered
       # by the driver.
       #
       # @since 2.0.0
       class ReplicaSetNoPrimary < Base
-
         # The display name for the topology.
         #
         # @since 2.0.0
         # @deprecated
-        NAME = 'Replica Set'.freeze
+        NAME = 'Replica Set'
 
         # Get the display name.
         #
@@ -50,16 +47,10 @@ module Mongo
         # @since 2.7.0
         def summary
           details = server_descriptions.keys.join(',')
-          if details != ''
-            details << ','
-          end
+          details << ',' if details != ''
           details << "name=#{replica_set_name}"
-          if max_set_version
-            details << ",v=#{max_set_version}"
-          end
-          if max_election_id
-            details << ",e=#{max_election_id && max_election_id.to_s.sub(/^0+/, '')}"
-          end
+          details << ",v=#{max_set_version}" if max_set_version
+          details << ",e=#{max_election_id && max_election_id.to_s.sub(/^0+/, '')}" if max_election_id
           "#{display_name}[#{details}]"
         end
 
@@ -104,7 +95,9 @@ module Mongo
         # @return [ true ] Always true.
         #
         # @since 2.0.0
-        def replica_set?; true; end
+        def replica_set?
+          true
+        end
 
         # Select appropriate servers for this topology.
         #
@@ -118,8 +111,8 @@ module Mongo
         # @since 2.0.0
         def servers(servers)
           servers.select do |server|
-            (replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
-              server.primary? || server.secondary?
+            ((replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
+              server.primary?) || server.secondary?
           end
         end
 
@@ -131,7 +124,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def sharded?; false; end
+        def sharded?
+          false
+        end
 
         # A replica set topology is not single.
         #
@@ -141,7 +136,9 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def single?; false; end
+        def single?
+          false
+        end
 
         # A replica set topology is not unknown.
         #
@@ -151,20 +148,20 @@ module Mongo
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def unknown?; false; end
+        def unknown?
+          false
+        end
 
         private
 
         def validate_options(options, cluster)
-          if options[:replica_set_name] == ''
-            options = options.merge(replica_set_name: nil)
-          end
+          options = options.merge(replica_set_name: nil) if options[:replica_set_name] == ''
 
           unless options[:replica_set_name]
             raise ArgumentError, 'Cannot instantiate a replica set topology without a replica set name'
           end
 
-          super(options, cluster)
+          super
         end
       end
     end

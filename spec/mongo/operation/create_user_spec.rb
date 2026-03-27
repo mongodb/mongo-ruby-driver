@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,7 +8,6 @@ describe Mongo::Operation::CreateUser do
   let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
-
     let(:user) do
       Mongo::Auth::User.new(
         user: 'durran',
@@ -24,13 +22,10 @@ describe Mongo::Operation::CreateUser do
 
     before do
       users = root_authorized_client.database.users
-      if users.info('durran').any?
-        users.remove('durran')
-      end
+      users.remove('durran') if users.info('durran').any?
     end
 
     context 'when user creation was successful' do
-
       let!(:response) do
         operation.execute(root_authorized_primary, context: context)
       end
@@ -41,12 +36,11 @@ describe Mongo::Operation::CreateUser do
     end
 
     context 'when creation was not successful' do
-
       it 'raises an exception' do
-        expect {
+        expect do
           operation.execute(root_authorized_primary, context: context)
           operation.execute(root_authorized_primary, context: context)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        end.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class UsersInfo
-
       # A MongoDB usersinfo operation sent as an op message.
       #
       # @api private
@@ -30,8 +28,8 @@ module Mongo
 
         private
 
-        def selector(connection)
-          { :usersInfo => user_name }
+        def selector(_connection)
+          { usersInfo: user_name }
         end
       end
     end

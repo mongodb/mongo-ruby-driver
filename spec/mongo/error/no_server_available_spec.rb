@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -10,8 +9,8 @@ describe Mongo::Error::NoServerAvailable do
     end
 
     let(:cluster) do
-      Mongo::Cluster.new(['127.0.0.1:27017'],
-        Mongo::Monitoring.new, monitoring_io: false)
+      Mongo::Cluster.new([ '127.0.0.1:27017' ],
+                         Mongo::Monitoring.new, monitoring_io: false)
     end
 
     let(:error) do

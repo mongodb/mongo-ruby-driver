@@ -1,8 +1,7 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-require_relative './performs_modern_retries'
-require_relative './performs_no_retries'
+require_relative 'performs_modern_retries'
+require_relative 'performs_no_retries'
 
 module SupportsModernRetries
   shared_examples 'it supports modern retries' do
@@ -13,7 +12,7 @@ module SupportsModernRetries
 
       before(:all) do
         skip 'RUBY-2171: standalone topology currently uses legacy write retries ' \
-          'by default. Standalone should NOT retry when modern retries are enabled.'
+             'by default. Standalone should NOT retry when modern retries are enabled.'
       end
 
       it_behaves_like 'it performs no retries'

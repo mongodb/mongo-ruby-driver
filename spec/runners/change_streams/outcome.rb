@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -19,12 +18,9 @@ module Mongo
   module ChangeStreams
     class Outcome
       def initialize(spec)
-        if spec.nil?
-          raise ArgumentError, 'Outcome specification cannot be nil'
-        end
-        if spec.keys.length != 1
-          raise ArgumentError, 'Outcome must have exactly one key: success or error'
-        end
+        raise ArgumentError, 'Outcome specification cannot be nil' if spec.nil?
+        raise ArgumentError, 'Outcome must have exactly one key: success or error' if spec.keys.length != 1
+
         if spec['success']
           @documents = spec['success']
         elsif spec['error']
@@ -34,8 +30,7 @@ module Mongo
         end
       end
 
-      attr_reader :documents
-      attr_reader :error
+      attr_reader :documents, :error
 
       def error?
         !!error

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ module Mongo
   class Monitoring
     module Event
       module Cmap
-
         # Base class for CMAP events.
         #
         # @since 2.9.0

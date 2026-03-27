@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -13,16 +12,14 @@ describe 'OperationFailure code' do
 
   context 'duplicate key error' do
     it 'is set' do
-      begin
-        collection.insert_one(_id: 1)
-        collection.insert_one(_id: 1)
-        fail('Should have raised')
-      rescue Mongo::Error::OperationFailure::Family => e
-        expect(e.code).to eq(11000)
-        # 4.2 sharded clusters set code name.
-        # 4.2 replica sets and standalones do not
-        expect([nil, 'DuplicateKey']).to include(e.code_name)
-      end
+      collection.insert_one(_id: 1)
+      collection.insert_one(_id: 1)
+      raise('Should have raised')
+    rescue Mongo::Error::OperationFailure::Family => e
+      expect(e.code).to eq(11_000)
+      # 4.2 sharded clusters set code name.
+      # 4.2 replica sets and standalones do not
+      expect([ nil, 'DuplicateKey' ]).to include(e.code_name)
     end
   end
 end

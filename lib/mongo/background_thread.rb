@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -16,7 +15,6 @@
 # limitations under the License.
 
 module Mongo
-
   # The run!, running? and stop! methods used to be part of the public API
   # in some of the classes which now include this module. Therefore these
   # methods must be considered part of the driver's public API for backwards
@@ -111,9 +109,7 @@ module Mongo
     def start!
       @thread = Thread.new do
         catch(:done) do
-          until @stop_requested
-            do_work
-          end
+          do_work until @stop_requested
         end
       end
     end
@@ -130,14 +126,12 @@ module Mongo
       # a background thread could be performing, say, network I/O and if
       # the network is no longer available that could take a long time.
       start_time = Utils.monotonic_time
-      ([0.1, 0.15] + [0.2] * 5 + [0.3] * 20).each do |interval|
-        begin
-          Timeout.timeout(interval) do
-            @thread.join
-          end
-          break
-        rescue ::Timeout::Error
+      ([ 0.1, 0.15 ] + ([ 0.2 ] * 5) + ([ 0.3 ] * 20)).each do |interval|
+        Timeout.timeout(interval) do
+          @thread.join
         end
+        break
+      rescue ::Timeout::Error
       end
 
       # Some driver objects can be reconnected, for backwards compatibiilty
@@ -162,12 +156,10 @@ module Mongo
     end
 
     # Override this method to do the work in the background thread.
-    def do_work
-    end
+    def do_work; end
 
     # Override this method to perform additional signaling for the background
     # thread to stop.
-    def pre_stop
-    end
+    def pre_stop; end
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error < StandardError
-
     # A module encapsulating functionality to manage data attached to
     # exceptions in the driver, since the driver does not currently have a
     # single exception hierarchy root.
@@ -25,7 +23,6 @@ module Mongo
     # @since 2.11.0
     # @api private
     module Notable
-
       # Returns an array of strings with additional information about the
       # exception.
       #
@@ -43,17 +40,14 @@ module Mongo
 
       # @api private
       def add_note(note)
-        unless @notes
-          @notes = []
+        @notes ||= []
+        if Lint.enabled? && @notes.include?(note)
+          # The driver makes an effort to not add duplicated notes, by
+          # keeping track of *when* a particular exception should have the
+          # particular notes attached to it throughout the call stack.
+          raise Error::LintError, "Adding a note which already exists in exception #{self}: #{note}"
         end
-        if Lint.enabled?
-          if @notes.include?(note)
-            # The driver makes an effort to not add duplicated notes, by
-            # keeping track of *when* a particular exception should have the
-            # particular notes attached to it throughout the call stack.
-            raise Error::LintError, "Adding a note which already exists in exception #{self}: #{note}"
-          end
-        end
+
         @notes << note
       end
 
@@ -94,9 +88,7 @@ module Mongo
       # @api private
       def notes_tail
         msg = ''
-        unless notes.empty?
-          msg += " (#{notes.join(', ')})"
-        end
+        msg += " (#{notes.join(', ')})" unless notes.empty?
         msg
       end
     end

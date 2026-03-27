@@ -1,11 +1,10 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
-require_relative './shared/supports_retries'
-require_relative './shared/only_supports_legacy_retries'
-require_relative './shared/does_not_support_retries'
+require_relative 'shared/supports_retries'
+require_relative 'shared/only_supports_legacy_retries'
+require_relative 'shared/does_not_support_retries'
 
 describe 'Retryable Writes' do
   require_fail_command
@@ -16,7 +15,7 @@ describe 'Retryable Writes' do
     authorized_client.with(
       socket_timeout: socket_timeout,
       retry_writes: retry_writes,
-      max_write_retries: max_write_retries,
+      max_write_retries: max_write_retries
     )
   end
 
@@ -267,7 +266,7 @@ describe 'Retryable Writes' do
       let(:command_name) { 'insert' }
 
       let(:perform_operation) do
-        collection.bulk_write([{ insert_one: { _id: 1 } }])
+        collection.bulk_write([ { insert_one: { _id: 1 } } ])
       end
 
       let(:actual_result) do
@@ -293,7 +292,7 @@ describe 'Retryable Writes' do
       end
 
       let(:perform_operation) do
-        collection.bulk_write([{ delete_one: { filter: { _id: 1 } } }])
+        collection.bulk_write([ { delete_one: { filter: { _id: 1 } } } ])
       end
 
       let(:actual_result) do
@@ -319,7 +318,8 @@ describe 'Retryable Writes' do
       end
 
       let(:perform_operation) do
-        collection.bulk_write([{ update_one: { filter: { text: 'hello world' }, update: { '$set' => { text: 'goodbye' } } } }])
+        collection.bulk_write([ { update_one: { filter: { text: 'hello world' },
+                                                update: { '$set' => { text: 'goodbye' } } } } ])
       end
 
       let(:actual_result) do
@@ -346,7 +346,7 @@ describe 'Retryable Writes' do
       end
 
       let(:perform_operation) do
-        collection.bulk_write([{ delete_many: { filter: { text: 'hello world' } } }])
+        collection.bulk_write([ { delete_many: { filter: { text: 'hello world' } } } ])
       end
 
       let(:actual_result) do
@@ -373,7 +373,8 @@ describe 'Retryable Writes' do
       end
 
       let(:perform_operation) do
-        collection.bulk_write([{ update_many: { filter: { text: 'hello world' }, update: { '$set' => { text: 'goodbye' } } } }])
+        collection.bulk_write([ { update_many: { filter: { text: 'hello world' },
+                                                 update: { '$set' => { text: 'goodbye' } } } } ])
       end
 
       let(:actual_result) do

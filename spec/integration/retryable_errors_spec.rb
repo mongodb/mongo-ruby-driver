@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -23,7 +22,6 @@ describe 'Failing retryable operations' do
   context 'when operation fails' do
     require_topology :replica_set
 
-
     let(:clear_fail_point_command) do
       {
         configureFailPoint: 'failCommand',
@@ -38,7 +36,7 @@ describe 'Failing retryable operations' do
     end
 
     let(:collection) do
-      client['retryable-errors-spec', read: {mode: :secondary_preferred}]
+      client['retryable-errors-spec', read: { mode: :secondary_preferred }]
     end
 
     let(:first_server) do
@@ -57,10 +55,10 @@ describe 'Failing retryable operations' do
       let(:fail_point_command) do
         {
           configureFailPoint: 'failCommand',
-          mode: {times: 1},
+          mode: { times: 1 },
           data: {
-            failCommands: ['find'],
-            errorCode: 11600,
+            failCommands: [ 'find' ],
+            errorCode: 11_600,
           },
         }
       end
@@ -80,14 +78,14 @@ describe 'Failing retryable operations' do
 
         begin
           collection.find(a: 1).to_a
-        rescue Mongo::Error::OperationFailure::Family => exception
+        rescue Mongo::Error::OperationFailure::Family => e
         else
-          fail('Expected operation to fail')
+          raise('Expected operation to fail')
         end
 
-        puts exception.message
+        puts e.message
 
-        exception
+        e
       end
 
       let(:events) do
@@ -99,10 +97,10 @@ describe 'Failing retryable operations' do
       let(:fail_point_command) do
         command = {
           configureFailPoint: 'failCommand',
-          mode: {times: 2},
+          mode: { times: 2 },
           data: {
-            failCommands: ['insert'],
-            errorCode: 11600,
+            failCommands: [ 'insert' ],
+            errorCode: 11_600,
           },
         }
 
@@ -110,7 +108,7 @@ describe 'Failing retryable operations' do
           # Server versions 4.4 and newer will add the RetryableWriteError
           # label to all retryable errors, and the driver must not add the label
           # if it is not already present.
-          command[:data][:errorLabels] = ['RetryableWriteError']
+          command[:data][:errorLabels] = [ 'RetryableWriteError' ]
         end
 
         command
@@ -125,14 +123,14 @@ describe 'Failing retryable operations' do
 
         begin
           collection.insert_one(a: 1)
-        rescue Mongo::Error::OperationFailure::Family => exception
+        rescue Mongo::Error::OperationFailure::Family => e
         else
-          fail('Expected operation to fail')
+          raise('Expected operation to fail')
         end
 
-        #puts exception.message
+        # puts exception.message
 
-        exception
+        e
       end
 
       let(:events) do
@@ -141,7 +139,6 @@ describe 'Failing retryable operations' do
     end
 
     shared_examples_for 'failing retry' do
-
       it 'indicates second attempt' do
         expect(operation_exception.message).to include('attempt 2')
         expect(operation_exception.message).not_to include('attempt 1')
@@ -156,7 +153,6 @@ describe 'Failing retryable operations' do
     end
 
     shared_examples_for 'failing single attempt' do
-
       it 'does not indicate attempt' do
         expect(operation_exception.message).not_to include('attempt 1')
         expect(operation_exception.message).not_to include('attempt 2')
@@ -191,7 +187,6 @@ describe 'Failing retryable operations' do
       end
 
       it 'publishes events for the different server addresses' do
-
         expect(events.length).to eq(2)
         expect(events.first.address.seed).not_to eq(events.last.address.seed)
       end
@@ -226,7 +221,7 @@ describe 'Failing retryable operations' do
 
       context 'modern read retries' do
         let(:client_options) do
-          {retry_reads: true}
+          { retry_reads: true }
         end
 
         it_behaves_like 'failing retry'
@@ -235,7 +230,7 @@ describe 'Failing retryable operations' do
 
       context 'legacy read retries' do
         let(:client_options) do
-          {retry_reads: false, read_retry_interval: 0}
+          { retry_reads: false, read_retry_interval: 0 }
         end
 
         it_behaves_like 'failing retry'
@@ -245,7 +240,7 @@ describe 'Failing retryable operations' do
 
     context 'when read retries are disabled' do
       let(:client_options) do
-        {retry_reads: false, max_read_retries: 0}
+        { retry_reads: false, max_read_retries: 0 }
       end
 
       include_context 'read operation'
@@ -259,7 +254,7 @@ describe 'Failing retryable operations' do
 
       context 'modern write retries' do
         let(:client_options) do
-          {retry_writes: true}
+          { retry_writes: true }
         end
 
         it_behaves_like 'failing retry'
@@ -268,7 +263,7 @@ describe 'Failing retryable operations' do
 
       context 'legacy write' do
         let(:client_options) do
-          {retry_writes: false}
+          { retry_writes: false }
         end
 
         it_behaves_like 'failing retry'

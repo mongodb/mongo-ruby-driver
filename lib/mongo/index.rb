@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,16 +17,14 @@
 require 'mongo/index/view'
 
 module Mongo
-
   # Contains constants for indexing purposes.
   #
   # @since 2.0.0
   module Index
-
     # Wildcard constant for all.
     #
     # @since 2.1.0
-    ALL = '*'.freeze
+    ALL = '*'
 
     # Specify ascending order for an index.
     #
@@ -42,32 +39,32 @@ module Mongo
     # Specify a 2d Geo index.
     #
     # @since 2.0.0
-    GEO2D = '2d'.freeze
+    GEO2D = '2d'
 
     # Specify a 2d sphere Geo index.
     #
     # @since 2.0.0
-    GEO2DSPHERE = '2dsphere'.freeze
+    GEO2DSPHERE = '2dsphere'
 
     # Specify a geoHaystack index.
     #
     # @since 2.0.0
     # @deprecated
-    GEOHAYSTACK = 'geoHaystack'.freeze
+    GEOHAYSTACK = 'geoHaystack'
 
     # Encodes a text index.
     #
     # @since 2.0.0
-    TEXT = 'text'.freeze
+    TEXT = 'text'
 
     # Specify a hashed index.
     #
     # @since 2.0.0
-    HASHED = 'hashed'.freeze
+    HASHED = 'hashed'
 
     # Constant for the indexes collection.
     #
     # @since 2.0.0
-    COLLECTION = 'system.indexes'.freeze
+    COLLECTION = 'system.indexes'
   end
 end

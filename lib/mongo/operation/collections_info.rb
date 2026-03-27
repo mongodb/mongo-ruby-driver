@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/operation/collections_info/result'
 
 module Mongo
   module Operation
-
     # A MongoDB operation to get info on all collections in a given database.
     #
     # @api private

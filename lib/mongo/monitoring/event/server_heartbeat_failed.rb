@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Monitoring
     module Event
-
       # Event fired when a server heartbeat is dispatched.
       #
       # @since 2.7.0
       class ServerHeartbeatFailed < Mongo::Event::Base
-
         # Create the event.
         #
         # @example Create the event.
@@ -37,9 +34,7 @@ module Mongo
         #
         # @since 2.7.0
         # @api private
-        def initialize(address, round_trip_time, error, awaited: false,
-          started_event:
-        )
+        def initialize(address, round_trip_time, error, started_event:, awaited: false)
           @address = address
           @round_trip_time = round_trip_time
           @error = error
@@ -54,13 +49,13 @@ module Mongo
         attr_reader :round_trip_time
 
         # Alias of round_trip_time.
-        alias :duration :round_trip_time
+        alias duration round_trip_time
 
         # @return [ Exception ] error The exception that occurred in hello call.
         attr_reader :error
 
         # Alias of error for SDAM spec compliance.
-        alias :failure :error
+        alias failure error
 
         # @return [ true | false ] Whether the heartbeat was awaited.
         def awaited?
@@ -83,8 +78,8 @@ module Mongo
         # @api experimental
         def summary
           "#<#{short_class_name}" +
-          " address=#{address}" +
-          " error=#{error.inspect}>"
+            " address=#{address}" +
+            " error=#{error.inspect}>"
         end
       end
     end

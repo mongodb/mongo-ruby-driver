@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Collection
     class View
-
       # Provides behavior around a map/reduce operation on the collection
       # view.
       #
@@ -33,13 +31,13 @@ module Mongo
         # The inline option.
         #
         # @since 2.1.0
-        INLINE = 'inline'.freeze
+        INLINE = 'inline'
 
         # Reroute message.
         #
         # @since 2.1.0
         # @deprecated
-        REROUTE = 'Rerouting the MapReduce operation to the primary server'.freeze
+        REROUTE = 'Rerouting the MapReduce operation to the primary server'
 
         # @return [ View ] view The collection view.
         attr_reader :view
@@ -68,11 +66,12 @@ module Mongo
         # @since 2.0.0
         #
         # @yieldparam [ Hash ] Each matching document.
-        def each
+        def each(&block)
           @cursor = nil
           session = client.get_session(@options)
           server = cluster.next_primary(nil, session)
-          context = Operation::Context.new(client: client, session: session, operation_timeouts: view.operation_timeouts)
+          context = Operation::Context.new(client: client, session: session,
+                                           operation_timeouts: view.operation_timeouts)
           if server.load_balancer?
             # Connection will be checked in when cursor is drained.
             connection = server.pool.check_out(context: context)
@@ -84,9 +83,7 @@ module Mongo
           end
           @cursor = Cursor.new(view, result, server, session: session)
           if block_given?
-            @cursor.each do |doc|
-              yield doc
-            end
+            @cursor.each(&block)
           else
             @cursor.to_enum
           end
@@ -124,7 +121,8 @@ module Mongo
           @reduce_function = reduce.dup.freeze
           @options = BSON::Document.new(options).freeze
 
-          Deprecations.warn(:map_reduce, 'The map_reduce operation is deprecated, please use the aggregation pipeline instead.')
+          Deprecations.warn(:map_reduce,
+                            'The map_reduce operation is deprecated, please use the aggregation pipeline instead.')
         end
 
         # Set or get the jsMode flag for the operation.
@@ -179,12 +177,12 @@ module Mongo
         # Returns the database name where the map-reduce result is written to.
         # If the result is returned inline, returns nil.
         def out_database_name
-          if options[:out]
-            if options[:out].respond_to?(:keys) && (db = options[:out][:db])
-              db
-            else
-              database.name
-            end
+          return unless options[:out]
+
+          if options[:out].respond_to?(:keys) && (db = options[:out][:db])
+            db
+          else
+            database.name
           end
         end
 
@@ -232,7 +230,7 @@ module Mongo
           view.send(:with_session, @options) do |session|
             write_concern = view.write_concern_with_session(session)
             context = Operation::Context.new(client: client, session: session)
-            nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+            nro_write_with_retry(write_concern, context: context) do |connection, _txn_num, context|
               send_initial_query_with_connection(connection, session, context: context)
             end
           end
@@ -240,7 +238,7 @@ module Mongo
 
         private
 
-        OUT_ACTIONS = [ :replace, :merge, :reduce ].freeze
+        OUT_ACTIONS = %i[replace merge reduce].freeze
 
         def server_selector
           @view.send(:server_selector)
@@ -276,11 +274,7 @@ module Mongo
         end
 
         def valid_server?(description)
-          if secondary_ok?
-            true
-          else
-            description.standalone? || description.mongos? || description.primary? || description.load_balancer?
-          end
+          secondary_ok? || description.standalone? || description.mongos? || description.primary? || description.load_balancer?
         end
 
         def secondary_ok?
@@ -310,7 +304,8 @@ module Mongo
         end
 
         def find_command_spec(session)
-          Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
+          Builder::MapReduce.new(map_function, reduce_function, view,
+                                 options.merge(session: session)).command_specification
         end
 
         def fetch_query_op(session)

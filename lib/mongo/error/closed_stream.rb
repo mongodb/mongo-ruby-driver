@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Raised if the Grid::FSBucket::Stream object is closed and an operation is attempted.
     #
     # @since 2.1.0
     class ClosedStream < Error
-
       # Create the new exception.
       #
       # @example Create the new exception.
@@ -30,7 +27,7 @@ module Mongo
       #
       # @since 2.1.0
       def initialize
-        super("The stream is closed and cannot be written to or read from.")
+        super('The stream is closed and cannot be written to or read from.')
       end
     end
   end

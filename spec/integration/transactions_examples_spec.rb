@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -7,13 +6,18 @@ describe 'Transactions examples' do
   require_transaction_support
 
   let(:client) do
-    authorized_client.with(read_concern: {level: :majority}, write: {w: :majority})
+    authorized_client.with(read_concern: { level: :majority }, write: { w: :majority })
   end
 
   before do
-    if SpecConfig.instance.client_debug?
-      Mongo::Logger.logger.level = 0
-    end
+    Mongo::Logger.logger.level = 0 if SpecConfig.instance.client_debug?
+    hr[:employees].insert_one(employee: 3, status: 'Active')
+
+    # Sanity check since this test likes to fail
+    employee = hr[:employees].find({ employee: 3 }, limit: 1).first
+    expect(employee).not_to be_nil
+
+    reporting[:events].insert_one(employee: 3, status: { new: 'Active', old: nil })
   end
 
   let(:hr) do
@@ -24,28 +28,17 @@ describe 'Transactions examples' do
     client.use(:reporting).database
   end
 
-  before(:each) do
-    hr[:employees].insert_one(employee: 3, status: 'Active')
-
-    # Sanity check since this test likes to fail
-    employee = hr[:employees].find({ employee: 3 }, limit: 1).first
-    expect(employee).to_not be_nil
-
-    reporting[:events].insert_one(employee: 3, status: { new: 'Active', old: nil})
-  end
-
-  after(:each) do
+  after do
     hr.drop
     reporting.drop
 
     # Work around https://jira.mongodb.org/browse/SERVER-53015
-    ::Utils.mongos_each_direct_client do |client|
+    Utils.mongos_each_direct_client do |client|
       client.database.command(flushRouterConfig: 1)
     end
   end
 
   context 'individual examples' do
-
     let(:session) do
       client.start_session
     end
@@ -58,7 +51,7 @@ describe 'Transactions examples' do
 
       session.start_transaction(read_concern: { level: :snapshot },
                                 write_concern: { w: :majority })
-      employees_coll.update_one({ employee: 3 }, { '$set' => { status: 'Inactive'} },
+      employees_coll.update_one({ employee: 3 }, { '$set' => { status: 'Inactive' } },
                                 session: session)
       events_coll.insert_one({ employee: 3, status: { new: 'Inactive', old: 'Active' } },
                              session: session)
@@ -68,7 +61,7 @@ describe 'Transactions examples' do
         puts 'Transaction committed.'
       rescue Mongo::Error => e
         if e.label?('UnknownTransactionCommitResult')
-          puts "UnknownTransactionCommitResult, retrying commit operation..."
+          puts 'UnknownTransactionCommitResult, retrying commit operation...'
           retry
         else
           puts 'Error during commit ...'
@@ -80,7 +73,6 @@ describe 'Transactions examples' do
     # End Transactions Intro Example  1
 
     context 'Transactions Intro Example 1' do
-
       let(:run_transaction) do
         update_employee_info(session)
       end
@@ -88,26 +80,22 @@ describe 'Transactions examples' do
       it 'makes the changes to the database' do
         run_transaction
         employee = hr[:employees].find({ employee: 3 }, limit: 1).first
-        expect(employee).to_not be_nil
+        expect(employee).not_to be_nil
         expect(employee['status']).to eq('Inactive')
       end
     end
 
     context 'Transactions Retry Example 1' do
-
       # Start Transactions Retry Example 1
 
       def run_transaction_with_retry(session)
-        begin
-          yield session # performs transaction
-        rescue Mongo::Error => e
+        yield session # performs transaction
+      rescue Mongo::Error => e
+        puts 'Transaction aborted. Caught exception during transaction.'
+        raise unless e.label?('TransientTransactionError')
 
-          puts 'Transaction aborted. Caught exception during transaction.'
-          raise unless e.label?('TransientTransactionError')
-
-          puts "TransientTransactionError, retrying transaction ..."
-          retry
-        end
+        puts 'TransientTransactionError, retrying transaction ...'
+        retry
       end
 
       # End Transactions Retry Example 1
@@ -119,27 +107,24 @@ describe 'Transactions examples' do
       it 'makes the changes to the database' do
         run_transaction
         employee = hr[:employees].find({ employee: 3 }, limit: 1).first
-        expect(employee).to_not be_nil
+        expect(employee).not_to be_nil
         expect(employee['status']).to eq('Inactive')
       end
     end
 
     context 'Transactions Retry Example 2' do
-
       # Start Transactions Retry Example 2
 
       def commit_with_retry(session)
-        begin
-          session.commit_transaction
-          puts 'Transaction committed.'
-        rescue Mongo::Error=> e
-          if e.label?('UnknownTransactionCommitResult')
-            puts "UnknownTransactionCommitResult, retrying commit operation..."
-            retry
-          else
-            puts 'Error during commit ...'
-            raise
-          end
+        session.commit_transaction
+        puts 'Transaction committed.'
+      rescue Mongo::Error => e
+        if e.label?('UnknownTransactionCommitResult')
+          puts 'UnknownTransactionCommitResult, retrying commit operation...'
+          retry
+        else
+          puts 'Error during commit ...'
+          raise
         end
       end
 
@@ -156,41 +141,36 @@ describe 'Transactions examples' do
       it 'makes the changes to the database' do
         run_transaction
         employee = hr[:employees].find({ employee: 4 }, limit: 1).first
-        expect(employee).to_not be_nil
+        expect(employee).not_to be_nil
         expect(employee['status']).to eq('Active')
       end
     end
   end
 
   context 'Transactions Retry Example 3 (combined example)' do
-
     let(:run_transaction) do
-
       # Start Transactions Retry Example 3
 
       def run_transaction_with_retry(session)
-        begin
-          yield session # performs transaction
-        rescue Mongo::Error => e
-          puts 'Transaction aborted. Caught exception during transaction.'
-          raise unless e.label?('TransientTransactionError')
-          puts "TransientTransactionError, retrying transaction ..."
-          retry
-        end
+        yield session # performs transaction
+      rescue Mongo::Error => e
+        puts 'Transaction aborted. Caught exception during transaction.'
+        raise unless e.label?('TransientTransactionError')
+
+        puts 'TransientTransactionError, retrying transaction ...'
+        retry
       end
 
       def commit_with_retry(session)
-        begin
-          session.commit_transaction
-          puts 'Transaction committed.'
-        rescue Mongo::Error => e
-          if e.label?('UnknownTransactionCommitResult')
-            puts "UnknownTransactionCommitResult, retrying commit operation ..."
-            retry
-          else
-            puts 'Error during commit ...'
-            raise
-          end
+        session.commit_transaction
+        puts 'Transaction committed.'
+      rescue Mongo::Error => e
+        if e.label?('UnknownTransactionCommitResult')
+          puts 'UnknownTransactionCommitResult, retrying commit operation ...'
+          retry
+        else
+          puts 'Error during commit ...'
+          raise
         end
       end
 
@@ -202,8 +182,8 @@ describe 'Transactions examples' do
 
         session.start_transaction(read_concern: { level: :snapshot },
                                   write_concern: { w: :majority },
-                                  read: {mode: :primary})
-        employees_coll.update_one({ employee: 3 }, { '$set' => { status: 'Inactive'} },
+                                  read: { mode: :primary })
+        employees_coll.update_one({ employee: 3 }, { '$set' => { status: 'Inactive' } },
                                   session: session)
         events_coll.insert_one({ employee: 3, status: { new: 'Inactive', old: 'Active' } },
                                session: session)
@@ -216,7 +196,7 @@ describe 'Transactions examples' do
         run_transaction_with_retry(session) do
           update_employee_info(session)
         end
-      rescue StandardError => e
+      rescue StandardError # rubocop:disable Lint/UselessRescue
         # Do something with error
         raise
       end
@@ -227,7 +207,7 @@ describe 'Transactions examples' do
     it 'makes the changes to the database' do
       run_transaction
       employee = hr[:employees].find({ employee: 3 }, limit: 1).first
-      expect(employee).to_not be_nil
+      expect(employee).not_to be_nil
       expect(employee['status']).to eq('Inactive')
     end
   end

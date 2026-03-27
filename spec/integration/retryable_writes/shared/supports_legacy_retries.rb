@@ -1,7 +1,6 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-require_relative './performs_legacy_retries'
+require_relative 'performs_legacy_retries'
 
 module SupportsLegacyRetries
   shared_examples 'it supports legacy retries' do

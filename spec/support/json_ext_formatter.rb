@@ -1,9 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 class JsonExtFormatter < RSpec::Core::Formatters::JsonFormatter
   RSpec::Core::Formatters.register self, :message,
-    :dump_summary, :dump_profile, :stop, :seed, :close
+                                   :dump_summary, :dump_profile, :stop, :seed, :close
 
   def format_example(example)
     super.tap do |hash|

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Grid
-
     # Represents a view of the GridFS in the database.
     #
     # @since 2.0.0
@@ -27,12 +25,12 @@ module Mongo
       # The default root prefix.
       #
       # @since 2.0.0
-      DEFAULT_ROOT = 'fs'.freeze
+      DEFAULT_ROOT = 'fs'
 
       # The specification for the chunks collection index.
       #
       # @since 2.0.0
-      CHUNKS_INDEX = { :files_id => 1, :n => 1 }.freeze
+      CHUNKS_INDEX = { files_id: 1, n: 1 }.freeze
 
       # The specification for the files collection index.
       #
@@ -70,13 +68,12 @@ module Mongo
       def initialize(database, options = {})
         @database = database
         @options = options.dup
-=begin WriteConcern object support
-        if @options[:write_concern].is_a?(WriteConcern::Base)
-          # Cache the instance so that we do not needlessly reconstruct it.
-          @write_concern = @options[:write_concern]
-          @options[:write_concern] = @write_concern.options
-        end
-=end
+        # WriteConcern object support
+        #         if @options[:write_concern].is_a?(WriteConcern::Base)
+        #           # Cache the instance so that we do not needlessly reconstruct it.
+        #           @write_concern = @options[:write_concern]
+        #           @options[:write_concern] = @write_concern.options
+        #         end
         @options.freeze
         @chunks_collection = database[chunks_name]
         @files_collection = database[files_name]
@@ -155,7 +152,8 @@ module Mongo
       def find_one(selector = nil)
         file_info = files_collection.find(selector).first
         return nil unless file_info
-        chunks = chunks_collection.find(:files_id => file_info[:_id]).sort(:n => 1)
+
+        chunks = chunks_collection.find(files_id: file_info[:_id]).sort(n: 1)
         Grid::File.new(chunks.to_a, Options::Mapper.transform(file_info, Grid::File::Info::MAPPINGS.invert))
       end
 
@@ -220,12 +218,13 @@ module Mongo
       def delete(id, opts = {})
         timeout_holder = CsotTimeoutHolder.new(operation_timeouts: operation_timeouts(opts))
         result = files_collection
-          .find({ :_id => id }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
-          .delete_one(timeout_ms: timeout_holder.remaining_timeout_ms)
+                 .find({ _id: id }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
+                 .delete_one(timeout_ms: timeout_holder.remaining_timeout_ms)
         chunks_collection
-          .find({ :files_id => id }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
+          .find({ files_id: id }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
           .delete_many(timeout_ms: timeout_holder.remaining_timeout_ms)
         raise Error::FileNotFound.new(id, :id) if result.n == 0
+
         result
       end
 
@@ -319,12 +318,13 @@ module Mongo
           skip = revision
           sort = { 'uploadDate' => Mongo::Index::ASCENDING }
         end
-        file_info_doc = files_collection.find({ filename: filename} ,
-                                           sort: sort,
-                                           skip: skip,
-                                           limit: -1).first
+        file_info_doc = files_collection.find({ filename: filename },
+                                              sort: sort,
+                                              skip: skip,
+                                              limit: -1).first
         unless file_info_doc
           raise Error::FileNotFound.new(filename, :filename) unless opts[:revision]
+
           raise Error::InvalidFileRevision.new(filename, opts[:revision])
         end
         open_download_stream(file_info_doc[:_id], file_info_doc: file_info_doc, &block)
@@ -434,18 +434,16 @@ module Mongo
       # @since 2.1.0
       def upload_from_stream(filename, io, opts = {})
         open_upload_stream(filename, opts) do |stream|
+          stream.write(io)
+        # IOError and SystemCallError are for errors reading the io.
+        # Error::SocketError and Error::SocketTimeoutError are for
+        # writing to MongoDB.
+        rescue IOError, SystemCallError, Error::SocketError, Error::SocketTimeoutError
           begin
-            stream.write(io)
-          # IOError and SystemCallError are for errors reading the io.
-          # Error::SocketError and Error::SocketTimeoutError are for
-          # writing to MongoDB.
-          rescue IOError, SystemCallError, Error::SocketError, Error::SocketTimeoutError
-            begin
-              stream.abort
-            rescue Error::OperationFailure
-            end
-            raise
+            stream.abort
+          rescue Error::OperationFailure
           end
+          raise
         end.file_id
       end
 
@@ -465,7 +463,7 @@ module Mongo
       def read_preference
         @read_preference ||= begin
           pref = options[:read] || database.read_preference
-          if BSON::Document === pref
+          if pref.is_a?(BSON::Document)
             pref
           else
             BSON::Document.new(pref)
@@ -483,10 +481,10 @@ module Mongo
       # @since 2.1.0
       def write_concern
         @write_concern ||= if wco = @options[:write_concern] || @options[:write]
-          WriteConcern.get(wco)
-        else
-          database.write_concern
-        end
+                             WriteConcern.get(wco)
+                           else
+                             database.write_concern
+                           end
       end
 
       # Drop the collections that implement this bucket.
@@ -525,9 +523,7 @@ module Mongo
           projection: { _id: 1 },
           timeout_ms: timeout_holder&.remaining_timeout_ms
         ).first
-        if fc_idx.nil?
-          create_index_if_missing!(files_collection, FSBucket::FILES_INDEX)
-        end
+        create_index_if_missing!(files_collection, FSBucket::FILES_INDEX) if fc_idx.nil?
 
         cc_idx = chunks_collection.find(
           {},
@@ -535,24 +531,20 @@ module Mongo
           projection: { _id: 1 },
           timeout_ms: timeout_holder&.remaining_timeout_ms
         ).first
-        if cc_idx.nil?
-          create_index_if_missing!(chunks_collection, FSBucket::CHUNKS_INDEX, :unique => true)
-        end
+        return unless cc_idx.nil?
+
+        create_index_if_missing!(chunks_collection, FSBucket::CHUNKS_INDEX, unique: true)
       end
 
       def create_index_if_missing!(collection, index_spec, options = {})
         indexes_view = collection.indexes
         begin
-          if indexes_view.get(index_spec).nil?
-            indexes_view.create_one(index_spec, options)
-          end
+          indexes_view.create_one(index_spec, options) if indexes_view.get(index_spec).nil?
         rescue Mongo::Error::OperationFailure::Family => e
           # proceed with index creation if a NamespaceNotFound error is thrown
-          if e.code == 26
-            indexes_view.create_one(index_spec, options)
-          else
-            raise
-          end
+          raise unless e.code == 26
+
+          indexes_view.create_one(index_spec, options)
         end
       end
 

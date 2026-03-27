@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -17,14 +16,12 @@
 
 module Mongo
   class Cursor
-
     # This class contains the operation specification for KillCursors.
     #
     # Its purpose is to ensure we don't misspell attribute names accidentally.
     #
     # @api private
     class KillSpec
-
       def initialize(
         cursor_id:,
         coll_name:,
@@ -44,12 +41,12 @@ module Mongo
       end
 
       attr_reader :cursor_id,
-      :coll_name,
-      :db_name,
-      :connection_global_id,
-      :server_address,
-      :session,
-      :connection
+                  :coll_name,
+                  :db_name,
+                  :connection_global_id,
+                  :server_address,
+                  :session,
+                  :connection
 
       def ==(other)
         cursor_id == other.cursor_id &&
@@ -61,7 +58,7 @@ module Mongo
       end
 
       def eql?(other)
-        self.==(other)
+        self == other
       end
 
       def hash

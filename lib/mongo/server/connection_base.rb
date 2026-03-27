@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Server
-
     # This class encapsulates common connection functionality.
     #
     # @note Although methods of this module are part of the public API,
@@ -37,17 +35,17 @@ module Mongo
       # MAX_BSON_COMMAND_OVERHEAD.
       #
       # @api private
-      DEFAULT_MAX_BSON_OBJECT_SIZE = 16777216
+      DEFAULT_MAX_BSON_OBJECT_SIZE = 16_777_216
 
       # The additional overhead allowed for command data (i.e. fields added
       # to the command document by the driver, as opposed to documents
       # provided by the user) when serializing a complete command to BSON.
       #
       # @api private
-      MAX_BSON_COMMAND_OVERHEAD = 16384
+      MAX_BSON_COMMAND_OVERHEAD = 16_384
 
       # @api private
-      REDUCED_MAX_BSON_SIZE = 2097152
+      REDUCED_MAX_BSON_SIZE = 2_097_152
 
       # @return [ Hash ] options The passed in options.
       attr_reader :options
@@ -83,10 +81,10 @@ module Mongo
 
       # @deprecated
       def_delegators :description,
-        :features,
-        :max_bson_object_size,
-        :max_message_size,
-        :mongos?
+                     :features,
+                     :max_bson_object_size,
+                     :max_message_size,
+                     :mongos?
 
       # @return [ nil | Object ] The service id, if any.
       def service_id
@@ -151,12 +149,13 @@ module Mongo
         # The monitoring code does not correctly handle multiple messages,
         # and the driver internally does not send more than one message at
         # a time ever. Thus prohibit multiple message use for now.
-        if messages.length != 1
-          raise ArgumentError, 'Can only dispatch one message at a time'
-        end
+        raise ArgumentError, 'Can only dispatch one message at a time' if messages.length != 1
+
         if description.unknown?
-          raise Error::InternalDriverError, "Cannot dispatch a message on a connection with unknown description: #{description.inspect}"
+          raise Error::InternalDriverError,
+                "Cannot dispatch a message on a connection with unknown description: #{description.inspect}"
         end
+
         message = messages.first
         deliver(message, context, options)
       end
@@ -168,16 +167,16 @@ module Mongo
         if Lint.enabled? && !@socket
           raise Error::LintError, "Trying to deliver a message over a disconnected connection (to #{address})"
         end
+
         buffer = serialize(message, context)
         check_timeout!(context)
         ensure_connected do |socket|
           operation_id = Monitoring.next_operation_id
           started_event = command_started(address, operation_id, message.payload,
-            socket_object_id: socket.object_id, connection_id: id,
-            connection_generation: generation,
-            server_connection_id: description.server_connection_id,
-            service_id: description.service_id,
-          )
+                                          socket_object_id: socket.object_id, connection_id: id,
+                                          connection_generation: generation,
+                                          server_connection_id: description.server_connection_id,
+                                          service_id: description.service_id)
           start = Utils.monotonic_time
           result = nil
           begin
@@ -185,32 +184,27 @@ module Mongo
               socket.write(buffer.to_s, timeout: context.remaining_timeout_sec)
               if message.replyable?
                 check_timeout!(context)
-                Protocol::Message.deserialize(socket, max_message_size, message.request_id, options.merge(timeout: context.remaining_timeout_sec))
-              else
-                nil
+                Protocol::Message.deserialize(socket, max_message_size, message.request_id,
+                                              options.merge(timeout: context.remaining_timeout_sec))
               end
             end
           rescue Exception => e
             total_duration = Utils.monotonic_time - start
             command_failed(nil, address, operation_id, message.payload,
-              e.message, total_duration,
-              started_event: started_event,
-              server_connection_id: description.server_connection_id,
-              service_id: description.service_id,
-            )
+                           e.message, total_duration,
+                           started_event: started_event,
+                           server_connection_id: description.server_connection_id,
+                           service_id: description.service_id)
             raise
           else
             total_duration = Utils.monotonic_time - start
             command_completed(result, address, operation_id, message.payload,
-              total_duration,
-              started_event: started_event,
-              server_connection_id: description.server_connection_id,
-              service_id: description.service_id,
-            )
+                              total_duration,
+                              started_event: started_event,
+                              server_connection_id: description.server_connection_id,
+                              service_id: description.service_id)
           end
-          if result && context.decrypt?
-            result = result.maybe_decrypt(context)
-          end
+          result = result.maybe_decrypt(context) if result && context.decrypt?
           result
         end
       end
@@ -224,18 +218,16 @@ module Mongo
         # only as the default if the server's hello did not contain
         # maxBsonObjectSize.
         max_bson_size = max_bson_object_size || DEFAULT_MAX_BSON_OBJECT_SIZE
-        if context.encrypt?
-          # The client-side encryption specification requires bulk writes to
-          # be split at a reduced maxBsonObjectSize. If this message is a bulk
-          # write and its size exceeds the reduced size limit, the serializer
-          # will raise an exception, which is caught by BulkWrite. BulkWrite
-          # will split the operation into individual writes, which will
-          # not be subject to the reduced maxBsonObjectSize.
-          if message.bulk_write?
-            # Make the new maximum size equal to the specified reduced size
-            # limit plus the 16KiB overhead allowance.
-            max_bson_size = REDUCED_MAX_BSON_SIZE
-          end
+        # The client-side encryption specification requires bulk writes to
+        # be split at a reduced maxBsonObjectSize. If this message is a bulk
+        # write and its size exceeds the reduced size limit, the serializer
+        # will raise an exception, which is caught by BulkWrite. BulkWrite
+        # will split the operation into individual writes, which will
+        # not be subject to the reduced maxBsonObjectSize.
+        if context.encrypt? && message.bulk_write?
+          # Make the new maximum size equal to the specified reduced size
+          # limit plus the 16KiB overhead allowance.
+          max_bson_size = REDUCED_MAX_BSON_SIZE
         end
 
         # RUBY-2234: It is necessary to check that the message size does not
@@ -261,9 +253,7 @@ module Mongo
           temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
 
           message.serialize(temp_buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
-          if temp_buffer.length > max_message_size
-            raise Error::MaxMessageSize.new(max_message_size)
-          end
+          raise Error::MaxMessageSize.new(max_message_size) if temp_buffer.length > max_message_size
         end
 
         # RUBY-2335: When the un-compressed message is smaller than the maximum
@@ -286,12 +276,12 @@ module Mongo
       # @raise [ Mongo::Error::TimeoutError ] if timeout expired or there is
       #   not enough time to send the message to the server.
       def check_timeout!(context)
-        return if [nil, 0].include?(context.deadline)
+        return if [ nil, 0 ].include?(context.deadline)
 
         time_to_execute = context.remaining_timeout_sec - server.minimum_round_trip_time
-        if time_to_execute <= 0
-          raise Mongo::Error::TimeoutError
-        end
+        return unless time_to_execute <= 0
+
+        raise Mongo::Error::TimeoutError
       end
     end
   end

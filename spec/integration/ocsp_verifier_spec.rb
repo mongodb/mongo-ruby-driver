@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'webrick'
@@ -20,7 +19,7 @@ describe Mongo::Socket::OcspVerifier do
         server.shutdown
       end
 
-      ::Utils.wait_for_port_free(port, 5)
+      Utils.wait_for_port_free(port, 5)
     end
   end
 
@@ -52,9 +51,10 @@ describe Mongo::Socket::OcspVerifier do
       it 'raises an exception' do
         lambda do
           verifier.verify
-        # Redirect tests receive responses from port 8101,
-        # tests without redirects receive responses from port 8100.
-        end.should raise_error(Mongo::Error::ServerCertificateRevoked, %r,TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status',)
+          # Redirect tests receive responses from port 8101,
+          # tests without redirects receive responses from port 8100.
+        end.should raise_error(Mongo::Error::ServerCertificateRevoked,
+                               %r{TLS certificate of 'foo' has been revoked according to 'http://localhost:810[01]/status'})
       end
 
       it 'does not wait for the timeout' do
@@ -85,7 +85,6 @@ describe Mongo::Socket::OcspVerifier do
   end
 
   shared_context 'basic verifier' do
-
     let(:cert) { OpenSSL::X509::Certificate.new(File.read(cert_path)) }
     let(:ca_cert) { OpenSSL::X509::Certificate.new(File.read(ca_cert_path)) }
 
@@ -109,7 +108,7 @@ describe Mongo::Socket::OcspVerifier do
     include_context 'basic verifier'
   end
 
-  %w(rsa ecdsa).each do |algorithm|
+  %w[rsa ecdsa].each do |algorithm|
     context "when using #{algorithm} cert" do
       include_context 'verifier', algorithm: algorithm
 
@@ -125,7 +124,7 @@ describe Mongo::Socket::OcspVerifier do
         end
       end
 
-      %w(ca delegate).each do |responder_cert|
+      %w[ca delegate].each do |responder_cert|
         responder_cert_file_name = {
           'ca' => 'ca',
           'delegate' => 'ocsp-responder',
@@ -136,7 +135,7 @@ describe Mongo::Socket::OcspVerifier do
             with_ocsp_mock(
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
-              SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
+              SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key")
             )
 
             include_examples 'verifies'
@@ -164,7 +163,7 @@ describe Mongo::Socket::OcspVerifier do
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
               SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
-              fault: 'unknown',
+              fault: 'unknown'
             )
 
             include_examples 'does not verify'
@@ -187,7 +186,6 @@ describe Mongo::Socket::OcspVerifier do
     let(:responder_cert_file_name) { 'ca' }
 
     context 'one time' do
-
       with_ocsp_responder do |req, res|
         res.status = 303
         res['locAtion'] = "http://localhost:8101#{req.path}"
@@ -201,7 +199,7 @@ describe Mongo::Socket::OcspVerifier do
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
-          port: 8101,
+          port: 8101
         )
 
         include_examples 'verifies'
@@ -219,7 +217,7 @@ describe Mongo::Socket::OcspVerifier do
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
           fault: 'revoked',
-          port: 8101,
+          port: 8101
         )
 
         include_examples 'fails verification'
@@ -231,7 +229,7 @@ describe Mongo::Socket::OcspVerifier do
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
           SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
           fault: 'unknown',
-          port: 8101,
+          port: 8101
         )
 
         include_examples 'does not verify'
@@ -249,7 +247,7 @@ describe Mongo::Socket::OcspVerifier do
         SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/ca.pem"),
         SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.crt"),
         SpecConfig.instance.ocsp_files_dir.join("#{algorithm}/#{responder_cert_file_name}.key"),
-        port: 8101,
+        port: 8101
       )
 
       with_ocsp_responder do |req, res|
@@ -264,12 +262,11 @@ describe Mongo::Socket::OcspVerifier do
   end
 
   context 'responder returns unexpected status code' do
-
     include_context 'verifier', algorithm: 'rsa'
 
-    [400, 404, 500, 503].each do |code|
+    [ 400, 404, 500, 503 ].each do |code|
       context "code #{code}" do
-        with_ocsp_responder do |req, res|
+        with_ocsp_responder do |_req, res|
           res.status = code
           res.body = "HTTP #{code}"
         end
@@ -279,7 +276,7 @@ describe Mongo::Socket::OcspVerifier do
     end
 
     context 'code 204' do
-      with_ocsp_responder do |req, res|
+      with_ocsp_responder do |_req, res|
         res.status = 204
       end
 

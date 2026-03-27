@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,13 +16,12 @@
 
 module Mongo
   class Error
-
     # Session was previously ended.
     #
     # @since 2.7.0
     class SessionEnded < Error
       def initialize
-        super("The session was ended and cannot be used")
+        super('The session was ended and cannot be used')
       end
     end
   end

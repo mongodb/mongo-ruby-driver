@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2009-2020 MongoDB Inc.
 #
@@ -17,7 +16,7 @@
 
 module Crypt
   LOCAL_MASTER_KEY_B64 = 'Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3' +
-  'YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk'.freeze
+                         'YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk'
 
   LOCAL_MASTER_KEY = Base64.decode64(LOCAL_MASTER_KEY_B64)
 
@@ -97,7 +96,7 @@ module Crypt
 
     let(:extra_options) do
       opts = {
-        mongocryptd_spawn_args: ["--port=#{SpecConfig.instance.mongocryptd_port}"],
+        mongocryptd_spawn_args: [ "--port=#{SpecConfig.instance.mongocryptd_port}" ],
         mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
       }
       if SpecConfig.instance.crypt_shared_lib_path
@@ -131,7 +130,7 @@ module Crypt
     end
 
     %w[DecimalNoPrecision DecimalPrecision Date DoubleNoPrecision DoublePrecision Int Long].each do |type|
-      let("range_encrypted_fields_#{type.downcase}".to_sym) do
+      let(:"range_encrypted_fields_#{type.downcase}") do
         BSON::ExtJSON.parse(
           File.read("spec/support/crypt/encrypted_fields/range-encryptedFields-#{type}.json"),
           mode: :bson
@@ -165,7 +164,7 @@ module Crypt
 
     let(:encrypted_ssn) do
       "ASzggCwAAAAAAAAAAAAAAAAC/OvUvE0N5eZ5vhjcILtGKZlxovGhYJduEfsR\n7NiH68Ft" +
-      "tXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"
+        "tXzHYqT0DKgvn3QjjTbS/4SPfBEYrMIS10Uzf9R1Ky4D5a19mYCp\nmv76Z8Rzdmo=\n"
     end
   end
 
@@ -185,19 +184,18 @@ module Crypt
   shared_context 'with AWS kms_providers' do
     before do
       unless SpecConfig.instance.fle_aws_key &&
-        SpecConfig.instance.fle_aws_secret &&
-        SpecConfig.instance.fle_aws_region &&
-        SpecConfig.instance.fle_aws_arn
+             SpecConfig.instance.fle_aws_secret &&
+             SpecConfig.instance.fle_aws_region &&
+             SpecConfig.instance.fle_aws_arn
 
-        reason = "This test requires the MONGO_RUBY_DRIVER_AWS_KEY, " +
-                "MONGO_RUBY_DRIVER_AWS_SECRET, MONGO_RUBY_DRIVER_AWS_REGION, " +
-                "MONGO_RUBY_DRIVER_AWS_ARN environment variables to be set information from AWS."
+        reason = 'This test requires the MONGO_RUBY_DRIVER_AWS_KEY, ' +
+                 'MONGO_RUBY_DRIVER_AWS_SECRET, MONGO_RUBY_DRIVER_AWS_REGION, ' +
+                 'MONGO_RUBY_DRIVER_AWS_ARN environment variables to be set information from AWS.'
 
-        if SpecConfig.instance.fle?
-          fail(reason)
-        else
-          skip(reason)
-        end
+        raise(reason) if SpecConfig.instance.fle?
+
+        skip(reason)
+
       end
     end
 
@@ -233,7 +231,7 @@ module Crypt
 
     let(:encrypted_ssn) do
       "AQFkgAAAAAAAAAAAAAAAAAACX/YG2ZOHWU54kARE17zDdeZzKgpZffOXNaoB\njmvdVa/" +
-      "yTifOikvxEov16KxtQrnaKWdxQL03TVgpoLt4Jb28pqYKlgBj3XMp\nuItZpQeFQB4=\n"
+        "yTifOikvxEov16KxtQrnaKWdxQL03TVgpoLt4Jb28pqYKlgBj3XMp\nuItZpQeFQB4=\n"
     end
   end
 
@@ -252,19 +250,18 @@ module Crypt
   shared_context 'with Azure kms_providers' do
     before do
       unless SpecConfig.instance.fle_azure_client_id &&
-        SpecConfig.instance.fle_azure_client_secret &&
-        SpecConfig.instance.fle_azure_tenant_id &&
-        SpecConfig.instance.fle_azure_identity_platform_endpoint
+             SpecConfig.instance.fle_azure_client_secret &&
+             SpecConfig.instance.fle_azure_tenant_id &&
+             SpecConfig.instance.fle_azure_identity_platform_endpoint
 
         reason = 'This test requires the MONGO_RUBY_DRIVER_AZURE_TENANT_ID, ' +
-        'MONGO_RUBY_DRIVER_AZURE_CLIENT_ID, MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET, ' +
-        'MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT environment variables to be set information from Azure.'
+                 'MONGO_RUBY_DRIVER_AZURE_CLIENT_ID, MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET, ' +
+                 'MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT environment variables to be set information from Azure.'
 
-        if SpecConfig.instance.fle?
-          fail(reason)
-        else
-          skip(reason)
-        end
+        raise(reason) if SpecConfig.instance.fle?
+
+        skip(reason)
+
       end
     end
 
@@ -312,23 +309,22 @@ module Crypt
   shared_context 'with GCP kms_providers' do
     before do
       unless SpecConfig.instance.fle_gcp_email &&
-        SpecConfig.instance.fle_gcp_private_key &&
-        SpecConfig.instance.fle_gcp_project_id &&
-        SpecConfig.instance.fle_gcp_location &&
-        SpecConfig.instance.fle_gcp_key_ring &&
-        SpecConfig.instance.fle_gcp_key_name
+             SpecConfig.instance.fle_gcp_private_key &&
+             SpecConfig.instance.fle_gcp_project_id &&
+             SpecConfig.instance.fle_gcp_location &&
+             SpecConfig.instance.fle_gcp_key_ring &&
+             SpecConfig.instance.fle_gcp_key_name
 
         reason = 'This test requires the MONGO_RUBY_DRIVER_GCP_EMAIL, ' +
-        'MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY, ' +
-        'MONGO_RUBY_DRIVER_GCP_PROJECT_ID, MONGO_RUBY_DRIVER_GCP_LOCATION, ' +
-        'MONGO_RUBY_DRIVER_GCP_KEY_RING, MONGO_RUBY_DRIVER_GCP_KEY_NAME ' +
-        'environment variables to be set information from GCP.'
+                 'MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY, ' +
+                 'MONGO_RUBY_DRIVER_GCP_PROJECT_ID, MONGO_RUBY_DRIVER_GCP_LOCATION, ' +
+                 'MONGO_RUBY_DRIVER_GCP_KEY_RING, MONGO_RUBY_DRIVER_GCP_KEY_NAME ' +
+                 'environment variables to be set information from GCP.'
 
-        if SpecConfig.instance.fle?
-          fail(reason)
-        else
-          skip(reason)
-        end
+        raise(reason) if SpecConfig.instance.fle?
+
+        skip(reason)
+
       end
     end
 
@@ -400,7 +396,7 @@ module Crypt
     let(:data_key_options) do
       {
         master_key: {
-          key_id: "1"
+          key_id: '1'
         }
       }
     end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Raised if there are no servers available matching the preference.
     #
     # @since 2.0.0
     class NoServerAvailable < Error
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
@@ -34,14 +31,12 @@ module Mongo
       #   performed on. (added in 2.7.0)
       #
       # @since 2.0.0
-      def initialize(server_selector, cluster=nil, msg=nil)
+      def initialize(server_selector, cluster = nil, msg = nil)
         unless msg
           msg = "No #{server_selector.name} server is available"
-          if cluster
-            msg += " in cluster: #{cluster.summary}"
-          end
+          msg += " in cluster: #{cluster.summary}" if cluster
           msg += " with timeout=#{server_selector.server_selection_timeout}, " +
-            "LT=#{server_selector.local_threshold}"
+                 "LT=#{server_selector.local_threshold}"
         end
 
         super(msg)

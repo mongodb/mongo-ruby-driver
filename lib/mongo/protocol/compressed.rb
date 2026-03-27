@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Protocol
-
     # MongoDB Wire protocol Compressed message.
     #
     # This is a bi-directional message that compresses another opcode.
@@ -27,15 +25,14 @@ module Mongo
     #
     # @since 2.5.0
     class Compressed < Message
-
       # The noop compressor identifier.
-      NOOP = 'noop'.freeze
+      NOOP = 'noop'
 
       # The byte signaling that the message has not been compressed (test mode).
       NOOP_BYTE = 0.chr.force_encoding(BSON::BINARY).freeze
 
       # The snappy compressor identifier.
-      SNAPPY = 'snappy'.freeze
+      SNAPPY = 'snappy'
 
       # The byte signaling that the message has been compressed with snappy.
       SNAPPY_BYTE = 1.chr.force_encoding(BSON::BINARY).freeze
@@ -48,10 +45,10 @@ module Mongo
       # The Zlib compressor identifier.
       #
       # @since 2.5.0
-      ZLIB = 'zlib'.freeze
+      ZLIB = 'zlib'
 
       # The zstd compressor identifier.
-      ZSTD = 'zstd'.freeze
+      ZSTD = 'zstd'
 
       # The byte signaling that the message has been compressed with zstd.
       ZSTD_BYTE = 3.chr.force_encoding(BSON::BINARY).freeze
@@ -103,9 +100,7 @@ module Mongo
             Message.deserialize_field(message, buf, field)
           end
         end
-        if message.is_a?(Msg)
-          message.fix_after_deserialization
-        end
+        message.fix_after_deserialization if message.is_a?(Msg)
         message
       end
 

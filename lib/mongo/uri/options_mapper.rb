@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class URI
-
     # Performs mapping between URI options and Ruby options.
     #
     # This class contains:
@@ -37,7 +35,6 @@ module Mongo
     #
     # @api private
     class OptionsMapper
-
       include Loggable
 
       # Instantates the options mapper.
@@ -68,21 +65,19 @@ module Mongo
 
         group = strategy[:group]
         target = if group
-          uri_options[group] || {}
-        else
-          uri_options
-        end
+                   uri_options[group] || {}
+                 else
+                   uri_options
+                 end
         value = apply_transform(key, value, strategy[:type])
         # Sometimes the value here would be nil, for example if we are processing
         # read preference tags or auth mechanism properties and all of the
         # data within is invalid. Ignore such options.
-        unless value.nil?
-          merge_uri_option(target, value, strategy[:name])
-        end
+        merge_uri_option(target, value, strategy[:name]) unless value.nil?
 
-        if group && !target.empty? && !uri_options.key?(group)
-          uri_options[group] = target
-        end
+        return unless group && !target.empty? && !uri_options.key?(group)
+
+        uri_options[group] = target
       end
 
       def smc_to_ruby(opts)
@@ -97,22 +92,18 @@ module Mongo
 
           group = strategy[:group]
           target = if group
-            uri_options[group] || {}
-          else
-            uri_options
-          end
+                     uri_options[group] || {}
+                   else
+                     uri_options
+                   end
 
           value = apply_transform(key, value, strategy[:type])
           # Sometimes the value here would be nil, for example if we are processing
           # read preference tags or auth mechanism properties and all of the
           # data within is invalid. Ignore such options.
-          unless value.nil?
-            merge_uri_option(target, value, strategy[:name])
-          end
+          merge_uri_option(target, value, strategy[:name]) unless value.nil?
 
-          if group && !target.empty? && !uri_options.key?(group)
-            uri_options[group] = target
-          end
+          uri_options[group] = target if group && !target.empty? && !uri_options.key?(group)
         end
 
         uri_options
@@ -128,35 +119,30 @@ module Mongo
         URI_OPTION_MAP.each do |uri_key, spec|
           if spec[:group]
             v = opts[spec[:group]]
-            v = v && v[spec[:name]]
+            v &&= v[spec[:name]]
           else
             v = opts[spec[:name]]
           end
-          unless v.nil?
-            if type = spec[:type]
-              v = send("revert_#{type}", v)
-            end
-            canonical_key = URI_OPTION_CANONICAL_NAMES[uri_key]
-            unless canonical_key
-              raise ArgumentError, "Option #{uri_key} is not known"
-            end
-            rv[canonical_key] = v
+          next if v.nil?
+
+          if type = spec[:type]
+            v = send("revert_#{type}", v)
           end
+          canonical_key = URI_OPTION_CANONICAL_NAMES[uri_key]
+          raise ArgumentError, "Option #{uri_key} is not known" unless canonical_key
+
+          rv[canonical_key] = v
         end
         # For options that default to true, remove the value if it is true.
-        %w(retryReads retryWrites).each do |k|
-          if rv[k]
-            rv.delete(k)
-          end
+        %w[retryReads retryWrites].each do |k|
+          rv.delete(k) if rv[k]
         end
         # Remove auth source when it is $external for mechanisms that default
         # (or require) that auth source.
-        if %w(MONGODB-AWS).include?(rv['authMechanism']) && rv['authSource'] == '$external'
-          rv.delete('authSource')
-        end
+        rv.delete('authSource') if %w[MONGODB-AWS].include?(rv['authMechanism']) && rv['authSource'] == '$external'
         # ssl and tls are aliases, remove ssl ones
         rv.delete('ssl')
-        # TODO remove authSource if it is the same as the database,
+        # TODO: remove authSource if it is the same as the database,
         # requires this method to know the database specified in the client.
         rv
       end
@@ -171,35 +157,30 @@ module Mongo
         URI_OPTION_MAP.each do |uri_key, spec|
           if spec[:group]
             v = opts[spec[:group]]
-            v = v && v[spec[:name]]
+            v &&= v[spec[:name]]
           else
             v = opts[spec[:name]]
           end
-          unless v.nil?
-            if type = spec[:type]
-              v = send("stringify_#{type}", v)
-            end
-            canonical_key = URI_OPTION_CANONICAL_NAMES[uri_key]
-            unless canonical_key
-              raise ArgumentError, "Option #{uri_key} is not known"
-            end
-            rv[canonical_key] = v
+          next if v.nil?
+
+          if type = spec[:type]
+            v = send("stringify_#{type}", v)
           end
+          canonical_key = URI_OPTION_CANONICAL_NAMES[uri_key]
+          raise ArgumentError, "Option #{uri_key} is not known" unless canonical_key
+
+          rv[canonical_key] = v
         end
         # For options that default to true, remove the value if it is true.
-        %w(retryReads retryWrites).each do |k|
-          if rv[k]
-            rv.delete(k)
-          end
+        %w[retryReads retryWrites].each do |k|
+          rv.delete(k) if rv[k]
         end
         # Remove auth source when it is $external for mechanisms that default
         # (or require) that auth source.
-        if %w(MONGODB-AWS).include?(rv['authMechanism']) && rv['authSource'] == '$external'
-          rv.delete('authSource')
-        end
+        rv.delete('authSource') if %w[MONGODB-AWS].include?(rv['authMechanism']) && rv['authSource'] == '$external'
         # ssl and tls are aliases, remove ssl ones
         rv.delete('ssl')
-        # TODO remove authSource if it is the same as the database,
+        # TODO: remove authSource if it is the same as the database,
         # requires this method to know the database specified in the client.
         rv
       end
@@ -303,7 +284,7 @@ module Mongo
       uri_option 'tlsCertificateKeyFilePassword', :ssl_key_pass_phrase
       uri_option 'tlsInsecure', :ssl_verify, type: :inverse_bool
       uri_option 'tlsDisableOCSPEndpointCheck', :ssl_verify_ocsp_endpoint,
-        type: :inverse_bool
+                 type: :inverse_bool
 
       # Topology options
       uri_option 'directConnection', :direct_connection, type: :bool
@@ -339,9 +320,9 @@ module Mongo
       # @return [ true | false | nil ] Converted value.
       def convert_bool(name, value)
         case value
-        when true, "true", 'TRUE'
+        when true, 'true', 'TRUE'
           true
-        when false, "false", 'FALSE'
+        when false, 'false', 'FALSE'
           false
         else
           log_warn("invalid boolean option for #{name}: #{value}")
@@ -375,7 +356,7 @@ module Mongo
       # @return [ Array<true | false> | nil ] The boolean value parsed and wraped
       #   in an array.
       def convert_repeated_bool(name, value)
-        [convert_bool(name, value)]
+        [ convert_bool(name, value) ]
       end
 
       # Reverts a repeated boolean type.
@@ -395,7 +376,7 @@ module Mongo
       def stringify_repeated_bool(value)
         rep = revert_repeated_bool(value)
         if rep&.is_a?(Array)
-          rep.join(",")
+          rep.join(',')
         else
           rep
         end
@@ -484,7 +465,7 @@ module Mongo
       def convert_ms(name, value)
         case value
         when String
-          if /\A-?\d+(\.\d+)?\z/ !~ value
+          unless /\A-?\d+(\.\d+)?\z/.match?(value)
             log_warn("Invalid ms value for #{name}: #{value}")
             return nil
           end
@@ -528,7 +509,7 @@ module Mongo
       # @param [ String | Symbol ] value URI option value.
       #
       # @return [ Symbol ] Converted value.
-      def convert_symbol(name, value)
+      def convert_symbol(_name, value)
         value.to_sym
       end
 
@@ -540,7 +521,7 @@ module Mongo
       def revert_symbol(value)
         value.to_s
       end
-      alias :stringify_symbol :revert_symbol
+      alias stringify_symbol revert_symbol
 
       # Extract values from the string and put them into an array.
       #
@@ -548,7 +529,7 @@ module Mongo
       # @param [ String ] value The string to build an array from.
       #
       # @return [ Array<String> ] The array built from the string.
-      def convert_array(name, value)
+      def convert_array(_name, value)
         value.split(',')
       end
 
@@ -576,9 +557,9 @@ module Mongo
       # @param [ String ] value The authentication mechanism.
       #
       # @return [ Symbol ] The transformed authentication mechanism.
-      def convert_auth_mech(name, value)
+      def convert_auth_mech(_name, value)
         auth_mech = AUTH_MECH_MAP[value.upcase]
-        (auth_mech || value).tap do |mech|
+        (auth_mech || value).tap do |_mech|
           log_warn("#{value} is not a valid auth mechanism") unless auth_mech
         end
       end
@@ -591,14 +572,12 @@ module Mongo
       #
       # @raise [ ArgumentError ] if its an invalid auth mechanism.
       def revert_auth_mech(value)
-        found = AUTH_MECH_MAP.detect do |k, v|
+        found = AUTH_MECH_MAP.detect do |_k, v|
           v == value
         end
-        if found
-          found.first
-        else
-          raise ArgumentError, "Unknown auth mechanism #{value}"
-        end
+        raise ArgumentError, "Unknown auth mechanism #{value}" unless found
+
+        found.first
       end
 
       # Stringifies auth mechanism.
@@ -607,7 +586,9 @@ module Mongo
       #
       # @return [ String | nil ] The auth mechanism as a string.
       def stringify_auth_mech(value)
-        revert_auth_mech(value) rescue nil
+        revert_auth_mech(value)
+      rescue StandardError
+        nil
       end
 
       # Auth mechanism properties extractor.
@@ -616,13 +597,11 @@ module Mongo
       # @param [ String ] value The auth mechanism properties string.
       #
       # @return [ Hash | nil ] The auth mechanism properties hash.
-      def convert_auth_mech_props(name, value)
+      def convert_auth_mech_props(_name, value)
         properties = hash_extractor('authMechanismProperties', value)
         if properties
           properties.each do |k, v|
-            if k.to_s.downcase == 'canonicalize_host_name' && v
-              properties[k] = (v.downcase == 'true')
-            end
+            properties[k] = (v.downcase == 'true') if k.to_s.downcase == 'canonicalize_host_name' && v
           end
         end
         properties
@@ -644,6 +623,7 @@ module Mongo
       # @return [ String | nil ] The string.
       def stringify_auth_mech_props(value)
         return if value.nil?
+
         value.map { |k, v| "#{k}:#{v}" }.join(',')
       end
 
@@ -655,23 +635,21 @@ module Mongo
       #
       # @return [ Integer | nil ] The max staleness integer parsed out if it is valid, otherwise nil
       #   (and a warning will be logged).
-      def convert_max_staleness(name, value)
+      def convert_max_staleness(_name, value)
         int = if value.is_a?(String) && /\A-?\d+\z/ =~ value
-          value.to_i
-        elsif value.is_a?(Integer)
-          value
-        end
+                value.to_i
+              elsif value.is_a?(Integer)
+                value
+              end
 
         if int.nil?
           log_warn("Invalid max staleness value: #{value}")
           return nil
         end
 
-        if int == -1
-          int = nil
-        end
+        int = nil if int == -1
 
-        if int && (int > 0 && int < 90 || int < 0)
+        if int && ((int > 0 && int < 90) || int < 0)
           log_warn("max staleness should be either 0 or greater than 90: #{value}")
           int = nil
         end
@@ -703,7 +681,7 @@ module Mongo
       # @param [ String ] value The read mode string value.
       #
       # @return [ Symbol | String ] The read mode.
-      def convert_read_mode(name, value)
+      def convert_read_mode(_name, value)
         READ_MODE_MAP[value.downcase] || value
       end
 
@@ -713,9 +691,9 @@ module Mongo
       #
       # @return [ String ] The read mode as a string.
       def revert_read_mode(value)
-        value.to_s.gsub(/_(\w)/) { $1.upcase }
+        value.to_s.gsub(/_(\w)/) { ::Regexp.last_match(1).upcase }
       end
-      alias :stringify_read_mode :revert_read_mode
+      alias stringify_read_mode revert_read_mode
 
       # Server monitoring mode transformation.
       #
@@ -723,7 +701,7 @@ module Mongo
       # @param [ String ] value The server monitoring mode string value.
       #
       # @return [ Symbol | nil ] The server monitoring mode symbol.
-      def convert_server_monitoring_mode(name, value)
+      def convert_server_monitoring_mode(_name, value)
         mode = value.downcase
         if SERVER_MONITORING_MODES.include?(mode)
           mode.to_sym
@@ -750,11 +728,9 @@ module Mongo
       # @return [ Array<Hash> | nil ] Array with tag set.
       def convert_read_tags(name, value)
         converted = convert_read_set(name, value)
-        if converted
-          [converted]
-        else
-          nil
-        end
+        return unless converted
+
+        [ converted ]
       end
 
       # Reverts read tags.
@@ -781,7 +757,7 @@ module Mongo
       # @param [ String ] value The tag set string.
       #
       # @return [ Hash ] The tag set hash.
-      def convert_read_set(name, value)
+      def convert_read_set(_name, value)
         hash_extractor('readPreferenceTags', value)
       end
 
@@ -795,7 +771,7 @@ module Mongo
       # @param [ String | Integer ] value URI option value.
       #
       # @return [ Integer | Symbol | String ] Converted value.
-      def convert_w(name, value)
+      def convert_w(_name, value)
         case value
         when 'majority'
           :majority
@@ -836,14 +812,14 @@ module Mongo
       #
       # @return [ Integer | nil ] The compression level value if it is between -1 and 9 (inclusive),
       #   otherwise nil (and a warning will be logged).
-      def convert_zlib_compression_level(name, value)
+      def convert_zlib_compression_level(_name, value)
         i = if value.is_a?(String) && /\A-?\d+\z/ =~ value
-          value.to_i
-        elsif value.is_a?(Integer)
-          value
-        end
+              value.to_i
+            elsif value.is_a?(Integer)
+              value
+            end
 
-        if i && (i >= -1 && i <= 9)
+        if i && i >= -1 && i <= 9
           i
         else
           log_warn("#{value} is not a valid zlibCompressionLevel")

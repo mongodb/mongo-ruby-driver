@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mongo'
 require 'base64'
@@ -19,7 +18,7 @@ describe Mongo::Crypt::DataKeyContext do
     Mongo::Crypt::Handle.new(credentials, kms_tls_options, extra_options)
   end
 
-  let(:io) { double("Mongo::Crypt::EncryptionIO") }
+  let(:io) { double('Mongo::Crypt::EncryptionIO') }
 
   let(:key_alt_names) { [] }
 
@@ -28,7 +27,7 @@ describe Mongo::Crypt::DataKeyContext do
   describe '#initialize' do
     shared_examples 'it properly sets key_alt_names' do
       context 'with one key_alt_names' do
-        let(:key_alt_names) { ['keyAltName1'] }
+        let(:key_alt_names) { [ 'keyAltName1' ] }
 
         it 'does not raise an exception' do
           expect do
@@ -38,7 +37,7 @@ describe Mongo::Crypt::DataKeyContext do
       end
 
       context 'with multiple key_alt_names' do
-        let(:key_alt_names) { ['keyAltName1', 'keyAltName2'] }
+        let(:key_alt_names) { %w[keyAltName1 keyAltName2] }
 
         it 'does not raise an exception' do
           expect do
@@ -58,7 +57,7 @@ describe Mongo::Crypt::DataKeyContext do
       end
 
       context 'with invalid key_alt_names' do
-        let(:key_alt_names) { ['keyAltName1', 3] }
+        let(:key_alt_names) { [ 'keyAltName1', 3 ] }
 
         it 'does raises an exception' do
           expect do
@@ -68,7 +67,7 @@ describe Mongo::Crypt::DataKeyContext do
       end
 
       context 'with non-array key_alt_names' do
-        let(:key_alt_names) { "keyAltName1" }
+        let(:key_alt_names) { 'keyAltName1' }
 
         it 'does raises an exception' do
           expect do
@@ -139,7 +138,7 @@ describe Mongo::Crypt::DataKeyContext do
       let(:operation_context) { Mongo::Operation::Context.new }
 
       it 'creates a data key' do
-        expect(context.run_state_machine(operation_context)).to be_a_kind_of(Hash)
+        expect(context.run_state_machine(operation_context)).to be_a(Hash)
       end
     end
   end

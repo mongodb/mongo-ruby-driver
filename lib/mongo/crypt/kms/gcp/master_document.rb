@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -43,9 +42,9 @@ module Mongo
           # @return [ String | nil ] GCP KMS endpoint.
           attr_reader :endpoint
 
-          FORMAT_HINT = "GCP key document  must be in the format: " +
-            "{ project_id: 'PROJECT_ID', location: 'LOCATION', " +
-            "key_ring: 'KEY-RING', key_name: 'KEY-NAME' }"
+          FORMAT_HINT = 'GCP key document  must be in the format: ' +
+                        "{ project_id: 'PROJECT_ID', location: 'LOCATION', " +
+                        "key_ring: 'KEY-RING', key_name: 'KEY-NAME' }"
 
           # Creates a master key document object form a parameters hash.
           #
@@ -77,19 +76,16 @@ module Mongo
           # @return [ BSON::Document ] GCP KMS credentials in libmongocrypt format.
           def to_document
             return BSON::Document.new({}) if @empty
+
             BSON::Document.new({
-              provider: 'gcp',
-              projectId: project_id,
-              location: location,
-              keyRing: key_ring,
-              keyName: key_name
-            }).tap do |bson|
-              unless key_version.nil?
-                bson.update({ keyVersion: key_version })
-              end
-              unless endpoint.nil?
-                bson.update({ endpoint: endpoint })
-              end
+                                 provider: 'gcp',
+                                 projectId: project_id,
+                                 location: location,
+                                 keyRing: key_ring,
+                                 keyName: key_name
+                               }).tap do |bson|
+              bson.update({ keyVersion: key_version }) unless key_version.nil?
+              bson.update({ endpoint: endpoint }) unless endpoint.nil?
             end
           end
         end

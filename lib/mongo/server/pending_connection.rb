@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Server
-
     # This class encapsulates connections during handshake and authentication.
     #
     # @api private
@@ -62,7 +60,7 @@ module Mongo
           # server and the user account doesn't allow SCRAM-SHA-256, we will
           # authenticate in a separate command with SCRAM-SHA-1 after
           # going through SCRAM mechanism negotiation.
-          default_options = Options::Redacted.new(:auth_mech => :scram256)
+          default_options = Options::Redacted.new(auth_mech: :scram256)
           speculative_auth_user = Auth::User.new(default_options.merge(options))
           speculative_auth = Auth.get(speculative_auth_user, self)
           speculative_auth_doc = speculative_auth.conversation.speculative_auth_document
@@ -71,14 +69,15 @@ module Mongo
         result = handshake!(speculative_auth_doc: speculative_auth_doc)
 
         if description.unknown?
-          raise Error::InternalDriverError, "Connection description cannot be unknown after successful handshake: #{description.inspect}"
+          raise Error::InternalDriverError,
+                "Connection description cannot be unknown after successful handshake: #{description.inspect}"
         end
 
         begin
           if speculative_auth_doc && (speculative_auth_result = result['speculativeAuthenticate'])
             case speculative_auth_user.mechanism
             when :mongodb_x509
-              # Done
+            # Done
             # We default auth mechanism to scram256, but if user specified
             # scram explicitly we may be able to authenticate speculatively
             # with scram.
@@ -86,26 +85,31 @@ module Mongo
               authenticate!(
                 speculative_auth_client_nonce: speculative_auth.conversation.client_nonce,
                 speculative_auth_mech: speculative_auth_user.mechanism,
-                speculative_auth_result: speculative_auth_result,
+                speculative_auth_result: speculative_auth_result
               )
             else
-              raise Error::InternalDriverError, "Speculative auth unexpectedly succeeded for mechanism #{speculative_auth_user.mechanism.inspect}"
+              raise Error::InternalDriverError,
+                    "Speculative auth unexpectedly succeeded for mechanism #{speculative_auth_user.mechanism.inspect}"
             end
           elsif !description.arbiter?
             authenticate!
           end
-        rescue Mongo::Error, Mongo::Error::AuthError => exc
-          exc.service_id = service_id
+        rescue Mongo::Error, Mongo::Error::AuthError => e
+          e.service_id = service_id
           raise
         end
 
         if description.unknown?
-          raise Error::InternalDriverError, "Connection description cannot be unknown after successful authentication: #{description.inspect}"
+          raise Error::InternalDriverError,
+                "Connection description cannot be unknown after successful authentication: #{description.inspect}"
         end
 
-        if server.load_balancer? && !description.mongos?
-          raise Error::BadLoadBalancerTarget, "Load-balanced operation requires being connected a mongos, but the server at #{address.seed} reported itself as #{description.server_type.to_s.gsub('_', ' ')}"
-        end
+        return unless server.load_balancer? && !description.mongos?
+
+        raise Error::BadLoadBalancerTarget,
+              "Load-balanced operation requires being connected a mongos, but the server at #{address.seed} reported itself as #{description.server_type.to_s.tr(
+                '_', ' '
+              )}"
       end
 
       private
@@ -148,38 +152,31 @@ module Mongo
         )
         doc = nil
         @server.handle_handshake_failure! do
-          begin
-            response = get_handshake_response(hello_command)
-            result = Operation::Result.new([response])
-            result.validate!
-            doc = result.documents.first
-          rescue => exc
-            msg = "Failed to handshake with #{address}"
-            Utils.warn_bg_exception(msg, exc,
-              logger: options[:logger],
-              log_prefix: options[:log_prefix],
-              bg_error_backtrace: options[:bg_error_backtrace],
-            )
-            if exc.is_a?(::Mongo::Error)
-              # The SystemOverloadedError label marks errors as back-pressure
-              # signals that should not cause the server to be marked Unknown.
-              # Per the SDAM spec, this label only applies to network errors
-              # during the handshake. Command errors (e.g. OperationFailure
-              # with "node is shutting down" codes) must still flow through
-              # normal SDAM error handling so the server is marked Unknown
-              # and the pool is cleared.
-              if exc.is_a?(Error::SocketError) || exc.is_a?(Error::SocketTimeoutError)
-                exc.add_label('SystemOverloadedError')
-                exc.add_label('RetryableError')
-              end
-            end
-            raise
+          response = get_handshake_response(hello_command)
+          result = Operation::Result.new([ response ])
+          result.validate!
+          doc = result.documents.first
+        rescue StandardError => e
+          msg = "Failed to handshake with #{address}"
+          Utils.warn_bg_exception(msg, e,
+                                  logger: options[:logger],
+                                  log_prefix: options[:log_prefix],
+                                  bg_error_backtrace: options[:bg_error_backtrace])
+          # The SystemOverloadedError label marks errors as back-pressure
+          # signals that should not cause the server to be marked Unknown.
+          # Per the SDAM spec, this label only applies to network errors
+          # during the handshake. Command errors (e.g. OperationFailure
+          # with "node is shutting down" codes) must still flow through
+          # normal SDAM error handling so the server is marked Unknown
+          # and the pool is cleared.
+          if e.is_a?(::Mongo::Error) && (e.is_a?(Error::SocketError) || e.is_a?(Error::SocketTimeoutError))
+            e.add_label('SystemOverloadedError')
+            e.add_label('RetryableError')
           end
+          raise
         end
 
-        if @server.force_load_balancer?
-          doc['serviceId'] ||= "fake:#{rand(2**32-1)+1}"
-        end
+        doc['serviceId'] ||= "fake:#{rand((2**32) - 1) + 1}" if @server.force_load_balancer?
 
         post_handshake(
           doc,
@@ -204,26 +201,23 @@ module Mongo
         speculative_auth_mech: nil,
         speculative_auth_result: nil
       )
-        if options[:user] || options[:auth_mech]
-          @server.handle_auth_failure! do
-            begin
-              auth = Auth.get(
-                resolved_user(speculative_auth_mech: speculative_auth_mech),
-                self,
-                speculative_auth_client_nonce: speculative_auth_client_nonce,
-                speculative_auth_result: speculative_auth_result,
-              )
-              auth.login
-            rescue => exc
-              msg = "Failed to authenticate to #{address}"
-              Utils.warn_bg_exception(msg, exc,
-                logger: options[:logger],
-                log_prefix: options[:log_prefix],
-                bg_error_backtrace: options[:bg_error_backtrace],
-              )
-              raise
-            end
-          end
+        return unless options[:user] || options[:auth_mech]
+
+        @server.handle_auth_failure! do
+          auth = Auth.get(
+            resolved_user(speculative_auth_mech: speculative_auth_mech),
+            self,
+            speculative_auth_client_nonce: speculative_auth_client_nonce,
+            speculative_auth_result: speculative_auth_result
+          )
+          auth.login
+        rescue StandardError => e
+          msg = "Failed to authenticate to #{address}"
+          Utils.warn_bg_exception(msg, e,
+                                  logger: options[:logger],
+                                  log_prefix: options[:log_prefix],
+                                  bg_error_backtrace: options[:bg_error_backtrace])
+          raise
         end
       end
 
@@ -235,8 +229,8 @@ module Mongo
       #
       # @return [ Server::Description ] The server description calculated from
       #   the handshake response for this particular connection.
-      def post_handshake(response, average_rtt, minimum_rtt)
-        if response["ok"] == 1
+      def post_handshake(response, average_rtt, _minimum_rtt)
+        if response['ok'] == 1
           # Auth mechanism is entirely dependent on the contents of
           # hello response *for this connection*.
           # Hello received by the monitoring connection should advertise
@@ -255,7 +249,7 @@ module Mongo
           address, response,
           average_round_trip_time: average_rtt,
           load_balancer: server.load_balancer?,
-          force_load_balancer: options[:connect] == :load_balanced,
+          force_load_balancer: options[:connect] == :load_balanced
         ).tap do |new_description|
           @server.cluster.run_sdam_flow(@server.description, new_description)
         end
@@ -289,19 +283,15 @@ module Mongo
             # that is what the conversation was started with, even though
             # SCRAM mechanism negotiation did not return SCRAM-SHA-256 as a
             # valid mechanism to use for these credentials.
-            :auth_mech => speculative_auth_mech || default_mechanism,
+            auth_mech: speculative_auth_mech || default_mechanism
           ).merge(options)
-          if user_options[:auth_mech] == :mongodb_x509
-            user_options[:auth_source] = '$external'
-          end
+          user_options[:auth_source] = '$external' if user_options[:auth_mech] == :mongodb_x509
           Auth::User.new(user_options)
         end
       end
 
       def default_mechanism
-        if description.nil?
-          raise Mongo::Error, 'Trying to query default mechanism when handshake has not completed'
-        end
+        raise Mongo::Error, 'Trying to query default mechanism when handshake has not completed' if description.nil?
 
         if @sasl_supported_mechanisms&.include?('SCRAM-SHA-256')
           :scram256

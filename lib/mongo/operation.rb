@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mongo/operation/context'
 require 'mongo/operation/result'
@@ -27,7 +26,6 @@ require 'mongo/operation/op_msg_base'
 require 'mongo/operation/command'
 require 'mongo/operation/write_command'
 require 'mongo/operation/aggregate'
-require 'mongo/operation/result'
 require 'mongo/operation/collections_info'
 require 'mongo/operation/list_collections'
 require 'mongo/operation/update'
@@ -56,7 +54,6 @@ require 'mongo/operation/drop_search_index'
 require 'mongo/operation/update_search_index'
 
 module Mongo
-
   # This module encapsulates all of the operation classes defined by the driver.
   #
   # The operation classes take Ruby options as constructor parameters.
@@ -67,51 +64,50 @@ module Mongo
   #
   # @api private
   module Operation
-
     # The q field constant.
     #
     # @since 2.1.0
-    Q = 'q'.freeze
+    Q = 'q'
 
     # The u field constant.
     #
     # @since 2.1.0
-    U = 'u'.freeze
+    U = 'u'
 
     # The limit field constant.
     #
     # @since 2.1.0
-    LIMIT = 'limit'.freeze
+    LIMIT = 'limit'
 
     # The multi field constant.
     #
     # @since 2.1.0
-    MULTI = 'multi'.freeze
+    MULTI = 'multi'
 
     # The upsert field constant.
     #
     # @since 2.1.0
-    UPSERT = 'upsert'.freeze
+    UPSERT = 'upsert'
 
     # The collation field constant.
     #
     # @since 2.4.0
-    COLLATION = 'collation'.freeze
+    COLLATION = 'collation'
 
     # The array filters field constant.
     #
     # @since 2.5.0
-    ARRAY_FILTERS = 'arrayFilters'.freeze
+    ARRAY_FILTERS = 'arrayFilters'
 
     # The operation time field constant.
     #
     # @since 2.5.0
-    OPERATION_TIME = 'operationTime'.freeze
+    OPERATION_TIME = 'operationTime'
 
     # The cluster time field constant.
     #
     # @since 2.5.0
     # @deprecated
-    CLUSTER_TIME = '$clusterTime'.freeze
+    CLUSTER_TIME = '$clusterTime'
   end
 end

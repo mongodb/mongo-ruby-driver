@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -25,14 +24,14 @@ describe 'SDAM error handling' do
 
   let(:client) do
     new_local_client(SpecConfig.instance.addresses,
-      SpecConfig.instance.all_test_options.merge(
-        socket_timeout: 3, connect_timeout: 3,
-        heartbeat_frequency: 100,
-        populator_io: false,
-        # Uncomment to print all events to stdout:
-        #sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
-        **Utils.disable_retries_client_options)
-    )
+                     SpecConfig.instance.all_test_options.merge(
+                       socket_timeout: 3, connect_timeout: 3,
+                       heartbeat_frequency: 100,
+                       populator_io: false,
+                       # Uncomment to print all events to stdout:
+                       # sdam_proc: Utils.subscribe_all_sdam_proc(diagnostic_subscriber),
+                       **Utils.disable_retries_client_options
+                     ))
   end
 
   let(:server) { client.cluster.next_primary }
@@ -114,7 +113,6 @@ describe 'SDAM error handling' do
   end
 
   describe 'when there is an error during an operation' do
-
     before do
       client.cluster.next_primary
       # we also need a connection to the primary so that our error
@@ -245,7 +243,6 @@ describe 'SDAM error handling' do
           client.cluster.servers.map(&:disconnect!)
 
           RSpec::Mocks.with_temporary_scope do
-
             Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
             allow(pool).to receive(:paused?).and_return(false)
             lambda do
@@ -257,11 +254,10 @@ describe 'SDAM error handling' do
         end
 
         it 'recovers' do
-          server = client.cluster.next_primary
+          client.cluster.next_primary
           # If we do not kill the monitor, the client will recover automatically.
 
           RSpec::Mocks.with_temporary_scope do
-
             Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
             Socket.should receive(:new).with(any_args).ordered.once.and_call_original
 
@@ -292,7 +288,7 @@ describe 'SDAM error handling' do
     end
 
     let(:operation) do
-      expect(server.monitor.connection).not_to be nil
+      expect(server.monitor.connection).not_to be_nil
       set_subscribers
       RSpec::Mocks.with_temporary_scope do
         expect(server.monitor).to receive(:check).and_raise(exception)
@@ -305,7 +301,7 @@ describe 'SDAM error handling' do
       it 'marks server unknown' do
         expect(server).not_to be_unknown
 
-        #subscriber.clear_events!
+        # subscriber.clear_events!
         events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
         events.should be_empty
 
@@ -316,7 +312,7 @@ describe 'SDAM error handling' do
           events.should_not be_empty
           event = events.detect do |event|
             event.new_description.address == server.address &&
-            event.new_description.unknown?
+              event.new_description.unknown?
           end
           event.should_not be_nil
         end
@@ -325,7 +321,7 @@ describe 'SDAM error handling' do
 
     shared_examples_for 'clears connection pool - cmap event' do
       it 'clears connection pool' do
-        #subscriber.clear_events!
+        # subscriber.clear_events!
         events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
         events.should be_empty
 
@@ -343,17 +339,16 @@ describe 'SDAM error handling' do
     end
 
     shared_examples_for 'marks server unknown and clears connection pool' do
-=begin These tests are not reliable
-      context 'via object inspection' do
-        let(:expect_server_state_change) do
-          server.summary.should =~ /unknown/i
-          expect(server).to be_unknown
-        end
-
-        it_behaves_like 'marks server unknown'
-        it_behaves_like 'clears connection pool'
-      end
-=end
+      # These tests are not reliable
+      #       context 'via object inspection' do
+      #         let(:expect_server_state_change) do
+      #           server.summary.should =~ /unknown/i
+      #           expect(server).to be_unknown
+      #         end
+      #
+      #         it_behaves_like 'marks server unknown'
+      #         it_behaves_like 'clears connection pool'
+      #       end
 
       context 'via events' do
         # When we use events we do not need to examine object state, therefore
@@ -394,16 +389,16 @@ describe 'SDAM error handling' do
       let(:set_fail_point) do
         admin_client.command(
           configureFailPoint: 'failCommand',
-          mode: {times: 2},
+          mode: { times: 2 },
           data: {
-            failCommands: %w(isMaster hello),
+            failCommands: %w[isMaster hello],
             closeConnection: true,
-          },
+          }
         )
       end
 
       let(:operation) do
-        expect(server.monitor.connection).not_to be nil
+        expect(server.monitor.connection).not_to be_nil
         set_subscribers
         set_fail_point
         server.monitor.scan!
@@ -419,20 +414,20 @@ describe 'SDAM error handling' do
     end
   end
 
-  context "when there is an error on the handshake" do
+  context 'when there is an error on the handshake' do
     # require appName for fail point
-    min_server_version "4.9"
+    min_server_version '4.9'
 
     let(:admin_client) do
       new_local_client(
-        [SpecConfig.instance.addresses.first],
+        [ SpecConfig.instance.addresses.first ],
         SpecConfig.instance.test_options.merge({
-          connect: :direct,
-          populator_io: false,
-          direct_connection: true,
-          app_name: "SDAMMinHeartbeatFrequencyTest",
-          database: 'admin'
-        })
+                                                 connect: :direct,
+                                                 populator_io: false,
+                                                 direct_connection: true,
+                                                 app_name: 'SDAMMinHeartbeatFrequencyTest',
+                                                 database: 'admin'
+                                               })
       )
     end
 
@@ -446,19 +441,24 @@ describe 'SDAM error handling' do
         configureFailPoint: 'failCommand',
         mode: { times: 5 },
         data: {
-          failCommands: %w(isMaster hello),
+          failCommands: %w[isMaster hello],
           errorCode: 1234,
-          appName: "SDAMMinHeartbeatFrequencyTest"
-        },
+          appName: 'SDAMMinHeartbeatFrequencyTest'
+        }
       )
     end
 
     let(:operation) do
-      expect(server.monitor.connection).not_to be nil
+      expect(server.monitor.connection).not_to be_nil
       set_fail_point
     end
 
-    it "waits 500ms between failed hello checks" do
+    after do
+      admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
+      cmd_client.close
+    end
+
+    it 'waits 500ms between failed hello checks' do
       operation
       start = Mongo::Utils.monotonic_time
       cmd_client.command(hello: 1)
@@ -469,12 +469,7 @@ describe 'SDAM error handling' do
       # The cluster that we use to set up the failpoint should not be the same
       # one we ping on, so that the ping will have to select a server. The admin
       # client has already selected a server.
-      expect(admin_client.cluster.object_id).to_not eq(cmd_client.cluster.object_id)
-    end
-
-    after do
-      admin_client.command(configureFailPoint: 'failCommand', mode: 'off')
-      cmd_client.close
+      expect(admin_client.cluster.object_id).not_to eq(cmd_client.cluster.object_id)
     end
   end
 end

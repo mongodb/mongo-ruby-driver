@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -22,7 +21,6 @@ end
 module Mongo
   module Auth
     class Aws
-
       # Helper class for working with AWS requests.
       #
       # The primary purpose of this class is to produce the canonical AWS
@@ -30,11 +28,10 @@ module Mongo
       #
       # @api private
       class Request
-
         # The body of the STS GetCallerIdentity request.
         #
         # This is currently the only request that this class supports making.
-        STS_REQUEST_BODY = "Action=GetCallerIdentity&Version=2011-06-15".freeze
+        STS_REQUEST_BODY = 'Action=GetCallerIdentity&Version=2011-06-15'
 
         # The timeout, in seconds, to use for validating credentials via STS.
         VALIDATE_TIMEOUT = 10
@@ -51,9 +48,7 @@ module Mongo
         # @param [ String ] host The value of Host HTTP header to use.
         # @param [ String ] server_nonce The server nonce binary string.
         # @param [ Time ] time The time of the request.
-        def initialize(access_key_id:, secret_access_key:, session_token: nil,
-          host:, server_nonce:, time: Time.now
-        )
+        def initialize(access_key_id:, secret_access_key:, host:, server_nonce:, session_token: nil, time: Time.now)
           @access_key_id = access_key_id
           @secret_access_key = secret_access_key
           @session_token = session_token
@@ -61,16 +56,14 @@ module Mongo
           @server_nonce = server_nonce
           @time = time
 
-          %i(access_key_id secret_access_key host server_nonce).each do |arg|
+          %i[access_key_id secret_access_key host server_nonce].each do |arg|
             value = instance_variable_get("@#{arg}")
-            if value.nil? || value.empty?
-              raise Error::InvalidServerAuthResponse, "Value for '#{arg}' is required"
-            end
+            raise Error::InvalidServerAuthResponse, "Value for '#{arg}' is required" if value.nil? || value.empty?
           end
 
-          if host && host.length > 255
-              raise Error::InvalidServerAuthHost, "Value for 'host' is too long: #{@host}"
-          end
+          return unless host && host.length > 255
+
+          raise Error::InvalidServerAuthHost, "Value for 'host' is too long: #{@host}"
         end
 
         # @return [ String ] access_key_id The access key id.
@@ -106,16 +99,10 @@ module Mongo
         # @return [ String ] region The region of the host, derived from the host.
         def region
           # Common case
-          if host == 'sts.amazonaws.com'
-            return 'us-east-1'
-          end
+          return 'us-east-1' if host == 'sts.amazonaws.com'
 
-          if host.start_with?('.')
-            raise Error::InvalidServerAuthHost, "Host begins with a period: #{host}"
-          end
-          if host.end_with?('.')
-            raise Error::InvalidServerAuthHost, "Host ends with a period: #{host}"
-          end
+          raise Error::InvalidServerAuthHost, "Host begins with a period: #{host}" if host.start_with?('.')
+          raise Error::InvalidServerAuthHost, "Host ends with a period: #{host}" if host.end_with?('.')
 
           parts = host.split('.')
           if parts.any? { |part| part.empty? }
@@ -151,11 +138,9 @@ module Mongo
             'host' => host,
             'x-amz-date' => formatted_time,
             'x-mongodb-gs2-cb-flag' => 'n',
-            'x-mongodb-server-nonce' => Base64.encode64(server_nonce).gsub("\n", ''),
+            'x-mongodb-server-nonce' => Base64.encode64(server_nonce).delete("\n"),
           }
-          if session_token
-            headers['x-amz-security-token'] = session_token
-          end
+          headers['x-amz-security-token'] = session_token if session_token
           headers
         end
 
@@ -216,9 +201,9 @@ module Mongo
         def signature
           hashed_canonical_request = Digest::SHA256.hexdigest(canonical_request)
           string_to_sign = "AWS4-HMAC-SHA256\n" +
-            "#{formatted_time}\n" +
-            "#{scope}\n" +
-            hashed_canonical_request
+                           "#{formatted_time}\n" +
+                           "#{scope}\n" +
+                           hashed_canonical_request
           # All of the intermediate HMAC operations are not hex-encoded.
           mac = hmac("AWS4#{secret_access_key}", formatted_date)
           mac = hmac(mac, region)
@@ -252,7 +237,8 @@ module Mongo
           http = Net::HTTP.new(host, 443)
           http.use_ssl = true
           http.start do
-            resp = Timeout.timeout(VALIDATE_TIMEOUT, Error::CredentialCheckError, 'GetCallerIdentity request timed out') do
+            resp = Timeout.timeout(VALIDATE_TIMEOUT, Error::CredentialCheckError,
+                                   'GetCallerIdentity request timed out') do
               http.request(sts_request)
             end
             payload = JSON.parse(resp.body)
@@ -261,7 +247,7 @@ module Mongo
               aws_message = payload.fetch('Error').fetch('Message')
               msg = "Credential check for user #{access_key_id} failed with HTTP status code #{resp.code}: #{aws_code}: #{aws_message}"
               msg += '.' unless msg.end_with?('.')
-              msg += " Please check that the credentials are valid, and if they are temporary (i.e. use the session token) that the session token is provided and not expired"
+              msg += ' Please check that the credentials are valid, and if they are temporary (i.e. use the session token) that the session token is provided and not expired'
               raise Error::CredentialCheckError, msg
             end
             payload.fetch('GetCallerIdentityResponse').fetch('GetCallerIdentityResult')
@@ -271,13 +257,12 @@ module Mongo
         private
 
         def hmac(key, data)
-          OpenSSL::HMAC.digest("SHA256", key, data)
+          OpenSSL::HMAC.digest('SHA256', key, data)
         end
 
         def hmac_hex(key, data)
-          OpenSSL::HMAC.hexdigest("SHA256", key, data)
+          OpenSSL::HMAC.hexdigest('SHA256', key, data)
         end
-
       end
     end
   end

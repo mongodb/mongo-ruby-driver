@@ -1,15 +1,13 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Unified
-
   class TestGroup
     def initialize(path, **opts)
-      if String === path
-        data = ::Utils.load_spec_yaml_file(path)
-      else
-        data = path
-      end
+      data = if path.is_a?(String)
+               ::Utils.load_spec_yaml_file(path)
+             else
+               path
+             end
       @spec = BSON::ExtJSON.parse_obj(data)
       @options = opts
     end

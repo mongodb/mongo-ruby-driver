@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Operation
-
     # Custom behavior for operations that support causal consistency.
     #
     # @since 2.5.2
     # @api private
     module CausalConsistencySupported
-
       private
 
       # Adds causal consistency document to the selector, if one can be

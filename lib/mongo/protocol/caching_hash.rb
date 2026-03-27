@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2022 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   module Protocol
-
     # A Hash that caches the results of #to_bson.
     #
     # @api private
     class CachingHash
-
       def initialize(hash)
         @hash = hash
       end
@@ -41,10 +38,8 @@ module Mongo
       #   This option is deprecated and will not be used. It will removed in version 3.0.
       #
       # @return [ BSON::ByteBuffer ] The buffer with the encoded object.
-      def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
-        if !@bytes
-          @bytes = @hash.to_bson(BSON::ByteBuffer.new).to_s
-        end
+      def to_bson(buffer = BSON::ByteBuffer.new, _validating_keys = nil)
+        @bytes ||= @hash.to_bson(BSON::ByteBuffer.new).to_s
         buffer.put_bytes(@bytes)
       end
     end

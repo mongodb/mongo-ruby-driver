@@ -1,11 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Mongo
   module CRUD
-
     class CRUDTestBase
-
       # The test description.
       #
       # @return [ String ] description The test description.
@@ -15,15 +12,15 @@ module Mongo
       attr_reader :expectations
 
       def setup_fail_point(client)
-        if @fail_point_command
-          client.use(:admin).command(@fail_point_command)
-        end
+        return unless @fail_point_command
+
+        client.use(:admin).command(@fail_point_command)
       end
 
-      def clear_fail_point(client)
-        if @fail_point_command
-          ClientRegistry.instance.global_client('root_authorized').use(:admin).command(BSON::Document.new(@fail_point_command).merge(mode: "off"))
-        end
+      def clear_fail_point(_client)
+        return unless @fail_point_command
+
+        ClientRegistry.instance.global_client('root_authorized').use(:admin).command(BSON::Document.new(@fail_point_command).merge(mode: 'off'))
       end
 
       private

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -42,7 +41,7 @@ describe Mongo::Server::Connection do
   let(:server) do
     register_server(
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+                        SpecConfig.instance.test_options.merge(monitoring_io: false))
     )
   end
 
@@ -62,7 +61,7 @@ describe Mongo::Server::Connection do
         SpecConfig.instance.test_options.merge(
           user: SpecConfig.instance.test_user.name,
           password: SpecConfig.instance.test_user.password,
-          auth_source: 'admin',
+          auth_source: 'admin'
         )
       end
 

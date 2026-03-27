@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,14 +15,11 @@
 # limitations under the License.
 
 module Mongo
-
   # Provides ability to log messages.
   #
   # @since 2.0.0
   class Logger
-
     class << self
-
       # Get the wrapped logger. If none was set will return a default info
       # level logger.
       #
@@ -47,9 +43,7 @@ module Mongo
       # @return [ ::Logger ] The wrapped logger.
       #
       # @since 2.0.0
-      def logger=(other)
-        @logger = other
-      end
+      attr_writer :logger
 
       # Get the global logger level.
       #

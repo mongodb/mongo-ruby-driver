@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -57,7 +56,7 @@ describe 'Client-Side Encryption' do
               # Spawn mongocryptd on non-default port for sharded cluster tests
               extra_options: extra_options,
             },
-            database: 'db',
+            database: 'db'
           )
         )
       end
@@ -106,7 +105,7 @@ describe 'Client-Side Encryption' do
               # Spawn mongocryptd on non-default port for sharded cluster tests
               extra_options: extra_options,
             },
-            database: 'db',
+            database: 'db'
           )
         )
       end
@@ -121,7 +120,7 @@ describe 'Client-Side Encryption' do
         )
       end
 
-       it 'raises an authentication exception when auto encrypting' do
+      it 'raises an authentication exception when auto encrypting' do
         expect do
           client_encrypted['coll'].insert_one(encrypted: 'test')
         end.to raise_error(Mongo::Auth::Unauthorized, /fake-user/)

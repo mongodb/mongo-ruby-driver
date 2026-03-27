@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ require 'mongo/operation/insert/bulk_result'
 
 module Mongo
   module Operation
-
     # A MongoDB insert operation.
     #
     # @api private
@@ -33,10 +31,9 @@ module Mongo
 
       private
 
-      IDENTIFIER = 'documents'.freeze
+      IDENTIFIER = 'documents'
 
-      def validate!(connection)
-      end
+      def validate!(connection); end
     end
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -34,7 +33,6 @@ describe 'Server description' do
   end
 
   describe '#last_update_time' do
-
     it 'is set' do
       expect(desc).not_to be_unknown
 

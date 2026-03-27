@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -59,24 +58,24 @@ module Mongo
         #
         # @api private
         CHANGE_STREAM_RESUME_ERRORS = [
-          {code_name: 'HostUnreachable', code: 6},
-          {code_name: 'HostNotFound', code: 7},
-          {code_name: 'NetworkTimeout', code: 89},
-          {code_name: 'ShutdownInProgress', code: 91},
-          {code_name: 'PrimarySteppedDown', code: 189},
-          {code_name: 'ExceededTimeLimit', code: 262},
-          {code_name: 'SocketException', code: 9001},
-          {code_name: 'NotMaster', code: 10107},
-          {code_name: 'InterruptedAtShutdown', code: 11600},
-          {code_name: 'InterruptedDueToReplStateChange', code: 11602},
-          {code_name: 'NotPrimaryNoSecondaryOk', code: 13435},
-          {code_name: 'NotMasterOrSecondary', code: 13436},
+          { code_name: 'HostUnreachable', code: 6 },
+          { code_name: 'HostNotFound', code: 7 },
+          { code_name: 'NetworkTimeout', code: 89 },
+          { code_name: 'ShutdownInProgress', code: 91 },
+          { code_name: 'PrimarySteppedDown', code: 189 },
+          { code_name: 'ExceededTimeLimit', code: 262 },
+          { code_name: 'SocketException', code: 9001 },
+          { code_name: 'NotMaster', code: 10_107 },
+          { code_name: 'InterruptedAtShutdown', code: 11_600 },
+          { code_name: 'InterruptedDueToReplStateChange', code: 11_602 },
+          { code_name: 'NotPrimaryNoSecondaryOk', code: 13_435 },
+          { code_name: 'NotMasterOrSecondary', code: 13_436 },
 
-          {code_name: 'StaleShardVersion', code: 63},
-          {code_name: 'FailedToSatisfyReadPreference', code: 133},
-          {code_name: 'StaleEpoch', code: 150},
-          {code_name: 'RetryChangeStream', code: 234},
-          {code_name: 'StaleConfig', code: 13388},
+          { code_name: 'StaleShardVersion', code: 63 },
+          { code_name: 'FailedToSatisfyReadPreference', code: 133 },
+          { code_name: 'StaleEpoch', code: 150 },
+          { code_name: 'RetryChangeStream', code: 234 },
+          { code_name: 'StaleConfig', code: 13_388 },
         ].freeze
 
         # Change stream can be resumed when these error messages are encountered.
@@ -226,10 +225,11 @@ module Mongo
         # @return [ Hash | nil ] the details extracted from the document
         def retrieve_details(document)
           return nil unless document
+
           if wce = document['writeConcernError']
-            return wce['errInfo']
+            wce['errInfo']
           elsif we = document['writeErrors']&.first
-            return we['errInfo']
+            we['errInfo']
           end
         end
 
@@ -238,6 +238,7 @@ module Mongo
         # @return [ String ] the message with the details appended to it
         def append_details(message, details)
           return message unless details && message
+
           message + " -- #{details.to_json}"
         end
       end

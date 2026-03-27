@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -20,14 +19,12 @@ require 'base64'
 
 module Mongo
   module Crypt
-
     # A handle to the libmongocrypt library that wraps a mongocrypt_t object,
     # allowing clients to set options on that object or perform operations such
     # as encryption and decryption
     #
     # @api private
     class Handle
-
       # @returns [ Crypt::KMS::Credentials ] Credentials for KMS providers.
       attr_reader :kms_providers
 
@@ -69,7 +66,7 @@ module Mongo
       #   error that libmongocrypt raises on a subsequent "$SYSTEM" search.
       # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
-      def initialize(kms_providers, kms_tls_options, options={})
+      def initialize(kms_providers, kms_tls_options, options = {})
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
         @mongocrypt = FFI::AutoPointer.new(
@@ -78,7 +75,7 @@ module Mongo
         )
         Binding.kms_ctx_setopt_retry_kms(self, true)
         @kms_providers = kms_providers
-        @kms_tls_options =  kms_tls_options
+        @kms_tls_options = kms_tls_options
 
         maybe_set_schema_map(options)
 
@@ -94,7 +91,7 @@ module Mongo
         if @crypt_shared_lib_path
           Binding.setopt_set_crypt_shared_lib_path_override(self, @crypt_shared_lib_path)
         elsif !@bypass_query_analysis && !@explicit_encryption_only && !@disable_crypt_shared_lib_search
-          Binding.setopt_append_crypt_shared_lib_search_path(self, "$SYSTEM")
+          Binding.setopt_append_crypt_shared_lib_search_path(self, '$SYSTEM')
         end
 
         @logger = options[:logger]
@@ -111,11 +108,11 @@ module Mongo
         initialize_mongocrypt
 
         @crypt_shared_lib_required = !!options[:crypt_shared_lib_required]
-        if @crypt_shared_lib_required && crypt_shared_lib_version == 0
-          raise Mongo::Error::CryptError.new(
-            "Crypt shared library is required, but cannot be loaded  according to libmongocrypt"
-          )
-        end
+        return unless @crypt_shared_lib_required && crypt_shared_lib_version == 0
+
+        raise Mongo::Error::CryptError.new(
+          'Crypt shared library is required, but cannot be loaded  according to libmongocrypt'
+        )
       end
 
       # Return the reference to the underlying @mongocrypt object
@@ -151,7 +148,7 @@ module Mongo
           @schema_map = nil
         elsif options[:schema_map] && options[:schema_map_path]
           raise ArgumentError.new(
-            "Cannot set both schema_map and schema_map_path options."
+            'Cannot set both schema_map and schema_map_path options.'
           )
         elsif options[:schema_map]
           unless options[:schema_map].is_a?(Hash)
@@ -182,7 +179,7 @@ module Mongo
       end
 
       def set_bypass_query_analysis
-        unless [true, false].include?(@bypass_query_analysis)
+        unless [ true, false ].include?(@bypass_query_analysis)
           raise ArgumentError.new(
             "#{@bypass_query_analysis} is an invalid bypass_query_analysis value; must be a Boolean or nil"
           )
@@ -193,7 +190,7 @@ module Mongo
 
       # Send the logs from libmongocrypt to the Mongo::Logger
       def set_logger_callback
-        @log_callback = Proc.new do |level, msg|
+        @log_callback = proc do |level, msg|
           @logger.send(level, msg)
         end
 
@@ -213,15 +210,13 @@ module Mongo
       # @return [ true | false ] Whether block executed without raising
       #   exceptions.
       def handle_error(status_p)
-        begin
-          yield
+        yield
 
-          true
-        rescue => e
-          status = Status.from_pointer(status_p)
-          status.update(:error_client, 1, "#{e.class}: #{e}")
-          false
-        end
+        true
+      rescue StandardError => e
+        status = Status.from_pointer(status_p)
+        status.update(:error_client, 1, "#{e.class}: #{e}")
+        false
       end
 
       # Yields to the provided block and writes the return value of block
@@ -248,7 +243,7 @@ module Mongo
       # Perform AES encryption or decryption and write the output to the
       # provided mongocrypt_binary_t object.
       def do_aes(key_binary_p, iv_binary_p, input_binary_p, output_binary_p,
-        response_length_p, status_p, decrypt: false, mode: :CBC)
+                 response_length_p, status_p, decrypt: false, mode: :CBC)
         key = Binary.from_pointer(key_binary_p).to_s
         iv = Binary.from_pointer(iv_binary_p).to_s
         input = Binary.from_pointer(input_binary_p).to_s
@@ -264,7 +259,7 @@ module Mongo
       # Perform HMAC SHA encryption and write the output to the provided
       # mongocrypt_binary_t object.
       def do_hmac_sha(digest_name, key_binary_p, input_binary_p,
-        output_binary_p, status_p)
+                      output_binary_p, status_p)
         key = Binary.from_pointer(key_binary_p).to_s
         input = Binary.from_pointer(input_binary_p).to_s
 
@@ -276,7 +271,7 @@ module Mongo
       # Perform signing using RSASSA-PKCS1-v1_5 with SHA256 hash and write
       # the output to the provided mongocrypt_binary_t object.
       def do_rsaes_pkcs_signature(key_binary_p, input_binary_p,
-        output_binary_p, status_p)
+                                  output_binary_p, status_p)
         key = Binary.from_pointer(key_binary_p).to_s
         input = Binary.from_pointer(input_binary_p).to_s
 
@@ -293,7 +288,7 @@ module Mongo
       # Every crypto binding ignores its first argument, which is an option
       # mongocrypt_ctx_t object and is not required to use crypto hooks.
       def set_crypto_hooks
-        @aes_encrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+        @aes_encrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p,
           output_binary_p, response_length_p, status_p|
           do_aes(
             key_binary_p,
@@ -305,7 +300,7 @@ module Mongo
           )
         end
 
-        @aes_decrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+        @aes_decrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p,
           output_binary_p, response_length_p, status_p|
           do_aes(
             key_binary_p,
@@ -318,23 +313,23 @@ module Mongo
           )
         end
 
-        @random = Proc.new do |_, output_binary_p, num_bytes, status_p|
+        @random = proc do |_, output_binary_p, num_bytes, status_p|
           write_binary_string_and_set_status(output_binary_p, status_p) do
             Hooks.random(num_bytes)
           end
         end
 
-        @hmac_sha_512 = Proc.new do |_, key_binary_p, input_binary_p,
+        @hmac_sha_512 = proc do |_, key_binary_p, input_binary_p,
           output_binary_p, status_p|
           do_hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
         end
 
-        @hmac_sha_256 = Proc.new do |_, key_binary_p, input_binary_p,
+        @hmac_sha_256 = proc do |_, key_binary_p, input_binary_p,
           output_binary_p, status_p|
           do_hmac_sha('SHA256', key_binary_p, input_binary_p, output_binary_p, status_p)
         end
 
-        @hmac_hash = Proc.new do |_, input_binary_p, output_binary_p, status_p|
+        @hmac_hash = proc do |_, input_binary_p, output_binary_p, status_p|
           input = Binary.from_pointer(input_binary_p).to_s
 
           write_binary_string_and_set_status(output_binary_p, status_p) do
@@ -349,10 +344,10 @@ module Mongo
           @random,
           @hmac_sha_512,
           @hmac_sha_256,
-          @hmac_hash,
+          @hmac_hash
         )
 
-        @aes_ctr_encrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+        @aes_ctr_encrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p,
           output_binary_p, response_length_p, status_p|
           do_aes(
             key_binary_p,
@@ -361,11 +356,11 @@ module Mongo
             output_binary_p,
             response_length_p,
             status_p,
-            mode: :CTR,
+            mode: :CTR
           )
         end
 
-        @aes_ctr_decrypt = Proc.new do |_, key_binary_p, iv_binary_p, input_binary_p,
+        @aes_ctr_decrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p,
           output_binary_p, response_length_p, status_p|
           do_aes(
             key_binary_p,
@@ -375,17 +370,17 @@ module Mongo
             response_length_p,
             status_p,
             decrypt: true,
-            mode: :CTR,
+            mode: :CTR
           )
         end
 
         Binding.setopt_aes_256_ctr(
           self,
           @aes_ctr_encrypt,
-          @aes_ctr_decrypt,
+          @aes_ctr_decrypt
         )
 
-        @rsaes_pkcs_signature_cb = Proc.new do |_, key_binary_p, input_binary_p,
+        @rsaes_pkcs_signature_cb = proc do |_, key_binary_p, input_binary_p,
           output_binary_p, status_p|
           do_rsaes_pkcs_signature(key_binary_p, input_binary_p, output_binary_p, status_p)
         end

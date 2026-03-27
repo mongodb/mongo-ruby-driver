@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -28,7 +27,7 @@ describe 'Push monitor close test' do
     threads = 10.times.map do
       Thread.new do
         10.times do
-          client = new_local_client([ClusterConfig.instance.primary_address.seed], options)
+          client = new_local_client([ ClusterConfig.instance.primary_address.seed ], options)
           if rand > 0.33
             client.command(ping: 1)
             sleep(rand * 3)

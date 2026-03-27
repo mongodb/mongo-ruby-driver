@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'support/shared/auth_context'
@@ -16,7 +15,6 @@ describe Mongo::Auth::Scram do
   let(:cache_mod) { Mongo::Auth::CredentialCache }
 
   shared_examples_for 'caches scram credentials' do |cache_key|
-
     it 'caches scram credentials' do
       cache_mod.clear
       expect(cache_mod.store).to be_empty
@@ -27,26 +25,23 @@ describe Mongo::Auth::Scram do
       client_key_entry = cache_mod.store.keys.detect do |key|
         key.include?(test_user.password) && key.include?(cache_key)
       end
-      expect(client_key_entry).not_to be nil
+      expect(client_key_entry).not_to be_nil
     end
   end
 
   shared_examples_for 'works correctly' do
-
     before do
       connection.connect!
     end
 
     describe '#login' do
-
       context 'when the user is not authorized' do
-
         let(:user) do
           Mongo::Auth::User.new(
             database: 'driver',
             user: 'notauser',
             password: 'password',
-            auth_mech: auth_mech,
+            auth_mech: auth_mech
           )
         end
 
@@ -65,15 +60,14 @@ describe Mongo::Auth::Scram do
 
           it 'does not compress the message' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
-            expect {
+            expect do
               authenticator.login
-            }.to raise_error(Mongo::Auth::Unauthorized)
+            end.to raise_error(Mongo::Auth::Unauthorized)
           end
         end
       end
 
       context 'when the user is authorized for the database' do
-
         let(:authenticator) do
           described_class.new(test_user, connection)
         end

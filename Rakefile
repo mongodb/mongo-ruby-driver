@@ -97,7 +97,35 @@ task :mongo do
   require 'mongo'
 end
 
-# rubocop:disable Metrics/BlockLength
+RUBOCOPABLE = %w[ bin examples gemfiles profile lib spec mongo.gemspec Gemfile Rakefile upload-api-docs ].freeze
+
+desc 'Run rubocop on the codebase'
+task rubocop: %w[ rubocop:run ]
+
+namespace :rubocop do
+  desc 'Run rubocop on the codebase'
+  task :run do
+    sh 'bundle', 'exec', 'rubocop', *RUBOCOPABLE, verbose: false
+  end
+
+  desc 'Add a git pre-commit hook that runs rubocop'
+  task :install_hook do
+    hook_path = File.join('.git', 'hooks', 'pre-commit')
+    hook_script = <<~HOOK
+      #!/usr/bin/env bash
+      set -e
+
+      echo "Running rubocop..."
+      rake rubocop
+    HOOK
+
+    File.write(hook_path, hook_script)
+    FileUtils.chmod('+x', hook_path)
+
+    puts "Git pre-commit hook installed at #{hook_path}."
+  end
+end
+
 namespace :spec do
   desc 'Creates necessary user accounts in the cluster'
   task prepare: :mongo do
@@ -155,8 +183,6 @@ namespace :spec do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength
-
 desc 'Build and validate the evergreen config'
 task eg: %w[ eg:build eg:validate ]
 

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ require 'mongo/address/unix'
 require 'mongo/address/validator'
 
 module Mongo
-
   # Represents an address to a server, either with an IP address or socket
   # path.
   #
@@ -41,7 +39,7 @@ module Mongo
     # The localhost constant.
     #
     # @since 2.1.0
-    LOCALHOST = 'localhost'.freeze
+    LOCALHOST = 'localhost'
 
     # Initialize the address.
     #
@@ -73,12 +71,11 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seed, options = {})
-      if seed.nil?
-        raise ArgumentError, "address must be not nil"
-      end
+      raise ArgumentError, 'address must be not nil' if seed.nil?
+
       @seed = seed
       @host, @port = parse_host_port
-      @options = Hash[options.map { |k, v| [k.to_sym, v] }]
+      @options = Hash[options.map { |k, v| [ k.to_sym, v ] }]
     end
 
     # @return [ String ] seed The seed address.
@@ -105,6 +102,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Address)
+
       host == other.host && port == other.port
     end
 
@@ -143,7 +141,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Address:0x#{object_id} address=#{to_s}>"
+      "#<Mongo::Address:0x#{object_id} address=#{self}>"
     end
 
     # Get a socket for the address stored in this object, given the options.
@@ -220,10 +218,10 @@ module Mongo
       csot = !!opts[:csot]
       opts = {
         connect_timeout: Server::CONNECT_TIMEOUT,
-      }.update(options).update(Hash[opts.map { |k, v| [k.to_sym, v] }])
+      }.update(options).update(Hash[opts.map { |k, v| [ k.to_sym, v ] }])
 
       map_exceptions(csot) do
-        if seed.downcase =~ Unix::MATCH
+        if Unix::MATCH.match?(seed.downcase)
           specific_address = Unix.new(seed.downcase)
           return specific_address.socket(socket_timeout, opts)
         end
@@ -239,16 +237,14 @@ module Mongo
         # eliminate duplicates here.
         infos = getaddrinfo(host, family)
         results = infos.map do |info|
-          [info[4], info[3]]
+          [ info[4], info[3] ]
         end.uniq
         results.each do |family, address_str|
-          begin
-            specific_address = FAMILY_MAP[family].new(address_str, port, host)
-            socket = specific_address.socket(socket_timeout, opts)
-            return socket
-          rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
-            error = e
-          end
+          specific_address = FAMILY_MAP[family].new(address_str, port, host)
+          socket = specific_address.socket(socket_timeout, opts)
+          return socket
+        rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
+          error = e
         end
         raise error
       end
@@ -285,9 +281,9 @@ module Mongo
     def parse_host_port
       address = seed.downcase
       case address
-        when Unix::MATCH then Unix.parse(address)
-        when IPv6::MATCH then IPv6.parse(address)
-        else IPv4.parse(address)
+      when Unix::MATCH then Unix.parse(address)
+      when IPv6::MATCH then IPv6.parse(address)
+      else IPv4.parse(address)
       end
     end
 
@@ -297,25 +293,19 @@ module Mongo
     # @param [ Boolean ] csot Whether the client-side operation timeout
     #   should be considered when connecting the socket.
     def map_exceptions(csot)
-      begin
-        yield
-      rescue Errno::ETIMEDOUT => e
-        if csot
-          raise Error::TimeoutError, "#{e.class}: #{e} (for #{self})"
-        else
-          raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{self})"
-        end
-      rescue Error::SocketTimeoutError => e
-        if csot
-          raise Error::TimeoutError, "#{e.class}: #{e} (for #{self})"
-        else
-          raise e
-        end
-      rescue IOError, SystemCallError, ::SocketError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
-      rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
-      end
+      yield
+    rescue Errno::ETIMEDOUT => e
+      raise Error::TimeoutError, "#{e.class}: #{e} (for #{self})" if csot
+
+      raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{self})"
+    rescue Error::SocketTimeoutError => e
+      raise Error::TimeoutError, "#{e.class}: #{e} (for #{self})" if csot
+
+      raise e
+    rescue IOError, SystemCallError, ::SocketError => e
+      raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
+    rescue OpenSSL::SSL::SSLError => e
+      raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
     end
   end
 end

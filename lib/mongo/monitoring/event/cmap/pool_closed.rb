@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -19,12 +18,10 @@ module Mongo
   class Monitoring
     module Event
       module Cmap
-
         # Event published when a connection pool is closed.
         #
         # @since 2.9.0
         class PoolClosed < Base
-
           # @return [ Mongo::Address ] address The address of the server the pool's connections will
           #   connect to.
           #
@@ -59,7 +56,7 @@ module Mongo
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
-                "address=#{address} pool=0x#{pool.object_id}>"
+              "address=#{address} pool=0x#{pool.object_id}>"
           end
         end
       end

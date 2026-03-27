@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -26,8 +25,8 @@ describe 'Cmap' do
 
   let(:options) do
     Mongo::Utils.shallow_symbolize_keys(Mongo::Client.canonicalize_ruby_options(
-      SpecConfig.instance.all_test_options,
-    )).update(monitoring_io: false, populator_io: true).tap do |options|
+                                          SpecConfig.instance.all_test_options
+                                        )).update(monitoring_io: false, populator_io: true).tap do |options|
       # We have a wait queue timeout set in the test suite options, but having
       # this option set interferes with assertions in the cmap spec tests.
       options.delete(:wait_queue_timeout)
@@ -37,10 +36,10 @@ describe 'Cmap' do
   CMAP_TESTS.each do |file|
     spec = Mongo::Cmap::Spec.new(file)
 
-    context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
+    context("#{spec.description} (#{file.sub(%r{.*/data/cmap/}, '')})") do
       unless spec.satisfied?
         before(:all) do
-          skip "Requirements not satisfied"
+          skip 'Requirements not satisfied'
         end
       end
 
@@ -77,7 +76,7 @@ describe 'Cmap' do
         end
 
         @client = ClusterTools.instance.direct_client(ClusterConfig.instance.primary_address,
-          database: 'admin')
+                                                      database: 'admin')
         spec.setup(@server, @client, subscriber)
       end
 
@@ -100,13 +99,13 @@ describe 'Cmap' do
         Mongo::Cmap::Verifier.new(spec)
       end
 
+      let(:actual_events) { result['events'].freeze }
+
       it 'raises the correct error' do
         RSpec::Mocks.with_temporary_scope do
           expect(result['error']).to eq(spec.expected_error)
         end
       end
-
-      let(:actual_events) { result['events'].freeze }
 
       it 'emits the correct number of events' do
         RSpec::Mocks.with_temporary_scope do
@@ -115,7 +114,7 @@ describe 'Cmap' do
       end
 
       spec.expected_events.each_with_index do |expected_event, index|
-        it "emits correct event #{index+1}" do
+        it "emits correct event #{index + 1}" do
           RSpec::Mocks.with_temporary_scope do
             verifier.verify_hashes(actual_events[index], expected_event)
           end

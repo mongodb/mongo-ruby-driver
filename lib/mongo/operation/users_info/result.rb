@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,19 +17,17 @@
 module Mongo
   module Operation
     class UsersInfo
-
       # Defines custom behavior of results when using the
       # usersInfo command.
       #
       # @since 2.1.0
       # @api semiprivate
       class Result < Operation::Result
-
         # The field name for the users document in a usersInfo result.
         #
         # @since 2.1.0
         # @api private
-        USERS = 'users'.freeze
+        USERS = 'users'
 
         # @api public
         def documents

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -22,7 +21,6 @@ require 'mongo/socket/ocsp_verifier'
 require 'mongo/socket/ocsp_cache'
 
 module Mongo
-
   # Provides additional data around sockets for the driver's use.
   #
   # @since 2.0.0
@@ -34,23 +32,23 @@ module Mongo
     #
     # @since 2.0.0
     # @deprecated
-    SSL_ERROR = 'MongoDB may not be configured with TLS support'.freeze
+    SSL_ERROR = 'MongoDB may not be configured with TLS support'
 
     # Error message for timeouts on socket calls.
     #
     # @since 2.0.0
     # @deprecated
-    TIMEOUT_ERROR = 'Socket request timed out'.freeze
+    TIMEOUT_ERROR = 'Socket request timed out'
 
     # The pack directive for timeouts.
     #
     # @since 2.0.0
-    TIMEOUT_PACK = 'l_2'.freeze
+    TIMEOUT_PACK = 'l_2'
 
     # Write data to the socket in chunks of this size.
     #
     # @api private
-    WRITE_CHUNK_SIZE = 65536
+    WRITE_CHUNK_SIZE = 65_536
 
     # Initializes common socket attributes.
     #
@@ -120,13 +118,17 @@ module Mongo
     #
     # @api private
     def summary
-      fileno = @socket&.fileno rescue '<no socket>' || '<no socket>'
+      fileno = begin
+        @socket&.fileno
+      rescue StandardError
+        '<no socket>'
+      end
       if monitor?
         indicator = if options[:push]
-          'pm'
-        else
-          'm'
-        end
+                      'pm'
+                    else
+                      'm'
+                    end
         "#{connection_address};#{indicator};fd=#{fileno}"
       else
         "#{connection_address};c:#{connection_generation};fd=#{fileno}"
@@ -143,7 +145,7 @@ module Mongo
     # @deprecated Use #connectable? on the connection instead.
     def alive?
       sock_arr = [ @socket ]
-      if Kernel::select(sock_arr, nil, sock_arr, 0)
+      if Kernel.select(sock_arr, nil, sock_arr, 0)
         # The eof? call is supposed to return immediately since select
         # indicated the socket is readable. However, if @socket is a TLS
         # socket, eof? can block anyway - see RUBY-2140.
@@ -173,7 +175,7 @@ module Mongo
         ::Timeout.timeout(5) do
           @socket&.close
         end
-      rescue
+      rescue StandardError
         # Silence all errors
       end
       true
@@ -213,9 +215,8 @@ module Mongo
     #
     # @since 2.0.0
     def read(length, socket_timeout: nil, timeout: nil)
-      if !socket_timeout.nil? && !timeout.nil?
-        raise ArgumentError, 'Both timeout and socket_timeout cannot be set'
-      end
+      raise ArgumentError, 'Both timeout and socket_timeout cannot be set' if !socket_timeout.nil? && !timeout.nil?
+
       if !socket_timeout.nil? || timeout.nil?
         read_without_timeout(length, socket_timeout)
       else
@@ -286,13 +287,11 @@ module Mongo
         String.new.tap do |data|
           while data.length < length
             socket_timeout = deadline - Utils.monotonic_time
-            if socket_timeout <= 0
-              raise Mongo::Error::TimeoutError
-            end
+            raise Mongo::Error::TimeoutError if socket_timeout <= 0
+
             chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout, csot: true)
-            unless chunk.length > 0
-              raise IOError, "Expected to read > 0 bytes but read 0 bytes"
-            end
+            raise IOError, 'Expected to read > 0 bytes but read 0 bytes' unless chunk.length > 0
+
             data << chunk
           end
         end
@@ -312,15 +311,13 @@ module Mongo
         String.new.tap do |data|
           while data.length < length
             chunk = read_from_socket(length - data.length, socket_timeout: socket_timeout)
-            unless chunk.length > 0
-              raise IOError, "Expected to read > 0 bytes but read 0 bytes"
-            end
+            raise IOError, 'Expected to read > 0 bytes but read 0 bytes' unless chunk.length > 0
+
             data << chunk
           end
         end
       end
     end
-
 
     # Reads the +length+ bytes from the socket. The read operation may involve
     # multiple socket reads, each read is limited to +timeout+ second,
@@ -333,11 +330,9 @@ module Mongo
     # @return [ Object ] The data from the socket.
     def read_from_socket(length, socket_timeout: nil, csot: false)
       # Just in case
-      if length == 0
-        return ''.force_encoding('BINARY')
-      end
+      return ''.force_encoding('BINARY') if length == 0
 
-      _timeout = socket_timeout || self.timeout
+      _timeout = socket_timeout || timeout
       if _timeout
         if _timeout > 0
           deadline = Utils.monotonic_time + _timeout
@@ -355,9 +350,7 @@ module Mongo
 
       # If we want to read less than the buffer size, just allocate the
       # memory that is necessary
-      if length < buf_size
-        buf_size = length
-      end
+      buf_size = length if length < buf_size
 
       # The binary encoding is important, otherwise Ruby performs encoding
       # conversions of some sort during the write into the buffer which
@@ -367,25 +360,19 @@ module Mongo
       begin
         while retrieved < length
           retrieve = length - retrieved
-          if retrieve > buf_size
-            retrieve = buf_size
-          end
+          retrieve = buf_size if retrieve > buf_size
           chunk = @socket.read_nonblock(retrieve, buf)
 
           # If we read the entire wanted length in one operation,
           # return the data as is which saves one memory allocation and
           # one copy per read
-          if retrieved == 0 && chunk.length == length
-            return chunk
-          end
+          return chunk if retrieved == 0 && chunk.length == length
 
           # If we are here, we are reading the wanted length in
           # multiple operations. Allocate the total buffer here rather
           # than up front so that the special case above won't be
           # allocating twice
-          if data.nil?
-            data = allocate_string(length)
-          end
+          data = allocate_string(length) if data.nil?
 
           # ... and we need to copy the chunks at this point
           data[retrieved, chunk.length] = chunk
@@ -393,40 +380,36 @@ module Mongo
         end
       # As explained in https://ruby-doc.com/core-trunk/IO.html#method-c-select,
       # reading from a TLS socket may require writing which may raise WaitWritable
-      rescue IO::WaitReadable, IO::WaitWritable => exc
+      rescue IO::WaitReadable, IO::WaitWritable => e
         if deadline
           select_timeout = deadline - Utils.monotonic_time
-          if select_timeout <= 0
-            raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot)
-          end
+          raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot) if select_timeout <= 0
         end
-        if exc.is_a?(IO::WaitReadable)
-          if pipe
-            select_args = [[@socket, pipe], nil, [@socket, pipe], select_timeout]
-          else
-            select_args = [[@socket], nil, [@socket], select_timeout]
-          end
-        else
-          select_args = [nil, [@socket], [@socket], select_timeout]
-        end
+        select_args = if e.is_a?(IO::WaitReadable)
+                        if pipe
+                          [ [ @socket, pipe ], nil, [ @socket, pipe ], select_timeout ]
+                        else
+                          [ [ @socket ], nil, [ @socket ], select_timeout ]
+                        end
+                      else
+                        [ nil, [ @socket ], [ @socket ], select_timeout ]
+                      end
 
         rv = Kernel.select(*select_args)
-        if Lint.enabled?
-          if pipe && rv&.include?(pipe)
-            # If the return value of select is the read end of the pipe, and
-            # an IOError is not raised, then that means the socket is still
-            # open. Select is interrupted be closing the write end of the
-            # pipe, which either returns the pipe if the socket is open, or
-            # raises an IOError if it isn't. Select is interrupted after all
-            # of the pending and checked out connections have been interrupted
-            # and closed, and this only happens once the pool is cleared with
-            # interrupt_in_use connections flag. This means that in order for
-            # the socket to still be open when the select is interrupted, and
-            # that socket is being read from, that means after clear was
-            # called, a connection from the previous generation was checked
-            # out of the pool, for reading on its socket. This should be impossible.
-            raise Mongo::LintError, "Select interrupted for live socket. This should be impossible."
-          end
+        if Lint.enabled? && pipe && rv&.include?(pipe)
+          # If the return value of select is the read end of the pipe, and
+          # an IOError is not raised, then that means the socket is still
+          # open. Select is interrupted be closing the write end of the
+          # pipe, which either returns the pipe if the socket is open, or
+          # raises an IOError if it isn't. Select is interrupted after all
+          # of the pending and checked out connections have been interrupted
+          # and closed, and this only happens once the pool is cleared with
+          # interrupt_in_use connections flag. This means that in order for
+          # the socket to still be open when the select is interrupted, and
+          # that socket is being read from, that means after clear was
+          # called, a connection from the previous generation was checked
+          # out of the pool, for reading on its socket. This should be impossible.
+          raise Mongo::LintError, 'Select interrupted for live socket. This should be impossible.'
         end
 
         if BSON::Environment.jruby?
@@ -437,9 +420,7 @@ module Mongo
           # Check the deadline ourselves.
           if deadline
             select_timeout = deadline - Utils.monotonic_time
-            if select_timeout <= 0
-              raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot)
-            end
+            raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot) if select_timeout <= 0
           end
         elsif rv.nil?
           raise_timeout_error!("Took more than #{_timeout} seconds to receive data (select call timed out)", csot)
@@ -451,13 +432,13 @@ module Mongo
     end
 
     def allocate_string(capacity)
-      String.new('', :capacity => capacity, :encoding => 'BINARY')
+      String.new('', capacity: capacity, encoding: 'BINARY')
     end
 
     def read_buffer_size
       # Buffer size for non-TLS reads
       # 64kb
-      65536
+      65_536
     end
 
     # Writes data to the socket instance.
@@ -514,6 +495,7 @@ module Mongo
     # @return [ Integer ] The length of bytes written to the socket.
     def write_with_timeout(*args, timeout:)
       raise ArgumentError, 'timeout cannot be nil' if timeout.nil?
+
       raise_timeout_error!("Negative timeout #{timeout} given to socket", true) if timeout < 0
 
       written = 0
@@ -537,7 +519,7 @@ module Mongo
         begin
           written += @socket.write_nonblock(chunk[written..-1])
         rescue IO::WaitWritable, Errno::EINTR
-          if !wait_for_socket_to_be_writable(deadline)
+          unless wait_for_socket_to_be_writable(deadline)
             raise_timeout_error!("Took more than #{timeout} seconds to receive data", true)
           end
 
@@ -550,7 +532,7 @@ module Mongo
 
     def wait_for_socket_to_be_writable(deadline)
       select_timeout = deadline - Utils.monotonic_time
-      rv = Kernel.select(nil, [@socket], nil, select_timeout)
+      rv = Kernel.select(nil, [ @socket ], nil, select_timeout)
 
       if BSON::Environment.jruby?
         # Ignore the return value of Kernel.select.
@@ -583,7 +565,7 @@ module Mongo
       set_option(sock, :TCP_KEEPCNT, DEFAULT_TCP_KEEPCNT)
       set_option(sock, :TCP_KEEPIDLE, DEFAULT_TCP_KEEPIDLE)
       set_option(sock, :TCP_USER_TIMEOUT, DEFAULT_TCP_USER_TIMEOUT)
-    rescue
+    rescue StandardError
       # JRuby 9.2.13.0 and lower do not define TCP_KEEPINTVL etc. constants.
       # JRuby 9.2.14.0 defines the constants but does not allow to get or
       # set them with this error:
@@ -591,12 +573,12 @@ module Mongo
     end
 
     def set_option(sock, option, default)
-      if Socket.const_defined?(option)
-        system_default = sock.getsockopt(IPPROTO_TCP, option).int
-        if system_default > default
-          sock.setsockopt(IPPROTO_TCP, option, default)
-        end
-      end
+      return unless Socket.const_defined?(option)
+
+      system_default = sock.getsockopt(IPPROTO_TCP, option).int
+      return unless system_default > default
+
+      sock.setsockopt(IPPROTO_TCP, option, default)
     end
 
     def set_socket_options(sock)
@@ -605,15 +587,13 @@ module Mongo
     end
 
     def map_exceptions
-      begin
-        yield
-      rescue Errno::ETIMEDOUT => e
-        raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{human_address})"
-      rescue IOError, SystemCallError, ::SocketError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
-      rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
-      end
+      yield
+    rescue Errno::ETIMEDOUT => e
+      raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{human_address})"
+    rescue IOError, SystemCallError, ::SocketError => e
+      raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
+    rescue OpenSSL::SSL::SSLError => e
+      raise Error::SocketError, "#{e.class}: #{e} (for #{human_address})"
     end
 
     def human_address
@@ -621,11 +601,9 @@ module Mongo
     end
 
     def raise_timeout_error!(message = nil, csot = false)
-      if csot
-        raise Mongo::Error::TimeoutError
-      else
-        raise Errno::ETIMEDOUT, message
-      end
+      raise Mongo::Error::TimeoutError if csot
+
+      raise Errno::ETIMEDOUT, message
     end
   end
 end

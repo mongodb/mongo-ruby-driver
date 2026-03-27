@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # Exception that is raised when trying to create a client with an invalid
     #   min_pool_size option.
     #
     # @since 2.4.2
     class InvalidMinPoolSize < Error
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.

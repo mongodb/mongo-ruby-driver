@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/operation/create_user/op_msg'
 
 module Mongo
   module Operation
-
     # A MongoDB create user command operation.
     #
     # @api private

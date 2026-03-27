@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Crypt
-
     # A Context object initialized specifically for the purpose of rewrapping
     # data keys (decrypting and re-rencryting using a new KEK).
     #
     # @api private
     class RewrapManyDataKeyContext < Context
-
       # Create a new RewrapManyDataKeyContext object
       #
       # @param [ Mongo::Crypt::Handle ] mongocrypt a Handle that
@@ -36,9 +33,7 @@ module Mongo
       #   key document that contains master encryption key parameters.
       def initialize(mongocrypt, io, filter, master_key_document)
         super(mongocrypt, io)
-        if master_key_document
-          Binding.ctx_setopt_key_encryption_key(self, master_key_document.to_document)
-        end
+        Binding.ctx_setopt_key_encryption_key(self, master_key_document.to_document) if master_key_document
         Binding.ctx_rewrap_many_datakey_init(self, filter)
       end
     end

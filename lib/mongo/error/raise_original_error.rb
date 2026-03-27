@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # This is a special marker exception class used internally in the
     # retryable reads/writes implementation. Its purpose is to bypass
     # note addition when raising the exception from the first read/write

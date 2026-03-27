@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -7,7 +6,6 @@ describe Mongo::Error::CryptError do
   let(:label) { :error_client }
   let(:code) { 401 }
   let(:message) { 'Operation unauthorized' }
-
 
   describe '#initialize' do
     context 'with code' do

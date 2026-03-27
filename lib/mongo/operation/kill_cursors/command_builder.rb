@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -18,10 +17,8 @@
 module Mongo
   module Operation
     class KillCursors
-
       # @api private
       module CommandBuilder
-
         private
 
         def int64_cursor_ids

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::CachingCursor do
-
   around do |spec|
     Mongo::QueryCache.clear
     Mongo::QueryCache.cache { spec.run }
@@ -16,6 +14,8 @@ describe Mongo::CachingCursor do
 
   before do
     authorized_collection.drop
+    authorized_collection.delete_many
+    3.times { |i| authorized_collection.insert_one(_id: i) }
   end
 
   let(:server) do
@@ -34,11 +34,6 @@ describe Mongo::CachingCursor do
     Mongo::Collection::View.new(authorized_collection)
   end
 
-  before do
-    authorized_collection.delete_many
-    3.times { |i| authorized_collection.insert_one(_id: i) }
-  end
-
   describe '#cached_docs' do
     context 'when no query has been performed' do
       it 'returns nil' do
@@ -50,7 +45,7 @@ describe Mongo::CachingCursor do
       it 'returns the number of documents' do
         cursor.to_a
         expect(cursor.cached_docs.length).to eq(3)
-        expect(cursor.cached_docs).to eq([{ '_id' => 0 }, { '_id' => 1 }, { '_id' => 2 }])
+        expect(cursor.cached_docs).to eq([ { '_id' => 0 }, { '_id' => 1 }, { '_id' => 2 } ])
       end
     end
   end
@@ -67,7 +62,7 @@ describe Mongo::CachingCursor do
     it 'iterates the cursor' do
       result = cursor.each.to_a
       expect(result.length).to eq(3)
-      expect(result).to eq([{ '_id' => 0 }, { '_id' => 1 }, { '_id' => 2 }])
+      expect(result).to eq([ { '_id' => 0 }, { '_id' => 1 }, { '_id' => 2 } ])
     end
   end
 end

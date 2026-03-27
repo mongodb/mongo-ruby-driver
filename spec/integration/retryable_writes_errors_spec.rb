@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe 'Retryable writes errors tests' do
-
   let(:options) { {} }
 
   let(:client) do
@@ -15,33 +13,33 @@ describe 'Retryable writes errors tests' do
     client['retryable-writes-error-spec']
   end
 
-  context "when encountering a NoWritesPerformed error after an error with a RetryableWriteError label" do
+  context 'when encountering a NoWritesPerformed error after an error with a RetryableWriteError label' do
     require_topology :replica_set
     require_retry_writes
     min_server_version '4.4'
 
     let(:failpoint1) do
       {
-        configureFailPoint: "failCommand",
+        configureFailPoint: 'failCommand',
         mode: { times: 1 },
         data: {
           writeConcernError: {
             code: 91,
-            errorLabels: ["RetryableWriteError"],
+            errorLabels: [ 'RetryableWriteError' ],
           },
-          failCommands: ["insert"],
+          failCommands: [ 'insert' ],
         }
       }
     end
 
     let(:failpoint2) do
       {
-        configureFailPoint: "failCommand",
+        configureFailPoint: 'failCommand',
         mode: { times: 1 },
         data: {
-          errorCode: 10107,
-          errorLabels: ["RetryableWriteError", "NoWritesPerformed"],
-          failCommands: ["insert"],
+          errorCode: 10_107,
+          errorLabels: %w[RetryableWriteError NoWritesPerformed],
+          failCommands: [ 'insert' ],
         },
       }
     end
@@ -61,19 +59,19 @@ describe 'Retryable writes errors tests' do
 
     after do
       authorized_client.use(:admin).command({
-        configureFailPoint: "failCommand",
-        mode: "off",
-      })
+                                              configureFailPoint: 'failCommand',
+                                              mode: 'off',
+                                            })
     end
 
-    it "returns the original error" do
+    it 'returns the original error' do
       expect do
         authorized_collection.insert_one(x: 1)
       end.to raise_error(Mongo::Error::OperationFailure, /\[91\]/)
     end
   end
 
-  context "PoolClearedError retryability test" do
+  context 'PoolClearedError retryability test' do
     require_topology :single, :sharded
     require_no_multi_mongos
     require_fail_command
@@ -83,15 +81,15 @@ describe 'Retryable writes errors tests' do
 
     let(:failpoint) do
       {
-          configureFailPoint: "failCommand",
-          mode: { times: 1 },
-          data: {
-              failCommands: [ "insert" ],
-              errorCode: 91,
-              blockConnection: true,
-              blockTimeMS: 1000,
-              errorLabels: ["RetryableWriteError"]
-          }
+        configureFailPoint: 'failCommand',
+        mode: { times: 1 },
+        data: {
+          failCommands: [ 'insert' ],
+          errorCode: 91,
+          blockConnection: true,
+          blockTimeMS: 1000,
+          errorLabels: [ 'RetryableWriteError' ]
+        }
       }
     end
 
@@ -109,7 +107,7 @@ describe 'Retryable writes errors tests' do
     end
 
     let(:insert_events) do
-      subscriber.started_events.select { |e| e.command_name == "insert" }
+      subscriber.started_events.select { |e| e.command_name == 'insert' }
     end
 
     let(:cmap_events) do
@@ -136,7 +134,14 @@ describe 'Retryable writes errors tests' do
       client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
     end
 
-    it "retries on PoolClearedError" do
+    after do
+      authorized_client.use(:admin).command({
+                                              configureFailPoint: 'failCommand',
+                                              mode: 'off',
+                                            })
+    end
+
+    it 'retries on PoolClearedError' do
       # After the first insert fails, the pool is paused and retry is triggered.
       # Now, a race is started between the second insert acquiring a connection,
       # and the first retrying the read. Now, retry reads cause the cluster to
@@ -144,7 +149,7 @@ describe 'Retryable writes errors tests' do
       # to succeed (when it should fail). Therefore we want the second insert's
       # check out to win the race. This gives the check out a little head start.
       allow(collection.cluster.next_primary.pool).to receive(:ready).and_wrap_original do |m, *args, &block|
-        ::Utils.wait_for_condition(3) do
+        Utils.wait_for_condition(3) do
           # check_out_results should contain:
           # - insert1 connection check out successful
           # - pool cleared
@@ -162,13 +167,6 @@ describe 'Retryable writes errors tests' do
       expect(check_out_results[2]).to be_a(Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed)
       expect(insert_events.length).to eq(3)
     end
-
-    after do
-      authorized_client.use(:admin).command({
-        configureFailPoint: "failCommand",
-        mode: "off",
-      })
-    end
   end
 
   context 'Retries in a sharded cluster' do
@@ -178,22 +176,22 @@ describe 'Retryable writes errors tests' do
     let(:subscriber) { Mrss::EventSubscriber.new }
 
     let(:insert_started_events) do
-      subscriber.started_events.select { |e| e.command_name == "insert" }
+      subscriber.started_events.select { |e| e.command_name == 'insert' }
     end
 
     let(:insert_failed_events) do
-      subscriber.failed_events.select { |e| e.command_name == "insert" }
+      subscriber.failed_events.select { |e| e.command_name == 'insert' }
     end
 
     let(:insert_succeeded_events) do
-      subscriber.succeeded_events.select { |e| e.command_name == "insert" }
+      subscriber.succeeded_events.select { |e| e.command_name == 'insert' }
     end
 
     context 'when another mongos is available' do
-      skip "https://jira.mongodb.org/browse/RUBY-3737"
+      skip 'https://jira.mongodb.org/browse/RUBY-3737'
       let(:first_mongos) do
         Mongo::Client.new(
-          [SpecConfig.instance.addresses.first],
+          [ SpecConfig.instance.addresses.first ],
           direct_connection: true,
           database: 'admin'
         )
@@ -201,7 +199,7 @@ describe 'Retryable writes errors tests' do
 
       let(:second_mongos) do
         Mongo::Client.new(
-          [SpecConfig.instance.addresses.last],
+          [ SpecConfig.instance.addresses.last ],
           direct_connection: false,
           database: 'admin'
         )
@@ -231,10 +229,10 @@ describe 'Retryable writes errors tests' do
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: %w(insert),
+            failCommands: %w[insert],
             closeConnection: false,
             errorCode: 6,
-            errorLabels: ['RetryableWriteError']
+            errorLabels: [ 'RetryableWriteError' ]
           }
         )
 
@@ -242,16 +240,16 @@ describe 'Retryable writes errors tests' do
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: %w(insert),
+            failCommands: %w[insert],
             closeConnection: false,
             errorCode: 6,
-            errorLabels: ['RetryableWriteError']
+            errorLabels: [ 'RetryableWriteError' ]
           }
         )
       end
 
       after do
-        [first_mongos, second_mongos].each do |admin_client|
+        [ first_mongos, second_mongos ].each do |admin_client|
           admin_client.database.command(
             configureFailPoint: 'failCommand',
             mode: 'off'
@@ -272,7 +270,7 @@ describe 'Retryable writes errors tests' do
     context 'when no other mongos is available' do
       let(:mongos) do
         Mongo::Client.new(
-          [SpecConfig.instance.addresses.first],
+          [ SpecConfig.instance.addresses.first ],
           direct_connection: true,
           database: 'admin'
         )
@@ -292,10 +290,10 @@ describe 'Retryable writes errors tests' do
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: %w(insert),
+            failCommands: %w[insert],
             closeConnection: false,
             errorCode: 6,
-            errorLabels: ['RetryableWriteError']
+            errorLabels: [ 'RetryableWriteError' ]
           }
         )
       end
@@ -313,15 +311,15 @@ describe 'Retryable writes errors tests' do
         client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
         expect { collection.insert_one(x: 1) }.not_to raise_error
         expect(insert_started_events.map { |e| e.address.to_s }.sort).to eq([
-          SpecConfig.instance.addresses.first.to_s,
-          SpecConfig.instance.addresses.first.to_s
-        ])
+                                                                              SpecConfig.instance.addresses.first.to_s,
+                                                                              SpecConfig.instance.addresses.first.to_s
+                                                                            ])
         expect(insert_failed_events.map { |e| e.address.to_s }.sort).to eq([
-          SpecConfig.instance.addresses.first.to_s
-        ])
+                                                                             SpecConfig.instance.addresses.first.to_s
+                                                                           ])
         expect(insert_succeeded_events.map { |e| e.address.to_s }.sort).to eq([
-          SpecConfig.instance.addresses.first.to_s
-        ])
+                                                                                SpecConfig.instance.addresses.first.to_s
+                                                                              ])
       end
     end
   end

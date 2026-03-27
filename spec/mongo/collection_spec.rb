@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Collection do
-
   let(:subscriber) { Mrss::EventSubscriber.new }
 
   let(:client) do
@@ -20,7 +18,6 @@ describe Mongo::Collection do
   end
 
   describe '#==' do
-
     let(:database) do
       Mongo::Database.new(authorized_client, :test)
     end
@@ -30,9 +27,7 @@ describe Mongo::Collection do
     end
 
     context 'when the names are the same' do
-
       context 'when the databases are the same' do
-
         let(:other) do
           described_class.new(database, :users)
         end
@@ -43,7 +38,6 @@ describe Mongo::Collection do
       end
 
       context 'when the databases are not the same' do
-
         let(:other_db) do
           Mongo::Database.new(authorized_client, :testing)
         end
@@ -53,12 +47,11 @@ describe Mongo::Collection do
         end
 
         it 'returns false' do
-          expect(collection).to_not eq(other)
+          expect(collection).not_to eq(other)
         end
       end
 
       context 'when the options are the same' do
-
         let(:other) do
           described_class.new(database, :users)
         end
@@ -69,48 +62,44 @@ describe Mongo::Collection do
       end
 
       context 'when the options are not the same' do
-
         let(:other) do
-          described_class.new(database, :users, :capped => true)
+          described_class.new(database, :users, capped: true)
         end
 
         it 'returns false' do
-          expect(collection).to_not eq(other)
+          expect(collection).not_to eq(other)
         end
       end
     end
 
     context 'when the names are not the same' do
-
       let(:other) do
         described_class.new(database, :sounds)
       end
 
       it 'returns false' do
-        expect(collection).to_not eq(other)
+        expect(collection).not_to eq(other)
       end
     end
 
     context 'when the object is not a collection' do
-
       it 'returns false' do
-        expect(collection).to_not eq('test')
+        expect(collection).not_to eq('test')
       end
     end
   end
 
   describe '#initialize' do
-
     let(:client) do
       new_local_client(SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+                       SpecConfig.instance.test_options.merge(monitoring_io: false))
     end
 
     let(:database) { client.database }
 
     context 'write concern given in :write option' do
       let(:collection) do
-        Mongo::Collection.new(database, 'foo', write: {w: 1})
+        Mongo::Collection.new(database, 'foo', write: { w: 1 })
       end
 
       it 'stores write concern' do
@@ -120,13 +109,13 @@ describe Mongo::Collection do
 
       it 'stores write concern under :write' do
         expect(collection.options[:write]).to eq(w: 1)
-        expect(collection.options[:write_concern]).to be nil
+        expect(collection.options[:write_concern]).to be_nil
       end
     end
 
     context 'write concern given in :write_concern option' do
       let(:collection) do
-        Mongo::Collection.new(database, 'foo', write_concern: {w: 1})
+        Mongo::Collection.new(database, 'foo', write_concern: { w: 1 })
       end
 
       it 'stores write concern' do
@@ -136,16 +125,15 @@ describe Mongo::Collection do
 
       it 'stores write concern under :write_concern' do
         expect(collection.options[:write_concern]).to eq(w: 1)
-        expect(collection.options[:write]).to be nil
+        expect(collection.options[:write]).to be_nil
       end
     end
 
     context 'write concern given in both :write and :write_concern options' do
       context 'identical values' do
-
         let(:collection) do
           Mongo::Collection.new(database, 'foo',
-            write: {w: 1}, write_concern: {w: 1})
+                                write: { w: 1 }, write_concern: { w: 1 })
         end
 
         it 'stores write concern' do
@@ -160,10 +148,9 @@ describe Mongo::Collection do
       end
 
       context 'different values' do
-
         let(:collection) do
           Mongo::Collection.new(database, 'foo',
-            write: {w: 1}, write_concern: {w: 2})
+                                write: { w: 1 }, write_concern: { w: 2 })
         end
 
         it 'raises an exception' do
@@ -174,33 +161,31 @@ describe Mongo::Collection do
       end
     end
 
-=begin WriteConcern object support
-    context 'when write concern is provided via a WriteConcern object' do
-
-      let(:collection) do
-        Mongo::Collection.new(database, 'foo', write_concern: wc)
-      end
-
-      let(:wc) { Mongo::WriteConcern.get(w: 2) }
-
-      it 'stores write concern options in collection options' do
-        expect(collection.options[:write_concern]).to eq(w: 2)
-      end
-
-      it 'caches write concern object' do
-        expect(collection.write_concern).to be wc
-      end
-    end
-=end
+    # WriteConcern object support
+    #     context 'when write concern is provided via a WriteConcern object' do
+    #
+    #       let(:collection) do
+    #         Mongo::Collection.new(database, 'foo', write_concern: wc)
+    #       end
+    #
+    #       let(:wc) { Mongo::WriteConcern.get(w: 2) }
+    #
+    #       it 'stores write concern options in collection options' do
+    #         expect(collection.options[:write_concern]).to eq(w: 2)
+    #       end
+    #
+    #       it 'caches write concern object' do
+    #         expect(collection.write_concern).to be wc
+    #       end
+    #     end
   end
 
   describe '#with' do
-
     let(:client) do
       new_local_client_nmio(SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(
-          SpecConfig.instance.auth_options
-      ))
+                            SpecConfig.instance.test_options.merge(
+                              SpecConfig.instance.auth_options
+                            ))
     end
 
     let(:database) do
@@ -216,7 +201,6 @@ describe Mongo::Collection do
     end
 
     context 'when new read options are provided' do
-
       let(:new_options) do
         { read: { mode: :secondary } }
       end
@@ -230,10 +214,9 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a server selection timeout setting' do
-
         let(:client) do
           new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.test_options.merge(server_selection_timeout: 2, monitoring_io: false))
+                           SpecConfig.instance.test_options.merge(server_selection_timeout: 2, monitoring_io: false))
         end
 
         it 'passes the the server_selection_timeout to the cluster' do
@@ -242,11 +225,11 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a read preference set' do
-
         let(:client) do
           authorized_client.with(client_options).tap do |client|
             expect(client.options[:read]).to eq(Mongo::Options::Redacted.new(
-              mode: :primary_preferred))
+                                                  mode: :primary_preferred
+                                                ))
             client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
           end
         end
@@ -277,7 +260,7 @@ describe Mongo::Collection do
           require_topology :replica_set
 
           let(:client_options) do
-            {read: { mode: :primary_preferred }}
+            { read: { mode: :primary_preferred } }
           end
 
           shared_examples_for "uses collection's read preference when reading" do
@@ -308,7 +291,7 @@ describe Mongo::Collection do
             require_topology :replica_set, :sharded
 
             let(:expected_read_preference) do
-              {'mode' => 'secondary'}
+              { 'mode' => 'secondary' }
             end
 
             it_behaves_like "uses collection's read preference when reading"
@@ -317,14 +300,13 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a read preference and server selection timeout set' do
-
         let(:client) do
           new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.test_options.merge(
-              read: { mode: :primary_preferred },
-              server_selection_timeout: 2,
-              monitoring_io: false
-          ))
+                           SpecConfig.instance.test_options.merge(
+                             read: { mode: :primary_preferred },
+                             server_selection_timeout: 2,
+                             monitoring_io: false
+                           ))
         end
 
         it 'sets the new read options on the new collection' do
@@ -338,7 +320,6 @@ describe Mongo::Collection do
     end
 
     context 'when new write options are provided' do
-
       let(:new_options) do
         { write: { w: 5 } }
       end
@@ -352,13 +333,12 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a write concern set' do
-
         let(:client) do
           new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.test_options.merge(
-              write: INVALID_WRITE_CONCERN,
-              monitoring_io: false,
-          ))
+                           SpecConfig.instance.test_options.merge(
+                             write: INVALID_WRITE_CONCERN,
+                             monitoring_io: false
+                           ))
         end
 
         it 'sets the new write options on the new collection' do
@@ -366,29 +346,27 @@ describe Mongo::Collection do
         end
 
         context 'when client uses :write_concern and collection uses :write' do
-
           let(:client) do
             new_local_client(SpecConfig.instance.addresses,
-              SpecConfig.instance.test_options.merge(
-                write_concern: {w: 1},
-                monitoring_io: false,
-            ))
+                             SpecConfig.instance.test_options.merge(
+                               write_concern: { w: 1 },
+                               monitoring_io: false
+                             ))
           end
 
           it 'uses :write from collection options only' do
             expect(new_collection.options[:write]).to eq(w: 5)
-            expect(new_collection.options[:write_concern]).to be nil
+            expect(new_collection.options[:write_concern]).to be_nil
           end
         end
 
         context 'when client uses :write and collection uses :write_concern' do
-
           let(:client) do
             new_local_client(SpecConfig.instance.addresses,
-              SpecConfig.instance.test_options.merge(
-                write: {w: 1},
-                monitoring_io: false,
-            ))
+                             SpecConfig.instance.test_options.merge(
+                               write: { w: 1 },
+                               monitoring_io: false
+                             ))
           end
 
           let(:new_options) do
@@ -397,14 +375,13 @@ describe Mongo::Collection do
 
           it 'uses :write_concern from collection options only' do
             expect(new_collection.options[:write_concern]).to eq(w: 5)
-            expect(new_collection.options[:write]).to be nil
+            expect(new_collection.options[:write]).to be_nil
           end
         end
 
         context 'when collection previously had :wrte_concern and :write is used with a different value' do
-
           let(:collection) do
-            database.collection(:users, write_concern: {w: 2})
+            database.collection(:users, write_concern: { w: 2 })
           end
 
           let(:new_options) do
@@ -413,14 +390,13 @@ describe Mongo::Collection do
 
           it 'uses the new option' do
             expect(new_collection.options[:write]).to eq(w: 5)
-            expect(new_collection.options[:write_concern]).to be nil
+            expect(new_collection.options[:write_concern]).to be_nil
           end
         end
 
         context 'when collection previously had :wrte and :write_concern is used with a different value' do
-
           let(:collection) do
-            database.collection(:users, write: {w: 2})
+            database.collection(:users, write: { w: 2 })
           end
 
           let(:new_options) do
@@ -429,14 +405,13 @@ describe Mongo::Collection do
 
           it 'uses the new option' do
             expect(new_collection.options[:write_concern]).to eq(w: 5)
-            expect(new_collection.options[:write]).to be nil
+            expect(new_collection.options[:write]).to be_nil
           end
         end
 
         context 'when collection previously had :wrte_concern and :write is used with the same value' do
-
           let(:collection) do
-            database.collection(:users, write_concern: {w: 2})
+            database.collection(:users, write_concern: { w: 2 })
           end
 
           let(:new_options) do
@@ -445,14 +420,13 @@ describe Mongo::Collection do
 
           it 'uses the new option' do
             expect(new_collection.options[:write]).to eq(w: 2)
-            expect(new_collection.options[:write_concern]).to be nil
+            expect(new_collection.options[:write_concern]).to be_nil
           end
         end
 
         context 'when collection previously had :wrte and :write_concern is used with the same value' do
-
           let(:collection) do
-            database.collection(:users, write: {w: 2})
+            database.collection(:users, write: { w: 2 })
           end
 
           let(:new_options) do
@@ -460,7 +434,7 @@ describe Mongo::Collection do
           end
 
           it 'uses the new option' do
-            expect(new_collection.options[:write]).to be nil
+            expect(new_collection.options[:write]).to be_nil
             expect(new_collection.options[:write_concern]).to eq(w: 2)
           end
         end
@@ -468,11 +442,10 @@ describe Mongo::Collection do
     end
 
     context 'when new read and write options are provided' do
-
       let(:new_options) do
         {
           read: { mode: :secondary },
-          write: { w: 4}
+          write: { w: 4 }
         }
       end
 
@@ -489,13 +462,12 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a server selection timeout setting' do
-
         let(:client) do
           new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.test_options.merge(
-              server_selection_timeout: 2,
-              monitoring_io: false,
-          ))
+                           SpecConfig.instance.test_options.merge(
+                             server_selection_timeout: 2,
+                             monitoring_io: false
+                           ))
         end
 
         it 'passes the server_selection_timeout setting to the cluster' do
@@ -504,13 +476,12 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a read preference set' do
-
         let(:client) do
           new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.test_options.merge(
-              read: { mode: :primary_preferred },
-              monitoring_io: false,
-          ))
+                           SpecConfig.instance.test_options.merge(
+                             read: { mode: :primary_preferred },
+                             monitoring_io: false
+                           ))
         end
 
         it 'sets the new read options on the new collection' do
@@ -521,21 +492,19 @@ describe Mongo::Collection do
     end
 
     context 'when neither read nor write options are provided' do
-
       let(:new_options) do
         { some_option: 'invalid' }
       end
 
       it 'raises an error' do
-        expect {
+        expect do
           new_collection
-        }.to raise_exception(Mongo::Error::UnchangeableCollectionOption)
+        end.to raise_exception(Mongo::Error::UnchangeableCollectionOption)
       end
     end
   end
 
   describe '#read_preference' do
-
     let(:collection) do
       described_class.new(authorized_client.database, :users, options)
     end
@@ -543,7 +512,6 @@ describe Mongo::Collection do
     let(:options) { {} }
 
     context 'when a read preference is set in the options' do
-
       let(:options) do
         { read: { mode: :secondary } }
       end
@@ -554,9 +522,7 @@ describe Mongo::Collection do
     end
 
     context 'when a read preference is not set in the options' do
-
       context 'when the database has a read preference set' do
-
         let(:client) do
           authorized_client.with(read: { mode: :secondary_preferred })
         end
@@ -571,7 +537,6 @@ describe Mongo::Collection do
       end
 
       context 'when the database does not have a read preference' do
-
         it 'returns nil' do
           expect(collection.read_preference).to be_nil
         end
@@ -580,7 +545,6 @@ describe Mongo::Collection do
   end
 
   describe '#server_selector' do
-
     let(:collection) do
       described_class.new(authorized_client.database, :users, options)
     end
@@ -588,7 +552,6 @@ describe Mongo::Collection do
     let(:options) { {} }
 
     context 'when a read preference is set in the options' do
-
       let(:options) do
         { read: { mode: :secondary } }
       end
@@ -599,9 +562,7 @@ describe Mongo::Collection do
     end
 
     context 'when a read preference is not set in the options' do
-
       context 'when the database has a read preference set' do
-
         let(:client) do
           authorized_client.with(read: { mode: :secondary_preferred })
         end
@@ -616,7 +577,6 @@ describe Mongo::Collection do
       end
 
       context 'when the database does not have a read preference' do
-
         it 'returns a primary server selector' do
           expect(collection.server_selector).to be_a(Mongo::ServerSelector::Primary)
         end
@@ -625,19 +585,17 @@ describe Mongo::Collection do
   end
 
   describe '#capped?' do
-
     let(:database) do
       authorized_client.database
     end
 
     context 'when the collection is capped' do
-
       let(:collection) do
-        described_class.new(database, :specs, :capped => true, :size => 4096, :max => 512)
+        described_class.new(database, :specs, capped: true, size: 4096, max: 512)
       end
 
       let(:collstats) do
-        collection.aggregate([ {'$collStats' => { 'storageStats' => {} }} ]).first
+        collection.aggregate([ { '$collStats' => { 'storageStats' => {} } } ]).first
       end
 
       let(:storage_stats) do
@@ -653,15 +611,14 @@ describe Mongo::Collection do
         expect(collection).to be_capped
       end
 
-      it "applies the options" do
-        expect(storage_stats["capped"]).to be true
-        expect(storage_stats["max"]).to eq(512)
-        expect(storage_stats["maxSize"]).to eq(4096)
+      it 'applies the options' do
+        expect(storage_stats['capped']).to be true
+        expect(storage_stats['max']).to eq(512)
+        expect(storage_stats['maxSize']).to eq(4096)
       end
     end
 
     context 'when the collection is not capped' do
-
       let(:collection) do
         described_class.new(database, :specs)
       end
@@ -672,13 +629,12 @@ describe Mongo::Collection do
       end
 
       it 'returns false' do
-        expect(collection).to_not be_capped
+        expect(collection).not_to be_capped
       end
     end
   end
 
   describe '#inspect' do
-
     it 'includes the object id' do
       expect(authorized_collection.inspect).to include(authorized_collection.object_id.to_s)
     end
@@ -689,7 +645,6 @@ describe Mongo::Collection do
   end
 
   describe '#watch' do
-
     context 'when change streams can be tested' do
       require_topology :replica_set
 
@@ -707,16 +662,13 @@ describe Mongo::Collection do
       end
 
       context 'when no options are provided' do
-
         context 'when the operation type is an insert' do
-
           it 'returns the change' do
             expect(enum.next[:fullDocument][:a]).to eq(1)
           end
         end
 
         context 'when the operation type is an update' do
-
           before do
             authorized_collection.update_one({ a: 1 }, { '$set' => { a: 2 } })
           end
@@ -734,9 +686,7 @@ describe Mongo::Collection do
       end
 
       context 'when options are provided' do
-
         context 'when full_document is updateLookup' do
-
           let(:change_stream) do
             authorized_collection.watch([], full_document: 'updateLookup').to_enum
           end
@@ -757,7 +707,6 @@ describe Mongo::Collection do
         end
 
         context 'when batch_size is provided' do
-
           before do
             Thread.new do
               sleep 1
@@ -777,7 +726,6 @@ describe Mongo::Collection do
         end
 
         context 'when collation is provided' do
-
           before do
             authorized_collection.update_one({ a: 1 }, { '$set' => { a: 2 } })
           end
@@ -787,8 +735,8 @@ describe Mongo::Collection do
           end
 
           let(:change_stream) do
-            authorized_collection.watch([ { '$match' => { operationType: 'UPDATE'}}],
-                                        collation: { locale: 'en_US', strength: 2 } ).to_enum
+            authorized_collection.watch([ { '$match' => { operationType: 'UPDATE' } } ],
+                                        collation: { locale: 'en_US', strength: 2 }).to_enum
           end
 
           it 'returns the change' do
@@ -803,7 +751,6 @@ describe Mongo::Collection do
       require_topology :replica_set
 
       context 'when setting the max_await_time_ms' do
-
         let(:change_stream) do
           authorized_collection.watch([], max_await_time_ms: 3000)
         end
@@ -818,12 +765,12 @@ describe Mongo::Collection do
           expect(get_more['maxTimeMS']).to be == 3000
         end
 
-        it "waits the appropriate amount of time" do
+        it 'waits the appropriate amount of time' do
           start_time = Mongo::Utils.monotonic_time
           enum.try_next
           end_time = Mongo::Utils.monotonic_time
 
-          expect(end_time-start_time).to be >= 3
+          expect(end_time - start_time).to be >= 3
         end
       end
     end

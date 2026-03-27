@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -23,14 +22,14 @@ describe 'Client-Side Encryption' do
         {
           kms_providers: aws_kms_providers,
           key_vault_namespace: 'keyvault.datakeys',
-        },
+        }
       )
     end
 
     let(:master_key_template) do
       {
-        region: "us-east-1",
-        key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0"
+        region: 'us-east-1',
+        key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'
       }
     end
 
@@ -65,7 +64,7 @@ describe 'Client-Side Encryption' do
 
     context 'with region, key, and endpoint options' do
       let(:master_key) do
-        master_key_template.merge({endpoint: "kms.us-east-1.amazonaws.com"})
+        master_key_template.merge({ endpoint: 'kms.us-east-1.amazonaws.com' })
       end
 
       it_behaves_like 'a functioning data key'
@@ -73,7 +72,7 @@ describe 'Client-Side Encryption' do
 
     context 'with region, key, and endpoint with valid port' do
       let(:master_key) do
-        master_key_template.merge({endpoint: "kms.us-east-1.amazonaws.com:443"})
+        master_key_template.merge({ endpoint: 'kms.us-east-1.amazonaws.com:443' })
       end
 
       it_behaves_like 'a functioning data key'
@@ -89,7 +88,7 @@ describe 'Client-Side Encryption' do
 
     context 'with region, key, and endpoint with invalid port' do
       let(:master_key) do
-        master_key_template.merge({endpoint: "kms.us-east-1.amazonaws.com:12345"})
+        master_key_template.merge({ endpoint: 'kms.us-east-1.amazonaws.com:12345' })
       end
 
       let(:error_regex) do
@@ -99,10 +98,9 @@ describe 'Client-Side Encryption' do
       it_behaves_like 'raising a KMS error'
     end
 
-
     context 'with region, key, and endpoint with invalid region' do
       let(:master_key) do
-        master_key_template.merge({endpoint: "kms.us-east-2.amazonaws.com"})
+        master_key_template.merge({ endpoint: 'kms.us-east-2.amazonaws.com' })
       end
 
       let(:error_regex) do
@@ -114,7 +112,7 @@ describe 'Client-Side Encryption' do
 
     context 'with region, key, and endpoint at incorrect domain' do
       let(:master_key) do
-        master_key_template.merge({endpoint: "doesnotexist.invalid"})
+        master_key_template.merge({ endpoint: 'doesnotexist.invalid' })
       end
 
       let(:error_regex) do

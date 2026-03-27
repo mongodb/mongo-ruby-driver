@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   class Server
     class Description
-
       # Defines behavior around what features a specific server supports.
       #
       # @since 2.0.0
@@ -43,19 +41,19 @@ module Mongo
         # Error message if the server is too old for this version of the driver.
         #
         # @since 2.5.0
-        SERVER_TOO_OLD = "Server at (%s) reports wire version (%s), but this version of the Ruby driver " +
-                           "requires at least (%s)."
+        SERVER_TOO_OLD = 'Server at (%s) reports wire version (%s), but this version of the Ruby driver ' +
+                         'requires at least (%s).'
 
         # Warning message if the server version is deprecated.
         SERVER_DEPRECATED = 'Server at (%s) reports wire version (%s), but support for that wire version ' \
-                              'is deprecated and will be removed in a future version of the Ruby driver. ' \
-                              'Please upgrade your MongoDB server to a newer version soon.'
+                            'is deprecated and will be removed in a future version of the Ruby driver. ' \
+                            'Please upgrade your MongoDB server to a newer version soon.'
 
         # Error message if the driver is too old for the version of the server.
         #
         # @since 2.5.0
-        DRIVER_TOO_OLD = "Server at (%s) requires wire version (%s), but this version of the Ruby driver " +
-                           "only supports up to (%s)."
+        DRIVER_TOO_OLD = 'Server at (%s) requires wire version (%s), but this version of the Ruby driver ' +
+                         'only supports up to (%s).'
 
         # An empty range constant, for use in DEPRECATED_WIRE_VERSIONS.
         EMPTY_RANGE = (0...0).freeze
@@ -79,16 +77,14 @@ module Mongo
         DEPRECATED_WIRE_VERSIONS = EMPTY_RANGE
 
         # make sure the deprecated versions are valid
-        if DEPRECATED_WIRE_VERSIONS.min
-          if DRIVER_WIRE_VERSIONS.min > DEPRECATED_WIRE_VERSIONS.max
-            raise ArgumentError, 'DEPRECATED_WIRE_VERSIONS must be empty, or be within DRIVER_WIRE_VERSIONS'
-          end
+        if DEPRECATED_WIRE_VERSIONS.min && (DRIVER_WIRE_VERSIONS.min > DEPRECATED_WIRE_VERSIONS.max)
+          raise ArgumentError, 'DEPRECATED_WIRE_VERSIONS must be empty, or be within DRIVER_WIRE_VERSIONS'
         end
 
         # Create the methods for each mapping to tell if they are supported.
         #
         # @since 2.0.0
-        MAPPINGS.each do |name, version|
+        MAPPINGS.each do |name, _version|
           # Determine whether or not the feature is supported.
           #
           # @example Is a feature enabled?
@@ -116,18 +112,15 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(server_wire_versions, address = nil)
-          if server_wire_versions.min.nil?
-            raise ArgumentError, "server_wire_versions's min is nil"
-          end
-          if server_wire_versions.max.nil?
-            raise ArgumentError, "server_wire_versions's max is nil"
-          end
+          raise ArgumentError, "server_wire_versions's min is nil" if server_wire_versions.min.nil?
+          raise ArgumentError, "server_wire_versions's max is nil" if server_wire_versions.max.nil?
+
           @server_wire_versions = server_wire_versions
           @address = address
 
-          if Mongo::Lint.enabled?
-            freeze
-          end
+          return unless Mongo::Lint.enabled?
+
+          freeze
         end
 
         # Check that there is an overlap between the driver supported wire
@@ -139,17 +132,15 @@ module Mongo
         def check_driver_support!
           if DEPRECATED_WIRE_VERSIONS.include?(@server_wire_versions.max)
             feature = "wire_version:#{@address}"
-            Mongo::Deprecations.warn(feature, SERVER_DEPRECATED % [@address, @server_wire_versions.max])
+            Mongo::Deprecations.warn(feature, format(SERVER_DEPRECATED, @address, @server_wire_versions.max))
 
           elsif DRIVER_WIRE_VERSIONS.min > @server_wire_versions.max
-            raise Error::UnsupportedFeatures.new(SERVER_TOO_OLD % [@address,
-                                                                   @server_wire_versions.max,
-                                                                   DRIVER_WIRE_VERSIONS.min])
+            raise Error::UnsupportedFeatures.new(format(SERVER_TOO_OLD, @address, @server_wire_versions.max,
+                                                        DRIVER_WIRE_VERSIONS.min))
 
           elsif DRIVER_WIRE_VERSIONS.max < @server_wire_versions.min
-            raise Error::UnsupportedFeatures.new(DRIVER_TOO_OLD % [@address,
-                                                                   @server_wire_versions.min,
-                                                                   DRIVER_WIRE_VERSIONS.max])
+            raise Error::UnsupportedFeatures.new(format(DRIVER_TOO_OLD, @address, @server_wire_versions.min,
+                                                        DRIVER_WIRE_VERSIONS.max))
           end
         end
       end

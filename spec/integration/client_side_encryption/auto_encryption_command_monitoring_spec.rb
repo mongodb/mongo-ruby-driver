@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -24,18 +23,18 @@ describe 'Auto Encryption' do
         auto_encryption_options: {
           kms_providers: kms_providers,
           key_vault_namespace: key_vault_namespace,
-          schema_map: { "auto_encryption.users" => schema_map },
+          schema_map: { 'auto_encryption.users' => schema_map },
           # Spawn mongocryptd on non-default port for sharded cluster tests
           extra_options: extra_options,
         },
         database: db_name
-      ),
+      )
     ).tap do |client|
       client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
   end
 
-  before(:each) do
+  before do
     key_vault_collection.drop
     key_vault_collection.insert_one(data_key)
 
@@ -64,24 +63,24 @@ describe 'Auto Encryption' do
 
   context 'when performing operations that need a document in the database' do
     before do
-      result = encryption_client['users'].insert_one(ssn: ssn, age: 23)
+      encryption_client['users'].insert_one(ssn: ssn, age: 23)
     end
 
     describe '#aggregate' do
       let(:command_name) { 'aggregate' }
 
       before do
-        encryption_client['users'].aggregate([{ '$match' => { 'ssn' => ssn } }]).first
+        encryption_client['users'].aggregate([ { '$match' => { 'ssn' => ssn } } ]).first
       end
 
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
         expect(
-          started_event.command["pipeline"].first["$match"]["ssn"]["$eq"]
+          started_event.command['pipeline'].first['$match']['ssn']['$eq']
         ).to be_ciphertext
 
         # Command succeeded event occurs before ssn is decrypted
-        expect(succeeded_event.reply["cursor"]["firstBatch"].first["ssn"]).to be_ciphertext
+        expect(succeeded_event.reply['cursor']['firstBatch'].first['ssn']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -97,7 +96,7 @@ describe 'Auto Encryption' do
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
         # Command succeeded event does not contain any data to be decrypted
-        expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command['query']['ssn']['$eq']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -113,7 +112,7 @@ describe 'Auto Encryption' do
       it 'has encrypted data in command monitoring' do
         # Command started event does not contain any data to be encrypted
         # Command succeeded event occurs before ssn is decrypted
-        expect(succeeded_event.reply["values"].first).to be_ciphertext
+        expect(succeeded_event.reply['values'].first).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -129,7 +128,7 @@ describe 'Auto Encryption' do
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
         # Command succeeded event does not contain any data to be decrypted
-        expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command['deletes'].first['q']['ssn']['$eq']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -145,7 +144,7 @@ describe 'Auto Encryption' do
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
         # Command succeeded event does not contain any data to be decrypted
-        expect(started_event.command["deletes"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command['deletes'].first['q']['ssn']['$eq']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -160,10 +159,10 @@ describe 'Auto Encryption' do
 
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
-        expect(started_event.command["filter"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command['filter']['ssn']['$eq']).to be_ciphertext
 
         # Command succeeded event occurs before ssn is decrypted
-        expect(succeeded_event.reply["cursor"]["firstBatch"].first["ssn"]).to be_ciphertext
+        expect(succeeded_event.reply['cursor']['firstBatch'].first['ssn']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -178,10 +177,10 @@ describe 'Auto Encryption' do
 
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
-        expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command['query']['ssn']['$eq']).to be_ciphertext
 
         # Command succeeded event occurs before ssn is decrypted
-        expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
+        expect(succeeded_event.reply['value']['ssn']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -199,11 +198,11 @@ describe 'Auto Encryption' do
 
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
-        expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
-        expect(started_event.command["update"]["ssn"]).to be_ciphertext
+        expect(started_event.command['query']['ssn']['$eq']).to be_ciphertext
+        expect(started_event.command['update']['ssn']).to be_ciphertext
 
         # Command succeeded event occurs before ssn is decrypted
-        expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
+        expect(succeeded_event.reply['value']['ssn']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -220,13 +219,12 @@ describe 'Auto Encryption' do
       end
 
       it 'has encrypted data in command monitoring' do
-
         # Command started event occurs after ssn is encrypted
-        expect(started_event.command["query"]["ssn"]["$eq"]).to be_ciphertext
-        expect(started_event.command["update"]["ssn"]).to be_ciphertext
+        expect(started_event.command['query']['ssn']['$eq']).to be_ciphertext
+        expect(started_event.command['update']['ssn']).to be_ciphertext
 
         # Command succeeded event occurs before ssn is decrypted
-        expect(succeeded_event.reply["value"]["ssn"]).to be_ciphertext
+        expect(succeeded_event.reply['value']['ssn']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -245,8 +243,8 @@ describe 'Auto Encryption' do
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
         # Command succeeded event does not contain any data to be decrypted
-        expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
-        expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
+        expect(started_event.command['updates'].first['q']['ssn']['$eq']).to be_ciphertext
+        expect(started_event.command['updates'].first['u']['ssn']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -262,8 +260,8 @@ describe 'Auto Encryption' do
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
         # Command succeeded event does not contain any data to be decrypted
-        expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
-        expect(started_event.command["updates"].first["u"]["ssn"]).to be_ciphertext
+        expect(started_event.command['updates'].first['q']['ssn']['$eq']).to be_ciphertext
+        expect(started_event.command['updates'].first['u']['ssn']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -274,13 +272,13 @@ describe 'Auto Encryption' do
 
       before do
         # update_many does not support replacement-style updates
-        encryption_client['users'].update_many({ ssn: ssn }, { "$inc" => { :age => 1 } })
+        encryption_client['users'].update_many({ ssn: ssn }, { '$inc' => { age: 1 } })
       end
 
       it 'has encrypted data in command monitoring' do
         # Command started event occurs after ssn is encrypted
         # Command succeeded event does not contain any data to be decrypted
-        expect(started_event.command["updates"].first["q"]["ssn"]["$eq"]).to be_ciphertext
+        expect(started_event.command['updates'].first['q']['ssn']['$eq']).to be_ciphertext
       end
 
       it_behaves_like 'it has a non-encrypted key_vault_client'
@@ -297,7 +295,7 @@ describe 'Auto Encryption' do
     it 'has encrypted data in command monitoring' do
       # Command started event occurs after ssn is encrypted
       # Command succeeded event does not contain any data to be decrypted
-      expect(started_event.command["documents"].first["ssn"]).to be_ciphertext
+      expect(started_event.command['documents'].first['ssn']).to be_ciphertext
     end
 
     it_behaves_like 'it has a non-encrypted key_vault_client'

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -30,32 +29,32 @@ describe 'Map-reduce operations' do
     require_topology :sharded
 
     context 'specified on client' do
-      let(:client) { authorized_client.with(read: {mode: :secondary_preferred }) }
+      let(:client) { authorized_client.with(read: { mode: :secondary_preferred }) }
 
       it 'is sent' do
         operation.to_a
 
-        event.command['$readPreference'].should == {'mode' => 'secondaryPreferred'}
+        expect(event.command['$readPreference']).to eq({ 'mode' => 'secondaryPreferred' })
       end
     end
 
     context 'specified on collection' do
-      let(:collection) { client['mr_integration', read: {mode: :secondary_preferred }] }
+      let(:collection) { client['mr_integration', read: { mode: :secondary_preferred }] }
 
       it 'is sent' do
         operation.to_a
 
-        event.command['$readPreference'].should == {'mode' => 'secondaryPreferred'}
+        expect(event.command['$readPreference']).to eq({ 'mode' => 'secondaryPreferred' })
       end
     end
 
     context 'specified on operation' do
-      let(:find_options) { {read: {mode: :secondary_preferred }} }
+      let(:find_options) { { read: { mode: :secondary_preferred } } }
 
       it 'is sent' do
         operation.to_a
 
-        event.command['$readPreference'].should == {'mode' => 'secondaryPreferred'}
+        expect(event.command['$readPreference']).to eq({ 'mode' => 'secondaryPreferred' })
       end
     end
   end
@@ -64,7 +63,7 @@ describe 'Map-reduce operations' do
     it 'is sent' do
       operation.to_a
 
-      event.command['lsid'].should_not be nil
+      event.command['lsid'].should_not be_nil
     end
   end
 end

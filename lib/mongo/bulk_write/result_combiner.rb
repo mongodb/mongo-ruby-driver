@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,14 +16,12 @@
 
 module Mongo
   class BulkWrite
-
     # Combines bulk write results together.
     #
     # @api private
     #
     # @since 2.1.0
     class ResultCombiner
-
       # @return [ Integer ] count The number of documents in the entire batch.
       attr_reader :count
 
@@ -97,12 +94,12 @@ module Mongo
       def combine_ids!(result)
         if result.respond_to?(Result::INSERTED_IDS)
           results[Result::INSERTED_IDS] = (results[Result::INSERTED_IDS] || []) +
-                                            result.inserted_ids
+                                          result.inserted_ids
         end
-        if result.respond_to?(Result::UPSERTED)
-          results[Result::UPSERTED_IDS] = (results[Result::UPSERTED_IDS] || []) +
-                                            result.upserted.map{ |doc| doc['_id'] }
-        end
+        return unless result.respond_to?(Result::UPSERTED)
+
+        results[Result::UPSERTED_IDS] = (results[Result::UPSERTED_IDS] || []) +
+                                        result.upserted.map { |doc| doc['_id'] }
       end
 
       def combine_errors!(result)
@@ -121,10 +118,10 @@ module Mongo
       end
 
       def combine_write_concern_errors!(result)
-        if write_concern_errors = result.aggregate_write_concern_errors(count)
-          results['writeConcernErrors'] = (results['writeConcernErrors'] || []) +
-                                                   write_concern_errors
-        end
+        return unless write_concern_errors = result.aggregate_write_concern_errors(count)
+
+        results['writeConcernErrors'] = (results['writeConcernErrors'] || []) +
+                                        write_concern_errors
       end
     end
   end

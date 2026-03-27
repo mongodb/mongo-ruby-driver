@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Protocol
-
     # The MongoDB wire protocol message representing a reply
     #
     # @example
@@ -28,7 +26,6 @@ module Mongo
     #
     # @api semipublic
     class Reply < Message
-
       # Determine if the reply had a query failure flag.
       #
       # @example Did the reply have a query failure.
@@ -81,14 +78,12 @@ module Mongo
       OP_CODE = 1
 
       # Available flags for a Reply message.
-      FLAGS = [
-        :cursor_not_found,
-        :query_failure,
-        :shard_config_stale,
-        :await_capable
+      FLAGS = %i[
+        cursor_not_found
+        query_failure
+        shard_config_stale
+        await_capable
       ]
-
-      public
 
       # @!attribute
       # @return [Array<Symbol>] The flags for this reply.
@@ -118,26 +113,25 @@ module Mongo
       #
       # @since 2.1.0
       class Upconverter
-
         # Next batch constant.
         #
         # @since 2.1.0
-        NEXT_BATCH = 'nextBatch'.freeze
+        NEXT_BATCH = 'nextBatch'
 
         # First batch constant.
         #
         # @since 2.1.0
-        FIRST_BATCH = 'firstBatch'.freeze
+        FIRST_BATCH = 'firstBatch'
 
         # Cursor field constant.
         #
         # @since 2.1.0
-        CURSOR = 'cursor'.freeze
+        CURSOR = 'cursor'
 
         # Id field constant.
         #
         # @since 2.1.0
-        ID = 'id'.freeze
+        ID = 'id'
 
         # Initialize the new upconverter.
         #
@@ -179,7 +173,7 @@ module Mongo
         private
 
         def batch_field
-          starting_from > 0 ? NEXT_BATCH : FIRST_BATCH
+          (starting_from > 0) ? NEXT_BATCH : FIRST_BATCH
         end
 
         def command?

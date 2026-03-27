@@ -1,14 +1,10 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Auth do
-
   describe '#get' do
-
     context 'when a mongodb_cr user is provided' do
-
       let(:user) do
         Mongo::Auth::User.new(auth_mech: :mongodb_cr)
       end
@@ -23,7 +19,6 @@ describe Mongo::Auth do
     end
 
     context 'when a mongodb_x509 user is provided' do
-
       let(:user) do
         Mongo::Auth::User.new(auth_mech: :mongodb_x509)
       end
@@ -38,7 +33,6 @@ describe Mongo::Auth do
     end
 
     context 'when a plain user is provided' do
-
       let(:user) do
         Mongo::Auth::User.new(auth_mech: :plain)
       end
@@ -53,15 +47,14 @@ describe Mongo::Auth do
     end
 
     context 'when an invalid mechanism is provided' do
-
       let(:user) do
         Mongo::Auth::User.new(auth_mech: :nothing)
       end
 
       it 'raises an error' do
-        expect {
+        expect do
           described_class.get(user, double('connection'))
-        }.to raise_error(Mongo::Auth::InvalidMechanism)
+        end.to raise_error(Mongo::Auth::InvalidMechanism)
       end
     end
   end

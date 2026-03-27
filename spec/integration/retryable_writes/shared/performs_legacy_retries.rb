@@ -1,7 +1,6 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
-require_relative './adds_diagnostics'
+require_relative 'adds_diagnostics'
 
 module PerformsLegacyRetries
   shared_examples 'it performs legacy retries' do
@@ -13,7 +12,7 @@ module PerformsLegacyRetries
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: [command_name],
+            failCommands: [ command_name ],
             closeConnection: true,
           }
         )
@@ -41,11 +40,17 @@ module PerformsLegacyRetries
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: [command_name],
+            failCommands: [ command_name ],
             blockConnection: true,
             blockTimeMS: 1100,
           }
         )
+      end
+
+      after do
+        # Assure that the server has completed the operation before moving
+        # on to the next test.
+        sleep 1
       end
 
       it 'does not retry the operation' do
@@ -54,12 +59,6 @@ module PerformsLegacyRetries
         expect do
           perform_operation
         end.to raise_error(Mongo::Error::SocketTimeoutError)
-      end
-
-      after do
-        # Assure that the server has completed the operation before moving
-        # on to the next test.
-        sleep 1
       end
     end
 
@@ -72,9 +71,9 @@ module PerformsLegacyRetries
             configureFailPoint: 'failCommand',
             mode: { times: times },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 5, # normally NOT a retryable error code
-              errorLabels: ['RetryableWriteError']
+              errorLabels: [ 'RetryableWriteError' ]
             }
           )
         end
@@ -122,7 +121,7 @@ module PerformsLegacyRetries
             configureFailPoint: 'failCommand',
             mode: { times: 1 },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 91, # normally a retryable error code
               errorLabels: [],
             }
@@ -150,7 +149,7 @@ module PerformsLegacyRetries
             configureFailPoint: 'failCommand',
             mode: { times: times },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 91, # a retryable error code
             }
           )
@@ -199,7 +198,7 @@ module PerformsLegacyRetries
             configureFailPoint: 'failCommand',
             mode: { times: 1 },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 5, # a non-retryable error code
             }
           )

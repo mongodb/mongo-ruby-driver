@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,16 +16,14 @@
 
 module Mongo
   class Error
-
     # Exception raised if the object is not a valid document.
     #
     # @since 2.0.0
     class InvalidDocument < Error
-
       # The error message.
       #
       # @since 2.0.0
-      MESSAGE = 'Invalid document provided.'.freeze
+      MESSAGE = 'Invalid document provided.'
 
       # Instantiate the new exception.
       #

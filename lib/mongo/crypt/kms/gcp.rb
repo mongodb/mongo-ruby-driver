@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -18,4 +17,3 @@
 require 'mongo/crypt/kms/gcp/credentials'
 require 'mongo/crypt/kms/gcp/credentials_retriever'
 require 'mongo/crypt/kms/gcp/master_document'
-

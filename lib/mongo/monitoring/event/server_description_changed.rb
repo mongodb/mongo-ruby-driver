@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Monitoring
     module Event
-
       # Event fired when a server's description changes.
       #
       # @since 2.4.0
       class ServerDescriptionChanged < Mongo::Event::Base
-
         # @return [ Address ] address The server address.
         attr_reader :address
 
@@ -60,8 +57,7 @@ module Mongo
         # @since 2.4.0
         # @api private
         def initialize(address, topology, previous_description, new_description,
-          awaited: false
-        )
+                       awaited: false)
           @address = address
           @topology = topology
           @previous_description = previous_description
@@ -79,9 +75,9 @@ module Mongo
         # @api experimental
         def summary
           "#<#{short_class_name}" +
-          " address=#{address}" +
-          # TODO Add summaries to descriptions and use them here
-          " prev=#{previous_description.server_type.upcase} new=#{new_description.server_type.upcase}#{awaited_indicator}>"
+            " address=#{address}" +
+            # TODO: Add summaries to descriptions and use them here
+            " prev=#{previous_description.server_type.upcase} new=#{new_description.server_type.upcase}#{awaited_indicator}>"
         end
 
         private

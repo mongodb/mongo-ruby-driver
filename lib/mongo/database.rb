@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 require 'mongo/database/view'
 
 module Mongo
-
   # Represents a database on the db server and operations that can execute on
   # it at this level.
   #
@@ -30,33 +28,33 @@ module Mongo
     # The admin database name.
     #
     # @since 2.0.0
-    ADMIN = 'admin'.freeze
+    ADMIN = 'admin'
 
     # The "collection" that database commands operate against.
     #
     # @since 2.0.0
-    COMMAND = '$cmd'.freeze
+    COMMAND = '$cmd'
 
     # The default database options.
     #
     # @since 2.0.0
-    DEFAULT_OPTIONS = Options::Redacted.new(:database => ADMIN).freeze
+    DEFAULT_OPTIONS = Options::Redacted.new(database: ADMIN).freeze
 
     # Database name field constant.
     #
     # @since 2.1.0
     # @deprecated
-    NAME = 'name'.freeze
+    NAME = 'name'
 
     # Databases constant.
     #
     # @since 2.1.0
-    DATABASES = 'databases'.freeze
+    DATABASES = 'databases'
 
     # The name of the collection that holds all the collection names.
     #
     # @since 2.0.0
-    NAMESPACES = 'system.namespaces'.freeze
+    NAMESPACES = 'system.namespaces'
 
     # @return [ Client ] client The database client.
     attr_reader :client
@@ -94,6 +92,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Database)
+
       name == other.name
     end
 
@@ -110,11 +109,13 @@ module Mongo
     # @since 2.0.0
     def [](collection_name, options = {})
       if options[:server_api]
-        raise ArgumentError, 'The :server_api option cannot be specified for collection objects. It can only be specified on Client level'
+        raise ArgumentError,
+              'The :server_api option cannot be specified for collection objects. It can only be specified on Client level'
       end
+
       Collection.new(self, collection_name, options)
     end
-    alias_method :collection, :[]
+    alias collection []
 
     # Get all the names of the non-system collections in the database.
     #
@@ -231,11 +232,7 @@ module Mongo
       opts = opts.dup
       execution_opts = opts.delete(:execution_options) || {}
 
-      txn_read_pref = if opts[:session] && opts[:session].in_transaction?
-        opts[:session].txn_read_preference
-      else
-        nil
-      end
+      txn_read_pref = (opts[:session].txn_read_preference if opts[:session] && opts[:session].in_transaction?)
       txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
       Lint.validate_underscore_read_preference(txn_read_pref)
       selector = ServerSelector.get(txn_read_pref)
@@ -247,10 +244,10 @@ module Mongo
           operation_timeouts: operation_timeouts(opts)
         )
         op = Operation::Command.new(
-          :selector => operation,
-          :db_name => name,
-          :read => selector,
-          :session => session
+          selector: operation,
+          db_name: name,
+          read: selector,
+          session: session
         )
 
         retry_enabled = client.options[:retry_reads] != false &&
@@ -281,11 +278,7 @@ module Mongo
     # @return [ Hash ] The result of the command execution.
     # @api private
     def read_command(operation, opts = {})
-      txn_read_pref = if opts[:session] && opts[:session].in_transaction?
-        opts[:session].txn_read_preference
-      else
-        nil
-      end
+      txn_read_pref = (opts[:session].txn_read_preference if opts[:session] && opts[:session].in_transaction?)
       txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
       Lint.validate_underscore_read_preference(txn_read_pref)
       preference = ServerSelector.get(txn_read_pref)
@@ -301,7 +294,7 @@ module Mongo
           db_name: name,
           read: preference,
           session: session,
-          comment: opts[:comment],
+          comment: opts[:comment]
         )
         op_name = opts[:op_name] || 'command'
         tracer.trace_operation(operation, context, op_name: op_name) do
@@ -330,26 +323,26 @@ module Mongo
     #
     # @since 2.0.0
     def drop(options = {})
-      operation = { :dropDatabase => 1 }
+      operation = { dropDatabase: 1 }
       client.with_session(options) do |session|
         write_concern = if options[:write_concern]
-          WriteConcern.get(options[:write_concern])
-        else
-          self.write_concern
-        end
+                          WriteConcern.get(options[:write_concern])
+                        else
+                          self.write_concern
+                        end
         Operation::DropDatabase.new({
-          selector: operation,
-          db_name: name,
-          write_concern: write_concern,
-          session: session
-        }).execute(
-          next_primary(nil, session),
-          context: Operation::Context.new(
-            client: client,
-            session: session,
-            operation_timeouts: operation_timeouts(options)
-          )
-        )
+                                      selector: operation,
+                                      db_name: name,
+                                      write_concern: write_concern,
+                                      session: session
+                                    }).execute(
+                                      next_primary(nil, session),
+                                      context: Operation::Context.new(
+                                        client: client,
+                                        session: session,
+                                        operation_timeouts: operation_timeouts(options)
+                                      )
+                                    )
       end
     end
 
@@ -374,6 +367,7 @@ module Mongo
       if Lint.enabled? && !(name.is_a?(String) || name.is_a?(Symbol))
         raise "Database name must be a string or a symbol: #{name}"
       end
+
       @client = client
       @name = name.to_s.freeze
       @options = options.freeze
@@ -532,7 +526,8 @@ module Mongo
         Mongo::Collection::View.new(collection("#{COMMAND}.aggregate"), {}, view_options),
         pipeline,
         Mongo::Collection::View::ChangeStream::DATABASE,
-        options)
+        options
+      )
     end
 
     # Create a database for the provided client, for use when we don't want the

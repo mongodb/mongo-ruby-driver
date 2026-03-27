@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # This exception is raised when the server nonce returned does not
     # start with the client nonce sent to it.
     #
     # @since 2.0.0
     class InvalidNonce < Error
-
       # @return [ String ] nonce The client nonce.
       attr_reader :nonce
 

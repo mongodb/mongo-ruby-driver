@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Protocol
-
     # A base class providing functionality required by all messages in
     # the MongoDB wire protocol. It provides a minimal DSL for defining typed
     # fields to enable serialization and deserialization over the wire.
@@ -49,34 +47,34 @@ module Mongo
       # The batch size constant.
       #
       # @since 2.2.0
-      BATCH_SIZE = 'batchSize'.freeze
+      BATCH_SIZE = 'batchSize'
 
       # The collection constant.
       #
       # @since 2.2.0
-      COLLECTION = 'collection'.freeze
+      COLLECTION = 'collection'
 
       # The limit constant.
       #
       # @since 2.2.0
-      LIMIT = 'limit'.freeze
+      LIMIT = 'limit'
 
       # The ordered constant.
       #
       # @since 2.2.0
-      ORDERED = 'ordered'.freeze
+      ORDERED = 'ordered'
 
       # The q constant.
       #
       # @since 2.2.0
-      Q = 'q'.freeze
+      Q = 'q'
 
       # Default max message size of 48MB.
       #
       # @since 2.2.1
-      MAX_MESSAGE_SIZE = 50331648.freeze
+      MAX_MESSAGE_SIZE = 50_331_648
 
-      def initialize(*args) # :nodoc:
+      def initialize(*_args) # :nodoc:
         set_request_id
       end
 
@@ -109,7 +107,7 @@ module Mongo
       #
       # @since 2.5.0
       # @api private
-      def maybe_compress(compressor, zlib_compression_level = nil)
+      def maybe_compress(_compressor, _zlib_compression_level = nil)
         self
       end
 
@@ -149,8 +147,8 @@ module Mongo
       #
       # @return [ Mongo::Protocol::Msg ] The decrypted message, or the original
       #   message if decryption was not possible or necessary.
-      def maybe_decrypt(context)
-        # TODO determine if we should be decrypting data coming from pre-4.2
+      def maybe_decrypt(_context)
+        # TODO: determine if we should be decrypting data coming from pre-4.2
         # servers, potentially using legacy wire protocols. If so we need
         # to implement decryption for those wire protocols as our current
         # encryption/decryption code is OP_MSG-specific.
@@ -165,7 +163,7 @@ module Mongo
       #
       # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
       #   message if encryption was not possible or necessary.
-      def maybe_encrypt(connection, context)
+      def maybe_encrypt(_connection, _context)
         # Do nothing if the Message subclass has not implemented this method
         self
       end
@@ -180,21 +178,18 @@ module Mongo
 
       private def merge_sections
         cmd = if @sections.length > 1
-          cmd = @sections.detect { |section| section[:type] == 0 }[:payload]
-          identifier = @sections.detect { |section| section[:type] == 1}[:payload][:identifier]
-          cmd.merge(identifier.to_sym =>
-            @sections.select { |section| section[:type] == 1 }.
-              map { |section| section[:payload][:sequence] }.
-              inject([]) { |arr, documents| arr + documents }
-          )
-        elsif @sections.first[:payload]
-          @sections.first[:payload]
-        else
-          @sections.first
-        end
-        if cmd.nil?
-          raise "The command should never be nil here"
-        end
+                cmd = @sections.detect { |section| section[:type] == 0 }[:payload]
+                identifier = @sections.detect { |section| section[:type] == 1 }[:payload][:identifier]
+                cmd.merge(identifier.to_sym =>
+                  @sections.select { |section| section[:type] == 1 }
+                  .sum([]) { |section| section[:payload][:sequence] })
+              elsif @sections.first[:payload]
+                @sections.first[:payload]
+              else
+                @sections.first
+              end
+        raise 'The command should never be nil here' if cmd.nil?
+
         cmd
       end
 
@@ -208,8 +203,6 @@ module Mongo
             max_bson_size + bson_overhead
           elsif max_bson_size
             max_bson_size
-          else
-            nil
           end
 
         start = buffer.length
@@ -218,7 +211,7 @@ module Mongo
         buffer.replace_int32(start, buffer.length - start)
       end
 
-      alias_method :to_s, :serialize
+      alias to_s serialize
 
       # Deserializes messages from an IO stream.
       #
@@ -240,29 +233,26 @@ module Mongo
       #
       # @api private
       def self.deserialize(io,
-        max_message_size = MAX_MESSAGE_SIZE,
-        expected_response_to = nil,
-        options = {}
-      )
+                           max_message_size = MAX_MESSAGE_SIZE,
+                           expected_response_to = nil,
+                           options = {})
         # io is usually a Mongo::Socket instance, which supports the
         # timeout option. For compatibility with whoever might call this
         # method with some other IO-like object, pass options only when they
         # are not empty.
         read_options = options.slice(:timeout, :socket_timeout)
 
-        if read_options.empty?
-          chunk = io.read(16)
-        else
-          chunk = io.read(16, **read_options)
-        end
+        chunk = if read_options.empty?
+                  io.read(16)
+                else
+                  io.read(16, **read_options)
+                end
         buf = BSON::ByteBuffer.new(chunk)
         length, _request_id, response_to, _op_code = deserialize_header(buf)
 
         # Protection from potential DOS man-in-the-middle attacks. See
         # DRIVERS-276.
-        if length > (max_message_size || MAX_MESSAGE_SIZE)
-          raise Error::MaxMessageSize.new(max_message_size)
-        end
+        raise Error::MaxMessageSize.new(max_message_size) if length > (max_message_size || MAX_MESSAGE_SIZE)
 
         # Protection against returning the response to a previous request. See
         # RUBY-1117
@@ -270,11 +260,11 @@ module Mongo
           raise Error::UnexpectedResponse.new(expected_response_to, response_to)
         end
 
-        if read_options.empty?
-          chunk = io.read(length - 16)
-        else
-          chunk = io.read(length - 16, **read_options)
-        end
+        chunk = if read_options.empty?
+                  io.read(length - 16)
+                else
+                  io.read(length - 16, **read_options)
+                end
         buf = BSON::ByteBuffer.new(chunk)
 
         message = Registry.get(_op_code).allocate
@@ -285,9 +275,7 @@ module Mongo
             deserialize_field(message, buf, field, options)
           end
         end
-        if message.is_a?(Msg)
-          message.fix_after_deserialization
-        end
+        message.fix_after_deserialization if message.is_a?(Msg)
         message.maybe_inflate
       end
 
@@ -298,13 +286,14 @@ module Mongo
       # @return [true, false] The equality of the messages.
       def ==(other)
         return false if self.class != other.class
+
         fields.all? do |field|
           name = field[:name]
           instance_variable_get(name) ==
             other.instance_variable_get(name)
         end
       end
-      alias_method :eql?, :==
+      alias eql? ==
 
       # Creates a hash from the values of the fields of a message.
       #
@@ -327,7 +316,9 @@ module Mongo
       # @return [ 0 ] This method must be overridden, otherwise, always returns 0.
       #
       # @since 2.5.0
-      def number_returned; 0; end
+      def number_returned
+        0
+      end
 
       private
 
@@ -360,12 +351,10 @@ module Mongo
                 field[:type].serialize(buffer, item)
               end
             end
+          elsif field[:type].respond_to?(:size_limited?)
+            field[:type].serialize(buffer, value, max_bson_size)
           else
-            if field[:type].respond_to?(:size_limited?)
-              field[:type].serialize(buffer, value, max_bson_size)
-            else
-              field[:type].serialize(buffer, value)
-            end
+            field[:type].serialize(buffer, value)
           end
         end
       end
@@ -382,7 +371,7 @@ module Mongo
       # @param buffer [String] Buffer to receive the header
       # @return [String] Serialized header
       def serialize_header(buffer)
-        Header.serialize(buffer, [0, request_id, 0, op_code])
+        Header.serialize(buffer, [ 0, request_id, 0, op_code ])
       end
 
       # Deserializes the header of the message
@@ -410,9 +399,9 @@ module Mongo
       # @return [NilClass]
       def self.field(name, type, multi = false)
         fields << {
-          :name => "@#{name}".intern,
-          :type => type,
-          :multi => multi
+          name: :"@#{name}",
+          type: type,
+          multi: multi
         }
 
         attr_reader name

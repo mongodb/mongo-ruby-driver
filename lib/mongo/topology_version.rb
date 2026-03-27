@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -23,12 +22,8 @@ module Mongo
   class TopologyVersion < BSON::Document
     def initialize(doc)
       if Lint.enabled?
-        unless doc['processId']
-          raise ArgumentError, 'Creating a topology version without processId field'
-        end
-        unless doc['counter']
-          raise ArgumentError, 'Creating a topology version without counter field'
-        end
+        raise ArgumentError, 'Creating a topology version without processId field' unless doc['processId']
+        raise ArgumentError, 'Creating a topology version without counter field' unless doc['counter']
       end
 
       super
@@ -55,10 +50,10 @@ module Mongo
     # @return [ true | false ] Whether this topology version is potentially newer.
     # @api private
     def gt?(other)
-      if process_id != other.process_id
-        true
-      else
+      if process_id == other.process_id
         counter > other.counter
+      else
+        true
       end
     end
 
@@ -73,10 +68,10 @@ module Mongo
     # @return [ true | false ] Whether this topology version is potentially newer.
     # @api private
     def gte?(other)
-      if process_id != other.process_id
-        true
-      else
+      if process_id == other.process_id
         counter >= other.counter
+      else
+        true
       end
     end
 

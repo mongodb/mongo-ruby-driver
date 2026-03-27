@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,24 +17,22 @@
 module Mongo
   module Operation
     class Aggregate
-
       # Defines custom behavior of results in an aggregation context.
       #
       # @since 2.0.0
       # @api semiprivate
       class Result < Operation::Result
-
         # The field name for the aggregation explain information.
         #
         # @since 2.0.5
         # @api private
-        EXPLAIN = 'stages'.freeze
+        EXPLAIN = 'stages'
 
         # The legacy field name for the aggregation explain information.
         #
         # @since 2.0.5
         # @api private
-        EXPLAIN_LEGACY = 'serverPipeline'.freeze
+        EXPLAIN_LEGACY = 'serverPipeline'
 
         # Get the cursor id for the result.
         #
@@ -88,7 +85,7 @@ module Mongo
         # This should only be called on explain responses; it will never
         # return a nil result and will only be meaningful on explain responses
         def explain_document
-          first_document[EXPLAIN] || first_document[EXPLAIN_LEGACY] || [first_document]
+          first_document[EXPLAIN] || first_document[EXPLAIN_LEGACY] || [ first_document ]
         end
 
         def cursor_document

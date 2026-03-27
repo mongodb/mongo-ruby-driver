@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2023 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/retryable/base_worker'
 
 module Mongo
   module Retryable
-
     # Implements the logic around retrying write operations.
     #
     # @api private
@@ -62,7 +60,7 @@ module Mongo
       # @return [ Result ] The result of the operation.
       #
       # @since 2.1.0
-      def write_with_retry(write_concern, ending_transaction: false, context:, &block)
+      def write_with_retry(write_concern, context:, ending_transaction: false, &block)
         session = context.session
 
         ensure_valid_state!(ending_transaction, session)
@@ -104,7 +102,7 @@ module Mongo
       #   write should be sent.
       # @yieldparam [ nil ] txn_num nil as transaction number.
       # @yieldparam [ Operation::Context ] context The operation context.
-      def nro_write_with_retry(write_concern, context:, &block)
+      def nro_write_with_retry(_write_concern, context:, &block)
         session = context.session
         server = select_server(cluster, ServerSelector.primary, session)
         options = session&.client&.options || {}
@@ -123,9 +121,8 @@ module Mongo
             if retryable_overload_error?(e)
               error_count += 1
               delay = retry_policy.backoff_delay(error_count)
-              unless retry_policy.should_retry_overload?(error_count, delay, context: context)
-                raise e
-              end
+              raise e unless retry_policy.should_retry_overload?(error_count, delay, context: context)
+
               log_retry(e, message: 'Write retry (overload backoff)')
               sleep(delay)
               begin
@@ -159,11 +156,7 @@ module Mongo
       def retry_write_allowed?(session, write_concern)
         return false unless session&.retry_writes?
 
-        if write_concern.nil?
-          true
-        else
-          WriteConcern.get(write_concern).acknowledged?
-        end
+        write_concern.nil? || WriteConcern.get(write_concern).acknowledged?
       end
 
       private
@@ -175,9 +168,9 @@ module Mongo
       # @param [ nil | Mongo::Session ] session The session that the operation
       #   is being run on (if any).
       def ensure_valid_state!(ending_transaction, session)
-        if ending_transaction && !session
-          raise ArgumentError, 'Cannot end a transaction without a session'
-        end
+        return unless ending_transaction && !session
+
+        raise ArgumentError, 'Cannot end a transaction without a session'
       end
 
       # Implements legacy write retrying functionality by yielding to the passed
@@ -224,16 +217,13 @@ module Mongo
           e.add_note('legacy retry')
           e.add_note("attempt #{attempt}")
           server = nil
-          if attempt > client.max_write_retries
-            raise e
-          end
-          if e.label?('RetryableWriteError')
-            log_retry(e, message: 'Legacy write retry')
-            cluster.scan!(false)
-            retry
-          else
-            raise e
-          end
+          raise e if attempt > client.max_write_retries
+
+          raise e unless e.label?('RetryableWriteError')
+
+          log_retry(e, message: 'Legacy write retry')
+          cluster.scan!(false)
+          retry
         end
       end
 
@@ -291,10 +281,10 @@ module Mongo
 
         if is_overload
           overload_write_retry(e, session, txn_num,
-            context: retry_context.with(overload_only_retry: true),
-            failed_server: server, error_count: 1,
-            was_starting_transaction: was_starting,
-            &block)
+                               context: retry_context.with(overload_only_retry: true),
+                               failed_server: server, error_count: 1,
+                               was_starting_transaction: was_starting,
+                               &block)
         else
           # Context#with creates a new context, which is not necessary here
           # but the API is less prone to misuse this way.
@@ -314,7 +304,7 @@ module Mongo
       #
       # @return [ Result ] The result of the operation.
       def retry_write(original_error, txn_num, context:, failed_server: nil, &block)
-        failed_error = failed_error || original_error
+        failed_error ||= original_error
         context&.check_timeout!
 
         session = context.session
@@ -357,7 +347,8 @@ module Mongo
       rescue *retryable_exceptions, Error::PoolError => e
         if retryable_overload_error?(e)
           e.add_notes('modern retry', "attempt #{attempt}")
-          return overload_write_retry(e, context.session, txn_num, context: context, failed_server: server, error_count: attempt, was_starting_transaction: false, &block)
+          return overload_write_retry(e, context.session, txn_num,
+                                      context: context, failed_server: server, error_count: attempt, was_starting_transaction: false, &block)
         end
         maybe_fail_on_retryable(e, original_error, context, attempt)
         failed_server = server
@@ -366,7 +357,8 @@ module Mongo
       rescue Error::OperationFailure::Family => e
         if retryable_overload_error?(e)
           e.add_notes('modern retry', "attempt #{attempt}")
-          return overload_write_retry(e, context.session, txn_num, context: context, failed_server: server, error_count: attempt, was_starting_transaction: false, &block)
+          return overload_write_retry(e, context.session, txn_num,
+                                      context: context, failed_server: server, error_count: attempt, was_starting_transaction: false, &block)
         end
         maybe_fail_on_operation_failure(e, original_error, context, attempt)
         failed_server = server
@@ -382,12 +374,11 @@ module Mongo
 
       # Retry loop for overload write errors with exponential backoff.
       def overload_write_retry(last_error, session, txn_num, context:, failed_server:, error_count:,
-                               was_starting_transaction: false, &block)
+                               was_starting_transaction: false)
         loop do
           delay = retry_policy.backoff_delay(error_count)
-          unless retry_policy.should_retry_overload?(error_count, delay, context: context)
-            raise last_error
-          end
+          raise last_error unless retry_policy.should_retry_overload?(error_count, delay, context: context)
+
           log_retry(last_error, message: 'Write retry (overload backoff)')
           sleep(delay)
 
@@ -422,13 +413,9 @@ module Mongo
             e.add_notes('modern retry', "attempt #{error_count}")
             is_overload = retryable_overload_error?(e)
             if e.is_a?(Error::OperationFailure::Family)
-              unless is_overload || (e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed'))
-                raise e
-              end
+              raise e unless is_overload || (e.label?('RetryableWriteError') && !e.label?('NoWritesPerformed'))
             else
-              unless is_overload || e.write_retryable?
-                raise e
-              end
+              raise e unless is_overload || e.write_retryable?
             end
             retry_policy.record_non_overload_retry_failure unless is_overload
             context = context.with(overload_only_retry: false) unless is_overload
@@ -444,17 +431,14 @@ module Mongo
       # Make sure the exception object is labeled 'RetryableWriteError'. If it
       # isn't, and should not be, re-raise the exception.
       def ensure_labeled_retryable!(e, connection_succeeded, session)
-        if !e.label?('RetryableWriteError')
-          # If there was an error before the connection was successfully
-          # checked out and connected, there was no connection present to use
-          # for adding labels. Therefore, we should check if it is retryable,
-          # and if it is, add the label and retry it.
-          if !connection_succeeded && !session.in_transaction? && e.write_retryable?
-            e.add_label('RetryableWriteError')
-          else
-            raise e
-          end
-        end
+        return if e.label?('RetryableWriteError')
+        # If there was an error before the connection was successfully
+        # checked out and connected, there was no connection present to use
+        # for adding labels. Therefore, we should check if it is retryable,
+        # and if it is, add the label and retry it.
+        raise e unless !connection_succeeded && !session.in_transaction? && e.write_retryable?
+
+        e.add_label('RetryableWriteError')
       end
 
       # Make sure the exception object supports retryable writes. If it does,

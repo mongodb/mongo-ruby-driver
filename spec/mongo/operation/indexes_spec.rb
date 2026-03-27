@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -9,7 +8,6 @@ describe Mongo::Operation::Indexes do
   let(:context) { Mongo::Operation::Context.new }
 
   describe '#execute' do
-
     let(:index_spec) do
       { name: 1 }
     end

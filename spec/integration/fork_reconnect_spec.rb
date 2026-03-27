@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -18,9 +17,9 @@ describe 'fork reconnect' do
   describe 'monitoring connection' do
     let(:monitor) do
       Mongo::Server::Monitor.new(server, [], Mongo::Monitoring.new, server.options.merge(
-        app_metadata: client.cluster.monitor_app_metadata,
-        push_monitor_app_metadata: client.cluster.push_monitor_app_metadata,
-      ))
+                                                                      app_metadata: client.cluster.monitor_app_metadata,
+                                                                      push_monitor_app_metadata: client.cluster.push_monitor_app_metadata
+                                                                    ))
     end
 
     it 'reconnects' do
@@ -30,8 +29,8 @@ describe 'fork reconnect' do
       (socket.is_a?(Socket) || socket.is_a?(OpenSSL::SSL::SSLSocket)).should be true
 
       if pid = fork
-        pid, status = Process.wait2(pid)
-        status.exitstatus.should == 0
+        _, status = Process.wait2(pid)
+        expect(status.exitstatus).to eq(0)
       else
         monitor.send(:do_scan).should be_a(Hash)
 
@@ -39,7 +38,8 @@ describe 'fork reconnect' do
         # fileno of child_socket may equal to fileno of socket,
         # as socket would've been closed first and file descriptors can be
         # reused by the kernel.
-        child_socket.object_id.should_not == socket.object_id
+        child_socket.object_id.should_not
+        socket.object_id
 
         # Exec so that we do not close any clients etc. in the child.
         exec(Utils::BIN_TRUE)
@@ -71,8 +71,8 @@ describe 'fork reconnect' do
       (socket.is_a?(Socket) || socket.is_a?(OpenSSL::SSL::SSLSocket)).should be true
 
       if pid = fork
-        pid, status = Process.wait2(pid)
-        status.exitstatus.should == 0
+        _, status = Process.wait2(pid)
+        expect(status.exitstatus).to eq(0)
       else
         Utils.wrap_forked_child do
           operation
@@ -81,7 +81,7 @@ describe 'fork reconnect' do
           # fileno of child_socket may equal to fileno of socket,
           # as socket would've been closed first and file descriptors can be
           # reused by the kernel.
-          child_socket.object_id.should == socket.object_id
+          expect(child_socket.object_id).to eq(socket.object_id)
         end
       end
 
@@ -91,15 +91,14 @@ describe 'fork reconnect' do
   end
 
   describe 'connection pool' do
-
     it 'creates a new connection in child' do
       conn_id = server.with_connection do |connection|
         connection.id
       end
 
       if pid = fork
-        pid, status = Process.wait2(pid)
-        status.exitstatus.should == 0
+        _, status = Process.wait2(pid)
+        expect(status.exitstatus).to eq(0)
       else
         Utils.wrap_forked_child do
           new_conn_id = server.with_connection do |connection|
@@ -114,7 +113,7 @@ describe 'fork reconnect' do
         connection.id
       end
 
-      parent_conn_id.should == conn_id
+      expect(parent_conn_id).to eq(conn_id)
     end
   end
 
@@ -125,12 +124,16 @@ describe 'fork reconnect' do
       # considers the primary.
       # In standalone deployments there are no retries, hence execute the
       # operation twice manually.
-      client['foo'].insert_one(test: 1) rescue nil
+      begin
+        client['foo'].insert_one(test: 1)
+      rescue StandardError
+        nil
+      end
       client['foo'].insert_one(test: 1)
 
       if pid = fork
-        pid, status = Process.wait2(pid)
-        status.exitstatus.should == 0
+        _, status = Process.wait2(pid)
+        expect(status.exitstatus).to eq(0)
       else
         Utils.wrap_forked_child do
           client.database.command(ping: 1).should be_a(Mongo::Operation::Result)
@@ -156,8 +159,8 @@ describe 'fork reconnect' do
         session.end_session
 
         if pid = fork
-          pid, status = Process.wait2(pid)
-          status.exitstatus.should == 0
+          _, status = Process.wait2(pid)
+          expect(status.exitstatus).to eq(0)
         else
           Utils.wrap_forked_child do
             client.reconnect
@@ -185,8 +188,8 @@ describe 'fork reconnect' do
         parent_lsid = session.session_id
 
         if pid = fork
-          pid, status = Process.wait2(pid)
-          status.exitstatus.should == 0
+          _, status = Process.wait2(pid)
+          expect(status.exitstatus).to eq(0)
         else
           Utils.wrap_forked_child do
             client.reconnect

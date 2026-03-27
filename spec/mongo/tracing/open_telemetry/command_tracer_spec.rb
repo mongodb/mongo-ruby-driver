@@ -4,7 +4,6 @@ require 'spec_helper'
 
 require 'opentelemetry-sdk'
 
-# rubocop:disable RSpec/VerifiedDoubles
 describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   let(:otel_tracer) { instance_double(OpenTelemetry::Trace::Tracer) }
   let(:parent_tracer) { instance_double(Mongo::Tracing::OpenTelemetry::Tracer) }

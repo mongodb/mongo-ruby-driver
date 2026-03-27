@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -20,27 +19,28 @@ describe Mongo::Srv::Result do
 
       it 'stores hostname in lower case' do
         result.add_record(record)
-        expect(result.address_strs).to eq(['foo.bar.com:42'])
+        expect(result.address_strs).to eq([ 'foo.bar.com:42' ])
       end
     end
 
-    example_srv_names = ['i-love-rb', 'i-love-rb.mongodb', 'i-love-ruby.mongodb.io'];
+    example_srv_names = [ 'i-love-rb', 'i-love-rb.mongodb', 'i-love-ruby.mongodb.io' ]
     example_host_names = [
       'rb-00.i-love-rb',
       'rb-00.i-love-rb.mongodb',
       'i-love-ruby-00.mongodb.io'
-    ];
+    ]
     example_host_names_that_do_not_match_parent = [
       'rb-00.i-love-rb-a-little',
       'rb-00.i-love-rb-a-little.mongodb',
       'i-love-ruby-00.evil-mongodb.io'
-    ];
+    ]
 
     (0..2).each do |i|
-      context "when srvName has #{i+1} part#{i != 0 ? 's' : ''}" do
+      context "when srvName has #{i + 1} part#{'s' if i != 0}" do
         let(:srv_name) { example_srv_names[i] }
         let(:host_name) { example_host_names[i] }
         let(:mismatched_host_name) { example_host_names_that_do_not_match_parent[i] }
+
         context 'when address does not match parent domain' do
           let(:record) do
             double('record').tap do |record|
@@ -49,11 +49,12 @@ describe Mongo::Srv::Result do
               allow(record).to receive(:ttl).and_return(1)
             end
           end
+
           it 'raises MismatchedDomain error' do
-            expect {
+            expect do
               result = described_class.new(srv_name)
               result.add_record(record)
-            }.to raise_error(Mongo::Error::MismatchedDomain)
+            end.to raise_error(Mongo::Error::MismatchedDomain)
           end
         end
 
@@ -65,11 +66,12 @@ describe Mongo::Srv::Result do
               allow(record).to receive(:ttl).and_return(1)
             end
           end
+
           it 'adds the record' do
             result = described_class.new(srv_name)
             result.add_record(record)
 
-            expect(result.address_strs).to eq([host_name + ':42'])
+            expect(result.address_strs).to eq([ host_name + ':42' ])
           end
         end
 
@@ -82,11 +84,12 @@ describe Mongo::Srv::Result do
                 allow(record).to receive(:ttl).and_return(1)
               end
             end
+
             it 'does not accept address if it does not contain an extra domain level' do
-              expect {
+              expect do
                 result = described_class.new(srv_name)
                 result.add_record(record)
-              }.to raise_error(Mongo::Error::MismatchedDomain)
+              end.to raise_error(Mongo::Error::MismatchedDomain)
             end
           end
         end

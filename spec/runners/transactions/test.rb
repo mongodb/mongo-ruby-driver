@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,17 +16,13 @@
 
 module Mongo
   module Transactions
-
     # Represents a single transaction test.
     #
     # @since 2.6.0
     class TransactionsTest < CRUD::CRUDTestBase
       include MongosMacros
 
-      attr_reader :expected_results
-      attr_reader :skip_reason
-
-      attr_reader :results
+      attr_reader :expected_results, :skip_reason, :results, :outcome
 
       # @return [ Crud::Spec ] the top-level YAML specification object
       attr_reader :spec
@@ -63,12 +58,12 @@ module Mongo
         @fail_point_command = test['failPoint']
 
         @session_options = if opts = test['sessionOptions']
-          Hash[opts.map do |session_name, options|
-            [session_name.to_sym, ::Utils.convert_operation_options(options)]
-          end]
-        else
-          {}
-        end
+                             Hash[opts.map do |session_name, options|
+                               [ session_name.to_sym, ::Utils.convert_operation_options(options) ]
+                             end]
+                           else
+                             {}
+                           end
         @skip_reason = test['skipReason']
         @multiple_mongoses = test['useMultipleMongoses']
 
@@ -77,16 +72,12 @@ module Mongo
           Operation.new(self, op)
         end
 
-        if expectations_bson_types.respond_to?(:call)
-          expectations_bson_types = expectations_bson_types[self]
-        end
+        expectations_bson_types = expectations_bson_types[self] if expectations_bson_types.respond_to?(:call)
 
-        mode = if expectations_bson_types then :bson else nil end
+        mode = expectations_bson_types ? :bson : nil
         @expectations = BSON::ExtJSON.parse_obj(test['expectations'], mode: mode)
 
-        if test['outcome']
-          @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: mode))
-        end
+        @outcome = Mongo::CRUD::Outcome.new(BSON::ExtJSON.parse_obj(test['outcome'], mode: mode)) if test['outcome']
 
         @expected_results = operations.map do |o|
           o = BSON::ExtJSON.parse_obj(o, mode: :bson)
@@ -94,11 +85,10 @@ module Mongo
           # We check both o.key('error') and o['error'] to provide a better
           # error message in case error: false is ever needed in the tests
           if o.key?('error')
-            if o['error']
-              {'error' => true}
-            else
-              raise "Unsupported error value #{o['error']}"
-            end
+            raise "Unsupported error value #{o['error']}" unless o['error']
+
+            { 'error' => true }
+
           else
             result = o['result']
             next result unless result.class == Hash
@@ -106,15 +96,14 @@ module Mongo
             # Change maps of result ids to arrays of ids
             result.dup.tap do |r|
               r.each do |k, v|
-                next unless ['insertedIds', 'upsertedIds'].include?(k)
+                next unless %w[insertedIds upsertedIds].include?(k)
+
                 r[k] = v.to_a.sort_by(&:first).map(&:last)
               end
             end
           end
         end
       end
-
-      attr_reader :outcome
 
       def multiple_mongoses?
         @multiple_mongoses
@@ -162,14 +151,15 @@ module Mongo
                   }
                 ]
               else
-                [provider, opts]
+                [ provider, opts ]
               end
             end.to_h
           end
 
           if @client_options[:auto_encryption_options] && SpecConfig.instance.crypt_shared_lib_path
             @client_options[:auto_encryption_options][:extra_options] ||= {}
-            @client_options[:auto_encryption_options][:extra_options][:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
+            @client_options[:auto_encryption_options][:extra_options][:crypt_shared_lib_path] =
+              SpecConfig.instance.crypt_shared_lib_path
           end
 
           ClientRegistry.instance.new_local_client(
@@ -177,8 +167,9 @@ module Mongo
             SpecConfig.instance.authorized_test_options.merge(
               database: @spec.database_name,
               auth_source: SpecConfig.instance.auth_options[:auth_source] || 'admin',
-              sdam_proc: sdam_proc,
-            ).merge(@client_options))
+              sdam_proc: sdam_proc
+            ).merge(@client_options)
+          )
         end
       end
 
@@ -208,7 +199,7 @@ module Mongo
             session1: session1,
             sdam_subscriber: sdam_subscriber,
             threads: @threads,
-            primary_address: @primary_address,
+            primary_address: @primary_address
           )
 
           op.execute(target, context).tap do
@@ -228,23 +219,17 @@ module Mongo
           event['command_started_event']['command']['endSessions']
         end
         actual_events.each do |e|
-
           # Replace the session id placeholders with the actual session ids.
           payload = e['command_started_event']
-          if @session0
-            payload['command']['lsid'] = 'session0' if payload['command']['lsid'] == session0_id
-          end
-          if @session1
-            payload['command']['lsid'] = 'session1' if payload['command']['lsid'] == session1_id
-          end
-
+          payload['command']['lsid'] = 'session0' if @session0 && (payload['command']['lsid'] == session0_id)
+          payload['command']['lsid'] = 'session1' if @session1 && (payload['command']['lsid'] == session1_id)
         end
 
         @results = {
           results: results,
           contents: @result_collection.with(
-            read: {mode: 'primary'},
-            read_concern: { level: 'local' },
+            read: { mode: 'primary' },
+            read_concern: { level: 'local' }
           ).find.sort(_id: 1).to_a,
           events: actual_events,
         }
@@ -261,15 +246,13 @@ module Mongo
         end
 
         key_vault_coll = support_client
-        .use(:keyvault)[:datakeys]
-        .with(write: { w: :majority })
+                         .use(:keyvault)[:datakeys]
+                         .with(write: { w: :majority })
 
         key_vault_coll.drop
         # Insert data into the key vault collection if required to do so by
         # the tests.
-        if @spec.key_vault_data && !@spec.key_vault_data.empty?
-          key_vault_coll.insert_many(@spec.key_vault_data)
-        end
+        key_vault_coll.insert_many(@spec.key_vault_data) if @spec.key_vault_data && !@spec.key_vault_data.empty?
 
         encrypted_fields = @spec.encrypted_fields if @spec.encrypted_fields
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
@@ -278,10 +261,10 @@ module Mongo
         # Place a jsonSchema validator on the collection if required to do so
         # by the tests.
         collection_validator = if @spec.json_schema
-          { '$jsonSchema' => @spec.json_schema }
-        else
-          {}
-        end
+                                 { '$jsonSchema' => @spec.json_schema }
+                               else
+                                 {}
+                               end
 
         create_collection_spec = {
           create: @spec.collection_name,
@@ -312,24 +295,21 @@ module Mongo
       end
 
       def teardown_test
-
-        if @fail_point_command
-          admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
-        end
+        admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off') if @fail_point_command
 
         if $disable_fail_points
           $disable_fail_points.each do |(fail_point_command, address)|
             client = ClusterTools.instance.direct_client(address,
-              database: 'admin')
+                                                         database: 'admin')
             client.command(configureFailPoint: fail_point_command['configureFailPoint'],
-              mode: 'off')
+                           mode: 'off')
           end
           $disable_fail_points = nil
         end
 
-        if @test_client
-          @test_client.cluster.session_pool.end_sessions
-        end
+        return unless @test_client
+
+        @test_client.cluster.session_pool.end_sessions
       end
 
       def resolve_target(client, operation)

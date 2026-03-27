@@ -1,11 +1,10 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::BulkWrite::Result do
   let(:results_document) do
-    {'n_inserted' => 2, 'n' => 3, 'inserted_ids' => [1, 2]}
+    { 'n_inserted' => 2, 'n' => 3, 'inserted_ids' => [ 1, 2 ] }
   end
 
   let(:subject) { described_class.new(results_document, true) }
@@ -24,13 +23,13 @@ describe Mongo::BulkWrite::Result do
 
   describe '#inserted_ids' do
     it 'is taken from results document' do
-      expect(subject.inserted_ids).to eql([1, 2])
+      expect(subject.inserted_ids).to eql([ 1, 2 ])
     end
   end
 
   describe '#deleted_count' do
     let(:results_document) do
-      {'n_removed' => 2, 'n' => 3}
+      { 'n_removed' => 2, 'n' => 3 }
     end
 
     it 'is taken from results document' do
@@ -40,7 +39,7 @@ describe Mongo::BulkWrite::Result do
 
   describe '#matched_count' do
     let(:results_document) do
-      {'n_modified' => 1, 'n_matched' => 2, 'n' => 3}
+      { 'n_modified' => 1, 'n_matched' => 2, 'n' => 3 }
     end
 
     it 'is taken from results document' do
@@ -50,7 +49,7 @@ describe Mongo::BulkWrite::Result do
 
   describe '#modified_count' do
     let(:results_document) do
-      {'n_modified' => 1, 'n_matched' => 2, 'n' => 3}
+      { 'n_modified' => 1, 'n_matched' => 2, 'n' => 3 }
     end
 
     it 'is taken from results document' do
@@ -60,7 +59,7 @@ describe Mongo::BulkWrite::Result do
 
   describe '#upserted_count' do
     let(:results_document) do
-      {'n_upserted' => 2, 'n' => 3, 'upserted_ids' => [1, 2]}
+      { 'n_upserted' => 2, 'n' => 3, 'upserted_ids' => [ 1, 2 ] }
     end
 
     it 'is taken from results document' do
@@ -70,11 +69,11 @@ describe Mongo::BulkWrite::Result do
 
   describe '#upserted_ids' do
     let(:results_document) do
-      {'n_upserted' => 2, 'n' => 3, 'upserted_ids' => [1, 2]}
+      { 'n_upserted' => 2, 'n' => 3, 'upserted_ids' => [ 1, 2 ] }
     end
 
     it 'is taken from results document' do
-      expect(subject.upserted_ids).to eql([1, 2])
+      expect(subject.upserted_ids).to eql([ 1, 2 ])
     end
   end
 
@@ -92,7 +91,7 @@ describe Mongo::BulkWrite::Result do
             {
               'ok' => 0,
               'errmsg' => 'not master',
-              'code' => 10107,
+              'code' => 10_107,
               'codeName' => 'NotMaster',
             }
           ]
@@ -102,34 +101,32 @@ describe Mongo::BulkWrite::Result do
       it 'raises BulkWriteError' do
         expect do
           subject.validate!
-        # BulkWriteErrors don't have any messages on them
+          # BulkWriteErrors don't have any messages on them
         end.to raise_error(Mongo::Error::BulkWriteError, /not master/)
       end
     end
 
     context 'with write concern error' do
       let(:results_document) do
-        {'n' => 1, 'writeConcernErrors' => {
+        { 'n' => 1, 'writeConcernErrors' => {
           'errmsg' => 'Not enough data-bearing nodes',
           'code' => 100,
           'codeName' => 'CannotSatisfyWriteConcern',
-        }}
+        } }
       end
 
       it 'raises BulkWriteError' do
         expect do
           subject.validate!
-        # BulkWriteErrors don't have any messages on them
+          # BulkWriteErrors don't have any messages on them
         end.to raise_error(Mongo::Error::BulkWriteError, nil)
       end
     end
   end
 
-  describe "#acknowledged?" do
-
-    [true, false].each do |b|
+  describe '#acknowledged?' do
+    [ true, false ].each do |b|
       context "when acknowledged is passed as #{b}" do
-
         let(:result) { described_class.new(results_document, b) }
 
         it "acknowledged? is #{b}" do

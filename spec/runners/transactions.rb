@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -23,43 +22,33 @@ def define_transactions_spec_tests(test_paths, expectations_bson_types: true)
   config_override :validate_update_replace, true
 
   test_paths.each do |file|
-
     spec = Mongo::Transactions::Spec.new(file)
 
     context(spec.description) do
-
       define_spec_tests_with_requirements(spec) do |req|
-
         spec.tests(expectations_bson_types: expectations_bson_types).each do |test|
-
           context(test.description) do
-
             before(:all) do
               if ClusterConfig.instance.topology == :sharded
                 if test.multiple_mongoses? && SpecConfig.instance.addresses.length == 1
-                  skip "Test requires multiple mongoses"
+                  skip 'Test requires multiple mongoses'
                 elsif !test.multiple_mongoses? && SpecConfig.instance.addresses.length > 1
                   # Many transaction spec tests that do not specifically deal with
                   # sharded transactions fail when run against a multi-mongos cluster
-                  skip "Test does not specify multiple mongoses"
+                  skip 'Test does not specify multiple mongoses'
                 end
               end
+              skip test.skip_reason
+
+              skip 'Requirements not satisfied'
+
+              test.setup_test
             end
 
             if test.skip_reason
-              before(:all) do
-                skip test.skip_reason
-              end
             end
 
             unless req.satisfied?
-              before(:all) do
-                skip "Requirements not satisfied"
-              end
-            end
-
-            before(:all) do
-              test.setup_test
             end
 
             after(:all) do
@@ -68,7 +57,7 @@ def define_transactions_spec_tests(test_paths, expectations_bson_types: true)
 
             let(:results) do
               $tx_spec_results_cache ||= {}
-              $tx_spec_results_cache[test.object_id] ||= test.run
+              $tx_spec_results_cache[test.object_id] ||= test.run # rubocop:disable Lint/HashCompareByIdentity
             end
 
             let(:verifier) { Mongo::CRUD::Verifier.new(test) }
@@ -82,20 +71,23 @@ def define_transactions_spec_tests(test_paths, expectations_bson_types: true)
                 results
                 verifier.verify_collection_data(
                   test.outcome.collection_data,
-                  results[:contents])
+                  results[:contents]
+                )
               end
             end
 
             if test.expectations
               it 'has the correct number of command_started events' do
                 verifier.verify_command_started_event_count(
-                  test.expectations, results[:events])
+                  test.expectations, results[:events]
+                )
               end
 
-              test.expectations.each_with_index do |expectation, i|
+              test.expectations.each_with_index do |_expectation, i|
                 it "has the correct command_started event #{i}" do
                   verifier.verify_command_started_event(
-                    test.expectations, results[:events], i)
+                    test.expectations, results[:events], i
+                  )
                 end
               end
             end

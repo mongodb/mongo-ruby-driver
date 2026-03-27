@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Error
-
     # Exception raised when a Client has :server_api configured and an
     # operation attempts to specify any of server API version parameters.
     class ServerApiConflict < Error

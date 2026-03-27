@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -18,15 +17,13 @@
 module Mongo
   module Crypt
     module KMS
-
       # KMS master key document object contains KMS master key parameters
       # that are used for creation of data keys.
       #
       # @api private
       class MasterKeyDocument
-
         # Known KMS provider names.
-        KMS_PROVIDERS = %w(aws azure gcp kmip local).freeze
+        KMS_PROVIDERS = %w[aws azure gcp kmip local].freeze
 
         # Creates a master key document object form a parameters hash.
         #
@@ -38,19 +35,18 @@ module Mongo
         #
         # @raise [ ArgumentError ] If required options are missing or incorrectly.
         def initialize(kms_provider, options)
-          if options.nil?
-            raise ArgumentError.new('Key document options must not be nil')
-          end
+          raise ArgumentError.new('Key document options must not be nil') if options.nil?
+
           master_key = options.fetch(:master_key, {})
           @key_document = case kms_provider.to_s
-            when 'aws' then KMS::AWS::MasterKeyDocument.new(master_key)
-            when 'azure' then KMS::Azure::MasterKeyDocument.new(master_key)
-            when 'gcp' then KMS::GCP::MasterKeyDocument.new(master_key)
-            when 'kmip' then KMS::KMIP::MasterKeyDocument.new(master_key)
-            when 'local' then KMS::Local::MasterKeyDocument.new(master_key)
-            else
-              raise ArgumentError.new("KMS provider must be one of #{KMS_PROVIDERS}")
-          end
+                          when 'aws' then KMS::AWS::MasterKeyDocument.new(master_key)
+                          when 'azure' then KMS::Azure::MasterKeyDocument.new(master_key)
+                          when 'gcp' then KMS::GCP::MasterKeyDocument.new(master_key)
+                          when 'kmip' then KMS::KMIP::MasterKeyDocument.new(master_key)
+                          when 'local' then KMS::Local::MasterKeyDocument.new(master_key)
+                          else
+                            raise ArgumentError.new("KMS provider must be one of #{KMS_PROVIDERS}")
+                          end
         end
 
         # Convert master key document object to a BSON document in libmongocrypt format.

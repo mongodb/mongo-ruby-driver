@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -10,10 +9,10 @@ describe Mongo::Operation::Update do
   let(:context) { Mongo::Operation::Context.new }
 
   let(:documents) do
-    [{ :q => { :foo => 1 },
-       :u => { :$set => { :bar => 1 } },
-       :multi => true,
-       :upsert => false }]
+    [ { q: { foo: 1 },
+        u: { :$set => { bar: 1 } },
+        multi: true,
+        upsert: false } ]
   end
 
   let(:spec) do
@@ -21,8 +20,7 @@ describe Mongo::Operation::Update do
       db_name: authorized_collection.database.name,
       coll_name: authorized_collection.name,
       write_concern: write_concern,
-      ordered: true
-    }
+      ordered: true }
   end
 
   let(:write_concern) do
@@ -34,9 +32,7 @@ describe Mongo::Operation::Update do
   end
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(op.spec).to eq(spec)
       end
@@ -44,11 +40,8 @@ describe Mongo::Operation::Update do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two ops have the same specs' do
-
         let(:other) { described_class.new(spec) }
 
         it 'returns true' do
@@ -58,10 +51,10 @@ describe Mongo::Operation::Update do
 
       context 'when two ops have different specs' do
         let(:other_docs) do
-          [ {:q => { :foo => 1 },
-             :u => { :$set => { :bar => 1 } },
-             :multi => true,
-             :upsert => true } ]
+          [ { q: { foo: 1 },
+              u: { :$set => { bar: 1 } },
+              multi: true,
+              upsert: true } ]
         end
 
         let(:other_spec) do
@@ -69,8 +62,7 @@ describe Mongo::Operation::Update do
             db_name: authorized_collection.database.name,
             coll_name: authorized_collection.name,
             write_concern: write_concern,
-            ordered: true
-          }
+            ordered: true }
         end
 
         let(:other) { described_class.new(other_spec) }
@@ -86,9 +78,9 @@ describe Mongo::Operation::Update do
     before do
       authorized_collection.drop
       authorized_collection.insert_many([
-        { name: 'test', field: 'test', other: 'test' },
-        { name: 'testing', field: 'test', other: 'test' }
-      ])
+                                          { name: 'test', field: 'test', other: 'test' },
+                                          { name: 'testing', field: 'test', other: 'test' }
+                                        ])
     end
 
     after do
@@ -96,11 +88,9 @@ describe Mongo::Operation::Update do
     end
 
     context 'when updating a single document' do
-
       context 'when the update passes' do
-
         let(:documents) do
-          [{ 'q' => { other: 'test' }, 'u' => { '$set' => { field: 'blah' }}, 'multi' => false }]
+          [ { 'q' => { other: 'test' }, 'u' => { '$set' => { field: 'blah' } }, 'multi' => false } ]
         end
 
         it 'updates the document' do
@@ -113,20 +103,18 @@ describe Mongo::Operation::Update do
     end
 
     context 'when updating multiple documents' do
-
       let(:update) do
         described_class.new({
-          updates: documents,
-          db_name: authorized_collection.database.name,
-          coll_name: authorized_collection.name,
-          write_concern: write_concern
-        })
+                              updates: documents,
+                              db_name: authorized_collection.database.name,
+                              coll_name: authorized_collection.name,
+                              write_concern: write_concern
+                            })
       end
 
       context 'when the updates succeed' do
-
         let(:documents) do
-          [{ 'q' => { other: 'test' }, 'u' => { '$set' => { field: 'blah' }}, 'multi' => true }]
+          [ { 'q' => { other: 'test' }, 'u' => { '$set' => { field: 'blah' } }, 'multi' => true } ]
         end
 
         it 'updates the documents' do
@@ -139,11 +127,9 @@ describe Mongo::Operation::Update do
     end
 
     context 'when the updates are ordered' do
-
       let(:documents) do
-        [ { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' }}, 'multi' => true},
-          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' }}, 'multi' => true }
-        ]
+        [ { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' } }, 'multi' => true },
+          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' } }, 'multi' => true } ]
       end
 
       let(:spec) do
@@ -151,8 +137,7 @@ describe Mongo::Operation::Update do
           db_name: authorized_collection.database.name,
           coll_name: authorized_collection.name,
           write_concern: write_concern,
-          ordered: true
-        }
+          ordered: true }
       end
 
       let(:failing_update) do
@@ -160,9 +145,7 @@ describe Mongo::Operation::Update do
       end
 
       context 'when the update fails' do
-
         context 'when write concern is acknowledged' do
-
           it 'aborts after first error' do
             authorized_primary.with_connection do |connection|
               failing_update.bulk_execute(connection, context: context)
@@ -172,7 +155,6 @@ describe Mongo::Operation::Update do
         end
 
         context 'when write concern is unacknowledged' do
-
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 0)
           end
@@ -188,11 +170,9 @@ describe Mongo::Operation::Update do
     end
 
     context 'when the updates are unordered' do
-
       let(:documents) do
-        [ { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' }}, 'multi' => true},
-          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' }}, 'multi' => false }
-        ]
+        [ { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' } }, 'multi' => true },
+          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' } }, 'multi' => false } ]
       end
 
       let(:spec) do
@@ -200,8 +180,7 @@ describe Mongo::Operation::Update do
           db_name: authorized_collection.database.name,
           coll_name: authorized_collection.name,
           write_concern: write_concern,
-          ordered: false
-        }
+          ordered: false }
       end
 
       let(:failing_update) do
@@ -209,9 +188,7 @@ describe Mongo::Operation::Update do
       end
 
       context 'when the update fails' do
-
         context 'when write concern is acknowledged' do
-
           it 'does not abort after first error' do
             authorized_primary.with_connection do |connection|
               failing_update.bulk_execute(connection, context: context)
@@ -221,7 +198,6 @@ describe Mongo::Operation::Update do
         end
 
         context 'when write concern is unacknowledged' do
-
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 0)
           end

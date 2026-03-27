@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2016-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Monitoring
     module Event
-
       # Event fired when the topology closes.
       #
       # @since 2.4.0
       class TopologyClosed < Mongo::Event::Base
-
         # @return [ Topology ] topology The topology.
         attr_reader :topology
 
@@ -49,7 +46,7 @@ module Mongo
         # @api experimental
         def summary
           "#<#{short_class_name}" +
-          " topology=#{topology.summary}>"
+            " topology=#{topology.summary}>"
         end
       end
     end

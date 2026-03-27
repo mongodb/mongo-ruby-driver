@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -23,7 +22,6 @@ module Mongo
     # Exception raised if an unknown server is attempted to be used for
     # an operation.
     class ServerNotUsable < Error
-
       # Instantiate the new exception.
       #
       # @api private

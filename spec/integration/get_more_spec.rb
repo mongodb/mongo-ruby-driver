@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -23,7 +22,7 @@ describe 'getMore operation' do
   before do
     collection.delete_many
     collection.insert_one(a: 1)
-    #collection.insert_one(a: 2)
+    # collection.insert_one(a: 2)
   end
 
   let(:get_more_command) do

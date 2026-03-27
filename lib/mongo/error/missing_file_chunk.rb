@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # Raised if the next chunk when reading from a GridFSBucket does not have the
     # expected sequence number (n).
     #
     # @since 2.1.0
     class MissingFileChunk < Error
-
       # Create the new exception.
       #
       # @example Create the new exception.

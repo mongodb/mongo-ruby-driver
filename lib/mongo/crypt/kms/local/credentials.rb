@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -32,7 +31,7 @@ module Mongo
           # @api private
           def_delegator :@opts, :empty?
 
-          FORMAT_HINT = "Local KMS provider options must be in the format: " +
+          FORMAT_HINT = 'Local KMS provider options must be in the format: ' +
                         "{ key: 'MASTER-KEY' }"
 
           # Creates a local KMS credentials object form a parameters hash.
@@ -45,21 +44,21 @@ module Mongo
           #   formatted.
           def initialize(opts)
             @opts = opts
-            unless empty?
-              @key = validate_param(:key, opts, FORMAT_HINT)
-            end
+            return if empty?
+
+            @key = validate_param(:key, opts, FORMAT_HINT)
           end
 
           # @return [ BSON::Document ] Local KMS credentials in libmongocrypt format.
           def to_document
             return BSON::Document.new({}) if empty?
+
             BSON::Document.new({
-              key: BSON::Binary.new(@key, :generic),
-            })
+                                 key: BSON::Binary.new(@key, :generic),
+                               })
           end
         end
       end
     end
   end
 end
-

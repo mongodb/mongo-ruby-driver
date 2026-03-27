@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Event::Subscriber do
-
   let(:listeners) do
     Mongo::Event::Listeners.new
   end
@@ -20,7 +18,6 @@ describe Mongo::Event::Subscriber do
   end
 
   describe '#subscribe_to' do
-
     let(:listener) do
       double('listener')
     end

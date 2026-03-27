@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -39,12 +38,12 @@ describe Mongo::Session do
 
     context 'when a non-Mongo error is raised' do
       before do
-        collection.insert_one({foo: 1})
+        collection.insert_one({ foo: 1 })
       end
 
       it 'propagates the exception and sets state to transaction aborted' do
         session.start_transaction
-        collection.insert_one({foo: 1}, session: session)
+        collection.insert_one({ foo: 1 }, session: session)
         expect(session).to receive(:write_with_retry).and_raise(SessionTransactionSpecError)
         expect do
           session.abort_transaction
@@ -61,12 +60,12 @@ describe Mongo::Session do
 
     context 'when a Mongo error is raised' do
       before do
-        collection.insert_one({foo: 1})
+        collection.insert_one({ foo: 1 })
       end
 
       it 'swallows the exception and sets state to transaction aborted' do
         session.start_transaction
-        collection.insert_one({foo: 1}, session: session)
+        collection.insert_one({ foo: 1 }, session: session)
         expect(session).to receive(:write_with_retry).and_raise(Mongo::Error::SocketError)
         expect do
           session.abort_transaction
@@ -145,7 +144,7 @@ describe Mongo::Session do
       end
     end
 
-    %w(UnknownTransactionCommitResult TransientTransactionError).each do |label|
+    %w[UnknownTransactionCommitResult TransientTransactionError].each do |label|
       context "timeout with commit raising with #{label}" do
         max_example_run_time 7
 
@@ -212,7 +211,7 @@ describe Mongo::Session do
           collection.insert_one(timeout_around_with_tx: 2)
         end
 
-        expect(collection.find(timeout_around_with_tx: 2).first).not_to be nil
+        expect(collection.find(timeout_around_with_tx: 2).first).not_to be_nil
       end
     end
 
@@ -280,14 +279,14 @@ describe Mongo::Session do
 
         it 'insert_many does not raise ArgumentError' do
           session.with_transaction do
-            collection.insert_many([{ a: 1 }], session: session)
+            collection.insert_many([ { a: 1 } ], session: session)
           end
         end
 
         it 'bulk_write does not raise ArgumentError' do
           session.with_transaction do
             collection.bulk_write(
-              [{ insert_one: { a: 1 } }],
+              [ { insert_one: { a: 1 } } ],
               session: session
             )
           end

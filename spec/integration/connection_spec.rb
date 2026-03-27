@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -15,7 +14,6 @@ describe 'Connections' do
   let(:server) { client.cluster.servers.first }
 
   describe '#connect!' do
-
     let(:connection) do
       Mongo::Server::Connection.new(server, server.options)
     end
@@ -49,7 +47,6 @@ describe 'Connections' do
       end
 
       context 'with sdam event subscription' do
-
         let(:subscriber) { Mrss::EventSubscriber.new }
         let(:client) do
           ClientRegistry.instance.global_client('authorized').with(app_name: 'connection_integration').tap do |client|
@@ -130,7 +127,6 @@ describe 'Connections' do
       end
 
       describe 'number of sockets created' do
-
         before do
           server
         end
@@ -154,7 +150,7 @@ describe 'Connections' do
           end
         end
 
-        let(:socket_cls) { ::Socket }
+        let(:socket_cls) { Socket }
 
         it_behaves_like 'is 1 per connection'
 
@@ -165,24 +161,23 @@ describe 'Connections' do
           let(:port) { SpecConfig.instance.any_port }
 
           let(:client) do
-            new_local_client(["/tmp/mongodb-#{port}.sock"], connect: :direct).tap do |client|
+            new_local_client([ "/tmp/mongodb-#{port}.sock" ], connect: :direct).tap do |client|
               stop_monitoring(client)
             end
           end
 
-          let(:socket_cls) { ::UNIXSocket }
+          let(:socket_cls) { UNIXSocket }
 
           it_behaves_like 'is 1 per connection'
         end
       end
 
       context 'when socket connection fails' do
-
         before do
           server
         end
 
-        let(:socket_cls) { ::Socket }
+        let(:socket_cls) { Socket }
 
         let(:socket) do
           double('socket').tap do |socket|
@@ -198,8 +193,9 @@ describe 'Connections' do
 
         it 'closes the socket' do
           RSpec::Mocks.with_temporary_scope do
-            expect(::Socket).to receive(:new).with(
-              Socket::AF_INET, Socket::SOCK_STREAM, 0).and_return(socket)
+            expect(Socket).to receive(:new).with(
+              Socket::AF_INET, Socket::SOCK_STREAM, 0
+            ).and_return(socket)
 
             lambda do
               connection.connect!
@@ -254,7 +250,7 @@ describe 'Connections' do
 
           server = client.cluster.servers.first
           expect(server.features.server_wire_versions.max >= 4).to be true
-          max_version = server.features.server_wire_versions.max
+          server.features.server_wire_versions.max
 
           RSpec::Mocks.with_temporary_scope do
             # now pretend a handshake returned a different range
@@ -310,13 +306,15 @@ describe 'Connections' do
         end
 
         # overwrite server description
-        server.instance_variable_set('@description', Mongo::Server::Description.new(
-          server.address))
+        server.instance_variable_set(:@description, Mongo::Server::Description.new(
+                                                      server.address
+                                                    ))
 
         # overwrite topology
-        client.cluster.instance_variable_set('@topology',
-          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new(
-            client.cluster.topology.options, client.cluster.topology.monitoring, client.cluster))
+        client.cluster.instance_variable_set(:@topology,
+                                             Mongo::Cluster::Topology::ReplicaSetNoPrimary.new(
+                                               client.cluster.topology.options, client.cluster.topology.monitoring, client.cluster
+                                             ))
 
         # now create a connection.
         connection = Mongo::Server::Connection.new(server, server.options)

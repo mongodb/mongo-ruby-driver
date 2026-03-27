@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   module Crypt
     module KMS
-
       # KMS Credentials object contains credentials for using KMS providers.
       #
       # @api private
       class Credentials
-
         # @return [ Credentials::AWS | nil ] AWS KMS credentials.
         attr_reader :aws
 
@@ -52,30 +49,19 @@ module Mongo
         # @raise [ ArgumentError ] If required options are missing or incorrectly
         #   formatted.
         def initialize(kms_providers)
-          if kms_providers.nil?
-            raise ArgumentError.new("KMS providers options must not be nil")
-          end
-          if kms_providers.key?(:aws)
-            @aws = AWS::Credentials.new(kms_providers[:aws])
-          end
-          if kms_providers.key?(:azure)
-            @azure = Azure::Credentials.new(kms_providers[:azure])
-          end
-          if kms_providers.key?(:gcp)
-            @gcp = GCP::Credentials.new(kms_providers[:gcp])
-          end
-          if kms_providers.key?(:kmip)
-            @kmip = KMIP::Credentials.new(kms_providers[:kmip])
-          end
-          if kms_providers.key?(:local)
-            @local = Local::Credentials.new(kms_providers[:local])
-          end
-          if @aws.nil? && @azure.nil? && @gcp.nil? && @kmip.nil? && @local.nil?
-            raise ArgumentError.new(
-              "KMS providers options must have one of the following keys: " +
-              ":aws, :azure, :gcp, :kmip, :local"
-            )
-          end
+          raise ArgumentError.new('KMS providers options must not be nil') if kms_providers.nil?
+
+          @aws = AWS::Credentials.new(kms_providers[:aws]) if kms_providers.key?(:aws)
+          @azure = Azure::Credentials.new(kms_providers[:azure]) if kms_providers.key?(:azure)
+          @gcp = GCP::Credentials.new(kms_providers[:gcp]) if kms_providers.key?(:gcp)
+          @kmip = KMIP::Credentials.new(kms_providers[:kmip]) if kms_providers.key?(:kmip)
+          @local = Local::Credentials.new(kms_providers[:local]) if kms_providers.key?(:local)
+          return unless @aws.nil? && @azure.nil? && @gcp.nil? && @kmip.nil? && @local.nil?
+
+          raise ArgumentError.new(
+            'KMS providers options must have one of the following keys: ' +
+            ':aws, :azure, :gcp, :kmip, :local'
+          )
         end
 
         # Convert credentials object to a BSON document in libmongocrypt format.

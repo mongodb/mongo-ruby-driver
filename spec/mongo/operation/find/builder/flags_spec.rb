@@ -1,14 +1,10 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Operation::Find::Builder::Flags do
-
   describe '.map_flags' do
-
     shared_examples_for 'a flag mapper' do
-
       let(:flags) do
         described_class.map_flags(options)
       end
@@ -39,15 +35,14 @@ describe Mongo::Operation::Find::Builder::Flags do
     end
 
     context 'when the options are standard' do
-
       let(:options) do
         {
-          :allow_partial_results => true,
-          :oplog_replay => true,
-          :no_cursor_timeout => true,
-          :tailable => true,
-          :await_data => true,
-          :exhaust => true
+          allow_partial_results: true,
+          oplog_replay: true,
+          no_cursor_timeout: true,
+          tailable: true,
+          await_data: true,
+          exhaust: true
         }
       end
 
@@ -55,16 +50,15 @@ describe Mongo::Operation::Find::Builder::Flags do
     end
 
     context 'when the options already have flags' do
-
       let(:options) do
         {
-          :flags => [
-            :partial,
-            :oplog_replay,
-            :no_cursor_timeout,
-            :tailable_cursor,
-            :await_data,
-            :exhaust
+          flags: %i[
+            partial
+            oplog_replay
+            no_cursor_timeout
+            tailable_cursor
+            await_data
+            exhaust
           ]
         }
       end
@@ -73,9 +67,8 @@ describe Mongo::Operation::Find::Builder::Flags do
     end
 
     context 'when the options include tailable_await' do
-
       let(:options) do
-        { :tailable_await => true }
+        { tailable_await: true }
       end
 
       let(:flags) do
@@ -92,9 +85,8 @@ describe Mongo::Operation::Find::Builder::Flags do
     end
 
     context 'when the options provide a cursor type' do
-
       let(:options) do
-        { :cursor_type => :await_data }
+        { cursor_type: :await_data }
       end
 
       let(:flags) do

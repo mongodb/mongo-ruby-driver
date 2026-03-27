@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class DropIndex
-
       # A MongoDB dropindex operation sent as an op message.
       #
       # @api private
@@ -29,11 +27,11 @@ module Mongo
 
         private
 
-        def selector(connection)
+        def selector(_connection)
           {
-            :dropIndexes => coll_name,
-            :index => index_name,
-            :comment => spec[:comment],
+            dropIndexes: coll_name,
+            index: index_name,
+            comment: spec[:comment],
           }.compact
         end
       end

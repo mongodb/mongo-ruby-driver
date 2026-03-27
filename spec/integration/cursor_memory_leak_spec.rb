@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -17,7 +16,7 @@ describe 'Cursor memory leak - RUBY-3669' do
 
   before do
     collection.delete_many
-    collection.insert_many([{ a: 1 }, { a: 2 }, { a: 3 }])
+    collection.insert_many([ { a: 1 }, { a: 2 }, { a: 3 } ])
   end
 
   it 'does not leak Mongo::Client objects when batch_size < limit' do
@@ -28,7 +27,7 @@ describe 'Cursor memory leak - RUBY-3669' do
     GC.start
     GC.start
     GC.start
-    sleep Mongo::Cluster::CursorReaper::FREQUENCY * 2 + 1
+    sleep (Mongo::Cluster::CursorReaper::FREQUENCY * 2) + 1
 
     client_count_before = ObjectSpace.each_object(Mongo::Client).count
 
@@ -41,11 +40,11 @@ describe 'Cursor memory leak - RUBY-3669' do
     GC.start
     GC.start
     GC.start
-    sleep Mongo::Cluster::CursorReaper::FREQUENCY * 2 + 1
+    sleep (Mongo::Cluster::CursorReaper::FREQUENCY * 2) + 1
 
     client_count_after = ObjectSpace.each_object(Mongo::Client).count
 
     expect(client_count_after).to be <= client_count_before,
-      "Expected Mongo::Client count to stay at #{client_count_before} but got #{client_count_after} — possible memory leak"
+                                  "Expected Mongo::Client count to stay at #{client_count_before} but got #{client_count_after} — possible memory leak"
   end
 end

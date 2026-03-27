@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -16,9 +15,7 @@
 # limitations under the License.
 
 RSpec::Matchers.define :have_hosts do |test, hosts|
-
   match do |cl|
-
     def find_server(client, host)
       client.cluster.servers_list.detect do |s|
         if host.port
@@ -50,48 +47,46 @@ RSpec::Matchers.define :have_hosts do |test, hosts|
       server = find_server(cl, host)
       server &&
         match_host?(server, host) &&
-        match_port?(server, host) #&&
-        #match_address_family?(server, host)
+        match_port?(server, host) # &&
+      # match_address_family?(server, host)
     end
   end
 
   failure_message do |client|
     "With URI: #{test.uri_string}\n" +
-        "Expected client hosts: #{client.cluster.instance_variable_get(:@servers)} " +
-        "to match #{hosts}"
+      "Expected client hosts: #{client.cluster.instance_variable_get(:@servers)} " +
+      "to match #{hosts}"
   end
 end
 
 RSpec::Matchers.define :match_auth do |test|
-
   def match_database?(client, auth)
     client.options[:database] == auth.database || !auth.database
   end
 
   def match_password?(client, auth)
     client.options[:password] == auth.password ||
-      client.options[:password].nil? && auth.password == ''
+      (client.options[:password].nil? && auth.password == '')
   end
 
   match do |client|
     auth = test.auth
     return true unless auth
+
     client.options[:user] == auth.username &&
       match_password?(client, auth) &&
-        match_database?(client, auth)
+      match_database?(client, auth)
   end
 
   failure_message do |client|
     "With URI: #{test.uri_string}\n" +
-        "Expected that test auth: #{test.auth} would match client auth: #{client.options}"
+      "Expected that test auth: #{test.auth} would match client auth: #{client.options}"
   end
 end
 
 module Mongo
   module ConnectionString
-
     class Spec
-
       attr_reader :description
 
       # Instantiate the new spec.
@@ -114,8 +109,7 @@ module Mongo
     class Test
       include RSpec::Core::Pending
 
-      attr_reader :description
-      attr_reader :uri_string
+      attr_reader :description, :uri_string
 
       def initialize(spec)
         @spec = spec
@@ -138,12 +132,10 @@ module Mongo
       end
 
       def seeds
-        if @spec['seeds']
-          @seeds ||= (@spec['seeds'] || []).collect do |host|
-            Host.new(host)
-          end
-        else
-          nil
+        return unless @spec['seeds']
+
+        @seeds ||= (@spec['seeds'] || []).collect do |host|
+          Host.new(host)
         end
       end
 
@@ -158,9 +150,7 @@ module Mongo
       def client
         @client ||= ClientRegistry.instance.new_local_client(@spec['uri'], monitoring_io: false)
       rescue Mongo::Error::LintError => e
-        if e.message =~ /arbitraryButStillValid/
-          skip 'Test uses a read concern that fails linter'
-        end
+        skip 'Test uses a read concern that fails linter' if /arbitraryButStillValid/.match?(e.message)
       end
 
       def uri
@@ -193,15 +183,13 @@ module Mongo
     end
 
     class Host
-
       MAPPING = {
-          'ipv4' => Mongo::Address::IPv4,
-          'ipv6' => Mongo::Address::IPv6,
-          'unix' => Mongo::Address::Unix
+        'ipv4' => Mongo::Address::IPv4,
+        'ipv6' => Mongo::Address::IPv6,
+        'unix' => Mongo::Address::Unix
       }
 
-      attr_reader :host
-      attr_reader :port
+      attr_reader :host, :port
 
       def initialize(spec)
         if spec.is_a?(Hash)
@@ -223,10 +211,7 @@ module Mongo
     end
 
     class Auth
-
-      attr_reader :username
-      attr_reader :password
-      attr_reader :database
+      attr_reader :username, :password, :database
 
       def initialize(spec)
         @spec = spec
@@ -241,52 +226,40 @@ module Mongo
     end
 
     module_function def adjust_expected_mongo_client_options(options)
-      expected = options.dup.tap do |expected|
+      options.dup.tap do |expected|
         expected.each do |k, v|
           # Ruby driver downcases auth mechanism properties when
           # constructing the client.
           #
           # Some tests give options in all lower case.
-          if k.downcase == 'authmechanismproperties'
-            expected[k] = ::Utils.downcase_keys(v)
-          end
+          expected[k] = ::Utils.downcase_keys(v) if k.downcase == 'authmechanismproperties'
         end
         # We omit retryReads/retryWrites=true because some tests do not
         # provide those.
-        %w(retryReads retryWrites).each do |k, v|
-          if expected[k] == true
-            expected.delete(k)
-          end
+        %w[retryReads retryWrites].each do |k, _v|
+          expected.delete(k) if expected[k] == true
         end
         # Fix appName case.
-        if expected.key?('appname') && !expected.key?('appName')
-          expected['appName'] = expected.delete('appname')
-        end
+        expected['appName'] = expected.delete('appname') if expected.key?('appname') && !expected.key?('appName')
       end
     end
   end
 end
 
-def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::ConnectionString::Spec, &block)
-
+def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::ConnectionString::Spec)
   clean_slate_for_all_if_possible
 
   test_paths.each do |path|
-
     spec = spec_cls.new(path)
 
     context(spec.description) do
+      # include Mongo::ConnectionString
 
-      #include Mongo::ConnectionString
-
-      spec.tests.each_with_index do |test, index|
+      spec.tests.each_with_index do |test, _index|
         context "when a #{test.description} is provided" do
-          if test.description.downcase.include?("gssapi")
-            require_mongo_kerberos
-          end
+          require_mongo_kerberos if test.description.downcase.include?('gssapi')
 
           context 'when the uri is invalid', unless: test.valid? do
-
             it 'raises an error' do
               expect do
                 test.uri
@@ -295,7 +268,6 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
           end
 
           context 'when the uri should warn', if: test.warn? do
-
             before do
               expect(Mongo::Logger.logger).to receive(:warn)
             end
@@ -306,7 +278,6 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
           end
 
           context 'when the uri is valid', if: test.valid? do
-
             it 'does not raise an exception' do
               expect(test.uri).to be_a(Mongo::URI)
             end
@@ -326,9 +297,9 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
                 actual = Utils.downcase_keys(mapped)
                 actual.delete('authsource')
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(
-                  test.expected_options,
+                  test.expected_options
                 )
-                actual.should == expected
+                expect(actual).to eq(expected)
               end
             end
 
@@ -340,7 +311,7 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
               if test.read_concern_expectation == {}
                 it 'creates a client with no read concern' do
                   actual = Utils.camelize_hash(test.client.options[:read_concern])
-                  expect(actual).to be nil
+                  expect(actual).to be_nil
                 end
               else
 
@@ -364,20 +335,16 @@ def define_connection_string_spec_tests(test_paths, spec_cls = Mongo::Connection
                   # these expectations are rather awkward to work with.
                   # Convert them all to expected server fields.
                   j = expected.delete('journal')
-                  unless j.nil?
-                    expected['j'] = j
-                  end
+                  expected['j'] = j unless j.nil?
                   wtimeout = expected.delete('wtimeoutMS')
-                  unless wtimeout.nil?
-                    expected['wtimeout'] = wtimeout
-                  end
+                  expected['wtimeout'] = wtimeout unless wtimeout.nil?
                 end
               end
 
               if test.write_concern_expectation == {}
 
                 it 'creates a client with no write concern' do
-                  expect(actual_write_concern).to be nil
+                  expect(actual_write_concern).to be_nil
                 end
               else
                 it 'creates a client with the correct write concern' do

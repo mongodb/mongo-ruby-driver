@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Grid::FSBucket do
-
   let(:fs) do
     described_class.new(client.database, options)
   end
@@ -19,7 +17,7 @@ describe Mongo::Grid::FSBucket do
   end
 
   let(:options) do
-    { }
+    {}
   end
 
   let(:filename) do
@@ -31,12 +29,19 @@ describe Mongo::Grid::FSBucket do
   end
 
   before do
-    support_fs.files_collection.drop rescue nil
-    support_fs.chunks_collection.drop rescue nil
+    begin
+      support_fs.files_collection.drop
+    rescue StandardError
+      nil
+    end
+    begin
+      support_fs.chunks_collection.drop
+    rescue StandardError
+      nil
+    end
   end
 
   describe '#initialize' do
-
     it 'sets the files collection' do
       expect(fs.files_collection.name).to eq('fs.files')
     end
@@ -46,15 +51,12 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when options are provided' do
-
       let(:fs) do
         described_class.new(authorized_client.database, options)
       end
 
       context 'when a write concern is set' do
-
         context 'when the option :write is provided' do
-
           let(:options) do
             { write: { w: 2 } }
           end
@@ -66,7 +68,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a read preference is set' do
-
         context 'when given as a hash with symbol keys' do
           let(:options) do
             { read: { mode: :secondary } }
@@ -90,7 +91,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a read preference is not set' do
-
         let(:database) do
           authorized_client.with(read: { mode: :secondary }).database
         end
@@ -105,7 +105,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a write stream is opened' do
-
         let(:stream) do
           fs.open_upload_stream('test.txt')
         end
@@ -115,7 +114,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when a write option is specified' do
-
           let(:options) do
             { write: { w: 2 } }
           end
@@ -126,16 +124,13 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when disable_md5 is not specified' do
-
           it 'does not set the option on the write stream' do
             expect(stream.options[:disable_md5]).to be_nil
           end
         end
 
         context 'when disable_md5 is specified' do
-
           context 'when disable_md5 is true' do
-
             let(:options) do
               { disable_md5: true }
             end
@@ -146,7 +141,6 @@ describe Mongo::Grid::FSBucket do
           end
 
           context 'when disable_md5 is false' do
-
             let(:options) do
               { disable_md5: false }
             end
@@ -161,17 +155,15 @@ describe Mongo::Grid::FSBucket do
   end
 
   describe '#find' do
-
     let(:fs) do
       described_class.new(authorized_client.database)
     end
 
     context 'when there is no selector provided' do
-
       let(:files) do
         [
-            Mongo::Grid::File.new('hello world!', :filename => 'test.txt'),
-            Mongo::Grid::File.new('goodbye world!', :filename => 'test1.txt')
+          Mongo::Grid::File.new('hello world!', filename: 'test.txt'),
+          Mongo::Grid::File.new('goodbye world!', filename: 'test1.txt')
         ]
       end
 
@@ -187,13 +179,12 @@ describe Mongo::Grid::FSBucket do
 
       it 'iterates over the documents in the result' do
         fs.find.each do |document|
-          expect(document).to_not be_nil
+          expect(document).not_to be_nil
         end
       end
     end
 
     context 'when provided a filter' do
-
       let(:view) do
         fs.find(filename: 'test.txt')
       end
@@ -204,9 +195,8 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when options are provided' do
-
       let(:view) do
-        fs.find({filename: 'test.txt'}, options)
+        fs.find({ filename: 'test.txt' }, options)
       end
 
       context 'when provided allow_disk_use' do
@@ -228,7 +218,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when provided batch_size' do
-
         let(:options) do
           { batch_size: 5 }
         end
@@ -239,7 +228,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when provided limit' do
-
         let(:options) do
           { limit: 5 }
         end
@@ -250,7 +238,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when provided no_cursor_timeout' do
-
         let(:options) do
           { no_cursor_timeout: true }
         end
@@ -261,7 +248,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when provided skip' do
-
         let(:options) do
           { skip: 5 }
         end
@@ -272,9 +258,8 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when provided sort' do
-
         let(:options) do
-          { sort:  { 'x' => Mongo::Index::ASCENDING } }
+          { sort: { 'x' => Mongo::Index::ASCENDING } }
         end
 
         it 'sets the sort on the view' do
@@ -285,13 +270,12 @@ describe Mongo::Grid::FSBucket do
   end
 
   describe '#find_one' do
-
     let(:fs) do
       described_class.new(authorized_client.database)
     end
 
     let(:file) do
-      Mongo::Grid::File.new('hello world!', :filename => 'test.txt')
+      Mongo::Grid::File.new('hello world!', filename: 'test.txt')
     end
 
     before do
@@ -299,15 +283,15 @@ describe Mongo::Grid::FSBucket do
     end
 
     let(:from_db) do
-      fs.find_one(:filename => 'test.txt')
+      fs.find_one(filename: 'test.txt')
     end
 
     let(:from_db_upload_date) do
-      from_db.info.upload_date.strftime("%Y-%m-%d %H:%M:%S")
+      from_db.info.upload_date.strftime('%Y-%m-%d %H:%M:%S')
     end
 
     let(:file_info_upload_date) do
-      file.info.upload_date.strftime("%Y-%m-%d %H:%M:%S")
+      file.info.upload_date.strftime('%Y-%m-%d %H:%M:%S')
     end
 
     it 'returns the assembled file from the db' do
@@ -321,27 +305,25 @@ describe Mongo::Grid::FSBucket do
   end
 
   describe '#insert_one' do
-
     let(:fs) do
       described_class.new(authorized_client.database)
     end
 
     let(:file) do
-      Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
+      Mongo::Grid::File.new('Hello!', filename: 'test.txt')
     end
 
     let(:support_file) do
-      Mongo::Grid::File.new('Hello!', :filename => 'support_test.txt')
+      Mongo::Grid::File.new('Hello!', filename: 'support_test.txt')
     end
 
     context 'when inserting the file once' do
-
       let!(:result) do
         fs.insert_one(file)
       end
 
       let(:from_db) do
-        fs.find_one(:filename => 'test.txt')
+        fs.find_one(filename: 'test.txt')
       end
 
       it 'inserts the file into the database' do
@@ -369,11 +351,11 @@ describe Mongo::Grid::FSBucket do
       end
 
       let(:chunks_index) do
-        fs.database[fs.chunks_collection.name].indexes.get(:files_id => 1, :n => 1)
+        fs.database[fs.chunks_collection.name].indexes.get(files_id: 1, n: 1)
       end
 
       let(:files_index) do
-        fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
+        fs.database[fs.files_collection.name].indexes.get(filename: 1, uploadDate: 1)
       end
 
       it 'tries to create indexes' do
@@ -392,9 +374,8 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a write operation is called more than once' do
-
         let(:file2) do
-          Mongo::Grid::File.new('Goodbye!', :filename => 'test2.txt')
+          Mongo::Grid::File.new('Goodbye!', filename: 'test2.txt')
         end
 
         it 'only creates the indexes the first time' do
@@ -411,27 +392,25 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when the index creation encounters an error' do
-
       before do
-        fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
+        fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, unique: false)
       end
 
-      it 'should not raise an error to the user' do
-        expect {
+      it 'does not raise an error to the user' do
+        expect do
           fs.insert_one(file)
-        }.not_to raise_error
+        end.not_to raise_error
       end
     end
 
     context 'when the files collection is not empty' do
-
       before do
         support_fs.insert_one(support_file)
         fs.insert_one(file)
       end
 
       let(:files_index) do
-        fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
+        fs.database[fs.files_collection.name].indexes.get(filename: 1, uploadDate: 1)
       end
 
       it 'assumes indexes already exist' do
@@ -440,24 +419,22 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when inserting the file more than once' do
-
       it 'raises an error' do
-        expect {
+        expect do
           fs.insert_one(file)
           fs.insert_one(file)
-        }.to raise_error(Mongo::Error::BulkWriteError)
+        end.to raise_error(Mongo::Error::BulkWriteError)
       end
     end
 
     context 'when the file exceeds the max bson size' do
-
       let(:fs) do
         described_class.new(authorized_client.database)
       end
 
       let(:file) do
-        str = 'y' * 16777216
-        Mongo::Grid::File.new(str, :filename => 'large-file.txt')
+        str = 'y' * 16_777_216
+        Mongo::Grid::File.new(str, filename: 'large-file.txt')
       end
 
       before do
@@ -466,16 +443,15 @@ describe Mongo::Grid::FSBucket do
 
       it 'successfully inserts the file' do
         expect(
-          fs.find_one(:filename => 'large-file.txt').chunks
+          fs.find_one(filename: 'large-file.txt').chunks
         ).to eq(file.chunks)
       end
     end
   end
 
   describe '#delete_one' do
-
     let(:file) do
-      Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
+      Mongo::Grid::File.new('Hello!', filename: 'test.txt')
     end
 
     before do
@@ -484,7 +460,7 @@ describe Mongo::Grid::FSBucket do
     end
 
     let(:from_db) do
-      fs.find_one(:filename => 'test.txt')
+      fs.find_one(filename: 'test.txt')
     end
 
     it 'removes the file from the db' do
@@ -493,7 +469,6 @@ describe Mongo::Grid::FSBucket do
   end
 
   describe '#delete' do
-
     let(:file_id) do
       fs.upload_from_stream(filename, file)
     end
@@ -503,7 +478,7 @@ describe Mongo::Grid::FSBucket do
     end
 
     let(:from_db) do
-      fs.find_one(:filename => filename)
+      fs.find_one(filename: filename)
     end
 
     it 'removes the file from the db' do
@@ -511,7 +486,6 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when a custom file id is used' do
-
       let(:custom_file_id) do
         fs.upload_from_stream(filename, file, file_id: 'Custom ID')
       end
@@ -521,7 +495,7 @@ describe Mongo::Grid::FSBucket do
       end
 
       let(:from_db) do
-        fs.find_one(:filename => filename)
+        fs.find_one(filename: filename)
       end
 
       it 'removes the file from the db' do
@@ -531,7 +505,6 @@ describe Mongo::Grid::FSBucket do
   end
 
   context 'when a read stream is opened' do
-
     let(:fs) do
       described_class.new(authorized_client.database, options)
     end
@@ -541,7 +514,6 @@ describe Mongo::Grid::FSBucket do
     end
 
     describe '#open_download_stream' do
-
       let!(:file_id) do
         fs.open_upload_stream(filename) do |stream|
           stream.write(file)
@@ -549,7 +521,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a block is provided' do
-
         let!(:stream) do
           fs.open_download_stream(file_id) do |stream|
             io.write(stream.read)
@@ -570,7 +541,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a block is not provided' do
-
         let!(:stream) do
           fs.open_download_stream(file_id)
         end
@@ -589,7 +559,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a custom file id is provided' do
-
         let(:file) do
           File.open(__FILE__)
         end
@@ -601,7 +570,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when a block is provided' do
-
           let!(:stream) do
             fs.open_download_stream(file_id) do |stream|
               io.write(stream.read)
@@ -614,7 +582,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when a block is not provided' do
-
           let!(:stream) do
             fs.open_download_stream(file_id)
           end
@@ -635,9 +602,7 @@ describe Mongo::Grid::FSBucket do
     end
 
     describe '#download_to_stream' do
-
       context 'sessions' do
-
         let(:options) do
           { session: session }
         end
@@ -660,7 +625,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when the file is found' do
-
         let!(:file_id) do
           fs.open_upload_stream(filename) do |stream|
             stream.write(file)
@@ -680,14 +644,13 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when the file has length 0' do
-
           let(:file) do
             StringIO.new('')
           end
 
           let(:from_db) do
             fs.open_upload_stream(filename) { |s| s.write(file) }
-            fs.find_one(:filename => filename)
+            fs.find_one(filename: filename)
           end
 
           it 'can read the file back' do
@@ -697,16 +660,14 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when there is no files collection document found' do
-
         it 'raises an exception' do
-          expect{
+          expect do
             fs.download_to_stream(BSON::ObjectId.new, io)
-          }.to raise_exception(Mongo::Error::FileNotFound)
+          end.to raise_exception(Mongo::Error::FileNotFound)
         end
       end
 
       context 'when a file has an id that is not an ObjectId' do
-
         before do
           fs.insert_one(file)
           fs.download_to_stream(file_id, io)
@@ -717,9 +678,9 @@ describe Mongo::Grid::FSBucket do
         end
 
         let(:file) do
-          Mongo::Grid::File.new(File.open(__FILE__).read,
-                                :filename => filename,
-                                :_id => file_id)
+          Mongo::Grid::File.new(File.read(__FILE__),
+                                filename: filename,
+                                _id: file_id)
         end
 
         it 'reads the file successfully' do
@@ -729,7 +690,6 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when a read preference is specified' do
-
       let(:fs) do
         described_class.new(authorized_client.database, options)
       end
@@ -749,19 +709,16 @@ describe Mongo::Grid::FSBucket do
     end
 
     describe '#download_to_stream_by_name' do
-
-
       let(:files) do
         [
-            StringIO.new('hello 1'),
-            StringIO.new('hello 2'),
-            StringIO.new('hello 3'),
-            StringIO.new('hello 4')
+          StringIO.new('hello 1'),
+          StringIO.new('hello 2'),
+          StringIO.new('hello 3'),
+          StringIO.new('hello 4')
         ]
       end
 
-      context ' when using a session' do
-
+      context 'when using a session' do
         let(:options) do
           { session: session }
         end
@@ -788,7 +745,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when not using a session' do
-
         before do
           files.each do |file|
             fs.upload_from_stream('test.txt', file)
@@ -800,7 +756,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when revision is not specified' do
-
           let!(:result) do
             fs.download_to_stream_by_name('test.txt', io)
           end
@@ -811,7 +766,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when revision is 0' do
-
           let!(:result) do
             fs.download_to_stream_by_name('test.txt', io, revision: 0)
           end
@@ -822,7 +776,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when revision is negative' do
-
           let!(:result) do
             fs.download_to_stream_by_name('test.txt', io, revision: -2)
           end
@@ -833,7 +786,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when revision is positive' do
-
           let!(:result) do
             fs.download_to_stream_by_name('test.txt', io, revision: 1)
           end
@@ -844,33 +796,30 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when the file revision is not found' do
-
           it 'raises a FileNotFound error' do
-            expect {
+            expect do
               fs.download_to_stream_by_name('test.txt', io, revision: 100)
-            }.to raise_exception(Mongo::Error::InvalidFileRevision)
+            end.to raise_exception(Mongo::Error::InvalidFileRevision)
           end
         end
 
         context 'when the file is not found' do
-
           it 'raises a FileNotFound error' do
-            expect {
+            expect do
               fs.download_to_stream_by_name('non-existent.txt', io)
-            }.to raise_exception(Mongo::Error::FileNotFound)
+            end.to raise_exception(Mongo::Error::FileNotFound)
           end
         end
       end
     end
 
     describe '#open_download_stream_by_name' do
-
       let(:files) do
         [
-            StringIO.new('hello 1'),
-            StringIO.new('hello 2'),
-            StringIO.new('hello 3'),
-            StringIO.new('hello 4')
+          StringIO.new('hello 1'),
+          StringIO.new('hello 2'),
+          StringIO.new('hello 3'),
+          StringIO.new('hello 4')
         ]
       end
 
@@ -878,8 +827,7 @@ describe Mongo::Grid::FSBucket do
         StringIO.new
       end
 
-      context ' when using a session' do
-
+      context 'when using a session' do
         let(:options) do
           { session: session }
         end
@@ -906,7 +854,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when not using a session' do
-
         before do
           files.each do |file|
             fs.upload_from_stream('test.txt', file)
@@ -914,7 +861,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when a block is provided' do
-
           let(:stream) do
             fs.open_download_stream_by_name('test.txt') do |stream|
               io.write(stream.read)
@@ -935,7 +881,6 @@ describe Mongo::Grid::FSBucket do
           end
 
           context 'when revision is not specified' do
-
             let!(:result) do
               fs.open_download_stream_by_name('test.txt') do |stream|
                 io.write(stream.read)
@@ -948,7 +893,6 @@ describe Mongo::Grid::FSBucket do
           end
 
           context 'when revision is 0' do
-
             let!(:result) do
               fs.open_download_stream_by_name('test.txt', revision: 0) do |stream|
                 io.write(stream.read)
@@ -961,7 +905,6 @@ describe Mongo::Grid::FSBucket do
           end
 
           context 'when revision is negative' do
-
             let!(:result) do
               fs.open_download_stream_by_name('test.txt', revision: -2) do |stream|
                 io.write(stream.read)
@@ -974,7 +917,6 @@ describe Mongo::Grid::FSBucket do
           end
 
           context 'when revision is positive' do
-
             let!(:result) do
               fs.open_download_stream_by_name('test.txt', revision: 1) do |stream|
                 io.write(stream.read)
@@ -987,26 +929,23 @@ describe Mongo::Grid::FSBucket do
           end
 
           context 'when the file revision is not found' do
-
             it 'raises a FileNotFound error' do
-              expect {
+              expect do
                 fs.open_download_stream_by_name('test.txt', revision: 100)
-              }.to raise_exception(Mongo::Error::InvalidFileRevision)
+              end.to raise_exception(Mongo::Error::InvalidFileRevision)
             end
           end
 
           context 'when the file is not found' do
-
             it 'raises a FileNotFound error' do
-              expect {
+              expect do
                 fs.open_download_stream_by_name('non-existent.txt')
-              }.to raise_exception(Mongo::Error::FileNotFound)
+              end.to raise_exception(Mongo::Error::FileNotFound)
             end
           end
         end
 
         context 'when a block is not provided' do
-
           let!(:stream) do
             fs.open_download_stream_by_name('test.txt')
           end
@@ -1028,15 +967,12 @@ describe Mongo::Grid::FSBucket do
   end
 
   context 'when a write stream is opened' do
-
     let(:stream) do
       fs.open_upload_stream(filename)
     end
 
     describe '#open_upload_stream' do
-
       context 'when a block is not provided' do
-
         it 'returns a Stream::Write object' do
           expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
         end
@@ -1046,7 +982,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when a custom file ID is provided' do
-
           let(:stream) do
             fs.open_upload_stream(filename, file_id: 'Custom ID')
           end
@@ -1062,9 +997,7 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a block is provided' do
-
         context 'when a session is not used' do
-
           let!(:stream) do
             fs.open_upload_stream(filename) do |stream|
               stream.write(file)
@@ -1092,17 +1025,15 @@ describe Mongo::Grid::FSBucket do
           end
         end
       end
-
     end
 
     describe '#upload_from_stream' do
-
       let!(:result) do
         fs.upload_from_stream(filename, file)
       end
 
       let(:file_from_db) do
-        fs.find_one(:filename => filename)
+        fs.find_one(filename: filename)
       end
 
       it 'writes to the provided stream' do
@@ -1118,7 +1049,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when the io stream raises an error' do
-
         let(:stream) do
           fs.open_upload_stream(filename)
         end
@@ -1128,48 +1058,44 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when stream#abort does not raise an OperationFailure' do
-
           before do
             expect(stream).to receive(:abort).and_call_original
             file.close
           end
 
           it 'raises the original IOError' do
-            expect {
+            expect do
               fs.upload_from_stream(filename, file)
-            }.to raise_exception(IOError)
+            end.to raise_exception(IOError)
           end
 
           it 'closes the stream' do
-            begin; fs.upload_from_stream(filename, file); rescue; end
+            begin; fs.upload_from_stream(filename, file); rescue StandardError; end
             expect(stream.closed?).to be(true)
           end
         end
 
         context 'when stream#abort raises an OperationFailure' do
-
           before do
             allow(stream).to receive(:abort).and_raise(Mongo::Error::OperationFailure)
             file.close
           end
 
           it 'raises the original IOError' do
-            expect {
+            expect do
               fs.upload_from_stream(filename, file)
-            }.to raise_exception(IOError)
+            end.to raise_exception(IOError)
           end
         end
       end
     end
 
     context 'when options are provided when opening the write stream' do
-
       let(:stream) do
         fs.open_upload_stream(filename, stream_options)
       end
 
       context 'when a custom file id is provided' do
-
         let(:stream_options) do
           { file_id: 'Custom ID' }
         end
@@ -1180,7 +1106,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a write option is specified' do
-
         let(:stream_options) do
           { write: { w: 2 } }
         end
@@ -1191,9 +1116,8 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when there is a chunk size set on the FSBucket' do
-
         let(:stream_options) do
-          {  }
+          {}
         end
 
         let(:options) do
@@ -1206,7 +1130,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a chunk size option is specified' do
-
         let(:stream_options) do
           { chunk_size: 50 }
         end
@@ -1216,7 +1139,6 @@ describe Mongo::Grid::FSBucket do
         end
 
         context 'when there is a chunk size set on the FSBucket' do
-
           let(:options) do
             { chunk_size: 100 }
           end
@@ -1228,12 +1150,10 @@ describe Mongo::Grid::FSBucket do
           it 'uses the chunk size set on the write stream' do
             expect(stream.options[:chunk_size]).to eq(stream_options[:chunk_size])
           end
-
         end
       end
 
       context 'when a file metadata option is specified' do
-
         let(:stream_options) do
           { metadata: { some_field: 1 } }
         end
@@ -1244,7 +1164,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a content type option is specified' do
-
         let(:stream_options) do
           { content_type: 'text/plain' }
         end
@@ -1255,7 +1174,6 @@ describe Mongo::Grid::FSBucket do
       end
 
       context 'when a aliases option is specified' do
-
         let(:stream_options) do
           { aliases: [ 'another-name.txt' ] }
         end

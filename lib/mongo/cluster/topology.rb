@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -90,30 +89,35 @@ module Mongo
       def initial(cluster, monitoring, options)
         connect = options[:connect]&.to_sym
         cls = if options[:direct_connection]
-          if connect && connect != :direct
-            raise ArgumentError, "Conflicting topology options: direct_connection=true and connect=#{connect}"
-          end
-          if options[:load_balanced]
-            raise ArgumentError, "Conflicting topology options: direct_connection=true and load_balanced=true"
-          end
-          Single
-        elsif options[:direct_connection] == false && connect && connect == :direct
-          raise ArgumentError, "Conflicting topology options: direct_connection=false and connect=#{connect}"
-        elsif connect && connect != :load_balanced
-          if options[:load_balanced]
-            raise ArgumentError, "Conflicting topology options: connect=#{options[:connect].inspect} and load_balanced=true"
-          end
-          OPTIONS.fetch(options[:connect].to_sym)
-        elsif options.key?(:replica_set) || options.key?(:replica_set_name)
-          if options[:load_balanced]
-            raise ArgumentError, "Conflicting topology options: replica_set/replica_set_name and load_balanced=true"
-          end
-          ReplicaSetNoPrimary
-        elsif options[:load_balanced] || connect == :load_balanced
-          LoadBalanced
-        else
-          Unknown
-        end
+                if connect && connect != :direct
+                  raise ArgumentError, "Conflicting topology options: direct_connection=true and connect=#{connect}"
+                end
+                if options[:load_balanced]
+                  raise ArgumentError, 'Conflicting topology options: direct_connection=true and load_balanced=true'
+                end
+
+                Single
+              elsif options[:direct_connection] == false && connect && connect == :direct
+                raise ArgumentError, "Conflicting topology options: direct_connection=false and connect=#{connect}"
+              elsif connect && connect != :load_balanced
+                if options[:load_balanced]
+                  raise ArgumentError,
+                        "Conflicting topology options: connect=#{options[:connect].inspect} and load_balanced=true"
+                end
+
+                OPTIONS.fetch(options[:connect].to_sym)
+              elsif options.key?(:replica_set) || options.key?(:replica_set_name)
+                if options[:load_balanced]
+                  raise ArgumentError,
+                        'Conflicting topology options: replica_set/replica_set_name and load_balanced=true'
+                end
+
+                ReplicaSetNoPrimary
+              elsif options[:load_balanced] || connect == :load_balanced
+                LoadBalanced
+              else
+                Unknown
+              end
         # Options here are client/cluster/server options.
         # In particular the replica set name key is different for
         # topology.

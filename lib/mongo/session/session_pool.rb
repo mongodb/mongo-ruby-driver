@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -16,9 +15,7 @@
 # limitations under the License.
 
 module Mongo
-
   class Session
-
     # A pool of server sessions.
     #
     # @api private
@@ -63,14 +60,10 @@ module Mongo
       def checkout
         @mutex.synchronize do
           loop do
-            if @queue.empty?
-              return ServerSession.new
-            else
-              session = @queue.shift
-              unless about_to_expire?(session)
-                return session
-              end
-            end
+            return ServerSession.new if @queue.empty?
+
+            session = @queue.shift
+            return session unless about_to_expire?(session)
           end
         end
       end
@@ -84,9 +77,7 @@ module Mongo
       #
       # @since 2.5.0
       def checkin(session)
-        if session.nil?
-          raise ArgumentError, 'session cannot be nil'
-        end
+        raise ArgumentError, 'session cannot be nil' if session.nil?
 
         @mutex.synchronize do
           prune!
@@ -101,17 +92,17 @@ module Mongo
       #
       # @since 2.5.0
       def end_sessions
-        while !@queue.empty?
+        until @queue.empty?
           server = ServerSelector.get(mode: :primary_preferred).select_server(@cluster)
           op = Operation::Command.new(
             selector: {
               endSessions: @queue.shift(10_000).map(&:session_id),
             },
-            db_name: Database::ADMIN,
+            db_name: Database::ADMIN
           )
           context = Operation::Context.new(options: {
-            server_api: server.options[:server_api],
-          })
+                                             server_api: server.options[:server_api],
+                                           })
           op.execute(server, context: context)
         end
       rescue Mongo::Error, Error::AuthError
@@ -131,23 +122,19 @@ module Mongo
       end
 
       def about_to_expire?(session)
-        if session.nil?
-          raise ArgumentError, 'session cannot be nil'
-        end
+        raise ArgumentError, 'session cannot be nil' if session.nil?
 
         # Load balancers spec explicitly requires to ignore the logical session
         # timeout value.
         # No rationale is provided as of the time of this writing.
-        if @cluster.load_balanced?
-          return false
-        end
+        return false if @cluster.load_balanced?
 
         logical_session_timeout = @cluster.logical_session_timeout
 
-        if logical_session_timeout
-          idle_time_minutes = (Time.now - session.last_use) / 60
-          (idle_time_minutes + 1) >= logical_session_timeout
-        end
+        return unless logical_session_timeout
+
+        idle_time_minutes = (Time.now - session.last_use) / 60
+        (idle_time_minutes + 1) >= logical_session_timeout
       end
 
       def prune!
@@ -155,12 +142,11 @@ module Mongo
         # No rationale is provided as of the time of this writing.
         return if @cluster.load_balanced?
 
-        while !@queue.empty?
-          if about_to_expire?(@queue[-1])
-            @queue.pop
-          else
-            break
-          end
+        until @queue.empty?
+          break unless about_to_expire?(@queue[-1])
+
+          @queue.pop
+
         end
       end
     end

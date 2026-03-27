@@ -75,7 +75,6 @@ module Mongo
       # @return [ Array<Float> ] the array of timings (in seconds) for
       #   each iteration.
       #
-      # rubocop:disable Metrics/AbcSize
       def run_benchmark
         [].tap do |timings|
           iteration_count = 0
@@ -104,7 +103,6 @@ module Mongo
           teardown
         end
       end
-      # rubocop:enable Metrics/AbcSize
 
       # Instantiate a new client.
       def new_client(uri = ENV['MONGODB_URI'])

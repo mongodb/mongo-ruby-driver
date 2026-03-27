@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -18,9 +17,9 @@ describe Mongo::Client do
       authorized_client.use(:keyvault)[:datakeys, write_concern: { w: :majority }].insert_one(data_key)
       authorized_client.use(:auto_encryption)[:users].drop
       authorized_client.use(:auto_encryption)[:users,
-        {
-          'validator' => { '$jsonSchema' => schema_map }
-        }
+                                              {
+                                                'validator' => { '$jsonSchema' => schema_map }
+                                              }
       ].create
     end
 
@@ -36,7 +35,7 @@ describe Mongo::Client do
               extra_options: extra_options,
             },
             database: :auto_encryption
-          ),
+          )
         )
       end
 

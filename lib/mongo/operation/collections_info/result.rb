@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,14 +17,12 @@
 module Mongo
   module Operation
     class CollectionsInfo
-
       # Defines custom behavior of results when query the system.namespaces
       # collection.
       #
       # @since 2.1.0
       # @api semiprivate
       class Result < Operation::Result
-
         # Initialize a new result.
         #
         # @param [ Array<Protocol::Message> | nil ] replies The wire protocol replies, if any.

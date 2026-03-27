@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -21,55 +20,57 @@ describe 'CRUD operations' do
 
       context 'filter only' do
         it 'passes the filter' do
-          collection.find(:'$query' => {test: 1}).first.should == {'_id' => 1, 'test' => 1}
+          expect(collection.find('$query': { test: 1 }).first).to eq({ '_id' => 1, 'test' => 1 })
         end
       end
 
       context 'empty filter with order' do
         it 'passes the filter' do
-          collection.find(:'$query' => {}, :'$orderby' => {test: 1}).first.should == {'_id' => 1, 'test' => 1}
-          collection.find(:'$query' => {}, :'$orderby' => {test: -1}).first.should == {'_id' => 3, 'test' => 3}
+          expect(collection.find('$query': {}, '$orderby': { test: 1 }).first).to eq({ '_id' => 1, 'test' => 1 })
+          expect(collection.find('$query': {}, '$orderby': { test: -1 }).first).to eq({ '_id' => 3, 'test' => 3 })
         end
       end
 
       context 'filter with order' do
         it 'passes both filter and order' do
-          collection.find(:'$query' => {test: {'$gt' => 1}}, '$orderby' => {test: 1}).first.should == {'_id' => 2, 'test' => 2}
-          collection.find(:'$query' => {test: {'$gt' => 1}}, '$orderby' => {test: -1}).first.should == {'_id' => 3, 'test' => 3}
+          expect(collection.find(:'$query' => { test: { '$gt' => 1 } },
+                                 '$orderby' => { test: 1 }).first).to eq({ '_id' => 2,
+                                                                           'test' => 2 })
+          expect(collection.find(:'$query' => { test: { '$gt' => 1 } },
+                                 '$orderby' => { test: -1 }).first).to eq({
+                                                                            '_id' => 3, 'test' => 3
+                                                                          })
         end
       end
     end
 
     context 'with read concern' do
       context 'with read concern specified on operation level' do
-
         it 'passes the read concern' do
           event = Utils.get_command_event(client, 'find') do |client|
-            client['foo'].find({}, read_concern: {level: :local}).to_a
+            client['foo'].find({}, read_concern: { level: :local }).to_a
           end
-          event.command.fetch('readConcern').should == {'level' => 'local'}
+          expect(event.command.fetch('readConcern')).to eq({ 'level' => 'local' })
         end
       end
 
       context 'with read concern specified on collection level' do
-
         it 'passes the read concern' do
           event = Utils.get_command_event(client, 'find') do |client|
-            client['foo', read_concern: {level: :local}].find.to_a
+            client['foo', read_concern: { level: :local }].find.to_a
           end
-          event.command.fetch('readConcern').should == {'level' => 'local'}
+          expect(event.command.fetch('readConcern')).to eq({ 'level' => 'local' })
         end
       end
 
       context 'with read concern specified on client level' do
-
-        let(:client) { authorized_client.with(read_concern: {level: :local}) }
+        let(:client) { authorized_client.with(read_concern: { level: :local }) }
 
         it 'passes the read concern' do
           event = Utils.get_command_event(client, 'find') do |client|
             client['foo'].find.to_a
           end
-          event.command.fetch('readConcern').should == {'level' => 'local'}
+          expect(event.command.fetch('readConcern')).to eq({ 'level' => 'local' })
         end
       end
     end
@@ -78,7 +79,7 @@ describe 'CRUD operations' do
       let(:collection_name) { 'crud_integration_oplog_replay' }
 
       let(:oplog_query) do
-        {ts: {'$gt' => 1}}
+        { ts: { '$gt' => 1 } }
       end
 
       context 'passed to operation' do
@@ -118,7 +119,7 @@ describe 'CRUD operations' do
           event = Utils.get_command_event(client, 'explain') do |client|
             client['foo'].find({}, session: session).explain.should be_explain_output
           end
-          event.command.fetch('lsid').should == session.session_id
+          expect(event.command.fetch('lsid')).to eq(session.session_id)
         end
       end
     end
@@ -128,9 +129,9 @@ describe 'CRUD operations' do
 
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
-          client['foo'].find({}, read: {mode: :secondary_preferred}).explain.should be_explain_output
+          client['foo'].find({}, read: { mode: :secondary_preferred }).explain.should be_explain_output
         end
-        event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
+        expect(event.command.fetch('$readPreference')).to eq({ 'mode' => 'secondaryPreferred' })
       end
     end
 
@@ -139,51 +140,48 @@ describe 'CRUD operations' do
 
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
-          client['foo', read: {mode: :secondary_preferred}].find.explain.should be_explain_output
+          client['foo', read: { mode: :secondary_preferred }].find.explain.should be_explain_output
         end
-        event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
+        expect(event.command.fetch('$readPreference')).to eq({ 'mode' => 'secondaryPreferred' })
       end
     end
 
     context 'with read preference specified on client level' do
       require_topology :sharded
 
-      let(:client) { authorized_client.with(read: {mode: :secondary_preferred}) }
+      let(:client) { authorized_client.with(read: { mode: :secondary_preferred }) }
 
       it 'passes the read preference' do
         event = Utils.get_command_event(client, 'explain') do |client|
           client['foo'].find.explain.should be_explain_output
         end
-        event.command.fetch('$readPreference').should == {'mode' => 'secondaryPreferred'}
+        expect(event.command.fetch('$readPreference')).to eq({ 'mode' => 'secondaryPreferred' })
       end
     end
 
     context 'with read concern' do
       context 'with read concern specifed on operation level' do
-
         # Read concern is not allowed in explain command, driver drops it.
         it 'drops the read concern' do
           event = Utils.get_command_event(client, 'explain') do |client|
-            client['foo'].find({}, read_concern: {level: :local}).explain.should have_key('queryPlanner')
+            client['foo'].find({}, read_concern: { level: :local }).explain.should have_key('queryPlanner')
           end
           event.command.should_not have_key('readConcern')
         end
       end
 
       context 'with read concern specifed on collection level' do
-
         # Read concern is not allowed in explain command, driver drops it.
         it 'drops the read concern' do
           event = Utils.get_command_event(client, 'explain') do |client|
-            client['foo', read_concern: {level: :local}].find.explain.should have_key('queryPlanner')
+            client['foo', read_concern: { level: :local }].find.explain.should have_key('queryPlanner')
           end
           event.command.should_not have_key('readConcern')
         end
       end
 
       context 'with read concern specifed on client level' do
-
-        let(:client) { authorized_client.with(read_concern: {level: :local}) }
+        let(:client) { authorized_client.with(read_concern: { level: :local }) }
 
         # Read concern is not allowed in explain command, driver drops it.
         it 'drops the read concern' do
@@ -287,19 +285,19 @@ describe 'CRUD operations' do
   describe 'upsert' do
     context 'with default write concern' do
       it 'upserts' do
-        collection.count_documents.should == 0
+        expect(collection.count_documents).to eq(0)
 
-        res = collection.find(_id: 'foo').update_one({'$set' => {foo: 'bar'}}, upsert: true)
+        res = collection.find(_id: 'foo').update_one({ '$set' => { foo: 'bar' } }, upsert: true)
 
-        res.documents.first['upserted'].length.should == 1
+        expect(res.documents.first['upserted'].length).to eq(1)
 
-        collection.count_documents.should == 1
+        expect(collection.count_documents).to eq(1)
       end
     end
 
     context 'unacknowledged write' do
       let(:unack_collection) do
-        collection.with(write_concern: {w: 0})
+        collection.with(write_concern: { w: 0 })
       end
 
       before do
@@ -307,15 +305,15 @@ describe 'CRUD operations' do
       end
 
       it 'upserts' do
-        unack_collection.count_documents.should == 0
+        expect(unack_collection.count_documents).to eq(0)
 
-        res = unack_collection.find(_id: 'foo').update_one({'$set' => {foo: 'bar'}}, upsert: true)
+        unack_collection.find(_id: 'foo').update_one({ '$set' => { foo: 'bar' } }, upsert: true)
 
         # since write concern is unacknowledged, wait for the data to be
         # persisted (hopefully)
         sleep 0.25
 
-        unack_collection.count_documents.should == 1
+        expect(unack_collection.count_documents).to eq(1)
       end
     end
   end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -22,7 +21,7 @@ describe 'Auto encryption client' do
             # Spawn mongocryptd on non-default port for sharded cluster tests
             extra_options: extra_options,
           },
-          database: 'auto_encryption',
+          database: 'auto_encryption'
         )
       )
     end
@@ -33,9 +32,9 @@ describe 'Auto encryption client' do
         expect(result).to be_ok
 
         encrypted_document = authorized_client
-          .use('auto_encryption')['users']
-          .find(_id: result.inserted_ids.first)
-          .first
+                             .use('auto_encryption')['users']
+                             .find(_id: result.inserted_ids.first)
+                             .first
 
         expect(encrypted_document['ssn']).to be_ciphertext
       end

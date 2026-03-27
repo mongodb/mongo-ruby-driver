@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -7,7 +6,7 @@ describe 'Mongo::Crypt::Binding' do
   describe 'binary_t bindings' do
     require_libmongocrypt
 
-    let(:bytes) { [104, 101, 108, 108, 111] }
+    let(:bytes) { [ 104, 101, 108, 108, 111 ] }
 
     let(:bytes_pointer) do
       # FFI::MemoryPointer automatically frees memory when it goes out of scope
@@ -23,7 +22,7 @@ describe 'Mongo::Crypt::Binding' do
       let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new }
 
       it 'returns a pointer' do
-        expect(binary).to be_a_kind_of(FFI::Pointer)
+        expect(binary).to be_a(FFI::Pointer)
       end
     end
 
@@ -31,7 +30,7 @@ describe 'Mongo::Crypt::Binding' do
       let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
 
       it 'returns a pointer' do
-        expect(binary).to be_a_kind_of(FFI::Pointer)
+        expect(binary).to be_a(FFI::Pointer)
       end
     end
 

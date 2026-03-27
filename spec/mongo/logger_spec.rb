@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
 describe Mongo::Logger do
-
   let(:logger) do
     described_class.logger
   end
@@ -20,9 +18,7 @@ describe Mongo::Logger do
   end
 
   describe '.logger' do
-
     context 'when no logger has been set' do
-
       let(:test_logger) do
         Mongo::Logger.logger
       end
@@ -37,7 +33,6 @@ describe Mongo::Logger do
     end
 
     context 'when a logger has been set' do
-
       let(:info) do
         Logger.new(STDOUT).tap do |log|
           log.level = Logger::INFO

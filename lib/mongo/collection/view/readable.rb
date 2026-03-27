@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,12 +17,10 @@
 module Mongo
   class Collection
     class View
-
       # Defines read related behavior for collection view.
       #
       # @since 2.0.0
       module Readable
-
         # Execute an aggregation on the collection view.
         #
         # @example Aggregate documents.
@@ -174,13 +171,14 @@ module Mongo
         #     * $nearSphere should be replaced with $geoWithin with $centerSphere
         def count(opts = {})
           opts = @options.merge(opts) unless Mongo.broken_view_options
-          cmd = { :count => collection.name, :query => filter }
+          cmd = { count: collection.name, query: filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
           cmd[:limit] = opts[:limit] if opts[:limit]
           if read_concern
             cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
-              read_concern)
+              read_concern
+            )
           end
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
@@ -195,13 +193,13 @@ module Mongo
             operation = Operation::Count.new(
               selector: cmd,
               db_name: database.name,
-              options: {:limit => -1},
+              options: { limit: -1 },
               read: read_pref,
               session: session,
               # For some reason collation was historically accepted as a
               # string key. Note that this isn't documented as valid usage.
               collation: opts[:collation] || opts['collation'] || collation,
-              comment: opts[:comment],
+              comment: opts[:comment]
             )
             tracer.trace_operation(operation, context) do
               read_with_retry(session, selector, context) do |server|
@@ -243,16 +241,17 @@ module Mongo
         # @since 2.6.0
         def count_documents(opts = {})
           opts = @options.merge(opts) unless Mongo.broken_view_options
-          pipeline = [:'$match' => filter]
-          pipeline << { :'$skip' => opts[:skip] } if opts[:skip]
-          pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
-          pipeline << { :'$group' => { _id: 1, n: { :'$sum' => 1 } } }
+          pipeline = [ { '$match': filter } ]
+          pipeline << { '$skip': opts[:skip] } if opts[:skip]
+          pipeline << { '$limit': opts[:limit] } if opts[:limit]
+          pipeline << { '$group': { _id: 1, n: { '$sum': 1 } } }
 
           opts = opts.slice(:hint, :max_time_ms, :read, :collation, :session, :comment, :timeout_ms)
           opts[:collation] ||= collation
 
           first = aggregate(pipeline, opts).first
           return 0 unless first
+
           first['n'].to_i
         end
 
@@ -278,7 +277,7 @@ module Mongo
         # @since 2.6.0
         def estimated_document_count(opts = {})
           unless view.filter.empty?
-            raise ArgumentError, "Cannot call estimated_document_count when querying with a filter"
+            raise ArgumentError, 'Cannot call estimated_document_count when querying with a filter'
           end
 
           %i[limit skip].each do |opt|
@@ -299,31 +298,27 @@ module Mongo
             )
             cmd = { count: collection.name }
             cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-            if read_concern
-              cmd[:readConcern] = Options::Mapper.transform_values_to_strings(read_concern)
-            end
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(read_concern) if read_concern
             operation = Operation::Count.new(
               selector: cmd,
               db_name: database.name,
               read: read_pref,
               session: session,
-              comment: opts[:comment],
+              comment: opts[:comment]
             )
             tracer.trace_operation(operation, context, op_name: 'estimatedDocumentCount') do
               read_with_retry(session, selector, context) do |server|
                 result = operation.execute(server, context: context)
                 result.n.to_i
               end
-            rescue Error::OperationFailure::Family => exc
-              if exc.code == 26
-                # NamespaceNotFound
-                # This should only happen with the aggregation pipeline path
-                # (server 4.9+). Previous servers should return 0 for nonexistent
-                # collections.
-                0
-              else
-                raise
-              end
+            rescue Error::OperationFailure::Family => e
+              raise unless e.code == 26
+
+              # NamespaceNotFound
+              # This should only happen with the aggregation pipeline path
+              # (server 4.9+). Previous servers should return 0 for nonexistent
+              # collections.
+              0
             end
           end
         end
@@ -347,17 +342,17 @@ module Mongo
         #
         # @since 2.0.0
         def distinct(field_name, opts = {})
-          if field_name.nil?
-            raise ArgumentError, 'Field name for distinct operation must be not nil'
-          end
+          raise ArgumentError, 'Field name for distinct operation must be not nil' if field_name.nil?
+
           opts = @options.merge(opts) unless Mongo.broken_view_options
-          cmd = { :distinct => collection.name,
-                  :key => field_name.to_s,
-                  :query => filter, }
+          cmd = { distinct: collection.name,
+                  key: field_name.to_s,
+                  query: filter, }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           if read_concern
             cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
-              read_concern)
+              read_concern
+            )
           end
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
@@ -371,13 +366,13 @@ module Mongo
             operation = Operation::Distinct.new(
               selector: cmd,
               db_name: database.name,
-              options: {:limit => -1},
+              options: { limit: -1 },
               read: read_pref,
               session: session,
               comment: opts[:comment],
               # For some reason collation was historically accepted as a
               # string key. Note that this isn't documented as valid usage.
-              collation: opts[:collation] || opts['collation'] || collation,
+              collation: opts[:collation] || opts['collation'] || collation
             )
             tracer.trace_operation(operation, context) do
               read_with_retry(session, selector, context) do |server|
@@ -524,6 +519,7 @@ module Mongo
         # @since 2.0.0
         def read(value = nil)
           return read_preference if value.nil?
+
           configure(:read, value)
         end
 
@@ -555,7 +551,7 @@ module Mongo
         def show_disk_loc(value = nil)
           configure(:show_disk_loc, value)
         end
-        alias :show_record_id :show_disk_loc
+        alias show_record_id show_disk_loc
 
         # The number of docs to skip before returning results.
         #
@@ -697,24 +693,22 @@ module Mongo
             # collection read preference. If we are not in transaction we
             # look at collection read preference which defaults to client.
             rp = if options[:read]
-              options[:read]
-            elsif options[:session] && options[:session].in_transaction?
-              options[:session].txn_read_preference || collection.client.read_preference
-            else
-              collection.read_preference
-            end
+                   options[:read]
+                 elsif options[:session] && options[:session].in_transaction?
+                   options[:session].txn_read_preference || collection.client.read_preference
+                 else
+                   collection.read_preference
+                 end
             Lint.validate_underscore_read_preference(rp)
             rp
           end
         end
 
         def parallel_scan(cursor_count, options = {})
-          if options[:session]
-            # The session would be overwritten by the one in +options+ later.
-            session = client.get_session(@options)
-          else
-            session = nil
-          end
+          session = if options[:session]
+                      # The session would be overwritten by the one in +options+ later.
+                      client.get_session(@options)
+                    end
           server = server_selector.select_server(cluster, nil, session)
           spec = {
             coll_name: collection.name,
@@ -742,7 +736,7 @@ module Mongo
             context = Operation::Context.new(
               client: client,
               session: session,
-              connection_global_id: result.connection_global_id,
+              connection_global_id: result.connection_global_id
             )
             result = if server.load_balancer?
                        # Connection will be checked in when cursor is drained.
@@ -763,10 +757,10 @@ module Mongo
 
         def server_selector
           @server_selector ||= if options[:session] && options[:session].in_transaction?
-            ServerSelector.get(read_preference || client.server_selector)
-          else
-            ServerSelector.get(read_preference || collection.server_selector)
-          end
+                                 ServerSelector.get(read_preference || client.server_selector)
+                               else
+                                 ServerSelector.get(read_preference || collection.server_selector)
+                               end
         end
 
         def validate_doc!(doc)

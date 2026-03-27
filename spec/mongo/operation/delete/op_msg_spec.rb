@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require_relative '../shared/csot/examples'
@@ -14,15 +13,14 @@ describe Mongo::Operation::Delete::OpMsg do
   end
 
   let(:session) { nil }
-  let(:deletes) { [{:q => { :foo => 1 }, :limit => 1}] }
+  let(:deletes) { [ { q: { foo: 1 }, limit: 1 } ] }
   let(:spec) do
-    { :deletes       => deletes,
-      :db_name       => authorized_collection.database.name,
-      :coll_name     => authorized_collection.name,
-      :write_concern => write_concern,
-      :ordered       => true,
-      :session       => session
-    }
+    { deletes: deletes,
+      db_name: authorized_collection.database.name,
+      coll_name: authorized_collection.name,
+      write_concern: write_concern,
+      ordered: true,
+      session: session }
   end
 
   let(:op) { described_class.new(spec) }
@@ -37,9 +35,7 @@ describe Mongo::Operation::Delete::OpMsg do
   end
 
   describe '#initialize' do
-
     context 'spec' do
-
       it 'sets the spec' do
         expect(op.spec).to eq(spec)
       end
@@ -47,9 +43,7 @@ describe Mongo::Operation::Delete::OpMsg do
   end
 
   describe '#==' do
-
     context 'spec' do
-
       context 'when two ops have the same specs' do
         let(:other) { described_class.new(spec) }
 
@@ -59,14 +53,13 @@ describe Mongo::Operation::Delete::OpMsg do
       end
 
       context 'when two ops have different specs' do
-        let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+        let(:other_deletes) { [ { q: { bar: 1 }, limit: 1 } ] }
         let(:other_spec) do
-          { :deletes       => other_deletes,
-            :db_name       => authorized_collection.database.name,
-            :coll_name     => authorized_collection.name,
-            :write_concern => write_concern,
-            :ordered       => true
-          }
+          { deletes: other_deletes,
+            db_name: authorized_collection.database.name,
+            coll_name: authorized_collection.name,
+            write_concern: write_concern,
+            ordered: true }
         end
         let(:other) { described_class.new(other_spec) }
 
@@ -82,13 +75,11 @@ describe Mongo::Operation::Delete::OpMsg do
     require_no_linting
 
     context 'when write concern is not specified' do
-
       let(:spec) do
-        { :deletes       => deletes,
-          :db_name       => authorized_collection.database.name,
-          :coll_name     => authorized_collection.name,
-          :ordered       => true
-        }
+        { deletes: deletes,
+          db_name: authorized_collection.database.name,
+          coll_name: authorized_collection.name,
+          ordered: true }
       end
 
       it 'does not include write concern in the selector' do
@@ -97,7 +88,6 @@ describe Mongo::Operation::Delete::OpMsg do
     end
 
     context 'when write concern is specified' do
-
       it 'includes write concern in the selector' do
         expect(op.send(:command, connection)[:writeConcern]).to eq(BSON::Document.new(write_concern.options))
       end
@@ -109,14 +99,13 @@ describe Mongo::Operation::Delete::OpMsg do
     require_no_linting
 
     context 'when the server supports OP_MSG' do
-
       let(:global_args) do
         {
-            delete: TEST_COLL,
-            ordered: true,
-            writeConcern: write_concern.options,
-            '$db' => SpecConfig.instance.test_db,
-            lsid: session.session_id
+          delete: TEST_COLL,
+          ordered: true,
+          writeConcern: write_concern.options,
+          '$db' => SpecConfig.instance.test_db,
+          lsid: session.session_id
         }
       end
 
@@ -136,7 +125,7 @@ describe Mongo::Operation::Delete::OpMsg do
         end
 
         it 'creates the correct OP_MSG message' do
-          authorized_client.command(ping:1)
+          authorized_client.command(ping: 1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
           op.send(:message, connection)
         end
@@ -150,7 +139,7 @@ describe Mongo::Operation::Delete::OpMsg do
         end
 
         it 'creates the correct OP_MSG message' do
-          authorized_client.command(ping:1)
+          authorized_client.command(ping: 1)
           expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
           op.send(:message, connection)
         end
@@ -177,7 +166,7 @@ describe Mongo::Operation::Delete::OpMsg do
               # mimic lack of session support
               allow(authorized_primary.description).to receive(:logical_session_timeout).and_return(nil)
 
-              expect(expected_global_args[:session]).to be nil
+              expect(expected_global_args[:session]).to be_nil
               expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
               op.send(:message, connection)
             end
@@ -186,13 +175,11 @@ describe Mongo::Operation::Delete::OpMsg do
       end
 
       context 'when the write concern is 0' do
-
         let(:write_concern) do
           Mongo::WriteConcern.get(w: 0)
         end
 
         context 'when the session is implicit' do
-
           let(:session) do
             Mongo::Session.new(nil, authorized_client, implicit: true).tap do |session|
               allow(session).to receive(:session_id).and_return(42)
@@ -211,8 +198,9 @@ describe Mongo::Operation::Delete::OpMsg do
             end
 
             it 'does not send a session id in the command' do
-              authorized_client.command(ping:1)
-              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              authorized_client.command(ping: 1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args,
+                                                                 expected_payload_1)
               op.send(:message, connection)
             end
           end
@@ -227,8 +215,9 @@ describe Mongo::Operation::Delete::OpMsg do
             end
 
             it 'creates the correct OP_MSG message' do
-              authorized_client.command(ping:1)
-              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              authorized_client.command(ping: 1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args,
+                                                                 expected_payload_1)
               op.send(:message, connection)
             end
           end
@@ -253,9 +242,10 @@ describe Mongo::Operation::Delete::OpMsg do
           end
 
           it 'does not send a session id in the command' do
-            authorized_client.command(ping:1)
+            authorized_client.command(ping: 1)
             RSpec::Mocks.with_temporary_scope do
-              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([ :more_to_come ], {}, expected_global_args,
+                                                                 expected_payload_1)
               op.send(:message, connection)
             end
           end

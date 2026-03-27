@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'support/shared/scram_conversation'
@@ -14,23 +13,21 @@ describe Mongo::Auth::Scram256::Conversation do
     described_class.new(user, double('connection'))
   end
 
-  it_behaves_like 'scram conversation'
-
+  let(:mechanism) do
+    :scram256
+  end
   let(:user) do
     Mongo::Auth::User.new(
       database: Mongo::Database::ADMIN,
       user: 'user',
       password: 'pencil',
-      auth_mech: :scram256,
+      auth_mech: :scram256
     )
   end
 
-  let(:mechanism) do
-    :scram256
-  end
+  it_behaves_like 'scram conversation'
 
   describe '#start' do
-
     let(:msg) do
       conversation.start(connection)
     end
@@ -68,7 +65,6 @@ describe Mongo::Auth::Scram256::Conversation do
     end
 
     context 'when the server rnonce starts with the nonce' do
-
       let(:continue_payload) do
         BSON::Binary.new(
           'r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
@@ -99,7 +95,6 @@ describe Mongo::Auth::Scram256::Conversation do
     end
 
     context 'when the server nonce does not start with the nonce' do
-
       let(:continue_payload) do
         BSON::Binary.new(
           'r=sOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096'
@@ -107,9 +102,9 @@ describe Mongo::Auth::Scram256::Conversation do
       end
 
       it 'raises an error' do
-        expect {
+        expect do
           conversation.continue(continue_document, connection)
-        }.to raise_error(Mongo::Error::InvalidNonce)
+        end.to raise_error(Mongo::Error::InvalidNonce)
       end
     end
   end
@@ -128,7 +123,6 @@ describe Mongo::Auth::Scram256::Conversation do
     end
 
     context 'when the verifier matches the server signature' do
-
       let(:finalize_payload) do
         BSON::Binary.new(' v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=')
       end
@@ -157,7 +151,6 @@ describe Mongo::Auth::Scram256::Conversation do
     end
 
     context 'when the verifier does not match the server signature' do
-
       let(:finalize_payload) do
         BSON::Binary.new('v=7rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=')
       end

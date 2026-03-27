@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 require 'runners/read_write_concern_document'
@@ -12,11 +11,8 @@ describe 'Connection String' do
     spec = ReadWriteConcernDocument::Spec.new(test_path)
 
     context(spec.description) do
-
-      spec.tests.each_with_index do |test, index|
-
+      spec.tests.each_with_index do |test, _index|
         context test.description do
-
           let(:actual) do
             Mongo::WriteConcern.get(test.input_document)
           end

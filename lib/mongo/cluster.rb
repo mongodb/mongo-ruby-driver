@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -21,7 +20,6 @@ require 'mongo/cluster/reapers/cursor_reaper'
 require 'mongo/cluster/periodic_executor'
 
 module Mongo
-
   # Represents a group of servers on the server side, either as a
   # single server, a replica set, or a single or multiple mongos.
   #
@@ -58,7 +56,7 @@ module Mongo
     #
     # @since 2.5.0
     # @deprecated
-    CLUSTER_TIME = 'clusterTime'.freeze
+    CLUSTER_TIME = 'clusterTime'
 
     # Instantiate the new cluster.
     #
@@ -118,14 +116,10 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
-      if seeds.nil?
-        raise ArgumentError, 'Seeds cannot be nil'
-      end
+      raise ArgumentError, 'Seeds cannot be nil' if seeds.nil?
 
       options = options.dup
-      if options[:monitoring_io] == false && !options.key?(:cleanup)
-        options[:cleanup] = false
-      end
+      options[:cleanup] = false if options[:monitoring_io] == false && !options.key?(:cleanup)
       @tracer = options.delete(:tracer)
       @options = options.freeze
 
@@ -160,9 +154,7 @@ module Mongo
       @sdam_flow_lock = Mutex.new
       @session_pool = Session::SessionPool.new(self)
 
-      if seeds.empty? && load_balanced?
-        raise ArgumentError, 'Load-balanced clusters with no seeds are prohibited'
-      end
+      raise ArgumentError, 'Load-balanced clusters with no seeds are prohibited' if seeds.empty? && load_balanced?
 
       # The opening topology is always unknown with no servers.
       # https://github.com/mongodb/specifications/pull/388
@@ -222,62 +214,59 @@ module Mongo
         @cursor_reaper = CursorReaper.new(self)
         @socket_reaper = SocketReaper.new(self)
         @periodic_executor = PeriodicExecutor.new([
-          @cursor_reaper, @socket_reaper,
-        ], options)
+                                                    @cursor_reaper, @socket_reaper,
+                                                  ], options)
 
         @periodic_executor.run!
       end
 
-      unless load_balanced?
-        # Need to record start time prior to starting monitoring
-        start_monotime = Utils.monotonic_time
+      return if load_balanced?
 
-        servers.each do |server|
-          server.start_monitoring
-        end
+      # Need to record start time prior to starting monitoring
+      start_monotime = Utils.monotonic_time
 
-        if options[:scan] != false
-          server_selection_timeout = options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
-          # The server selection timeout can be very short especially in
-          # tests, when the client waits for a synchronous scan before
-          # starting server selection. Limiting the scan to server selection time
-          # then aborts the scan before it can process even local servers.
-          # Therefore, allow at least 3 seconds for the scan here.
-          if server_selection_timeout < 3
-            server_selection_timeout = 3
-          end
-          deadline = start_monotime + server_selection_timeout
-          # Wait for the first scan of each server to complete, for
-          # backwards compatibility.
-          # If any servers are discovered during this SDAM round we are going to
-          # wait for these servers to also be queried, and so on, up to the
-          # server selection timeout or the 3 second minimum.
-          loop do
-            # Ensure we do not try to read the servers list while SDAM is running
-            servers = @sdam_flow_lock.synchronize do
-              servers_list.dup
-            end
-            if servers.all? { |server| server.last_scan_monotime && server.last_scan_monotime >= start_monotime }
-              break
-            end
-            if (time_remaining = deadline - Utils.monotonic_time) <= 0
-              break
-            end
-            log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
-            # Since the semaphore may have been signaled between us checking
-            # the servers list above and the wait call below, we should not
-            # wait for the full remaining time - wait for up to 0.5 second, then
-            # recheck the state.
-            begin
-              server_selection_semaphore.wait([time_remaining, 0.5].min)
-            rescue ::Timeout::Error
-              # nothing
-            end
-          end
-        end
-
-        start_stop_srv_monitor
+      servers.each do |server|
+        server.start_monitoring
       end
+
+      if options[:scan] != false
+        server_selection_timeout = options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
+        # The server selection timeout can be very short especially in
+        # tests, when the client waits for a synchronous scan before
+        # starting server selection. Limiting the scan to server selection time
+        # then aborts the scan before it can process even local servers.
+        # Therefore, allow at least 3 seconds for the scan here.
+        server_selection_timeout = 3 if server_selection_timeout < 3
+        deadline = start_monotime + server_selection_timeout
+        # Wait for the first scan of each server to complete, for
+        # backwards compatibility.
+        # If any servers are discovered during this SDAM round we are going to
+        # wait for these servers to also be queried, and so on, up to the
+        # server selection timeout or the 3 second minimum.
+        loop do
+          # Ensure we do not try to read the servers list while SDAM is running
+          servers = @sdam_flow_lock.synchronize do
+            servers_list.dup
+          end
+          break if servers.all? { |server| server.last_scan_monotime && server.last_scan_monotime >= start_monotime }
+          if (time_remaining = deadline - Utils.monotonic_time) <= 0
+            break
+          end
+
+          log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
+          # Since the semaphore may have been signaled between us checking
+          # the servers list above and the wait call below, we should not
+          # wait for the full remaining time - wait for up to 0.5 second, then
+          # recheck the state.
+          begin
+            server_selection_semaphore.wait([ time_remaining, 0.5 ].min)
+          rescue ::Timeout::Error
+            # nothing
+          end
+        end
+      end
+
+      start_stop_srv_monitor
     end
 
     # Create a cluster for the provided client, for use when we don't want the
@@ -351,11 +340,11 @@ module Mongo
       topology.is_a?(Topology::LoadBalanced)
     end
 
-    [:register_cursor, :schedule_kill_cursor, :unregister_cursor].each do |m|
+    %i[register_cursor schedule_kill_cursor unregister_cursor].each do |m|
       define_method(m) do |*args|
-        if options[:cleanup] != false
-          @cursor_reaper.send(m, *args)
-        end
+        return unless options[:cleanup] != false
+
+        @cursor_reaper.send(m, *args)
       end
     end
 
@@ -484,9 +473,9 @@ module Mongo
     # @api experimental
     # @since 2.7.0
     def summary
-      "#<Cluster " +
-      "topology=#{topology.summary} "+
-      "servers=[#{servers_list.map(&:summary).join(',')}]>"
+      '#<Cluster ' +
+        "topology=#{topology.summary} " +
+        "servers=[#{servers_list.map(&:summary).join(',')}]>"
     end
 
     # @api private
@@ -510,26 +499,23 @@ module Mongo
     # @api private
     def close
       @state_change_lock.synchronize do
-        unless connecting? || connected?
-          return nil
-        end
+        return nil unless connecting? || connected?
+
         if options[:cleanup] != false
           session_pool.end_sessions
           @periodic_executor.stop!
         end
         @srv_monitor_lock.synchronize do
-          if @srv_monitor
-            @srv_monitor.stop!
-          end
+          @srv_monitor.stop! if @srv_monitor
         end
         @servers.each do |server|
-          if server.connected?
-            server.close
-            publish_sdam_event(
-              Monitoring::SERVER_CLOSED,
-              Monitoring::Event::ServerClosed.new(server.address, topology)
-            )
-          end
+          next unless server.connected?
+
+          server.close
+          publish_sdam_event(
+            Monitoring::SERVER_CLOSED,
+            Monitoring::Event::ServerClosed.new(server.address, topology)
+          )
         end
         publish_sdam_event(
           Monitoring::TOPOLOGY_CLOSED,
@@ -563,9 +549,7 @@ module Mongo
         end
         @periodic_executor.restart!
         @srv_monitor_lock.synchronize do
-          if @srv_monitor
-            @srv_monitor.run!
-          end
+          @srv_monitor.run! if @srv_monitor
         end
         @update_lock.synchronize do
           @connecting = false
@@ -597,7 +581,7 @@ module Mongo
     # @return [ true ] Always true.
     #
     # @since 2.0.0
-    def scan!(sync=true)
+    def scan!(sync = true)
       if sync
         servers_list.each do |server|
           if server.monitor
@@ -640,16 +624,14 @@ module Mongo
     # @api private
     def run_sdam_flow(previous_desc, updated_desc, options = {})
       if load_balanced?
-        if updated_desc.config.empty?
-          unless options[:keep_connection_pool]
-            servers_list.each do |server|
-              # TODO should service id be taken out of updated_desc?
-              # We could also assert that
-              # options[:service_id] == updated_desc.service_id
-              err = options[:scan_error]
-              interrupt = err && (err.is_a?(Error::SocketError) || err.is_a?(Error::SocketTimeoutError))
-              server.clear_connection_pool(service_id: options[:service_id], interrupt_in_use_connections: interrupt)
-            end
+        if updated_desc.config.empty? && !options[:keep_connection_pool]
+          servers_list.each do |server|
+            # TODO: should service id be taken out of updated_desc?
+            # We could also assert that
+            # options[:service_id] == updated_desc.service_id
+            err = options[:scan_error]
+            interrupt = err && (err.is_a?(Error::SocketError) || err.is_a?(Error::SocketTimeoutError))
+            server.clear_connection_pool(service_id: options[:service_id], interrupt_in_use_connections: interrupt)
           end
         end
         return
@@ -657,22 +639,20 @@ module Mongo
 
       @sdam_flow_lock.synchronize do
         flow = SdamFlow.new(self, previous_desc, updated_desc,
-          awaited: options[:awaited])
+                            awaited: options[:awaited])
         flow.server_description_changed
 
         # SDAM flow may alter the updated description - grab the final
         # version for the purposes of broadcasting if a server is available
         updated_desc = flow.updated_desc
 
-        unless options[:keep_connection_pool]
-          if flow.became_unknown?
-            servers_list.each do |server|
-              if server.address == updated_desc.address
-                err = options[:scan_error]
-                interrupt = err && (err.is_a?(Error::SocketError) || err.is_a?(Error::SocketTimeoutError))
-                server.clear_connection_pool(interrupt_in_use_connections: interrupt)
-              end
-            end
+        if !options[:keep_connection_pool] && flow.became_unknown?
+          servers_list.each do |server|
+            next unless server.address == updated_desc.address
+
+            err = options[:scan_error]
+            interrupt = err && (err.is_a?(Error::SocketError) || err.is_a?(Error::SocketTimeoutError))
+            server.clear_connection_pool(interrupt_in_use_connections: interrupt)
           end
         end
 
@@ -690,9 +670,9 @@ module Mongo
       # thread got killed the server should have been closed and no client
       # should be currently waiting for it, thus not signaling the semaphore
       # shouldn't cause any problems.
-      unless updated_desc.unknown?
-        server_selection_semaphore.broadcast
-      end
+      return if updated_desc.unknown?
+
+      server_selection_semaphore.broadcast
     end
 
     # Sets the list of servers to the addresses in the provided list of address
@@ -714,9 +694,7 @@ module Mongo
         # If one of the new addresses is not in the current servers list,
         # add it to the servers list.
         server_address_strs.each do |address_str|
-          unless servers_list.any? { |server| server.address.seed == address_str }
-            add(address_str)
-          end
+          add(address_str) unless servers_list.any? { |server| server.address.seed == address_str }
         end
 
         # If one of the servers' addresses are not in the new address list,
@@ -742,6 +720,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
+
       addresses == other.addresses && options == other.options
     end
 
@@ -788,7 +767,7 @@ module Mongo
     # @return [ Mongo::Server ] A primary server.
     #
     # @since 2.0.0
-    def next_primary(ping = nil, session = nil, timeout: nil)
+    def next_primary(_ping = nil, session = nil, timeout: nil)
       ServerSelector.primary.select_server(
         self,
         nil,
@@ -823,10 +802,10 @@ module Mongo
     #
     # @since 2.5.0
     def update_cluster_time(result)
-      if cluster_time_doc = result.cluster_time
-        @cluster_time_lock.synchronize do
-          advance_cluster_time(cluster_time_doc)
-        end
+      return unless cluster_time_doc = result.cluster_time
+
+      @cluster_time_lock.synchronize do
+        advance_cluster_time(cluster_time_doc)
       end
     end
 
@@ -845,34 +824,32 @@ module Mongo
     # @return [ Server ] The newly added server, if not present already.
     #
     # @since 2.0.0
-    def add(host, add_options=nil)
+    def add(host, add_options = nil)
       address = Address.new(host, options)
-      if !addresses.include?(address)
-        opts = options.merge(monitor: false)
-        # If we aren't starting the montoring threads, we also don't want to
-        # start the pool's populator thread.
-        opts.merge!(populator_io: false) unless options.fetch(:monitoring_io, true)
-        # Note that in a load-balanced topology, every server must be a
-        # load balancer (load_balancer: true is specified in the options)
-        # but this option isn't set here because we are required by the
-        # specifications to pretent the server started out as an unknown one
-        # and publish server description change event into the load balancer
-        # one. The actual correct description for this server will be set
-        # by the fabricate_lb_sdam_events_and_set_server_type method.
-        server = Server.new(address, self, @monitoring, event_listeners, opts)
-        @update_lock.synchronize do
-          # Need to recheck whether server is present in @servers, because
-          # the previous check was not under a lock.
-          # Since we are under the update lock here, we cannot call servers_list.
-          return if @servers.map(&:address).include?(address)
+      return if addresses.include?(address)
 
-          @servers.push(server)
-        end
-        if add_options.nil? || add_options[:monitor] != false
-          server.start_monitoring
-        end
-        server
+      opts = options.merge(monitor: false)
+      # If we aren't starting the montoring threads, we also don't want to
+      # start the pool's populator thread.
+      opts.merge!(populator_io: false) unless options.fetch(:monitoring_io, true)
+      # Note that in a load-balanced topology, every server must be a
+      # load balancer (load_balancer: true is specified in the options)
+      # but this option isn't set here because we are required by the
+      # specifications to pretent the server started out as an unknown one
+      # and publish server description change event into the load balancer
+      # one. The actual correct description for this server will be set
+      # by the fabricate_lb_sdam_events_and_set_server_type method.
+      server = Server.new(address, self, @monitoring, event_listeners, opts)
+      @update_lock.synchronize do
+        # Need to recheck whether server is present in @servers, because
+        # the previous check was not under a lock.
+        # Since we are under the update lock here, we cannot call servers_list.
+        return if @servers.map(&:address).include?(address)
+
+        @servers.push(server)
       end
+      server.start_monitoring if add_options.nil? || add_options[:monitor] != false
+      server
     end
 
     # Remove the server from the cluster for the provided address, if it
@@ -900,9 +877,7 @@ module Mongo
       @update_lock.synchronize do
         @servers.delete_if do |server|
           (server.address == address).tap do |delete|
-            if delete
-              removed_servers << server
-            end
+            removed_servers << server if delete
           end
         end
       end
@@ -911,10 +886,10 @@ module Mongo
           disconnect_server_if_connected(server)
         end
       end
-      if disconnect != false
-        removed_servers.any?
-      else
+      if disconnect == false
         removed_servers
+      else
+        removed_servers.any?
       end
     end
 
@@ -954,14 +929,14 @@ module Mongo
 
     # @api private
     def disconnect_server_if_connected(server)
-      if server.connected?
-        server.clear_description
-        server.disconnect!
-        publish_sdam_event(
-          Monitoring::SERVER_CLOSED,
-          Monitoring::Event::ServerClosed.new(server.address, topology)
-        )
-      end
+      return unless server.connected?
+
+      server.clear_description
+      server.disconnect!
+      publish_sdam_event(
+        Monitoring::SERVER_CLOSED,
+        Monitoring::Event::ServerClosed.new(server.address, topology)
+      )
     end
 
     # Raises Error::SessionsNotAvailable if the deployment that the driver
@@ -989,17 +964,11 @@ module Mongo
     #
     # @api private
     def validate_session_support!(timeout: nil)
-      if topology.is_a?(Topology::LoadBalanced)
-        return
-      end
+      return if topology.is_a?(Topology::LoadBalanced)
 
       @state_change_lock.synchronize do
         @sdam_flow_lock.synchronize do
-          if topology.data_bearing_servers?
-            unless topology.logical_session_timeout
-              raise_sessions_not_supported
-            end
-          end
+          raise_sessions_not_supported if topology.data_bearing_servers? && !topology.logical_session_timeout
         end
       end
 
@@ -1009,9 +978,7 @@ module Mongo
       ServerSelector.get(mode: :primary_preferred).select_server(self, timeout: timeout)
       @state_change_lock.synchronize do
         @sdam_flow_lock.synchronize do
-          unless topology.logical_session_timeout
-            raise_sessions_not_supported
-          end
+          raise_sessions_not_supported unless topology.logical_session_timeout
         end
       end
     end
@@ -1029,7 +996,8 @@ module Mongo
         @srv_monitor_lock.synchronize do
           unless @srv_monitor
             monitor_options = Utils.shallow_symbolize_keys(options.merge(
-              timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT))
+                                                             timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT
+                                                           ))
             @srv_monitor = _srv_monitor = Srv::Monitor.new(self, **monitor_options)
           end
           @srv_monitor.run!
@@ -1040,9 +1008,7 @@ module Mongo
         # is discovered, since it's not a sharded cluster, the SRV monitor
         # needs to be stopped.
         @srv_monitor_lock.synchronize do
-          if @srv_monitor
-            @srv_monitor.stop!
-          end
+          @srv_monitor.stop! if @srv_monitor
         end
       end
     end
@@ -1055,10 +1021,10 @@ module Mongo
         server.description.data_bearing? && server.logical_session_timeout.nil?
       end
       reason = if offending_servers.empty?
-        "There are no known data bearing servers (current seeds: #{@servers.map(&:address).map(&:seed).join(', ')})"
-      else
-        "The following servers have null logical session timeout: #{offending_servers.map(&:address).map(&:seed).join(', ')}"
-      end
+                 "There are no known data bearing servers (current seeds: #{@servers.map(&:address).map(&:seed).join(', ')})"
+               else
+                 "The following servers have null logical session timeout: #{offending_servers.map(&:address).map(&:seed).join(', ')}"
+               end
       msg = "The deployment that the driver is connected to does not support sessions: #{reason}"
       raise Error::SessionsNotSupported, msg
     end
@@ -1074,9 +1040,8 @@ module Mongo
       # description.
       server.update_description(
         Server::Description.new(server.address, {},
-          load_balancer: true,
-          force_load_balancer: options[:connect] == :load_balanced,
-        )
+                                load_balancer: true,
+                                force_load_balancer: options[:connect] == :load_balanced)
       )
       publish_sdam_event(
         Monitoring::SERVER_DESCRIPTION_CHANGED,
@@ -1100,13 +1065,13 @@ module Mongo
 
     COSMOSDB_HOST_PATTERNS = %w[ .cosmos.azure.com ]
     COSMOSDB_LOG_MESSAGE = 'You appear to be connected to a CosmosDB cluster. ' \
-      'For more information regarding feature compatibility and support please visit ' \
-      'https://www.mongodb.com/supportability/cosmosdb'
+                           'For more information regarding feature compatibility and support please visit ' \
+                           'https://www.mongodb.com/supportability/cosmosdb'
 
     DOCUMENTDB_HOST_PATTERNS = %w[ .docdb.amazonaws.com .docdb-elastic.amazonaws.com ]
     DOCUMENTDB_LOG_MESSAGE = 'You appear to be connected to a DocumentDB cluster. ' \
-      'For more information regarding feature compatibility and support please visit ' \
-      'https://www.mongodb.com/supportability/documentdb'
+                             'For more information regarding feature compatibility and support please visit ' \
+                             'https://www.mongodb.com/supportability/documentdb'
 
     # Compares the server hosts with address suffixes of known services
     # that provide limited MongoDB API compatibility, and warns about them.
@@ -1116,10 +1081,10 @@ module Mongo
         return
       end
 
-      if topology.server_hosts_match_any?(DOCUMENTDB_HOST_PATTERNS)
-        log_info DOCUMENTDB_LOG_MESSAGE
-        return
-      end
+      return unless topology.server_hosts_match_any?(DOCUMENTDB_HOST_PATTERNS)
+
+      log_info DOCUMENTDB_LOG_MESSAGE
+      nil
     end
   end
 end

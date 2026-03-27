@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -23,7 +22,11 @@ describe 'fork reconnect' do
       # considers the primary.
       # In standalone deployments there are no retries, hence execute the
       # operation twice manually.
-      client['foo'].insert_one(test: 1) rescue nil
+      begin
+        client['foo'].insert_one(test: 1)
+      rescue StandardError
+        nil
+      end
       client['foo'].insert_one(test: 1)
 
       pids = []
@@ -46,8 +49,8 @@ describe 'fork reconnect' do
       end
 
       pids.each do |pid|
-        pid, status = Process.wait2(pid)
-        status.exitstatus.should == 0
+        _, status = Process.wait2(pid)
+        expect(status.exitstatus).to eq(0)
       end
     end
 
@@ -62,8 +65,10 @@ describe 'fork reconnect' do
       # to fail as then server selection fails.
       # The retry_test is to deal with network errors on monitoring connection.
 
-      let(:client) { authorized_client.with(max_pool_size: 10,
-        wait_queue_timeout: 10, socket_timeout: 2, connect_timeout: 2) }
+      let(:client) do
+        authorized_client.with(max_pool_size: 10,
+                               wait_queue_timeout: 10, socket_timeout: 2, connect_timeout: 2)
+      end
 
       it 'works' do
         client.database.command(hello: 1).should be_a(Mongo::Operation::Result)
@@ -91,16 +96,14 @@ describe 'fork reconnect' do
           end
         end
 
-        while Mongo::Utils.monotonic_time < deadline
-          sleep 0.1
-        end
+        sleep 0.1 while Mongo::Utils.monotonic_time < deadline
 
         threads.map(&:kill)
         threads.map(&:join)
 
         pids.each do |pid|
-          pid, status = Process.wait2(pid)
-          status.exitstatus.should == 0
+          _, status = Process.wait2(pid)
+          expect(status.exitstatus).to eq(0)
         end
       end
     end

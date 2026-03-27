@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mrss/event_subscriber'
 
 module Unified
-
   class EventSubscriber < Mrss::EventSubscriber
     def ignore_commands(command_names)
       @ignore_commands = command_names
@@ -12,7 +10,9 @@ module Unified
 
     def wanted_events(observe_sensitive = false)
       events = all_events.select do |event|
-        kind = event.class.name.sub(/.*::/, '').sub('Command', '').gsub(/([A-Z])/) { "_#{$1}" }.sub(/^_/, '').downcase.to_sym
+        kind = event.class.name.sub(/.*::/, '').sub('Command', '').gsub(/([A-Z])/) do
+          "_#{::Regexp.last_match(1)}"
+        end.sub(/^_/, '').downcase.to_sym
         @wanted_events[kind]
       end.select do |event|
         if event.respond_to?(:command_name)
@@ -30,14 +30,14 @@ module Unified
         events
       else
         events.reject do |event|
-          if event.respond_to?(:command_name)
-            # event could be a command started event or command succeeded event
-            command = event.respond_to?(:command) ? event.command : event.started_event.command
-            %w(authenticate getnonce saslStart saslContinue).include?(event.command_name) ||
-              # if the command is empty that means we used speculativeAuth and we should
-              # reject the event.
-              (%w(hello ismaster isMaster).include?(event.command_name) && command.empty?)
-          end
+          next unless event.respond_to?(:command_name)
+
+          # event could be a command started event or command succeeded event
+          command = event.respond_to?(:command) ? event.command : event.started_event.command
+          %w[authenticate getnonce saslStart saslContinue].include?(event.command_name) ||
+            # if the command is empty that means we used speculativeAuth and we should
+            # reject the event.
+            (%w[hello ismaster isMaster].include?(event.command_name) && command.empty?)
         end
       end
     end
@@ -62,7 +62,7 @@ module Unified
         'address' => event.address.seed,
         'requestId' => event.request_id,
         'operationId' => event.operation_id,
-        'connectionId' => event.connection_id,
+        'connectionId' => event.connection_id
       )
     end
 
@@ -74,7 +74,7 @@ module Unified
         'observedAt' => Time.now.to_f,
         'address' => event.address.seed,
         'requestId' => event.request_id,
-        'operationId' => event.operation_id,
+        'operationId' => event.operation_id
       )
     end
 
@@ -87,7 +87,7 @@ module Unified
         'observedAt' => Time.now.to_f,
         'address' => event.address.seed,
         'requestId' => event.request_id,
-        'operationId' => event.operation_id,
+        'operationId' => event.operation_id
       )
     end
 
@@ -97,12 +97,8 @@ module Unified
         'observedAt' => Time.now.to_f,
         'address' => event.address.seed,
       }.tap do |entry|
-        if event.respond_to?(:connection_id)
-          entry['connectionId'] = event.connection_id
-        end
-        if event.respond_to?(:reason)
-          entry['reason'] = event.reason
-        end
+        entry['connectionId'] = event.connection_id if event.respond_to?(:connection_id)
+        entry['reason'] = event.reason if event.respond_to?(:reason)
       end
       @handler.call(payload)
     end

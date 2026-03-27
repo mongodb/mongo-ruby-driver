@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Address
-
     # Sets up resolution with IPv6 support if the address is an ip
     # address.
     #
     # @since 2.0.0
     class IPv6
-
       # @return [ String ] host The host.
       attr_reader :host
 
@@ -51,16 +48,15 @@ module Mongo
       def self.parse(address)
         # IPAddr's parser handles IP address only, not port.
         # Therefore we need to handle the port ourselves
-        if address =~ /[\[\]]/
+        if /[\[\]]/.match?(address)
           parts = address.match(/\A\[(.+)\](?::(\d+))?\z/)
-          if parts.nil?
-            raise ArgumentError, "Invalid IPv6 address: #{address}"
-          end
+          raise ArgumentError, "Invalid IPv6 address: #{address}" if parts.nil?
+
           host = parts[1]
-          port = (parts[2] || 27017).to_i
+          port = (parts[2] || 27_017).to_i
         else
           host = address
-          port = 27017
+          port = 27_017
         end
         # Validate host.
         # This will raise IPAddr::InvalidAddressError
@@ -83,7 +79,7 @@ module Mongo
       # @param [ Integer ] port The port.
       #
       # @since 2.0.0
-      def initialize(host, port, host_name=nil)
+      def initialize(host, port, host_name = nil)
         @host = host
         @port = port
         @host_name = host_name

@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Auth::LDAP::Conversation do
-
   let(:user) do
     Mongo::Auth::User.new(
       database: '$external',
@@ -18,7 +16,6 @@ describe Mongo::Auth::LDAP::Conversation do
   end
 
   describe '#start' do
-
     let(:query) do
       conversation.start(nil)
     end

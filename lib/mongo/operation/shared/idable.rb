@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   module Operation
-
     # Shared behavior of operations that require its documents to each have an id.
     #
     # @since 2.5.2
     # @api private
     module Idable
-
       def documents
         @documents ||= ensure_ids(super)
       end
@@ -33,7 +30,7 @@ module Mongo
       # The option for a custom id generator.
       #
       # @since 2.2.0
-      ID_GENERATOR = :id_generator.freeze
+      ID_GENERATOR = :id_generator
 
       # Get the id generator.
       #
@@ -44,7 +41,7 @@ module Mongo
       #
       # @since 2.2.0
       def id_generator
-        @id_generator ||= (spec[ID_GENERATOR] || Operation::ObjectIdGenerator.new)
+        @id_generator ||= spec[ID_GENERATOR] || Operation::ObjectIdGenerator.new
       end
 
       def id(doc)

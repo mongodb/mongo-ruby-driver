@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -45,22 +44,22 @@ module Mongo
             resp = fetch_response(uri, req, timeout_holder)
             if resp.code != '200'
               raise KMS::CredentialsNotFound,
-                "GCE metadata host responded with code #{resp.code}"
+                    "GCE metadata host responded with code #{resp.code}"
             end
             parsed_resp = JSON.parse(resp.body)
             parsed_resp.fetch('access_token')
           rescue JSON::ParserError, KeyError => e
             raise KMS::CredentialsNotFound,
-              "GCE metadata response is invalid: '#{resp.body}'; #{e.class}: #{e.message}"
-            rescue ::Timeout::Error, IOError, SystemCallError, SocketError => e
-              raise KMS::CredentialsNotFound,
-                    "Could not receive GCP metadata response; #{e.class}: #{e.message}"
+                  "GCE metadata response is invalid: '#{resp.body}'; #{e.class}: #{e.message}"
+          rescue ::Timeout::Error, IOError, SystemCallError, SocketError => e
+            raise KMS::CredentialsNotFound,
+                  "Could not receive GCP metadata response; #{e.class}: #{e.message}"
           end
 
           def self.fetch_response(uri, req, timeout_holder)
             timeout_holder&.check_timeout!
             if timeout_holder&.timeout?
-              ::Timeout.timeout(timeout_holder.remaining_timeout_sec, Error:TimeoutError) do
+              ::Timeout.timeout(timeout_holder.remaining_timeout_sec, Error: TimeoutError) do
                 do_fetch(uri, req)
               end
             else
@@ -80,4 +79,3 @@ module Mongo
     end
   end
 end
-

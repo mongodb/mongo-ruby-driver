@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -20,7 +19,6 @@ require 'mongo/collection/view/aggregation/behavior'
 module Mongo
   class Collection
     class View
-
       # Provides behavior around an aggregation pipeline on a collection view.
       #
       # @since 2.0.0
@@ -71,9 +69,7 @@ module Mongo
         def initialize(view, pipeline, options = {})
           perform_setup(view, options) do
             @pipeline = pipeline.dup
-            unless Mongo.broken_view_aggregate || view.filter.empty?
-              @pipeline.unshift(:$match => view.filter)
-            end
+            @pipeline.unshift(:$match => view.filter) unless Mongo.broken_view_aggregate || view.filter.empty?
           end
         end
 
@@ -104,20 +100,19 @@ module Mongo
         def effective_read_preference(connection)
           return unless view.read_preference
           return view.read_preference unless write?
-          return view.read_preference unless [:secondary, :secondary_preferred].include?(view.read_preference[:mode])
+          return view.read_preference unless %i[secondary secondary_preferred].include?(view.read_preference[:mode])
 
-          primary_read_preference = {mode: :primary}
+          primary_read_preference = { mode: :primary }
           description = connection.description
           if description.primary?
-            log_warn("Routing the Aggregation operation to the primary server")
+            log_warn('Routing the Aggregation operation to the primary server')
             primary_read_preference
           elsif description.mongos? && !description.features.merge_out_on_secondary_enabled?
-            log_warn("Routing the Aggregation operation to the primary server")
+            log_warn('Routing the Aggregation operation to the primary server')
             primary_read_preference
           else
             view.read_preference
           end
-
         end
 
         def send_initial_query(server, context, operation: nil)

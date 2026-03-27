@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module PerformsNoRetries
   shared_examples 'it performs no retries' do
@@ -9,7 +8,7 @@ module PerformsNoRetries
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: [command_name],
+            failCommands: [ command_name ],
             closeConnection: true,
           }
         )
@@ -35,11 +34,17 @@ module PerformsNoRetries
           configureFailPoint: 'failCommand',
           mode: { times: 1 },
           data: {
-            failCommands: [command_name],
+            failCommands: [ command_name ],
             blockConnection: true,
             blockTimeMS: 1100,
           }
         )
+      end
+
+      after do
+        # Assure that the server has completed the operation before moving
+        # on to the next test.
+        sleep 1
       end
 
       it 'does not retry the operation' do
@@ -48,12 +53,6 @@ module PerformsNoRetries
         expect do
           perform_operation
         end.to raise_error(Mongo::Error::SocketTimeoutError)
-      end
-
-      after do
-        # Assure that the server has completed the operation before moving
-        # on to the next test.
-        sleep 1
       end
     end
 
@@ -71,11 +70,12 @@ module PerformsNoRetries
             configureFailPoint: 'failCommand',
             mode: { times: 1 },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 91, # a retryable error code
             }
           )
         end
+
         it 'does not retry the operation' do
           expect(Mongo::Logger.logger).not_to receive(:warn)
 
@@ -91,7 +91,7 @@ module PerformsNoRetries
             configureFailPoint: 'failCommand',
             mode: { times: 1 },
             data: {
-              failCommands: [command_name],
+              failCommands: [ command_name ],
               errorCode: 5, # a non-retryable error code
             }
           )

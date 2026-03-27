@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,13 +17,11 @@
 module Mongo
   module Operation
     class Result
-
       # Defines custom behavior of bulk write results
       #
       # @since 2.0.0
       # @api private
       module Aggregatable
-
         # Aggregate the write errors returned from this result.
         #
         # @example Aggregate the write errors.
@@ -37,13 +34,14 @@ module Mongo
         # @since 2.0.0
         def aggregate_write_errors(count)
           return unless @replies
+
           @replies.reduce(nil) do |errors, reply|
-            if write_errors = reply.documents.first['writeErrors']
-              wes = write_errors.collect do |we|
-                we.merge!('index' => count + we['index'])
-              end
-              (errors || []) << wes if wes
+            next unless write_errors = reply.documents.first['writeErrors']
+
+            wes = write_errors.collect do |we|
+              we.merge!('index' => count + we['index'])
             end
+            (errors || []) << wes if wes
           end
         end
 
@@ -59,12 +57,13 @@ module Mongo
         # @since 2.0.0
         def aggregate_write_concern_errors(count)
           return unless @replies
+
           @replies.each_with_index.reduce(nil) do |errors, (reply, _)|
-            if write_concern_errors = reply.documents.first['writeConcernErrors']
-              (errors || []) << write_concern_errors.reduce(nil) do |errs, wce|
-                wce.merge!('index' => count + wce['index'])
-                (errs || []) << write_concern_error
-              end
+            next unless write_concern_errors = reply.documents.first['writeConcernErrors']
+
+            (errors || []) << write_concern_errors.reduce(nil) do |errs, wce|
+              wce.merge!('index' => count + wce['index'])
+              (errs || []) << write_concern_error
             end
           end
         end

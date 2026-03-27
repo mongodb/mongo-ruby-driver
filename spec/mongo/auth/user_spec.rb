@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Auth::User do
-
   let(:options) do
     { database: 'testing', user: 'user', password: 'pass' }
   end
@@ -14,7 +12,6 @@ describe Mongo::Auth::User do
   end
 
   shared_examples_for 'sets database and auth source to admin' do
-
     it 'sets database to admin' do
       expect(user.database).to eq('admin')
     end
@@ -25,7 +22,6 @@ describe Mongo::Auth::User do
   end
 
   shared_examples_for 'sets auth source to $external' do
-
     it 'sets auth source to $external' do
       expect(user.auth_source).to eq('$external')
     end
@@ -45,17 +41,18 @@ describe Mongo::Auth::User do
     end
 
     context 'invalid mechanism' do
-      let(:options) { {auth_mech: :invalid} }
+      let(:options) { { auth_mech: :invalid } }
 
       it 'raises ArgumentError' do
         expect do
           user
-        end.to raise_error(Mongo::Auth::InvalidMechanism, ":invalid is invalid, please use one of the following mechanisms: :aws, :gssapi, :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256")
+        end.to raise_error(Mongo::Auth::InvalidMechanism,
+                           ':invalid is invalid, please use one of the following mechanisms: :aws, :gssapi, :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256')
       end
     end
 
     context 'mechanism given as string' do
-      let(:options) { {auth_mech: 'scram'} }
+      let(:options) { { auth_mech: 'scram' } }
 
       context 'not linting' do
         require_no_linting
@@ -78,13 +75,13 @@ describe Mongo::Auth::User do
         it 'raises LintError' do
           expect do
             user
-          end.to raise_error(Mongo::Error::LintError, "Auth mechanism \"scram\" must be specified as a symbol")
+          end.to raise_error(Mongo::Error::LintError, 'Auth mechanism "scram" must be specified as a symbol')
         end
       end
     end
 
     context 'mechanism given as symbol' do
-      let(:options) { {auth_mech: :scram} }
+      let(:options) { { auth_mech: :scram } }
 
       it 'does not warn' do
         expect(Mongo::Logger.logger).not_to receive(:warn)
@@ -99,7 +96,7 @@ describe Mongo::Auth::User do
     end
 
     context 'mechanism is x509' do
-      let(:options) { {auth_mech: :mongodb_x509} }
+      let(:options) { { auth_mech: :mongodb_x509 } }
 
       it 'sets database to admin' do
         expect(user.database).to eq('admin')
@@ -108,7 +105,7 @@ describe Mongo::Auth::User do
       it_behaves_like 'sets auth source to $external'
 
       context 'database is explicitly given' do
-        let(:options) { {auth_mech: :mongodb_x509, database: 'foo'} }
+        let(:options) { { auth_mech: :mongodb_x509, database: 'foo' } }
 
         it 'sets database to the specified one' do
           expect(user.database).to eq('foo')
@@ -132,9 +129,7 @@ describe Mongo::Auth::User do
   end
 
   describe '#auth_key' do
-
     let(:nonce) do
-
     end
 
     let(:expected) do
@@ -147,9 +142,7 @@ describe Mongo::Auth::User do
   end
 
   describe '#encoded_name' do
-
     context 'when the user name contains an =' do
-
       let(:options) do
         { user: 'user=' }
       end
@@ -164,7 +157,6 @@ describe Mongo::Auth::User do
     end
 
     context 'when the user name contains a ,' do
-
       let(:options) do
         { user: 'user,' }
       end
@@ -179,7 +171,6 @@ describe Mongo::Auth::User do
     end
 
     context 'when the user name contains no special characters' do
-
       it 'does not alter the user name' do
         expect(user.name).to eq('user')
       end
@@ -191,9 +182,8 @@ describe Mongo::Auth::User do
   end
 
   describe '#hashed_password' do
-
     let(:expected) do
-      Digest::MD5.hexdigest("user:mongo:pass")
+      Digest::MD5.hexdigest('user:mongo:pass')
     end
 
     it 'returns the hashed password' do
@@ -201,7 +191,7 @@ describe Mongo::Auth::User do
     end
 
     context 'password not given' do
-      let(:options) { {user: 'foo'} }
+      let(:options) { { user: 'foo' } }
 
       it 'raises MissingPassword' do
         expect do
@@ -212,7 +202,6 @@ describe Mongo::Auth::User do
   end
 
   describe '#sasl_prepped_password' do
-
     let(:expected) do
       'pass'
     end
@@ -226,7 +215,7 @@ describe Mongo::Auth::User do
     end
 
     context 'password not given' do
-      let(:options) { {user: 'foo'} }
+      let(:options) { { user: 'foo' } }
 
       it 'raises MissingPassword' do
         expect do
@@ -237,9 +226,7 @@ describe Mongo::Auth::User do
   end
 
   describe '#mechanism' do
-
     context 'when the option is provided' do
-
       let(:options) do
         { database: 'testing', user: 'user', password: 'pass', auth_mech: :plain }
       end
@@ -254,7 +241,6 @@ describe Mongo::Auth::User do
     end
 
     context 'when no option is provided' do
-
       let(:user) do
         described_class.new(options)
       end
@@ -266,9 +252,7 @@ describe Mongo::Auth::User do
   end
 
   describe '#auth_mech_properties' do
-
     context 'when the option is provided' do
-
       let(:auth_mech_properties) do
         { service_name: 'test',
           service_realm: 'test',
@@ -289,7 +273,6 @@ describe Mongo::Auth::User do
     end
 
     context 'when no option is provided' do
-
       let(:user) do
         described_class.new(options)
       end
@@ -301,9 +284,7 @@ describe Mongo::Auth::User do
   end
 
   describe '#roles' do
-
     context 'when roles are provided' do
-
       let(:roles) do
         [ Mongo::Auth::Roles::ROOT ]
       end
@@ -318,7 +299,6 @@ describe Mongo::Auth::User do
     end
 
     context 'when no roles are provided' do
-
       let(:user) do
         described_class.new({})
       end
@@ -336,7 +316,7 @@ describe Mongo::Auth::User do
       end
 
       it 'is a hash with empty roles' do
-        user.spec.should == {roles: []}
+        expect(user.spec).to eq({ roles: [] })
       end
     end
   end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2022 MongoDB Inc.
 #
@@ -17,12 +16,11 @@
 
 module Mongo
   class Error
-
     # This exception is raised when a session is attempted to be used but
     # it was never materialized.
     class SessionNotMaterialized < InvalidSession
       def initialize
-        super("The session was not materialized and cannot be used. Use start_session or with_session in order to start a session that will be materialized.")
+        super('The session was not materialized and cannot be used. Use start_session or with_session in order to start a session that will be materialized.')
       end
     end
   end

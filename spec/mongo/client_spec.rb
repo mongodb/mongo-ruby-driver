@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -81,7 +80,7 @@ describe Mongo::Client do
   describe '#[]' do
     let(:client) do
       new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
-        database: SpecConfig.instance.test_db)
+                            database: SpecConfig.instance.test_db)
     end
 
     shared_examples_for 'a collection switching object' do
@@ -185,19 +184,22 @@ describe Mongo::Client do
         [ DEFAULT_LOCAL_HOST ],
         read: { mode: :primary },
         local_threshold: 0.010,
-        server_selection_timeout: 10000,
+        server_selection_timeout: 10_000,
         database: SpecConfig.instance.test_db
       )
     end
 
-    let(:default_options) { Mongo::Options::Redacted.new(
-      retry_writes: true, retry_reads: true, monitoring_io: false) }
+    let(:default_options) do
+      Mongo::Options::Redacted.new(
+        retry_writes: true, retry_reads: true, monitoring_io: false
+      )
+    end
 
     let(:options) do
       Mongo::Options::Redacted.new(read: { mode: :primary },
-                                    local_threshold: 0.010,
-                                    server_selection_timeout: 10000,
-                                    database: SpecConfig.instance.test_db)
+                                   local_threshold: 0.010,
+                                   server_selection_timeout: 10_000,
+                                   database: SpecConfig.instance.test_db)
     end
 
     let(:expected) do
@@ -225,11 +227,11 @@ describe Mongo::Client do
     context 'when there is sensitive data in the options' do
       let(:client) do
         new_local_client_nmio(
-            [ DEFAULT_LOCAL_HOST ],
-            read: { mode: :primary },
-            database: SpecConfig.instance.test_db,
-            password: 'some_password',
-            user: 'emily'
+          [ DEFAULT_LOCAL_HOST ],
+          read: { mode: :primary },
+          database: SpecConfig.instance.test_db,
+          password: 'some_password',
+          user: 'emily'
         )
       end
 
@@ -243,9 +245,9 @@ describe Mongo::Client do
     context 'when there is a read preference set' do
       let(:client) do
         new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
-                            database: SpecConfig.instance.test_db,
-                            read: mode,
-                            server_selection_timeout: 2)
+                              database: SpecConfig.instance.test_db,
+                              read: mode,
+                              server_selection_timeout: 2)
       end
 
       let(:server_selector) do
@@ -309,8 +311,8 @@ describe Mongo::Client do
       context 'when no mode provided' do
         let(:client) do
           new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
-                              database: SpecConfig.instance.test_db,
-                              server_selection_timeout: 2)
+                                database: SpecConfig.instance.test_db,
+                                server_selection_timeout: 2)
         end
 
         it 'returns a primary server selector' do
@@ -332,11 +334,9 @@ describe Mongo::Client do
         end
 
         let(:error) do
-          begin
-            client.database.command(ping: 1)
-          rescue StandardError => e
-            e
-          end
+          client.database.command(ping: 1)
+        rescue StandardError => e
+          e
         end
 
         it 'redacts sensitive client options' do
@@ -349,9 +349,9 @@ describe Mongo::Client do
   describe '#read_preference' do
     let(:client) do
       new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
-                          database: SpecConfig.instance.test_db,
-                          read: mode,
-                          server_selection_timeout: 2)
+                            database: SpecConfig.instance.test_db,
+                            read: mode,
+                            server_selection_timeout: 2)
     end
 
     let(:preference) do
@@ -411,8 +411,8 @@ describe Mongo::Client do
     context 'when no mode provided' do
       let(:client) do
         new_local_client_nmio([ DEFAULT_LOCAL_HOST ],
-                            database: SpecConfig.instance.test_db,
-                            server_selection_timeout: 2)
+                              database: SpecConfig.instance.test_db,
+                              server_selection_timeout: 2)
       end
 
       it 'returns nil' do
@@ -460,9 +460,9 @@ describe Mongo::Client do
           end
 
           it 'raises an error' do
-            expect {
+            expect do
               concern
-            }.to raise_error(Mongo::Error::InvalidWriteConcern)
+            end.to raise_error(Mongo::Error::InvalidWriteConcern)
           end
         end
       end
@@ -482,8 +482,8 @@ describe Mongo::Client do
       end
 
       it "defaults to #{default}" do
-        expect(default).not_to be nil
-        expect(client.options[opt]).to be nil
+        expect(default).not_to be_nil
+        expect(client.options[opt]).to be_nil
         expect(client.send(opt)).to eq(default)
       end
 
@@ -521,7 +521,6 @@ describe Mongo::Client do
         expect(database.options[:server_api]).to be_nil
       end
     end
-
   end
 
   describe '#database_names' do
@@ -567,21 +566,21 @@ describe Mongo::Client do
 
       before do
         root_authorized_client.use('admin').command({
-          configureFailPoint: "failCommand",
-          mode: "alwaysOn",
-          data: {
-              failCommands: ["listDatabases"],
-              blockConnection: true,
-              blockTimeMS: 100
-            }
-        })
+                                                      configureFailPoint: 'failCommand',
+                                                      mode: 'alwaysOn',
+                                                      data: {
+                                                        failCommands: [ 'listDatabases' ],
+                                                        blockConnection: true,
+                                                        blockTimeMS: 100
+                                                      }
+                                                    })
       end
 
       after do
         root_authorized_client.use('admin').command({
-          configureFailPoint: "failCommand",
-          mode: "off"
-        })
+                                                      configureFailPoint: 'failCommand',
+                                                      mode: 'off'
+                                                    })
       end
 
       context 'when timeout_ms is set on command level' do
@@ -635,7 +634,8 @@ describe Mongo::Client do
       expect(
         root_authorized_client.list_databases.collect do |i|
           i['name']
-        end).to include('admin')
+        end
+      ).to include('admin')
     end
 
     context 'when filter criteria is present' do
@@ -736,21 +736,21 @@ describe Mongo::Client do
 
       before do
         root_authorized_client.use('admin').command({
-          configureFailPoint: "failCommand",
-          mode: "alwaysOn",
-          data: {
-              failCommands: ["listDatabases"],
-              blockConnection: true,
-              blockTimeMS: 100
-            }
-        })
+                                                      configureFailPoint: 'failCommand',
+                                                      mode: 'alwaysOn',
+                                                      data: {
+                                                        failCommands: [ 'listDatabases' ],
+                                                        blockConnection: true,
+                                                        blockTimeMS: 100
+                                                      }
+                                                    })
       end
 
       after do
         root_authorized_client.use('admin').command({
-          configureFailPoint: "failCommand",
-          mode: "off"
-        })
+                                                      configureFailPoint: 'failCommand',
+                                                      mode: 'off'
+                                                    })
       end
 
       context 'when timeout_ms is set on command level' do
@@ -992,7 +992,7 @@ describe Mongo::Client do
 
         it 'uses the session and updates the last use time' do
           authorized_client.database.command(ping: 1)
-          expect(before_last_use).to be < (pool.instance_variable_get(:@queue)[0].last_use)
+          expect(before_last_use).to be < pool.instance_variable_get(:@queue)[0].last_use
         end
       end
 
@@ -1115,7 +1115,8 @@ describe Mongo::Client do
             end
             threads << Thread.new do
               client['test'].bulk_write([ { insert_one: { test: 'test1' } },
-                                          { update_one: { filter: { test: 'test1' }, update: { '$set' => { test: 'test2' } } } } ])
+                                          { update_one: { filter: { test: 'test1' },
+                                                          update: { '$set' => { test: 'test2' } } } } ])
             end
             threads
           end
@@ -1215,7 +1216,8 @@ describe Mongo::Client do
             end
             threads << Thread.new do
               client['test'].bulk_write([ { insert_one: { test: 'test1' } },
-                                          { update_one: { filter: { test: 'test1' }, update: { '$set' => { test: 'test2' } } } } ])
+                                          { update_one: { filter: { test: 'test1' },
+                                                          update: { '$set' => { test: 'test2' } } } } ])
             end
             threads << Thread.new do
               client['test'].find_one_and_delete({ test: 'test' })
@@ -1265,9 +1267,9 @@ describe Mongo::Client do
       end
 
       it 'raises an exception' do
-        expect {
+        expect do
           client[TEST_COLL].insert_one({ a: 1 }, session: session)
-        }.to raise_exception(Mongo::Error::InvalidSession)
+        end.to raise_exception(Mongo::Error::InvalidSession)
       end
     end
 
@@ -1284,7 +1286,7 @@ describe Mongo::Client do
 
       it 'uses CSOT timeout set on the client' do
         expect_any_instance_of(Mongo::ServerSelector::PrimaryPreferred).to(
-          receive(:select_server).with(anything, {timeout: timeout_sec}).and_call_original
+          receive(:select_server).with(anything, { timeout: timeout_sec }).and_call_original
         )
 
         client.start_session
@@ -1303,7 +1305,7 @@ describe Mongo::Client do
       end
 
       it 'indicates lack of monitoring' do
-        expect(client.summary).to match /servers=.*UNKNOWN.*NO-MONITORING/
+        expect(client.summary).to match(/servers=.*UNKNOWN.*NO-MONITORING/)
       end
     end
 
@@ -1315,8 +1317,8 @@ describe Mongo::Client do
       end
 
       it 'does not indicate lack of monitoring' do
-        expect(client.summary).to match /servers=.*(?:STANDALONE|PRIMARY|MONGOS)/
-        expect(client.summary).not_to match /servers=.*(?:STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/
+        expect(client.summary).to match(/servers=.*(?:STANDALONE|PRIMARY|MONGOS)/)
+        expect(client.summary).not_to match(/servers=.*(?:STANDALONE|PRIMARY|MONGOS).*NO-MONITORING/)
       end
     end
 
@@ -1330,7 +1332,7 @@ describe Mongo::Client do
       end
 
       it 'does not indicate lack of monitoring' do
-        expect(client.summary).to match /servers=.*(STANDALONE|PRIMARY|MONGOS|\bLB\b).*NO-MONITORING/
+        expect(client.summary).to match(/servers=.*(STANDALONE|PRIMARY|MONGOS|\bLB\b).*NO-MONITORING/)
       end
     end
   end

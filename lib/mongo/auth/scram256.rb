@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Auth
-
     # Defines behavior for SCRAM-SHA-256 authentication.
     #
     # The purpose of this class is to provide the namespace for the
@@ -26,7 +24,7 @@ module Mongo
     # @api private
     class Scram256 < Scram
       # The authentication mechanism string.
-      MECHANISM = 'SCRAM-SHA-256'.freeze
+      MECHANISM = 'SCRAM-SHA-256'
     end
   end
 end

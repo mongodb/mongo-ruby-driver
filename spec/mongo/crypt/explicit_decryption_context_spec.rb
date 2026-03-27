@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mongo'
 require 'lite_spec_helper'
@@ -12,7 +11,7 @@ describe Mongo::Crypt::ExplicitDecryptionContext do
   let(:mongocrypt) { Mongo::Crypt::Handle.new(credentials, {}, extra_options.merge(logger: logger)) }
   let(:context) { described_class.new(mongocrypt, io, value) }
   let(:logger) { nil }
-  let(:io) { double("Mongo::ClientEncryption::IO") }
+  let(:io) { double('Mongo::ClientEncryption::IO') }
 
   # A binary string representing a value previously encrypted by libmongocrypt
   let(:encrypted_data) do
@@ -20,7 +19,7 @@ describe Mongo::Crypt::ExplicitDecryptionContext do
   end
 
   let(:value) do
-    { 'v': BSON::Binary.new(encrypted_data, :ciphertext) }
+    { v: BSON::Binary.new(encrypted_data, :ciphertext) }
   end
 
   describe '#initialize' do
@@ -87,12 +86,12 @@ describe Mongo::Crypt::ExplicitDecryptionContext do
         # For now, skip this test by default and revisit once we have determined how we want to
         # package libmongocrypt with the Ruby driver (see: https://jira.mongodb.org/browse/RUBY-1966)
         skip "These tests require libmongocrypt to be built with the '-DENABLE_TRACE=ON' cmake option." +
-          " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
+             " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
       end
 
       let(:logger) do
-        ::Logger.new(STDOUT).tap do |logger|
-          logger.level = ::Logger::DEBUG
+        Logger.new(STDOUT).tap do |logger|
+          logger.level = Logger::DEBUG
         end
       end
 

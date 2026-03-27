@@ -1,14 +1,12 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Auth::X509::Conversation do
-
   let(:user) do
     Mongo::Auth::User.new(
       database: '$external',
-      user: 'user',
+      user: 'user'
     )
   end
 
@@ -17,7 +15,6 @@ describe Mongo::Auth::X509::Conversation do
   end
 
   describe '#start' do
-
     let(:query) do
       conversation.start(nil)
     end
@@ -35,10 +32,9 @@ describe Mongo::Auth::X509::Conversation do
     end
 
     context 'when a username is not provided' do
-
       let(:user) do
         Mongo::Auth::User.new(
-          database: '$external',
+          database: '$external'
         )
       end
 
@@ -52,7 +48,6 @@ describe Mongo::Auth::X509::Conversation do
     end
 
     context 'when the username is nil' do
-
       let(:user) do
         Mongo::Auth::User.new(
           database: '$external',

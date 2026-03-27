@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Crypt
-
     # Wraps a libmongocrypt mongocrypt_kms_ctx_t object. Contains information
     # about making an HTTP request to fetch information about a KMS
     # data key.

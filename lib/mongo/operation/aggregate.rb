@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -20,7 +19,6 @@ require 'mongo/operation/aggregate/result'
 
 module Mongo
   module Operation
-
     # A MongoDB aggregate operation.
     #
     # @note An aggregate operation can behave like a read and return a

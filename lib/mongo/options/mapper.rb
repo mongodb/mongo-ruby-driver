@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Options
-
     # Utility class for various options mapping behavior.
     #
     # @since 2.0.0
@@ -42,13 +40,12 @@ module Mongo
       def transform(options, mappings)
         map = transform_keys_to_strings(mappings)
         opts = transform_keys_to_strings(options)
-        opts.reduce({}) do |transformed, (key, value)|
+        opts.each_with_object({}) do |(key, value), transformed|
           if map[key]
             transformed[map[key]] = value
           else
             transformed[key] = value
           end
-          transformed
         end
       end
 
@@ -67,10 +64,9 @@ module Mongo
       #
       # @since 2.0.0
       def transform_documents(options, mappings, document = BSON::Document.new)
-        options.reduce(document) do |transformed, (key, value)|
+        options.each_with_object(document) do |(key, value), transformed|
           name = mappings[key]
           transformed[name] = value if name && !value.nil?
-          transformed
         end
       end
 
@@ -85,9 +81,8 @@ module Mongo
       #
       # @since 2.0.0
       def transform_keys_to_strings(options)
-        options.reduce({}) do |transformed, (key, value)|
+        options.each_with_object({}) do |(key, value), transformed|
           transformed[key.to_s] = value
-          transformed
         end
       end
 
@@ -102,9 +97,8 @@ module Mongo
       #
       # @since 2.2.2
       def transform_keys_to_symbols(options)
-        options.reduce({}) do |transformed, (key, value)|
+        options.each_with_object({}) do |(key, value), transformed|
           transformed[key.to_sym] = value
-          transformed
         end
       end
 
@@ -119,9 +113,8 @@ module Mongo
       #
       # @since 2.0.0
       def transform_values_to_strings(options)
-        options.reduce({}) do |transformed, (key, value)|
+        options.each_with_object({}) do |(key, value), transformed|
           transformed[key] = value.is_a?(Symbol) ? value.to_s : value
-          transformed
         end
       end
     end

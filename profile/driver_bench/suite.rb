@@ -118,7 +118,6 @@ module Mongo
         end
       end
 
-      # rubocop:disable Metrics/AbcSize
       def summarize_perf_data(data)
         puts '===== Performance Results ====='
         data.each do |item|
@@ -132,7 +131,6 @@ module Mongo
           end
         end
       end
-      # rubocop:enable Metrics/AbcSize
 
       def save_perf_data(data, file_name: ENV['PERFORMANCE_RESULTS_FILE'] || 'results.json')
         File.write(file_name, data.to_json)

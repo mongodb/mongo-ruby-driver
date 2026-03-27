@@ -1,24 +1,21 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 require 'support/shared/protocol'
 
 describe Mongo::Protocol::GetMore do
-
   let(:opcode)    { 2005 }
   let(:db)        { SpecConfig.instance.test_db }
   let(:collection_name) { 'protocol-test' }
   let(:ns)        { "#{db}.#{collection_name}" }
   let(:limit)     { 25 }
-  let(:cursor_id) { 12345 }
+  let(:cursor_id) { 12_345 }
 
   let(:message) do
     described_class.new(db, collection_name, limit, cursor_id)
   end
 
   describe '#initialize' do
-
     it 'sets the namepsace' do
       expect(message.namespace).to eq(ns)
     end
@@ -33,9 +30,7 @@ describe Mongo::Protocol::GetMore do
   end
 
   describe '#==' do
-
     context 'when the other is a getMore' do
-
       context 'when the fields are equal' do
         let(:other) do
           described_class.new(db, collection_name, limit, cursor_id)
@@ -107,7 +102,6 @@ describe Mongo::Protocol::GetMore do
   end
 
   describe '#replyable?' do
-
     it 'returns true' do
       expect(message).to be_replyable
     end
@@ -128,6 +122,7 @@ describe Mongo::Protocol::GetMore do
 
     describe 'namespace' do
       let(:field) { bytes.to_s[20..36] }
+
       it 'serializes the namespace' do
         expect(field).to be_cstring(ns)
       end
@@ -135,6 +130,7 @@ describe Mongo::Protocol::GetMore do
 
     describe 'number to return' do
       let(:field) { bytes.to_s[37..40] }
+
       it 'serializes the number to return' do
         expect(field).to be_int32(limit)
       end
@@ -142,6 +138,7 @@ describe Mongo::Protocol::GetMore do
 
     describe 'cursor id' do
       let(:field) { bytes.to_s[41..48] }
+
       it 'serializes the cursor id' do
         expect(field).to be_int64(cursor_id)
       end
@@ -149,9 +146,7 @@ describe Mongo::Protocol::GetMore do
   end
 
   describe '#registry' do
-
     context 'when the class is loaded' do
-
       it 'registers the op code in the Protocol Registry' do
         expect(Mongo::Protocol::Registry.get(described_class::OP_CODE)).to be(described_class)
       end

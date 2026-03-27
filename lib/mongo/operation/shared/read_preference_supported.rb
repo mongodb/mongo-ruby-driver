@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Operation
-
     # Read preference handling for pre-OP_MSG operation implementations.
     #
     # This module is not used by OP_MSG operation classes (those deriving
@@ -27,7 +25,6 @@ module Mongo
     # @since 2.5.2
     # @api private
     module ReadPreferenceSupported
-
       private
 
       # Get the options for executing the operation on a particular connection.
@@ -70,7 +67,7 @@ module Mongo
           # In replica sets and sharded clusters, read preference is passed
           # to the server if one is specified by the application, and there
           # is no default.
-          read && read.secondary_ok? || false
+          (read && read.secondary_ok?) || false
         end
       end
 
@@ -96,18 +93,16 @@ module Mongo
       #
       # @return [ Hash ] New command document to send to the server.
       def add_read_preference_legacy(sel, connection)
+        # If the read preference contains only mode and mode is secondary
+        # preferred and we are sending to a pre-OP_MSG server, this read
+        # preference is indicated by the :secondary_ok wire protocol flag
+        # and $readPreference command parameter isn't sent.
         if read && (
-          connection.description.mongos? || connection.description.load_balancer?
-        ) && read_pref = read.to_mongos
-          # If the read preference contains only mode and mode is secondary
-          # preferred and we are sending to a pre-OP_MSG server, this read
-          # preference is indicated by the :secondary_ok wire protocol flag
-          # and $readPreference command parameter isn't sent.
-          if read_pref != {mode: 'secondaryPreferred'}
-            Mongo::Lint.validate_camel_case_read_preference(read_pref)
-            sel = sel[:$query] ? sel : {:$query => sel}
-            sel = sel.merge(:$readPreference => read_pref)
-          end
+                  connection.description.mongos? || connection.description.load_balancer?
+                ) && (read_pref = read.to_mongos) && (read_pref != { mode: 'secondaryPreferred' })
+          Mongo::Lint.validate_camel_case_read_preference(read_pref)
+          sel = { :$query => sel } unless sel[:$query]
+          sel = sel.merge(:$readPreference => read_pref)
         end
         sel
       end

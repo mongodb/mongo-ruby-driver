@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -29,17 +28,14 @@ describe 'Auth' do
       # server default
 
       users = ClientRegistry.instance.global_client('root_authorized').use(:admin).database.users
-      unless users.info('existing_user').empty?
-        users.remove('existing_user')
-      end
+      users.remove('existing_user') unless users.info('existing_user').empty?
       users.create('existing_user', password: 'password')
     end
 
     context 'user mechanism not provided' do
-
       context 'user does not exist' do
         let(:options) do
-          {user: 'nonexistent_user' }
+          { user: 'nonexistent_user' }
         end
 
         before do
@@ -51,17 +47,18 @@ describe 'Auth' do
         it 'indicates scram-sha-1 was used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
+          end.to raise_error(Mongo::Auth::Unauthorized,
+                             /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
         end
       end
 
       context 'user exists' do
         let(:options) do
-          {user: 'existing_user', password: 'bogus'}
+          { user: 'existing_user', password: 'bogus' }
         end
 
         before do
-          expect(connection.app_metadata.send(:document)[:saslSupportedMechs]).to eq("admin.existing_user")
+          expect(connection.app_metadata.send(:document)[:saslSupportedMechs]).to eq('admin.existing_user')
         end
 
         # An existing user will negotiate scram-sha-256.
@@ -69,7 +66,8 @@ describe 'Auth' do
         it 'indicates scram-sha-256 was used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram256\) is not authorized to access admin.*used mechanism: SCRAM-SHA-256/)
+          end.to raise_error(Mongo::Auth::Unauthorized,
+                             /User existing_user \(mechanism: scram256\) is not authorized to access admin.*used mechanism: SCRAM-SHA-256/)
         end
       end
     end
@@ -77,38 +75,40 @@ describe 'Auth' do
     context 'user mechanism is provided' do
       context 'scram-sha-1 requested' do
         let(:options) do
-          {user: 'nonexistent_user', auth_mech: :scram}
+          { user: 'nonexistent_user', auth_mech: :scram }
         end
 
         it 'indicates scram-sha-1 was requested and used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
+          end.to raise_error(Mongo::Auth::Unauthorized,
+                             /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
         end
       end
 
       context 'scram-sha-256 requested' do
         let(:options) do
-          {user: 'nonexistent_user', auth_mech: :scram256}
+          { user: 'nonexistent_user', auth_mech: :scram256 }
         end
 
         it 'indicates scram-sha-256 was requested and used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram256\) is not authorized to access admin.*used mechanism: SCRAM-SHA-256/)
+          end.to raise_error(Mongo::Auth::Unauthorized,
+                             /User nonexistent_user \(mechanism: scram256\) is not authorized to access admin.*used mechanism: SCRAM-SHA-256/)
         end
       end
     end
 
     context 'when authentication fails' do
       let(:options) do
-        {user: 'nonexistent_user', password: 'foo'}
+        { user: 'nonexistent_user', password: 'foo' }
       end
 
       it 'reports which server authentication was attempted against' do
         expect do
           connection.connect!
-        end.to raise_error(Mongo::Auth::Unauthorized, /used server: #{connection.address.to_s}/)
+        end.to raise_error(Mongo::Auth::Unauthorized, /used server: #{connection.address}/)
       end
 
       context 'with default auth source' do
@@ -121,7 +121,7 @@ describe 'Auth' do
 
       context 'with custom auth source' do
         let(:options) do
-          {user: 'nonexistent_user', password: 'foo', auth_source: 'authdb'}
+          { user: 'nonexistent_user', password: 'foo', auth_source: 'authdb' }
         end
 
         it 'reports auth source used' do
@@ -135,38 +135,38 @@ describe 'Auth' do
     context 'attempting to connect to a non-tls server with tls' do
       require_no_tls
 
-      let(:options) { {ssl: true} }
+      let(:options) { { ssl: true } }
 
       it 'reports host, port and tls status' do
         begin
           connection.connect!
-        rescue Mongo::Error::SocketError => exc
+        rescue Mongo::Error::SocketError => e
         end
-        expect(exc).not_to be nil
-        expect(exc.message).to include('OpenSSL::SSL::SSLError')
-        expect(exc.message).to include(server.address.to_s)
-        expect(exc.message).to include('TLS')
-        expect(exc.message).not_to include('no TLS')
+        expect(e).not_to be_nil
+        expect(e.message).to include('OpenSSL::SSL::SSLError')
+        expect(e.message).to include(server.address.to_s)
+        expect(e.message).to include('TLS')
+        expect(e.message).not_to include('no TLS')
       end
     end
 
     context 'attempting to connect to a tls server without tls' do
       require_tls
 
-      let(:options) { {ssl: false} }
+      let(:options) { { ssl: false } }
 
       it 'reports host, port and tls status' do
         begin
           connection.connect!
-        rescue Mongo::Error::SocketError => exc
+        rescue Mongo::Error::SocketError => e
         end
-        expect(exc).not_to be nil
-        expect(exc.message).not_to include('OpenSSL::SSL::SSLError')
+        expect(e).not_to be_nil
+        expect(e.message).not_to include('OpenSSL::SSL::SSLError')
         addresses = Socket.getaddrinfo(server.address.host, nil)
         expect(addresses.any? do |address|
-          exc.message.include?("#{address[2]}:#{server.address.port}")
+          e.message.include?("#{address[2]}:#{server.address.port}")
         end).to be true
-        expect(exc.message).to include('no TLS')
+        expect(e.message).to include('no TLS')
       end
     end
   end
@@ -215,7 +215,8 @@ describe 'Auth' do
 
     let(:client) do
       new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.monitoring_options.merge(
-        auth_source: 'foo'))
+                                                        auth_source: 'foo'
+                                                      ))
     end
 
     it 'does not authenticate' do
@@ -229,7 +230,8 @@ describe 'Auth' do
 
     let(:client) do
       new_local_client(SpecConfig.instance.addresses, base_options.merge(
-        auth_mech: :mongodb_x509))
+                                                        auth_mech: :mongodb_x509
+                                                      ))
     end
 
     it 'authenticates' do
@@ -259,10 +261,10 @@ describe 'Auth' do
 
         begin
           connection.connect!
-        rescue Mongo::Error::SocketError => exc
-          exc.service_id.should_not be nil
+        rescue Mongo::Error::SocketError => e
+          e.service_id.should_not be_nil
         else
-          fail 'Expected the SocketError to be raised'
+          raise 'Expected the SocketError to be raised'
         end
       end
     end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -20,6 +19,8 @@ describe 'Read preference' do
 
   before do
     client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    collection.drop
+    collection.create(write_concern: { w: :majority })
   end
 
   let(:client_options) do
@@ -36,11 +37,6 @@ describe 'Read preference' do
 
   let(:collection) { client['tx_read_pref_test'] }
 
-  before do
-    collection.drop
-    collection.create(write_concern: {w: :majority})
-  end
-
   let(:find_options) do
     {}
   end
@@ -51,7 +47,7 @@ describe 'Read preference' do
 
       event = subscriber.single_command_started_event('find')
       actual_preference = event.command['$readPreference']
-      expect(actual_preference).to be nil
+      expect(actual_preference).to be_nil
     end
   end
 
@@ -61,7 +57,7 @@ describe 'Read preference' do
 
       event = subscriber.single_command_started_event('insert')
       actual_preference = event.command['$readPreference']
-      expect(actual_preference).to be nil
+      expect(actual_preference).to be_nil
     end
 
     context 'standalone' do
@@ -81,7 +77,7 @@ describe 'Read preference' do
 
         event = subscriber.single_command_started_event('find')
         actual_preference = event.command['$readPreference']
-        if expected_read_preference&.[]("mode") == "primary"
+        if expected_read_preference&.[]('mode') == 'primary'
           expect(actual_preference).to be_nil
         else
           expect(actual_preference).to eq(expected_read_preference)
@@ -102,7 +98,6 @@ describe 'Read preference' do
   end
 
   shared_context 'non-transactional read preference specifications' do
-
     context 'when read preference is not explicitly given' do
       let(:client_options) do
         {}
@@ -117,11 +112,11 @@ describe 'Read preference' do
 
     context 'when read preference is given in client options' do
       let(:client_options) do
-        {read: { mode: :primary }}
+        { read: { mode: :primary } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -129,11 +124,11 @@ describe 'Read preference' do
 
     context 'when read preference is given in operation options' do
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       let(:find_options) do
-        {read: {mode: :primary}}
+        { read: { mode: :primary } }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -141,16 +136,16 @@ describe 'Read preference' do
 
     context 'when read preference is given in client and operation options' do
       let(:client_options) do
-        {read: { mode: :secondary }}
+        { read: { mode: :secondary } }
       end
 
       # Operation should override the client.
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       let(:find_options) do
-        {read: {mode: :primary}}
+        { read: { mode: :primary } }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -158,16 +153,16 @@ describe 'Read preference' do
 
     context 'when read preference is given in collection and operation options' do
       let(:collection) do
-        client['tx_read_pref_test', {read: {mode: :secondary}}]
+        client['tx_read_pref_test', { read: { mode: :secondary } }]
       end
 
       # Operation should override the collection.
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       let(:find_options) do
-        {read: {mode: :primary}}
+        { read: { mode: :primary } }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -175,14 +170,13 @@ describe 'Read preference' do
   end
 
   context 'not in transaction' do
-
     let(:write_operation) do
       collection.insert_one(hello: 'world')
     end
 
     let(:read_operation) do
-      collection.with(write: {w: :majority}).insert_one(hello: 'world')
-      res = collection.find({}, find_options || {}).to_a.count
+      collection.with(write: { w: :majority }).insert_one(hello: 'world')
+      res = collection.find({}, find_options || {}).to_a.size
       expect(res).to eq(1)
     end
 
@@ -194,11 +188,11 @@ describe 'Read preference' do
       end
 
       let(:collection) do
-        client['tx_read_pref_test', {read: {mode: :primary}}]
+        client['tx_read_pref_test', { read: { mode: :primary } }]
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -206,11 +200,11 @@ describe 'Read preference' do
 
     context 'when read preference is given in collection options via #with' do
       let(:collection) do
-        client['tx_read_pref_test'].with(read: {mode: :primary})
+        client['tx_read_pref_test'].with(read: { mode: :primary })
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -218,16 +212,16 @@ describe 'Read preference' do
 
     context 'when read preference is given in client and collection options' do
       let(:client_options) do
-        {read: { mode: :secondary }}
+        { read: { mode: :secondary } }
       end
 
       let(:collection) do
-        client['tx_read_pref_test', {read: {mode: :primary}}]
+        client['tx_read_pref_test', { read: { mode: :primary } }]
       end
 
       # Collection should override the client.
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -241,7 +235,7 @@ describe 'Read preference' do
       expect do
         session = client.start_session(session_options)
         session.with_transaction(tx_options) do
-          collection.insert_one({hello: 'world'}, session: session)
+          collection.insert_one({ hello: 'world' }, session: session)
         end
       end.not_to raise_error
     end
@@ -250,8 +244,8 @@ describe 'Read preference' do
       expect do
         session = client.start_session(session_options)
         session.with_transaction(tx_options) do
-          collection.insert_one({hello: 'world'}, session: session)
-          res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
+          collection.insert_one({ hello: 'world' }, session: session)
+          res = collection.find({}, { session: session }.merge(find_options || {})).to_a.size
           expect(res).to eq(1)
         end
       end.not_to raise_error
@@ -270,7 +264,7 @@ describe 'Read preference' do
 
           session = client.start_session(session_options)
           session.with_transaction(tx_options) do
-            res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
+            res = collection.find({}, { session: session }.merge(find_options || {})).to_a.size
             expect(res).to eq(1)
           end
 
@@ -287,13 +281,13 @@ describe 'Read preference' do
 
           session = client.start_session(session_options)
           session.with_transaction(tx_options) do
-            res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
+            res = collection.find({}, { session: session }.merge(find_options || {})).to_a.size
             expect(res).to eq(1)
           end
 
           event = subscriber.single_command_started_event('find')
           actual_preference = event.command['$readPreference']
-          if expected_read_preference&.[]("mode") == "primary"
+          if expected_read_preference&.[]('mode') == 'primary'
             expect(actual_preference).to be_nil
           else
             expect(actual_preference).to eq(expected_read_preference)
@@ -310,7 +304,7 @@ describe 'Read preference' do
       end
 
       let(:collection) do
-        client['tx_read_pref_test', {read: {mode: :primary}}]
+        client['tx_read_pref_test', { read: { mode: :primary } }]
       end
 
       # collection read preference is ignored
@@ -323,7 +317,7 @@ describe 'Read preference' do
 
     context 'when read preference is given in collection options via #with' do
       let(:collection) do
-        client['tx_read_pref_test'].with(read: {mode: :primary})
+        client['tx_read_pref_test'].with(read: { mode: :primary })
       end
 
       # collection read preference is ignored
@@ -336,16 +330,16 @@ describe 'Read preference' do
 
     context 'when read preference is given in client and collection options' do
       let(:client_options) do
-        {read: { mode: :primary }}
+        { read: { mode: :primary } }
       end
 
       let(:collection) do
-        client['tx_read_pref_test', {read: {mode: :secondary}}]
+        client['tx_read_pref_test', { read: { mode: :secondary } }]
       end
 
       # collection read preference is ignored, client read preference is used
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -353,11 +347,11 @@ describe 'Read preference' do
 
     context 'when read preference is given in default transaction options' do
       let(:session_options) do
-        {default_transaction_options: {read: { mode: :primary }}}
+        { default_transaction_options: { read: { mode: :primary } } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -365,15 +359,15 @@ describe 'Read preference' do
 
     context 'when read preference is given in client and default transaction options' do
       let(:client_options) do
-        {read: { mode: :secondary }}
+        { read: { mode: :secondary } }
       end
 
       let(:session_options) do
-        {default_transaction_options: {read: { mode: :primary }}}
+        { default_transaction_options: { read: { mode: :primary } } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -381,15 +375,15 @@ describe 'Read preference' do
 
     context 'when read preference is given in collection and default transaction options' do
       let(:collection) do
-        client['tx_read_pref_test', {read: {mode: :secondary}}]
+        client['tx_read_pref_test', { read: { mode: :secondary } }]
       end
 
       let(:session_options) do
-        {default_transaction_options: {read: { mode: :primary }}}
+        { default_transaction_options: { read: { mode: :primary } } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -397,15 +391,15 @@ describe 'Read preference' do
 
     context 'when read preference is given in default transaction and transaction options' do
       let(:session_options) do
-        {default_transaction_options: {read: { mode: :secondary }}}
+        { default_transaction_options: { read: { mode: :secondary } } }
       end
 
       let(:tx_options) do
-        {read: { mode: :primary }}
+        { read: { mode: :primary } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -413,36 +407,37 @@ describe 'Read preference' do
 
     context 'when read preference is given in default transaction and operation options' do
       let(:session_options) do
-        {default_transaction_options: {read: { mode: :primary }}}
+        { default_transaction_options: { read: { mode: :primary } } }
       end
 
       let(:find_options) do
-        {read: {mode: :secondary}}
+        { read: { mode: :secondary } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it 'sends operation read preference and fails' do
         expect do
           session = client.start_session(session_options)
           session.with_transaction(tx_options) do
-            collection.insert_one({hello: 'world'}, session: session)
-            res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
+            collection.insert_one({ hello: 'world' }, session: session)
+            res = collection.find({}, { session: session }.merge(find_options || {})).to_a.size
             expect(res).to eq(1)
           end
-        end.to raise_error(Mongo::Error::InvalidTransactionOperation, /read preference in a transaction must be primary \(requested: secondary\)/)
+        end.to raise_error(Mongo::Error::InvalidTransactionOperation,
+                           /read preference in a transaction must be primary \(requested: secondary\)/)
       end
     end
 
     context 'when read preference is given in transaction options' do
       let(:tx_options) do
-        {read: { mode: :primary }}
+        { read: { mode: :primary } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -450,15 +445,15 @@ describe 'Read preference' do
 
     context 'when read preference is given in client and transaction options' do
       let(:client_options) do
-        {read: { mode: :secondary }}
+        { read: { mode: :secondary } }
       end
 
       let(:tx_options) do
-        {read: { mode: :primary }}
+        { read: { mode: :primary } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -466,15 +461,15 @@ describe 'Read preference' do
 
     context 'when read preference is given in collection and transaction options' do
       let(:collection) do
-        client['tx_read_pref_test', {read: {mode: :secondary}}]
+        client['tx_read_pref_test', { read: { mode: :secondary } }]
       end
 
       let(:tx_options) do
-        {read: { mode: :primary }}
+        { read: { mode: :primary } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it_behaves_like 'sends expected read preference'
@@ -482,26 +477,27 @@ describe 'Read preference' do
 
     context 'when read preference is given in transaction and operation options' do
       let(:tx_options) do
-        {read: { mode: :primary }}
+        { read: { mode: :primary } }
       end
 
       let(:find_options) do
-        {read: {mode: :secondary}}
+        { read: { mode: :secondary } }
       end
 
       let(:expected_read_preference) do
-        {'mode' => 'primary'}
+        { 'mode' => 'primary' }
       end
 
       it 'sends operation read preference and fails' do
         expect do
           session = client.start_session(session_options)
           session.with_transaction(tx_options) do
-            collection.insert_one({hello: 'world'}, session: session)
-            res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
+            collection.insert_one({ hello: 'world' }, session: session)
+            res = collection.find({}, { session: session }.merge(find_options || {})).to_a.size
             expect(res).to eq(1)
           end
-        end.to raise_error(Mongo::Error::InvalidTransactionOperation, /read preference in a transaction must be primary \(requested: secondary\)/)
+        end.to raise_error(Mongo::Error::InvalidTransactionOperation,
+                           /read preference in a transaction must be primary \(requested: secondary\)/)
       end
     end
   end
@@ -510,13 +506,13 @@ describe 'Read preference' do
     require_topology :replica_set
 
     let(:address_str) do
-      Mongo::ServerSelector.get(mode: :secondary).
-        select_server(authorized_client.cluster).address.seed
+      Mongo::ServerSelector.get(mode: :secondary)
+                           .select_server(authorized_client.cluster).address.seed
     end
 
     let(:secondary_client) do
-      new_local_client([address_str],
-        SpecConfig.instance.all_test_options.merge(connect: :direct))
+      new_local_client([ address_str ],
+                       SpecConfig.instance.all_test_options.merge(connect: :direct))
     end
 
     it 'succeeds without read preference' do
@@ -524,11 +520,11 @@ describe 'Read preference' do
     end
 
     it 'succeeds with read preference: secondary' do
-      secondary_client['foo', {read: {mode: :secondary}}].find.to_a
+      secondary_client['foo', { read: { mode: :secondary } }].find.to_a
     end
 
     it 'succeeds with read preference: primary' do
-      secondary_client['foo', {read: {mode: :primary}}].find.to_a
+      secondary_client['foo', { read: { mode: :primary } }].find.to_a
     end
   end
 end

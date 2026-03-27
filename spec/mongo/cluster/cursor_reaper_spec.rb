@@ -1,10 +1,8 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Cluster::CursorReaper do
-
   let(:cluster) { double('cluster') }
 
   before do
@@ -20,7 +18,6 @@ describe Mongo::Cluster::CursorReaper do
   end
 
   describe '#intialize' do
-
     it 'initializes a hash for servers and their kill cursors ops' do
       expect(reaper.instance_variable_get(:@to_kill)).to be_a(Hash)
     end
@@ -31,7 +28,6 @@ describe Mongo::Cluster::CursorReaper do
   end
 
   describe '#schedule_kill_cursor' do
-
     let(:address) { Mongo::Address.new('localhost') }
     let(:server) do
       double('server').tap do |server|
@@ -49,7 +45,7 @@ describe Mongo::Cluster::CursorReaper do
         db_name: 'd',
         server_address: address,
         connection_global_id: 1,
-        session: session,
+        session: session
       )
     end
     let(:cursor_kill_spec_2) do
@@ -59,19 +55,17 @@ describe Mongo::Cluster::CursorReaper do
         db_name: 'q',
         server_address: address,
         connection_global_id: 1,
-        session: session,
+        session: session
       )
     end
-    let(:to_kill) { reaper.instance_variable_get(:@to_kill)}
+    let(:to_kill) { reaper.instance_variable_get(:@to_kill) }
 
     context 'when the cursor is on the list of active cursors' do
-
       before do
         reaper.register_cursor(cursor_id)
       end
 
       context 'when there is not a list already for the server' do
-
         before do
           reaper.schedule_kill_cursor(cursor_kill_spec_1)
           reaper.read_scheduled_kill_specs
@@ -84,7 +78,6 @@ describe Mongo::Cluster::CursorReaper do
       end
 
       context 'when there is a list of ops already for the server' do
-
         before do
           reaper.schedule_kill_cursor(cursor_kill_spec_1)
           reaper.read_scheduled_kill_specs
@@ -98,7 +91,6 @@ describe Mongo::Cluster::CursorReaper do
         end
 
         context 'when the same op is added more than once' do
-
           before do
             reaper.schedule_kill_cursor(cursor_kill_spec_2)
             reaper.read_scheduled_kill_specs
@@ -113,7 +105,6 @@ describe Mongo::Cluster::CursorReaper do
     end
 
     context 'when the cursor is not on the list of active cursors' do
-
       before do
         reaper.schedule_kill_cursor(cursor_kill_spec_1)
       end
@@ -125,9 +116,7 @@ describe Mongo::Cluster::CursorReaper do
   end
 
   describe '#register_cursor' do
-
     context 'when the cursor id is nil' do
-
       let(:cursor_id) do
         nil
       end
@@ -140,7 +129,6 @@ describe Mongo::Cluster::CursorReaper do
     end
 
     context 'when the cursor id is 0' do
-
       let(:cursor_id) do
         0
       end
@@ -153,7 +141,6 @@ describe Mongo::Cluster::CursorReaper do
     end
 
     context 'when the cursor id is a valid id' do
-
       let(:cursor_id) do
         2
       end
@@ -163,15 +150,13 @@ describe Mongo::Cluster::CursorReaper do
       end
 
       it 'registers the cursor id as active' do
-        expect(active_cursor_ids).to eq(Set.new([2]))
+        expect(active_cursor_ids).to eq(Set.new([ 2 ]))
       end
     end
   end
 
   describe '#unregister_cursor' do
-
     context 'when the cursor id is in the active cursors list' do
-
       before do
         reaper.register_cursor(2)
         reaper.unregister_cursor(2)
@@ -184,7 +169,6 @@ describe Mongo::Cluster::CursorReaper do
   end
 
   context 'when a non-exhausted cursor goes out of scope' do
-
     let(:docs) do
       103.times.collect { |i| { a: i } }
     end
@@ -200,7 +184,7 @@ describe Mongo::Cluster::CursorReaper do
     let(:cursor) do
       view = authorized_collection.find
       view.to_enum.next
-      cursor = view.instance_variable_get(:@cursor)
+      view.instance_variable_get(:@cursor)
     end
 
     around do |example|
@@ -217,14 +201,14 @@ describe Mongo::Cluster::CursorReaper do
     end
 
     it 'schedules the kill cursor op' do
-      expect {
+      expect do
         cursor.to_a
         # Mongo::Error::SessionEnded is raised here because the periodic executor
         # called in around block kills the cursor and closes the session.
         # This code is normally scheduled in cursor finalizer, so the cursor object
         # is garbage collected when the code is executed. So, a user won't get
         # this exception.
-      }.to raise_exception(Mongo::Error::SessionEnded)
+      end.to raise_exception(Mongo::Error::SessionEnded)
     end
   end
 end

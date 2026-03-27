@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2018-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Operation
     class Find
-
       # A MongoDB find operation sent as an op message.
       #
       # @api private
@@ -49,26 +47,20 @@ module Mongo
           when nil # non-tailable
             if view.timeout_mode == :cursor_lifetime
               spec[:maxTimeMS] = timeout_ms || view.options[:max_time_ms]
-            else # timeout_mode == :iterable
+            elsif !timeout_ms && view.options[:max_time_ms] # timeout_mode == :iterable
               # drivers MUST honor the timeoutMS option for the initial command
               # but MUST NOT append a maxTimeMS field to the command sent to the
               # server
-              if !timeout_ms && view.options[:max_time_ms]
-                spec[:maxTimeMS] = view.options[:max_time_ms]
-              end
+              spec[:maxTimeMS] = view.options[:max_time_ms]
             end
 
           when :tailable
             # If timeoutMS is set, drivers...MUST NOT append a maxTimeMS field to any commands.
-            if !timeout_ms && view.options[:max_time_ms]
-              spec[:maxTimeMS] = view.options[:max_time_ms]
-            end
+            spec[:maxTimeMS] = view.options[:max_time_ms] if !timeout_ms && view.options[:max_time_ms]
 
           when :tailable_await
             # The server supports the maxTimeMS option for the original command.
-            if timeout_ms || view.options[:max_time_ms]
-              spec[:maxTimeMS] = timeout_ms || view.options[:max_time_ms]
-            end
+            spec[:maxTimeMS] = timeout_ms || view.options[:max_time_ms] if timeout_ms || view.options[:max_time_ms]
           end
 
           spec.tap do |spc|

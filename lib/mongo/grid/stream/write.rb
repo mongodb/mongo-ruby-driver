@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,13 +17,11 @@
 module Mongo
   module Grid
     class FSBucket
-
       module Stream
         # A stream that writes files to the FSBucket.
         #
         # @since 2.1.0
         class Write
-
           # @return [ FSBucket ] fs The fs bucket to which this stream writes.
           #
           # @since 2.1.0
@@ -73,13 +70,12 @@ module Mongo
             @n = 0
             @file_id = options[:file_id] || BSON::ObjectId.new
             @options = options.dup
-=begin WriteConcern object support
-            if @options[:write_concern].is_a?(WriteConcern::Base)
-              # Cache the instance so that we do not needlessly reconstruct it.
-              @write_concern = @options[:write_concern]
-              @options[:write_concern] = @write_concern.options
-            end
-=end
+            # WriteConcern object support
+            #             if @options[:write_concern].is_a?(WriteConcern::Base)
+            #               # Cache the instance so that we do not needlessly reconstruct it.
+            #               @write_concern = @options[:write_concern]
+            #               @options[:write_concern] = @write_concern.options
+            #             end
             @options.freeze
             @filename = @options[:filename]
             @open = true
@@ -105,12 +101,12 @@ module Mongo
             ensure_open!
             @indexes ||= ensure_indexes!
             @length += if io.respond_to?(:bytesize)
-              # String objects
-              io.bytesize
-            else
-              # IO objects
-              io.size
-            end
+                         # String objects
+                         io.bytesize
+                       else
+                         # IO objects
+                         io.size
+                       end
             chunks = File::Chunk.split(io, file_info, @n)
             @n += chunks.size
             unless chunks.empty?
@@ -153,10 +149,10 @@ module Mongo
           # @since 2.1.0
           def write_concern
             @write_concern ||= if wco = @options[:write_concern] || @options[:write]
-              WriteConcern.get(wco)
-            else
-              fs.write_concern
-            end
+                                 WriteConcern.get(wco)
+                               else
+                                 fs.write_concern
+                               end
           end
 
           # Is the stream closed.
@@ -181,7 +177,7 @@ module Mongo
           # @since 2.1.0
           def abort
             fs.chunks_collection.find(
-              { :files_id => file_id },
+              { files_id: file_id },
               @options.merge(timeout_ms: @timeout_holder.remaining_timeout_ms!)
             ).delete_many
             (@open = false) || true
@@ -200,7 +196,6 @@ module Mongo
           def with_write_concern(collection)
             if write_concern.nil? || (collection.write_concern &&
               collection.write_concern.options == write_concern.options)
-            then
               collection
             else
               collection.with(write: write_concern.options)

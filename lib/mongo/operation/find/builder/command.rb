@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,12 +18,10 @@ module Mongo
   module Operation
     class Find
       module Builder
-
         # Builds a find command specification from options.
         #
         # @api private
         module Command
-
           # The mappings from ruby options to the find command.
           OPTION_MAPPINGS = BSON::Document.new(
             allow_disk_use: 'allowDiskUse',
@@ -52,10 +49,10 @@ module Mongo
             snapshot: 'snapshot',
             sort: 'sort',
             tailable: 'tailable',
-            tailable_cursor: 'tailable',
+            tailable_cursor: 'tailable'
           ).freeze
 
-          module_function def selector(spec, connection)
+          module_function def selector(spec, _connection)
             BSON::Document.new.tap do |selector|
               OPTION_MAPPINGS.each do |k, server_k|
                 unless (value = spec[k]).nil?
@@ -82,13 +79,12 @@ module Mongo
           # The +command+ parameter is mutated by this method.
           module_function def convert_limit_and_batch_size!(command)
             if command[:limit] && command[:limit] < 0 &&
-              command[:batchSize] && command[:batchSize] < 0
-            then
+               command[:batchSize] && command[:batchSize] < 0
               command[:limit] = command[:limit].abs
               command[:batchSize] = command[:limit].abs
               command[:singleBatch] = true
             else
-              [:limit, :batchSize].each do |opt|
+              %i[limit batchSize].each do |opt|
                 if command[opt]
                   if command[opt] < 0
                     command[opt] = command[opt].abs

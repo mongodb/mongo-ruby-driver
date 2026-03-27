@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'mongo'
 require 'lite_spec_helper'
@@ -14,8 +13,8 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
 
   let(:logger) { nil }
 
-  let(:io) { double("Mongo::ClientEncryption::IO") }
-  let(:value) { { 'v': 'Hello, world!' } }
+  let(:io) { double('Mongo::ClientEncryption::IO') }
+  let(:value) { { v: 'Hello, world!' } }
 
   let(:options) do
     {
@@ -137,7 +136,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
               mongocrypt,
               io,
               value,
-              options.merge(query_type: "equality")
+              options.merge(query_type: 'equality')
             )
           end.to raise_error(ArgumentError, /query_type is allowed only for "Indexed" or "Range" algorithm/)
         end
@@ -185,7 +184,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
                 mongocrypt,
                 io,
                 value,
-                options.merge(query_type: "equality", contention_factor: 0)
+                options.merge(query_type: 'equality', contention_factor: 0)
               )
             end.not_to raise_error
           end
@@ -244,13 +243,13 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
         # For now, skip this test by default and revisit once we have determined how we want to
         # package libmongocrypt with the Ruby driver (see: https://jira.mongodb.org/browse/RUBY-1966)
         skip "These tests require libmongocrypt to be built with the '-DENABLE_TRACE=ON' cmake option." +
-          " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
+             " They also require the MONGOCRYPT_TRACE environment variable to be set to 'ON'."
       end
 
       let(:key_alt_name) { nil }
       let(:logger) do
-        ::Logger.new(STDOUT).tap do |logger|
-          logger.level = ::Logger::DEBUG
+        Logger.new(STDOUT).tap do |logger|
+          logger.level = Logger::DEBUG
         end
       end
 

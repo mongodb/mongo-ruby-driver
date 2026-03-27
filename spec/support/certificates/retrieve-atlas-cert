@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'tmpdir'
 
@@ -8,9 +7,7 @@ host = 'ac-ulwcmzm-shard-00-00.g6fyiaq.mongodb-dev.net'
 
 output = `openssl s_client -showcerts -servername #{host} -connect #{host}:27017 </dev/null`
 
-if output.empty?
-  raise 'Something bad happened'
-end
+raise 'Something bad happened' if output.empty?
 
 certs = output.scan(/(-----BEGIN CERTIFICATE(.|\n)+?END CERTIFICATE-----)/)
 cert, ca_cert = certs.map { |g| g.first }

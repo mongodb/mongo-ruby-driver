@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -29,7 +28,7 @@ RSpec::Matchers.define :have_blank_credentials do
     # Note that this is a different test from "no auth-related options are
     # set on the client". Options like password or auth source are preserved
     # by the client if set, but do not trigger authentication.
-    %i(auth_mech user).all? do |key|
+    %i[auth_mech user].all? do |key|
       client.options[key].nil?
     end
   end
@@ -43,9 +42,7 @@ end
 module Mongo
   module Auth
     class Spec
-
-      attr_reader :description
-      attr_reader :tests
+      attr_reader :description, :tests
 
       def initialize(test_path)
         @spec = ::Utils.load_spec_yaml_file(test_path)
@@ -60,8 +57,7 @@ module Mongo
     end
 
     class Test
-      attr_reader :description
-      attr_reader :uri_string
+      attr_reader :description, :uri_string
 
       def initialize(spec)
         @spec = spec
@@ -84,21 +80,15 @@ module Mongo
       def expected_credential
         expected_credential = { 'auth_source' => credential['source'] }
 
-        if credential['username']
-          expected_credential['user'] = credential['username']
-        end
+        expected_credential['user'] = credential['username'] if credential['username']
 
-        if credential['password']
-          expected_credential['password'] = credential['password']
-        end
+        expected_credential['password'] = credential['password'] if credential['password']
 
-        if credential['mechanism']
-          expected_credential['auth_mech'] = expected_auth_mech
-        end
+        expected_credential['auth_mech'] = expected_auth_mech if credential['mechanism']
 
         if credential['mechanism_properties']
           props = Hash[credential['mechanism_properties'].map do |k, v|
-            [k.downcase, v]
+            [ k.downcase, v ]
           end]
           expected_credential['auth_mech_properties'] = props
         end
@@ -108,7 +98,7 @@ module Mongo
 
       def actual_client_options
         client.options.select do |k, _|
-          %w(auth_mech auth_mech_properties auth_source password user).include?(k)
+          %w[auth_mech auth_mech_properties auth_source password user].include?(k)
         end
       end
 
@@ -123,9 +113,7 @@ module Mongo
           mechanism: 'auth_mech',
         }.each do |attr, field|
           value = user.send(attr)
-          unless value.nil? || attr == :auth_mech_properties && value == {}
-            attrs[field] = value
-          end
+          attrs[field] = value unless value.nil? || (attr == :auth_mech_properties && value == {})
         end
         attrs
       end

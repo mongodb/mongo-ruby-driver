@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,7 +17,6 @@
 module Mongo
   module Auth
     class User
-
       # Defines behavior for user related operation on databases.
       #
       # @since 2.0.0
@@ -52,7 +50,7 @@ module Mongo
               user: user,
               db_name: database.name,
               session: session,
-              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern])
             )
           end
         end
@@ -89,7 +87,7 @@ module Mongo
               user_name: name,
               db_name: database.name,
               session: session,
-              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern])
             )
           end
         end
@@ -115,7 +113,7 @@ module Mongo
               user: user,
               db_name: database.name,
               session: session,
-              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern])
             )
           end
         end

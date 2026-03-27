@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   module WriteConcern
-
     # Defines common behavior for write concerns.
     #
     # @since 2.7.0
     class Base
-
       # @return [ Hash ] The write concern options.
       attr_reader :options
 
@@ -51,11 +48,14 @@ module Mongo
 
         if options[:w]
           if options[:w] == 0 && options[:j]
-            raise Error::InvalidWriteConcern, "Invalid write concern options: :j cannot be true when :w is 0: #{options.inspect}"
+            raise Error::InvalidWriteConcern,
+                  "Invalid write concern options: :j cannot be true when :w is 0: #{options.inspect}"
           elsif options[:w] == 0 && options[:fsync]
-            raise Error::InvalidWriteConcern, "Invalid write concern options: :fsync cannot be true when :w is 0: #{options.inspect}"
+            raise Error::InvalidWriteConcern,
+                  "Invalid write concern options: :fsync cannot be true when :w is 0: #{options.inspect}"
           elsif options[:w].is_a?(Integer) && options[:w] < 0
-            raise Error::InvalidWriteConcern, "Invalid write concern options: :w cannot be negative (#{options[:w]}): #{options.inspect}"
+            raise Error::InvalidWriteConcern,
+                  "Invalid write concern options: :w cannot be negative (#{options[:w]}): #{options.inspect}"
           end
         end
 

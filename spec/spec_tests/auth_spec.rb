@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -12,11 +11,9 @@ describe 'Auth' do
     spec = Mongo::Auth::Spec.new(file)
 
     context(spec.description) do
-      spec.tests.each_with_index do |test, index|
+      spec.tests.each_with_index do |test, _index|
         context test.description do
-          if test.description.downcase.include?("gssapi")
-            require_mongo_kerberos
-          end
+          require_mongo_kerberos if test.description.downcase.include?('gssapi')
 
           if test.valid?
 

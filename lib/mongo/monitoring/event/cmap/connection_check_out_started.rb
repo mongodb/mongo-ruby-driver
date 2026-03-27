@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -19,12 +18,10 @@ module Mongo
   class Monitoring
     module Event
       module Cmap
-
         # Event published when a thread begins attempting to check a connection out of a pool.
         #
         # @since 2.9.0
         class ConnectionCheckOutStarted < Base
-
           # @return [ Mongo::Address ] address The address of the server that the connection will
           #   connect to.
           #

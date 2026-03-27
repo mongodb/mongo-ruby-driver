@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ module Mongo
   module Operation
     class Find
       module Builder
-
         # Provides behavior for mapping Ruby options to legacy OP_QUERY
         # find modifiers.
         #
@@ -34,7 +32,6 @@ module Mongo
         #
         # @api private
         module Modifiers
-
           # Mappings from Ruby options to OP_QUERY modifiers.
           DRIVER_MAPPINGS = BSON::Document.new(
             comment: '$comment',
@@ -47,7 +44,7 @@ module Mongo
             return_key: '$returnKey',
             show_disk_loc: '$showDiskLoc',
             snapshot: '$snapshot',
-            sort: '$orderby',
+            sort: '$orderby'
           ).freeze
 
           # Mappings from OP_QUERY modifiers to Ruby options.

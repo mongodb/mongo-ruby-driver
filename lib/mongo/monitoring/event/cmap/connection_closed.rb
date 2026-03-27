@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -19,12 +18,10 @@ module Mongo
   class Monitoring
     module Event
       module Cmap
-
         # Event published when a connection is closed.
         #
         # @since 2.9.0
         class ConnectionClosed < Base
-
           # @return [ Symbol ] STALE Indicates that the connection was closed due to it being stale.
           #
           # @since 2.9.0
@@ -97,7 +94,7 @@ module Mongo
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
-                "address=#{address} connection_id=#{connection_id} reason=#{reason}>"
+              "address=#{address} connection_id=#{connection_id} reason=#{reason}>"
           end
         end
       end

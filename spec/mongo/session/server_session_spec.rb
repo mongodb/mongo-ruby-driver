@@ -1,12 +1,9 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Session::ServerSession do
-
   describe '#initialize' do
-
     it 'sets the last use variable to the current time' do
       expect(described_class.new.last_use).to be_within(0.2).of(Time.now)
     end
@@ -19,13 +16,11 @@ describe Mongo::Session::ServerSession do
   end
 
   describe '#next_txn_number' do
-
     it 'advances and returns the next transaction number' do
       expect(described_class.new.next_txn_num).to be(1)
     end
 
     context 'when the method is called multiple times' do
-
       let(:server_session) do
         described_class.new
       end
@@ -42,7 +37,6 @@ describe Mongo::Session::ServerSession do
   end
 
   describe '#inspect' do
-
     let(:session) do
       described_class.new
     end

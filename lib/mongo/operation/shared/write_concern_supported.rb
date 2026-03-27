@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,25 +16,23 @@
 
 module Mongo
   module Operation
-
     # Custom behavior for operations that support write concern.
     #
     # @since 2.5.2
     # @api private
     module WriteConcernSupported
-
       private
 
-      def write_concern_supported?(connection); true; end
+      def write_concern_supported?(_connection)
+        true
+      end
 
       def command(connection)
         add_write_concern!(super, connection)
       end
 
       def add_write_concern!(sel, connection)
-        if write_concern && write_concern_supported?(connection)
-          sel[:writeConcern] = write_concern.options
-        end
+        sel[:writeConcern] = write_concern.options if write_concern && write_concern_supported?(connection)
         sel
       end
     end

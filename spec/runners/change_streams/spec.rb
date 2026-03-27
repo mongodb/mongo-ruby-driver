@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -20,7 +19,6 @@ require 'runners/change_streams/test'
 module Mongo
   module ChangeStreams
     class Spec
-
       # @return [ String ] description The spec description.
       #
       # @since 2.6.0
@@ -52,7 +50,7 @@ module Mongo
       def tests
         @spec_tests.map do |test|
           ChangeStreamsTest.new(self, test,
-            @collection_name, @collection2_name, @database_name, @database2_name)
+                                @collection_name, @collection2_name, @database_name, @database2_name)
         end
       end
     end

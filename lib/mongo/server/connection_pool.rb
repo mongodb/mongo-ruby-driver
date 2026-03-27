@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Server
-
     # Represents a connection pool for server connections.
     #
     # @since 2.0.0, largely rewritten in 2.9.0
@@ -52,7 +50,7 @@ module Mongo
       # thus anything over 15 seconds is potentially dangerous.
       #
       # @since 2.9.0
-      DEFAULT_WAIT_TIMEOUT = 10.freeze
+      DEFAULT_WAIT_TIMEOUT = 10
 
       # Condition variable broadcast when the size of the pool changes
       # to wake up the populator
@@ -100,31 +98,32 @@ module Mongo
       # @since 2.0.0, API changed in 2.9.0
 
       def initialize(server, options = {})
-        unless server.is_a?(Server)
-          raise ArgumentError, 'First argument must be a Server instance'
-        end
+        raise ArgumentError, 'First argument must be a Server instance' unless server.is_a?(Server)
+
         options = options.dup
         if options[:min_size] && options[:min_pool_size] && options[:min_size] != options[:min_pool_size]
-          raise ArgumentError, "Min size #{options[:min_size]} is not identical to min pool size #{options[:min_pool_size]}"
+          raise ArgumentError,
+                "Min size #{options[:min_size]} is not identical to min pool size #{options[:min_pool_size]}"
         end
         if options[:max_size] && options[:max_pool_size] && options[:max_size] != options[:max_pool_size]
-          raise ArgumentError, "Max size #{options[:max_size]} is not identical to max pool size #{options[:max_pool_size]}"
+          raise ArgumentError,
+                "Max size #{options[:max_size]} is not identical to max pool size #{options[:max_pool_size]}"
         end
         if options[:wait_timeout] && options[:wait_queue_timeout] && options[:wait_timeout] != options[:wait_queue_timeout]
-          raise ArgumentError, "Wait timeout #{options[:wait_timeout]} is not identical to wait queue timeout #{options[:wait_queue_timeout]}"
+          raise ArgumentError,
+                "Wait timeout #{options[:wait_timeout]} is not identical to wait queue timeout #{options[:wait_queue_timeout]}"
         end
+
         options[:min_size] ||= options[:min_pool_size]
         options.delete(:min_pool_size)
         options[:max_size] ||= options[:max_pool_size]
         options.delete(:max_pool_size)
         if options[:min_size] && options[:max_size] &&
-          (options[:max_size] != 0 && options[:min_size] > options[:max_size])
-        then
+           options[:max_size] != 0 && options[:min_size] > options[:max_size]
           raise ArgumentError, "Cannot have min size #{options[:min_size]} exceed max size #{options[:max_size]}"
         end
-        if options[:wait_queue_timeout]
-          options[:wait_timeout] ||= options[:wait_queue_timeout]
-        end
+
+        options[:wait_timeout] ||= options[:wait_queue_timeout] if options[:wait_queue_timeout]
         options.delete(:wait_queue_timeout)
 
         @server = server
@@ -137,7 +136,7 @@ module Mongo
         # A connection owned by this pool should be either in the
         # available connections array (which is used as a stack)
         # or in the checked out connections set.
-        @available_connections = available_connections = []
+        @available_connections = []
         @checked_out_connections = Set.new
         @pending_connections = Set.new
         @interrupt_connections = []
@@ -169,7 +168,8 @@ module Mongo
         @max_connecting_cv = Mongo::ConditionVariable.new(@lock)
         @max_connecting = options.fetch(:max_connecting, DEFAULT_MAX_CONNECTING)
 
-        ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
+        ObjectSpace.define_finalizer(self,
+                                     self.class.finalize(@available_connections, @pending_connections, @populator))
 
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options, self)
@@ -191,7 +191,7 @@ module Mongo
       #
       # @since 2.9.0
       def max_size
-        @max_size ||= options[:max_size] || [DEFAULT_MAX_SIZE, min_size].max
+        @max_size ||= options[:max_size] || [ DEFAULT_MAX_SIZE, min_size ].max
       end
 
       # Get the minimum size of the connection pool.
@@ -321,12 +321,12 @@ module Mongo
       def summary
         @lock.synchronize do
           state = if closed?
-            'closed'
-          elsif !@ready
-            'paused'
-          else
-            'ready'
-          end
+                    'closed'
+                  elsif !@ready
+                    'paused'
+                  else
+                    'ready'
+                  end
           "#<ConnectionPool size=#{unsynchronized_size} (#{min_size}-#{max_size}) " +
             "used=#{@checked_out_connections.length} avail=#{@available_connections.length} pending=#{@pending_connections.length} #{state}>"
         end
@@ -378,13 +378,12 @@ module Mongo
         )
 
         publish_cmap_event(
-          Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id, self),
+          Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id, self)
         )
 
-        if Lint.enabled?
-          unless connection.connected?
-            raise Error::LintError, "Connection pool for #{address} checked out a disconnected connection #{connection.generation}:#{connection.id}"
-          end
+        if Lint.enabled? && !connection.connected?
+          raise Error::LintError,
+                "Connection pool for #{address} checked out a disconnected connection #{connection.generation}:#{connection.id}"
         end
 
         connection
@@ -420,14 +419,16 @@ module Mongo
         return if connection.closed? && connection.interrupted?
 
         unless connection.connection_pool == self
-          raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.connection_pool} (for #{self})"
+          raise ArgumentError,
+                "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.connection_pool} (for #{self})"
         end
 
         unless @checked_out_connections.include?(connection)
-          raise ArgumentError, "Trying to check in a connection which is not currently checked out by this pool: #{connection} (for #{self})"
+          raise ArgumentError,
+                "Trying to check in a connection which is not currently checked out by this pool: #{connection} (for #{self})"
         end
 
-        # Note: if an event handler raises, resource will not be signaled.
+        # NOTE: if an event handler raises, resource will not be signaled.
         # This means threads waiting for a connection to free up when
         # the pool is at max size may time out.
         # Threads that begin waiting after this method completes (with
@@ -495,7 +496,7 @@ module Mongo
           raise Error::LintError, "Attempting to pause pool for server #{@server.summary} which is known"
         end
 
-        return if !@ready
+        return unless @ready
 
         @ready = false
       end
@@ -551,9 +552,7 @@ module Mongo
           # Generation must be bumped before emitting pool cleared event.
           @generation_manager.bump(service_id: service_id)
 
-          unless options && options[:lazy]
-            close_available_connections(service_id)
-          end
+          close_available_connections(service_id) unless options && options[:lazy]
 
           if options && options[:interrupt_in_use_connections]
             schedule_for_interruption(@checked_out_connections, service_id)
@@ -618,12 +617,12 @@ module Mongo
           Monitoring::Event::Cmap::PoolReady.new(@server.address, options, self)
         )
 
-        if options.fetch(:populator_io, true)
-          if @populator.running?
-            @populate_semaphore.signal
-          else
-            @populator.run!
-          end
+        return unless options.fetch(:populator_io, true)
+
+        if @populator.running?
+          @populate_semaphore.signal
+        else
+          @populator.run!
         end
       end
 
@@ -723,9 +722,7 @@ module Mongo
       rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished => e
         maybe_raise_pool_cleared!(connection, e)
       ensure
-        if connection
-          check_in(connection)
-        end
+        check_in(connection) if connection
       end
 
       # Close sockets that have been open for longer than the max idle time,
@@ -740,13 +737,11 @@ module Mongo
           i = 0
           while i < @available_connections.length
             connection = @available_connections[i]
-            if last_checkin = connection.last_checkin
-              if (Time.now - last_checkin) > max_idle_time
-                connection.disconnect!(reason: :idle)
-                @available_connections.delete_at(i)
-                @populate_semaphore.signal
-                next
-              end
+            if (last_checkin = connection.last_checkin) && ((Time.now - last_checkin) > max_idle_time)
+              connection.disconnect!(reason: :idle)
+              @available_connections.delete_at(i)
+              @populate_semaphore.signal
+              next
             end
             i += 1
           end
@@ -801,7 +796,7 @@ module Mongo
           log_warn("Populator failed to connect a connection for #{address}: #{e.class}: #{e}. It will retry.")
         end
 
-        return create_and_add_connection
+        create_and_add_connection
       end
 
       # Finalize the connection pool for garbage collection.
@@ -811,7 +806,7 @@ module Mongo
       # @param [ Populator ] populator The populator.
       #
       # @return [ Proc ] The Finalizer.
-      def self.finalize(available_connections, pending_connections, populator)
+      def self.finalize(available_connections, pending_connections, _populator)
         proc do
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
@@ -841,9 +836,7 @@ module Mongo
           conn = @available_connections.detect do |conn|
             conn.global_id == connection_global_id
           end
-          if conn
-            @available_connections.delete(conn)
-          end
+          @available_connections.delete(conn) if conn
           conn
         else
           @available_connections.pop
@@ -851,16 +844,14 @@ module Mongo
       end
 
       def create_connection
-        r, _ = @generation_manager.pipe_fds(service_id: server.description.service_id)
+        r, = @generation_manager.pipe_fds(service_id: server.description.service_id)
         opts = options.merge(
           connection_pool: self,
           pipe: r
           # Do not pass app metadata - this will be retrieved by the connection
           # based on the auth needs.
         )
-        unless @server.load_balancer?
-          opts[:generation] = generation
-        end
+        opts[:generation] = generation unless @server.load_balancer?
         Connection.new(@server, opts)
       end
 
@@ -875,14 +866,14 @@ module Mongo
 
         @lock.synchronize do
           if !closed? && @ready &&
-            (unsynchronized_size + @connection_requests) < min_size &&
-            @pending_connections.length < @max_connecting
-          then
+             (unsynchronized_size + @connection_requests) < min_size &&
+             @pending_connections.length < @max_connecting
             connection = create_connection
             @pending_connections << connection
           else
             return true if remove_interrupted_connections
             return true if remove_stale_connection
+
             return false
           end
         end
@@ -910,11 +901,11 @@ module Mongo
 
       # Removes and disconnects all stale available connections.
       def remove_stale_connection
-        if conn = @available_connections.detect(&method(:connection_stale_unlocked?))
-          conn.disconnect!(reason: :stale)
-          @available_connections.delete(conn)
-          return true
-        end
+        return unless conn = @available_connections.detect { |c| connection_stale_unlocked?(c) }
+
+        conn.disconnect!(reason: :stale)
+        @available_connections.delete(conn)
+        true
       end
 
       # Interrupt connections scheduled for interruption.
@@ -957,7 +948,7 @@ module Mongo
       # @return [ true | false ] Whether the connection is stale.
       def connection_stale_unlocked?(connection)
         connection.generation != generation_unlocked(service_id: connection.service_id) &&
-        !connection.pinned?
+          !connection.pinned?
       end
 
       # Asserts that the pool has not been closed.
@@ -966,9 +957,9 @@ module Mongo
       #
       # @since 2.9.0
       def raise_if_closed!
-        if closed?
-          raise Error::PoolClosedError.new(@server.address, self)
-        end
+        return unless closed?
+
+        raise Error::PoolClosedError.new(@server.address, self)
       end
 
       # If the connection was interrupted, raise a pool cleared error. If it
@@ -980,41 +971,37 @@ module Mongo
       # @raise [ Mongo::Error | Mongo::Error::PoolClearedError ] A PoolClearedError
       #   if the connection was interrupted, the original error if not.
       def maybe_raise_pool_cleared!(connection, e)
-        if connection&.interrupted?
-          err = Error::PoolClearedError.new(connection.server.address, connection.server.pool_internal).tap do |err|
-            e.labels.each { |l| err.add_label(l) }
-          end
-          raise err
-        else
-          raise e
+        raise e unless connection&.interrupted?
+
+        err = Error::PoolClearedError.new(connection.server.address, connection.server.pool_internal).tap do |err|
+          e.labels.each { |l| err.add_label(l) }
         end
+        raise err
       end
 
       # Attempts to connect (handshake and auth) the connection. If an error is
       # encountered, closes the connection and raises the error.
       def connect_connection(connection, context = nil)
-        begin
-          connection.connect!(context)
-        rescue Exception => exc
-          # When a connection encounters an error during creation
-          # (including handshake and authentication), mark the server
-          # as Unknown so the pool is cleared (per CMAP spec).
-          # The unknown! call must happen before disconnect! so that
-          # the ConnectionPoolCleared event is published before the
-          # ConnectionClosed event.
-          # Errors with the SystemOverloadedError label (network errors
-          # during handshake) are excluded per the SDAM spec — those
-          # must not change the server description.
-          if exc.is_a?(Mongo::Error) && !exc.label?('SystemOverloadedError')
-            @server.unknown!(
-              generation: exc.generation,
-              service_id: exc.service_id,
-              stop_push_monitor: true,
-            )
-          end
-          connection.disconnect!(reason: :error)
-          raise
+        connection.connect!(context)
+      rescue Exception => e
+        # When a connection encounters an error during creation
+        # (including handshake and authentication), mark the server
+        # as Unknown so the pool is cleared (per CMAP spec).
+        # The unknown! call must happen before disconnect! so that
+        # the ConnectionPoolCleared event is published before the
+        # ConnectionClosed event.
+        # Errors with the SystemOverloadedError label (network errors
+        # during handshake) are excluded per the SDAM spec — those
+        # must not change the server description.
+        if e.is_a?(Mongo::Error) && !e.label?('SystemOverloadedError')
+          @server.unknown!(
+            generation: e.generation,
+            service_id: e.service_id,
+            stop_push_monitor: true
+          )
         end
+        connection.disconnect!(reason: :error)
+        raise
       end
 
       def check_invariants
@@ -1048,15 +1035,13 @@ module Mongo
           loop do
             conn = @available_connections.detect do |conn|
               conn.service_id == service_id &&
-              conn.generation < @generation_manager.generation(service_id: service_id)
+                conn.generation < @generation_manager.generation(service_id: service_id)
             end
-            if conn
-              @available_connections.delete(conn)
-              conn.disconnect!(reason: :stale, interrupted: true)
-              @populate_semaphore.signal
-            else
-              break
-            end
+            break unless conn
+
+            @available_connections.delete(conn)
+            conn.disconnect!(reason: :stale, interrupted: true)
+            @populate_semaphore.signal
           end
         else
           @available_connections.delete_if do |conn|
@@ -1076,7 +1061,7 @@ module Mongo
       def schedule_for_interruption(connections, service_id)
         @interrupt_connections += connections.select do |conn|
           (!server.load_balancer? || conn.service_id == service_id) &&
-          conn.generation < @generation_manager.generation(service_id: service_id)
+            conn.generation < @generation_manager.generation(service_id: service_id)
         end
       end
 
@@ -1096,23 +1081,23 @@ module Mongo
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
             @server.address,
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed::TIMEOUT,
-          ),
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed::TIMEOUT
+          )
         )
 
         connection_global_id_msg = if connection_global_id
-          " for connection #{connection_global_id}"
-        else
-          ''
-        end
+                                     " for connection #{connection_global_id}"
+                                   else
+                                     ''
+                                   end
 
-        msg = "Timed out attempting to check out a connection " +
-          "from pool for #{@server.address}#{connection_global_id_msg} after #{wait_timeout} sec. " +
-          "Connections in pool: #{@available_connections.length} available, " +
-          "#{@checked_out_connections.length} checked out, " +
-          "#{@pending_connections.length} pending, " +
-          "#{@connection_requests} connections requests " +
-          "(max size: #{max_size})"
+        msg = 'Timed out attempting to check out a connection ' +
+              "from pool for #{@server.address}#{connection_global_id_msg} after #{wait_timeout} sec. " +
+              "Connections in pool: #{@available_connections.length} available, " +
+              "#{@checked_out_connections.length} checked out, " +
+              "#{@pending_connections.length} pending, " +
+              "#{@connection_requests} connections requests " +
+              "(max size: #{max_size})"
         raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
       end
 
@@ -1123,31 +1108,31 @@ module Mongo
       end
 
       def raise_if_pool_closed!
-        if closed?
-          publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-              @server.address,
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed::POOL_CLOSED
-            ),
+        return unless closed?
+
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+            @server.address,
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed::POOL_CLOSED
           )
-          raise Error::PoolClosedError.new(@server.address, self)
-        end
+        )
+        raise Error::PoolClosedError.new(@server.address, self)
       end
 
       def raise_if_pool_paused!
         raise_unless_locked!
 
-        if !@ready
-          publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
-              @server.address,
-              # CMAP spec decided to conflate pool paused with all the other
-              # possible non-timeout errors.
-              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR,
-            ),
+        return if @ready
+
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+            @server.address,
+            # CMAP spec decided to conflate pool paused with all the other
+            # possible non-timeout errors.
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
           )
-          raise Error::PoolPausedError.new(@server.address, self)
-        end
+        )
+        raise Error::PoolPausedError.new(@server.address, self)
       end
 
       def raise_if_pool_paused_locked!
@@ -1164,12 +1149,12 @@ module Mongo
       end
 
       def raise_unless_locked!
-        unless @lock.owned?
-          raise ArgumentError, "the lock must be owned when calling this method"
-        end
+        return if @lock.owned?
+
+        raise ArgumentError, 'the lock must be owned when calling this method'
       end
 
-      def valid_available_connection?(connection, pid, connection_global_id)
+      def valid_available_connection?(connection, pid, _connection_global_id)
         if connection.pid != pid
           log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{pid}")
           connection.disconnect!(reason: :stale)
@@ -1177,7 +1162,7 @@ module Mongo
           return false
         end
 
-        if !connection.pinned?
+        unless connection.pinned?
           # If connection is marked as pinned, it is used by a transaction
           # or a series of cursor operations in a load balanced setup.
           # In this case connection should not be disconnected until
@@ -1193,8 +1178,7 @@ module Mongo
           end
 
           if max_idle_time && connection.last_checkin &&
-            Time.now - connection.last_checkin > max_idle_time
-          then
+             Time.now - connection.last_checkin > max_idle_time
             connection.disconnect!(reason: :idle)
             @populate_semaphore.signal
             return false
@@ -1218,9 +1202,7 @@ module Mongo
       #   and remains so for longer than the wait timeout.
       def get_connection(pid, connection_global_id)
         if connection = next_available_connection(connection_global_id)
-          unless valid_available_connection?(connection, pid, connection_global_id)
-            return nil
-          end
+          return nil unless valid_available_connection?(connection, pid, connection_global_id)
 
           # We've got a connection, so we decrement the number of connection
           # requests.
@@ -1231,10 +1213,8 @@ module Mongo
           # If the connection is connected, it's not considered a
           # "pending connection". The pending_connections list represents
           # the set of connections that are awaiting connection.
-          unless connection.connected?
-            @pending_connections << connection
-          end
-          return connection
+          @pending_connections << connection unless connection.connected?
+          connection
         elsif connection_global_id && @server.load_balancer?
           # A particular connection is requested, but it is not available.
           # If it is nether available not checked out, we should stop here.
@@ -1246,7 +1226,7 @@ module Mongo
                 Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
                   @server.address,
                   Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
-                ),
+                )
               )
               # We're going to raise, so we need to decrement the number of
               # connection requests.
@@ -1262,7 +1242,7 @@ module Mongo
           connection = create_connection
           @connection_requests -= 1
           @pending_connections << connection
-          return connection
+          connection
         end
       end
 
@@ -1278,7 +1258,7 @@ module Mongo
       # @raise [ Error::PoolClosedError ] If the pool has been closed.
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
-      def retrieve_and_connect_connection(connection_global_id, context =  nil)
+      def retrieve_and_connect_connection(connection_global_id, context = nil)
         deadline = Utils.monotonic_time + wait_timeout(context)
         connection = nil
 
@@ -1299,9 +1279,7 @@ module Mongo
 
         @lock.synchronize do
           @checked_out_connections << connection
-          if @pending_connections.include?(connection)
-            @pending_connections.delete(connection)
-          end
+          @pending_connections.delete(connection) if @pending_connections.include?(connection)
           @max_connecting_cv.signal
           # no need to signal size_cv here since the number of unavailable
           # connections is unchanged.
@@ -1345,13 +1323,13 @@ module Mongo
 
           connection = get_connection(Process.pid, connection_global_id)
           wait = deadline - Utils.monotonic_time
-          if connection.nil? && wait <= 0
-            # connection is nil here, it means that get_connection method
-            # did not create a new connection; therefore, it did not decrease
-            # the connection_requests counter. We need to do it here.
-            decrement_connection_requests_and_signal
-            raise_check_out_timeout!(connection_global_id)
-          end
+          next unless connection.nil? && wait <= 0
+
+          # connection is nil here, it means that get_connection method
+          # did not create a new connection; therefore, it did not decrease
+          # the connection_requests counter. We need to do it here.
+          decrement_connection_requests_and_signal
+          raise_check_out_timeout!(connection_global_id)
         end
 
         connection
@@ -1366,9 +1344,7 @@ module Mongo
       rescue Exception
         # Handshake or authentication failed
         @lock.synchronize do
-          if @pending_connections.include?(connection)
-            @pending_connections.delete(connection)
-          end
+          @pending_connections.delete(connection) if @pending_connections.include?(connection)
           @max_connecting_cv.signal
           @size_cv.signal
         end
@@ -1377,11 +1353,10 @@ module Mongo
           Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
             @server.address,
             Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
-          ),
+          )
         )
         raise
       end
-
 
       # Decrement connection requests counter and signal the condition
       # variables that the number of unavailable connections has decreased.

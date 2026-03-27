@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -21,25 +20,22 @@ module Mongo
       include RSpec::Matchers
 
       def needs_session?
-        arguments && arguments['session'] || object =~ /session/
+        (arguments && arguments['session']) || object =~ /session/
       end
 
       def execute(target, context)
         op_name = ::Utils.underscore(name).to_sym
-        if op_name == :with_transaction
-          args = [target]
-        else
-          args = []
-        end
-        if op_name.nil?
-          raise "Unknown operation #{name}"
-        end
+        args = if op_name == :with_transaction
+                 [ target ]
+               else
+                 []
+               end
+        raise "Unknown operation #{name}" if op_name.nil?
+
         result = send(op_name, target, context, *args)
-        if result
-          if result.is_a?(Hash)
-            result = result.dup
-            result['error'] = false
-          end
+        if result && result.is_a?(Hash)
+          result = result.dup
+          result['error'] = false
         end
 
         result
@@ -47,7 +43,7 @@ module Mongo
         raise "OperationFailure had nil result: #{e}" if e.result.nil?
 
         err_doc = e.result.send(:first_document)
-        error_code_name = err_doc['codeName'] || err_doc['writeConcernError'] && err_doc['writeConcernError']['codeName']
+        error_code_name = err_doc['codeName'] || (err_doc['writeConcernError'] && err_doc['writeConcernError']['codeName'])
         if error_code_name.nil?
           # Sometimes the server does not return the error code name,
           # but does return the error code (or we can parse the error code
@@ -95,50 +91,45 @@ module Mongo
         database.command(cmd, opts).documents.first
       end
 
-      def start_transaction(session, context)
+      def start_transaction(session, _context)
         session.start_transaction(::Utils.convert_operation_options(arguments['options']))
         nil
       end
 
-      def commit_transaction(session, context)
+      def commit_transaction(session, _context)
         session.commit_transaction
         nil
       end
 
-      def abort_transaction(session, context)
+      def abort_transaction(session, _context)
         session.abort_transaction
         nil
       end
 
-      def with_transaction(session, context, collection)
+      def with_transaction(session, context, _collection)
         unless callback = arguments['callback']
           raise ArgumentError, 'with_transaction requires a callback to be present'
         end
 
-        if arguments['options']
-          options = ::Utils.snakeize_hash(arguments['options'])
-        else
-          options = nil
-        end
+        options = (::Utils.snakeize_hash(arguments['options']) if arguments['options'])
         session.with_transaction(options) do
           callback['operations'].each do |op_spec|
             op = Operation.new(@crud_test, op_spec)
             target = @crud_test.resolve_target(@crud_test.test_client, op)
             rv = op.execute(target, context)
-            if rv && rv['exception']
-              raise rv['exception']
-            end
+            raise rv['exception'] if rv && rv['exception']
           end
         end
       end
 
-      def assert_session_transaction_state(collection, context)
+      def assert_session_transaction_state(_collection, context)
         session = context.send(arguments['session'])
-        actual_state = session.instance_variable_get('@state').to_s.sub(/^transaction_|_transaction$/, '').sub(/^no$/, 'none')
+        actual_state = session.instance_variable_get(:@state).to_s.sub(/^transaction_|_transaction$/, '').sub(/^no$/,
+                                                                                                              'none')
         expect(actual_state).to eq(arguments['state'])
       end
 
-      def targeted_fail_point(collection, context)
+      def targeted_fail_point(_collection, context)
         args = transformed_options(context)
         session = args[:session]
         unless session.pinned_server
@@ -146,7 +137,7 @@ module Mongo
         end
 
         client = ClusterTools.instance.direct_client(session.pinned_server.address,
-          database: 'admin')
+                                                     database: 'admin')
         client.command(arguments['failPoint'])
 
         $disable_fail_points ||= []
@@ -156,40 +147,38 @@ module Mongo
         ]
       end
 
-      def assert_session_pinned(collection, context)
+      def assert_session_pinned(_collection, context)
         args = transformed_options(context)
         session = args[:session]
-        unless session.pinned_server
-          raise ArgumentError, 'Expected session to be pinned'
-        end
+        return if session.pinned_server
+
+        raise ArgumentError, 'Expected session to be pinned'
       end
 
-      def assert_session_unpinned(collection, context)
+      def assert_session_unpinned(_collection, context)
         args = transformed_options(context)
         session = args[:session]
-        if session.pinned_server
-          raise ArgumentError, 'Expected session to not be pinned'
-        end
+        return unless session.pinned_server
+
+        raise ArgumentError, 'Expected session to not be pinned'
       end
 
-      def wait_for_event(client, context)
+      def wait_for_event(_client, context)
         deadline = Utils.monotonic_time + 5
         loop do
           events = _select_events(context)
-          if events.length >= arguments['count']
-            break
-          end
+          break if events.length >= arguments['count']
           if Utils.monotonic_time >= deadline
             raise "Did not receive an event matching #{arguments} in 5 seconds; received #{events.length} but expected #{arguments['count']} events"
-          else
-            sleep 0.1
           end
+
+          sleep 0.1
         end
       end
 
-      def assert_event_count(client, context)
+      def assert_event_count(_client, context)
         events = _select_events(context)
-        if %w(ServerMarkedUnknownEvent PoolClearedEvent).include?(arguments['event'])
+        if %w[ServerMarkedUnknownEvent PoolClearedEvent].include?(arguments['event'])
           # We publish SDAM events from both regular and push monitors.
           # This means sometimes there are two ServerMarkedUnknownEvent
           # events published for the same server transition.
@@ -210,7 +199,7 @@ module Mongo
         when 'ServerMarkedUnknownEvent'
           context.sdam_subscriber.all_events.select do |event|
             event.is_a?(Mongo::Monitoring::Event::ServerDescriptionChanged) &&
-            event.new_description.unknown?
+              event.new_description.unknown?
           end
         else
           context.sdam_subscriber.all_events.select do |event|
@@ -233,11 +222,10 @@ module Mongo
           @stop = true
         end
 
-        attr_reader :operations
-        attr_reader :unexpected_operation_results
+        attr_reader :operations, :unexpected_operation_results
       end
 
-      def start_thread(client, context)
+      def start_thread(_client, context)
         thread_context = ThreadContext.new
         thread = Thread.new do
           loop do
@@ -247,49 +235,41 @@ module Mongo
               target = @crud_test.resolve_target(@crud_test.test_client, op)
               result = op.execute(target, context)
               if op_spec['error']
-                unless result['error']
-                  thread_context.unexpected_operation_results << result
-                end
-              else
-                if result['error']
-                  thread_context.unexpected_operation_results << result
-                end
+                thread_context.unexpected_operation_results << result unless result['error']
+              elsif result['error']
+                thread_context.unexpected_operation_results << result
               end
             rescue ThreadError
               # Queue is empty
             end
-            if thread_context.stop?
-              break
-            else
-              sleep 1
-            end
+            break if thread_context.stop?
+
+            sleep 1
           end
         end
         class << thread
           attr_accessor :context
         end
         thread.context = thread_context
-        unless context.threads
-          context.threads ||= {}
-        end
+        context.threads ||= {} unless context.threads
         context.threads[arguments['name']] = thread
       end
 
-      def run_on_thread(client, context)
+      def run_on_thread(_client, context)
         thread = context.threads.fetch(arguments['name'])
         thread.context.operations << arguments['operation']
       end
 
-      def wait_for_thread(client, context)
+      def wait_for_thread(_client, context)
         thread = context.threads.fetch(arguments['name'])
         thread.context.signal_stop
         thread.join
-        unless thread.context.unexpected_operation_results.empty?
-          raise "Thread #{arguments['name']} had #{thread.context.unexpected_operation_results}.length unexpected operation results"
-        end
+        return if thread.context.unexpected_operation_results.empty?
+
+        raise "Thread #{arguments['name']} had #{thread.context.unexpected_operation_results}.length unexpected operation results"
       end
 
-      def wait(client, context)
+      def wait(_client, _context)
         sleep arguments['ms'] / 1000.0
       end
 
@@ -297,25 +277,21 @@ module Mongo
         context.primary_address = client.cluster.next_primary.address
       end
 
-      def run_admin_command(support_client, context)
+      def run_admin_command(support_client, _context)
         support_client.use('admin').database.command(arguments['command'])
       end
 
       def wait_for_primary_change(client, context)
         timeout = if arguments['timeoutMS']
-          arguments['timeoutMS'] / 1000.0
-        else
-          10
-        end
+                    arguments['timeoutMS'] / 1000.0
+                  else
+                    10
+                  end
         deadline = Utils.monotonic_time + timeout
         loop do
           client.cluster.scan!
-          if client.cluster.next_primary.address != context.primary_address
-            break
-          end
-          if Utils.monotonic_time >= deadline
-            raise "Failed to change primary in #{timeout} seconds"
-          end
+          break if client.cluster.next_primary.address != context.primary_address
+          raise "Failed to change primary in #{timeout} seconds" if Utils.monotonic_time >= deadline
         end
       end
 
@@ -323,9 +299,11 @@ module Mongo
       # BSON::String::IllegalKey then we should rescue that particular error,
       # otherwise, rescue an arbitrary BSON::Error
       def bson_error
-        BSON::String.const_defined?(:IllegalKey) ?
-          BSON::String.const_get(:IllegalKey) :
+        if BSON::String.const_defined?(:IllegalKey)
+          BSON::String.const_get(:IllegalKey)
+        else
           BSON::Error
+        end
       end
     end
   end

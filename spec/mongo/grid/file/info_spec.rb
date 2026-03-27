@@ -1,55 +1,46 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 describe Mongo::Grid::File::Info do
-
   describe '#==' do
-
     let(:upload_date) do
       Time.now.utc
     end
 
     let(:info) do
-      described_class.new(:filename => 'test.txt', :length => 7, :uploadDate => upload_date)
+      described_class.new(filename: 'test.txt', length: 7, uploadDate: upload_date)
     end
 
     context 'when the other is not a file info object' do
-
       it 'returns false' do
-        expect(info).to_not eq('test')
+        expect(info).not_to eq('test')
       end
     end
 
     context 'when the other object is file info object' do
-
       context 'when the documents are equal' do
-
         it 'returns true' do
           expect(info).to eq(info)
         end
       end
 
       context 'when the documents are not equal' do
-
         let(:other) do
-          described_class.new(:filename => 'testing.txt')
+          described_class.new(filename: 'testing.txt')
         end
 
         it 'returns false' do
-          expect(info).to_not eq(other)
+          expect(info).not_to eq(other)
         end
       end
     end
   end
 
   describe '#initialize' do
-
     context 'when provided only a filename and length' do
-
       let(:info) do
-        described_class.new(:filename => 'test.txt', :length => 7)
+        described_class.new(filename: 'test.txt', length: 7)
       end
 
       it 'sets the default id' do
@@ -71,9 +62,8 @@ describe Mongo::Grid::File::Info do
   end
 
   describe '#inspect' do
-
     let(:info) do
-      described_class.new(:filename => 'test.txt', :length => 7)
+      described_class.new(filename: 'test.txt', length: 7)
     end
 
     it 'includes the chunk size' do
@@ -94,9 +84,8 @@ describe Mongo::Grid::File::Info do
   end
 
   context 'when there are extra options' do
-
     let(:info) do
-      described_class.new(:filename => 'test.txt', :extra_field => 'extra')
+      described_class.new(filename: 'test.txt', extra_field: 'extra')
     end
 
     it 'includes them in the document written to the database' do

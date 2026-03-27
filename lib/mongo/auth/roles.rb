@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,91 +16,89 @@
 
 module Mongo
   module Auth
-
     # Provides constants for the built in roles provided by MongoDB.
     #
     # @since 2.0.0
     module Roles
-
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#backup
       #
       # @since 2.0.0
-      BACKUP = 'backup'.freeze
+      BACKUP = 'backup'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#clusterAdmin
       #
       # @since 2.0.0
-      CLUSTER_ADMIN = 'clusterAdmin'.freeze
+      CLUSTER_ADMIN = 'clusterAdmin'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#clusterManager
       #
       # @since 2.0.0
-      CLUSTER_MANAGER = 'clusterManager'.freeze
+      CLUSTER_MANAGER = 'clusterManager'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#clusterMonitor
       #
       # @since 2.0.0
-      CLUSTER_MONITOR = 'clusterMonitor'.freeze
+      CLUSTER_MONITOR = 'clusterMonitor'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#dbAdmin
       #
       # @since 2.0.0
-      DATABASE_ADMIN = 'dbAdmin'.freeze
+      DATABASE_ADMIN = 'dbAdmin'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#dbAdminAnyDatabase
       #
       # @since 2.0.0
-      DATABASE_ADMIN_ANY_DATABASE = 'dbAdminAnyDatabase'.freeze
+      DATABASE_ADMIN_ANY_DATABASE = 'dbAdminAnyDatabase'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#dbOwner
       #
       # @since 2.0.0
-      DATABASE_OWNER = 'dbOwner'.freeze
+      DATABASE_OWNER = 'dbOwner'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#hostManager
       #
       # @since 2.0.0
-      HOST_MANAGER = 'hostManager'.freeze
+      HOST_MANAGER = 'hostManager'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#read
       #
       # @since 2.0.0
-      READ = 'read'.freeze
+      READ = 'read'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#readAnyDatabase
       #
       # @since 2.0.0
-      READ_ANY_DATABASE = 'readAnyDatabase'.freeze
+      READ_ANY_DATABASE = 'readAnyDatabase'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#readWriteAnyDatabase
       #
       # @since 2.0.0
-      READ_WRITE_ANY_DATABASE = 'readWriteAnyDatabase'.freeze
+      READ_WRITE_ANY_DATABASE = 'readWriteAnyDatabase'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#readWrite
       #
       # @since 2.0.0
-      READ_WRITE = 'readWrite'.freeze
+      READ_WRITE = 'readWrite'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#restore
       #
       # @since 2.0.0
-      RESTORE = 'restore'.freeze
+      RESTORE = 'restore'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#root
       #
       # @since 2.0.0
-      ROOT = 'root'.freeze
+      ROOT = 'root'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#userAdmin
       #
       # @since 2.0.0
-      USER_ADMIN = 'userAdmin'.freeze
+      USER_ADMIN = 'userAdmin'
 
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#userAdminAnyDatabase
       #
       # @since 2.0.0
-      USER_ADMIN_ANY_DATABASE = 'userAdminAnyDatabase'.freeze
+      USER_ADMIN_ANY_DATABASE = 'userAdminAnyDatabase'
     end
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -11,8 +10,7 @@ describe 'OCSP connectivity' do
 
   let(:client) do
     new_local_client(ENV.fetch('MONGODB_URI'),
-      server_selection_timeout: 5,
-    )
+                     server_selection_timeout: 5)
   end
 
   if ENV['OCSP_CONNECTIVITY'] == 'fail'

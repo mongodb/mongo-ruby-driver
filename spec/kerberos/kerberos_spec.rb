@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -7,16 +6,14 @@ describe 'kerberos authentication' do
   require_mongo_kerberos
 
   before(:all) do
-    unless %w(1 yes true).include?(ENV['MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION']&.downcase)
-      skip "Set MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION=1 in environment to run the Kerberos integration tests"
+    unless %w[1 yes true].include?(ENV['MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION']&.downcase)
+      skip 'Set MONGO_RUBY_DRIVER_KERBEROS_INTEGRATION=1 in environment to run the Kerberos integration tests'
     end
   end
 
   def require_env_value(key)
     ENV[key].tap do |value|
-      if value.nil? || value.empty?
-        raise "Value for key #{key} is not present in environment as required"
-      end
+      raise "Value for key #{key} is not present in environment as required" if value.nil? || value.empty?
     end
   end
 
@@ -25,7 +22,7 @@ describe 'kerberos authentication' do
   end
 
   let(:user) do
-   "#{require_env_value('SASL_USER')}%40#{realm}"
+    "#{require_env_value('SASL_USER')}%40#{realm}"
   end
 
   let(:host) do
@@ -45,7 +42,7 @@ describe 'kerberos authentication' do
   end
 
   let(:uri) do
-    uri = "mongodb://#{user}@#{host}/#{kerberos_db}?authMechanism=GSSAPI&authSource=#{auth_source}"
+    "mongodb://#{user}@#{host}/#{kerberos_db}?authMechanism=GSSAPI&authSource=#{auth_source}"
   end
 
   let(:client) do
@@ -87,7 +84,7 @@ describe 'kerberos authentication' do
     end
 
     let(:uri) do
-      uri = "mongodb://#{user}@#{host}/#{kerberos_db}?authMechanism=GSSAPI&authSource=#{auth_source}&authMechanismProperties=CANONICALIZE_HOST_NAME:true"
+      "mongodb://#{user}@#{host}/#{kerberos_db}?authMechanism=GSSAPI&authSource=#{auth_source}&authMechanismProperties=CANONICALIZE_HOST_NAME:true"
     end
 
     it 'correctly authenticates when using the IP' do

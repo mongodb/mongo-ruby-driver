@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Socket
-
     # Wrapper for TLS sockets.
     #
     # @since 2.0.0
@@ -113,7 +111,7 @@ module Mongo
           run_tls_context_hooks
 
           connect!
-        rescue
+        rescue StandardError
           @tcp_socket.close
           raise
         end
@@ -154,7 +152,8 @@ module Mongo
               # solution, even though it is known to be not very reliable.
               raise Error::SocketTimeoutError, 'connect_timeout expired' if connect_timeout < 0
 
-              Timeout.timeout(connect_timeout, Error::SocketTimeoutError, "The socket took over #{options[:connect_timeout]} seconds to connect") do
+              Timeout.timeout(connect_timeout, Error::SocketTimeoutError,
+                              "The socket took over #{options[:connect_timeout]} seconds to connect") do
                 connect_without_timeout(sockaddr)
               end
             else
@@ -170,7 +169,7 @@ module Mongo
           end
         end
         self
-      rescue
+      rescue StandardError
         @socket&.close
         @socket = nil
         raise
@@ -223,11 +222,12 @@ module Mongo
         if deadline <= Utils.monotonic_time
           raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
         end
+
         begin
           @tcp_socket.connect_nonblock(sockaddr)
         rescue IO::WaitWritable
           with_select_timeout(deadline, connect_timeout) do |select_timeout|
-            IO.select(nil, [@tcp_socket], nil, select_timeout)
+            IO.select(nil, [ @tcp_socket ], nil, select_timeout)
           end
           retry
         rescue Errno::EISCONN
@@ -239,6 +239,7 @@ module Mongo
         if deadline <= Utils.monotonic_time
           raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
         end
+
         @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
         @socket.hostname = @host_name
         @socket.sync_close = true
@@ -248,12 +249,12 @@ module Mongo
           @socket.connect_nonblock
         rescue IO::WaitReadable, OpenSSL::SSL::SSLErrorWaitReadable
           with_select_timeout(deadline, connect_timeout) do |select_timeout|
-            IO.select([@socket], nil, nil, select_timeout)
+            IO.select([ @socket ], nil, nil, select_timeout)
           end
           retry
         rescue IO::WaitWritable, OpenSSL::SSL::SSLErrorWaitWritable
           with_select_timeout(deadline, connect_timeout) do |select_timeout|
-            IO.select(nil, [@socket], nil, select_timeout)
+            IO.select(nil, [ @socket ], nil, select_timeout)
           end
           retry
         rescue Errno::EISCONN
@@ -264,15 +265,16 @@ module Mongo
       # Raises +Error::SocketTimeoutError+ exception if deadline reached or the
       # block returns nil. The block should call +IO.select+ with the
       # +connect_timeout+ value. It returns nil if the +connect_timeout+ expires.
-      def with_select_timeout(deadline, connect_timeout, &block)
+      def with_select_timeout(deadline, connect_timeout)
         select_timeout = deadline - Utils.monotonic_time
         if select_timeout <= 0
           raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
         end
-        rv = block.call(select_timeout)
-        if rv.nil?
-          raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
-        end
+
+        rv = yield(select_timeout)
+        return unless rv.nil?
+
+        raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
       end
 
       def verify_certificate?
@@ -319,15 +321,14 @@ module Mongo
             # In JRuby we must allow one call as this callback is invoked for
             # the initial connection also, not just for renegotiations -
             # https://github.com/jruby/jruby-openssl/issues/180
-            if BSON::Environment.jruby?
-              allowed_calls = 1
-            else
-              allowed_calls = 0
-            end
-            context.renegotiation_cb = lambda do |ssl|
-              if allowed_calls <= 0
-                raise RuntimeError, 'Client renegotiation disabled'
-              end
+            allowed_calls = if BSON::Environment.jruby?
+                              1
+                            else
+                              0
+                            end
+            context.renegotiation_cb = lambda do |_ssl|
+              raise 'Client renegotiation disabled' if allowed_calls <= 0
+
               allowed_calls -= 1
             end
           end
@@ -412,19 +413,17 @@ module Mongo
 
       def load_private_key(text, passphrase)
         args = if passphrase
-          [text, passphrase]
-        else
-          [text]
-        end
+                 [ text, passphrase ]
+               else
+                 [ text ]
+               end
         # On JRuby, PKey.read does not grok cert+key bundles.
         # https://github.com/jruby/jruby-openssl/issues/176
         if BSON::Environment.jruby?
-          [OpenSSL::PKey::RSA, OpenSSL::PKey::DSA].each do |cls|
-            begin
-              return cls.send(:new, *args)
-            rescue OpenSSL::PKey::PKeyError
-              # ignore
-            end
+          [ OpenSSL::PKey::RSA, OpenSSL::PKey::DSA ].each do |cls|
+            return cls.send(:new, *args)
+          rescue OpenSSL::PKey::PKeyError
+            # ignore
           end
           # Neither RSA nor DSA worked, fall through to trying PKey
         end
@@ -439,8 +438,11 @@ module Mongo
         elsif options[:ssl_ca_cert_string]
           cert_store.add_cert(OpenSSL::X509::Certificate.new(options[:ssl_ca_cert_string]))
         elsif options[:ssl_ca_cert_object]
-          raise TypeError("Option :ssl_ca_cert_object should be an array of OpenSSL::X509:Certificate objects") unless options[:ssl_ca_cert_object].is_a? Array
-          options[:ssl_ca_cert_object].each {|cert| cert_store.add_cert(cert)}
+          unless options[:ssl_ca_cert_object].is_a? Array
+            raise TypeError('Option :ssl_ca_cert_object should be an array of OpenSSL::X509:Certificate objects')
+          end
+
+          options[:ssl_ca_cert_object].each { |cert| cert_store.add_cert(cert) }
         else
           cert_store.set_default_paths
         end
@@ -448,11 +450,10 @@ module Mongo
       end
 
       def verify_certificate!(socket)
-        if verify_hostname?
-          unless OpenSSL::SSL.verify_certificate_identity(socket.peer_cert, host_name)
-            raise Error::SocketError, 'TLS handshake failed due to a hostname mismatch.'
-          end
-        end
+        return unless verify_hostname?
+        return if OpenSSL::SSL.verify_certificate_identity(socket.peer_cert, host_name)
+
+        raise Error::SocketError, 'TLS handshake failed due to a hostname mismatch.'
       end
 
       def verify_ocsp_endpoint!(socket, timeout = nil)
@@ -467,14 +468,14 @@ module Mongo
         end
 
         verifier = OcspVerifier.new(@host_name, cert, ca_cert, context.cert_store,
-          **Utils.shallow_symbolize_keys(options).merge(timeout: timeout))
+                                    **Utils.shallow_symbolize_keys(options), timeout: timeout)
         verifier.verify_with_cache
       end
 
       def read_buffer_size
         # Buffer size for TLS reads.
         # Capped at 16k due to https://linux.die.net/man/3/ssl_read
-        16384
+        16_384
       end
 
       def human_address
@@ -487,8 +488,8 @@ module Mongo
         end
       end
 
-      BEGIN_CERT = "-----BEGIN CERTIFICATE-----"
-      END_CERT = "-----END CERTIFICATE-----"
+      BEGIN_CERT = '-----BEGIN CERTIFICATE-----'
+      END_CERT = '-----END CERTIFICATE-----'
 
       # This was originally a scan + regex, but the regex was particularly
       # inefficient and was flagged as a concern by static analysis.

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -46,17 +45,17 @@ describe 'Explicit Encryption' do
       decrypted = client_encryption.decrypt(encrypted)
       if decrypted_value.nil?
         expect(decrypted).to eq(value)
-        expect(decrypted).to be_a_kind_of(value.class)
+        expect(decrypted).to be_a(value.class)
       else
         expect(decrypted).to eq(decrypted_value)
-        expect(decrypted).to be_a_kind_of(decrypted_value.class)
+        expect(decrypted).to be_a(decrypted_value.class)
       end
     end
 
     it 'encrypts and decrypts the value using key_alt_name' do
-      data_key_id = client_encryption.create_data_key(
+      client_encryption.create_data_key(
         kms_provider_name,
-        data_key_options.merge(key_alt_names: [key_alt_name])
+        data_key_options.merge(key_alt_names: [ key_alt_name ])
       )
 
       encrypted = client_encryption.encrypt(
@@ -70,10 +69,10 @@ describe 'Explicit Encryption' do
       decrypted = client_encryption.decrypt(encrypted)
       if decrypted_value.nil?
         expect(decrypted).to eq(value)
-        expect(decrypted).to be_a_kind_of(value.class)
+        expect(decrypted).to be_a(value.class)
       else
         expect(decrypted).to eq(decrypted_value)
-        expect(decrypted).to be_a_kind_of(decrypted_value.class)
+        expect(decrypted).to be_a(decrypted_value.class)
       end
     end
   end

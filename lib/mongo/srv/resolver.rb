@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2017-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Srv
-
     # Encapsulates the necessary behavior for querying SRV records as
     # required by the driver.
     #
@@ -27,7 +25,7 @@ module Mongo
 
       # @return [ String ] RECORD_PREFIX The prefix prepended to each hostname
       #   before querying SRV records.
-      RECORD_PREFIX = '_mongodb._tcp.'.freeze
+      RECORD_PREFIX = '_mongodb._tcp.'
 
       # Generates the record prefix with a custom SRV service name if it is
       # provided.
@@ -35,8 +33,8 @@ module Mongo
       # @option srv_service_name [ String | nil ] The SRV service name to use
       #   in the record prefix.
       # @return [ String ] The generated record prefix.
-      def record_prefix(srv_service_name=nil)
-        return srv_service_name ? "_#{srv_service_name}._tcp." : RECORD_PREFIX
+      def record_prefix(srv_service_name = nil)
+        srv_service_name ? "_#{srv_service_name}._tcp." : RECORD_PREFIX
       end
 
       # Creates a new Resolver.
@@ -81,7 +79,7 @@ module Mongo
       #   option is true and no records are found.
       #
       # @return [ Mongo::Srv::Result ] SRV lookup result.
-      def get_records(hostname, srv_service_name=nil, srv_max_hosts=nil)
+      def get_records(hostname, srv_service_name = nil, srv_max_hosts = nil)
         query_name = record_prefix(srv_service_name) + hostname
         resources = @resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV)
 
@@ -91,30 +89,25 @@ module Mongo
         # added to the Result object.
         result = Srv::Result.new(hostname)
         resources.each do |record|
-          begin
-            result.add_record(record)
-          rescue Error::MismatchedDomain => e
-            if raise_on_invalid?
-              raise
-            else
-              log_warn(e.message)
-            end
-          end
+          result.add_record(record)
+        rescue Error::MismatchedDomain => e
+          raise if raise_on_invalid?
+
+          log_warn(e.message)
         end
 
         # If no records are found, either raise an error or log a warning
         # based on the Resolver's :raise_on_invalid option.
         if result.empty?
-          if raise_on_invalid?
-            raise Error::NoSRVRecords.new(URI::SRVProtocol::NO_SRV_RECORDS % hostname)
-          else
-            log_warn(URI::SRVProtocol::NO_SRV_RECORDS % hostname)
-          end
+          raise Error::NoSRVRecords.new(URI::SRVProtocol::NO_SRV_RECORDS % hostname) if raise_on_invalid?
+
+          log_warn(URI::SRVProtocol::NO_SRV_RECORDS % hostname)
+
         end
 
         # if srv_max_hosts is in [1, #addresses)
         if (1...result.address_strs.length).include? srv_max_hosts
-          sampled_records = resources.shuffle.first(srv_max_hosts)
+          sampled_records = resources.sample(srv_max_hosts)
           result = Srv::Result.new(hostname)
           sampled_records.each { |record| result.add_record(record) }
         end
@@ -131,9 +124,7 @@ module Mongo
       # @raise [ Mongo::Error::InvalidTXTRecord ] If more than one TXT record is found.
       def get_txt_options_string(hostname)
         records = @resolver.getresources(hostname, Resolv::DNS::Resource::IN::TXT)
-        if records.empty?
-          return nil
-        end
+        return nil if records.empty?
 
         if records.length > 1
           msg = "Only one TXT record is allowed: querying hostname #{hostname} returned #{records.length} records"

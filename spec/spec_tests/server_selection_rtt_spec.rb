@@ -1,20 +1,16 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
 require 'runners/server_selection_rtt'
 
 describe 'Server Selection moving average round trip time calculation' do
-
   include Mongo::ServerSelection::RTT
 
   SERVER_SELECTION_RTT_TESTS.each do |file|
-
     spec = Mongo::ServerSelection::RTT::Spec.new(file)
 
     context(spec.description) do
-
       let(:calculator) do
         Mongo::Server::RoundTripTimeCalculator.new
       end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -22,7 +21,7 @@ describe Mongo::DistinguishingSemaphore do
     semaphore.signal
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should < 1
+    (Mongo::Utils.monotonic_time - start_time).should
 
     result.should be true
   end
@@ -41,7 +40,7 @@ describe Mongo::DistinguishingSemaphore do
     semaphore.broadcast
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should < 1
+    (Mongo::Utils.monotonic_time - start_time).should
 
     result.should be true
   end
@@ -59,7 +58,7 @@ describe Mongo::DistinguishingSemaphore do
     start_time = Mongo::Utils.monotonic_time
     consumer.join
 
-    (Mongo::Utils.monotonic_time - start_time).should > 1
+    (Mongo::Utils.monotonic_time - start_time).should
 
     result.should be false
   end

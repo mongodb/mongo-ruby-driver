@@ -1,10 +1,7 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Unified
-
   module CrudOperations
-
     def crud_find(op)
       get_find_view(op).to_a
     end
@@ -20,12 +17,12 @@ module Unified
         session = args.use('session')
 
         opts = extract_options(args, 'let', 'comment',
-          'allowDiskUse', 'returnKey', 'projection',
-          'skip', 'hint', 'maxTimeMS', 'timeoutMS',
-          'collation', 'noCursorTimeout', 'oplogReplay', 'allowPartialResults',
-          'timeoutMode', 'maxAwaitTimeMS', 'cursorType', 'timeoutMode',
-          { 'showRecordId' => :show_disk_loc, 'max' => :max_value, 'min' => :min_value },
-          allow_extra: true)
+                               'allowDiskUse', 'returnKey', 'projection',
+                               'skip', 'hint', 'maxTimeMS', 'timeoutMS',
+                               'collation', 'noCursorTimeout', 'oplogReplay', 'allowPartialResults',
+                               'timeoutMode', 'maxAwaitTimeMS', 'cursorType', 'timeoutMode',
+                               { 'showRecordId' => :show_disk_loc, 'max' => :max_value, 'min' => :min_value },
+                               allow_extra: true)
         symbolize_options!(opts, :timeout_mode, :cursor_type)
 
         opts[:session] = entities.get(:session, session) if session
@@ -88,7 +85,7 @@ module Unified
           opts[:session] = entities.get(:session, session)
         end
         req = collection.find(args.use!('filter'), **opts).distinct(args.use!('fieldName'), **opts)
-        result = req.to_a
+        req.to_a
       end
     end
 
@@ -230,7 +227,7 @@ module Unified
           hint: args.use('hint'),
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS'),
-          sort: args.use('sort'),
+          sort: args.use('sort')
         )
       end
     end
@@ -273,9 +270,7 @@ module Unified
           convert_bulk_write_spec(req)
         end
         opts = {}
-        if args.key?('ordered')
-          opts[:ordered] = args.use!('ordered')
-        end
+        opts[:ordered] = args.use!('ordered') if args.key?('ordered')
         if comment = args.use('comment')
           opts[:comment] = comment
         end
@@ -298,16 +293,14 @@ module Unified
       pipeline = args.use!('pipeline')
 
       opts = extract_options(args, 'let', 'comment', 'batchSize', 'maxTimeMS',
-        'allowDiskUse', 'timeoutMode', 'timeoutMS', 'maxTimeMS', 'maxAwaitTimeMS', allow_extra: true)
+                             'allowDiskUse', 'timeoutMode', 'timeoutMS', 'maxTimeMS', 'maxAwaitTimeMS', allow_extra: true)
       symbolize_options!(opts, :timeout_mode)
 
       if session = args.use('session')
         opts[:session] = entities.get(:session, session)
       end
 
-      unless args.empty?
-        raise NotImplementedError, "Unhandled spec keys: #{args} in #{test_spec}"
-      end
+      raise NotImplementedError, "Unhandled spec keys: #{args} in #{test_spec}" unless args.empty?
 
       obj.aggregate(pipeline, **opts).to_a
     end
@@ -329,44 +322,40 @@ module Unified
     private
 
     def convert_bulk_write_spec(spec)
-      unless spec.keys.length == 1
-        raise NotImplementedError, "Must have exactly one item"
-      end
+      raise NotImplementedError, 'Must have exactly one item' unless spec.keys.length == 1
+
       op, spec = spec.first
       spec = UsingHash[spec]
       out = case op
-      when 'insertOne'
-        spec.use!('document')
-      when 'updateOne', 'updateMany'
-        {
-          filter: spec.use('filter'),
-          update: spec.use('update'),
-          upsert: spec.use('upsert'),
-          array_filters: spec.use('arrayFilters'),
-          hint: spec.use('hint'),
-        }
-      when 'replaceOne'
-        {
-          filter: spec.use('filter'),
-          replacement: spec.use('replacement'),
-          upsert: spec.use('upsert'),
-          hint: spec.use('hint'),
-        }
-      when 'deleteOne', 'deleteMany'
-        {
-          filter: spec.use('filter'),
-          hint: spec.use('hint'),
-        }
-      else
-        raise NotImplementedError, "Unknown operation #{op}"
-      end
-      if %w[ updateOne replaceOne ].include?(op)
-        out[:sort] = spec.use('sort') if spec.key?('sort')
-      end
-      unless spec.empty?
-        raise NotImplementedError, "Unhandled keys: #{spec}"
-      end
-      {Utils.underscore(op) =>out}
+            when 'insertOne'
+              spec.use!('document')
+            when 'updateOne', 'updateMany'
+              {
+                filter: spec.use('filter'),
+                update: spec.use('update'),
+                upsert: spec.use('upsert'),
+                array_filters: spec.use('arrayFilters'),
+                hint: spec.use('hint'),
+              }
+            when 'replaceOne'
+              {
+                filter: spec.use('filter'),
+                replacement: spec.use('replacement'),
+                upsert: spec.use('upsert'),
+                hint: spec.use('hint'),
+              }
+            when 'deleteOne', 'deleteMany'
+              {
+                filter: spec.use('filter'),
+                hint: spec.use('hint'),
+              }
+            else
+              raise NotImplementedError, "Unknown operation #{op}"
+            end
+      out[:sort] = spec.use('sort') if %w[ updateOne replaceOne ].include?(op) && spec.key?('sort')
+      raise NotImplementedError, "Unhandled keys: #{spec}" unless spec.empty?
+
+      { Utils.underscore(op) => out }
     end
   end
 end

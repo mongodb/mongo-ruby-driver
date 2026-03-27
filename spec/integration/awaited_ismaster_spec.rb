@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -22,9 +21,9 @@ describe 'awaited hello' do
 
     elapsed_time = Benchmark.realtime do
       resp = client.database.command(hello: 1,
-        topologyVersion: tv.to_doc, maxAwaitTimeMS: 500)
+                                     topologyVersion: tv.to_doc, maxAwaitTimeMS: 500)
     end
-    doc = resp.replies.first.documents.first
+    resp.replies.first.documents.first
 
     elapsed_time.should > 0.5
   end

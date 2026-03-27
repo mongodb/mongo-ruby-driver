@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'lite_spec_helper'
 
@@ -18,8 +17,8 @@ describe Mongo::Server::ConnectionCommon do
     context 'with api version' do
       let(:metadata) do
         Mongo::Server::AppMetadata.new({
-          server_api: { version: '1'  }
-        })
+                                         server_api: { version: '1'  }
+                                       })
       end
 
       it 'returns hello document with API version' do
@@ -34,7 +33,6 @@ describe Mongo::Server::ConnectionCommon do
     end
 
     context 'when connecting to load balancer' do
-
       let(:document) do
         subject.handshake_document(metadata, load_balancer: true)
       end
@@ -49,14 +47,14 @@ describe Mongo::Server::ConnectionCommon do
     let(:document) do
       subject.handshake_document(metadata, load_balancer: load_balancer)
     end
-    
+
     let(:load_balancer) { false }
 
     context 'with api version' do
       let(:metadata) do
         Mongo::Server::AppMetadata.new({
-          server_api: { version: '1'  }
-        })
+                                         server_api: { version: '1'  }
+                                       })
       end
 
       it 'returns OP_MSG command' do
@@ -65,7 +63,7 @@ describe Mongo::Server::ConnectionCommon do
         ).to be_a(Mongo::Protocol::Msg)
       end
     end
-    
+
     context 'with loadBalanced=true' do
       let(:load_balancer) { true }
 

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class Error
-
     # Exception raised if an operation is attempted on a closed connection pool.
     #
     # @since 2.9.0
     class PoolClosedError < PoolError
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.

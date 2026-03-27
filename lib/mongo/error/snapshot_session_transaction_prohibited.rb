@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2021 MongoDB Inc.
 #
@@ -17,13 +16,11 @@
 
 module Mongo
   class Error
-
     # Exception raised if a transaction is attempted on a snapshot session.
     class SnapshotSessionTransactionProhibited < Error
-
       # Instantiate the new exception.
       def initialize
-        super("Transactions are not supported in snapshot sessions")
+        super('Transactions are not supported in snapshot sessions')
       end
     end
   end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -80,10 +79,11 @@ module Mongo
                 operation_id,
                 result_combiner,
                 session,
-                txn_num)
+                txn_num
+              )
             end
           else
-            nro_write_with_retry(write_concern, context: context) do |connection, txn_num, context|
+            nro_write_with_retry(write_concern, context: context) do |connection, _txn_num, context|
               execute_operation(
                 operation.keys.first,
                 operation.values.flatten,
@@ -91,7 +91,8 @@ module Mongo
                 context,
                 operation_id,
                 result_combiner,
-                session)
+                session
+              )
             end
           end
         end
@@ -129,9 +130,9 @@ module Mongo
       @collection = collection
       @requests = requests
       @options = options || {}
-      if @options[:timeout_ms] && @options[:timeout_ms] < 0
-        raise ArgumentError, "timeout_ms options must be non-negative integer"
-      end
+      return unless @options[:timeout_ms] && @options[:timeout_ms] < 0
+
+      raise ArgumentError, 'timeout_ms options must be non-negative integer'
     end
 
     # Is the bulk write ordered?
@@ -159,16 +160,18 @@ module Mongo
     #
     # @since 2.1.0
     def write_concern(session = nil)
-      @write_concern ||= options[:write_concern] ?
-        WriteConcern.get(options[:write_concern]) :
-        collection.write_concern_with_session(session)
+      @write_concern ||= if options[:write_concern]
+                           WriteConcern.get(options[:write_concern])
+                         else
+                           collection.write_concern_with_session(session)
+                         end
     end
 
     private
 
-    SINGLE_STATEMENT_OPS = [ :delete_one,
-                             :update_one,
-                             :insert_one ].freeze
+    SINGLE_STATEMENT_OPS = %i[delete_one
+                              update_one
+                              insert_one].freeze
 
     # @return [ Float | nil ] Deadline for the batch of operations, if set.
     def calculate_deadline
@@ -217,18 +220,18 @@ module Mongo
 
     def base_spec(operation_id, session)
       {
-        :db_name => database.name,
-        :coll_name => collection.name,
-        :write_concern => write_concern(session),
-        :ordered => ordered?,
-        :operation_id => operation_id,
-        :bypass_document_validation => !!options[:bypass_document_validation],
-        :max_time_ms => options[:max_time_ms],
-        :options => options,
-        :id_generator => client.options[:id_generator],
-        :session => session,
-        :comment => options[:comment],
-        :let => options[:let],
+        db_name: database.name,
+        coll_name: collection.name,
+        write_concern: write_concern(session),
+        ordered: ordered?,
+        operation_id: operation_id,
+        bypass_document_validation: !!options[:bypass_document_validation],
+        max_time_ms: options[:max_time_ms],
+        options: options,
+        id_generator: client.options[:id_generator],
+        session: session,
+        comment: options[:comment],
+        let: options[:let],
       }
     end
 
@@ -253,6 +256,7 @@ module Mongo
     # its own section. The size of the entire bulk write is limited to 48m.
     rescue Error::MaxBSONSize, Error::MaxMessageSize => e
       raise e if values.size <= 1
+
       unpin_maybe(session, connection) do
         split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
       end
@@ -263,7 +267,8 @@ module Mongo
     end
 
     def split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
-      execute_operation(name, values.shift(values.size / 2), connection, context, operation_id, result_combiner, session, txn_num)
+      execute_operation(name, values.shift(values.size / 2), connection, context, operation_id, result_combiner,
+                        session, txn_num)
 
       txn_num = session.next_txn_num if txn_num && !session.in_transaction?
       execute_operation(name, values, connection, context, operation_id, result_combiner, session, txn_num)
@@ -272,47 +277,44 @@ module Mongo
     def delete_one(documents, connection, context, operation_id, session, txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
-      spec = base_spec(operation_id, session).merge(:deletes => documents, :txn_num => txn_num)
+      spec = base_spec(operation_id, session).merge(deletes: documents, txn_num: txn_num)
       Operation::Delete.new(spec).bulk_execute(connection, context: context)
     end
 
-    def delete_many(documents, connection, context, operation_id, session, txn_num)
+    def delete_many(documents, connection, context, operation_id, session, _txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
-      spec = base_spec(operation_id, session).merge(:deletes => documents)
+      spec = base_spec(operation_id, session).merge(deletes: documents)
       Operation::Delete.new(spec).bulk_execute(connection, context: context)
     end
 
     def insert_one(documents, connection, context, operation_id, session, txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
-      spec = base_spec(operation_id, session).merge(:documents => documents, :txn_num => txn_num)
+      spec = base_spec(operation_id, session).merge(documents: documents, txn_num: txn_num)
       Operation::Insert.new(spec).bulk_execute(connection, context: context)
     end
 
     def update_one(documents, connection, context, operation_id, session, txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
-      spec = base_spec(operation_id, session).merge(:updates => documents, :txn_num => txn_num)
+      spec = base_spec(operation_id, session).merge(updates: documents, txn_num: txn_num)
       Operation::Update.new(spec).bulk_execute(connection, context: context)
     end
-    alias :replace_one :update_one
+    alias replace_one update_one
 
-    def update_many(documents, connection, context, operation_id, session, txn_num)
+    def update_many(documents, connection, context, operation_id, session, _txn_num)
       QueryCache.clear_namespace(collection.namespace)
 
-      spec = base_spec(operation_id, session).merge(:updates => documents)
+      spec = base_spec(operation_id, session).merge(updates: documents)
       Operation::Update.new(spec).bulk_execute(connection, context: context)
     end
 
-    private
-
     def validate_hint!(connection)
-      if op_combiner.has_hint?
-        if !can_hint?(connection) && write_concern && !write_concern.acknowledged?
-          raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-        end
-      end
+      return unless op_combiner.has_hint?
+      return unless !can_hint?(connection) && write_concern && !write_concern.acknowledged?
+
+      raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
     end
 
     # Loop through the requests and check if each operation is allowed to send
@@ -333,11 +335,7 @@ module Mongo
       op_combiner.requests.all? do |req|
         op = req.keys.first
         if req[op].keys.include?(:hint)
-          if [:update_one, :update_many, :replace_one].include?(op)
-            true
-          else
-            gte_4_4
-          end
+          %i[update_one update_many replace_one].include?(op) || gte_4_4
         else
           true
         end
@@ -363,32 +361,24 @@ module Mongo
       @requests.each do |req|
         requests_empty = false
         if op = req.keys.first
-          if [:update_one, :update_many].include?(op)
-            if doc = maybe_first(req.dig(op, :update))
-              if key = doc.keys&.first
-                unless key.to_s.start_with?("$")
-                  if Mongo.validate_update_replace
-                    raise Error::InvalidUpdateDocument.new(key: key)
-                  else
-                    Error::InvalidUpdateDocument.warn(Logger.logger, key)
-                  end
-                end
-              end
+          if %i[update_one update_many].include?(op)
+            if (doc = maybe_first(req.dig(op, :update))) && (key = doc.keys&.first) && !key.to_s.start_with?('$')
+              raise Error::InvalidUpdateDocument.new(key: key) if Mongo.validate_update_replace
+
+              Error::InvalidUpdateDocument.warn(Logger.logger, key)
+
             end
           elsif op == :replace_one
-            if key = req.dig(op, :replacement)&.keys&.first
-              if key.to_s.start_with?("$")
-                if Mongo.validate_update_replace
-                  raise Error::InvalidReplacementDocument.new(key: key)
-                else
-                  Error::InvalidReplacementDocument.warn(Logger.logger, key)
-                end
-              end
+            if (key = req.dig(op, :replacement)&.keys&.first) && key.to_s.start_with?('$')
+              raise Error::InvalidReplacementDocument.new(key: key) if Mongo.validate_update_replace
+
+              Error::InvalidReplacementDocument.warn(Logger.logger, key)
+
             end
           end
         end
       end.tap do
-        raise ArgumentError, "Bulk write requests cannot be empty" if requests_empty
+        raise ArgumentError, 'Bulk write requests cannot be empty' if requests_empty
       end
     end
 

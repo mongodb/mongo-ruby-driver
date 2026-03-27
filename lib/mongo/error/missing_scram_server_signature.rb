@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,13 +16,12 @@
 
 module Mongo
   class Error
-
     # This exception is raised when the server returned +{done: true}+ in a
     # SCRAM conversation but did not provide a ServerSignature.
     class MissingScramServerSignature < Error
       def initialize(msg = nil)
-        msg ||= "Server signaled completion of SCRAM conversation without providing ServerSignature"
-        super(msg)
+        msg ||= 'Server signaled completion of SCRAM conversation without providing ServerSignature'
+        super
       end
     end
   end

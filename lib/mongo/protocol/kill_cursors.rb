@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   module Protocol
-
     # MongoDB Wire protocol KillCursors message.
     #
     # This is a client request message that is sent to the server in order
@@ -25,7 +23,6 @@ module Mongo
     #
     # @api semipublic
     class KillCursors < Message
-
       # Creates a new KillCursors message
       #
       # @example Kill the cursor on the server with id 1.
@@ -55,15 +52,13 @@ module Mongo
           command_name: 'killCursors',
           database_name: @database,
           command: upconverter.command,
-          request_id: request_id,
+          request_id: request_id
         )
       end
 
       protected
 
       attr_reader :upconverter
-
-      private
 
       # The operation code required to specify +KillCursors+ message.
       # @return [Fixnum] the operation code.
@@ -87,7 +82,6 @@ module Mongo
       #
       # @since 2.1.0
       class Upconverter
-
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
 

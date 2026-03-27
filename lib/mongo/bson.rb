@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -19,7 +18,6 @@
 #
 # @since 2.2.1
 class Symbol
-
   # Overrides the default BSON type to use the symbol type instead of a
   # string type.
   #

@@ -31,7 +31,6 @@ module Mongo
     #   detected.
     #
     # @api private
-    # rubocop:disable Metrics
     def validate_timeout_mode!(options, forbid: [])
       forbid.each do |key|
         raise ArgumentError, "#{key} is not allowed here" if options.key?(key)
@@ -77,6 +76,5 @@ module Mongo
       # if no timeout_mode was set initially.
       @timeout_mode = timeout_mode
     end
-    # rubocop:enable Metrics
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2023 MongoDB Inc.
 #
@@ -19,7 +18,6 @@ require 'mongo/retryable/base_worker'
 
 module Mongo
   module Retryable
-
     # Implements the logic around retrying read operations.
     #
     # @api private
@@ -65,7 +63,7 @@ module Mongo
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Cursor ] The cursor for the result set.
-      def read_with_retry_cursor(session, server_selector, view, context: nil, &block)
+      def read_with_retry_cursor(session, server_selector, view, context: nil)
         read_with_retry(session, server_selector, context) do |server|
           result = yield server
 
@@ -171,8 +169,8 @@ module Mongo
       # @return [ Result ] The result of the operation.
       def deprecated_legacy_read_with_retry(&block)
         deprecation_warning :read_with_retry,
-          'Legacy read_with_retry invocation - ' \
-          'please update the application and/or its dependencies'
+                            'Legacy read_with_retry invocation - ' \
+                            'please update the application and/or its dependencies'
 
         # Since we don't have a session, we cannot use the modern read retries.
         # And we need to select a server but we don't have a server selector.
@@ -213,6 +211,7 @@ module Mongo
           overload_read_retry(e, session, server_selector, context, server, error_count: 1, &block)
         else
           raise e if !is_retryable_exception?(e) && !e.write_retryable?
+
           retry_read(e, session, server_selector, context: context, failed_server: server, &block)
         end
       end
@@ -230,7 +229,7 @@ module Mongo
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def legacy_read_with_retry(session, server_selector, context = nil, &block)
+      def legacy_read_with_retry(session, server_selector, context = nil)
         context&.check_timeout!
         attempt = attempt ? attempt + 1 : 1
         yield select_server(cluster, server_selector, session)
@@ -260,7 +259,7 @@ module Mongo
       # @param [ Proc ] block The block to execute.
       #
       # @return [ Result ] The result of the operation.
-      def read_without_retry(session, server_selector, &block)
+      def read_without_retry(session, server_selector)
         server = select_server(cluster, server_selector, session)
 
         begin
@@ -306,12 +305,10 @@ module Mongo
           if retryable_overload_error?(e)
             return overload_read_retry(e, session, server_selector, context, server, error_count: attempt, &block)
           end
-          if context&.csot?
-            failed_server = server
-            retry
-          else
-            raise e
-          end
+
+          raise e unless context&.csot?
+
+          retry
         rescue Error::OperationFailure::Family, Error::PoolError => e
           e.add_note('modern retry')
           if retryable_overload_error?(e)
@@ -320,12 +317,10 @@ module Mongo
           end
           if e.write_retryable?
             e.add_note("attempt #{attempt}")
-            if context&.csot?
-              failed_server = server
-              retry
-            else
-              raise e
-            end
+            raise e unless context&.csot?
+
+            retry
+
           else
             original_error.add_note("later retry failed: #{e.class}: #{e}")
             raise original_error
@@ -341,12 +336,11 @@ module Mongo
       # Each retry sleeps with jittered backoff, respects MAX_RETRIES,
       # and consumes a token from the bucket when adaptive retries
       # are enabled.
-      def overload_read_retry(last_error, session, server_selector, context, failed_server, error_count:, &block)
+      def overload_read_retry(last_error, session, server_selector, context, failed_server, error_count:)
         loop do
           delay = retry_policy.backoff_delay(error_count)
-          unless retry_policy.should_retry_overload?(error_count, delay, context: context)
-            raise last_error
-          end
+          raise last_error unless retry_policy.should_retry_overload?(error_count, delay, context: context)
+
           log_retry(last_error, message: 'Read retry (overload backoff)')
           sleep(delay)
 
@@ -372,9 +366,8 @@ module Mongo
             error_count += 1
             e.add_notes('modern retry', "attempt #{error_count}")
             is_overload = retryable_overload_error?(e)
-            unless is_overload || is_retryable_exception?(e) || e.write_retryable?
-              raise e
-            end
+            raise e unless is_overload || is_retryable_exception?(e) || e.write_retryable?
+
             retry_policy.record_non_overload_retry_failure unless is_overload
             failed_server = server
             last_error = e

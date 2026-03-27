@@ -1,10 +1,7 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 module Unified
-
   module ThreadOperations
-
     class ThreadContext
       def initialize
         @operations = Queue.new
@@ -40,14 +37,12 @@ module Unified
         deadline = Mongo::Utils.monotonic_time + 10
         loop do
           events = select_events(subscriber, event)
-          if events.length >= count
-            break
-          end
+          break if events.length >= count
           if Mongo::Utils.monotonic_time >= deadline
             raise "Did not receive an event matching #{event} in 10 seconds; received #{events.length} but expected #{count} events"
-          else
-            sleep 0.1
           end
+
+          sleep 0.1
         end
       end
     end

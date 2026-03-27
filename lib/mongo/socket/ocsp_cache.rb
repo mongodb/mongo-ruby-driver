@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -17,7 +16,6 @@
 
 module Mongo
   class Socket
-
     # This module caches OCSP responses for their indicated validity time.
     #
     # The key is the CertificateId used for the OCSP request.
@@ -45,16 +43,13 @@ module Mongo
         resp = responses.detect do |resp|
           resp.certid.cmp(cert_id)
         end
-        if resp
-          # Only expire responses with good status.
-          # Once a certificate is revoked, it should stay revoked forever,
-          # hence we should be able to cache revoked responses indefinitely.
-          if resp.cert_status == OpenSSL::OCSP::V_CERTSTATUS_GOOD &&
-            resp.next_update < Time.now
-          then
-            responses.delete(resp)
-            resp = nil
-          end
+        # Only expire responses with good status.
+        # Once a certificate is revoked, it should stay revoked forever,
+        # hence we should be able to cache revoked responses indefinitely.
+        if resp && resp.cert_status == OpenSSL::OCSP::V_CERTSTATUS_GOOD &&
+           resp.next_update < Time.now
+          responses.delete(resp)
+          resp = nil
         end
 
         # If we have connected to a server and cached the OCSP response for it,

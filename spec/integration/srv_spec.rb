@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -18,23 +17,23 @@ describe 'SRV lookup' do
 
     let(:client) do
       new_local_client(uri,
-        SpecConfig.instance.ssl_options.merge(
-          server_selection_timeout: 3.16,
-          timeout: 4.11,
-          connect_timeout: 4.12,
-          resolv_options: {
-            nameserver: 'localhost',
-            nameserver_port: [['localhost', 5300], ['127.0.0.1', 5300]],
-          },
-        ),
-      )
+                       SpecConfig.instance.ssl_options.merge(
+                         server_selection_timeout: 3.16,
+                         timeout: 4.11,
+                         connect_timeout: 4.12,
+                         resolv_options: {
+                           nameserver: 'localhost',
+                           nameserver_port: [ [ 'localhost', 5300 ], [ '127.0.0.1', 5300 ] ],
+                         }
+                       ))
     end
 
     context 'DNS resolver not responding' do
       it 'fails to create client' do
         lambda do
           client
-        end.should raise_error(Mongo::Error::NoSRVRecords, /The DNS query returned no SRV records for 'test-fake.test.build.10gen.cc'/)
+        end.should raise_error(Mongo::Error::NoSRVRecords,
+                               /The DNS query returned no SRV records for 'test-fake.test.build.10gen.cc'/)
       end
 
       it 'times out in connect_timeout' do
@@ -49,7 +48,7 @@ describe 'SRV lookup' do
         # The number of queries performed depends on local DNS search suffixes,
         # therefore we cannot reliably assert how long it would take for this
         # resolution to time out.
-        #elapsed_time.should < 8
+        # elapsed_time.should < 8
       end
     end
   end

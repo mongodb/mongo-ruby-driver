@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,16 +16,14 @@
 
 module Mongo
   class Error
-
     # Exception raised if the object is not a valid update document.
     #
     # @since 2.0.0
     class InvalidUpdateDocument < Error
-
       # The error message.
       #
       # @deprecated
-      MESSAGE = 'Invalid update document provided'.freeze
+      MESSAGE = 'Invalid update document provided'
 
       # Construct the error message.
       #
@@ -36,7 +33,7 @@ module Mongo
       #
       # @api private
       def self.message(key)
-        message = "Invalid update document provided. Updates documents must only "
+        message = 'Invalid update document provided. Updates documents must only '
         message += "contain only atomic modifiers. The \"#{key}\" key is invalid."
         message
       end

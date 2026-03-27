@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2019-2021 MongoDB Inc.
 #
@@ -73,7 +72,7 @@ module Mongo
             req['Metadata'] = 'true'
             req['Accept'] = 'application/json'
             extra_headers.each { |k, v| req[k] = v }
-            [uri, req]
+            [ uri, req ]
           end
           private_class_method :prepare_request
 
@@ -116,11 +115,7 @@ module Mongo
           def self.do_request(uri, req, timeout_holder)
             timeout_holder&.check_timeout!
             timeout = timeout_holder&.remaining_timeout_sec || 10
-            exception_class = if timeout_holder&.csot?
-                                Error::TimeoutError
-                              else
-                                nil
-                              end
+            exception_class = (Error::TimeoutError if timeout_holder&.csot?)
             ::Timeout.timeout(timeout, exception_class) do
               Net::HTTP.start(uri.hostname, uri.port, use_ssl: false) do |http|
                 http.request(req)

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2015-2020 MongoDB Inc.
 #
@@ -17,12 +16,10 @@
 
 module Mongo
   class BulkWrite
-
     # Wraps a series of bulk write operations in a result object.
     #
     # @since 2.0.6
     class Result
-
       # @return [ Boolean ] Is the result acknowledged?
       def acknowledged?
         @acknowledged
@@ -31,42 +28,42 @@ module Mongo
       # Constant for number removed.
       #
       # @since 2.1.0
-      REMOVED_COUNT = 'n_removed'.freeze
+      REMOVED_COUNT = 'n_removed'
 
       # Constant for number inserted.
       #
       # @since 2.1.0
-      INSERTED_COUNT = 'n_inserted'.freeze
+      INSERTED_COUNT = 'n_inserted'
 
       # Constant for inserted ids.
       #
       # @since 2.1.0
-      INSERTED_IDS = 'inserted_ids'.freeze
+      INSERTED_IDS = 'inserted_ids'
 
       # Constant for number matched.
       #
       # @since 2.1.0
-      MATCHED_COUNT = 'n_matched'.freeze
+      MATCHED_COUNT = 'n_matched'
 
       # Constant for number modified.
       #
       # @since 2.1.0
-      MODIFIED_COUNT = 'n_modified'.freeze
+      MODIFIED_COUNT = 'n_modified'
 
       # Constant for upserted.
       #
       # @since 2.1.0
-      UPSERTED = 'upserted'.freeze
+      UPSERTED = 'upserted'
 
       # Constant for number upserted.
       #
       # @since 2.1.0
-      UPSERTED_COUNT = 'n_upserted'.freeze
+      UPSERTED_COUNT = 'n_upserted'
 
       # Constant for upserted ids.
       #
       # @since 2.1.0
-      UPSERTED_IDS = 'upserted_ids'.freeze
+      UPSERTED_IDS = 'upserted_ids'
 
       # The fields contained in the result document returned from executing the
       # operations.
@@ -192,11 +189,9 @@ module Mongo
       #
       # @since 2.1.0
       def validate!
-        if @results['writeErrors'] || @results['writeConcernErrors']
-          raise Error::BulkWriteError.new(@results)
-        else
-          self
-        end
+        raise Error::BulkWriteError.new(@results) if @results['writeErrors'] || @results['writeConcernErrors']
+
+        self
       end
     end
   end

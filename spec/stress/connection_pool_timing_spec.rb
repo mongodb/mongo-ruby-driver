@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 require 'spec_helper'
 
@@ -37,8 +36,8 @@ describe 'Connection pool timing test' do
 
   let(:documents) do
     [].tap do |documents|
-      10000.times do |i|
-        documents << { a: i}
+      10_000.times do |i|
+        documents << { a: i }
       end
     end
   end
@@ -48,9 +47,9 @@ describe 'Connection pool timing test' do
       thread_count.times do |i|
         threads << Thread.new do
           100.times do |j|
-            collection.find(a: i+j).to_a
+            collection.find(a: i + j).to_a
             sleep 0.01
-            collection.find(a: i+j).to_a
+            collection.find(a: i + j).to_a
           end
         end
       end
@@ -68,9 +67,9 @@ describe 'Connection pool timing test' do
 
     it 'does not error' do
       start = Mongo::Utils.monotonic_time
-      expect {
+      expect do
         threads.collect { |t| t.join }
-      }.not_to raise_error
+      end.not_to raise_error
       puts "[Connection Pool Timing] Duration with no max idle time: #{Mongo::Utils.monotonic_time - start}"
     end
   end
@@ -84,9 +83,9 @@ describe 'Connection pool timing test' do
 
     it 'does not error' do
       start = Mongo::Utils.monotonic_time
-      expect {
+      expect do
         threads.collect { |t| t.join }
-      }.not_to raise_error
+      end.not_to raise_error
       puts "[Connection Pool Timing] Duration with low max idle time: #{Mongo::Utils.monotonic_time - start}"
     end
   end
@@ -103,9 +102,9 @@ describe 'Connection pool timing test' do
         5.times do |i|
           more_threads << Thread.new do
             10.times do |j|
-              collection.find(a: i+j).to_a
+              collection.find(a: i + j).to_a
               sleep 0.01
-              collection.find(a: i+j).to_a
+              collection.find(a: i + j).to_a
             end
           end
         end
@@ -118,9 +117,9 @@ describe 'Connection pool timing test' do
       5.times do |i|
         threads << Thread.new do
           10.times do |j|
-            collection.find(a: i+j).to_a
+            collection.find(a: i + j).to_a
             sleep 0.01
-            collection.find(a: i+j).to_a
+            collection.find(a: i + j).to_a
           end
         end
       end
@@ -152,8 +151,8 @@ describe 'Connection pool timing test' do
           t.join
         end
       end.not_to raise_error
-      puts "[Connection Pool Timing] Duration before primary change: #{@primary_change_start - start}. "\
-        "Duration after primary change: #{Mongo::Utils.monotonic_time - @primary_change_end}"
+      puts "[Connection Pool Timing] Duration before primary change: #{@primary_change_start - start}. " \
+           "Duration after primary change: #{Mongo::Utils.monotonic_time - @primary_change_end}"
     end
   end
 end

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2020 MongoDB Inc.
 #
@@ -18,7 +17,7 @@
 module Mongo
   module Auth
     class Aws < Base
-      MECHANISM = 'MONGODB-AWS'.freeze
+      MECHANISM = 'MONGODB-AWS'
 
       # Log the user in on the current connection.
       #

@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -17,128 +16,126 @@
 
 module Mongo
   module Operation
-
     # This module contains common functionality for convenience methods getting
     # various values from the spec.
     #
     # @since 2.0.0
     # @api private
     module Specifiable
-
       # The field for database name.
       #
       # @since 2.0.0
-      DB_NAME = :db_name.freeze
+      DB_NAME = :db_name
 
       # The field for deletes.
       #
       # @since 2.0.0
-      DELETES = :deletes.freeze
+      DELETES = :deletes
 
       # The field for delete.
       #
       # @since 2.0.0
-      DELETE = :delete.freeze
+      DELETE = :delete
 
       # The field for documents.
       #
       # @since 2.0.0
-      DOCUMENTS = :documents.freeze
+      DOCUMENTS = :documents
 
       # The field for collection name.
       #
       # @since 2.0.0
-      COLL_NAME = :coll_name.freeze
+      COLL_NAME = :coll_name
 
       # The field for cursor count.
       #
       # @since 2.0.0
-      CURSOR_COUNT = :cursor_count.freeze
+      CURSOR_COUNT = :cursor_count
 
       # The field for cursor id.
       #
       # @since 2.0.0
-      CURSOR_ID = :cursor_id.freeze
+      CURSOR_ID = :cursor_id
 
       # The field for an index.
       #
       # @since 2.0.0
-      INDEX = :index.freeze
+      INDEX = :index
 
       # The field for multiple indexes.
       #
       # @since 2.0.0
-      INDEXES = :indexes.freeze
+      INDEXES = :indexes
 
       # The field for index names.
       #
       # @since 2.0.0
-      INDEX_NAME = :index_name.freeze
+      INDEX_NAME = :index_name
 
       # The operation id constant.
       #
       # @since 2.1.0
-      OPERATION_ID = :operation_id.freeze
+      OPERATION_ID = :operation_id
 
       # The field for options.
       #
       # @since 2.0.0
-      OPTIONS = :options.freeze
+      OPTIONS = :options
 
       # The read concern option.
       #
       # @since 2.2.0
-      READ_CONCERN = :read_concern.freeze
+      READ_CONCERN = :read_concern
 
       # The max time ms option.
       #
       # @since 2.2.5
-      MAX_TIME_MS = :max_time_ms.freeze
+      MAX_TIME_MS = :max_time_ms
 
       # The field for a selector.
       #
       # @since 2.0.0
-      SELECTOR = :selector.freeze
+      SELECTOR = :selector
 
       # The field for updates.
       #
       # @since 2.0.0
-      UPDATES = :updates.freeze
+      UPDATES = :updates
 
       # The field for update.
       #
       # @since 2.0.0
-      UPDATE = :update.freeze
+      UPDATE = :update
 
       # The field name for a user.
       #
       # @since 2.0.0
-      USER = :user.freeze
+      USER = :user
 
       # The field name for user name.
       #
       # @since 2.0.0
-      USER_NAME = :user_name.freeze
+      USER_NAME = :user_name
 
       # The field name for a write concern.
       #
       # @since 2.0.0
-      WRITE_CONCERN = :write_concern.freeze
+      WRITE_CONCERN = :write_concern
 
       # The field name for the read preference.
       #
       # @since 2.0.0
-      READ = :read.freeze
+      READ = :read
 
       # Whether to bypass document level validation.
       #
       # @since 2.2.0
-      BYPASS_DOC_VALIDATION = :bypass_document_validation.freeze
+      BYPASS_DOC_VALIDATION = :bypass_document_validation
 
       # A collation to apply to the operation.
       #
       # @since 2.4.0
-      COLLATION = :collation.freeze
+      COLLATION = :collation
 
       # @return [ Hash ] spec The specification for the operation.
       attr_reader :spec
@@ -155,9 +152,10 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(Specifiable)
+
         spec == other.spec
       end
-      alias_method :eql?, :==
+      alias eql? ==
 
       # Get the cursor count from the spec.
       #
@@ -322,7 +320,7 @@ module Mongo
       # @return [ Hash ] The options.
       #
       # @since 2.0.0
-      def options(connection)
+      def options(_connection)
         spec[OPTIONS] || {}
       end
 
@@ -385,7 +383,7 @@ module Mongo
       # @return [ Hash ] The selector spec.
       #
       # @since 2.0.0
-      def selector(connection)
+      def selector(_connection)
         spec[SELECTOR]
       end
 
@@ -456,9 +454,7 @@ module Mongo
       #
       # @since 2.0.0
       def read
-        @read ||= begin
-          ServerSelector.get(spec[READ]) if spec[READ]
-        end
+        @read ||= (ServerSelector.get(spec[READ]) if spec[READ])
       end
 
       # Whether the operation is ordered.
@@ -470,7 +466,7 @@ module Mongo
       #
       # @since 2.1.0
       def ordered?
-        !!(@spec.fetch(:ordered, true))
+        !!@spec.fetch(:ordered, true)
       end
 
       # The namespace, consisting of the db name and collection name.
@@ -547,7 +543,7 @@ module Mongo
         write_concern.nil? || write_concern.acknowledged?
       end
 
-      def apply_collation(selector, connection, collation)
+      def apply_collation(selector, _connection, collation)
         selector = selector.merge(collation: collation) if collation
         selector
       end

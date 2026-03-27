@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-# rubocop:todo all
 
 # Copyright (C) 2014-2020 MongoDB Inc.
 #
@@ -18,14 +17,12 @@
 module Mongo
   module Operation
     class Indexes
-
       # Defines custom behavior of results when using the
       # listIndexes command.
       #
       # @since 2.0.0
       # @api semiprivate
       class Result < Operation::Result
-
         # Get the cursor id for the result.
         #
         # @example Get the cursor id.
@@ -86,7 +83,7 @@ module Mongo
         # @since 2.0.0
         # @api private
         def validate!
-          !successful? ? raise_operation_failure : self
+          successful? ? self : raise_operation_failure
         end
 
         private
@@ -102,4 +99,3 @@ module Mongo
     end
   end
 end
-
