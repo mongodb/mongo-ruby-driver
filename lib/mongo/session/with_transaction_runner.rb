@@ -145,6 +145,122 @@ module Mongo
 
       # -- Commit helpers ----------------------------------------------------
 
+      # Returns true if the session is no longer in an active transaction state
+      # (the callback may have aborted or committed the transaction itself).
+      def transaction_no_longer_active?
+        return false unless @session.within_states?(
+          Session::TRANSACTION_ABORTED_STATE,
+          Session::NO_TRANSACTION_STATE,
+          Session::TRANSACTION_COMMITTED_STATE
+        )
+
+        @transaction_in_progress = false
+        true
+      end
+
+      # CSOT-only: aborts and raises TimeoutError if the deadline has expired
+      # before we even try to commit.
+      def check_deadline_before_commit!
+        return unless @csot && deadline_expired?
+
+        @session.clear_with_transaction_deadline!
+        @session.abort_transaction
+        @transaction_in_progress = false
+        raise Mongo::Error::TimeoutError, 'CSOT timeout expired before transaction could be committed'
+      end
+
+      # Handles a TransientTransactionError raised during commit.
+      # Raises on deadline; otherwise records state and throws :retry.
+      # Note: uses deadline_expired? which correctly returns false for deadline 0
+      # (timeout_ms: 0 = infinite CSOT), fixing a bug in the original code that
+      # used `Utils.monotonic_time >= deadline` — true when deadline == 0.
+      def handle_transient_commit_error(err)
+        if deadline_expired?
+          @transaction_in_progress = false
+          make_timeout_error_from(err, 'CSOT timeout expired during withTransaction commit')
+        end
+        @last_error = err
+        track_overload(err)
+        @session.reset_transaction_state!
+        throw :retry
+      end
+
+      # Raises if the commit deadline or max_time_ms has expired.
+      def check_unknown_commit_deadline(err)
+        return unless deadline_expired? || (err.is_a?(Error::OperationFailure::Family) && err.max_time_ms_expired?)
+
+        @transaction_in_progress = false
+        raise err unless @csot && deadline_expired?
+
+        make_timeout_error_from(err, 'CSOT timeout expired during withTransaction commit')
+      end
+
+      # Handles the overload path for unknown-commit retries.
+      # Sleeps and returns normally to let the caller retry with escalated wc.
+      # Raises or calls make_timeout_error_from if retry is not possible.
+      def handle_unknown_commit_overload(err)
+        return unless @overload_encountered
+
+        delay = @session.client.retry_policy.backoff_delay(@overload_error_count)
+        if backoff_would_exceed_deadline?(delay)
+          @transaction_in_progress = false
+          make_timeout_error_from(err, 'CSOT timeout expired during withTransaction commit')
+        end
+        unless @session.client.retry_policy.should_retry_overload?(@overload_error_count, delay)
+          @transaction_in_progress = false
+          raise err
+        end
+        sleep(delay)
+      end
+
+      # Handles an UnknownTransactionCommitResult error.
+      # Raises on deadline or max_time_ms expiry. Sleeps and falls through
+      # for overload-driven retries (caller escalates write concern).
+      def handle_unknown_commit_result(err)
+        check_unknown_commit_deadline(err)
+        track_overload(err)
+        handle_unknown_commit_overload(err)
+      end
+
+      # Routes commit errors to the appropriate handler.
+      def handle_commit_error(err)
+        if err.label?('UnknownTransactionCommitResult')
+          handle_unknown_commit_result(err)
+        elsif err.label?('TransientTransactionError')
+          handle_transient_commit_error(err)
+        else
+          @transaction_in_progress = false
+          raise err
+        end
+      end
+
+      # Inner commit+retry loop. Escalates write concern for retriable paths.
+      # Error::AuthError < RuntimeError (not < Mongo::Error), so it requires
+      # its own rescue clause.
+      def commit_with_escalation(result)
+        commit_options = build_commit_options
+        loop do
+          @session.commit_transaction(commit_options)
+          @transaction_in_progress = false
+          return result
+        rescue Mongo::Error => e
+          handle_commit_error(e)
+          escalate_write_concern!(commit_options)
+        rescue Error::AuthError
+          @transaction_in_progress = false
+          raise
+        end
+      end
+
+      # Top-level commit. Skips if the block already managed the transaction;
+      # checks the CSOT deadline; then enters the escalation loop.
+      def commit(result)
+        return result if transaction_no_longer_active?
+
+        check_deadline_before_commit!
+        commit_with_escalation(result)
+      end
+
       def build_commit_options
         @options ? { write_concern: @options[:write_concern] } : {}
       end

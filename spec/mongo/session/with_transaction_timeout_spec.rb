@@ -224,6 +224,33 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
       end
     end
 
+    # Regression test: the original with_transaction used `Utils.monotonic_time >= deadline`
+    # for the TransientTransactionError commit check, which is always true when
+    # deadline == 0 (timeout_ms: 0 = infinite CSOT). WithTransactionRunner fixes
+    # this with deadline_expired? that guards on @deadline.zero?.
+    context 'when timeout_ms: 0 (infinite CSOT) and commit raises TransientTransactionError' do
+      let(:commit_error) { make_commit_transient_error }
+      let(:success_return_value) { 42 }
+
+      it 'retries and succeeds (does not raise TimeoutError)' do
+        allow(Mongo::Utils).to receive(:monotonic_time).and_return(0.0)
+
+        call_count = 0
+        allow(session).to receive(:commit_transaction) do
+          call_count += 1
+          raise commit_error if call_count == 1
+
+          session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_COMMITTED_STATE)
+        end
+
+        result = session.with_transaction(timeout_ms: 0) do
+          session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_IN_PROGRESS_STATE)
+          success_return_value
+        end
+        expect(result).to eq(success_return_value)
+      end
+    end
+
     context 'when commit overload backoff would exceed CSOT deadline' do
       let(:commit_error) { make_commit_overload_error }
 
