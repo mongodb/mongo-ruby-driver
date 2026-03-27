@@ -43,7 +43,7 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
     allow(session).to receive(:commit_transaction) do
       session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_COMMITTED_STATE)
     end
-    allow(session).to receive(:sleep)
+    allow_any_instance_of(Mongo::Session::WithTransactionRunner).to receive(:sleep)
   end
 
   # Stubs Mongo::Utils.monotonic_time: first `initial_calls` invocations
