@@ -75,6 +75,52 @@ module Mongo
         end
       end
 
+      # -- execute_callback helpers ------------------------------------------
+
+      # Aborts the transaction if it is currently active.
+      # Clears the deadline first if it is already expired so that abort gets
+      # a fresh timeout rather than the expired one.
+      def abort_in_progress_transaction(err)
+        return unless @session.within_states?(
+          Session::STARTING_TRANSACTION_STATE,
+          Session::TRANSACTION_IN_PROGRESS_STATE
+        )
+
+        @session.log_warn("Aborting transaction due to #{err.class}: #{err}")
+        @session.clear_with_transaction_deadline! if @csot && deadline_expired?
+        @session.abort_transaction
+        @transaction_in_progress = false
+      end
+
+      # Raises if the deadline has passed.
+      # In CSOT mode raises TimeoutError; in non-CSOT mode re-raises last_error.
+      def raise_or_retry_on_deadline!(err)
+        return unless deadline_expired?
+
+        make_timeout_error_from(err, 'CSOT timeout expired during withTransaction callback')
+      end
+
+      # Handles the error from the callback.
+      # Throws :retry for transient errors; re-raises everything else.
+      def handle_transient_callback_error(err)
+        raise err unless err.is_a?(Mongo::Error) && err.label?('TransientTransactionError')
+
+        @last_error = err
+        track_overload(err)
+        throw :retry
+      end
+
+      # Runs the user's block; handles errors using the three helpers above.
+      # rubocop:disable Lint/RescueException
+      def execute_callback
+        yield
+      rescue Exception => e
+        abort_in_progress_transaction(e)
+        raise_or_retry_on_deadline!(e)
+        handle_transient_callback_error(e)
+      end
+      # rubocop:enable Lint/RescueException
+
       # -- Pre-retry backoff -------------------------------------------------
 
       # Sleeps before the next transaction attempt, checking the deadline first.
