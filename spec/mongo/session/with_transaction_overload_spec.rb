@@ -75,13 +75,13 @@ describe 'Mongo::Session#with_transaction overload retries' do
 
     allow(retry_policy).to receive(:record_non_overload_retry_failure).and_call_original
 
-    allow(session).to receive(:sleep)
+    allow(Kernel).to receive(:sleep)
   end
 
   context 'when callback raises TransientTransactionError with SystemOverloadedError' do
     it 'uses the new overload backoff' do
       call_count = 0
-      expect(session).to receive(:sleep).with(0.1).once
+      expect(Kernel).to receive(:sleep).with(0.1).once
 
       session.with_transaction do
         call_count += 1
@@ -93,8 +93,8 @@ describe 'Mongo::Session#with_transaction overload retries' do
   context 'when callback raises TransientTransactionError without SystemOverloadedError' do
     it 'uses the existing backoff' do
       call_count = 0
-      expect(session).to receive(:sleep).once
-      expect(session).not_to receive(:sleep).with(0.1)
+      expect(Kernel).to receive(:sleep).once
+      expect(Kernel).not_to receive(:sleep).with(0.1)
 
       session.with_transaction do
         call_count += 1
@@ -150,7 +150,7 @@ describe 'Mongo::Session#with_transaction overload retries' do
     end
 
     it 'applies overload backoff during commit retry' do
-      expect(session).to receive(:sleep).once
+      expect(Kernel).to receive(:sleep).once
 
       session.with_transaction do
         session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_IN_PROGRESS_STATE)
