@@ -10,7 +10,9 @@ jobs:
       CI: true
       TESTOPTS: "-v"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - name: Set up Ruby 3.0
         uses: ruby/setup-ruby@v1
         with:
