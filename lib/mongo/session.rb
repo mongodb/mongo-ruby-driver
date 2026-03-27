@@ -1269,40 +1269,5 @@ module Mongo
       end
     end
 
-    def deadline_expired?(deadline)
-      if deadline.zero?
-        false
-      else
-        Utils.monotonic_time >= deadline
-      end
-    end
-
-    # Exponential backoff settings for with_transaction retries.
-    BACKOFF_INITIAL = 0.005
-    BACKOFF_MAX = 0.5
-    private_constant :BACKOFF_INITIAL, :BACKOFF_MAX
-
-    def backoff_seconds_for_retry(transaction_attempt)
-      exponential = BACKOFF_INITIAL * (1.5 ** (transaction_attempt - 1))
-      Random.rand * [exponential, BACKOFF_MAX].min
-    end
-
-    def backoff_would_exceed_deadline?(deadline, backoff_seconds)
-      return false if deadline.zero?
-
-      Utils.monotonic_time + backoff_seconds >= deadline
-    end
-
-    # Implements makeTimeoutError(lastError) from the transactions-convenient-api spec.
-    # In CSOT mode raises TimeoutError with last_error's message included as a substring.
-    # In non-CSOT mode re-raises last_error directly.
-    def make_timeout_error_from(last_error, timeout_message)
-      if @with_transaction_timeout_ms
-        raise Mongo::Error::TimeoutError, "#{timeout_message}: #{last_error}"
-      else
-        raise last_error
-      end
-    end
-
   end
 end
