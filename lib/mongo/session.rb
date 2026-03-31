@@ -458,7 +458,7 @@ module Mongo
       overload_error_count = 0
       overload_encountered = false
 
-      loop do
+      loop do # rubocop:disable Metrics/BlockLength
         if transaction_attempt > 0
           if overload_encountered
             delay = @client.retry_policy.backoff_delay(overload_error_count)
@@ -539,11 +539,10 @@ module Mongo
               if deadline_expired?(deadline) ||
                  (e.is_a?(Error::OperationFailure::Family) && e.max_time_ms_expired?)
                 transaction_in_progress = false
-                if @with_transaction_timeout_ms && deadline_expired?(deadline)
-                  make_timeout_error_from(e, 'CSOT timeout expired during withTransaction commit')
-                else
-                  raise
-                end
+
+                raise unless @with_transaction_timeout_ms && deadline_expired?(deadline)
+
+                make_timeout_error_from(e, 'CSOT timeout expired during withTransaction commit')
               end
 
               if e.label?('SystemOverloadedError')
@@ -1401,12 +1400,9 @@ module Mongo
     # In CSOT mode raises TimeoutError with last_error's message included as a substring.
     # In non-CSOT mode re-raises last_error directly.
     def make_timeout_error_from(last_error, timeout_message)
-      if @with_transaction_timeout_ms
-        raise Mongo::Error::TimeoutError, "#{timeout_message}: #{last_error}"
-      else
-        raise last_error
-      end
-    end
+      raise Mongo::Error::TimeoutError, "#{timeout_message}: #{last_error}" if @with_transaction_timeout_ms
 
+      raise last_error
+    end
   end
 end
