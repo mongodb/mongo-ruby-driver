@@ -10,7 +10,7 @@ The project is organized into the following directories:
 - `spec/`: RSpec tests for the project, and shared test data
 - `bin/`: executable scripts
 - `examples/`: example usage of the library
-- `gemfiles/`: Gemfile files for different usage scenarios (primarily testing, aside from standard.gemfile which is used for development and production)
+- `gemfiles/`: Gemfile files for different usage scenarios (primarily testing, aside from `standard.rb` which is used for development and production)
 - `profile/`: profiling scripts and results
 
 
