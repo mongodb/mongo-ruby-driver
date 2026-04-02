@@ -85,7 +85,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connections are returned when the cursor is drained
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - &createAndSaveCursor
         name: createFindCursor
@@ -179,7 +178,6 @@ tests:
   # If a network error occurs during a getMore request, the connection must remain pinned. and drivers must not
   # attempt to send a killCursors command when the cursor is closed because the connection is no longer valid.
   - description: pinned connections are not returned after an network error during getMore
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
@@ -234,7 +232,6 @@ tests:
               reason: error
 
   - description: pinned connections are returned after a network error during a killCursors request
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
@@ -360,7 +357,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: listCollections pins the cursor to a connection
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     runOnRequirements:
       - serverless: forbid # CLOUDP-98562 listCollections batchSize is ignored on serverless.
     operations:
@@ -402,7 +398,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: listIndexes pins the cursor to a connection
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       # There is an automatic index on _id so we create two more indexes to force multiple batches with batchSize=2.
       - name: createIndex
@@ -471,7 +466,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: change streams pin to a connection
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     runOnRequirements:
       - serverless: forbid # Serverless does not support change streams.
     operations:

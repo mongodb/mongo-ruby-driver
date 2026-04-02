@@ -53,9 +53,9 @@ module Mongo
                             "Expected operation to use connection #{session.pinned_connection_global_id} but it used #{connection.global_id}"
                           )
                         end
-                      else
-                        session.pin_to_connection(connection.global_id)
-                        connection.pin
+                      elsif !session.committing_transaction? && !session.aborting_transaction?
+                        session.pin_to_connection(connection.global_id, connection: connection)
+                        connection.pin(:transaction)
                       end
                     end
 

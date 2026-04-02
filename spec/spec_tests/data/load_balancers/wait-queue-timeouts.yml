@@ -37,7 +37,6 @@ initialData:
 
 tests:
   - description: wait queue timeout errors include cursor statistics
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: createFindCursor
         object: *collection0
@@ -60,7 +59,6 @@ tests:
           - connectionCheckOutFailedEvent: {}
 
   - description: wait queue timeout errors include transaction statistics
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: startTransaction
         object: *session0

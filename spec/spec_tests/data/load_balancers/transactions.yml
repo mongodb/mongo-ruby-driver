@@ -57,7 +57,6 @@ tests:
           client: *client0
 
   - description: all operations go to the same mongos
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - &startTransaction
         name: startTransaction
@@ -105,7 +104,6 @@ tests:
           - connectionCheckedOutEvent: {}
 
   - description: transaction can be committed multiple times
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - *startTransaction
       - *transactionalInsert
@@ -131,7 +129,6 @@ tests:
           - connectionCheckedOutEvent: {}
 
   - description: pinned connection is not released after a non-transient CRUD error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
@@ -168,7 +165,6 @@ tests:
           - connectionCheckedOutEvent: {}
 
   - description: pinned connection is not released after a non-transient commit error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
@@ -204,7 +200,6 @@ tests:
   # Errors during abort are different than errors during commit and CRUD operations because the pinned connection is
   # always released after abort.
   - description: pinned connection is released after a non-transient abort error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
@@ -245,7 +240,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connection is released after a transient non-network CRUD error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     runOnRequirements:
       - serverless: forbid # (CLOUDP-88216) Serverless does not append error labels to errors triggered by failpoints.
     operations:
@@ -288,7 +282,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connection is released after a transient network CRUD error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     runOnRequirements:
       - serverless: forbid # (CLOUDP-88216) Serverless does not append error labels to errors triggered by failpoints.
     operations:
@@ -334,7 +327,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connection is released after a transient non-network commit error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     runOnRequirements:
       - serverless: forbid # (CLOUDP-88216) Serverless does not append error labels to errors triggered by failpoints.
     operations:
@@ -371,7 +363,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connection is released after a transient network commit error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
@@ -418,7 +409,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connection is released after a transient non-network abort error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
@@ -453,7 +443,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connection is released after a transient network abort error
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
@@ -496,7 +485,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connection is released on successful abort
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - *startTransaction
       - *transactionalInsert
@@ -517,7 +505,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: pinned connection is returned when a new transaction is started
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - *startTransaction
       - *transactionalInsert
@@ -547,7 +534,6 @@ tests:
           - connectionCheckedOutEvent: {}
 
   - description: pinned connection is returned when a non-transaction operation uses the session
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - *startTransaction
       - *transactionalInsert
@@ -574,7 +560,6 @@ tests:
           - connectionCheckedInEvent: {}
 
   - description: a connection can be shared by a transaction and a cursor
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - *startTransaction
       - *transactionalInsert
@@ -610,4 +595,22 @@ tests:
           - connectionReadyEvent: {}
           - connectionCheckedOutEvent: {}
           # Events for abortTransaction.
+          - connectionCheckedInEvent: {}
+
+  - description: pinned connection is released when session ended
+    operations:
+      - *startTransaction
+      - *transactionalInsert
+      - *commitTransaction
+      - &endSession
+        name: endSession
+        object: *session0
+    expectEvents:
+      - client: *client0
+        eventType: cmap
+        events:
+          # Events for the insert and commitTransaction.
+          - connectionReadyEvent: {}
+          - connectionCheckedOutEvent: {}
+          # Events for endSession.
           - connectionCheckedInEvent: {}

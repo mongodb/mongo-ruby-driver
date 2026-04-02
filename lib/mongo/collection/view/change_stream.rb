@@ -347,20 +347,34 @@ module Mongo
           start_at_operation_time = nil
 
           @cursor = read_with_retry_cursor(session, server_selector, self, context: context) do |server|
-            server.with_connection do |connection|
+            if server.load_balancer?
+              # In load balanced topology, manually check out a connection
+              # so it remains checked out and pinned to the cursor.
+              connection = server.pool.check_out(context: context)
               result = send_initial_query(connection, context)
 
               start_at_operation_time = if doc = result.replies.first && result.replies.first.documents.first
                                           doc['operationTime']
                                         else
-                                          # The above may set @start_at_operation_time to nil
-                                          # if it was not in the document for some reason,
-                                          # for consistency set it to nil here as well.
-                                          # NB: since this block may be executed more than once, each
-                                          # execution must write to start_at_operation_time either way.
                                           nil
                                         end
               result
+            else
+              server.with_connection do |connection|
+                result = send_initial_query(connection, context)
+
+                start_at_operation_time = if doc = result.replies.first && result.replies.first.documents.first
+                                            doc['operationTime']
+                                          else
+                                            # The above may set @start_at_operation_time to nil
+                                            # if it was not in the document for some reason,
+                                            # for consistency set it to nil here as well.
+                                            # NB: since this block may be executed more than once, each
+                                            # execution must write to start_at_operation_time either way.
+                                            nil
+                                          end
+                result
+              end
             end
           end
 
