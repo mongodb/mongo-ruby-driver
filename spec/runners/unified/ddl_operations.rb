@@ -83,6 +83,9 @@ module Unified
         if timeout_ms = args.use('timeoutMS')
           opts[:timeout_ms] = timeout_ms
         end
+        if batch_size = args.use('batchSize')
+          opts[:batch_size] = batch_size
+        end
 
         database.list_collections(**opts, name_only: name_only)
       end
@@ -140,6 +143,9 @@ module Unified
         end
         if timeout_ms = args.use('timeoutMS')
           opts[:timeout_ms] = timeout_ms
+        end
+        if batch_size = args.use('batchSize')
+          opts[:batch_size] = batch_size
         end
         collection.indexes(**opts).to_a
       end

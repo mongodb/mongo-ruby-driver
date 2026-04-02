@@ -310,8 +310,12 @@ module Unified
       args = op.use!('arguments')
 
       filter = args.use('filter')
+      if session = args.use('session')
+        session = entities.get(:session, session)
+      end
       opts = extract_options(args, 'batchSize', 'timeoutMS', 'cursorType', 'maxAwaitTimeMS')
       symbolize_options!(opts, :cursor_type)
+      opts[:session] = session if session
 
       view = obj.find(filter, opts)
       view.each # to initialize the cursor

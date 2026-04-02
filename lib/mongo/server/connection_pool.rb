@@ -391,6 +391,23 @@ module Mongo
         check_invariants
       end
 
+      # Returns a pinned connection that is already checked out, if one
+      # exists with the given global id. Returns nil otherwise.
+      #
+      # @param [ Integer ] connection_global_id The global id of the pinned
+      #   connection.
+      #
+      # @return [ Connection | nil ] The pinned connection, or nil.
+      #
+      # @api private
+      def check_out_pinned_connection(connection_global_id)
+        @lock.synchronize do
+          @checked_out_connections.detect do |conn|
+            conn.global_id == connection_global_id && conn.pinned?
+          end
+        end
+      end
+
       # Check a connection back into the pool.
       #
       # The connection must have been previously created by this pool.
@@ -714,15 +731,36 @@ module Mongo
       def with_connection(connection_global_id: nil, context: nil)
         raise_if_closed!
 
-        connection = check_out(
+        # If a specific connection is requested and it is already checked out
+        # and pinned (e.g. for a transaction or cursor in load-balanced mode),
+        # reuse it directly without going through the check_out/check_in cycle.
+        if connection_global_id
+          connection = @lock.synchronize do
+            @checked_out_connections.detect do |conn|
+              conn.global_id == connection_global_id && conn.pinned?
+            end
+          end
+        end
+
+        connection ||= check_out(
           connection_global_id: connection_global_id,
           context: context
         )
+
         yield(connection)
       rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished => e
         maybe_raise_pool_cleared!(connection, e)
       ensure
-        check_in(connection) if connection
+        if connection && !connection.pinned?
+          # Do not check in if the connection is pinned (the session or cursor
+          # owns it and will check it in later when unpinning). Also skip
+          # check-in if the connection was already checked in during the block
+          # (e.g. by Session#unpin after an error on the first operation).
+          checked_out = @lock.synchronize do
+            @checked_out_connections.include?(connection)
+          end
+          check_in(connection) if checked_out
+        end
       end
 
       # Close sockets that have been open for longer than the max idle time,
