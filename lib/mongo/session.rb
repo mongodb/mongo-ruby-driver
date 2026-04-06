@@ -379,6 +379,9 @@ module Mongo
           rescue Mongo::Error, Error::AuthError
           end
         end
+        # Release any pinned connection (e.g. after a committed transaction
+        # in load-balanced mode).
+        unpin if pinned_connection_global_id
         cluster.session_pool.checkin(@server_session) if @server_session
       end
     ensure
@@ -919,12 +922,14 @@ module Mongo
     #
     # @param [ Integer ] connection_global_id The global id of connection to pin
     # this session to.
+    # @param [ Connection | nil ] connection The connection object to pin to.
     #
     # @api private
-    def pin_to_connection(connection_global_id)
+    def pin_to_connection(connection_global_id, connection: nil)
       raise ArgumentError, 'Cannot pin to a nil connection id' if connection_global_id.nil?
 
       @pinned_connection_global_id = connection_global_id
+      @pinned_connection = connection
     end
 
     # Unpins this session from the pinned server or connection,
@@ -936,7 +941,16 @@ module Mongo
     def unpin(connection = nil)
       @pinned_server = nil
       @pinned_connection_global_id = nil
-      connection.unpin unless connection.nil?
+      conn = connection || @pinned_connection
+      if conn
+        conn.unpin(:transaction)
+        # Only check the connection back into the pool if nothing else
+        # still holds a pin on it (e.g. an open cursor).
+        unless conn.pinned?
+          conn.connection_pool.check_in(conn)
+        end
+      end
+      @pinned_connection = nil
     end
 
     # Unpins this session from the pinned server or connection, if the session was pinned

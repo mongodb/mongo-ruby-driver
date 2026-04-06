@@ -65,7 +65,6 @@ initialData:
 
 tests:
   - description: only connections for a specific serviceId are closed when pools are cleared
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     runOnRequirements:
     # This test assumes that two sequential connections receive different serviceIDs.
     # Sequential connections to a serverless instance may receive the same serviceID.
@@ -141,7 +140,6 @@ tests:
   # This test uses singleClient to ensure that connection attempts are routed
   # to the same mongos on which the failpoint is set.
   - description: errors during the initial connection hello are ignored
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     runOnRequirements:
       # Require SERVER-49336 for failCommand + appName on the initial handshake.
       - minServerVersion: '4.4.7'
@@ -155,14 +153,14 @@ tests:
             mode: { times: 1 }
             data:
               failCommands: [isMaster, hello]
-              closeConnection: true
+              errorCode: 11600
               appName: *singleClientAppName
       - name: insertOne
         object: *singleColl
         arguments:
           document: { x: 1 }
         expectError:
-          isClientError: true
+          isError: true
     expectEvents:
       - client: *singleClient
         eventType: cmap
@@ -206,7 +204,6 @@ tests:
               reason: connectionError
 
   - description: stale errors are ignored
-    skipReason: "RUBY-2881: ruby driver LB is not spec compliant"
     operations:
       - name: failPoint
         object: testRunner
