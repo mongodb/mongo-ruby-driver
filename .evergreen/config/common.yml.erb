@@ -148,7 +148,7 @@ functions:
           MONGODB_VERSION: ${MONGODB_VERSION}
         include_expansions_in_env: [TOPOLOGY, AUTH, SSL, ORCHESTRATION_FILE,
             REQUIRE_API_VERSION, LOAD_BALANCER]
-        args: ["${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh"]
+        args: ["${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh", "start"]
     - command: expansions.update
       params:
         file: mo-expansion.yml
