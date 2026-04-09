@@ -55,9 +55,6 @@ describe 'URI options' do
                 end
               end
 
-              if opts['compressors'] && opts['compressors'].include?('zstd')
-              end
-
               it 'creates a client with the correct options' do
                 mapped = Mongo::URI::OptionsMapper.new.ruby_to_smc(test.client.options)
                 expected = Mongo::ConnectionString.adjust_expected_mongo_client_options(

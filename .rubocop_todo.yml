@@ -54,13 +54,6 @@ Lint/EmptyBlock:
     - 'spec/mongo/server/round_trip_time_calculator_spec.rb'
     - 'spec/mongo/uri/srv_protocol_spec.rb'
 
-# Offense count: 3
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowComments.
-Lint/EmptyConditionalBody:
-  Exclude:
-    - 'spec/runners/transactions.rb'
-    - 'spec/spec_tests/uri_options_spec.rb'
 
 # Offense count: 4
 # This cop supports unsafe autocorrection (--autocorrect-all).
