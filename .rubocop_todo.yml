@@ -6,14 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 8
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: RequireParenthesesForMethodChains.
-Lint/AmbiguousRange:
-  Exclude:
-    - 'spec/integration/sdam_events_spec.rb'
-    - 'spec/mongo/server/description/features_spec.rb'
-    - 'spec/runners/unified.rb'
 
 # Offense count: 190
 # This cop supports unsafe autocorrection (--autocorrect-all).
