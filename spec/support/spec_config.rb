@@ -53,7 +53,7 @@ class SpecConfig
     end
   end
 
-  attr_reader :uri_options, :ruby_options, :connect_options
+  attr_reader :uri_options, :ruby_options
 
   def addresses
     @addresses ||= if @mongodb_uri

@@ -42,12 +42,6 @@ Lint/DuplicateBranch:
     - 'spec/runners/sdam.rb'
     - 'spec/support/client_registry.rb'
 
-# Offense count: 3
-Lint/DuplicateMethods:
-  Exclude:
-    - 'spec/runners/auth.rb'
-    - 'spec/runners/cmap.rb'
-    - 'spec/support/spec_config.rb'
 
 # Offense count: 8
 # Configuration parameters: AllowComments, AllowEmptyLambdas.
