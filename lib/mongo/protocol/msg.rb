@@ -208,8 +208,6 @@ module Mongo
       # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
       #   message if encryption was not possible or necessary.
       def maybe_encrypt(connection, context)
-        # TODO: verify compression happens later, i.e. when this method runs
-        # the message is not compressed.
         if context.encrypt?
           if connection.description.max_wire_version < 8
             raise Error::CryptError.new(

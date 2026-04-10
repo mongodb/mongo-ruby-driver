@@ -104,9 +104,6 @@ module Mongo
       def initialize(replies, connection_description = nil, connection_global_id = nil, context: nil, connection: nil)
         @context = context
 
-        # TODO: older versions of MongoDB (2.4 and below?) could sometimes end
-        # up with nil here, which indicated an unackowledged write. Is that
-        # still the case? Can we simplify this?
         return unless replies
 
         if replies.is_a?(Array)

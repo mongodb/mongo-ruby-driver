@@ -26,6 +26,8 @@ module Mongo
   #
   # @api private
   class ClusterTime < BSON::Document
+    include Comparable
+
     def initialize(elements = nil)
       super
 
@@ -60,25 +62,6 @@ module Mongo
         other['clusterTime']
         raise ArgumentError, "Cannot compare cluster times when other is missing clusterTime key: #{other.inspect}"
       end
-    end
-
-    # Older Rubies do not implement other logical operators through <=>.
-    # TODO revise whether these methods are needed when
-    # https://jira.mongodb.org/browse/RUBY-1622 is implemented.
-    def >=(other)
-      (self <=> other) != -1
-    end
-
-    def >(other)
-      (self <=> other) == 1
-    end
-
-    def <=(other)
-      (self <=> other) != 1
-    end
-
-    def <(other)
-      (self <=> other) == -1
     end
 
     # Compares two ClusterTime instances by comparing their timestamps.
