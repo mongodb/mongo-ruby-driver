@@ -13,16 +13,6 @@
 Lint/AssignmentInCondition:
   Enabled: false
 
-# Offense count: 10
-# Configuration parameters: AllowedMethods.
-# AllowedMethods: enums
-Lint/ConstantDefinitionInBlock:
-  Exclude:
-    - 'spec/integration/heartbeat_events_spec.rb'
-    - 'spec/mongo/id_spec.rb'
-    - 'spec/mongo/operation/result_spec.rb'
-    - 'spec/mongo/server/connection_spec.rb'
-    - 'spec/spec_tests/sdam_spec.rb'
 
 # Offense count: 16
 # Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
