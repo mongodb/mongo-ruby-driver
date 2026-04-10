@@ -94,11 +94,6 @@ Lint/NextWithoutAccumulator:
   Exclude:
     - 'lib/mongo/operation/shared/result/aggregatable.rb'
 
-# Offense count: 2
-Lint/NoReturnInBeginEndBlocks:
-  Exclude:
-    - 'lib/mongo/socket/ocsp_verifier.rb'
-    - 'spec/runners/change_streams/test.rb'
 
 # Offense count: 1
 Lint/NonLocalExitFromIterator:
