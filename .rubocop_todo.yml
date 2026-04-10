@@ -33,16 +33,6 @@ Lint/DuplicateBranch:
     - 'spec/support/client_registry.rb'
 
 
-# Offense count: 8
-# Configuration parameters: AllowComments, AllowEmptyLambdas.
-Lint/EmptyBlock:
-  Exclude:
-    - 'spec/integration/cursor_memory_leak_spec.rb'
-    - 'spec/mongo/auth/user_spec.rb'
-    - 'spec/mongo/cursor_spec.rb'
-    - 'spec/mongo/server/description_spec.rb'
-    - 'spec/mongo/server/round_trip_time_calculator_spec.rb'
-    - 'spec/mongo/uri/srv_protocol_spec.rb'
 
 
 # Offense count: 4

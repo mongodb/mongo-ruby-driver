@@ -1190,9 +1190,6 @@ describe Mongo::URI::SRVProtocol do
   end
 
   describe '#validate_srv_hostname' do
-    let(:valid_hostname) do
-    end
-
     let(:dummy_uri) do
       Mongo::URI::SRVProtocol.new('mongodb+srv://test1.test.build.10gen.cc/')
     end
