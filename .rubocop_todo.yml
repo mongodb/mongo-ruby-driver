@@ -49,15 +49,6 @@ Lint/IneffectiveAccessModifier:
     - 'lib/mongo/protocol/message.rb'
     - 'lib/mongo/uri/options_mapper.rb'
 
-# Offense count: 4
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: standard_error, runtime_error
-Lint/InheritException:
-  Exclude:
-    - 'lib/mongo/error/raise_original_error.rb'
-    - 'spec/mongo/server/connection_spec.rb'
-    - 'spec/mongo/socket_spec.rb'
 
 # Offense count: 31
 # Configuration parameters: AllowedParentClasses.

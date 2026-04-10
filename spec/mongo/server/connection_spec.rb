@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-class ConnectionSpecTestException < Exception; end
+class ConnectionSpecTestException < StandardError; end
 
 # fails intermittently in evergreen
 describe Mongo::Server::Connection do
