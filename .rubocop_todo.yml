@@ -42,12 +42,6 @@ Lint/IncompatibleIoSelectWithFiberScheduler:
     - 'lib/mongo/socket/ssl.rb'
     - 'lib/mongo/socket/tcp.rb'
 
-# Offense count: 7
-Lint/IneffectiveAccessModifier:
-  Exclude:
-    - 'lib/mongo/operation/shared/polymorphic_result.rb'
-    - 'lib/mongo/protocol/message.rb'
-    - 'lib/mongo/uri/options_mapper.rb'
 
 
 # Offense count: 31
