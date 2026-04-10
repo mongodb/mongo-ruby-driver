@@ -11,7 +11,7 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
   config_override :validate_update_replace, true
 
   paths.each do |path|
-    basename = path[base_path.length + 1...path.length]
+    basename = path[(base_path.length + 1)...path.length]
     context basename do
       group = Unified::TestGroup.new(path)
 

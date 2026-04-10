@@ -42,7 +42,7 @@ end
 module Mongo
   module Auth
     class Spec
-      attr_reader :description, :tests
+      attr_reader :description
 
       def initialize(test_path)
         @spec = ::Utils.load_spec_yaml_file(test_path)
