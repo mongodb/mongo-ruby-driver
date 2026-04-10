@@ -6,13 +6,11 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-
 # Offense count: 190
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: AllowSafeAssignment.
 Lint/AssignmentInCondition:
   Enabled: false
-
 
 # Offense count: 16
 # Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
@@ -32,17 +30,12 @@ Lint/DuplicateBranch:
     - 'spec/runners/sdam.rb'
     - 'spec/support/client_registry.rb'
 
-
-
-
 # Offense count: 4
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Lint/IncompatibleIoSelectWithFiberScheduler:
   Exclude:
     - 'lib/mongo/socket/ssl.rb'
     - 'lib/mongo/socket/tcp.rb'
-
-
 
 # Offense count: 31
 # Configuration parameters: AllowedParentClasses.
@@ -58,7 +51,6 @@ Lint/MixedRegexpCaptureTypes:
 Lint/NextWithoutAccumulator:
   Exclude:
     - 'lib/mongo/operation/shared/result/aggregatable.rb'
-
 
 # Offense count: 1
 Lint/NonLocalExitFromIterator:
