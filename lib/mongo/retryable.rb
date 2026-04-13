@@ -15,7 +15,6 @@
 # limitations under the License.
 
 require 'mongo/retryable/backpressure'
-require 'mongo/retryable/token_bucket'
 require 'mongo/retryable/retry_policy'
 require 'mongo/retryable/read_worker'
 require 'mongo/retryable/write_worker'
