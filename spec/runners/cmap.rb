@@ -48,8 +48,6 @@ module Mongo
         process_run_on
       end
 
-      attr_reader :pool
-
       def setup(server, client, subscriber)
         @subscriber = subscriber
         @client = client

@@ -366,7 +366,8 @@ describe Mongo::Collection::View::Readable do
       end
 
       let(:operation) do
-        view.map_reduce(map, reduce).to_a; rescue StandardError
+        view.map_reduce(map, reduce).to_a
+      rescue StandardError
       end
 
       let(:command) do

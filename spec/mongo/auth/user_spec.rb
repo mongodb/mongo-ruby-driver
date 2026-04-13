@@ -129,8 +129,7 @@ describe Mongo::Auth::User do
   end
 
   describe '#auth_key' do
-    let(:nonce) do
-    end
+    let(:nonce) { nil }
 
     let(:expected) do
       Digest::MD5.hexdigest("#{nonce}#{user.name}#{user.hashed_password}")

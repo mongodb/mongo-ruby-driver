@@ -182,9 +182,9 @@ module Mongo
         redirect_count = 0
         http_response = nil
         loop do
-          http_response = begin
+          begin
             uri = URI(uri)
-            Net::HTTP.start(uri.hostname, uri.port) do |http|
+            http_response = Net::HTTP.start(uri.hostname, uri.port) do |http|
               path = uri.path
               path = '/' if path.empty?
               http.post(path, @serialized_req,

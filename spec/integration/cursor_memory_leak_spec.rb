@@ -22,7 +22,7 @@ describe 'Cursor memory leak - RUBY-3669' do
   it 'does not leak Mongo::Client objects when batch_size < limit' do
     # Warm up: run once so any one-time initialization clients are created
     # before we start counting.
-    collection.find(nil, batch_size: 2, limit: 3).each {}
+    collection.find(nil, batch_size: 2, limit: 3).to_a
 
     GC.start
     GC.start
@@ -32,7 +32,7 @@ describe 'Cursor memory leak - RUBY-3669' do
     client_count_before = ObjectSpace.each_object(Mongo::Client).count
 
     10.times do
-      collection.find(nil, batch_size: 2, limit: 3).each {}
+      collection.find(nil, batch_size: 2, limit: 3).to_a
     end
 
     # Give the GC and the periodic cursor reaper time to process finalizers
