@@ -264,9 +264,6 @@ describe Mongo::Server::Description do
           it 'normalizes the addresses to lowercase' do
             expect(description.passives).to eq([ 'server:27017' ])
           end
-
-          it 'normalizes the addresses to lowercase' do
-          end
         end
       end
 

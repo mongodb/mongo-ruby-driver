@@ -175,8 +175,7 @@ describe Mongo::Cursor do
 
           it 'raises the error' do
             expect do
-              cursor.each do |doc|
-              end
+              cursor.to_a
             end.to raise_error(Mongo::Error::SocketError)
           end
         end

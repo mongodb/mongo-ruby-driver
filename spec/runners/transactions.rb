@@ -25,7 +25,7 @@ def define_transactions_spec_tests(test_paths, expectations_bson_types: true)
     spec = Mongo::Transactions::Spec.new(file)
 
     context(spec.description) do
-      define_spec_tests_with_requirements(spec) do |req|
+      define_spec_tests_with_requirements(spec) do |_req|
         spec.tests(expectations_bson_types: expectations_bson_types).each do |test|
           context(test.description) do
             before(:all) do
@@ -43,12 +43,6 @@ def define_transactions_spec_tests(test_paths, expectations_bson_types: true)
               skip 'Requirements not satisfied'
 
               test.setup_test
-            end
-
-            if test.skip_reason
-            end
-
-            unless req.satisfied?
             end
 
             after(:all) do

@@ -5,24 +5,24 @@ require 'lite_spec_helper'
 require 'runners/sdam'
 require 'runners/sdam/verifier'
 
+class SDAMSpecExecutor
+  include Mongo::Operation::Executable
+
+  def session
+    nil
+  end
+end
+
 describe 'Server Discovery and Monitoring' do
   include Mongo::SDAM
-
-  class Executor
-    include Mongo::Operation::Executable
-
-    def session
-      nil
-    end
-  end
 
   SERVER_DISCOVERY_TESTS.each do |file|
     spec = Mongo::SDAM::Spec.new(file)
 
     context("#{spec.description} (#{file.sub(%r{.*/data/sdam/}, '')})") do
       before(:all) do
-        class Mongo::Server::Monitor
-          alias run_saved! run!
+        Mongo::Server::Monitor.class_eval do
+          alias_method :run_saved!, :run!
 
           # Replace run! method to do nothing, to avoid races between
           # the background thread started by Server.new and our mocking.
@@ -33,8 +33,8 @@ describe 'Server Discovery and Monitoring' do
       end
 
       after(:all) do
-        class Mongo::Server::Monitor
-          alias run! run_saved!
+        Mongo::Server::Monitor.class_eval do
+          alias_method :run!, :run_saved!
         end
         @client && @client.close
       end
@@ -56,7 +56,7 @@ describe 'Server Discovery and Monitoring' do
         when :command
           result = error.result
           allow(connection).to receive(:generation).and_return(error.generation) if error.generation
-          Executor.new.send(:process_result_for_sdam, result, connection)
+          SDAMSpecExecutor.new.send(:process_result_for_sdam, result, connection)
         else
           raise NotImplementedError, "Error type #{error.type} is not implemented"
         end

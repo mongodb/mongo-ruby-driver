@@ -288,8 +288,7 @@ module Mongo
       # Every crypto binding ignores its first argument, which is an option
       # mongocrypt_ctx_t object and is not required to use crypto hooks.
       def set_crypto_hooks
-        @aes_encrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p,
-          output_binary_p, response_length_p, status_p|
+        @aes_encrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
           do_aes(
             key_binary_p,
             iv_binary_p,
@@ -300,8 +299,7 @@ module Mongo
           )
         end
 
-        @aes_decrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p,
-          output_binary_p, response_length_p, status_p|
+        @aes_decrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
           do_aes(
             key_binary_p,
             iv_binary_p,
@@ -319,13 +317,11 @@ module Mongo
           end
         end
 
-        @hmac_sha_512 = proc do |_, key_binary_p, input_binary_p,
-          output_binary_p, status_p|
+        @hmac_sha_512 = proc do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
           do_hmac_sha('SHA512', key_binary_p, input_binary_p, output_binary_p, status_p)
         end
 
-        @hmac_sha_256 = proc do |_, key_binary_p, input_binary_p,
-          output_binary_p, status_p|
+        @hmac_sha_256 = proc do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
           do_hmac_sha('SHA256', key_binary_p, input_binary_p, output_binary_p, status_p)
         end
 
@@ -347,8 +343,7 @@ module Mongo
           @hmac_hash
         )
 
-        @aes_ctr_encrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p,
-          output_binary_p, response_length_p, status_p|
+        @aes_ctr_encrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
           do_aes(
             key_binary_p,
             iv_binary_p,
@@ -360,8 +355,7 @@ module Mongo
           )
         end
 
-        @aes_ctr_decrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p,
-          output_binary_p, response_length_p, status_p|
+        @aes_ctr_decrypt = proc do |_, key_binary_p, iv_binary_p, input_binary_p, output_binary_p, response_length_p, status_p|
           do_aes(
             key_binary_p,
             iv_binary_p,
@@ -380,8 +374,7 @@ module Mongo
           @aes_ctr_decrypt
         )
 
-        @rsaes_pkcs_signature_cb = proc do |_, key_binary_p, input_binary_p,
-          output_binary_p, status_p|
+        @rsaes_pkcs_signature_cb = proc do |_, key_binary_p, input_binary_p, output_binary_p, status_p|
           do_rsaes_pkcs_signature(key_binary_p, input_binary_p, output_binary_p, status_p)
         end
 

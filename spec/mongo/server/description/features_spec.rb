@@ -20,7 +20,7 @@ describe Mongo::Server::Description::Features do
 
     context 'when the server wire version range min is higher' do
       let(:wire_versions) do
-        described_class::DRIVER_WIRE_VERSIONS.max + 1..described_class::DRIVER_WIRE_VERSIONS.max + 2
+        (described_class::DRIVER_WIRE_VERSIONS.max + 1)..(described_class::DRIVER_WIRE_VERSIONS.max + 2)
       end
 
       it 'raises an exception' do
@@ -62,7 +62,7 @@ describe Mongo::Server::Description::Features do
 
     context 'when the server wire version range max is lower' do
       let(:wire_versions) do
-        described_class::DRIVER_WIRE_VERSIONS.min - 2..described_class::DRIVER_WIRE_VERSIONS.min - 1
+        (described_class::DRIVER_WIRE_VERSIONS.min - 2)..(described_class::DRIVER_WIRE_VERSIONS.min - 1)
       end
 
       it 'raises an exception' do
