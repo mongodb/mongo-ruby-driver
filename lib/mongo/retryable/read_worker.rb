@@ -201,7 +201,7 @@ module Mongo
           timeout: context&.remaining_timeout_sec
         )
         result = yield server
-        retry_policy.record_success(is_retry: false)
+
         result
       rescue *retryable_exceptions, Error::OperationFailure::Family, Auth::Unauthorized, Error::PoolError => e
         e.add_notes('modern retry', 'attempt 1')
@@ -296,7 +296,6 @@ module Mongo
           context&.check_timeout!
           attempt = attempt ? attempt + 1 : 2
           result = yield server, true
-          retry_policy.record_success(is_retry: true)
           result
         rescue Error::TimeoutError
           raise
@@ -358,7 +357,6 @@ module Mongo
           begin
             context&.check_timeout!
             result = yield server, true
-            retry_policy.record_success(is_retry: true)
             return result
           rescue Error::TimeoutError
             raise
@@ -368,7 +366,6 @@ module Mongo
             is_overload = retryable_overload_error?(e)
             raise e unless is_overload || is_retryable_exception?(e) || e.write_retryable?
 
-            retry_policy.record_non_overload_retry_failure unless is_overload
             failed_server = server
             last_error = e
           end

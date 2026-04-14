@@ -119,7 +119,7 @@ module Mongo
       error_count = 0
       loop do
         result = yield
-        client.retry_policy.record_success(is_retry: error_count > 0)
+
         return result
       rescue Error::TimeoutError
         raise

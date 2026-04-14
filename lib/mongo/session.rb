@@ -512,7 +512,6 @@ module Mongo
               overload_error_count += 1
             elsif overload_encountered
               overload_error_count += 1
-              @client.retry_policy.record_non_overload_retry_failure
             end
             next
           end
@@ -553,7 +552,6 @@ module Mongo
                 overload_error_count += 1
               elsif overload_encountered
                 overload_error_count += 1
-                @client.retry_policy.record_non_overload_retry_failure
               end
 
               if overload_encountered
@@ -590,7 +588,6 @@ module Mongo
                 overload_error_count += 1
               elsif overload_encountered
                 overload_error_count += 1
-                @client.retry_policy.record_non_overload_retry_failure
               end
               @state = NO_TRANSACTION_STATE
               next
