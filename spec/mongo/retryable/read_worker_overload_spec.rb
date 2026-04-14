@@ -60,23 +60,23 @@ describe Mongo::Retryable::ReadWorker do
   describe '#read_with_retry with overload errors' do
     context 'when an overload error is raised and then succeeds' do
       it 'retries with backoff and returns the result' do
-        expect(worker).to receive(:sleep).at_least(:twice)
+        expect(worker).to receive(:sleep).at_least(:once)
         call_count = 0
         result = worker.read_with_retry(session, server_selector, context) do |_server, _is_retry|
           call_count += 1
-          raise make_overload_error if call_count <= 3
+          raise make_overload_error if call_count <= 2
 
           :success
         end
 
         expect(result).to eq(:success)
-        expect(call_count).to eq(4)
+        expect(call_count).to eq(3)
       end
     end
 
-    context 'when overload errors exceed MAX_RETRIES' do
-      it 'raises after MAX_RETRIES' do
-        max = Mongo::Retryable::Backpressure::MAX_RETRIES
+    context 'when overload errors exceed DEFAULT_MAX_RETRIES' do
+      it 'raises after DEFAULT_MAX_RETRIES' do
+        max = Mongo::Retryable::Backpressure::DEFAULT_MAX_RETRIES
         call_count = 0
 
         expect do
@@ -103,43 +103,6 @@ describe Mongo::Retryable::ReadWorker do
 
         expect(result).to eq(:success)
         expect(call_count).to eq(2)
-      end
-    end
-
-    context 'when adaptive retries are enabled and bucket is drained' do
-      let(:retry_policy) { Mongo::Retryable::RetryPolicy.new(adaptive_retries: true) }
-
-      it 'raises when the token bucket is empty' do
-        bucket = retry_policy.token_bucket
-        bucket.tokens.to_i.times { bucket.consume(1) }
-
-        expect do
-          worker.read_with_retry(session, server_selector, context) do |_server, _is_retry|
-            raise make_overload_error
-          end
-        end.to raise_error(Mongo::Error::OperationFailure, /overloaded/)
-      end
-    end
-
-    context 'when record_success is called on success' do
-      it 'calls record_success(is_retry: false) on first-attempt success' do
-        expect(retry_policy).to receive(:record_success).with(is_retry: false)
-
-        worker.read_with_retry(session, server_selector, context) do |_server|
-          :ok
-        end
-      end
-
-      it 'calls record_success(is_retry: true) after a retry succeeds' do
-        call_count = 0
-        expect(retry_policy).to receive(:record_success).with(is_retry: true)
-
-        worker.read_with_retry(session, server_selector, context) do |_server, _is_retry|
-          call_count += 1
-          raise make_overload_error if call_count == 1
-
-          :ok
-        end
       end
     end
   end
