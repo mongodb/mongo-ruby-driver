@@ -52,7 +52,6 @@ module Mongo
     #
     # @since 2.1.2
     VALID_OPTIONS = %i[
-      adaptive_retries
       app_name
       auth_mech
       auth_mech_properties
@@ -62,6 +61,7 @@ module Mongo
       cleanup
       compressors
       direct_connection
+      enable_overload_retargeting
       connect
       connect_timeout
       database
@@ -71,6 +71,7 @@ module Mongo
       local_threshold
       logger
       log_prefix
+      max_adaptive_retries
       max_connecting
       max_idle_time
       max_pool_size
@@ -587,7 +588,7 @@ module Mongo
 
       @connect_lock = Mutex.new
       @retry_policy = Retryable::RetryPolicy.new(
-        adaptive_retries: !!@options[:adaptive_retries]
+        max_retries: @options[:max_adaptive_retries] || Retryable::Backpressure::DEFAULT_MAX_RETRIES
       )
       @connect_lock.synchronize do
         @cluster = Cluster.new(
