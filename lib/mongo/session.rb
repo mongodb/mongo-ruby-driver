@@ -461,7 +461,7 @@ module Mongo
       overload_error_count = 0
       overload_encountered = false
 
-      loop do # rubocop:disable Metrics/BlockLength
+      loop do
         if transaction_attempt > 0
           if overload_encountered
             delay = @client.retry_policy.backoff_delay(overload_error_count)

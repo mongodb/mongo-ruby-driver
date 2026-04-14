@@ -111,10 +111,9 @@ module Mongo
           error_count = 0
           error_to_raise = nil
           begin
-            result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+            server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, nil, context
             end
-            result
           rescue Error::TimeoutError
             raise
           rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
@@ -253,7 +252,7 @@ module Mongo
         connection_succeeded = false
         was_starting = false
 
-        result = server.with_connection(
+        server.with_connection(
           connection_global_id: context.connection_global_id,
           context: context
         ) do |connection|
@@ -267,8 +266,6 @@ module Mongo
           # it later for the retry as well.
           yield connection, txn_num, context.dup
         end
-
-        result
       rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure::Family => e
         e.add_notes('modern retry', 'attempt 1')
 
@@ -343,10 +340,9 @@ module Mongo
 
         attempt = attempt ? attempt + 1 : 2
         log_retry(original_error, message: 'Write retry')
-        result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
         end
-        result
       rescue *retryable_exceptions, Error::PoolError => e
         if retryable_overload_error?(e)
           e.add_notes('modern retry', "attempt #{attempt}")
