@@ -2,9 +2,9 @@
 
 require 'spec_helper'
 
-describe 'Heartbeat events' do
-  class HeartbeatEventsSpecTestException < StandardError; end
+class HeartbeatEventsSpecTestException < StandardError; end
 
+describe 'Heartbeat events' do
   # 4.4 has two monitors and thus issues heartbeats multiple times
   max_server_version '4.2'
 

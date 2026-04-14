@@ -96,7 +96,7 @@ describe Mongo::Socket do
 
       context 'with WaitReadable' do
         let(:exception_class) do
-          Class.new(Exception) do
+          Class.new(StandardError) do
             include IO::WaitReadable
           end
         end
@@ -106,7 +106,7 @@ describe Mongo::Socket do
 
       context 'with WaitWritable' do
         let(:exception_class) do
-          Class.new(Exception) do
+          Class.new(StandardError) do
             include IO::WaitWritable
           end
         end

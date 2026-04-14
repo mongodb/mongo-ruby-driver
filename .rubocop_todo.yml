@@ -6,44 +6,11 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 7
-# This cop supports safe autocorrection (--autocorrect).
-Layout/MultilineBlockLayout:
-  Exclude:
-    - 'lib/mongo/crypt/handle.rb'
-
-# Offense count: 2
-# This cop supports safe autocorrection (--autocorrect).
-Layout/RescueEnsureAlignment:
-  Exclude:
-    - 'spec/mongo/collection/view/change_stream_spec.rb'
-    - 'spec/mongo/collection/view/readable_spec.rb'
-
-# Offense count: 8
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: RequireParenthesesForMethodChains.
-Lint/AmbiguousRange:
-  Exclude:
-    - 'spec/integration/sdam_events_spec.rb'
-    - 'spec/mongo/server/description/features_spec.rb'
-    - 'spec/runners/unified.rb'
-
 # Offense count: 190
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: AllowSafeAssignment.
 Lint/AssignmentInCondition:
   Enabled: false
-
-# Offense count: 10
-# Configuration parameters: AllowedMethods.
-# AllowedMethods: enums
-Lint/ConstantDefinitionInBlock:
-  Exclude:
-    - 'spec/integration/heartbeat_events_spec.rb'
-    - 'spec/mongo/id_spec.rb'
-    - 'spec/mongo/operation/result_spec.rb'
-    - 'spec/mongo/server/connection_spec.rb'
-    - 'spec/spec_tests/sdam_spec.rb'
 
 # Offense count: 16
 # Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
@@ -63,55 +30,12 @@ Lint/DuplicateBranch:
     - 'spec/runners/sdam.rb'
     - 'spec/support/client_registry.rb'
 
-# Offense count: 3
-Lint/DuplicateMethods:
-  Exclude:
-    - 'spec/runners/auth.rb'
-    - 'spec/runners/cmap.rb'
-    - 'spec/support/spec_config.rb'
-
-# Offense count: 8
-# Configuration parameters: AllowComments, AllowEmptyLambdas.
-Lint/EmptyBlock:
-  Exclude:
-    - 'spec/integration/cursor_memory_leak_spec.rb'
-    - 'spec/mongo/auth/user_spec.rb'
-    - 'spec/mongo/cursor_spec.rb'
-    - 'spec/mongo/server/description_spec.rb'
-    - 'spec/mongo/server/round_trip_time_calculator_spec.rb'
-    - 'spec/mongo/uri/srv_protocol_spec.rb'
-
-# Offense count: 3
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowComments.
-Lint/EmptyConditionalBody:
-  Exclude:
-    - 'spec/runners/transactions.rb'
-    - 'spec/spec_tests/uri_options_spec.rb'
-
 # Offense count: 4
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Lint/IncompatibleIoSelectWithFiberScheduler:
   Exclude:
     - 'lib/mongo/socket/ssl.rb'
     - 'lib/mongo/socket/tcp.rb'
-
-# Offense count: 7
-Lint/IneffectiveAccessModifier:
-  Exclude:
-    - 'lib/mongo/operation/shared/polymorphic_result.rb'
-    - 'lib/mongo/protocol/message.rb'
-    - 'lib/mongo/uri/options_mapper.rb'
-
-# Offense count: 4
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: EnforcedStyle.
-# SupportedStyles: standard_error, runtime_error
-Lint/InheritException:
-  Exclude:
-    - 'lib/mongo/error/raise_original_error.rb'
-    - 'spec/mongo/server/connection_spec.rb'
-    - 'spec/mongo/socket_spec.rb'
 
 # Offense count: 31
 # Configuration parameters: AllowedParentClasses.
@@ -127,12 +51,6 @@ Lint/MixedRegexpCaptureTypes:
 Lint/NextWithoutAccumulator:
   Exclude:
     - 'lib/mongo/operation/shared/result/aggregatable.rb'
-
-# Offense count: 2
-Lint/NoReturnInBeginEndBlocks:
-  Exclude:
-    - 'lib/mongo/socket/ocsp_verifier.rb'
-    - 'spec/runners/change_streams/test.rb'
 
 # Offense count: 1
 Lint/NonLocalExitFromIterator:

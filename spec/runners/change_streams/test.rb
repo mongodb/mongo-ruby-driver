@@ -98,8 +98,8 @@ module Mongo
       end
 
       def run
-        change_stream = begin
-          @target.watch(@pipeline, ::Utils.snakeize_hash(@options))
+        begin
+          change_stream = @target.watch(@pipeline, ::Utils.snakeize_hash(@options))
         rescue Mongo::Error::OperationFailure::Family => e
           return {
             result: {
