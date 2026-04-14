@@ -297,7 +297,8 @@ describe 'Retryable reads errors tests' do
       let(:client) do
         authorized_client.with(
           retry_reads: true,
-          read: { mode: :primary_preferred }
+          read: { mode: :primary_preferred },
+          enable_overload_retargeting: true
         )
       end
 

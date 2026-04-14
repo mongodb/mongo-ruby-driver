@@ -15,7 +15,6 @@
 # limitations under the License.
 
 require 'mongo/retryable/backpressure'
-require 'mongo/retryable/token_bucket'
 require 'mongo/retryable/retry_policy'
 require 'mongo/retryable/read_worker'
 require 'mongo/retryable/write_worker'
@@ -67,10 +66,11 @@ module Mongo
     # Whether the failed server should be deprioritized during server
     # selection for a retry attempt. For sharded and load-balanced
     # topologies, servers are always deprioritized on any retryable error.
-    # For replica sets, servers are only deprioritized when the error
-    # carries the SystemOverloadedError label.
+    # For replica sets, servers are deprioritized on overload errors only
+    # when enableOverloadRetargeting is enabled.
     def deprioritize_server?(cluster, error)
       return true if cluster.sharded? || cluster.load_balanced?
+      return false unless client.options[:enable_overload_retargeting]
 
       error.respond_to?(:label?) && error.label?('SystemOverloadedError')
     end
@@ -120,7 +120,7 @@ module Mongo
       error_count = 0
       loop do
         result = yield
-        client.retry_policy.record_success(is_retry: error_count > 0)
+
         return result
       rescue Error::TimeoutError
         raise

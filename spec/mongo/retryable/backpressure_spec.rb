@@ -12,16 +12,8 @@ describe Mongo::Retryable::Backpressure do
       expect(described_class::MAX_BACKOFF).to eq(10)
     end
 
-    it 'defines MAX_RETRIES as 5' do
-      expect(described_class::MAX_RETRIES).to eq(5)
-    end
-
-    it 'defines RETRY_TOKEN_RETURN_RATE as 0.1' do
-      expect(described_class::RETRY_TOKEN_RETURN_RATE).to eq(0.1)
-    end
-
-    it 'defines DEFAULT_RETRY_TOKEN_CAPACITY as 1000' do
-      expect(described_class::DEFAULT_RETRY_TOKEN_CAPACITY).to eq(1000)
+    it 'defines DEFAULT_MAX_RETRIES as 2' do
+      expect(described_class::DEFAULT_MAX_RETRIES).to eq(2)
     end
   end
 

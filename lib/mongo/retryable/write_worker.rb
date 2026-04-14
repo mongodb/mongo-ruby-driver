@@ -111,11 +111,9 @@ module Mongo
           error_count = 0
           error_to_raise = nil
           begin
-            result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+            server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, nil, context
             end
-            retry_policy.record_success(is_retry: error_count > 0) if error_count > 0
-            result
           rescue Error::TimeoutError
             raise
           rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
@@ -254,7 +252,7 @@ module Mongo
         connection_succeeded = false
         was_starting = false
 
-        result = server.with_connection(
+        server.with_connection(
           connection_global_id: context.connection_global_id,
           context: context
         ) do |connection|
@@ -268,8 +266,6 @@ module Mongo
           # it later for the retry as well.
           yield connection, txn_num, context.dup
         end
-        retry_policy.record_success(is_retry: false)
-        result
       rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure::Family => e
         e.add_notes('modern retry', 'attempt 1')
 
@@ -344,11 +340,9 @@ module Mongo
 
         attempt = attempt ? attempt + 1 : 2
         log_retry(original_error, message: 'Write retry')
-        result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
         end
-        retry_policy.record_success(is_retry: true)
-        result
       rescue *retryable_exceptions, Error::PoolError => e
         if retryable_overload_error?(e)
           e.add_notes('modern retry', "attempt #{attempt}")
@@ -414,7 +408,6 @@ module Mongo
             result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, txn_num, context
             end
-            retry_policy.record_success(is_retry: true)
             return result
           rescue Error::TimeoutError
             raise
@@ -430,7 +423,6 @@ module Mongo
             unless e.respond_to?(:label?) && e.label?('NoWritesPerformed')
               error_to_raise = e
             end
-            retry_policy.record_non_overload_retry_failure unless is_overload
             context = context.with(overload_only_retry: false) unless is_overload
             failed_server = server
             last_error = e

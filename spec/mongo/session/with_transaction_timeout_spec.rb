@@ -11,7 +11,7 @@ require 'spec_helper'
 # the language allows to expose the underlying error as a cause of a timeout
 # error." Ruby supports this via Exception#cause.
 describe 'Mongo::Session#with_transaction timeout enforcement' do
-  let(:retry_policy) { Mongo::Retryable::RetryPolicy.new(adaptive_retries: false) }
+  let(:retry_policy) { Mongo::Retryable::RetryPolicy.new }
 
   let(:client) do
     instance_double(Mongo::Client).tap do |c|

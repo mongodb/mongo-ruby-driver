@@ -2,26 +2,24 @@
 
 module Mongo
   module Retryable
-    # Encapsulates the retry policy for client backpressure, combining
-    # exponential backoff with jitter and an optional token bucket for
-    # adaptive retries.
+    # Encapsulates the retry policy for client backpressure with
+    # exponential backoff and jitter.
     #
     # One instance is created per Client and shared across all operations
     # on that client.
     #
     # @api private
     class RetryPolicy
+      # @return [ Integer ] The maximum number of overload retries.
+      attr_reader :max_retries
+
       # Create a new retry policy.
       #
-      # @param [ true | false ] adaptive_retries Whether the adaptive
-      #   retry token bucket is enabled.
-      def initialize(adaptive_retries: false)
-        @token_bucket = adaptive_retries ? TokenBucket.new : nil
+      # @param [ Integer ] max_retries The maximum number of overload
+      #   retry attempts. Defaults to Backpressure::DEFAULT_MAX_RETRIES.
+      def initialize(max_retries: Backpressure::DEFAULT_MAX_RETRIES)
+        @max_retries = max_retries
       end
-
-      # @return [ TokenBucket | nil ] The token bucket, if adaptive
-      #   retries are enabled.
-      attr_reader :token_bucket
 
       # Calculate the backoff delay for a given retry attempt.
       #
@@ -35,46 +33,21 @@ module Mongo
 
       # Determine whether an overload retry should be attempted.
       #
-      # Checks that the attempt number does not exceed MAX_RETRIES,
-      # that the backoff delay would not exceed the CSOT deadline (if set),
-      # and that a token is available (if adaptive retries are enabled).
-      #
       # @param [ Integer ] attempt The retry attempt number (1-indexed).
       # @param [ Float ] delay The backoff delay in seconds.
-      # @param [ Mongo::CsotTimeoutHolder | nil ] context The operation
+      # @param [ Mongo::Operation::Context | nil ] context The operation
       #   context (for CSOT deadline checking).
       #
       # @return [ true | false ] Whether the retry should proceed.
       def should_retry_overload?(attempt, delay, context: nil)
-        return false if attempt > Backpressure::MAX_RETRIES
+        return false if attempt > @max_retries
         return false if exceeds_deadline?(delay, context)
-        return false if @token_bucket && !@token_bucket.consume(1)
 
         true
       end
 
-      # Record a successful operation by depositing tokens into the
-      # bucket.
-      #
-      # @param [ true | false ] is_retry Whether the success came from
-      #   a retried attempt.
-      def record_success(is_retry:)
-        return unless @token_bucket
-
-        tokens = Backpressure::RETRY_TOKEN_RETURN_RATE
-        tokens += 1 if is_retry
-        @token_bucket.deposit(tokens)
-      end
-
-      # Record a non-overload failure during a retry attempt by
-      # depositing 1 token.
-      def record_non_overload_retry_failure
-        @token_bucket&.deposit(1)
-      end
-
       private
 
-      # Check whether the backoff delay would exceed the CSOT deadline.
       def exceeds_deadline?(delay, context)
         return false unless context&.csot?
 
