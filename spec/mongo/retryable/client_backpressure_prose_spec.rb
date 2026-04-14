@@ -86,7 +86,7 @@ describe 'Client Backpressure Prose Tests' do
   end
 
   # -------------------------------------------------------------------------
-  # Test 3: Overload Errors are Retried MAX_RETRIES Times
+  # Test 3: Overload Errors are Retried DEFAULT_MAX_RETRIES Times
   # -------------------------------------------------------------------------
   describe 'Test 3: overload errors are retried DEFAULT_MAX_RETRIES times' do
     include_context 'with read worker'
