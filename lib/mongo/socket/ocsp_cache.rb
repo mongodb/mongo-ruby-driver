@@ -19,7 +19,7 @@ module Mongo
     # This module caches OCSP responses for their indicated validity time.
     #
     # The key is the CertificateId used for the OCSP request.
-    # The value is the SingleResponse.
+    # The value is an OcspVerifier::Response.
     #
     # @api private
     module OcspCache
