@@ -120,10 +120,13 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
     context 'when callback raises TransientTransactionError and retry timeout is exceeded' do
       let(:transient_error) { make_transient_error }
 
-      it 'propagates the error as TimeoutError including the transient error message' do
+      it 'propagates the error as TimeoutError with the same labels as the wrapped error' do
         with_expired_deadline_after(initial_calls: 1) do
           ex = expect { session.with_transaction(timeout_ms: 1) { raise transient_error } }
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(transient_error.message) }
+          ex.to raise_error(Mongo::Error::TimeoutError) do |e|
+            expect(e.message).to include(transient_error.message)
+            expect(e.labels).to match_array(transient_error.labels)
+          end
         end
       end
     end
@@ -133,14 +136,17 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
 
       before { allow(session).to receive(:commit_transaction) { raise commit_error } }
 
-      it 'propagates the error as TimeoutError including the commit error message' do
+      it 'propagates the error as TimeoutError with the same labels as the wrapped error' do
         with_expired_deadline_after(initial_calls: 2) do
           ex = expect do
             session.with_transaction(timeout_ms: 1) do
               session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_IN_PROGRESS_STATE)
             end
           end
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(commit_error.message) }
+          ex.to raise_error(Mongo::Error::TimeoutError) do |e|
+            expect(e.message).to include(commit_error.message)
+            expect(e.labels).to match_array(commit_error.labels)
+          end
         end
       end
     end
@@ -150,14 +156,17 @@ describe 'Mongo::Session#with_transaction timeout enforcement' do
 
       before { allow(session).to receive(:commit_transaction) { raise commit_error } }
 
-      it 'propagates the error as TimeoutError including the commit error message' do
+      it 'propagates the error as TimeoutError with the same labels as the wrapped error' do
         with_expired_deadline_after(initial_calls: 2) do
           ex = expect do
             session.with_transaction(timeout_ms: 1) do
               session.instance_variable_set(:@state, Mongo::Session::TRANSACTION_IN_PROGRESS_STATE)
             end
           end
-          ex.to raise_error(Mongo::Error::TimeoutError) { |e| expect(e.message).to include(commit_error.message) }
+          ex.to raise_error(Mongo::Error::TimeoutError) do |e|
+            expect(e.message).to include(commit_error.message)
+            expect(e.labels).to match_array(commit_error.labels)
+          end
         end
       end
     end
