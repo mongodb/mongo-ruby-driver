@@ -34,40 +34,7 @@ describe 'Client Backpressure backoff prose tests' do
   end
 
   # -------------------------------------------------------------------------
-  # Test 4: Backoff is not applied for non-overload retryable errors
-  # -------------------------------------------------------------------------
-  describe 'Test 4: backoff is not applied for non-overload retryable errors' do
-    it 'does not apply backoff when retrying a non-overload retryable error' do
-      admin_client.command(
-        configureFailPoint: 'failCommand',
-        mode: { times: 1 },
-        data: {
-          failCommands: %w[find],
-          errorCode: 91,
-          errorLabels: %w[RetryableError]
-        }
-      )
-
-      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-      subscriber.clear_events!
-
-      start_time = Mongo::Utils.monotonic_time
-      collection.find.first
-      elapsed = Mongo::Utils.monotonic_time - start_time
-
-      # BASE_BACKOFF is 5s. Without backoff, the operation completes
-      # well under 2 seconds even on slow CI.
-      expect(elapsed).to be < 2.0
-
-      find_failed = subscriber.failed_events.select { |e| e.command_name == 'find' }
-      find_succeeded = subscriber.succeeded_events.select { |e| e.command_name == 'find' }
-      expect(find_failed.length).to eq(1)
-      expect(find_succeeded.length).to eq(1)
-    end
-  end
-
-  # -------------------------------------------------------------------------
-  # Proposed Test 4: Backoff is applied if and only if the error is an
+  # Test 4: Backoff is applied if and only if the error is an
   # overload error (mixed overload + non-overload in the overload loop)
   # -------------------------------------------------------------------------
   describe 'Test 5: backoff applied only for overload errors in overload retry loop' do
