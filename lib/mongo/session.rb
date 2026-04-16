@@ -1408,10 +1408,16 @@ module Mongo
     end
 
     # Implements makeTimeoutError(lastError) from the transactions-convenient-api spec.
-    # In CSOT mode raises TimeoutError with last_error's message included as a substring.
+    # In CSOT mode raises TimeoutError with last_error's message and labels copied.
     # In non-CSOT mode re-raises last_error directly.
     def make_timeout_error_from(last_error, timeout_message)
-      raise Mongo::Error::TimeoutError, "#{timeout_message}: #{last_error}" if @with_transaction_timeout_ms
+      if @with_transaction_timeout_ms
+        timeout_error = Mongo::Error::TimeoutError.new("#{timeout_message}: #{last_error}")
+        if last_error.respond_to?(:labels)
+          last_error.labels.each { |label| timeout_error.add_label(label) }
+        end
+        raise timeout_error
+      end
 
       raise last_error
     end

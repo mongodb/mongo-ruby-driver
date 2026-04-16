@@ -132,8 +132,11 @@ describe 'Retryable writes prose test 6: error propagation' do
   # some errors with NoWritesPerformed and some without.
   context 'Case 3: mixed errors with and without NoWritesPerformed' do
     it 'returns the error without NoWritesPerformed (91)' do
-      # Step 2: Via CommandFailedEvent, configure a fail point with
-      # error code 91 and NoWritesPerformed for subsequent retries.
+      # Step 3 (set up before step 2 so the listener is active when
+      # the first failure occurs): Via CommandFailedEvent, configure
+      # a fail point with error code 91 and NoWritesPerformed for
+      # subsequent retries. Configure only if the failed event is for
+      # the first error configured in step 2.
       failpoint_set = false
       subscriber = Mrss::EventSubscriber.new
       client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
@@ -154,8 +157,9 @@ describe 'Retryable writes prose test 6: error propagation' do
         end
       end
 
-      # Step 3: Configure initial fail point with error code 91
-      # WITHOUT NoWritesPerformed.
+      # Step 2: Configure initial fail point with error code 91
+      # (ShutdownInProgress) with RetryableError and
+      # SystemOverloadedError labels, without NoWritesPerformed.
       admin_client.command(
         configureFailPoint: 'failCommand',
         mode: { times: 1 },
