@@ -531,7 +531,7 @@ module Mongo
           candidate[:artt]
         end
 
-        # Default for legacy signarure
+        # Default for legacy signature
         local_threshold ||= self.local_threshold
 
         threshold = nearest_candidate[:artt] + local_threshold

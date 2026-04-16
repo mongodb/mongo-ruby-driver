@@ -52,7 +52,7 @@ module Mongo
       #
       # @see https://jira.mongodb.org/browse/SECURITY-621
       #
-      # @return [ true | fase ] Whether the server's signature was verified.
+      # @return [ true | false ] Whether the server's signature was verified.
       def server_verified?
         !!@server_verified
       end

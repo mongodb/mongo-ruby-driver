@@ -212,7 +212,7 @@ module Mongo
       # @return [Hash] The projection.
       field :project, Document
 
-      # Converts legacy query messages to the appropriare OP_COMMAND style
+      # Converts legacy query messages to the appropriate OP_COMMAND style
       # message.
       #
       # @since 2.1.0

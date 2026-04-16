@@ -74,7 +74,7 @@ module Mongo
     # @option options :j [ true, false ] Whether to acknowledge a write to
     #   the journal.
     # @option options :fsync [ true, false ] Should the write be synced to
-    #   disc.
+    #   disk.
     # @option options :wtimeout [ Integer ] The number of milliseconds to
     #   wait for acknowledgement before raising an error.
     #

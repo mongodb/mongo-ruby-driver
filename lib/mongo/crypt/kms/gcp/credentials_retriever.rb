@@ -18,7 +18,7 @@ module Mongo
   module Crypt
     module KMS
       module GCP
-        # This class retrieves GPC credentials using Google Compute Engine
+        # This class retrieves GCP credentials using Google Compute Engine
         # metadata host. This should be used when the driver is used on the
         # Google Compute Engine instance.
         #

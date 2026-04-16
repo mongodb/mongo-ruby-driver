@@ -84,7 +84,7 @@ describe Mongo::Server::AppMetadata::Environment do
     end
   end
 
-  shared_examples_for 'running under Kerbenetes' do
+  shared_examples_for 'running under Kubernetes' do
     it 'detects that kubernetes is present' do
       expect(env.container['orchestrator']).to be == 'kubernetes'
     end

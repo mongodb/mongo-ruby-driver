@@ -246,7 +246,7 @@ module Mongo
       #   Returns the status message.
       #   @param [ FFI::Pointer ] status A pointer to a mongocrypt_status_t.
       #   @param [ FFI::Pointer | nil ] len (out param) An optional pointer to a
-      #     uint32, where the length of the retun string will be written.
+      #     uint32, where the length of the return string will be written.
       #   @return [ String ] The status message.
       attach_function :mongocrypt_status_message, %i[pointer pointer], :string
 

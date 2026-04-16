@@ -317,7 +317,7 @@ module Mongo
         KMS::MasterKeyDocument.new(provider, options)
       end
 
-      # Returns the corresponding update document for each for of the given
+      # Returns the corresponding update document for each of the given
       # data key documents.
       #
       # @param [ Array<Hash> ] documents the data key documents

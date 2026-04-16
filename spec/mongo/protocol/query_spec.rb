@@ -205,7 +205,7 @@ describe Mongo::Protocol::Query do
         context 'partial flag' do
           let(:flags) { [ :partial ] }
 
-          it 'sets the eigth bit' do
+          it 'sets the eighth bit' do
             expect(field).to be_int32(128)
           end
         end

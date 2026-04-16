@@ -3,7 +3,7 @@
 module Mongo
   class Error
     # This exception is raised when stringprep validation fails, such as due to
-    #   character being present or bidirection data being invalid.
+    #   character being present or bidirectional data being invalid.
     #
     # @since 2.6.0
     class FailedStringPrepValidation < Error

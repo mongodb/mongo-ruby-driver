@@ -142,7 +142,7 @@ module Mongo
       @server_selection_semaphore = Semaphore.new
       @topology = Topology.initial(self, monitoring, options)
       # State change lock is similar to the sdam flow lock, but is designed
-      # to serialize state changes initated by consumers of Cluster
+      # to serialize state changes initiated by consumers of Cluster
       # (e.g. application connecting or disconnecting the cluster), so that
       # e.g. an application calling disconnect-connect-disconnect rapidly
       # does not put the cluster into an inconsistent state.
@@ -829,13 +829,13 @@ module Mongo
       return if addresses.include?(address)
 
       opts = options.merge(monitor: false)
-      # If we aren't starting the montoring threads, we also don't want to
+      # If we aren't starting the monitoring threads, we also don't want to
       # start the pool's populator thread.
       opts.merge!(populator_io: false) unless options.fetch(:monitoring_io, true)
       # Note that in a load-balanced topology, every server must be a
       # load balancer (load_balancer: true is specified in the options)
       # but this option isn't set here because we are required by the
-      # specifications to pretent the server started out as an unknown one
+      # specifications to pretend the server started out as an unknown one
       # and publish server description change event into the load balancer
       # one. The actual correct description for this server will be set
       # by the fabricate_lb_sdam_events_and_set_server_type method.

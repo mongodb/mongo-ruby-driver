@@ -20,7 +20,7 @@ module Mongo
     #
     # @api private
     module Helpers
-      # Executes drop operation and and ignores NamespaceNotFound error.
+      # Executes drop operation and ignores NamespaceNotFound error.
       #
       # @param [ Operation::Drop ] operation Drop operation to be executed.
       # @param [ Session ] session Session to be use for execution.

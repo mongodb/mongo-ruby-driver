@@ -18,7 +18,7 @@ module Mongo
   class Monitoring
     module Event
       module Cmap
-        # Event published when a connection is successfully checked out out of a pool.
+        # Event published when a connection is successfully checked out of a pool.
         #
         # @since 2.9.0
         class ConnectionCheckedOut < Base

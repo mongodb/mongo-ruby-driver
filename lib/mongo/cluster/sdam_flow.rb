@@ -167,8 +167,8 @@ class Mongo::Cluster
           # is is imperative to NOT pass updated_desc's RS name to
           # topology constructor here.
           # During processing we may remove the server whose updated_desc
-          # we are be processing (e.g. the RS name mismatch case again),
-          # in which case topoogy type will go back to RS without primary
+          # we are processing (e.g. the RS name mismatch case again),
+          # in which case topology type will go back to RS without primary
           # in the check_if_has_primary step.
           @topology = Topology::ReplicaSetWithPrimary.new(
             # Do not pass updated_desc's RS name here

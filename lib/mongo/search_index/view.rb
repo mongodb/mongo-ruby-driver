@@ -103,7 +103,7 @@ module Mongo
 
       # Iterate over the search indexes.
       #
-      # @param [ Proc ] block if given, each search index will be yieleded to
+      # @param [ Proc ] block if given, each search index will be yielded to
       #    the block.
       #
       # @return [ self | Enumerator ] if a block is given, self is returned.

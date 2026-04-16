@@ -33,7 +33,7 @@ module Mongo
       #
       # @api private
       def self.message(key)
-        message = 'Invalid update document provided. Updates documents must only '
+        message = 'Invalid update document provided. Update documents must only '
         message += "contain only atomic modifiers. The \"#{key}\" key is invalid."
         message
       end

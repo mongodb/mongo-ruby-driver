@@ -16,7 +16,7 @@ describe Mongo::Error::CryptError do
       end
     end
 
-    context 'with code' do
+    context 'without code' do
       let(:error) { described_class.new(message) }
 
       it 'correctly generates the error message' do

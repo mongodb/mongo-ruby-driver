@@ -45,7 +45,7 @@ module Mongo
       # the cluster is initialized it no longer uses this timeout.
       # Unfortunately server selector reads server selection timeout out of
       # the cluster, and this behavior is required by Cluster#next_primary
-      # which takes no arguments. When next_primary is removed we can revsit
+      # which takes no arguments. When next_primary is removed we can revisit
       # using the same cluster object with different server selection timeouts.
     ].freeze
 
@@ -612,7 +612,7 @@ module Mongo
         begin
           @cluster.close
         rescue StandardError => e
-          log_warn("Eror closing cluster in client constructor's exception handler: #{e.class}: #{e}")
+          log_warn("Error closing cluster in client constructor's exception handler: #{e.class}: #{e}")
           # Drop this exception so that the original exception is raised
         end
         raise

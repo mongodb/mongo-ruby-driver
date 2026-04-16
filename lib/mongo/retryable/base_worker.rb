@@ -28,7 +28,7 @@ module Mongo
                      :select_server
 
       # @return [ Mongo::Retryable ] retryable A reference to the client object
-      #   that instatiated this worker.
+      #   that instantiated this worker.
       attr_reader :retryable
 
       # Constructs a new worker.

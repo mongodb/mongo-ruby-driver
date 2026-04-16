@@ -211,7 +211,7 @@ describe Mongo::Operation::Update do
           expect(result.matched_count).to eq(0)
         end
 
-        it 'retruns the upserted id' do
+        it 'returns the upserted id' do
           expect(result.upserted_id).to be_a(BSON::ObjectId)
         end
       end

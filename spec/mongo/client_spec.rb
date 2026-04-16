@@ -517,7 +517,7 @@ describe Mongo::Client do
         new_local_client_nmio([ 'localhost' ], server_api: { version: '1' })
       end
 
-      it 'is not transfered to the collection' do
+      it 'is not transferred to the collection' do
         expect(database.options[:server_api]).to be_nil
       end
     end

@@ -4,7 +4,7 @@ require 'lite_spec_helper'
 
 describe Mongo::Protocol::Registry do
   describe '.get' do
-    context 'when the type has a correspoding class' do
+    context 'when the type has a corresponding class' do
       before do
         described_class.register(Mongo::Protocol::Query::OP_CODE, Mongo::Protocol::Query)
       end

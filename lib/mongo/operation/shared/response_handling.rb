@@ -113,8 +113,8 @@ module Mongo
       # AND the server does not support adding the RetryableWriteError label OR
       #   the error is a network error (i.e. the driver must add the label)
       #
-      # AND the error occured during a commitTransaction or abortTransaction
-      #   OR the error occured during a write outside of a transaction on a
+      # AND the error occurred during a commitTransaction or abortTransaction
+      #   OR the error occurred during a write outside of a transaction on a
       #   client that has retry writes enabled.
       #
       # If these conditions are met, the original error will be mutated.

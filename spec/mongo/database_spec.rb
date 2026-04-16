@@ -102,7 +102,7 @@ describe Mongo::Database do
           new_local_client_nmio([ 'localhost' ], server_api: { version: '1' })
         end
 
-        it 'is not transfered to the collection' do
+        it 'is not transferred to the collection' do
           expect(client.options[:server_api]).to eq({ 'version' => '1' })
           collection.options[:server_api].should be_nil
         end

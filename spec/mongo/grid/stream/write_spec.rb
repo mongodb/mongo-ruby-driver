@@ -323,7 +323,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
       end
 
-      context 'when the index creation is done explicitely' do
+      context 'when the index creation is done explicitly' do
         before do
           fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, unique: false)
         end

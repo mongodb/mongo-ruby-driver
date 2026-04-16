@@ -229,7 +229,7 @@ module Mongo
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Mongo::Session ] :session The session to use for the operation.
-        # @option ops [ Object ] :comment A user-provided
+        # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
         # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
         #    Must be a non-negative integer. An explicit value of 0 means infinite.

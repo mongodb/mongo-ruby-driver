@@ -104,7 +104,7 @@ describe Mongo::Session::SessionPool do
         context 'in load-balanced topology' do
           require_topology :load_balanced
 
-          it 'doed not dispose of the old session' do
+          it 'does not dispose of the old session' do
             old_sessions = [ old_session_a, old_session_b ]
             expect(old_sessions).to include(checked_out_session)
             expect(old_sessions).to include(checked_out_session)

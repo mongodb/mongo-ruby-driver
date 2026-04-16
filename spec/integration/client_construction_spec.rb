@@ -86,7 +86,7 @@ describe 'Client construction' do
       expect(client.options[:connect]).to eq :direct
     end
 
-    context 'direct connection with mismached me' do
+    context 'direct connection with mismatched me' do
       let(:address) { ClusterConfig.instance.alternate_address.to_s }
 
       let(:client) do

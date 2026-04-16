@@ -25,7 +25,7 @@ module Mongo
     #
     # @api private
     class Handle
-      # @returns [ Crypt::KMS::Credentials ] Credentials for KMS providers.
+      # @return [ Crypt::KMS::Credentials ] Credentials for KMS providers.
       attr_reader :kms_providers
 
       # Creates a new Handle object and initializes it with options

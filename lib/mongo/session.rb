@@ -34,7 +34,7 @@ module Mongo
     # Initialize a Session.
     #
     # A session can be explicit or implicit. Lifetime of explicit sessions is
-    # managed by the application - applications explicitry create such sessions
+    # managed by the application - applications explicitly create such sessions
     # and explicitly end them. Implicit sessions are created automatically by
     # the driver, and their lifetime is managed by the driver.
     #
@@ -630,7 +630,7 @@ module Mongo
     #
     # @option options [ Integer ] :max_commit_time_ms The maximum amount of
     #   time to allow a single commitTransaction command to run, in milliseconds.
-    #   This options is deprecated, use :timeout_ms instead.
+    #   This option is deprecated, use :timeout_ms instead.
     # @option options [ Hash ] :read_concern The read concern options hash,
     #   with the following optional keys:
     #   - *:level* -- the read preference level as a symbol; valid values
@@ -1104,7 +1104,7 @@ module Mongo
       end
     end
 
-    # Ensure that the read preference of a command primary.
+    # Ensure that the read preference of a command is primary.
     #
     # @example
     #   session.validate_read_preference!(command)

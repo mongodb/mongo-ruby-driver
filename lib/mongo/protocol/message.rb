@@ -444,7 +444,7 @@ module Mongo
       # and the op code for the message
       #
       # Currently uses hardcoded 0 for request id and response to as their
-      # values are irrelevent to the server
+      # values are irrelevant to the server
       #
       # @param buffer [String] Buffer to receive the header
       # @return [String] Serialized header

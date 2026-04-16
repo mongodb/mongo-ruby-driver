@@ -331,7 +331,7 @@ module Mongo
 
           # When we want to raise the original error, we must not run the
           # rescue blocks below that add diagnostics because the diagnostics
-          # added would either be rendundant (e.g. modern retry note) or wrong
+          # added would either be redundant (e.g. modern retry note) or wrong
           # (e.g. "attempt 2", we are raising the exception produced in the
           # first attempt and haven't attempted the second time). Use the
           # special marker class to bypass the ordinarily applicable rescues.

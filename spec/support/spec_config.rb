@@ -556,7 +556,7 @@ class SpecConfig
       ssl: true,
       ssl_verify: true,
     }.tap do |options|
-      # We should use bundled cetificates for ssl except for testing against
+      # We should use bundled certificates for ssl except for testing against
       # Atlas instances. Atlas instances have addresses in domains
       # mongodb.net or mongodb-dev.net.
       if @mongodb_uri.servers.grep(/mongodb.*\.net/).empty?

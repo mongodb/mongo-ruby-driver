@@ -103,7 +103,7 @@ module Mongo
     # @return [ Cluster ] cluster The server cluster.
     attr_reader :cluster
 
-    # @return [ nil | Monitor ] monitor The server monitor. nil if the servenr
+    # @return [ nil | Monitor ] monitor The server monitor. nil if the server
     #   was created with monitoring_io: false option.
     attr_reader :monitor
 
@@ -164,8 +164,8 @@ module Mongo
 
     # The compressor negotiated by the server monitor, if any.
     #
-    # This attribute is nil if no server check has not yet completed, and if
-    # no compression was negatiated.
+    # This attribute is nil if no server check has yet completed, and if
+    # no compression was negotiated.
     #
     # @note Compression is negotiated for each connection separately.
     #
