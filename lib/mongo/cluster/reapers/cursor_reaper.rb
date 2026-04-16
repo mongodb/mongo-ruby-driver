@@ -177,9 +177,10 @@ module Mongo
           end
 
           unless server
-            # TODO: We currently don't have a server for the address that the
-            # cursor is associated with. We should leave the cursor in the
-            # queue to be killed at a later time (when the server comes back).
+            # The server for this cursor has gone away --- maybe temporarily,
+            # maybe permanently, but we can't know. To prevent connections from
+            # leaking in the case of a permanent failure, we'll just silently
+            # drop this killspec and move on.
             next
           end
 
