@@ -37,7 +37,7 @@ describe 'Client Backpressure backoff prose tests' do
   # Test 4: Backoff is applied if and only if the error is an
   # overload error (mixed overload + non-overload in the overload loop)
   # -------------------------------------------------------------------------
-  describe 'Test 5: backoff applied only for overload errors in overload retry loop' do
+  describe 'Test 4: backoff applied only for overload errors in overload retry loop' do
     it 'applies backoff for the overload error but not for subsequent non-overload errors' do
       # Configure first fail point: overload error, fires once.
       admin_client.command(
