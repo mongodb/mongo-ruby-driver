@@ -372,19 +372,25 @@ module Mongo
       end
 
       # Retry loop for overload write errors with exponential backoff.
+      #
+      # Per the client-backpressure spec, backoff is applied if and only
+      # if the error triggering the retry is an overload error. Non-overload
+      # retryable errors that occur within this loop are retried immediately
+      # (without backoff) but still count toward MAX_RETRIES.
       def overload_write_retry(last_error, session, txn_num, context:, failed_server:, error_count:,
                                was_starting_transaction: false)
         # Track the error to return per the NoWritesPerformed spec rules:
         # - first error is always saved
         # - only update when a new error does NOT have NoWritesPerformed
         error_to_raise = last_error
+        last_was_overload = true
 
         loop do
-          delay = retry_policy.backoff_delay(error_count)
+          delay = last_was_overload ? retry_policy.backoff_delay(error_count) : 0
           raise error_to_raise unless retry_policy.should_retry_overload?(error_count, delay, context: context)
 
           log_retry(last_error, message: 'Write retry (overload backoff)')
-          sleep(delay)
+          sleep(delay) if last_was_overload
 
           begin
             server = select_server(
@@ -423,6 +429,7 @@ module Mongo
             unless e.respond_to?(:label?) && e.label?('NoWritesPerformed')
               error_to_raise = e
             end
+            last_was_overload = is_overload
             context = context.with(overload_only_retry: false) unless is_overload
             failed_server = server
             last_error = e
