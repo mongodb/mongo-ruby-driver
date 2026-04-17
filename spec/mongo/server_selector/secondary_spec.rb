@@ -177,7 +177,7 @@ describe Mongo::ServerSelector::Secondary do
         context 'no matching candidates' do
           let(:candidates) { [ primary, secondary, secondary ] }
 
-          it 'returns an emtpy array' do
+          it 'returns an empty array' do
             expect(selector.send(:select_in_replica_set, candidates)).to be_empty
           end
         end

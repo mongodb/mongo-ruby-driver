@@ -167,7 +167,7 @@ describe Mongo::Grid::File::Chunk do
       end
     end
 
-    context 'when the data is larger that the default size' do
+    context 'when the data is larger than the default size' do
       let(:data_size) do
         Mongo::Grid::File::Chunk::DEFAULT_SIZE * 3
       end
@@ -207,7 +207,7 @@ describe Mongo::Grid::File::Chunk do
         expect(chunks[3].n).to eq(3)
       end
 
-      it 'does to miss any bytes' do
+      it 'does not miss any bytes' do
         expect(assembled).to eq(raw_data)
       end
     end

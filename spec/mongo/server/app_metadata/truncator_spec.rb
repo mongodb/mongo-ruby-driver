@@ -47,7 +47,7 @@ describe Mongo::Server::AppMetadata::Truncator do
   describe 'MAX_DOCUMENT_SIZE' do
     it 'is 512 bytes' do
       # This test is an additional check that MAX_DOCUMENT_SIZE
-      # has not been accidentially changed.
+      # has not been accidentally changed.
       expect(described_class::MAX_DOCUMENT_SIZE).to be == 512
     end
   end
@@ -80,7 +80,7 @@ describe Mongo::Server::AppMetadata::Truncator do
         expect(truncator.document[:env][:name]).to be == 'name'
       end
 
-      it 'removes all other entries until size is satisifed' do
+      it 'removes all other entries until size is satisfied' do
         expect(truncator.document[:env].keys).to be == %w[ name d ]
       end
 
@@ -118,7 +118,7 @@ describe Mongo::Server::AppMetadata::Truncator do
         expect(truncator.document[:os][:type]).to be == 'type'
       end
 
-      it 'removes all other entries until size is satisifed' do
+      it 'removes all other entries until size is satisfied' do
         expect(truncator.document[:os].keys).to be == %w[ type d ]
       end
 

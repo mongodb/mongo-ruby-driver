@@ -84,7 +84,7 @@ module Mongo
 
         # Returns whether this topology is Single.
         #
-        # @return [ true ] Always false.
+        # @return [ false ] Always false.
         def single?
           false
         end

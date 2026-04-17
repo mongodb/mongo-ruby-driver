@@ -160,7 +160,7 @@ describe 'CRUD operations' do
     end
 
     context 'with read concern' do
-      context 'with read concern specifed on operation level' do
+      context 'with read concern specified on operation level' do
         # Read concern is not allowed in explain command, driver drops it.
         it 'drops the read concern' do
           event = Utils.get_command_event(client, 'explain') do |client|
@@ -170,7 +170,7 @@ describe 'CRUD operations' do
         end
       end
 
-      context 'with read concern specifed on collection level' do
+      context 'with read concern specified on collection level' do
         # Read concern is not allowed in explain command, driver drops it.
         it 'drops the read concern' do
           event = Utils.get_command_event(client, 'explain') do |client|
@@ -180,7 +180,7 @@ describe 'CRUD operations' do
         end
       end
 
-      context 'with read concern specifed on client level' do
+      context 'with read concern specified on client level' do
         let(:client) { authorized_client.with(read_concern: { level: :local }) }
 
         # Read concern is not allowed in explain command, driver drops it.

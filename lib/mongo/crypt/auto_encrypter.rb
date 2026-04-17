@@ -16,7 +16,7 @@
 
 module Mongo
   module Crypt
-    # An AutoEcnrypter is an object that encapsulates the behavior of
+    # An AutoEncrypter is an object that encapsulates the behavior of
     # automatic encryption. It controls all resources associated with
     # auto-encryption, including the libmongocrypt handle, key vault client
     # object, mongocryptd client object, and encryption I/O.
@@ -225,7 +225,7 @@ module Mongo
 
       # Returns a new set of options with the following changes:
       # - sets default values for all extra_options
-      # - adds --idleShtudownTimeoutSecs=60 to extra_options[:mongocryptd_spawn_args]
+      # - adds --idleShutdownTimeoutSecs=60 to extra_options[:mongocryptd_spawn_args]
       #   if not already present
       # - sets bypass_auto_encryption to false
       # - sets default key vault client

@@ -107,7 +107,7 @@ module Mongo
       # Returns the reference to the underlying mongocrypt_status_t
       # object
       #
-      # @return [ FFI::Pointer ] Pointer to the underlying mongocrypt_status_t oject
+      # @return [ FFI::Pointer ] Pointer to the underlying mongocrypt_status_t object
       def ref
         @status
       end

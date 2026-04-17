@@ -26,7 +26,7 @@ describe 'On-demand GCP Credentials' do
 
   context 'when credentials are available' do
     it 'authenticates successfully' do
-      skip 'This tests should be run inside Google Cloud only' unless ENV['TEST_FLE_GCP_AUTO']
+      skip 'These tests should be run inside Google Cloud only' unless ENV['TEST_FLE_GCP_AUTO']
       expect do
         client_encryption.create_data_key('gcp', data_key_options)
       end.not_to raise_error
@@ -35,7 +35,7 @@ describe 'On-demand GCP Credentials' do
 
   context 'when credentials are not available' do
     it 'raises an error' do
-      skip 'This tests should NOT be run inside Google Cloud only' if ENV['TEST_FLE_GCP_AUTO']
+      skip 'These tests should NOT be run inside Google Cloud only' if ENV['TEST_FLE_GCP_AUTO']
 
       expect do
         client_encryption.create_data_key('gcp', data_key_options)

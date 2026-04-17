@@ -43,7 +43,7 @@ module Mongo
     include UniversalMethods
     extend UniversalMethods
 
-    # Convenience helper to find a server by it's URI.
+    # Convenience helper to find a server by its URI.
     #
     # @since 2.0.0
     def find_server(client, address_str)

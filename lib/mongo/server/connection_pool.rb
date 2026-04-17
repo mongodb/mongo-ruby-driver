@@ -147,7 +147,7 @@ module Mongo
         # must do so under this lock.
         @lock = Mutex.new
 
-        # Background thread reponsible for maintaining the size of
+        # Background thread responsible for maintaining the size of
         # the pool to at least min_size
         @populator = Populator.new(self, options)
         @populate_semaphore = Semaphore.new
@@ -163,7 +163,7 @@ module Mongo
         @connection_requests = 0
 
         # Condition variable to enforce the second check in check_out: max_connecting.
-        # Thei condition variable should be signaled when the number of pending
+        # This condition variable should be signaled when the number of pending
         # connections decreases.
         @max_connecting_cv = Mongo::ConditionVariable.new(@lock)
         @max_connecting = options.fetch(:max_connecting, DEFAULT_MAX_CONNECTING)
@@ -820,7 +820,7 @@ module Mongo
       # @return [ true | false ] Whether this method should be called again
       #   to create more connections.
       # @raise [ Error::AuthError, Error ] The second socket-related error raised if a retry
-      # occured, or the non socket-related error
+      # occurred, or the non socket-related error
       #
       # @api private
       def populate
@@ -1255,7 +1255,7 @@ module Mongo
           connection
         elsif connection_global_id && @server.load_balancer?
           # A particular connection is requested, but it is not available.
-          # If it is nether available not checked out, we should stop here.
+          # If it is neither available nor checked out, we should stop here.
           @checked_out_connections.detect do |conn|
             conn.global_id == connection_global_id
           end.tap do |conn|

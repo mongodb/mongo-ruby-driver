@@ -186,7 +186,7 @@ module Mongo
       #
       # @param [ String ] hostname The hostname whose records should be obtained.
       #
-      # @return [ Hash ] The TXT record options (an empyt hash if no TXT
+      # @return [ Hash ] The TXT record options (an empty hash if no TXT
       #   records are found).
       #
       # @raise [ Mongo::Error::InvalidTXTRecord ] If more than one TXT record is found.

@@ -99,7 +99,7 @@ module Mongo
       # @return [Fixnum] The cursor id to get more documents from.
       field :cursor_id, Int64
 
-      # Converts legacy getMore messages to the appropriare OP_COMMAND style
+      # Converts legacy getMore messages to the appropriate OP_COMMAND style
       # message.
       #
       # @since 2.1.0

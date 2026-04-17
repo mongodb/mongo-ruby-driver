@@ -134,7 +134,7 @@ module Mongo
       rescue ::Timeout::Error
       end
 
-      # Some driver objects can be reconnected, for backwards compatibiilty
+      # Some driver objects can be reconnected, for backwards compatibility
       # reasons. Clear the thread instance variable to support this cleanly.
       if @thread.alive?
         log_warn("Failed to stop the background thread in #{self} in #{(Utils.monotonic_time - start_time).to_i} seconds: #{@thread.inspect} (thread status: #{@thread.status})")

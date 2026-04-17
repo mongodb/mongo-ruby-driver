@@ -619,7 +619,7 @@ describe Mongo::URI::SRVProtocol do
           expect(client.options[:read]).to eq(read)
         end
 
-        it 'rountrips the string with lowercase values' do
+        it 'roundtrips the string with lowercase values' do
           expect(uri.to_s).to eq('mongodb+srv://test5.test.build.10gen.cc/?readPreference=secondary&maxStalenessSeconds=120')
         end
 

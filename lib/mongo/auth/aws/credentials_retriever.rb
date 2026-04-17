@@ -137,7 +137,7 @@ module Mongo
         #
         # @raise Auth::InvalidConfiguration if a source contains an invalid set
         #   of credentials.
-        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        # @raise Error::TimeoutError if credentials cannot be retrieved within
         #   the timeout defined on the operation context.
         def obtain_credentials_from_endpoints(timeout_holder = nil)
           if (credentials = web_identity_credentials(timeout_holder)) && credentials_valid?(credentials,
@@ -159,7 +159,7 @@ module Mongo
         #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
-        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        # @raise Error::TimeoutError if credentials cannot be retrieved within
         #   the timeout.
         def ec2_metadata_credentials(timeout_holder = nil)
           timeout_holder&.check_timeout!
@@ -207,7 +207,7 @@ module Mongo
         #
         # @return [ Auth::Aws::Credentials | nil ] A set of credentials, or nil
         #   if retrieval failed.
-        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        # @raise Error::TimeoutError if credentials cannot be retrieved within
         #   the timeout defined on the operation context.
         def ecs_metadata_credentials(timeout_holder = nil)
           timeout_holder&.check_timeout!
@@ -290,7 +290,7 @@ module Mongo
         # @return [ Net::HTTPResponse | nil ] AWS API response if successful,
         #   otherwise nil.
         #
-        # @ raise Error::TimeoutError if credentials cannot be retrieved within
+        # @raise Error::TimeoutError if credentials cannot be retrieved within
         #   the timeout defined on the operation context.
         def request_web_identity_credentials(token, role_arn, role_session_name, timeout_holder)
           timeout_holder&.check_timeout!
@@ -384,7 +384,7 @@ module Mongo
         #
         # @param [ CsotTimeoutHolder | nil ] timeout_holder CSOT timeout.
         #
-        # @ raise Error::TimeoutError if deadline exceeded.
+        # @raise Error::TimeoutError if deadline exceeded.
         def with_timeout(timeout_holder, &block)
           timeout = timeout_holder&.remaining_timeout_sec! || METADATA_TIMEOUT
           exception_class = (Error::TimeoutError if timeout_holder&.csot?)

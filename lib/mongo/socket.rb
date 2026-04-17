@@ -445,7 +445,7 @@ module Mongo
     #
     # This is a separate method from +write+ for ease of mocking in the tests.
     # This method should not perform any exception mapping, upstream code
-    # sholud map exceptions.
+    # should map exceptions.
     #
     # @param [ Array<Object> ] args The data to be written.
     # @param [ Numeric ] :timeout The total timeout to the whole write operation.
@@ -459,7 +459,7 @@ module Mongo
       end
     end
 
-    # Writes data to to the socket.
+    # Writes data to the socket.
     #
     # @param [ Array<Object> ] args The data to be written.
     #
@@ -487,7 +487,7 @@ module Mongo
       end
     end
 
-    # Writes data to to the socket, the write duration is limited to +timeout+.
+    # Writes data to the socket, the write duration is limited to +timeout+.
     #
     # @param [ Array<Object> ] args The data to be written.
     # @param [ Numeric ] :timeout The total timeout to the whole write operation.

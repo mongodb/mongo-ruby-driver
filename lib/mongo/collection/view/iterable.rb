@@ -222,7 +222,7 @@ module Mongo
           QueryCache.normalized_limit(limit)
         end
 
-        # Add tailable cusror options to the command specifiction if needed.
+        # Add tailable cursor options to the command specification if needed.
         #
         # @param [ Hash ] spec The command specification.
         def maybe_set_tailable_options(spec)

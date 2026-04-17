@@ -85,7 +85,7 @@ module Mongo
         doc
       }
 
-      # Proc to transfor replace one ops.
+      # Proc to transform replace one ops.
       #
       # @since 2.1.0
       REPLACE_ONE_TRANSFORM = lambda { |doc|

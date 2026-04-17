@@ -16,7 +16,7 @@
 
 module Mongo
   class Error
-    # Exception raised if an non-existent operation type is used.
+    # Exception raised if a non-existent operation type is used.
     #
     # @since 2.0.0
     class InvalidBulkOperationType < Error

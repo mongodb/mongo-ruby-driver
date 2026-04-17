@@ -56,7 +56,7 @@ module Mongo
       #
       # @param [ Server ] server The server to monitor.
       # @param [ Event::Listeners ] event_listeners The event listeners.
-      # @param [ Monitoring ] monitoring The monitoring..
+      # @param [ Monitoring ] monitoring The monitoring.
       # @param [ Hash ] options The options.
       #
       # @option options [ Float ] :connect_timeout The timeout, in seconds, to

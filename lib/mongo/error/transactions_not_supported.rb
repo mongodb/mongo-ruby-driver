@@ -19,7 +19,7 @@ module Mongo
     # Transactions are not supported by the cluster, e.g. if the topology is
     # standalone.
     #
-    # @param [ String ] reason The reason why transactions are no supported.
+    # @param [ String ] reason The reason why transactions are not supported.
     #
     # @since 2.7.0
     class TransactionsNotSupported < Error

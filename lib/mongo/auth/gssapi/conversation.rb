@@ -17,7 +17,7 @@
 module Mongo
   module Auth
     class Gssapi
-      # Defines behaviour around a single Kerberos conversation between the
+      # Defines behavior around a single Kerberos conversation between the
       # client and the server.
       #
       # @api private

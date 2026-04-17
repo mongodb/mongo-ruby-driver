@@ -37,7 +37,7 @@ module Mongo
     class OptionsMapper
       include Loggable
 
-      # Instantates the options mapper.
+      # Instantiates the options mapper.
       #
       # @option opts [ Logger ] :logger A custom logger to use.
       def initialize(**opts)

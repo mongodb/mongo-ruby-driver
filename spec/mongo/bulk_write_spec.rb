@@ -254,7 +254,7 @@ describe Mongo::BulkWrite do
               context 'on 4.4+ servers' do
                 min_server_version '4.4'
 
-                it "doesn't raises an error" do
+                it "doesn't raise an error" do
                   expect do
                     bulk_write.execute
                   end.not_to raise_error
@@ -375,7 +375,7 @@ describe Mongo::BulkWrite do
                   )
                 end
 
-                it "doesn't raises an error" do
+                it "doesn't raise an error" do
                   expect do
                     bulk_write.execute
                   end.not_to raise_error
@@ -431,7 +431,7 @@ describe Mongo::BulkWrite do
                   )
                 end
 
-                it "doesn't raises an error" do
+                it "doesn't raise an error" do
                   expect do
                     bulk_write.execute
                   end.not_to raise_error
@@ -656,7 +656,7 @@ describe Mongo::BulkWrite do
               context 'on 4.4+ servers' do
                 min_server_version '4.4'
 
-                it "doesn't raises an error" do
+                it "doesn't raise an error" do
                   expect do
                     bulk_write.execute
                   end.not_to raise_error
@@ -908,7 +908,7 @@ describe Mongo::BulkWrite do
                 )
               end
 
-              it "doesn't raises an error" do
+              it "doesn't raise an error" do
                 expect do
                   bulk_write.execute
                 end.not_to raise_error

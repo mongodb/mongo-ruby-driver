@@ -100,7 +100,7 @@ module Mongo
         # @return [ String | nil ] the error message explaining why a valid
         #   FaaS environment was not detected, or nil if no error occurred.
         #
-        # @note These error messagess are not to be propogated to the
+        # @note These error messages are not to be propagated to the
         #   user; they are intended only for troubleshooting and debugging.)
         attr_reader :error
 
@@ -194,7 +194,7 @@ module Mongo
 
         private
 
-        # Searches the DESCRIMINATORS list to see which (if any) apply to
+        # Searches the DISCRIMINATORS list to see which (if any) apply to
         # the current environment.
         #
         # @return [ String | nil ] the name of the detected FaaS provider.
@@ -248,7 +248,7 @@ module Mongo
         end
 
         # Determines whether the named environment variable exists, and (if
-        # a pattern has been declared for that descriminator) whether the
+        # a pattern has been declared for that discriminator) whether the
         # pattern matches the value of the variable.
         #
         # @param [ String ] var the name of the environment variable

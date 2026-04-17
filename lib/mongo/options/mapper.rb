@@ -70,7 +70,7 @@ module Mongo
         end
       end
 
-      # Coverts all the keys of the options to strings.
+      # Converts all the keys of the options to strings.
       #
       # @example Convert all option keys to strings.
       #   Mapper.transform({ :name => 1 })
@@ -86,7 +86,7 @@ module Mongo
         end
       end
 
-      # Coverts all the keys of the options to symbols.
+      # Converts all the keys of the options to symbols.
       #
       # @example Convert all option keys to symbols.
       #   Mapper.transform({ 'name' => 1 })
@@ -102,7 +102,7 @@ module Mongo
         end
       end
 
-      # Coverts all the symbol values to strings.
+      # Converts all the symbol values to strings.
       #
       # @example Convert all option symbol values to strings.
       #   Mapper.transform({ :name => 1 })

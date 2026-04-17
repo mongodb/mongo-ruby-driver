@@ -272,7 +272,7 @@ describe Mongo::Address do
         end
 
         if Socket.const_defined?(:TCP_USER_TIMEOUT)
-          it 'sets the socket TCP_KEEPIDLE option' do
+          it 'sets the socket TCP_USER_TIMEOUT option' do
             expect(socket.getsockopt(Socket::IPPROTO_TCP, Socket::TCP_USER_TIMEOUT).int).to be <= 210
           end
         end

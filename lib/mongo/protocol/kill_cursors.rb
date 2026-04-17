@@ -77,7 +77,7 @@ module Mongo
       # @return [Array<Fixnum>] Cursors to kill.
       field :cursor_ids, Int64, true
 
-      # Converts legacy insert messages to the appropriare OP_COMMAND style
+      # Converts legacy insert messages to the appropriate OP_COMMAND style
       # message.
       #
       # @since 2.1.0

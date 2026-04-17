@@ -95,7 +95,7 @@ module Mongo
 
       # Read and decode scheduled kill cursors operations.
       #
-      # This method mutates instance variables without locking, so is is not
+      # This method mutates instance variables without locking, so it is not
       # thread safe. Generally, it should not be called itself, this is a helper
       # for `kill_cursor` method.
       #

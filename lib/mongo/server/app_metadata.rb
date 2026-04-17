@@ -95,7 +95,7 @@ module Mongo
 
       # @return [ Hash | nil ] The requested server API version.
       #
-      #   Thes hash can have the following items:
+      #   This hash can have the following items:
       #   - *:version* -- string
       #   - *:strict* -- boolean
       #   - *:deprecation_errors* -- boolean
@@ -138,7 +138,7 @@ module Mongo
       private
 
       # Check whether it is possible to build a valid app metadata document
-      # with params provided on intialization.
+      # with params provided on initialization.
       #
       # @raise [ Error::InvalidApplicationName ] When the metadata are invalid.
       def validate!

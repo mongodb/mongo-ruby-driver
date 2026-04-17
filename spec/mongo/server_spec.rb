@@ -85,7 +85,7 @@ describe Mongo::Server do
         end
       end
 
-      context 'when the addresses dont match' do
+      context "when the addresses don't match" do
         let(:other_address) do
           Mongo::Address.new('127.0.0.1:27018')
         end
