@@ -49,7 +49,7 @@ describe 'CSOT for encryption' do
     let(:key_vault_client) do
       ClientRegistry.instance.new_local_client(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(timeout_ms: 20)
+        SpecConfig.instance.test_options.merge(timeout_ms: 50)
       )
     end
 
@@ -73,7 +73,7 @@ describe 'CSOT for encryption' do
                                                 data: {
                                                   failCommands: [ 'insert' ],
                                                   blockConnection: true,
-                                                  blockTimeMS: 30
+                                                  blockTimeMS: 200
                                                 }
                                               })
       end
@@ -107,7 +107,7 @@ describe 'CSOT for encryption' do
                                                 data: {
                                                   failCommands: [ 'find' ],
                                                   blockConnection: true,
-                                                  blockTimeMS: 30
+                                                  blockTimeMS: 200
                                                 }
                                               })
       end
