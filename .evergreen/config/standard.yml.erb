@@ -39,7 +39,8 @@ buildvariants:
   - matrix_name: "ruby-dev"
     matrix_spec:
       ruby: "ruby-dev"
-      mongodb-version: <%= recent_mdb %>
+      # MongoDB 7.0 enterprise archive is not published for ubuntu2404.
+      mongodb-version: <%= latest_stable_mdb %>
       topology: "replica-set"
       os: ubuntu2404
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -260,17 +261,19 @@ buildvariants:
 #    tasks:
 #      - name: "test-mlaunch"
 
-  - matrix_name: "jruby-auth"
-    matrix_spec:
-      auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
-      ruby: <%= jrubies.first %>
-      mongodb-version: <%= latest_stable_mdb %>
-      topology: <%= topologies %>
-      os: ubuntu2204
-    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-    tags: ["pr"]
-    tasks:
-      - name: "run-main-test-suite"
+  # RUBY-3808: disabled — widespread TLS/EBADF failures on jruby-openssl.
+  # Re-enable once the jruby + TLS stack is investigated.
+  # - matrix_name: "jruby-auth"
+  #   matrix_spec:
+  #     auth-and-ssl: [ "auth-and-ssl", "noauth-and-nossl" ]
+  #     ruby: <%%= jrubies.first %>
+  #     mongodb-version: <%%= latest_stable_mdb %>
+  #     topology: <%%= topologies %>
+  #     os: ubuntu2204
+  #   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  #   tags: ["pr"]
+  #   tasks:
+  #     - name: "run-main-test-suite"
 
  <% [
       [latest_ruby, stable_and_rapid, 'ubuntu2204'],
