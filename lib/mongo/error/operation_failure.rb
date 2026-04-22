@@ -191,7 +191,8 @@ module Mongo
         # @option options [ true | false ] :wtimeout Whether the error is a wtimeout.
         def initialize(message = nil, result = nil, options = {})
           @details = retrieve_details(options[:document])
-          super(append_details(message, @details))
+          @server_address = normalize_server_address(options[:server_address])
+          super(append_server_address(append_details(message, @details)))
 
           @result = result
           @code = options[:code]
@@ -204,7 +205,6 @@ module Mongo
           @wtimeout = !!options[:wtimeout]
           @document = options[:document]
           @server_message = options[:server_message]
-          @server_address = normalize_server_address(options[:server_address])
         end
 
         # Whether the error is a write concern timeout.
@@ -247,6 +247,20 @@ module Mongo
           return message unless details && message
 
           message + " -- #{details.to_json}"
+        end
+
+        # Append the server address suffix to the message when the
+        # Mongo.include_server_address_in_errors flag is enabled and
+        # a server address is known.
+        #
+        # @return [ String | nil ] the message with the suffix appended,
+        #   or the original message unchanged.
+        def append_server_address(message)
+          return message unless Mongo.include_server_address_in_errors
+          return message if @server_address.nil?
+          return "(on #{@server_address})" if message.nil? || message.empty?
+
+          "#{message} (on #{@server_address})"
         end
 
         # Normalize a server_address option into a String "host:port" form.

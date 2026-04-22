@@ -594,4 +594,43 @@ describe Mongo::Error::OperationFailure do
       end
     end
   end
+
+  describe 'message rendering with server_address' do
+    let(:error) do
+      described_class.new('boom', nil, server_address: 'host-1:27017')
+    end
+
+    context 'when include_server_address_in_errors is false' do
+      it 'does not include the host in #message' do
+        expect(error.message).not_to include('host-1:27017')
+      end
+
+      it 'does not include the host in #to_s' do
+        expect(error.to_s).not_to include('host-1:27017')
+      end
+    end
+
+    context 'when include_server_address_in_errors is true' do
+      around do |example|
+        original = Mongo.include_server_address_in_errors
+        Mongo.include_server_address_in_errors = true
+        example.run
+      ensure
+        Mongo.include_server_address_in_errors = original
+      end
+
+      it 'includes the host in #message' do
+        expect(error.message).to include('boom (on host-1:27017)')
+      end
+
+      it 'includes the host in #to_s' do
+        expect(error.to_s).to include('boom (on host-1:27017)')
+      end
+
+      it 'omits the suffix when server_address is nil' do
+        e = described_class.new('boom', nil)
+        expect(e.message).not_to include('(on ')
+      end
+    end
+  end
 end
