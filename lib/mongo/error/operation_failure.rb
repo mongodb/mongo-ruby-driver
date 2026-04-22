@@ -53,6 +53,10 @@ module Mongo
         # @api experimental
         attr_reader :server_message
 
+        # @return [ String | nil ] The address ("host:port") of the server
+        #   that produced this error, if known.
+        attr_reader :server_address
+
         # Error codes and code names that should result in a failing getMore
         # command on a change stream NOT being resumed.
         #
@@ -172,6 +176,8 @@ module Mongo
         #   error document.
         # @option options [ String ] server_message The server-returned
         #   error message parsed from the response.
+        # @option options [ nil | String | Mongo::Address | Mongo::Server::Description ]
+        #   :server_address The address of the server that produced the error.
         # @option options [ Hash ] :write_concern_error_document The
         #   server-supplied write concern error document, if any.
         # @option options [ Integer ] :write_concern_error_code Error code for
@@ -198,6 +204,7 @@ module Mongo
           @wtimeout = !!options[:wtimeout]
           @document = options[:document]
           @server_message = options[:server_message]
+          @server_address = normalize_server_address(options[:server_address])
         end
 
         # Whether the error is a write concern timeout.
@@ -240,6 +247,23 @@ module Mongo
           return message unless details && message
 
           message + " -- #{details.to_json}"
+        end
+
+        # Normalize a server_address option into a String "host:port" form.
+        #
+        # @param [ nil | String | Mongo::Address | Mongo::Server::Description ] value
+        #
+        # @return [ String | nil ] The normalized address, or nil.
+        def normalize_server_address(value)
+          case value
+          when nil then nil
+          when String then value
+          when Mongo::Address then value.seed
+          when Mongo::Server::Description then value.address&.seed
+          else
+            raise ArgumentError,
+                  "server_address must be nil, String, Mongo::Address, or Mongo::Server::Description; got #{value.class}"
+          end
         end
       end
 

@@ -410,6 +410,18 @@ describe Mongo::Error::OperationFailure do
     end
   end
 
+  describe '#server_address' do
+    it 'is nil by default' do
+      error = described_class.new('msg', nil)
+      expect(error.server_address).to be_nil
+    end
+
+    it 'stores a String passed via options' do
+      error = described_class.new('msg', nil, server_address: 'host-1:27017')
+      expect(error.server_address).to eq('host-1:27017')
+    end
+  end
+
   describe '#not_master?' do
     [ 10_107, 13_435 ].each do |code|
       context "error code #{code}" do
