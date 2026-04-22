@@ -52,4 +52,22 @@ describe 'OperationFailure message' do
                              /User bogus.*is not authorized.*\[18:AuthenticationFailed\]: Authentication failed/)
     end
   end
+
+  context 'when include_server_address_in_errors is enabled' do
+    around do |example|
+      original = Mongo.include_server_address_in_errors
+      Mongo.include_server_address_in_errors = true
+      example.run
+    ensure
+      Mongo.include_server_address_in_errors = original
+    end
+
+    it 'includes the server address in the message' do
+      client.command(bogus_command: nil)
+      raise('Should have raised')
+    rescue Mongo::Error::OperationFailure => e
+      expect(e.message).to match(/\(on [^)]+:\d+\)\z/)
+      expect(e.server_address).to be_a(String)
+    end
+  end
 end
