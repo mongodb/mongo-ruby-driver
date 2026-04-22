@@ -420,6 +420,25 @@ describe Mongo::Error::OperationFailure do
       error = described_class.new('msg', nil, server_address: 'host-1:27017')
       expect(error.server_address).to eq('host-1:27017')
     end
+
+    it 'stores the seed from a Mongo::Address' do
+      addr = Mongo::Address.new('host-2:27018')
+      error = described_class.new('msg', nil, server_address: addr)
+      expect(error.server_address).to eq('host-2:27018')
+    end
+
+    it 'stores the seed from a Mongo::Server::Description' do
+      addr = Mongo::Address.new('host-3:27019')
+      desc = Mongo::Server::Description.new(addr)
+      error = described_class.new('msg', nil, server_address: desc)
+      expect(error.server_address).to eq('host-3:27019')
+    end
+
+    it 'raises ArgumentError for unsupported types' do
+      expect do
+        described_class.new('msg', nil, server_address: 42)
+      end.to raise_error(ArgumentError, /server_address must be/)
+    end
   end
 
   describe '#not_master?' do
