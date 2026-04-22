@@ -63,4 +63,26 @@ describe 'BulkWriteError message' do
       e.message.scan(' -- ').length.should be <= 1
     end
   end
+
+  context 'when include_server_address_in_errors is enabled' do
+    around do |example|
+      original = Mongo.include_server_address_in_errors
+      Mongo.include_server_address_in_errors = true
+      example.run
+    ensure
+      Mongo.include_server_address_in_errors = original
+    end
+
+    it 'includes the server address suffix in the bulk error message' do
+      collection.insert_one(_id: 1)
+      begin
+        collection.insert_many([ { _id: 1 }, { _id: 2 }, { _id: 2 } ])
+      rescue Mongo::Error::BulkWriteError => e
+        expect(e.message).to match(/\(on [^)]+:\d+(?:, [^)]+:\d+)*\)\z/)
+        expect(e.server_addresses).not_to be_empty
+      else
+        raise 'expected BulkWriteError'
+      end
+    end
+  end
 end
