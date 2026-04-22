@@ -29,6 +29,11 @@ module Mongo
     # decryption instead of BSON types.
     option :csfle_convert_to_ruby_types, default: false
 
+    # When this flag is set to true, the (host:port) of the server that produced
+    # the error is appended to error messages for OperationFailure and
+    # BulkWriteError. See RUBY-3602.
+    option :include_server_address_in_errors, default: false
+
     # Set the configuration options.
     #
     # @example Set the options.
