@@ -273,7 +273,8 @@ module Mongo
           when nil then nil
           when String then value
           when Mongo::Address then value.seed
-          when Mongo::Server::Description then value.address&.seed
+          when Mongo::Server::Description
+            value.address.is_a?(Mongo::Address) ? value.address.seed : nil
           else
             raise ArgumentError,
                   "server_address must be nil, String, Mongo::Address, or Mongo::Server::Description; got #{value.class}"
