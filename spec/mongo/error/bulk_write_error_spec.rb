@@ -48,4 +48,29 @@ describe Mongo::Error::BulkWriteError do
       expect(error.inspect).to eq('#<Mongo::Error::BulkWriteError: Multiple errors: [1]: message1; [2]: message2 (note1, note2)>')
     end
   end
+
+  describe '#server_addresses' do
+    let(:result) { { 'writeErrors' => [ { 'code' => 11_000, 'errmsg' => 'dup' } ] } }
+
+    it 'defaults to an empty array when not supplied' do
+      error = described_class.new(result)
+      expect(error.server_addresses).to eq([])
+    end
+
+    it 'stores an array of strings' do
+      error = described_class.new(result, server_addresses: [ 'h1:27017', 'h2:27017' ])
+      expect(error.server_addresses).to eq([ 'h1:27017', 'h2:27017' ])
+    end
+
+    it 'normalizes Mongo::Address entries to seed strings' do
+      addrs = [ Mongo::Address.new('h1:27017'), 'h2:27017' ]
+      error = described_class.new(result, server_addresses: addrs)
+      expect(error.server_addresses).to eq([ 'h1:27017', 'h2:27017' ])
+    end
+
+    it 'treats nil as empty' do
+      error = described_class.new(result, server_addresses: nil)
+      expect(error.server_addresses).to eq([])
+    end
+  end
 end

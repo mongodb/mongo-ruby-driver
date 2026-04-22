@@ -34,6 +34,11 @@ module Mongo
       # @return [ BSON::Document ] result The error result.
       attr_reader :result
 
+      # @return [ Array<String> ] Deduplicated list of "host:port" addresses of
+      #   the servers that produced this bulk write error. Empty when no
+      #   addresses were supplied.
+      attr_reader :server_addresses
+
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
@@ -41,10 +46,14 @@ module Mongo
       #
       # @param [ Hash ] result A processed response from the server
       #   reporting results of the operation.
+      # @param [ Array<String | Mongo::Address | Mongo::Server::Description> ]
+      #   server_addresses Addresses of the servers that produced this error.
+      #   Entries are normalized to "host:port" strings.
       #
       # @since 2.0.0
-      def initialize(result)
+      def initialize(result, server_addresses: nil)
         @result = result
+        @server_addresses = normalize_server_addresses(server_addresses)
 
         # Exception constructor behaves differently for a nil argument and
         # for no argument. Avoid passing nil explicitly.
@@ -94,6 +103,21 @@ module Mongo
         fragment = "Multiple errors: #{fragment}" if errors.length > 1
 
         fragment
+      end
+
+      def normalize_server_addresses(value)
+        return [] if value.nil?
+
+        Array(value).filter_map do |entry|
+          case entry
+          when String then entry
+          when Mongo::Address then entry.seed
+          when Mongo::Server::Description then entry.address&.seed
+          else
+            raise ArgumentError,
+                  "server_addresses entries must be String, Mongo::Address, or Mongo::Server::Description; got #{entry.class}"
+          end
+        end
       end
     end
   end
