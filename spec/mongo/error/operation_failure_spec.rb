@@ -601,6 +601,14 @@ describe Mongo::Error::OperationFailure do
     end
 
     context 'when include_server_address_in_errors is false' do
+      around do |example|
+        original = Mongo.include_server_address_in_errors
+        Mongo.include_server_address_in_errors = false
+        example.run
+      ensure
+        Mongo.include_server_address_in_errors = original
+      end
+
       it 'does not include the host in #message' do
         expect(error.message).not_to include('host-1:27017')
       end
