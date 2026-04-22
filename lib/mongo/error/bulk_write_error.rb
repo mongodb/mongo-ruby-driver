@@ -102,6 +102,10 @@ module Mongo
 
         fragment = "Multiple errors: #{fragment}" if errors.length > 1
 
+        if Mongo.include_server_address_in_errors && @server_addresses.any?
+          fragment = "#{fragment} (on #{@server_addresses.uniq.join(', ')})"
+        end
+
         fragment
       end
 
