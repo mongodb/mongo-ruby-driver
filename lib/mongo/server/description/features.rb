@@ -61,7 +61,7 @@ module Mongo
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
-        DRIVER_WIRE_VERSIONS = 8..25
+        DRIVER_WIRE_VERSIONS = 8..29
 
         # The wire protocol versions that are deprecated in this version of the
         # driver. Support for these versions will be removed in the future.
