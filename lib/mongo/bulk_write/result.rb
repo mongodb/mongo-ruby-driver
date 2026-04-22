@@ -25,6 +25,10 @@ module Mongo
         @acknowledged
       end
 
+      # @return [ Array<String> ] Deduplicated list of "host:port" addresses of
+      #   the servers that produced this bulk write's operations.
+      attr_reader :server_addresses
+
       # Constant for number removed.
       #
       # @since 2.1.0
@@ -97,13 +101,17 @@ module Mongo
       #
       # @param [ BSON::Document, Hash ] results The results document.
       # @param [ Boolean ] acknowledged Is the result acknowledged?
+      # @param [ Array<String> ] server_addresses Deduplicated "host:port"
+      #   addresses of the servers that produced the underlying operation
+      #   results.
       #
       # @since 2.1.0
       #
       # @api private
-      def initialize(results, acknowledged)
+      def initialize(results, acknowledged, server_addresses = [])
         @results = results
         @acknowledged = acknowledged
+        @server_addresses = server_addresses
       end
 
       # Returns the number of documents inserted.
@@ -189,7 +197,7 @@ module Mongo
       #
       # @since 2.1.0
       def validate!
-        raise Error::BulkWriteError.new(@results) if @results['writeErrors'] || @results['writeConcernErrors']
+        raise Error::BulkWriteError.new(@results, server_addresses: @server_addresses) if @results['writeErrors'] || @results['writeConcernErrors']
 
         self
       end
