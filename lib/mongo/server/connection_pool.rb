@@ -1361,9 +1361,12 @@ module Mongo
       def wait_for_connection(connection_global_id, deadline)
         connection = nil
         while connection.nil?
+          # RUBY-3364: as above, yield to any thread already queued for
+          # a max_connecting slot before competing ourselves.
+          must_wait = @max_connecting_waiters > 0
           # The second gate to checking out a connection. Make sure 1) there
           # exists an available connection and 2) we are under max_connecting.
-          until @available_connections.any? || @pending_connections.length < @max_connecting
+          until (@available_connections.any? || @pending_connections.length < @max_connecting) && !must_wait
             wait = deadline - Utils.monotonic_time
             if wait <= 0
               # We are going to raise a timeout error, so the connection
@@ -1372,10 +1375,16 @@ module Mongo
               decrement_connection_requests_and_signal
               raise_check_out_timeout!(connection_global_id)
             end
-            @max_connecting_cv.wait(wait)
+            @max_connecting_waiters += 1
+            begin
+              @max_connecting_cv.wait(wait)
+            ensure
+              @max_connecting_waiters -= 1
+            end
             # We do not need to decrement the connection_requests counter
             # or signal here because the pool is not ready yet.
             raise_if_not_ready!
+            must_wait = false
           end
 
           connection = get_connection(Process.pid, connection_global_id)
