@@ -23,6 +23,13 @@
 #   THREADS             concurrent worker threads (default: 200)
 #   DURATION_SEC        how long to run (default: 30)
 #   WAIT_TIMEOUT        pool wait_queue_timeout in seconds (default: 10)
+#
+# Memory note: this script records every operation into an in-memory Queue
+# and drains it at the end. At default settings (~4000 ops/sec × 30s ≈ 120k
+# rows, roughly 24 MB) that is well within normal memory budgets. For very
+# long runs (tens of minutes or more) switch to online aggregation —
+# e.g., per-thread counters and a histogram — to avoid unbounded memory
+# growth.
 
 require 'mongo'
 require 'logger'
