@@ -1308,13 +1308,25 @@ module Mongo
         connection = nil
 
         @lock.synchronize do
-          # The first gate to checking out a connection. Make sure the number of
-          # unavailable connections is less than the max pool size.
-          until max_size == 0 || unavailable_connections < max_size
+          # RUBY-3364: if any thread is already waiting for a size slot,
+          # join the queue even when the gate predicate is currently
+          # satisfied. Without this, re-entering threads (those that just
+          # checked a connection back in) barge past existing waiters and
+          # the 195 blocked threads in a 200:5 scenario never wake.
+          must_wait = @size_waiters > 0
+          until (max_size == 0 || unavailable_connections < max_size) && !must_wait
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
-            @size_cv.wait(wait)
+            @size_waiters += 1
+            begin
+              @size_cv.wait(wait)
+            ensure
+              @size_waiters -= 1
+            end
             raise_if_not_ready!
+            # After one wait cycle we have served our "queue tax" and
+            # compete for the slot on the next predicate check.
+            must_wait = false
           end
           @connection_requests += 1
           connection = wait_for_connection(connection_global_id, deadline)
