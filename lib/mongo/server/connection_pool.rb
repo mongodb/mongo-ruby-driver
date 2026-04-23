@@ -1313,7 +1313,9 @@ module Mongo
           # satisfied. Without this, re-entering threads (those that just
           # checked a connection back in) barge past existing waiters and
           # the 195 blocked threads in a 200:5 scenario never wake.
-          must_wait = @size_waiters > 0
+          # Skip the gate for unlimited pools (max_size == 0) where there
+          # is no size constraint to wait on.
+          must_wait = max_size != 0 && @size_waiters > 0
           until (max_size == 0 || unavailable_connections < max_size) && !must_wait
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
@@ -1338,8 +1340,17 @@ module Mongo
           @checked_out_connections << connection
           @pending_connections.delete(connection) if @pending_connections.include?(connection)
           @max_connecting_cv.signal
-          # no need to signal size_cv here since the number of unavailable
-          # connections is unchanged.
+          # RUBY-3364: hand off the baton. A waiter that arrived during
+          # our wake-up window (seeing our stale @size_waiters > 0) may be
+          # parked on @size_cv with capacity already available. The
+          # regular check-in path is the only other place that signals
+          # @size_cv, so we wake the next waiter only when the predicate
+          # is actually satisfied for them. Signaling unconditionally
+          # would re-queue a waiter at the back of the FIFO and break
+          # ordering.
+          if @size_waiters > 0 && (max_size == 0 || unavailable_connections < max_size)
+            @size_cv.signal
+          end
         end
 
         connection
@@ -1396,6 +1407,14 @@ module Mongo
           # the connection_requests counter. We need to do it here.
           decrement_connection_requests_and_signal
           raise_check_out_timeout!(connection_global_id)
+        end
+
+        # RUBY-3364: hand off the baton for max_connecting_cv. Signal
+        # only if the gate predicate is satisfied for the next waiter, to
+        # avoid re-queuing a waiter at the back of the FIFO.
+        if @max_connecting_waiters > 0 &&
+           (@available_connections.any? || @pending_connections.length < @max_connecting)
+          @max_connecting_cv.signal
         end
 
         connection
