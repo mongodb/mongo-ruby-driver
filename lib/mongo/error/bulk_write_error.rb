@@ -103,7 +103,7 @@ module Mongo
         fragment = "Multiple errors: #{fragment}" if errors.length > 1
 
         if Mongo.include_server_address_in_errors && @server_addresses.any?
-          fragment = "#{fragment} (on #{@server_addresses.uniq.join(', ')})"
+          fragment = "#{fragment} (on #{@server_addresses.join(', ')})"
         end
 
         fragment
@@ -121,7 +121,7 @@ module Mongo
             raise ArgumentError,
                   "server_addresses entries must be String, Mongo::Address, or Mongo::Server::Description; got #{entry.class}"
           end
-        end
+        end.uniq
       end
     end
   end

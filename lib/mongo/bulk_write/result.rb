@@ -111,7 +111,7 @@ module Mongo
       def initialize(results, acknowledged, server_addresses = [])
         @results = results
         @acknowledged = acknowledged
-        @server_addresses = server_addresses
+        @server_addresses = Array(server_addresses).compact.uniq
       end
 
       # Returns the number of documents inserted.
