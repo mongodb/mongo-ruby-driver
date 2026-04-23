@@ -141,6 +141,13 @@ module Mongo
         @pending_connections = Set.new
         @interrupt_connections = []
 
+        # RUBY-3364: count threads currently blocked on size_cv /
+        # max_connecting_cv. When non-zero, a newly-arriving thread must
+        # enter the wait queue even if the gate predicate is currently
+        # satisfied, to prevent barging past existing waiters.
+        @size_waiters = 0
+        @max_connecting_waiters = 0
+
         # Mutex used for synchronizing access to @available_connections and
         # @checked_out_connections. The pool object is thread-safe, thus
         # all methods that retrieve or modify instance variables generally
