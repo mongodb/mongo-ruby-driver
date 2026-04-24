@@ -233,7 +233,7 @@ describe Mongo::Operation::Insert do
         end
 
         context 'when the insert fails' do
-          it 'does not after first error' do
+          it 'does not abort after first error' do
             authorized_primary.with_connection do |connection|
               failing_insert.bulk_execute(connection, context: context)
             end

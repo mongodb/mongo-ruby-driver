@@ -129,7 +129,7 @@ module Mongo
           true
         end
 
-        # An single topology is not unknown.
+        # A single topology is not unknown.
         #
         # @example Is the topology unknown?
         #   Single.unknown?

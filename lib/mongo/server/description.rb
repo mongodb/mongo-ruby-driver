@@ -296,7 +296,7 @@ module Mongo
       # @return [ Float ] The moving average time the hello call took to complete.
       attr_reader :average_round_trip_time
 
-      # @return [ Float ] The minimum time from the ten last hello calls took
+      # @return [ Float ] The minimum time that the ten last hello calls took
       #   to complete.
       attr_reader :minimum_round_trip_time
 

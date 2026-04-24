@@ -34,6 +34,7 @@ module Mongo
       :write, :write_concern,
       :retry_reads, :max_read_retries, :read_retry_interval,
       :retry_writes, :max_write_retries,
+      :max_adaptive_retries, :enable_overload_retargeting,
       :timeout_ms,
 
       # Options which cannot currently be here:
@@ -44,7 +45,7 @@ module Mongo
       # the cluster is initialized it no longer uses this timeout.
       # Unfortunately server selector reads server selection timeout out of
       # the cluster, and this behavior is required by Cluster#next_primary
-      # which takes no arguments. When next_primary is removed we can revsit
+      # which takes no arguments. When next_primary is removed we can revisit
       # using the same cluster object with different server selection timeouts.
     ].freeze
 
@@ -52,7 +53,6 @@ module Mongo
     #
     # @since 2.1.2
     VALID_OPTIONS = %i[
-      adaptive_retries
       app_name
       auth_mech
       auth_mech_properties
@@ -62,6 +62,7 @@ module Mongo
       cleanup
       compressors
       direct_connection
+      enable_overload_retargeting
       connect
       connect_timeout
       database
@@ -71,6 +72,7 @@ module Mongo
       local_threshold
       logger
       log_prefix
+      max_adaptive_retries
       max_connecting
       max_idle_time
       max_pool_size
@@ -587,7 +589,7 @@ module Mongo
 
       @connect_lock = Mutex.new
       @retry_policy = Retryable::RetryPolicy.new(
-        adaptive_retries: !!@options[:adaptive_retries]
+        max_retries: @options[:max_adaptive_retries] || Retryable::Backpressure::DEFAULT_MAX_RETRIES
       )
       @connect_lock.synchronize do
         @cluster = Cluster.new(
@@ -610,7 +612,7 @@ module Mongo
         begin
           @cluster.close
         rescue StandardError => e
-          log_warn("Eror closing cluster in client constructor's exception handler: #{e.class}: #{e}")
+          log_warn("Error closing cluster in client constructor's exception handler: #{e.class}: #{e}")
           # Drop this exception so that the original exception is raised
         end
         raise

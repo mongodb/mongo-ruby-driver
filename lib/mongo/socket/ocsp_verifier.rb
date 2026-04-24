@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'delegate'
+
 module Net
   autoload :HTTP, 'net/http'
 end
@@ -31,6 +33,19 @@ module Mongo
     #
     # @api private
     class OcspVerifier
+      # Wraps OpenSSL::OCSP::SingleResponse with the responder URI that supplied it.
+      #
+      # @api private
+      class Response < SimpleDelegator
+        attr_reader :uri, :original_uri
+
+        def initialize(single_response, uri, original_uri)
+          super(single_response)
+          @uri = uri
+          @original_uri = original_uri
+        end
+      end
+
       include Loggable
 
       # @param [ String ] host_name The host name being verified, for
@@ -167,9 +182,9 @@ module Mongo
         redirect_count = 0
         http_response = nil
         loop do
-          http_response = begin
+          begin
             uri = URI(uri)
-            Net::HTTP.start(uri.hostname, uri.port) do |http|
+            http_response = Net::HTTP.start(uri.hostname, uri.port) do |http|
               path = uri.path
               path = '/' if path.empty?
               http.post(path, @serialized_req,
@@ -228,18 +243,13 @@ module Mongo
           return false
         end
 
-        resp = resp.find_response(cert_id)
-        unless resp
+        single_response = resp.find_response(cert_id)
+        unless single_response
           @resp_errors << "OCSP response from #{report_uri(original_uri,
                                                            uri)} did not include information about the requested certificate"
           return false
         end
-        # TODO: make a new class instead of patching the stdlib one?
-        resp.instance_variable_set(:@uri, uri)
-        resp.instance_variable_set(:@original_uri, original_uri)
-        class << resp
-          attr_reader :uri, :original_uri
-        end
+        resp = Response.new(single_response, uri, original_uri)
 
         unless resp.check_validity
           @resp_errors << "OCSP response from #{report_uri(original_uri,

@@ -2,10 +2,10 @@
 
 require 'spec_helper'
 
+class ConnectionSpecTestException < StandardError; end
+
 # fails intermittently in evergreen
 describe Mongo::Server::Connection do
-  class ConnectionSpecTestException < Exception; end
-
   clean_slate_for_all
 
   let(:generation_manager) do

@@ -13,14 +13,8 @@ module Mongo
       # Maximum backoff delay in seconds.
       MAX_BACKOFF = 10
 
-      # Maximum number of retries for overload errors.
-      MAX_RETRIES = 5
-
-      # Rate at which tokens are returned to the bucket on success.
-      RETRY_TOKEN_RETURN_RATE = 0.1
-
-      # Default capacity of the retry token bucket.
-      DEFAULT_RETRY_TOKEN_CAPACITY = 1000
+      # Default maximum number of retries for overload errors.
+      DEFAULT_MAX_RETRIES = 2
 
       # Calculate the backoff delay for a given retry attempt.
       #

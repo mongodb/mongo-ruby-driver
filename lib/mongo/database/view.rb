@@ -202,6 +202,7 @@ module Mongo
       private
 
       def collections_info(session, server_selector, options = {})
+        @batch_size = options[:batch_size] if options[:batch_size]
         description = nil
         context = Operation::Context.new(
           client: client,

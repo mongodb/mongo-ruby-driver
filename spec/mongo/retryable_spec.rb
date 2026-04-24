@@ -123,6 +123,7 @@ describe Mongo::Retryable do
       allow(client).to receive(:max_read_retries).and_return(max_read_retries)
       allow(client).to receive(:max_write_retries).and_return(max_write_retries)
       allow(client).to receive(:retry_policy).and_return(Mongo::Retryable::RetryPolicy.new)
+      allow(client).to receive(:options).and_return({})
     end
   end
 

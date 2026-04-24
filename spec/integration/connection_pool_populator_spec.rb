@@ -236,7 +236,7 @@ describe 'Connection pool populator integration' do
         { min_pool_size: 1, max_idle_time: 0.5 }
       end
 
-      it 'repopulates pool after sockets are closes' do
+      it 'repopulates pool after sockets are closed' do
         pool
 
         sleep 2

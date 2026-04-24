@@ -17,7 +17,7 @@ describe Mongo::Cluster::CursorReaper do
     reaper.instance_variable_get(:@active_cursor_ids)
   end
 
-  describe '#intialize' do
+  describe '#initialize' do
     it 'initializes a hash for servers and their kill cursors ops' do
       expect(reaper.instance_variable_get(:@to_kill)).to be_a(Hash)
     end

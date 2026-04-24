@@ -37,7 +37,7 @@ module Mongo
     class OptionsMapper
       include Loggable
 
-      # Instantates the options mapper.
+      # Instantiates the options mapper.
       #
       # @option opts [ Logger ] :logger A custom logger to use.
       def initialize(**opts)
@@ -185,6 +185,28 @@ module Mongo
         rv
       end
 
+      # Hash for storing map of URI option parameters to conversion strategies
+      # @api private
+      URI_OPTION_MAP = {}
+
+      # @return [ Hash<String, String> ] Map from lowercased to canonical URI
+      #   option names.
+      # @api private
+      URI_OPTION_CANONICAL_NAMES = {}
+
+      # Simple internal dsl to register a MongoDB URI option in the URI_OPTION_MAP.
+      #
+      # @param [ String ] uri_key The MongoDB URI option to register.
+      # @param [ Symbol ] name The name of the option in the driver.
+      # @param [ Hash ] extra Extra options.
+      #   * :group [ Symbol ] Nested hash where option will go.
+      #   * :type [ Symbol ] Name of function to transform value.
+      # @api private
+      def self.uri_option(uri_key, name, **extra)
+        URI_OPTION_MAP[uri_key.downcase] = { name: name }.update(extra)
+        URI_OPTION_CANONICAL_NAMES[uri_key.downcase] = uri_key
+      end
+
       private
 
       # Applies URI value transformation by either using the default cast
@@ -222,25 +244,6 @@ module Mongo
         else
           target.merge!(name => value)
         end
-      end
-
-      # Hash for storing map of URI option parameters to conversion strategies
-      URI_OPTION_MAP = {}
-
-      # @return [ Hash<String, String> ] Map from lowercased to canonical URI
-      #   option names.
-      URI_OPTION_CANONICAL_NAMES = {}
-
-      # Simple internal dsl to register a MongoDB URI option in the URI_OPTION_MAP.
-      #
-      # @param [ String ] uri_key The MongoDB URI option to register.
-      # @param [ Symbol ] name The name of the option in the driver.
-      # @param [ Hash ] extra Extra options.
-      #   * :group [ Symbol ] Nested hash where option will go.
-      #   * :type [ Symbol ] Name of function to transform value.
-      def self.uri_option(uri_key, name, **extra)
-        URI_OPTION_MAP[uri_key.downcase] = { name: name }.update(extra)
-        URI_OPTION_CANONICAL_NAMES[uri_key.downcase] = uri_key
       end
 
       # Replica Set Options
@@ -304,7 +307,8 @@ module Mongo
       uri_option 'readConcernLevel', :level, group: :read_concern, type: :symbol
       uri_option 'retryReads', :retry_reads, type: :bool
       uri_option 'retryWrites', :retry_writes, type: :bool
-      uri_option 'adaptiveRetries', :adaptive_retries, type: :bool
+      uri_option 'enableOverloadRetargeting', :enable_overload_retargeting, type: :bool
+      uri_option 'maxAdaptiveRetries', :max_adaptive_retries, type: :integer
       uri_option 'zlibCompressionLevel', :zlib_compression_level, type: :zlib_compression_level
 
       # Monitoring Options

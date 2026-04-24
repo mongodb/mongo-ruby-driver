@@ -84,14 +84,12 @@ describe Mongo::Server::RoundTripTimeCalculator do
     context 'block does not raise' do
       it 'updates average rtt' do
         expect(calculator).to receive(:update_average_round_trip_time)
-        calculator.measure do
-        end
+        calculator.measure { nil }
       end
 
       it 'updates minimum rtt' do
         expect(calculator).to receive(:update_minimum_round_trip_time)
-        calculator.measure do
-        end
+        calculator.measure { nil }
       end
     end
 

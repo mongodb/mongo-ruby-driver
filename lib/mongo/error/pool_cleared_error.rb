@@ -16,7 +16,7 @@
 
 module Mongo
   class Error
-    # Exception raised if an operation is attempted connection that was
+    # Exception raised if an operation is attempted on a connection that was
     # interrupted due to server monitor timeout.
     class PoolClearedError < PoolError
       include WriteRetryable

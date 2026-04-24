@@ -353,7 +353,7 @@ module Mongo
       # Whether or not to bypass document level validation.
       #
       # @example Get the bypass_document_validation option.
-      #   specifiable.bypass_documentation_validation.
+      #   specifiable.bypass_document_validation.
       #
       # @return [ true, false ] Whether to bypass document level validation.
       #

@@ -38,7 +38,7 @@ module Mongo
 
     # Convenience method to log error messages with the standard prefix.
     #
-    # @example Log a error message.
+    # @example Log an error message.
     #   log_error('Message')
     #
     # @param [ String ] message The message to log.
@@ -62,7 +62,7 @@ module Mongo
 
     # Convenience method to log info messages with the standard prefix.
     #
-    # @example Log a info message.
+    # @example Log an info message.
     #   log_info('Message')
     #
     # @param [ String ] message The message to log.

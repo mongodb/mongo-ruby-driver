@@ -87,6 +87,7 @@ module Mongo
       @connection_global_id = result.connection_global_id
       @context = @options[:context]&.with(connection_global_id: connection_global_id_for_context) || fresh_context
       @explicitly_closed = false
+      @get_more_network_error = false
       @lock = Mutex.new
       if server.load_balancer?
         # We need the connection in the cursor only in load balanced topology;
@@ -297,19 +298,21 @@ module Mongo
       ctx = context ? context.refresh(timeout_ms: opts[:timeout_ms]) : fresh_context(opts)
 
       unregister
-      read_with_one_retry do
-        spec = {
-          coll_name: collection_name,
-          db_name: database.name,
-          cursor_ids: [ id ],
-        }
-        op = Operation::KillCursors.new(spec)
-        execute_operation(op, context: ctx)
+      unless @get_more_network_error
+        read_with_one_retry do
+          spec = {
+            coll_name: collection_name,
+            db_name: database.name,
+            cursor_ids: [ id ],
+          }
+          op = Operation::KillCursors.new(spec)
+          execute_operation(op, context: ctx)
+        end
       end
 
       nil
-    rescue Error::OperationFailure::Family, Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable
-      # Errors are swallowed since there is noting can be done by handling them.
+    rescue Error::OperationFailure::Family, Error::SocketError, Error::SocketTimeoutError, Error::ServerNotUsable, Error::ConnectionPerished
+      # Errors are swallowed since there is nothing can be done by handling them.
     ensure
       end_session
       @cursor_id = 0
@@ -379,6 +382,9 @@ module Mongo
       with_overload_retry(context: possibly_refreshed_context) do
         process(execute_operation(get_more_operation))
       end
+    rescue Error::SocketError, Error::SocketTimeoutError
+      @get_more_network_error = true
+      raise
     rescue Error::OperationFailure => e
       # When overload retries are exhausted on getMore, close the cursor
       # so that killCursors is sent to the server.
@@ -579,7 +585,12 @@ module Mongo
       return if @connection.nil?
       return unless @connection.server.load_balancer?
 
-      @connection.connection_pool.check_in(@connection)
+      @connection.unpin
+      # Do not check in if the connection is still pinned by something
+      # else (e.g. a transaction).
+      unless @connection.pinned?
+        @connection.connection_pool.check_in(@connection)
+      end
       @connection = nil
     end
   end

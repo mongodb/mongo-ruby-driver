@@ -61,8 +61,23 @@ module Unified
 
     attr_reader :test_spec, :description, :outcome, :skip_reason, :reqs, :group_reqs, :options, :entities
 
+    # Descriptions of unified spec tests that are known to flake under load on
+    # CI and benefit from being retried. See the corresponding JIRA tickets for
+    # the underlying investigations.
+    RETRY_PATTERNS = Regexp.union(
+      /KMS/i,
+      # RUBY-3809: CSOT deprecated-options "maxTimeMS is ignored if timeoutMS
+      # is set" operations occasionally observe a drifted maxTimeMS on the
+      # wire when the CI host is loaded.
+      /maxTimeMS is ignored if timeoutMS is set/i,
+      # RUBY-3810: sharded mongos-pin-auto "remain pinned after non-transient"
+      # tests flake when the server injects its own transient transaction
+      # condition around the failCommand-injected error.
+      /remain pinned after non-transient/i
+    ).freeze
+
     def retry?
-      @description =~ /KMS/i
+      @description =~ RETRY_PATTERNS
     end
 
     def skip?
@@ -424,6 +439,13 @@ module Unified
       entities[:client]&.each do |_id, client|
         client.close
       end
+
+      # Reset entity state so that retry_test re-runs (RUBY-3809, RUBY-3810)
+      # build fresh clients/sessions instead of reusing the closed ones
+      # produced by the previous attempt. Without this, retried transactional
+      # tests hit TRANSACTION_ALREADY_IN_PROGRESS on the stale session.
+      @entities = EntityMap.new
+      @entities_created = false
     end
 
     private

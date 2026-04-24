@@ -200,9 +200,7 @@ module Mongo
           session,
           timeout: context&.remaining_timeout_sec
         )
-        result = yield server
-        retry_policy.record_success(is_retry: false)
-        result
+        yield server
       rescue *retryable_exceptions, Error::OperationFailure::Family, Auth::Unauthorized, Error::PoolError => e
         e.add_notes('modern retry', 'attempt 1')
         raise e if session.in_transaction? && !retryable_overload_error?(e)
@@ -295,9 +293,7 @@ module Mongo
         begin
           context&.check_timeout!
           attempt = attempt ? attempt + 1 : 2
-          result = yield server, true
-          retry_policy.record_success(is_retry: true)
-          result
+          yield server, true
         rescue Error::TimeoutError
           raise
         rescue *retryable_exceptions => e
@@ -336,13 +332,19 @@ module Mongo
       # Each retry sleeps with jittered backoff, respects MAX_RETRIES,
       # and consumes a token from the bucket when adaptive retries
       # are enabled.
+      #
+      # Per the client-backpressure spec, backoff is applied if and only
+      # if the error triggering the retry is an overload error. Non-overload
+      # retryable errors that occur within this loop are retried immediately
+      # (without backoff) but still count toward MAX_RETRIES.
       def overload_read_retry(last_error, session, server_selector, context, failed_server, error_count:)
+        last_was_overload = true
         loop do
-          delay = retry_policy.backoff_delay(error_count)
+          delay = last_was_overload ? retry_policy.backoff_delay(error_count) : 0
           raise last_error unless retry_policy.should_retry_overload?(error_count, delay, context: context)
 
           log_retry(last_error, message: 'Read retry (overload backoff)')
-          sleep(delay)
+          sleep(delay) if last_was_overload
 
           begin
             server = select_server(
@@ -358,7 +360,6 @@ module Mongo
           begin
             context&.check_timeout!
             result = yield server, true
-            retry_policy.record_success(is_retry: true)
             return result
           rescue Error::TimeoutError
             raise
@@ -368,7 +369,7 @@ module Mongo
             is_overload = retryable_overload_error?(e)
             raise e unless is_overload || is_retryable_exception?(e) || e.write_retryable?
 
-            retry_policy.record_non_overload_retry_failure unless is_overload
+            last_was_overload = is_overload
             failed_server = server
             last_error = e
           end

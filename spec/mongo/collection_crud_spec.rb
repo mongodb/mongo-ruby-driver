@@ -343,7 +343,7 @@ describe Mongo::Collection do
           authorized_collection.insert_many(source_data.lazy)
         end
 
-        it 'acceptses them without raising an error' do
+        it 'accepts them without raising an error' do
           expect { result }.not_to raise_error
           expect(result.inserted_count).to eq(source_data.size)
         end

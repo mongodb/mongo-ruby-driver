@@ -214,6 +214,9 @@ module Unified
       unless (awaited = spec.use('awaited')).nil?
         assert_eq(actual.awaited?, awaited, 'Event awaited does not match expectation')
       end
+      if reason = spec.use('reason')
+        assert_eq(actual.reason.to_s, reason.to_s, 'Event reason does not match expectation')
+      end
       return if spec.empty?
 
       raise NotImplementedError, "Unhandled keys: #{spec}"

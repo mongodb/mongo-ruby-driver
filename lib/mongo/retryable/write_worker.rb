@@ -109,19 +109,22 @@ module Mongo
 
         if options[:retry_writes]
           error_count = 0
+          error_to_raise = nil
           begin
-            result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+            server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, nil, context
             end
-            retry_policy.record_success(is_retry: error_count > 0) if error_count > 0
-            result
           rescue Error::TimeoutError
             raise
           rescue *retryable_exceptions, Error::PoolError, Error::OperationFailure::Family => e
             if retryable_overload_error?(e)
               error_count += 1
+              error_to_raise ||= e
+              unless e.respond_to?(:label?) && e.label?('NoWritesPerformed')
+                error_to_raise = e
+              end
               delay = retry_policy.backoff_delay(error_count)
-              raise e unless retry_policy.should_retry_overload?(error_count, delay, context: context)
+              raise error_to_raise unless retry_policy.should_retry_overload?(error_count, delay, context: context)
 
               log_retry(e, message: 'Write retry (overload backoff)')
               sleep(delay)
@@ -131,8 +134,8 @@ module Mongo
                   error: e, timeout: context.remaining_timeout_sec
                 )
               rescue Error, Error::AuthError => select_err
-                e.add_note("later retry failed: #{select_err.class}: #{select_err}")
-                raise e
+                error_to_raise.add_note("later retry failed: #{select_err.class}: #{select_err}")
+                raise error_to_raise
               end
               retry
             else
@@ -249,7 +252,7 @@ module Mongo
         connection_succeeded = false
         was_starting = false
 
-        result = server.with_connection(
+        server.with_connection(
           connection_global_id: context.connection_global_id,
           context: context
         ) do |connection|
@@ -263,8 +266,6 @@ module Mongo
           # it later for the retry as well.
           yield connection, txn_num, context.dup
         end
-        retry_policy.record_success(is_retry: false)
-        result
       rescue *retryable_exceptions, Error::PoolError, Auth::Unauthorized, Error::OperationFailure::Family => e
         e.add_notes('modern retry', 'attempt 1')
 
@@ -330,7 +331,7 @@ module Mongo
 
           # When we want to raise the original error, we must not run the
           # rescue blocks below that add diagnostics because the diagnostics
-          # added would either be rendundant (e.g. modern retry note) or wrong
+          # added would either be redundant (e.g. modern retry note) or wrong
           # (e.g. "attempt 2", we are raising the exception produced in the
           # first attempt and haven't attempted the second time). Use the
           # special marker class to bypass the ordinarily applicable rescues.
@@ -339,11 +340,9 @@ module Mongo
 
         attempt = attempt ? attempt + 1 : 2
         log_retry(original_error, message: 'Write retry')
-        result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
+        server.with_connection(connection_global_id: context.connection_global_id) do |connection|
           yield(connection, txn_num, context)
         end
-        retry_policy.record_success(is_retry: true)
-        result
       rescue *retryable_exceptions, Error::PoolError => e
         if retryable_overload_error?(e)
           e.add_notes('modern retry', "attempt #{attempt}")
@@ -373,14 +372,25 @@ module Mongo
       end
 
       # Retry loop for overload write errors with exponential backoff.
+      #
+      # Per the client-backpressure spec, backoff is applied if and only
+      # if the error triggering the retry is an overload error. Non-overload
+      # retryable errors that occur within this loop are retried immediately
+      # (without backoff) but still count toward MAX_RETRIES.
       def overload_write_retry(last_error, session, txn_num, context:, failed_server:, error_count:,
                                was_starting_transaction: false)
+        # Track the error to return per the NoWritesPerformed spec rules:
+        # - first error is always saved
+        # - only update when a new error does NOT have NoWritesPerformed
+        error_to_raise = last_error
+        last_was_overload = true
+
         loop do
-          delay = retry_policy.backoff_delay(error_count)
-          raise last_error unless retry_policy.should_retry_overload?(error_count, delay, context: context)
+          delay = last_was_overload ? retry_policy.backoff_delay(error_count) : 0
+          raise error_to_raise unless retry_policy.should_retry_overload?(error_count, delay, context: context)
 
           log_retry(last_error, message: 'Write retry (overload backoff)')
-          sleep(delay)
+          sleep(delay) if last_was_overload
 
           begin
             server = select_server(
@@ -389,13 +399,13 @@ module Mongo
               timeout: context.remaining_timeout_sec
             )
           rescue Error, Error::AuthError => e
-            last_error.add_note("later retry failed: #{e.class}: #{e}")
-            raise last_error
+            error_to_raise.add_note("later retry failed: #{e.class}: #{e}")
+            raise error_to_raise
           end
 
           unless server.retry_writes?
-            last_error.add_note('did not retry because server does not support retryable writes')
-            raise last_error
+            error_to_raise.add_note('did not retry because server does not support retryable writes')
+            raise error_to_raise
           end
 
           begin
@@ -404,7 +414,6 @@ module Mongo
             result = server.with_connection(connection_global_id: context.connection_global_id) do |connection|
               yield connection, txn_num, context
             end
-            retry_policy.record_success(is_retry: true)
             return result
           rescue Error::TimeoutError
             raise
@@ -417,13 +426,16 @@ module Mongo
             else
               raise e unless is_overload || e.write_retryable?
             end
-            retry_policy.record_non_overload_retry_failure unless is_overload
+            unless e.respond_to?(:label?) && e.label?('NoWritesPerformed')
+              error_to_raise = e
+            end
+            last_was_overload = is_overload
             context = context.with(overload_only_retry: false) unless is_overload
             failed_server = server
             last_error = e
           rescue Error, Error::AuthError => e
-            last_error.add_note("later retry failed: #{e.class}: #{e}")
-            raise last_error
+            error_to_raise.add_note("later retry failed: #{e.class}: #{e}")
+            raise error_to_raise
           end
         end
       end

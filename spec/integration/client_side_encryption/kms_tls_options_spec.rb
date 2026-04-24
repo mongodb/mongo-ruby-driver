@@ -196,7 +196,7 @@ describe 'Client-Side Encryption' do
       )
     end
 
-    # We do noy use shared examples for AWS because of the way we pass endpoint.
+    # We do not use shared examples for AWS because of the way we pass endpoint.
     context 'AWS' do
       let(:master_key_template) do
         {

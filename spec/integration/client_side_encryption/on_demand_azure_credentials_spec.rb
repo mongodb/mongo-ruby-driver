@@ -26,7 +26,7 @@ describe 'On-demand Azure Credentials' do
 
   context 'when credentials are available' do
     it 'authenticates successfully' do
-      skip 'This tests should be run inside Azure Cloud only' unless ENV['TEST_FLE_AZURE_AUTO']
+      skip 'These tests should be run inside Azure Cloud only' unless ENV['TEST_FLE_AZURE_AUTO']
 
       expect do
         client_encryption.create_data_key('azure', data_key_options)
@@ -36,7 +36,7 @@ describe 'On-demand Azure Credentials' do
 
   context 'when credentials are not available' do
     it 'raises an error' do
-      skip 'This tests should NOT be run inside Azure Cloud only' if ENV['TEST_FLE_AZURE_AUTO']
+      skip 'These tests should NOT be run inside Azure Cloud only' if ENV['TEST_FLE_AZURE_AUTO']
 
       expect do
         client_encryption.create_data_key('azure', data_key_options)

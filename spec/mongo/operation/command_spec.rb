@@ -44,7 +44,7 @@ describe Mongo::Operation::Command do
         op.execute(authorized_primary, context: context)
       end
 
-      it 'returns the reponse' do
+      it 'returns the response' do
         expect(response).to be_successful
       end
     end

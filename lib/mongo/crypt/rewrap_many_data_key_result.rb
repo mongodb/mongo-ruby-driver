@@ -16,11 +16,11 @@
 
 module Mongo
   module Crypt
-    # Represent result of the rewrap many data ke operation.
+    # Represent result of the rewrap many data key operation.
     #
     # @api semiprivate
     class RewrapManyDataKeyResult
-      # @returns [ BulkWrite::Result ] the result of the bulk write operation
+      # @return [ BulkWrite::Result ] the result of the bulk write operation
       #   used to update the key vault collection with rewrapped data keys.
       attr_reader :bulk_write_result
 

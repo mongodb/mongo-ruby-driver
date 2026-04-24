@@ -124,7 +124,7 @@ module Mongo
           @document = BSON::Document.new(_id: BSON::ObjectId.new).merge(document)
         end
 
-        # Conver the chunk to BSON for storage.
+        # Convert the chunk to BSON for storage.
         #
         # @example Convert the chunk to BSON.
         #   chunk.to_bson

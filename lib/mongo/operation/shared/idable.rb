@@ -16,7 +16,7 @@
 
 module Mongo
   module Operation
-    # Shared behavior of operations that require its documents to each have an id.
+    # Shared behavior of operations that require their documents to each have an id.
     #
     # @since 2.5.2
     # @api private

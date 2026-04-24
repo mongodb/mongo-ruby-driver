@@ -104,7 +104,7 @@ describe Mongo::Auth::Aws::CredentialsRetriever do
     context 'web identity' do
       before(:all) do
         unless ENV['AUTH'] == 'aws-web-identity'
-          skip 'Set AUTH=aws-web-identity in environment to run Wed identity tests'
+          skip 'Set AUTH=aws-web-identity in environment to run Web identity tests'
         end
       end
 

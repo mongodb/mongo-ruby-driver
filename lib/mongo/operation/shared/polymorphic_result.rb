@@ -26,11 +26,11 @@ module Mongo
     module PolymorphicResult
       include PolymorphicLookup
 
-      private
-
       def self.included(base)
         base.extend ClassMethods
       end
+
+      private
 
       module ClassMethods
         attr_accessor :result_class

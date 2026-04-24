@@ -34,7 +34,7 @@ module Mongo
     # Initialize a Session.
     #
     # A session can be explicit or implicit. Lifetime of explicit sessions is
-    # managed by the application - applications explicitry create such sessions
+    # managed by the application - applications explicitly create such sessions
     # and explicitly end them. Implicit sessions are created automatically by
     # the driver, and their lifetime is managed by the driver.
     #
@@ -379,6 +379,9 @@ module Mongo
           rescue Mongo::Error, Error::AuthError
           end
         end
+        # Release any pinned connection (e.g. after a committed transaction
+        # in load-balanced mode).
+        unpin if pinned_connection_global_id
         cluster.session_pool.checkin(@server_session) if @server_session
       end
     ensure
@@ -458,7 +461,7 @@ module Mongo
       overload_error_count = 0
       overload_encountered = false
 
-      loop do # rubocop:disable Metrics/BlockLength
+      loop do
         if transaction_attempt > 0
           if overload_encountered
             delay = @client.retry_policy.backoff_delay(overload_error_count)
@@ -509,7 +512,6 @@ module Mongo
               overload_error_count += 1
             elsif overload_encountered
               overload_error_count += 1
-              @client.retry_policy.record_non_overload_retry_failure
             end
             next
           end
@@ -550,7 +552,6 @@ module Mongo
                 overload_error_count += 1
               elsif overload_encountered
                 overload_error_count += 1
-                @client.retry_policy.record_non_overload_retry_failure
               end
 
               if overload_encountered
@@ -587,7 +588,6 @@ module Mongo
                 overload_error_count += 1
               elsif overload_encountered
                 overload_error_count += 1
-                @client.retry_policy.record_non_overload_retry_failure
               end
               @state = NO_TRANSACTION_STATE
               next
@@ -630,7 +630,7 @@ module Mongo
     #
     # @option options [ Integer ] :max_commit_time_ms The maximum amount of
     #   time to allow a single commitTransaction command to run, in milliseconds.
-    #   This options is deprecated, use :timeout_ms instead.
+    #   This option is deprecated, use :timeout_ms instead.
     # @option options [ Hash ] :read_concern The read concern options hash,
     #   with the following optional keys:
     #   - *:level* -- the read preference level as a symbol; valid values
@@ -919,12 +919,14 @@ module Mongo
     #
     # @param [ Integer ] connection_global_id The global id of connection to pin
     # this session to.
+    # @param [ Connection | nil ] connection The connection object to pin to.
     #
     # @api private
-    def pin_to_connection(connection_global_id)
+    def pin_to_connection(connection_global_id, connection: nil)
       raise ArgumentError, 'Cannot pin to a nil connection id' if connection_global_id.nil?
 
       @pinned_connection_global_id = connection_global_id
+      @pinned_connection = connection
     end
 
     # Unpins this session from the pinned server or connection,
@@ -936,7 +938,16 @@ module Mongo
     def unpin(connection = nil)
       @pinned_server = nil
       @pinned_connection_global_id = nil
-      connection.unpin unless connection.nil?
+      conn = connection || @pinned_connection
+      if conn
+        conn.unpin(:transaction)
+        # Only check the connection back into the pool if nothing else
+        # still holds a pin on it (e.g. an open cursor).
+        unless conn.pinned?
+          conn.connection_pool.check_in(conn)
+        end
+      end
+      @pinned_connection = nil
     end
 
     # Unpins this session from the pinned server or connection, if the session was pinned
@@ -1093,7 +1104,7 @@ module Mongo
       end
     end
 
-    # Ensure that the read preference of a command primary.
+    # Ensure that the read preference of a command is primary.
     #
     # @example
     #   session.validate_read_preference!(command)
@@ -1397,10 +1408,16 @@ module Mongo
     end
 
     # Implements makeTimeoutError(lastError) from the transactions-convenient-api spec.
-    # In CSOT mode raises TimeoutError with last_error's message included as a substring.
+    # In CSOT mode raises TimeoutError with last_error's message and labels copied.
     # In non-CSOT mode re-raises last_error directly.
     def make_timeout_error_from(last_error, timeout_message)
-      raise Mongo::Error::TimeoutError, "#{timeout_message}: #{last_error}" if @with_transaction_timeout_ms
+      if @with_transaction_timeout_ms
+        timeout_error = Mongo::Error::TimeoutError.new("#{timeout_message}: #{last_error}")
+        if last_error.respond_to?(:labels)
+          last_error.labels.each { |label| timeout_error.add_label(label) }
+        end
+        raise timeout_error
+      end
 
       raise last_error
     end

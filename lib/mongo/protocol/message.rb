@@ -320,6 +320,91 @@ module Mongo
         0
       end
 
+      # A class method for getting the fields for a message class
+      #
+      # @return [Integer] the fields for the message class
+      # @api private
+      def self.fields
+        @fields ||= []
+      end
+
+      # Deserializes the header of the message
+      #
+      # @param io [IO] Stream containing the header.
+      # @return [Array<Fixnum>] Deserialized header.
+      # @api private
+      def self.deserialize_header(io)
+        Header.deserialize(io)
+      end
+
+      # A method for declaring a message field
+      #
+      # @param name [String] Name of the field
+      # @param type [Module] Type specific serialization strategies
+      # @param multi [true, false, Symbol] Specify as +true+ to
+      #   serialize the field's value as an array of type +:type+ or as a
+      #   symbol describing the field having the number of items in the
+      #   array (used upon deserialization)
+      #
+      #     Note: In fields where multi is a symbol representing the field
+      #     containing number items in the repetition, the field containing
+      #     that information *must* be deserialized prior to deserializing
+      #     fields that use the number.
+      #
+      # @return [NilClass]
+      # @api private
+      def self.field(name, type, multi = false)
+        fields << {
+          name: :"@#{name}",
+          type: type,
+          multi: multi
+        }
+
+        attr_reader name
+      end
+
+      # Deserializes an array of fields in a message
+      #
+      # The number of items in the array must be described by a previously
+      # deserialized field specified in the class by the field dsl under
+      # the key +:multi+
+      #
+      # @param message [Message] Message to contain the deserialized array.
+      # @param io [IO] Stream containing the array to deserialize.
+      # @param field [Hash] Hash representing a field.
+      # @param options [ Hash ]
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   each of the elements in this array using BSON types wherever possible.
+      #
+      # @return [Message] Message with deserialized array.
+      # @api private
+      def self.deserialize_array(message, io, field, options = {})
+        elements = []
+        count = message.instance_variable_get(field[:multi])
+        count.times { elements << field[:type].deserialize(io, options) }
+        message.instance_variable_set(field[:name], elements)
+      end
+
+      # Deserializes a single field in a message
+      #
+      # @param message [Message] Message to contain the deserialized field.
+      # @param io [IO] Stream containing the field to deserialize.
+      # @param field [Hash] Hash representing a field.
+      # @param options [ Hash ]
+      #
+      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
+      #   this field using BSON types wherever possible.
+      #
+      # @return [Message] Message with deserialized field.
+      # @api private
+      def self.deserialize_field(message, io, field, options = {})
+        message.instance_variable_set(
+          field[:name],
+          field[:type].deserialize(io, options)
+        )
+      end
+
       private
 
       # A method for getting the fields for a message class
@@ -327,13 +412,6 @@ module Mongo
       # @return [Integer] the fields for the message class
       def fields
         self.class.fields
-      end
-
-      # A class method for getting the fields for a message class
-      #
-      # @return [Integer] the fields for the message class
-      def self.fields
-        @fields ||= []
       end
 
       # Serializes message fields into a buffer
@@ -366,85 +444,12 @@ module Mongo
       # and the op code for the message
       #
       # Currently uses hardcoded 0 for request id and response to as their
-      # values are irrelevent to the server
+      # values are irrelevant to the server
       #
       # @param buffer [String] Buffer to receive the header
       # @return [String] Serialized header
       def serialize_header(buffer)
         Header.serialize(buffer, [ 0, request_id, 0, op_code ])
-      end
-
-      # Deserializes the header of the message
-      #
-      # @param io [IO] Stream containing the header.
-      # @return [Array<Fixnum>] Deserialized header.
-      def self.deserialize_header(io)
-        Header.deserialize(io)
-      end
-
-      # A method for declaring a message field
-      #
-      # @param name [String] Name of the field
-      # @param type [Module] Type specific serialization strategies
-      # @param multi [true, false, Symbol] Specify as +true+ to
-      #   serialize the field's value as an array of type +:type+ or as a
-      #   symbol describing the field having the number of items in the
-      #   array (used upon deserialization)
-      #
-      #     Note: In fields where multi is a symbol representing the field
-      #     containing number items in the repetition, the field containing
-      #     that information *must* be deserialized prior to deserializing
-      #     fields that use the number.
-      #
-      # @return [NilClass]
-      def self.field(name, type, multi = false)
-        fields << {
-          name: :"@#{name}",
-          type: type,
-          multi: multi
-        }
-
-        attr_reader name
-      end
-
-      # Deserializes an array of fields in a message
-      #
-      # The number of items in the array must be described by a previously
-      # deserialized field specified in the class by the field dsl under
-      # the key +:multi+
-      #
-      # @param message [Message] Message to contain the deserialized array.
-      # @param io [IO] Stream containing the array to deserialize.
-      # @param field [Hash] Hash representing a field.
-      # @param options [ Hash ]
-      #
-      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
-      #   each of the elements in this array using BSON types wherever possible.
-      #
-      # @return [Message] Message with deserialized array.
-      def self.deserialize_array(message, io, field, options = {})
-        elements = []
-        count = message.instance_variable_get(field[:multi])
-        count.times { elements << field[:type].deserialize(io, options) }
-        message.instance_variable_set(field[:name], elements)
-      end
-
-      # Deserializes a single field in a message
-      #
-      # @param message [Message] Message to contain the deserialized field.
-      # @param io [IO] Stream containing the field to deserialize.
-      # @param field [Hash] Hash representing a field.
-      # @param options [ Hash ]
-      #
-      # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
-      #   this field using BSON types wherever possible.
-      #
-      # @return [Message] Message with deserialized field.
-      def self.deserialize_field(message, io, field, options = {})
-        message.instance_variable_set(
-          field[:name],
-          field[:type].deserialize(io, options)
-        )
       end
     end
   end

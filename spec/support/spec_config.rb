@@ -53,7 +53,7 @@ class SpecConfig
     end
   end
 
-  attr_reader :uri_options, :ruby_options, :connect_options
+  attr_reader :uri_options, :ruby_options
 
   def addresses
     @addresses ||= if @mongodb_uri
@@ -556,7 +556,7 @@ class SpecConfig
       ssl: true,
       ssl_verify: true,
     }.tap do |options|
-      # We should use bundled cetificates for ssl except for testing against
+      # We should use bundled certificates for ssl except for testing against
       # Atlas instances. Atlas instances have addresses in domains
       # mongodb.net or mongodb-dev.net.
       if @mongodb_uri.servers.grep(/mongodb.*\.net/).empty?

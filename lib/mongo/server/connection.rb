@@ -101,7 +101,7 @@ module Mongo
         @last_checkin = nil
         @auth_mechanism = nil
         @pid = Process.pid
-        @pinned = false
+        @pin_reasons = Set.new
 
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCreated.new(address, id)
@@ -182,21 +182,34 @@ module Mongo
       #
       # @api private
       def pinned?
-        @pinned
+        !@pin_reasons.empty?
       end
 
-      # Mark the connection as pinned.
+      # Mark the connection as pinned for the given reason.
+      #
+      # @param [ Symbol ] reason The reason for pinning (:cursor or
+      #   :transaction). Defaults to :cursor for backward compatibility.
       #
       # @api private
-      def pin
-        @pinned = true
+      def pin(reason = :cursor)
+        @pin_reasons << reason
       end
 
-      # Mark the connection as not pinned.
+      # Remove a pin from the connection for the given reason.
+      #
+      # @param [ Symbol ] reason The reason to unpin (:cursor or
+      #   :transaction). Defaults to :cursor for backward compatibility.
       #
       # @api private
-      def unpin
-        @pinned = false
+      def unpin(reason = :cursor)
+        @pin_reasons.delete(reason)
+      end
+
+      # Remove all pins from the connection.
+      #
+      # @api private
+      def unpin_all
+        @pin_reasons.clear
       end
 
       # Establishes a network connection to the target address.

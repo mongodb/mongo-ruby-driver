@@ -134,7 +134,7 @@ module Mongo
 
           # Is the stream closed.
           #
-          # @example Is the stream closd.
+          # @example Is the stream closed.
           #   stream.closed?
           #
           # @return [ true, false ] Whether the stream is closed.

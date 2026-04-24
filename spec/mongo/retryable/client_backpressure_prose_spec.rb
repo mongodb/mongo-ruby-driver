@@ -31,7 +31,6 @@ describe 'Client Backpressure Prose Tests' do
     ).tap { |ctx| allow(ctx).to receive(:check_timeout!) }
   end
 
-  # Shared client/retryable/worker setup for read-worker prose tests.
   shared_context 'with read worker' do
     let(:retry_policy) { Mongo::Retryable::RetryPolicy.new }
 
@@ -78,35 +77,21 @@ describe 'Client Backpressure Prose Tests' do
       sleep_args.sum
     end
 
-    it 'with jitter=0 backoff is near-zero; with jitter~1 backoff >= 2.1s' do
+    it 'with jitter=1 the backoff sum is approximately 0.3s' do
       no_backoff = total_sleep_with_jitter(0.0)
       with_backoff = total_sleep_with_jitter(1.0)
-      expect(with_backoff - no_backoff).to be >= 2.1
+      # Sum of 2 backoffs is 0.3 seconds (0.1 + 0.2).
+      expect((with_backoff - (no_backoff + 0.3)).abs).to be < 0.3
     end
   end
 
   # -------------------------------------------------------------------------
-  # Test 2: Token Bucket Capacity is Enforced
+  # Test 3: Overload Errors are Retried DEFAULT_MAX_RETRIES Times
   # -------------------------------------------------------------------------
-  describe 'Test 2: token bucket capacity is enforced' do
-    it 'starts at DEFAULT_RETRY_TOKEN_CAPACITY and never exceeds it' do
-      policy = Mongo::Retryable::RetryPolicy.new(adaptive_retries: true)
-      bucket = policy.token_bucket
-      capacity = Mongo::Retryable::Backpressure::DEFAULT_RETRY_TOKEN_CAPACITY
-
-      expect(bucket.tokens).to eq(capacity)
-      policy.record_success(is_retry: false)
-      expect(bucket.tokens).to be <= capacity
-    end
-  end
-
-  # -------------------------------------------------------------------------
-  # Test 3: Overload Errors are Retried MAX_RETRIES Times
-  # -------------------------------------------------------------------------
-  describe 'Test 3: overload errors are retried MAX_RETRIES times' do
+  describe 'Test 3: overload errors are retried DEFAULT_MAX_RETRIES times' do
     include_context 'with read worker'
 
-    it 'attempts the command exactly MAX_RETRIES + 1 times' do
+    it 'attempts the command exactly DEFAULT_MAX_RETRIES + 1 times' do
       call_count = 0
       expect do
         worker.read_with_retry(session, server_selector, context) do |_s, _r|
@@ -115,25 +100,19 @@ describe 'Client Backpressure Prose Tests' do
         end
       end.to raise_error(Mongo::Error::OperationFailure)
 
-      expect(call_count).to eq(Mongo::Retryable::Backpressure::MAX_RETRIES + 1)
+      expect(call_count).to eq(Mongo::Retryable::Backpressure::DEFAULT_MAX_RETRIES + 1)
     end
   end
 
   # -------------------------------------------------------------------------
-  # Test 4: Adaptive Retries are Limited by Token Bucket Tokens
+  # Test 4: Overload Errors are Retried maxAdaptiveRetries Times When Configured
   # -------------------------------------------------------------------------
-  describe 'Test 4: adaptive retries are limited by token bucket tokens' do
+  describe 'Test 4: overload errors are retried maxAdaptiveRetries times when configured' do
     include_context 'with read worker'
 
-    let(:retry_policy) { Mongo::Retryable::RetryPolicy.new(adaptive_retries: true) }
+    let(:retry_policy) { Mongo::Retryable::RetryPolicy.new(max_retries: 1) }
 
-    before do
-      bucket = retry_policy.token_bucket
-      bucket.consume(bucket.capacity)
-      bucket.deposit(2)
-    end
-
-    it 'retries only as many times as there are tokens (2 tokens -> 3 total attempts)' do
+    it 'attempts the command exactly maxAdaptiveRetries + 1 times' do
       call_count = 0
       expect do
         worker.read_with_retry(session, server_selector, context) do |_s, _r|
@@ -142,7 +121,7 @@ describe 'Client Backpressure Prose Tests' do
         end
       end.to raise_error(Mongo::Error::OperationFailure)
 
-      expect(call_count).to eq(3)
+      expect(call_count).to eq(2)
     end
   end
 end

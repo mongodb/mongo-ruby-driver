@@ -18,10 +18,10 @@ module Mongo
   module Protocol
     # Container for various serialization strategies
     #
-    # Each strategy must have a serialization method named +serailize+
+    # Each strategy must have a serialization method named +serialize+
     # and a deserialization method named +deserialize+
     #
-    # Serialize methods must take buffer and value arguements and
+    # Serialize methods must take buffer and value arguments and
     # serialize the value into the buffer
     #
     # Deserialize methods must take an IO stream argument and

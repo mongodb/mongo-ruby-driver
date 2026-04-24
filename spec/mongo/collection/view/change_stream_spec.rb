@@ -227,7 +227,9 @@ describe Mongo::Collection::View::ChangeStream do
           end
 
           let!(:operation_result) do
-            change_stream; rescue StandardError => e; e
+            change_stream
+          rescue StandardError => e
+            e
           end
 
           let(:session) do

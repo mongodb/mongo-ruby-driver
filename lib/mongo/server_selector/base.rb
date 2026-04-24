@@ -191,7 +191,14 @@ module Mongo
       # Parameters and return values are the same as for select_server, only
       # the +timeout+ param is renamed to +csot_timeout+.
       private def select_server_impl(cluster, _ping, session, write_aggregation, deprioritized, csot_timeout)
-        return cluster.servers.first if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
+        if cluster.topology.is_a?(Cluster::Topology::LoadBalanced)
+          # In load-balanced mode, release the pinned connection if the session
+          # is no longer in a transaction (e.g. after commit or abort).
+          if session&.pinned_connection_global_id && !session.in_transaction?
+            session.unpin
+          end
+          return cluster.servers.first
+        end
 
         timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
 
@@ -524,7 +531,7 @@ module Mongo
           candidate[:artt]
         end
 
-        # Default for legacy signarure
+        # Default for legacy signature
         local_threshold ||= self.local_threshold
 
         threshold = nearest_candidate[:artt] + local_threshold

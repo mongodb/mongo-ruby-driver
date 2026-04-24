@@ -172,8 +172,15 @@ module Mongo
         def send_initial_query(server, context, operation: nil)
           operation ||= initial_query_op(context.session)
           if server.load_balancer?
-            # Connection will be checked in when cursor is drained.
-            connection = server.pool.check_out(context: context)
+            # Connection will be checked in when cursor is drained,
+            # unless the connection is pinned to a transaction (in which
+            # case it stays checked out for the transaction duration).
+            if context.connection_global_id
+              connection = server.pool.check_out_pinned_connection(
+                context.connection_global_id
+              )
+            end
+            connection ||= server.pool.check_out(context: context)
             operation.execute_with_connection(connection, context: context)
           else
             operation.execute(server, context: context)
@@ -215,7 +222,7 @@ module Mongo
           QueryCache.normalized_limit(limit)
         end
 
-        # Add tailable cusror options to the command specifiction if needed.
+        # Add tailable cursor options to the command specification if needed.
         #
         # @param [ Hash ] spec The command specification.
         def maybe_set_tailable_options(spec)

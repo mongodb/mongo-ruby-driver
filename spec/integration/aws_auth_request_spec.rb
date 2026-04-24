@@ -42,7 +42,7 @@ describe Mongo::Auth::Aws::Request do
 
       # Uncomment to log complete request headers and the response.
       # WARNING: do not enable this in Evergreen as this can expose real
-      # AWS credentias.
+      # AWS credentials.
       # http.set_debug_output(STDERR)
 
       http.start do

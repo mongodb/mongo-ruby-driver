@@ -17,7 +17,7 @@
 module Mongo
   module Crypt
     # A wrapper around mongocrypt_ctx_t, which manages the
-    # state machine for encryption and decription.
+    # state machine for encryption and decryption.
     #
     # This class is a superclass that defines shared methods
     # amongst contexts that are initialized for different purposes

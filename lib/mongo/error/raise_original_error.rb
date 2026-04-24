@@ -24,7 +24,7 @@ module Mongo
     # @note This class must not derive from Error.
     #
     # @api private
-    class RaiseOriginalError < Exception
+    class RaiseOriginalError < Exception # rubocop:disable Lint/InheritException
     end
   end
 end

@@ -6,7 +6,7 @@ require 'spec_helper'
 # this file is under spec/mongo/session/ (not spec/mongo/).
 describe 'Mongo::Session#with_transaction overload retries' do
   let(:retry_policy) do
-    Mongo::Retryable::RetryPolicy.new(adaptive_retries: false)
+    Mongo::Retryable::RetryPolicy.new
   end
 
   let(:client) do
@@ -73,8 +73,6 @@ describe 'Mongo::Session#with_transaction overload retries' do
       method.call(attempt, jitter: 1.0)
     end
 
-    allow(retry_policy).to receive(:record_non_overload_retry_failure).and_call_original
-
     allow(session).to receive(:sleep)
   end
 
@@ -103,9 +101,9 @@ describe 'Mongo::Session#with_transaction overload retries' do
     end
   end
 
-  context 'when overload errors exceed MAX_RETRIES' do
-    it 'raises the error after MAX_RETRIES' do
-      max_retries = Mongo::Retryable::Backpressure::MAX_RETRIES
+  context 'when overload errors exceed DEFAULT_MAX_RETRIES' do
+    it 'raises the error after DEFAULT_MAX_RETRIES' do
+      max_retries = Mongo::Retryable::Backpressure::DEFAULT_MAX_RETRIES
       call_count = 0
 
       expect do
@@ -125,7 +123,6 @@ describe 'Mongo::Session#with_transaction overload retries' do
 
     it 'uses overload backoff for the subsequent non-overload error' do
       expect(retry_policy).to receive(:backoff_delay).twice.and_call_original
-      expect(retry_policy).to receive(:record_non_overload_retry_failure).once
 
       call_count = 0
       session.with_transaction do
@@ -178,13 +175,13 @@ describe 'Mongo::Session#with_transaction overload retries' do
     end
   end
 
-  context 'when commit overload errors exceed MAX_RETRIES' do
+  context 'when commit overload errors exceed DEFAULT_MAX_RETRIES' do
     before do
       allow(session).to receive(:commit_transaction).and_raise(make_commit_overload_error)
     end
 
-    it 'raises after MAX_RETRIES' do
-      max_retries = Mongo::Retryable::Backpressure::MAX_RETRIES
+    it 'raises after DEFAULT_MAX_RETRIES' do
+      max_retries = Mongo::Retryable::Backpressure::DEFAULT_MAX_RETRIES
       expect(retry_policy).to receive(:backoff_delay)
         .exactly(max_retries + 1).times.and_call_original
 

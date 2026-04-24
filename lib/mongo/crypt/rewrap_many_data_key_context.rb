@@ -17,7 +17,7 @@
 module Mongo
   module Crypt
     # A Context object initialized specifically for the purpose of rewrapping
-    # data keys (decrypting and re-rencryting using a new KEK).
+    # data keys (decrypting and re-encrypting using a new KEK).
     #
     # @api private
     class RewrapManyDataKeyContext < Context
