@@ -53,6 +53,10 @@ module Mongo
         # @api experimental
         attr_reader :server_message
 
+        # @return [ String | nil ] The address ("host:port") of the server
+        #   that produced this error, if known.
+        attr_reader :server_address
+
         # Error codes and code names that should result in a failing getMore
         # command on a change stream NOT being resumed.
         #
@@ -172,6 +176,8 @@ module Mongo
         #   error document.
         # @option options [ String ] server_message The server-returned
         #   error message parsed from the response.
+        # @option options [ nil | String | Mongo::Address | Mongo::Server::Description ]
+        #   :server_address The address of the server that produced the error.
         # @option options [ Hash ] :write_concern_error_document The
         #   server-supplied write concern error document, if any.
         # @option options [ Integer ] :write_concern_error_code Error code for
@@ -185,7 +191,8 @@ module Mongo
         # @option options [ true | false ] :wtimeout Whether the error is a wtimeout.
         def initialize(message = nil, result = nil, options = {})
           @details = retrieve_details(options[:document])
-          super(append_details(message, @details))
+          @server_address = normalize_server_address(options[:server_address])
+          super(append_server_address(append_details(message, @details)))
 
           @result = result
           @code = options[:code]
@@ -240,6 +247,38 @@ module Mongo
           return message unless details && message
 
           message + " -- #{details.to_json}"
+        end
+
+        # Append the server address suffix to the message when the
+        # Mongo.include_server_address_in_errors flag is enabled and
+        # a server address is known.
+        #
+        # @return [ String | nil ] the message with the suffix appended,
+        #   or the original message unchanged.
+        def append_server_address(message)
+          return message unless Mongo.include_server_address_in_errors
+          return message if @server_address.nil?
+          return "(on #{@server_address})" if message.nil? || message.empty?
+
+          "#{message} (on #{@server_address})"
+        end
+
+        # Normalize a server_address option into a String "host:port" form.
+        #
+        # @param [ nil | String | Mongo::Address | Mongo::Server::Description ] value
+        #
+        # @return [ String | nil ] The normalized address, or nil.
+        def normalize_server_address(value)
+          case value
+          when nil then nil
+          when String then value
+          when Mongo::Address then value.seed
+          when Mongo::Server::Description
+            value.address.is_a?(Mongo::Address) ? value.address.seed : nil
+          else
+            raise ArgumentError,
+                  "server_address must be nil, String, Mongo::Address, or Mongo::Server::Description; got #{value.class}"
+          end
         end
       end
 

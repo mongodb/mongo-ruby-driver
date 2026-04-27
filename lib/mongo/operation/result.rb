@@ -355,7 +355,8 @@ module Mongo
           wtimeout: parser.wtimeout,
           connection_description: connection_description,
           document: parser.document,
-          server_message: parser.server_message
+          server_message: parser.server_message,
+          server_address: connection_description
         )
       end
 

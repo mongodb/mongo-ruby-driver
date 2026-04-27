@@ -28,6 +28,10 @@ module Mongo
       # @return [ Hash ] results The results hash.
       attr_reader :results
 
+      # @return [ Array<String> ] Deduplicated list of "host:port" addresses of
+      #   the servers that produced the combined operation results.
+      attr_reader :server_addresses
+
       # Create the new result combiner.
       #
       # @api private
@@ -39,6 +43,7 @@ module Mongo
       def initialize
         @results = {}
         @count = 0
+        @server_addresses = []
       end
 
       # Adds a result to the overall results.
@@ -68,6 +73,8 @@ module Mongo
         combine_errors!(result)
         @count += count
         @acknowledged = result.acknowledged?
+        seed = result.connection_description&.address&.seed
+        @server_addresses << seed if seed && !@server_addresses.include?(seed)
       end
 
       # Get the final result.
@@ -78,7 +85,7 @@ module Mongo
       #
       # @since 2.1.0
       def result
-        BulkWrite::Result.new(results, @acknowledged).validate!
+        BulkWrite::Result.new(results, @acknowledged, @server_addresses).validate!
       end
 
       private

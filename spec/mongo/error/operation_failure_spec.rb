@@ -410,6 +410,37 @@ describe Mongo::Error::OperationFailure do
     end
   end
 
+  describe '#server_address' do
+    it 'is nil by default' do
+      error = described_class.new('msg', nil)
+      expect(error.server_address).to be_nil
+    end
+
+    it 'stores a String passed via options' do
+      error = described_class.new('msg', nil, server_address: 'host-1:27017')
+      expect(error.server_address).to eq('host-1:27017')
+    end
+
+    it 'stores the seed from a Mongo::Address' do
+      addr = Mongo::Address.new('host-2:27018')
+      error = described_class.new('msg', nil, server_address: addr)
+      expect(error.server_address).to eq('host-2:27018')
+    end
+
+    it 'stores the seed from a Mongo::Server::Description' do
+      addr = Mongo::Address.new('host-3:27019')
+      desc = Mongo::Server::Description.new(addr)
+      error = described_class.new('msg', nil, server_address: desc)
+      expect(error.server_address).to eq('host-3:27019')
+    end
+
+    it 'raises ArgumentError for unsupported types' do
+      expect do
+        described_class.new('msg', nil, server_address: 42)
+      end.to raise_error(ArgumentError, /server_address must be/)
+    end
+  end
+
   describe '#not_master?' do
     [ 10_107, 13_435 ].each do |code|
       context "error code #{code}" do
@@ -560,6 +591,53 @@ describe Mongo::Error::OperationFailure do
 
       it 'is true' do
         expect(subject.node_recovering?).to be true
+      end
+    end
+  end
+
+  describe 'message rendering with server_address' do
+    let(:error) do
+      described_class.new('boom', nil, server_address: 'host-1:27017')
+    end
+
+    context 'when include_server_address_in_errors is false' do
+      around do |example|
+        original = Mongo.include_server_address_in_errors
+        Mongo.include_server_address_in_errors = false
+        example.run
+      ensure
+        Mongo.include_server_address_in_errors = original
+      end
+
+      it 'does not include the host in #message' do
+        expect(error.message).not_to include('host-1:27017')
+      end
+
+      it 'does not include the host in #to_s' do
+        expect(error.to_s).not_to include('host-1:27017')
+      end
+    end
+
+    context 'when include_server_address_in_errors is true' do
+      around do |example|
+        original = Mongo.include_server_address_in_errors
+        Mongo.include_server_address_in_errors = true
+        example.run
+      ensure
+        Mongo.include_server_address_in_errors = original
+      end
+
+      it 'includes the host in #message' do
+        expect(error.message).to include('boom (on host-1:27017)')
+      end
+
+      it 'includes the host in #to_s' do
+        expect(error.to_s).to include('boom (on host-1:27017)')
+      end
+
+      it 'omits the suffix when server_address is nil' do
+        e = described_class.new('boom', nil)
+        expect(e.message).not_to include('(on ')
       end
     end
   end

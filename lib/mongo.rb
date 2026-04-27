@@ -101,6 +101,7 @@ module Mongo
     delegate_option Config, :broken_view_options
     delegate_option Config, :validate_update_replace
     delegate_option Config, :csfle_convert_to_ruby_types
+    delegate_option Config, :include_server_address_in_errors
   end
 
   # Clears the driver's OCSP response cache.

@@ -61,4 +61,22 @@ describe Mongo::Config do
       end
     end
   end
+
+  describe '.include_server_address_in_errors' do
+    it 'defaults to false' do
+      expect(Mongo::Config.include_server_address_in_errors).to be false
+    end
+
+    it 'is accessible as Mongo.include_server_address_in_errors' do
+      expect(Mongo.include_server_address_in_errors).to be false
+    end
+
+    it 'can be set via Mongo=' do
+      original = Mongo.include_server_address_in_errors
+      Mongo.include_server_address_in_errors = true
+      expect(Mongo.include_server_address_in_errors).to be true
+    ensure
+      Mongo.include_server_address_in_errors = original
+    end
+  end
 end
