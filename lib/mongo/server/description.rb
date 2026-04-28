@@ -887,6 +887,7 @@ module Mongo
       def ==(other)
         return false if self.class != other.class
         return false if unknown? || other.unknown?
+        return false if server_type != other.server_type
 
         (config.keys + other.config.keys).uniq.all? do |k|
           config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)

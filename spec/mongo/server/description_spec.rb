@@ -734,6 +734,30 @@ describe Mongo::Server::Description do
           end
         end
 
+        context 'when configs differ only in isWritablePrimary, causing server_type to flip' do
+          let(:rs_other) do
+            described_class.new(address, replica.merge(
+                                           'ismaster' => nil,
+                                           'isWritablePrimary' => false,
+                                           'secondary' => false
+                                         ))
+          end
+
+          let(:promoted) do
+            described_class.new(address, replica.merge(
+                                           'ismaster' => nil,
+                                           'isWritablePrimary' => true,
+                                           'secondary' => false
+                                         ))
+          end
+
+          it 'returns false because the server_type changed' do
+            expect(rs_other.server_type).to eq(:other)
+            expect(promoted.server_type).to eq(:primary)
+            expect(rs_other == promoted).to be false
+          end
+        end
+
         context 'when one config is a subset of the other' do
           let(:one) do
             described_class.new(address, { primary_param => true,
