@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::Monitoring::ServerDescriptionChangedLogSubscriber do
   let(:subscriber) { described_class.new }
