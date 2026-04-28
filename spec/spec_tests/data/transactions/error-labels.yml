@@ -736,7 +736,7 @@ tests:
       collection:
         data: []
 
-  - description: add UnknownTransactionCommitResult label to writeConcernError WriteConcernFailed
+  - description: add UnknownTransactionCommitResult label to writeConcernError WriteConcernTimeout
 
     failPoint:
       configureFailPoint: failCommand
@@ -744,7 +744,7 @@ tests:
       data:
           failCommands: ["commitTransaction"]
           writeConcernError:
-            code: 64  # WriteConcernFailed without wtimeout
+            code: 64  # WriteConcernTimeout without wtimeout
             errmsg: multiple errors reported
 
     operations:
@@ -816,7 +816,7 @@ tests:
         data:
           - _id: 1
 
-  - description: add UnknownTransactionCommitResult label to writeConcernError WriteConcernFailed with wtimeout
+  - description: add UnknownTransactionCommitResult label to writeConcernError WriteConcernTimeout with wtimeout
 
     failPoint:
       configureFailPoint: failCommand
@@ -825,7 +825,6 @@ tests:
           failCommands: ["commitTransaction"]
           writeConcernError:
             code: 64
-            codeName: WriteConcernFailed
             errmsg: waiting for replication timed out
             errInfo: {wtimeout: True}
 
