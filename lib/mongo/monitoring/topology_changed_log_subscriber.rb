@@ -24,6 +24,9 @@ module Mongo
 
       def log_event(event)
         if event.previous_topology.class == event.new_topology.class
+          return if event.previous_topology.server_descriptions ==
+                    event.new_topology.server_descriptions
+
           log_debug(
             "There was a change in the members of the '#{event.new_topology.display_name}' " +
               'topology.'
