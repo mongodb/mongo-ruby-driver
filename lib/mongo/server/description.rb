@@ -185,14 +185,35 @@ module Mongo
       # @api private
       CONNECTION_ID = 'connectionId'
 
+      # Constant for reading the modern primary flag from config.
+      #
+      # @api private
+      IS_WRITABLE_PRIMARY = 'isWritablePrimary'
+
+      # Constant for reading the helloOk capability flag from config.
+      #
+      # @api private
+      HELLO_OK = 'helloOk'
+
       # Fields to exclude when comparing two descriptions.
+      #
+      # The PRIMARY (legacy `ismaster`), IS_WRITABLE_PRIMARY (modern `hello`),
+      # and HELLO_OK keys are excluded because the driver does a one-time
+      # legacy-`isMaster` to modern-`hello` protocol switch on the initial
+      # handshake (per the SDAM Server Monitoring spec). Two responses for the
+      # same logical role differ only in which of these keys is populated.
+      # The role itself is still differentiated by the SECONDARY flag and the
+      # remaining replica-set metadata.
       #
       # @since 2.0.6
       EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME,
                                  LAST_WRITE,
                                  OPERATION_TIME,
                                  Operation::CLUSTER_TIME,
-                                 CONNECTION_ID, ].freeze
+                                 CONNECTION_ID,
+                                 PRIMARY,
+                                 IS_WRITABLE_PRIMARY,
+                                 HELLO_OK, ].freeze
 
       # Instantiate the new server description from the result of the hello
       # command or fabricate a placeholder description for Unknown and

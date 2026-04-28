@@ -94,4 +94,26 @@ describe Mongo::Monitoring::ServerDescriptionChangedLogSubscriber do
       subscriber.succeeded(make_event(prev_desc, new_desc))
     end
   end
+
+  context 'when descriptions differ only by legacy hello vs modern hello reply shape' do
+    let(:prev_desc) do
+      Mongo::Server::Description.new(address, primary_config.merge(
+                                                'ismaster' => true,
+                                                'helloOk' => true,
+                                                'isWritablePrimary' => nil
+                                              ))
+    end
+    let(:new_desc) do
+      Mongo::Server::Description.new(address, primary_config.merge(
+                                                'isWritablePrimary' => true,
+                                                'ismaster' => nil,
+                                                'helloOk' => nil
+                                              ))
+    end
+
+    it 'does not log (one-time protocol switch is not interesting)' do
+      expect(subscriber).not_to receive(:log_debug)
+      subscriber.succeeded(make_event(prev_desc, new_desc, awaited: true))
+    end
+  end
 end

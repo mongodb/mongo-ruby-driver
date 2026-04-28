@@ -712,6 +712,28 @@ describe Mongo::Server::Description do
           end
         end
 
+        context 'when one description is from a legacy isMaster reply and the other from a modern hello reply' do
+          let(:legacy) do
+            described_class.new(address, replica.merge(
+                                           'ismaster' => true,
+                                           'helloOk' => true,
+                                           'isWritablePrimary' => nil
+                                         ))
+          end
+
+          let(:modern) do
+            described_class.new(address, replica.merge(
+                                           'isWritablePrimary' => true,
+                                           'ismaster' => nil,
+                                           'helloOk' => nil
+                                         ))
+          end
+
+          it 'treats them as equal' do
+            expect(legacy == modern).to be(true)
+          end
+        end
+
         context 'when one config is a subset of the other' do
           let(:one) do
             described_class.new(address, { primary_param => true,
