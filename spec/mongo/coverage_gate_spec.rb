@@ -102,5 +102,15 @@ RSpec.describe CoverageGate do
         expect { gate.check }.to raise_error(/SimpleCov did not produce a result/)
       end
     end
+
+    context 'when a file is in the baseline but not the resultset' do
+      it 'returns 0 and reports the file as missing' do
+        write_resultset({})
+        write_baseline('lib/mongo/deleted.rb' => { 'covered' => 5, 'total' => 5 })
+        expect(gate.check).to eq(0)
+        expect(output.string).to include('deleted.rb')
+        expect(output.string).to include('missing')
+      end
+    end
   end
 end
