@@ -30,7 +30,33 @@ class CoverageGate
     (entries.any? { |e| e.status == :regression }) ? 1 : 0
   end
 
+  # Writes the current resultset back to the baseline path. Used by developers
+  # to lock in an intentional coverage change.
+  def update_baseline
+    File.write(@baseline_path, "#{format_baseline(load_current)}\n")
+    0
+  end
+
+  # Like #check, but always returns 0. Used for local inspection.
+  def report
+    entries = compare(load_current, load_baseline)
+    @output.puts(format_report(entries))
+    0
+  end
+
   private
+
+  def format_baseline(current)
+    files = current.sort.to_h.transform_values do |v|
+      { 'covered' => v[:covered], 'total' => v[:total] }
+    end
+
+    JSON.pretty_generate(
+      'generated_at' => Time.now.utc.iso8601,
+      'ruby_version' => RUBY_VERSION,
+      'files' => files
+    )
+  end
 
   def load_current
     unless File.exist?(@resultset_path)

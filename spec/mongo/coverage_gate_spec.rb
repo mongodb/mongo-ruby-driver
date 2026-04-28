@@ -113,4 +113,41 @@ RSpec.describe CoverageGate do
       end
     end
   end
+
+  describe '#update_baseline' do
+    it 'writes the current resultset to the baseline path' do
+      write_resultset('lib/mongo/foo.rb' => [ nil, 1, 1, 0, nil ])
+      gate.update_baseline
+      expect(File).to exist(baseline_path)
+      data = JSON.parse(File.read(baseline_path))
+      expect(data['files']).to eq('lib/mongo/foo.rb' => { 'covered' => 2, 'total' => 3 })
+    end
+
+    it 'records ruby version and generation timestamp' do
+      write_resultset('lib/mongo/foo.rb' => [ 1, 1 ])
+      gate.update_baseline
+      data = JSON.parse(File.read(baseline_path))
+      expect(data['ruby_version']).to eq(RUBY_VERSION)
+      expect(data['generated_at']).to match(/\A\d{4}-\d{2}-\d{2}T/)
+    end
+
+    it 'sorts file keys for diff stability' do
+      write_resultset(
+        'lib/mongo/zeta.rb' => [ 1, 1 ],
+        'lib/mongo/alpha.rb' => [ 1, 1 ]
+      )
+      gate.update_baseline
+      raw = File.read(baseline_path)
+      expect(raw.index('alpha.rb')).to be < raw.index('zeta.rb')
+    end
+  end
+
+  describe '#report' do
+    it 'always returns 0 even when there is a regression' do
+      write_resultset('lib/mongo/foo.rb' => [ nil, 1, 0, 0, nil ])
+      write_baseline('lib/mongo/foo.rb' => { 'covered' => 2, 'total' => 3 })
+      expect(gate.report).to eq(0)
+      expect(output.string).to include('foo.rb')
+    end
+  end
 end
