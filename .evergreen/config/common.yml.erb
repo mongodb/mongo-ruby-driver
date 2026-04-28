@@ -219,6 +219,25 @@ functions:
           TEST_CMD="bundle exec rspec spec/spec_tests/open_telemetry_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
+  "run coverage tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          export COVERAGE=1
+          .evergreen/run-tests.sh
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          bundle exec rake coverage:check
+
   "export FLE credentials":
     - command: shell.exec
       type: test
@@ -655,6 +674,10 @@ tasks:
   - name: "test-otel"
     commands:
       - func: "run OTel tests"
+  - name: "test-coverage"
+    commands:
+      - func: bootstrap-mongo-orchestration
+      - func: "run coverage tests"
   - name: "test-fle"
     commands:
       - func: "export FLE credentials"
