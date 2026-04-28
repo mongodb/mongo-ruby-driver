@@ -340,4 +340,26 @@ describe Mongo::Session do
       session.session_id.should be_a(BSON::Document)
     end
   end
+
+  describe '#unpin' do
+    context 'when called twice with the same connection' do
+      # Nested unpin_maybe handlers in the bulk_write code path can trigger
+      # Session#unpin to be invoked twice for the same network error: once
+      # from Operation::Executable#do_execute and once from
+      # BulkWrite#execute_operation. The second call must be a no-op rather
+      # than raising "Trying to check in a connection which is not currently
+      # checked out" from the pool.
+      it 'does not raise on the second call' do
+        server = authorized_client.cluster.next_primary
+        server.with_connection do |connection|
+          session.pin_to_server(server)
+          session.unpin(connection)
+
+          expect do
+            session.unpin(connection)
+          end.not_to raise_error
+        end
+      end
+    end
+  end
 end

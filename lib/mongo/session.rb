@@ -936,6 +936,13 @@ module Mongo
     #
     # @api private
     def unpin(connection = nil)
+      # Idempotent: if there is no pinned state to clear, do nothing. Nested
+      # unpin_maybe handlers (e.g. in BulkWrite#execute_operation wrapping an
+      # OpMsg execution that already calls unpin_maybe in its own do_execute)
+      # can call this method twice for the same error; checking the connection
+      # back into the pool a second time would raise from the pool.
+      return if @pinned_server.nil? && @pinned_connection.nil? && @pinned_connection_global_id.nil?
+
       @pinned_server = nil
       @pinned_connection_global_id = nil
       conn = connection || @pinned_connection
