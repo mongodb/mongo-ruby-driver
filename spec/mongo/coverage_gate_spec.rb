@@ -75,5 +75,15 @@ RSpec.describe CoverageGate do
         expect(gate.check).to eq(0)
       end
     end
+
+    context 'when a file is in the resultset but not the baseline' do
+      it 'returns 0 and reports the file as new' do
+        write_resultset('lib/mongo/new_file.rb' => [ nil, 1, 0, nil ])
+        write_baseline({})
+        expect(gate.check).to eq(0)
+        expect(output.string).to include('new_file.rb')
+        expect(output.string).to include('new')
+      end
+    end
   end
 end
