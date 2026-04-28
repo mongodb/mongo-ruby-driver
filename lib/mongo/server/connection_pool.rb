@@ -141,6 +141,13 @@ module Mongo
         @pending_connections = Set.new
         @interrupt_connections = []
 
+        # RUBY-3364: count threads currently blocked on size_cv /
+        # max_connecting_cv. When non-zero, a newly-arriving thread must
+        # enter the wait queue even if the gate predicate is currently
+        # satisfied, to prevent barging past existing waiters.
+        @size_waiters = 0
+        @max_connecting_waiters = 0
+
         # Mutex used for synchronizing access to @available_connections and
         # @checked_out_connections. The pool object is thread-safe, thus
         # all methods that retrieve or modify instance variables generally
@@ -1301,13 +1308,27 @@ module Mongo
         connection = nil
 
         @lock.synchronize do
-          # The first gate to checking out a connection. Make sure the number of
-          # unavailable connections is less than the max pool size.
-          until max_size == 0 || unavailable_connections < max_size
+          # RUBY-3364: if any thread is already waiting for a size slot,
+          # join the queue even when the gate predicate is currently
+          # satisfied. Without this, re-entering threads (those that just
+          # checked a connection back in) barge past existing waiters and
+          # the 195 blocked threads in a 200:5 scenario never wake.
+          # Skip the gate for unlimited pools (max_size == 0) where there
+          # is no size constraint to wait on.
+          must_wait = max_size != 0 && @size_waiters > 0
+          until (max_size == 0 || unavailable_connections < max_size) && !must_wait
             wait = deadline - Utils.monotonic_time
             raise_check_out_timeout!(connection_global_id) if wait <= 0
-            @size_cv.wait(wait)
+            @size_waiters += 1
+            begin
+              @size_cv.wait(wait)
+            ensure
+              @size_waiters -= 1
+            end
             raise_if_not_ready!
+            # After one wait cycle we have served our "queue tax" and
+            # compete for the slot on the next predicate check.
+            must_wait = false
           end
           @connection_requests += 1
           connection = wait_for_connection(connection_global_id, deadline)
@@ -1319,8 +1340,17 @@ module Mongo
           @checked_out_connections << connection
           @pending_connections.delete(connection) if @pending_connections.include?(connection)
           @max_connecting_cv.signal
-          # no need to signal size_cv here since the number of unavailable
-          # connections is unchanged.
+          # RUBY-3364: hand off the baton. A waiter that arrived during
+          # our wake-up window (seeing our stale @size_waiters > 0) may be
+          # parked on @size_cv with capacity already available. The
+          # regular check-in path is the only other place that signals
+          # @size_cv, so we wake the next waiter only when the predicate
+          # is actually satisfied for them. Signaling unconditionally
+          # would re-queue a waiter at the back of the FIFO and break
+          # ordering.
+          if @size_waiters > 0 && (max_size == 0 || unavailable_connections < max_size)
+            @size_cv.signal
+          end
         end
 
         connection
@@ -1342,9 +1372,12 @@ module Mongo
       def wait_for_connection(connection_global_id, deadline)
         connection = nil
         while connection.nil?
+          # RUBY-3364: as above, yield to any thread already queued for
+          # a max_connecting slot before competing ourselves.
+          must_wait = @max_connecting_waiters > 0
           # The second gate to checking out a connection. Make sure 1) there
           # exists an available connection and 2) we are under max_connecting.
-          until @available_connections.any? || @pending_connections.length < @max_connecting
+          until (@available_connections.any? || @pending_connections.length < @max_connecting) && !must_wait
             wait = deadline - Utils.monotonic_time
             if wait <= 0
               # We are going to raise a timeout error, so the connection
@@ -1353,10 +1386,16 @@ module Mongo
               decrement_connection_requests_and_signal
               raise_check_out_timeout!(connection_global_id)
             end
-            @max_connecting_cv.wait(wait)
+            @max_connecting_waiters += 1
+            begin
+              @max_connecting_cv.wait(wait)
+            ensure
+              @max_connecting_waiters -= 1
+            end
             # We do not need to decrement the connection_requests counter
             # or signal here because the pool is not ready yet.
             raise_if_not_ready!
+            must_wait = false
           end
 
           connection = get_connection(Process.pid, connection_global_id)
@@ -1368,6 +1407,14 @@ module Mongo
           # the connection_requests counter. We need to do it here.
           decrement_connection_requests_and_signal
           raise_check_out_timeout!(connection_global_id)
+        end
+
+        # RUBY-3364: hand off the baton for max_connecting_cv. Signal
+        # only if the gate predicate is satisfied for the next waiter, to
+        # avoid re-queuing a waiter at the back of the FIFO.
+        if @max_connecting_waiters > 0 &&
+           (@available_connections.any? || @pending_connections.length < @max_connecting)
+          @max_connecting_cv.signal
         end
 
         connection
