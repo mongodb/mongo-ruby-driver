@@ -85,5 +85,22 @@ RSpec.describe CoverageGate do
         expect(output.string).to include('new')
       end
     end
+
+    context 'when the baseline file does not exist' do
+      it 'returns 0 (treats baseline as empty)' do
+        write_resultset('lib/mongo/foo.rb' => [ nil, 1, 1, 0, nil ])
+        # baseline_path intentionally not created
+        expect(File).not_to exist(baseline_path)
+        expect(gate.check).to eq(0)
+      end
+    end
+
+    context 'when the resultset file does not exist' do
+      it 'raises a clear error' do
+        write_baseline('lib/mongo/foo.rb' => { 'covered' => 2, 'total' => 3 })
+        # resultset_path intentionally not created
+        expect { gate.check }.to raise_error(/SimpleCov did not produce a result/)
+      end
+    end
   end
 end
