@@ -23,6 +23,8 @@ module Mongo
       private
 
       def log_event(event)
+        return if event.previous_description == event.new_description
+
         log_debug(
           "Server description for #{event.address} changed from " +
           "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'#{awaited_indicator(event)}."
