@@ -473,7 +473,7 @@ describe Mongo::Auth::User::View do
           failCommands: [ failCommand ],
           writeConcernError: {
             code: 64,
-            codeName: 'WriteConcernFailed',
+            codeName: 'WriteConcernTimeout',
             errmsg: 'waiting for replication timed out',
             errInfo: { wtimeout: true }
           }
@@ -494,7 +494,7 @@ describe Mongo::Auth::User::View do
         expect(e.write_concern_error?).to be true
         expect(e.write_concern_error_document).to eq(
           'code' => 64,
-          'codeName' => 'WriteConcernFailed',
+          'codeName' => 'WriteConcernTimeout',
           'errmsg' => 'waiting for replication timed out',
           'errInfo' => { 'wtimeout' => true }
         )
