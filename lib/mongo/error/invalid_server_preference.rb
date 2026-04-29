@@ -33,6 +33,9 @@ module Mongo
       # Error message when hedge is specified for a read preference that does not support it.
       #
       # @api private
+      #
+      # @deprecated Hedged reads are deprecated in MongoDB Server 8.0 and will
+      #   be removed in a future version.
       NO_HEDGE_SUPPORT = 'The hedge option cannot be set for this read preference'
 
       # Error message for when the max staleness is not at least twice the heartbeat frequency.
