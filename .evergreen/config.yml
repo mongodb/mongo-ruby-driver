@@ -231,6 +231,8 @@ functions:
         script: |
           ${PREPARE_SHELL}
           export COVERAGE=1
+          unset TOPOLOGY
+          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests.sh
     - command: shell.exec
       type: test
