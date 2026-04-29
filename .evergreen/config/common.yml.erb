@@ -238,6 +238,8 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          export PATH="$HOME/.rbenv/bin:$PATH"
+          eval "$(rbenv init - bash)"
           bundle exec rake coverage:check
 
   "export FLE credentials":
