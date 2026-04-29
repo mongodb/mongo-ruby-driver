@@ -36,6 +36,15 @@ RSpec.describe CoverageGate do
     File.write(resultset_path, JSON.dump('rspec' => { 'coverage' => coverage }))
   end
 
+  def write_multi_session_resultset(sessions)
+    payload = sessions.each_with_index.with_object({}) do |(files, idx), out|
+      coverage = files.transform_keys { |rel| File.join(project_root, rel) }
+                      .transform_values { |lines| { 'lines' => lines } }
+      out["rspec-#{idx}"] = { 'coverage' => coverage }
+    end
+    File.write(resultset_path, JSON.dump(payload))
+  end
+
   def write_baseline(files)
     File.write(baseline_path, JSON.pretty_generate('files' => files))
   end
@@ -110,6 +119,21 @@ RSpec.describe CoverageGate do
         expect(gate.check).to eq(0)
         expect(output.string).to include('deleted.rb')
         expect(output.string).to include('missing')
+      end
+    end
+
+    context 'when the resultset has multiple sessions (parallel buckets)' do
+      it 'merges line hits across sessions before comparing' do
+        write_multi_session_resultset(
+          [
+            # bucket A covers lines 1 and 2
+            { 'lib/mongo/foo.rb' => [ nil, 1, 1, 0, nil ] },
+            # bucket B covers line 3 (but not 1 or 2)
+            { 'lib/mongo/foo.rb' => [ nil, 0, 0, 1, nil ] },
+          ]
+        )
+        write_baseline('lib/mongo/foo.rb' => { 'covered' => 3, 'total' => 3 })
+        expect(gate.check).to eq(0)
       end
     end
   end

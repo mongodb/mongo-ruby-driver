@@ -4,7 +4,9 @@ if ENV['COVERAGE']
   require 'simplecov'
   require 'simplecov-json'
 
-  SimpleCov.command_name 'rspec'
+  # Unique per process so concurrent buckets in rake spec:ci do not overwrite
+  # each other's session in coverage/.resultset.json.
+  SimpleCov.command_name "rspec-#{Process.pid}"
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
     [
       SimpleCov::Formatter::HTMLFormatter,

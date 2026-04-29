@@ -68,14 +68,27 @@ class CoverageGate
   end
 
   def parse_resultset(data)
-    _, run = data.first
-    coverage = run.fetch('coverage')
-    coverage.each_with_object({}) do |(abs_path, file_data), out|
+    merged = data.each_value.with_object({}) do |run, acc|
+      run.fetch('coverage').each do |abs_path, file_data|
+        lines = file_data.is_a?(Hash) ? file_data['lines'] : file_data
+        existing = acc[abs_path]
+        acc[abs_path] = existing ? merge_lines(existing, lines) : lines.dup
+      end
+    end
+
+    merged.each_with_object({}) do |(abs_path, lines), out|
       rel = relative_path(abs_path)
       next unless rel
 
-      lines = file_data.is_a?(Hash) ? file_data['lines'] : file_data
       out[rel] = count_lines(lines)
+    end
+  end
+
+  def merge_lines(a, b)
+    a.zip(b).map do |x, y|
+      next nil if x.nil? && y.nil?
+
+      (x.is_a?(Integer) ? x : 0) + (y.is_a?(Integer) ? y : 0)
     end
   end
 
