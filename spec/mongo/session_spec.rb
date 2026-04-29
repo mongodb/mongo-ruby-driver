@@ -32,6 +32,53 @@ describe Mongo::Session do
     it 'sets the cluster' do
       expect(session.cluster).to be(authorized_client.cluster)
     end
+
+    context 'when :snapshot_time is set without :snapshot' do
+      let(:options) do
+        { snapshot_time: BSON::Timestamp.new(0, 1) }
+      end
+
+      it 'raises ArgumentError' do
+        expect { session }.to raise_error(
+          ArgumentError, /:snapshot_time can only be set when :snapshot is true/
+        )
+      end
+    end
+
+    context 'when :snapshot_time is not a BSON::Timestamp' do
+      let(:options) do
+        { snapshot: true, snapshot_time: 12_345 }
+      end
+
+      it 'raises ArgumentError' do
+        expect { session }.to raise_error(
+          ArgumentError, /:snapshot_time must be a BSON::Timestamp/
+        )
+      end
+    end
+
+    context 'when :snapshot_time is set with :snapshot' do
+      let(:timestamp) { BSON::Timestamp.new(42, 7) }
+
+      let(:options) do
+        { snapshot: true, snapshot_time: timestamp }
+      end
+
+      it 'exposes the timestamp via snapshot_timestamp' do
+        expect(session.snapshot_timestamp).to eq(timestamp)
+      end
+    end
+  end
+
+  describe '#snapshot_timestamp=' do
+    let(:initial_timestamp) { BSON::Timestamp.new(1, 1) }
+    let(:later_timestamp) { BSON::Timestamp.new(2, 2) }
+    let(:options) { { snapshot: true, snapshot_time: initial_timestamp } }
+
+    it 'is a no-op once a snapshot timestamp is set' do
+      session.snapshot_timestamp = later_timestamp
+      expect(session.snapshot_timestamp).to eq(initial_timestamp)
+    end
   end
 
   describe '#inspect' do

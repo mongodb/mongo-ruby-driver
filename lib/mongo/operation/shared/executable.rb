@@ -59,7 +59,7 @@ module Mongo
                       end
                     end
 
-                    if session.snapshot? && !session.snapshot_timestamp
+                    if session.snapshot?
                       session.snapshot_timestamp = result.snapshot_timestamp
                     end
                   end

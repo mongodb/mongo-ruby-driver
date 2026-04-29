@@ -285,12 +285,7 @@ module Unified
                    database.fs
                  when 'session'
                    client = entities.get(:client, spec.use!('client'))
-
-                   opts = if smc_opts = spec.use('sessionOptions')
-                            ::Utils.underscore_hash(smc_opts)
-                          else
-                            {}
-                          end
+                   opts = build_session_options(spec)
 
                    client.start_session(**opts).tap do |session|
                      session.advance_cluster_time(@cluster_time)
@@ -378,6 +373,20 @@ module Unified
         entities.set(type.to_sym, id, entity)
       end
       @entities_created = true
+    end
+
+    # Builds the keyword options for Client#start_session from a session
+    # entity spec. When sessionOptions contains snapshotTime, the value is the
+    # name of a previously saved entity holding the actual BSON::Timestamp.
+    def build_session_options(spec)
+      smc_opts = spec.use('sessionOptions')
+      return {} unless smc_opts
+
+      opts = ::Utils.underscore_hash(smc_opts)
+      if opts[:snapshot_time].is_a?(String)
+        opts[:snapshot_time] = entities.get(:result, opts[:snapshot_time])
+      end
+      opts
     end
 
     def set_initial_data

@@ -68,6 +68,11 @@ module Unified
       session.end_session
     end
 
+    def get_snapshot_time(op)
+      session = entities.get(:session, op.use!('object'))
+      session.snapshot_timestamp
+    end
+
     def assert_session_dirty(op)
       consume_test_runner(op)
       use_arguments(op) do |args|
