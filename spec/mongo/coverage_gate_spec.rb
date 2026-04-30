@@ -135,6 +135,21 @@ RSpec.describe CoverageGate do
         write_baseline('lib/mongo/foo.rb' => { 'covered' => 3, 'total' => 3 })
         expect(gate.check).to eq(0)
       end
+
+      it 'treats a nil from any session as non-executable' do
+        # Session A loaded the file: Ruby Coverage marked lines 0, 4, 5 as
+        # non-executable (nil). Session B used the track_files heuristic and
+        # tagged those same lines as executable-not-hit (0). The merge must
+        # not inflate total by counting heuristic 0s where a real run said nil.
+        write_multi_session_resultset(
+          [
+            { 'lib/mongo/foo.rb' => [ nil, 1, 1, 0, nil, nil ] },
+            { 'lib/mongo/foo.rb' => [ 0,   0, 0, 0, 0,   0   ] },
+          ]
+        )
+        write_baseline('lib/mongo/foo.rb' => { 'covered' => 2, 'total' => 3 })
+        expect(gate.check).to eq(0)
+      end
     end
   end
 

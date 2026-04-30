@@ -84,11 +84,15 @@ class CoverageGate
     end
   end
 
+  # SimpleCov's track_files placeholder uses a heuristic to mark executable
+  # lines in files no process actually loaded. Ruby's Coverage module is
+  # authoritative when the file was loaded, so a nil from any session wins
+  # over a heuristic 0 from another.
   def merge_lines(a, b)
     a.zip(b).map do |x, y|
-      next nil if x.nil? && y.nil?
+      next nil if x.nil? || y.nil?
 
-      (x.is_a?(Integer) ? x : 0) + (y.is_a?(Integer) ? y : 0)
+      x + y
     end
   end
 
