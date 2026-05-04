@@ -171,6 +171,17 @@ buildvariants:
     tasks:
       - name: test-otel
 
+  - matrix_name: Coverage
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      mongodb-version: <%= latest_stable_mdb %>
+      topology: replica-set
+      os: ubuntu2404
+    display_name: "Coverage - ${mongodb-version}"
+    tags: ["pr"]
+    tasks:
+      - name: test-coverage
+
   - matrix_name: "no-retry-reads"
     matrix_spec:
       retry-reads: no-retry-reads

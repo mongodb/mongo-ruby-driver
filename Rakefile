@@ -221,4 +221,31 @@ namespace :docs do
   end
 end
 
+def coverage_gate
+  require_relative '.evergreen/lib/coverage_gate'
+  CoverageGate.new(
+    resultset_path: 'coverage/.resultset.json',
+    baseline_path: '.simplecov_baseline.json',
+    project_root: ROOT
+  )
+end
+
+namespace :coverage do
+  desc 'Fail if any tracked file dropped below its baseline coverage'
+  task :check do
+    exit(coverage_gate.check)
+  end
+
+  desc 'Regenerate the coverage baseline from the latest resultset'
+  task :update_baseline do
+    coverage_gate.update_baseline
+    puts 'Wrote .simplecov_baseline.json'
+  end
+
+  desc 'Print the coverage report without failing'
+  task :report do
+    coverage_gate.report
+  end
+end
+
 load 'profile/driver_bench/rake/tasks.rake'
