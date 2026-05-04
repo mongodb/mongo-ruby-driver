@@ -74,12 +74,22 @@ module Mongo
     #     and *:nearest*.
     # @option options [ true | false ] :snapshot Set up the session for
     #   snapshot reads.
+    # @option options [ BSON::Timestamp ] :snapshot_time The desired snapshot
+    #   time for snapshot reads. Only valid when :snapshot is true.
     #
     # @since 2.5.0
     # @api private
     def initialize(server_session, client, options = {})
       if options[:causal_consistency] && options[:snapshot]
         raise ArgumentError, ':causal_consistency and :snapshot options cannot be both set on a session'
+      end
+
+      if options[:snapshot_time] && !options[:snapshot]
+        raise ArgumentError, ':snapshot_time can only be set when :snapshot is true'
+      end
+
+      if options[:snapshot_time] && !options[:snapshot_time].is_a?(BSON::Timestamp)
+        raise ArgumentError, ':snapshot_time must be a BSON::Timestamp'
       end
 
       if options[:implicit]
@@ -104,6 +114,7 @@ module Mongo
       @with_transaction_deadline = nil
       @with_transaction_timeout_ms = nil
       @inside_with_transaction = false
+      @snapshot_timestamp = options[:snapshot_time]
     end
 
     # @return [ Hash ] The options for this session.
@@ -1273,8 +1284,23 @@ module Mongo
       @server_session.txn_num
     end
 
+    # @return [ BSON::Timestamp | nil ] The snapshot time for this session.
+    #   nil if the session is not a snapshot session, or if it is a snapshot
+    #   session for which no :snapshot_time option was provided and no read
+    #   has yet captured atClusterTime from the server.
+    attr_reader :snapshot_timestamp
+
+    # Sets the snapshot time for the session. Once set, subsequent
+    # assignments are ignored: snapshotTime is established at most once per
+    # session, either from the :snapshot_time option at construction or from
+    # the atClusterTime returned by the first find/aggregate/distinct
+    # response. This keeps the property effectively read-only for callers,
+    # per the snapshot-sessions spec rationale.
+    #
     # @api private
-    attr_accessor :snapshot_timestamp
+    def snapshot_timestamp=(value)
+      @snapshot_timestamp ||= value
+    end
 
     # @return [ Integer | nil ] The deadline for the current transaction, if any.
     # @api private
