@@ -37,6 +37,8 @@ module Mongo
       #   reads on the server. Hedged reads are not enabled by default. When
       #   specifying this option, it must be in the format: { enabled: true },
       #   where the value of the :enabled key is a boolean value.
+      #   @deprecated Hedged reads are deprecated in MongoDB Server 8.0 and will
+      #     be removed in a future version.
       #
       # @raise [ Error::InvalidServerPreference ] If tag sets are specified
       #   but not allowed.
@@ -51,6 +53,14 @@ module Mongo
         @hedge = options[:hedge]
 
         validate!
+
+        return if @hedge.nil?
+
+        Mongo::Deprecations.warn(
+          :hedge_read_preference,
+          'The hedge read preference option is deprecated. Hedged reads are ' \
+          'deprecated in MongoDB Server 8.0 and will be removed in a future version.'
+        )
       end
 
       # @return [ Hash ] options The options.
@@ -67,6 +77,9 @@ module Mongo
 
       # @return [ Hash | nil ] hedge The document specifying whether to enable
       #   hedged reads.
+      #
+      # @deprecated Hedged reads are deprecated in MongoDB Server 8.0 and will
+      #   be removed in a future version.
       attr_reader :hedge
 
       # Get the timeout for server selection.

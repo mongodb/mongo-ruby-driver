@@ -59,6 +59,9 @@ module Mongo
       # Whether the hedge option is allowed to be defined for this server preference.
       #
       # @return [ false ] false
+      #
+      # @deprecated Hedged reads are deprecated in MongoDB Server 8.0 and will
+      #   be removed in a future version.
       def hedge_allowed?
         false
       end
