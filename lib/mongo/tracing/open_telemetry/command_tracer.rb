@@ -21,6 +21,15 @@ module Mongo
       #
       # @api private
       class CommandTracer
+        include Mongo::Monitoring::Event::Secure
+
+        # Commands for which a span MUST NOT be created. The OpenTelemetry spec
+        # requires drivers to skip command spans for sensitive commands listed in
+        # the Command Logging and Monitoring spec. We additionally skip hello /
+        # legacy hello in all forms — these are handshake/heartbeat traffic and
+        # would only add noise to traces.
+        HELLO_COMMANDS = %w[hello ismaster isMaster].freeze
+
         # Initializes a new CommandTracer.
         #
         # @param otel_tracer [ OpenTelemetry::Trace::Tracer ] the OpenTelemetry tracer.
@@ -57,6 +66,8 @@ module Mongo
         # @return [ Object ] the result of the command.
         # rubocop:disable Lint/RescueException
         def trace_command(message, _operation_context, connection)
+          return yield if skip_tracing?(message)
+
           # Commands should always be nested under their operation span, not directly under
           # the transaction span. Don't pass with_parent to use automatic parent resolution
           # from the currently active span (the operation span).
@@ -75,6 +86,22 @@ module Mongo
         # rubocop:enable Lint/RescueException
 
         private
+
+        # Determines whether the command must not be traced. Sensitive auth
+        # commands carry credentials in their payloads (SCRAM proofs, cleartext
+        # passwords, etc.) and the OpenTelemetry spec requires drivers to skip
+        # command spans for them. Hello / legacy hello are also skipped to keep
+        # handshake traffic out of traces.
+        #
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ Boolean ] true when no command span should be created.
+        def skip_tracing?(message)
+          name = command_name(message)
+          return true if HELLO_COMMANDS.include?(name)
+
+          sensitive?(command_name: name, document: message.documents.first)
+        end
 
         # Creates a span for a command.
         #
