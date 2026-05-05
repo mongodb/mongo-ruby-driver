@@ -382,7 +382,7 @@ module Mongo
       with_overload_retry(context: possibly_refreshed_context) do
         process(execute_operation(get_more_operation))
       end
-    rescue Error::SocketError, Error::SocketTimeoutError
+    rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished
       @get_more_network_error = true
       raise
     rescue Error::OperationFailure => e

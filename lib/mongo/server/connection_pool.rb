@@ -862,6 +862,22 @@ module Mongo
         end
       end
 
+      # Returns statistics about the internal state of the connection pool,
+      # primarily for testing and debugging purposes.
+      #
+      # @return [ Hash ] The state of the connection pool
+      #
+      # @api private
+      def state
+        @lock.synchronize do
+          { available_connections: @available_connections.length,
+            checked_out_connections: @checked_out_connections.length,
+            pending_connections: @pending_connections.length,
+            interrupt_connections: @interrupt_connections.length,
+            connection_requests: @connection_requests }
+        end
+      end
+
       private
 
       # Returns the next available connection, optionally with given
