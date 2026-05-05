@@ -196,6 +196,84 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
         end.to raise_error(error)
       end
     end
+
+    shared_examples 'skipped command' do
+      let(:query_text_max_length) { 1000 }
+
+      it 'does not create a span' do
+        expect(otel_tracer).not_to receive(:start_span)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+
+      it 'does not enter an OpenTelemetry context' do
+        expect(OpenTelemetry::Trace).not_to receive(:with_span)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+
+      it 'yields the block' do
+        yielded = false
+        command_tracer.trace_command(message, operation_context, connection) do
+          yielded = true
+          result
+        end
+        expect(yielded).to be true
+      end
+
+      it 'returns the block result' do
+        return_value = command_tracer.trace_command(message, operation_context, connection) { result }
+        expect(return_value).to eq(result)
+      end
+    end
+
+    %w[
+      authenticate
+      saslStart
+      saslContinue
+      getnonce
+      createUser
+      updateUser
+      copydbgetnonce
+      copydbsaslstart
+      copydb
+    ].each do |sensitive_cmd|
+      context "with #{sensitive_cmd} command" do
+        let(:document) do
+          {
+            sensitive_cmd => 1,
+            '$db' => 'admin',
+            'payload' => BSON::Binary.new('secret-credential-bytes')
+          }
+        end
+
+        include_examples 'skipped command'
+      end
+    end
+
+    %w[hello ismaster isMaster].each do |hello_cmd|
+      context "with #{hello_cmd} command without speculativeAuthenticate" do
+        let(:document) do
+          { hello_cmd => 1, '$db' => 'admin' }
+        end
+
+        include_examples 'skipped command'
+      end
+
+      context "with #{hello_cmd} command with speculativeAuthenticate" do
+        let(:document) do
+          {
+            hello_cmd => 1,
+            '$db' => 'admin',
+            'speculativeAuthenticate' => {
+              'saslStart' => 1,
+              'mechanism' => 'SCRAM-SHA-256',
+              'payload' => BSON::Binary.new('secret-handshake-bytes')
+            }
+          }
+        end
+
+        include_examples 'skipped command'
+      end
+    end
   end
 
   describe '#span_attributes' do
