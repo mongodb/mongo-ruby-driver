@@ -141,6 +141,15 @@ module Mongo
     # @since 2.5.0
     SCHEME_DELIM = '://'
 
+    # Placeholder used in place of cleartext credentials when a URI is
+    # rendered for display, logging, or error reporting.
+    CREDENTIALS_PLACEHOLDER = '<credentials>'
+
+    # Pattern matching the userinfo portion of a MongoDB connection string.
+    # Anchors at the start and stops at the first '/', '?', or '#' so it
+    # cannot accidentally redact something past the authority component.
+    USERINFO_REDACTION_REGEX = %r{\A(mongodb(?:\+srv)?://)[^/?#@]*@}.freeze
+
     # Error details for an invalid options format.
     #
     # @since 2.1.0
@@ -214,6 +223,24 @@ module Mongo
     #
     # @since 2.1.0
     REPEATABLE_OPTIONS = %i[tag_sets ssl]
+
+    # Replace the userinfo portion of a MongoDB connection string with a
+    # placeholder so the result can safely be logged, displayed, or embedded
+    # in an exception message.
+    #
+    # The input is matched as a string, not parsed, so this is safe to call
+    # on malformed URIs (which is exactly when {InvalidURI} is raised).
+    #
+    # @param [ String ] string The raw URI string.
+    #
+    # @return [ String ] The URI with any userinfo replaced by
+    #   {CREDENTIALS_PLACEHOLDER}, or the input unchanged if it is not a
+    #   string or has no userinfo.
+    def self.redact(string)
+      return string unless string.is_a?(String)
+
+      string.sub(USERINFO_REDACTION_REGEX, "\\1#{CREDENTIALS_PLACEHOLDER}@")
+    end
 
     # Get either a URI object or a SRVProtocol URI object.
     #
@@ -320,20 +347,33 @@ module Mongo
       @database || Database::ADMIN
     end
 
-    # Get the uri as a string.
+    # Get the uri as a string with any credentials redacted.
+    #
+    # Credentials are replaced with {CREDENTIALS_PLACEHOLDER} so the result is
+    # safe to log or display. Use {#credentials} to recover the original user
+    # and password.
     #
     # @example Get the uri as a string.
     #   uri.to_s
     #
-    # @return [ String ] The uri string.
+    # @return [ String ] The redacted uri string.
     def to_s
       reconstruct_uri
     end
 
+    # Return a redacted, human-readable representation of the URI. The
+    # default {Object#inspect} would dump {@string} and {@password} as
+    # instance variables, leaking credentials.
+    #
+    # @return [ String ] The redacted inspect string.
+    def inspect
+      "#<#{self.class.name}: #{reconstruct_uri}>"
+    end
+
     private
 
-    # Reconstruct the URI from its parts. Invalid options are dropped and options
-    # are converted to camelCase.
+    # Reconstruct the URI from its parts with credentials redacted. Invalid
+    # options are dropped and options are converted to camelCase.
     #
     # @return [ String ] the uri.
     def reconstruct_uri
@@ -349,9 +389,7 @@ module Mongo
       end.compact.join('&')
 
       uri = "#{scheme}#{SCHEME_DELIM}"
-      uri += @user.to_s if @user
-      uri += "#{AUTH_USER_PWD_DELIM}#{@password}" if @password
-      uri += '@' if @user || @password
+      uri += "#{CREDENTIALS_PLACEHOLDER}@" if @user || @password
       uri += @query_hostname || servers
       uri += '/' if @database || !options.empty?
       uri += @database.to_s if @database
