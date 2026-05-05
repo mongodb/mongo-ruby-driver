@@ -45,7 +45,10 @@ module Mongo
         raise ArgumentError, 'SRV URI is required' unless @srv_uri = opts.delete(:srv_uri)
 
         @options = opts.freeze
-        @resolver = Srv::Resolver.new(**opts)
+        # Per the polling-srv-records spec, mismatched-domain records and empty
+        # results MUST be logged and ignored, not raised. Force the polling
+        # resolver into log-and-continue mode regardless of caller options.
+        @resolver = Srv::Resolver.new(**opts, raise_on_invalid: false)
         @last_result = @srv_uri.srv_result
         @stop_semaphore = Semaphore.new
       end
@@ -81,6 +84,12 @@ module Mongo
           return
         rescue Resolv::ResolvError => e
           log_warn("SRV monitor: unable to resolve hostname #{@srv_uri.query_hostname}: #{e.class}: #{e}")
+          return
+        rescue Mongo::Error => e
+          # Defense in depth: the polling resolver is configured to log-and-continue
+          # for mismatched-domain and empty-result cases, but if any Mongo::Error
+          # leaks out we MUST NOT let it terminate the SRV monitor thread.
+          log_warn("SRV monitor: error resolving hostname #{@srv_uri.query_hostname}: #{e.class}: #{e}")
           return
         end
 

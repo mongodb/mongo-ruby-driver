@@ -229,6 +229,32 @@ describe Mongo::Srv::Monitor do
           expect(cluster.addresses.map(&:to_s).sort).to eq(hosts.sort)
         end
       end
+
+      context 'when the resolver raises Mongo::Error::MismatchedDomain' do
+        let(:resolver) do
+          double('resolver').tap do |resolver|
+            allow(resolver).to receive(:get_records)
+              .and_raise(Mongo::Error::MismatchedDomain, 'simulated mismatched domain')
+          end
+        end
+
+        it 'does not propagate the error and leaves the topology unchanged' do
+          expect(cluster.addresses.map(&:to_s).sort).to eq(hosts.sort)
+        end
+      end
+
+      context 'when the resolver raises Mongo::Error::NoSRVRecords' do
+        let(:resolver) do
+          double('resolver').tap do |resolver|
+            allow(resolver).to receive(:get_records)
+              .and_raise(Mongo::Error::NoSRVRecords, 'simulated no records')
+          end
+        end
+
+        it 'does not propagate the error and leaves the topology unchanged' do
+          expect(cluster.addresses.map(&:to_s).sort).to eq(hosts.sort)
+        end
+      end
     end
 
     context 'when srv_max_hosts is specified' do
