@@ -117,14 +117,14 @@ module Mongo
         raise Error::InvalidURI.new(@string, details, FORMAT)
       end
 
-      # Gets the SRV resolver.
-      # If domain verification fails or no SRV records are found,
-      # an error must not be raised per the spec; instead, a warning is logged.
+      # Gets the SRV resolver used for initial URI parsing.
+      # Per the Initial DNS Seedlist Discovery spec, the driver MUST raise an
+      # error if domain verification fails or no SRV records are found, so
+      # raise_on_invalid is left at its default of true.
       #
       # @return [ Mongo::Srv::Resolver ]
       def resolver
         @resolver ||= Srv::Resolver.new(
-          raise_on_invalid: false,
           resolv_options: options[:resolv_options],
           timeout: options[:connect_timeout]
         )
