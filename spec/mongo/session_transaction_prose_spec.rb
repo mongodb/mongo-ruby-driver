@@ -25,37 +25,33 @@ describe Mongo::Session do
     it 'adds measurable delay when jitter is enabled' do
       skip 'failCommand fail point is not available' unless fail_command_available?
 
-      no_backoff_time = with_fixed_jitter(0) do
+      no_backoff_sleeps = []
+      with_fixed_jitter(0) do
         with_commit_failures(13) do
-          measure_with_transaction_time do |session|
-            collection.insert_one({}, session: session)
+          client.start_session do |session|
+            allow(session).to receive(:sleep) { |d| no_backoff_sleeps << d }
+            session.with_transaction { collection.insert_one({}, session: session) }
           end
         end
       end
 
-      with_backoff_time = with_fixed_jitter(1) do
+      with_backoff_sleeps = []
+      with_fixed_jitter(1) do
         with_commit_failures(13) do
-          measure_with_transaction_time do |session|
-            collection.insert_one({}, session: session)
+          client.start_session do |session|
+            allow(session).to receive(:sleep) { |d| with_backoff_sleeps << d }
+            session.with_transaction { collection.insert_one({}, session: session) }
           end
         end
       end
 
-      # Sum of 13 backoffs per spec is approximately 1.8 seconds.
-      expect(with_backoff_time).to be_within(0.5).of(no_backoff_time + 1.8)
+      # With jitter=0 all requested sleeps are zero; with jitter=1 they sum to
+      # approximately 1.8 seconds (sum of 13 exponential backoffs, per spec).
+      expect(no_backoff_sleeps.sum).to eq(0)
+      expect(with_backoff_sleeps.sum).to be_within(0.05).of(1.8)
     end
 
     private
-
-    def measure_with_transaction_time
-      start_time = Mongo::Utils.monotonic_time
-      client.start_session do |session|
-        session.with_transaction do
-          yield(session)
-        end
-      end
-      Mongo::Utils.monotonic_time - start_time
-    end
 
     def with_fixed_jitter(value)
       allow(Random).to receive(:rand).and_return(value)
