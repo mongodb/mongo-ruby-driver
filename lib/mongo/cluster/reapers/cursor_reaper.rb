@@ -195,8 +195,8 @@ module Mongo
               # Connection is dead. do_check_in will detect connection.error?
               # and disconnect it; the pool slot becomes free for a new connection.
             ensure
-              connection.unpin(:cursor) if connection.respond_to?(:unpin)
-              connection.connection_pool.check_in(connection)
+              connection.unpin(:cursor)
+              connection.connection_pool.check_in(connection) unless connection.pinned?
             end
           else
             op.execute(server, context: Operation::Context.new(options: options))
