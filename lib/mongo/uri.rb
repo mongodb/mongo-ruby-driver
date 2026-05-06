@@ -146,9 +146,13 @@ module Mongo
     CREDENTIALS_PLACEHOLDER = '<credentials>'
 
     # Pattern matching the userinfo portion of a MongoDB connection string.
-    # Anchors at the start and stops at the first '/', '?', or '#' so it
-    # cannot accidentally redact something past the authority component.
-    USERINFO_REDACTION_REGEX = %r{\A(mongodb(?:\+srv)?://)[^/?#@]*@}.freeze
+    # Anchors at the start and is bounded to the authority component (stops at
+    # the first '/', '?', or '#'), but matches greedily up to the last '@' in
+    # that component so passwords containing an unescaped '@' are still fully
+    # redacted. Case-insensitive so an unusual scheme like 'MongoDB://' is
+    # redacted too — the parser will reject it, and the redactor must not be
+    # the thing that leaks the credentials in the resulting error.
+    USERINFO_REDACTION_REGEX = %r{\A(mongodb(?:\+srv)?://)[^/?#]*@}i.freeze
 
     # Error details for an invalid options format.
     #

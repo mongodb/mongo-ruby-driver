@@ -356,6 +356,16 @@ describe Mongo::URI do
         .to eq('mongodb://host/db?opt=a@b')
     end
 
+    it 'redacts a password containing an unescaped @' do
+      expect(described_class.redact('mongodb://alice:p@ss@host'))
+        .to eq('mongodb://<credentials>@host')
+    end
+
+    it 'redacts when the scheme uses mixed case' do
+      expect(described_class.redact('MongoDB://alice:s3cret@host'))
+        .to eq('MongoDB://<credentials>@host')
+    end
+
     it 'does not redact strings with an unrelated scheme' do
       expect(described_class.redact('http://alice:s3cret@host'))
         .to eq('http://alice:s3cret@host')
