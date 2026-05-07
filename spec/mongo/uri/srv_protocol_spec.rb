@@ -17,7 +17,8 @@ describe Mongo::URI::SRVProtocol do
 
   shared_examples 'roundtrips string' do
     it 'returns the correct string for the uri' do
-      expect(uri.to_s).to eq(URI::DEFAULT_PARSER.unescape(string))
+      expected = Mongo::URI.redact(URI::DEFAULT_PARSER.unescape(string))
+      expect(uri.to_s).to eq(expected)
     end
   end
 
@@ -352,8 +353,8 @@ describe Mongo::URI::SRVProtocol do
           expect(uri.credentials[:user]).to eq(user)
         end
 
-        it 'drops the colon in to_s' do
-          expect(uri.to_s).to eq('mongodb+srv://tyler@test5.test.build.10gen.cc')
+        it 'redacts the credentials in to_s' do
+          expect(uri.to_s).to eq('mongodb+srv://<credentials>@test5.test.build.10gen.cc')
         end
       end
 
@@ -734,8 +735,8 @@ describe Mongo::URI::SRVProtocol do
             expect(client.options[:auth_mech]).to eq(expected)
           end
 
-          it 'roundtrips the string' do
-            expect(uri.to_s).to eq('mongodb+srv://tyler:s3kr4t@test5.test.build.10gen.cc/?authSource=$external&authMechanism=GSSAPI')
+          it 'roundtrips the string with credentials redacted' do
+            expect(uri.to_s).to eq('mongodb+srv://<credentials>@test5.test.build.10gen.cc/?authSource=$external&authMechanism=GSSAPI')
           end
         end
 
@@ -778,8 +779,8 @@ describe Mongo::URI::SRVProtocol do
             expect(client.options[:auth_mech]).to eq(expected)
           end
 
-          it 'roundtrips the string' do
-            expect(uri.to_s).to eq('mongodb+srv://tyler@test5.test.build.10gen.cc/?authSource=$external&authMechanism=MONGODB-X509')
+          it 'roundtrips the string with credentials redacted' do
+            expect(uri.to_s).to eq('mongodb+srv://<credentials>@test5.test.build.10gen.cc/?authSource=$external&authMechanism=MONGODB-X509')
           end
 
           context 'when a username is not provided' do
