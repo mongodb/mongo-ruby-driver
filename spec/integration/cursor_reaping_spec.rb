@@ -131,4 +131,74 @@ describe 'Cursor reaping' do
       expect(event.reply['cursorsUnknown']).to be_empty
     end
   end
+
+  context 'load-balanced topology' do
+    require_topology :load_balanced
+
+    let(:pool_size) { 3 }
+
+    let(:client) do
+      authorized_client.with(max_pool_size: pool_size, wait_queue_timeout: 2)
+    end
+
+    let(:collection) { client['cursor_reaper_lb_leak'] }
+
+    before do
+      authorized_client['cursor_reaper_lb_leak'].drop
+      200.times { |i| authorized_client['cursor_reaper_lb_leak'].insert_one(name: "doc_#{i}") }
+    end
+
+    def kill_checked_out_sockets(pool)
+      pool.instance_variable_get(:@checked_out_connections).each do |conn|
+        sock = conn.instance_variable_get(:@socket)
+        raw = sock&.instance_variable_get(:@tcp_socket) ||
+              sock&.instance_variable_get(:@socket)
+        raw&.close unless raw.nil? || raw.closed?
+      rescue StandardError
+      end
+    end
+
+    it 'releases pinned connections when the socket dies before killCursors runs' do
+      server = client.cluster.next_primary
+      pool = server.pool
+
+      # Open pool_size cursors with cursor_id != 0. batch_size: 1 ensures the
+      # server never exhausts the cursor in the first batch, so each cursor pins
+      # its connection until the reaper runs.
+      pool_size.times do
+        scope = collection.find({}, batch_size: 1)
+        scope.each.first
+      end
+
+      # All connections should be pinned (checked out) and none available.
+      expect(pool.available_count).to eq(0)
+      expect(pool.state[:checked_out_connections]).to eq(pool_size)
+
+      # Simulate a network failure by force-closing the underlying TCP sockets
+      # while the connections are still pinned to their open cursors.
+      kill_checked_out_sockets(pool)
+
+      # The block-local `scope` variables are now eligible for GC. Force
+      # collection so finalizers run and KillSpecs are enqueued.
+      GC.start
+      sleep 1
+
+      # Force the cursor reaper (via the periodic executor) to process the
+      # queued KillSpecs. Without the fix, execute_with_connection raises
+      # SocketError on each dead connection and check_in is never called;
+      # the rescue here prevents that exception from failing the test for the
+      # wrong reason.
+      begin
+        client.cluster.trigger_periodic_executor!
+      rescue StandardError
+        nil
+      end
+
+      # Every pinned connection should have been checked back into the pool,
+      # even though the killCursors command failed on the dead socket. Without
+      # the fix, @checked_out_connections still holds all pool_size connections
+      # and this expectation fails.
+      expect(pool.state[:checked_out_connections]).to eq(0)
+    end
+  end
 end
