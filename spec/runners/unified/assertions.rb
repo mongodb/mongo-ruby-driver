@@ -296,8 +296,13 @@ module Unified
     def get_actual_value(actual, key)
       if actual.is_a?(Hash)
         actual[key]
-      elsif actual.is_a?(Mongo::Operation::Result) && !actual.respond_to?(key.to_sym)
-        actual.documents.first[key]
+      elsif actual.is_a?(Mongo::Operation::Result)
+        snake_key = Utils.underscore(key)
+        if actual.respond_to?(snake_key)
+          actual.send(snake_key)
+        else
+          actual.documents.first[key]
+        end
       else
         actual.send(key)
       end
