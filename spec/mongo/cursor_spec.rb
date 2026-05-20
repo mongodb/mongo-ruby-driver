@@ -180,6 +180,33 @@ describe Mongo::Cursor do
           end
         end
 
+        context 'when a getMore raises ConnectionPerished' do
+          let(:op) { double('operation') }
+
+          before do
+            allow(cursor).to receive(:get_more_operation).and_return(op)
+            if SpecConfig.instance.connect_options[:connect] == :load_balanced
+              allow(op).to receive(:execute_with_connection).and_raise(Mongo::Error::ConnectionPerished)
+            else
+              allow(op).to receive(:execute).and_raise(Mongo::Error::ConnectionPerished)
+            end
+            begin
+              cursor.to_a
+            rescue Mongo::Error::ConnectionPerished
+              nil
+            end
+          end
+
+          it 'sets @get_more_network_error' do
+            expect(cursor.instance_variable_get(:@get_more_network_error)).to be true
+          end
+
+          it 'does not attempt killCursors on close' do
+            expect(Mongo::Operation::KillCursors).not_to receive(:new)
+            cursor.close
+          end
+        end
+
         context 'when no errors occur' do
           it 'returns the correct amount' do
             expect(cursor.to_a.size).to eq(102)

@@ -189,8 +189,15 @@ module Mongo
             connection_global_id: kill_spec.connection_global_id,
           }
           if connection = kill_spec.connection
-            op.execute_with_connection(connection, context: Operation::Context.new(options: options))
-            connection.connection_pool.check_in(connection)
+            begin
+              op.execute_with_connection(connection, context: Operation::Context.new(options: options))
+            rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished
+              # Connection is dead. do_check_in will detect connection.error?
+              # and disconnect it; the pool slot becomes free for a new connection.
+            ensure
+              connection.unpin(:cursor)
+              connection.connection_pool.check_in(connection) unless connection.pinned?
+            end
           else
             op.execute(server, context: Operation::Context.new(options: options))
           end

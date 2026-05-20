@@ -351,14 +351,19 @@ module Mongo
               # In load balanced topology, manually check out a connection
               # so it remains checked out and pinned to the cursor.
               connection = server.pool.check_out(context: context)
-              result = send_initial_query(connection, context)
+              begin
+                result = send_initial_query(connection, context)
 
-              start_at_operation_time = if doc = result.replies.first && result.replies.first.documents.first
-                                          doc['operationTime']
-                                        else
-                                          nil
-                                        end
-              result
+                start_at_operation_time = if doc = result.replies.first && result.replies.first.documents.first
+                                            doc['operationTime']
+                                          else
+                                            nil
+                                          end
+                result
+              rescue StandardError
+                server.pool.check_in(connection)
+                raise
+              end
             else
               server.with_connection do |connection|
                 result = send_initial_query(connection, context)

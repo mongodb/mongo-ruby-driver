@@ -324,9 +324,7 @@ module Mongo
     # @api private
     attr_reader :seeds
 
-    # @private
-    #
-    # @since 2.5.1
+    # @api private
     attr_reader :session_pool
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
@@ -981,6 +979,16 @@ module Mongo
           raise_sessions_not_supported unless topology.logical_session_timeout
         end
       end
+    end
+
+    # Forces the cluster's periodic executor to run immediately. If the cluster
+    # has no periodic executor, this method does nothing.
+    #
+    # @api private
+    def trigger_periodic_executor!
+      return unless @periodic_executor
+
+      @periodic_executor.execute
     end
 
     private
