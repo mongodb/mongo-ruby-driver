@@ -157,35 +157,13 @@ functions:
         file: mo-expansion.yml
 
   "export AWS auth credentials":
-    - command: shell.exec
+    - command: subprocess.exec
       type: test
       params:
-        silent: true
-        working_dir: "src"
-        script: |
-          cat <<EOT > .env.private
-          IAM_AUTH_ASSUME_AWS_ACCOUNT="${iam_auth_assume_aws_account}"
-          IAM_AUTH_ASSUME_AWS_SECRET_ACCESS_KEY="${iam_auth_assume_aws_secret_access_key}"
-          IAM_AUTH_ASSUME_ROLE_NAME="${iam_auth_assume_role_name}"
-          IAM_AUTH_EC2_INSTANCE_ACCOUNT="${iam_auth_ec2_instance_account}"
-          IAM_AUTH_EC2_INSTANCE_PROFILE="${iam_auth_ec2_instance_profile}"
-          IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY="${iam_auth_ec2_instance_secret_access_key}"
-          IAM_AUTH_ECS_ACCOUNT="${iam_auth_ecs_account}"
-          IAM_AUTH_ECS_ACCOUNT_ARN="${iam_auth_ecs_account_arn}"
-          IAM_AUTH_ECS_CLUSTER="${iam_auth_ecs_cluster}"
-          IAM_AUTH_ECS_SECRET_ACCESS_KEY="${iam_auth_ecs_secret_access_key}"
-          IAM_AUTH_ECS_SECURITY_GROUP="${iam_auth_ecs_security_group}"
-          IAM_AUTH_ECS_SUBNET_A="${iam_auth_ecs_subnet_a}"
-          IAM_AUTH_ECS_SUBNET_B="${iam_auth_ecs_subnet_b}"
-          IAM_AUTH_ECS_TASK_DEFINITION="${iam_auth_ecs_task_definition_ubuntu2004}"
-
-          IAM_WEB_IDENTITY_ISSUER="${iam_web_identity_issuer}"
-          IAM_WEB_IDENTITY_JWKS_URI="${iam_web_identity_jwks_uri}"
-          IAM_WEB_IDENTITY_RSA_KEY="${iam_web_identity_rsa_key}"
-          IAM_WEB_IDENTITY_TOKEN_FILE="${iam_web_identity_token_file}"
-          IAM_AUTH_ASSUME_WEB_ROLE_NAME="${iam_auth_assume_web_role_name}"
-
-          EOT
+        binary: bash
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, DRIVERS_TOOLS]
+        args:
+          - "${DRIVERS_TOOLS}/.evergreen/auth_aws/setup-secrets.sh"
 
   "run CSOT tests":
     - command: shell.exec
