@@ -240,6 +240,9 @@ if test -n "$FLE"; then
   if test -f secrets-export.sh; then
     # shellcheck disable=SC1091
     . ./secrets-export.sh
+    # setup-secrets.sh sets AWS_SESSION_TOKEN="" for long-lived keys. Unset it
+    # so the driver does not include an empty security token in KMS requests.
+    [ -z "${AWS_SESSION_TOKEN:-}" ] && unset AWS_SESSION_TOKEN
     export MONGO_RUBY_DRIVER_AWS_KEY="${FLE_AWS_KEY}"
     export MONGO_RUBY_DRIVER_AWS_SECRET="${FLE_AWS_SECRET}"
     export MONGO_RUBY_DRIVER_AZURE_TENANT_ID="${FLE_AZURE_TENANTID}"
