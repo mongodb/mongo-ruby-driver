@@ -6,9 +6,10 @@ set +x
 
 . `dirname "$0"`/functions.sh
 
-# When running in Evergreen, credentials are written to this file.
-# In Docker they are already in the environment and the file does not exist.
-if test -f .env.private; then
+# Source credentials from AWS Secrets Manager (CI) or .env.private (local/Docker).
+if test -n "${DRIVERS_TOOLS:-}" && test -f "${DRIVERS_TOOLS}/.evergreen/auth_aws/secrets-export.sh"; then
+  . "${DRIVERS_TOOLS}/.evergreen/auth_aws/secrets-export.sh"
+elif test -f .env.private; then
   . ./.env.private
 fi
 
