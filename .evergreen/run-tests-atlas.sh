@@ -28,5 +28,10 @@ echo "Running specs"
 
 export ATLAS_TESTING=1
 
+if test -f secrets-export.sh; then
+  # shellcheck disable=SC1091
+  . ./secrets-export.sh
+fi
+
 bundle exec rspec spec/atlas \
   --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml
