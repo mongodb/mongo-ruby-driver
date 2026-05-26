@@ -5,7 +5,8 @@ require 'lite_spec_helper'
 describe Mongo::URI do
   shared_examples 'roundtrips string' do
     it 'returns the correct string for the uri' do
-      expect(uri.to_s).to eq(URI::DEFAULT_PARSER.unescape(string))
+      expected = Mongo::URI.redact(URI::DEFAULT_PARSER.unescape(string))
+      expect(uri.to_s).to eq(expected)
     end
   end
 
@@ -325,12 +326,92 @@ describe Mongo::URI do
     end
   end
 
+  describe '.redact' do
+    it 'returns nil unchanged' do
+      expect(described_class.redact(nil)).to be_nil
+    end
+
+    it 'leaves a uri without userinfo unchanged' do
+      expect(described_class.redact('mongodb://localhost:27017'))
+        .to eq('mongodb://localhost:27017')
+    end
+
+    it 'replaces user and password with the placeholder' do
+      expect(described_class.redact('mongodb://alice:s3cret@host:27017/admin'))
+        .to eq('mongodb://<credentials>@host:27017/admin')
+    end
+
+    it 'redacts userinfo for mongodb+srv:// URIs' do
+      expect(described_class.redact('mongodb+srv://alice:s3cret@host'))
+        .to eq('mongodb+srv://<credentials>@host')
+    end
+
+    it 'redacts user-only userinfo' do
+      expect(described_class.redact('mongodb://alice@host'))
+        .to eq('mongodb://<credentials>@host')
+    end
+
+    it 'does not redact an @ that appears past the authority component' do
+      expect(described_class.redact('mongodb://host/db?opt=a@b'))
+        .to eq('mongodb://host/db?opt=a@b')
+    end
+
+    it 'redacts a password containing an unescaped @' do
+      expect(described_class.redact('mongodb://alice:p@ss@host'))
+        .to eq('mongodb://<credentials>@host')
+    end
+
+    it 'redacts when the scheme uses mixed case' do
+      expect(described_class.redact('MongoDB://alice:s3cret@host'))
+        .to eq('MongoDB://<credentials>@host')
+    end
+
+    it 'does not redact strings with an unrelated scheme' do
+      expect(described_class.redact('http://alice:s3cret@host'))
+        .to eq('http://alice:s3cret@host')
+    end
+  end
+
   describe '#to_s' do
-    context 'string is a uri' do
+    context 'string is a uri without credentials' do
       let(:string) { 'mongodb://localhost:27017' }
 
       it 'returns the original string' do
         expect(uri.to_s).to eq(string)
+      end
+    end
+
+    context 'string includes credentials' do
+      let(:string) { 'mongodb://alice:s3cret@localhost:27017' }
+
+      it 'replaces the credentials with a placeholder' do
+        expect(uri.to_s).to eq('mongodb://<credentials>@localhost:27017')
+      end
+
+      it 'does not include the password' do
+        expect(uri.to_s).not_to include('s3cret')
+      end
+
+      it 'does not include the username' do
+        expect(uri.to_s).not_to include('alice')
+      end
+    end
+  end
+
+  describe '#inspect' do
+    context 'string includes credentials' do
+      let(:string) { 'mongodb://alice:s3cret@localhost:27017' }
+
+      it 'does not include the password' do
+        expect(uri.inspect).not_to include('s3cret')
+      end
+
+      it 'does not include the username' do
+        expect(uri.inspect).not_to include('alice')
+      end
+
+      it 'includes the credentials placeholder' do
+        expect(uri.inspect).to include('<credentials>')
       end
     end
   end
@@ -448,8 +529,8 @@ describe Mongo::URI do
         expect(uri.credentials[:user]).to eq(user)
       end
 
-      it 'roundtrips string without the colon' do
-        expect(uri.to_s).to eq('mongodb://tyler@localhost')
+      it 'redacts the credentials in to_s' do
+        expect(uri.to_s).to eq('mongodb://<credentials>@localhost')
       end
     end
 
@@ -895,8 +976,8 @@ describe Mongo::URI do
               expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
             end
 
-            it 'roundtrips the string' do
-              expect(uri.to_s).to eq('mongodb://tyler:s3kr4t@localhost/?authMechanism=GSSAPI')
+            it 'roundtrips the string with credentials redacted' do
+              expect(uri.to_s).to eq('mongodb://<credentials>@localhost/?authMechanism=GSSAPI')
             end
           end
 
@@ -909,8 +990,8 @@ describe Mongo::URI do
               expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'foo' })
             end
 
-            it 'roundtrips the string' do
-              expect(uri.to_s).to eq('mongodb://tyler:s3kr4t@localhost/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:foo')
+            it 'roundtrips the string with credentials redacted' do
+              expect(uri.to_s).to eq('mongodb://<credentials>@localhost/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:foo')
             end
           end
         end

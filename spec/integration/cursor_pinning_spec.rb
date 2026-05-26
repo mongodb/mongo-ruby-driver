@@ -75,5 +75,22 @@ describe 'Cursor pinning' do
         enum.each { |it| it.nil? }
       end
     end
+
+    context 'change stream' do
+      it 'returns the connection to the pool when send_initial_query raises' do
+        client = authorized_client.with(max_pool_size: 1, wait_queue_timeout: 1)
+        collection = client['change_stream_conn_leak']
+
+        allow_any_instance_of(Mongo::Collection::View::ChangeStream)
+          .to receive(:send_initial_query)
+          .and_raise(RuntimeError, 'simulated failure')
+
+        expect { collection.watch }.to raise_error(RuntimeError)
+
+        # Without the fix the connection is not checked back in, the pool is
+        # exhausted, and this raises ConnectionCheckOutTimeout after 1 second.
+        expect { collection.find.first }.not_to raise_error
+      end
+    end
   end
 end

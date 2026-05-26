@@ -23,12 +23,16 @@ module Mongo
     class InvalidURI < Error
       # Instantiate the new exception.
       #
+      # The URI is redacted via {Mongo::URI.redact} before being interpolated
+      # so that any cleartext credentials in the original input do not end up
+      # in logs, error reporters, or backtraces.
+      #
       # @example Instantiate the exception.
       #   Mongo::Error::InvalidURI.new(uri, details, format)
       #
       # @since 2.0.0
       def initialize(uri, details, format = nil)
-        message = "Bad URI: #{uri}\n" +
+        message = "Bad URI: #{Mongo::URI.redact(uri)}\n" +
                   "#{details}\n"
         message += "MongoDB URI must be in the following format: #{format}\n" if format
         message += "Please see the following URL for more information: #{Mongo::URI::HELP}\n"
