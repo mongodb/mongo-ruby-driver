@@ -147,19 +147,17 @@ describe Mongo::ServerSelector::SecondaryPreferred do
 
     context 'primary and secondary candidates' do
       let(:candidates) { [ primary, secondary ] }
-      let(:expected) { [ secondary, primary ] }
 
-      it 'returns array with secondary first, then primary' do
-        expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
+      it 'returns array with secondary only' do
+        expect(selector.send(:select_in_replica_set, candidates)).to eq([ secondary ])
       end
     end
 
     context 'secondary and primary candidates' do
       let(:candidates) { [ secondary, primary ] }
-      let(:expected) { [ secondary, primary ] }
 
-      it 'returns array with secondary and primary' do
-        expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
+      it 'returns array with secondary only' do
+        expect(selector.send(:select_in_replica_set, candidates)).to eq([ secondary ])
       end
     end
 
@@ -222,28 +220,26 @@ describe Mongo::ServerSelector::SecondaryPreferred do
         context 'one matching secondary' do
           let(:candidates) { [ primary, matching_secondary ] }
 
-          it 'returns an array of the matching secondary, then primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq(
-              [ matching_secondary, primary ]
-            )
+          it 'returns an array with the matching secondary only' do
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ matching_secondary ])
           end
         end
 
         context 'two matching secondaries' do
           let(:candidates) { [ primary, matching_secondary, matching_secondary ] }
-          let(:expected) { [ matching_secondary, matching_secondary, primary ] }
 
-          it 'returns an array of the matching secondaries, then primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
+          it 'returns an array of the matching secondaries only' do
+            expect(selector.send(:select_in_replica_set, candidates)).to eq(
+              [ matching_secondary, matching_secondary ]
+            )
           end
         end
 
         context 'one matching secondary and one matching primary' do
           let(:candidates) { [ matching_primary, matching_secondary ] }
-          let(:expected) { [ matching_secondary, matching_primary ] }
 
-          it 'returns an array of the matching secondary, then the primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
+          it 'returns an array with the matching secondary only' do
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ matching_secondary ])
           end
         end
       end
@@ -275,53 +271,49 @@ describe Mongo::ServerSelector::SecondaryPreferred do
         context 'local primary, local secondary' do
           let(:candidates) { [ primary, secondary ] }
 
-          it 'returns an array with secondary, then primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([ secondary, primary ])
+          it 'returns an array with secondary only' do
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ secondary ])
           end
         end
 
         context 'local primary, far secondary' do
           let(:candidates) { [ primary, far_secondary ] }
 
-          it 'returns an array with the secondary, then primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq([ far_secondary, primary ])
+          it 'returns an array with the secondary only' do
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ far_secondary ])
           end
         end
 
         context 'local secondary' do
           let(:candidates) { [ far_primary, secondary ] }
-          let(:expected) { [ secondary, far_primary ] }
 
-          it 'returns an array with secondary, then primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
+          it 'returns an array with secondary only' do
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ secondary ])
           end
         end
 
         context 'far primary, far secondary' do
           let(:candidates) { [ far_primary, far_secondary ] }
-          let(:expected) { [ far_secondary, far_primary ] }
 
-          it 'returns an array with secondary, then primary' do
-            expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
+          it 'returns an array with secondary only' do
+            expect(selector.send(:select_in_replica_set, candidates)).to eq([ far_secondary ])
           end
         end
 
         context 'two near servers, one far secondary' do
           context 'near primary, near secondary, far secondary' do
             let(:candidates) { [ primary, secondary, far_secondary ] }
-            let(:expected) { [ secondary, primary ] }
 
-            it 'returns an array with near secondary, then primary' do
-              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
+            it 'returns an array with near secondary only' do
+              expect(selector.send(:select_in_replica_set, candidates)).to eq([ secondary ])
             end
           end
 
           context 'two near secondaries, one far primary' do
             let(:candidates) { [ far_primary, secondary, secondary ] }
-            let(:expected) { [ secondary, secondary, far_primary ] }
 
-            it 'returns an array with secondaries, then primary' do
-              expect(selector.send(:select_in_replica_set, candidates)).to eq(expected)
+            it 'returns an array with secondaries only' do
+              expect(selector.send(:select_in_replica_set, candidates)).to contain_exactly(secondary, secondary)
             end
           end
         end

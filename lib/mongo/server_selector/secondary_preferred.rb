@@ -101,7 +101,10 @@ module Mongo
       #
       # @since 2.0.0
       def select_in_replica_set(candidates)
-        near_servers(secondaries(candidates)) + primary(candidates)
+        eligible = secondaries(candidates)
+        return near_servers(eligible) unless eligible.empty?
+
+        primary(candidates)
       end
 
       def max_staleness_allowed?
