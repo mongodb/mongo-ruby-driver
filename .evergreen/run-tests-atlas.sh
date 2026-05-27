@@ -31,6 +31,14 @@ export ATLAS_TESTING=1
 if test -f secrets-export.sh; then
   # shellcheck disable=SC1091
   . ./secrets-export.sh
+  # Map from vault variable names (shared with Python/Node) to Ruby driver expected names.
+  export ATLAS_REPLICA_SET_URI="${ATLAS_REPL}"
+  export ATLAS_SHARDED_URI="${ATLAS_SHRD}"
+  export ATLAS_FREE_TIER_URI="${ATLAS_FREE}"
+  export ATLAS_TLS11_URI="${ATLAS_TLS11}"
+  export ATLAS_TLS12_URI="${ATLAS_TLS12}"
+  export ATLAS_X509_URI="${ATLAS_X509}"
+  export ATLAS_X509_DEV_URI="${ATLAS_X509_DEV}"
 fi
 
 bundle exec rspec spec/atlas \
