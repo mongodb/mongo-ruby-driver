@@ -121,11 +121,6 @@ functions:
             export OCSP_CONNECTIVITY="${OCSP_CONNECTIVITY}"
             export OCSP_VERIFIER="${OCSP_VERIFIER}"
 
-            export ATLAS_REPLICA_SET_URI="${atlas_replica_set_uri}"
-            export ATLAS_SHARDED_URI="${atlas_sharded_uri}"
-            export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
-            export ATLAS_TLS11_URI="${atlas_tls11_uri}"
-            export ATLAS_TLS12_URI="${atlas_tls12_uri}"
             export RVM_RUBY="${RVM_RUBY}"
           EOT
 
@@ -380,6 +375,17 @@ functions:
           ${PREPARE_SHELL}
           .evergreen/run-tests-kerberos-unit.sh
 
+  "export Atlas credentials":
+    - command: subprocess.exec
+      type: test
+      params:
+        binary: bash
+        working_dir: "src"
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, DRIVERS_TOOLS]
+        args:
+          - "${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh"
+          - "drivers/atlas_connect"
+
   "run Atlas tests":
     - command: shell.exec
       type: test
@@ -389,15 +395,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" \
-          ATLAS_REPLICA_SET_URI=${atlas_replica_set_uri} ATLAS_SHARDED_URI=${atlas_sharded_uri} \
-          ATLAS_FREE_TIER_URI=${atlas_free_tier_uri} ATLAS_TLS11_URI=${atlas_tls11_uri} \
-          ATLAS_TLS12_URI=${atlas_tls12_uri} ATLAS_SERVERLESS_URI=${atlas_serverless_uri} \
-          ATLAS_SERVERLESS_LB_URI=${atlas_serverless_lb_uri} \
-          ATLAS_X509_CERT_BASE64="${atlas_x509_cert_base64}" \
-          ATLAS_X509_URI="${atlas_x509}" \
-          ATLAS_X509_DEV_CERT_BASE64="${atlas_x509_dev_cert_base64}" \
-          ATLAS_X509_DEV_URI="${atlas_x509_dev}" \
-          .evergreen/run-tests-atlas.sh
+            .evergreen/run-tests-atlas.sh
 
 pre:
   - func: assume-test-secrets-ec2-role
@@ -599,6 +597,7 @@ tasks:
       - func: "run tests with orchestration and drivers tools"
   - name: "test-atlas"
     commands:
+      - func: "export Atlas credentials"
       - func: "run Atlas tests"
   - name: "test-mlaunch"
     commands:
