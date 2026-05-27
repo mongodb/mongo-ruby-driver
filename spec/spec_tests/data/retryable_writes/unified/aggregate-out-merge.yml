@@ -27,7 +27,7 @@ initialData:
   - collectionName: &mergeCollection mergeCollection
     databaseName: *database0Name
     documents: []
-  
+
 tests:
   - description: "aggregate with $out does not set txnNumber"
     runOnRequirements:

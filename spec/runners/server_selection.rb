@@ -214,7 +214,7 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
                 server['avg_rtt_ms'] / 1000.0
               end
             end
-            allow(s).to receive(:tags).and_return(server['tags'])
+            allow(s).to receive(:tags).and_return(server['tags'] || {})
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
             allow(s).to receive(:primary?).and_return(server['type'] == 'RSPrimary')
             allow(s).to receive(:mongos?).and_return(server['type'] == 'Mongos')
@@ -338,22 +338,6 @@ def define_server_selection_spec_tests(test_paths, skipped_tests = {})
 
           let(:actual_addresses) do
             servers = server_selector.send(:suitable_servers, cluster, deprioritized_servers)
-
-            # The tests expect that only secondaries are "suitable" for
-            # server selection with secondary preferred read preference.
-            # In actuality, primaries are also suitable, and the driver
-            # returns the primaries also. Remove primaries from the
-            # actual set when read preference is secondary preferred.
-            # HOWEVER, if a test ends up selecting a primary, then it
-            # includes that primary into its suitable servers. Therefore
-            # only remove primaries when the number of suitable servers
-            # is greater than 1.
-            servers.delete_if do |server|
-              server_selector.is_a?(Mongo::ServerSelector::SecondaryPreferred) &&
-                server.primary? &&
-                servers.length > 1
-            end
-
             # Since we remove the latency requirement, the servers
             # may be returned in arbitrary order.
             servers.map(&:address).map(&:seed).sort

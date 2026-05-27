@@ -170,13 +170,6 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          # Needed for generating temporary aws credentials.
-          if [ -n "${FLE}" ];
-          then
-            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-            export AWS_DEFAULT_REGION="${fle_aws_region}"
-          fi
           export CSOT_SPEC_TESTS=1
           unset TOPOLOGY
           export TOPOLOGY=${MLAUNCH_TOPOLOGY}
@@ -198,33 +191,14 @@ functions:
             .evergreen/run-tests.sh
 
   "export FLE credentials":
-    - command: shell.exec
+    - command: subprocess.exec
       type: test
       params:
-        silent: true
+        binary: bash
         working_dir: "src"
-        script: |
-          cat <<EOT > .env.private
-          MONGO_RUBY_DRIVER_AWS_KEY="${fle_aws_key}"
-          MONGO_RUBY_DRIVER_AWS_SECRET="${fle_aws_secret}"
-          MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
-          MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
-
-          MONGO_RUBY_DRIVER_AZURE_TENANT_ID="${fle_azure_tenant_id}"
-          MONGO_RUBY_DRIVER_AZURE_CLIENT_ID="${fle_azure_client_id}"
-          MONGO_RUBY_DRIVER_AZURE_CLIENT_SECRET="${fle_azure_client_secret}"
-          MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT="${fle_azure_identity_platform_endpoint}"
-          MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT="${fle_azure_key_vault_endpoint}"
-          MONGO_RUBY_DRIVER_AZURE_KEY_NAME="${fle_azure_key_name}"
-
-          MONGO_RUBY_DRIVER_GCP_EMAIL="${fle_gcp_email}"
-          MONGO_RUBY_DRIVER_GCP_PRIVATE_KEY="${fle_gcp_private_key}"
-          MONGO_RUBY_DRIVER_GCP_PROJECT_ID="${fle_gcp_project_id}"
-          MONGO_RUBY_DRIVER_GCP_LOCATION="${fle_gcp_location}"
-          MONGO_RUBY_DRIVER_GCP_KEY_RING="${fle_gcp_key_ring}"
-          MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
-          MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
-          EOT
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, DRIVERS_TOOLS]
+        args:
+          - "${DRIVERS_TOOLS}/.evergreen/csfle/setup-secrets.sh"
 
   "export Kerberos credentials":
     - command: shell.exec
@@ -365,12 +339,17 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          # Needed for generating temporary aws credentials.
-          if [ -n "${FLE}" ];
-          then
-            export AWS_ACCESS_KEY_ID="${fle_aws_key}"
-            export AWS_SECRET_ACCESS_KEY="${fle_aws_secret}"
-            export AWS_DEFAULT_REGION="${fle_aws_region}"
+          if [ -n "${FLE}" ]; then
+            export MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
+            export MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
+            export MONGO_RUBY_DRIVER_AZURE_IDENTITY_PLATFORM_ENDPOINT="${fle_azure_identity_platform_endpoint}"
+            export MONGO_RUBY_DRIVER_AZURE_KEY_VAULT_ENDPOINT="${fle_azure_key_vault_endpoint}"
+            export MONGO_RUBY_DRIVER_AZURE_KEY_NAME="${fle_azure_key_name}"
+            export MONGO_RUBY_DRIVER_GCP_PROJECT_ID="${fle_gcp_project_id}"
+            export MONGO_RUBY_DRIVER_GCP_LOCATION="${fle_gcp_location}"
+            export MONGO_RUBY_DRIVER_GCP_KEY_RING="${fle_gcp_key_ring}"
+            export MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
+            export MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
           fi
           unset TOPOLOGY
           export TOPOLOGY=${MLAUNCH_TOPOLOGY}
