@@ -198,24 +198,6 @@ functions:
         args:
           - "${DRIVERS_TOOLS}/.evergreen/csfle/setup-secrets.sh"
 
-  "export Kerberos credentials":
-    - command: shell.exec
-      type: test
-      params:
-        silent: true
-        working_dir: "src"
-        script: |
-          cat <<EOT > .env.private
-          SASL_HOST=${sasl_host}
-          SASL_PORT=${sasl_port}
-          SASL_USER=${sasl_user}
-          SASL_PASS=${sasl_pass}
-          SASL_DB=${sasl_db}
-          PRINCIPAL=${principal}
-          KERBEROS_DB=${kerberos_db}
-          KEYTAB_BASE64=${keytab_base64}
-          EOT
-
   "exec script" :
     - command: shell.exec
       type: test
@@ -296,15 +278,6 @@ functions:
       params:
         file: ./src/tmp/*.xml
 
-  "delete private environment":
-    - command: shell.exec
-      type: test
-      params:
-        silent: true
-        working_dir: "src"
-        script: |
-          rm -f .env.private
-
   "run benchmarks":
     - command: shell.exec
       type: test
@@ -365,16 +338,6 @@ functions:
           export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests-aws-auth.sh
 
-  "run Kerberos unit tests":
-    - command: shell.exec
-      type: test
-      params:
-        shell: bash
-        working_dir: "src"
-        script: |
-          ${PREPARE_SHELL}
-          .evergreen/run-tests-kerberos-unit.sh
-
   "export Atlas credentials":
     - command: subprocess.exec
       type: test
@@ -403,7 +366,6 @@ pre:
   - func: setup-system
 
 post:
-  - func: "delete private environment"
   - func: "upload mo artifacts"
   - func: "upload test results"
   - func: "upload test results to s3"
@@ -605,9 +567,6 @@ tasks:
   - name: "driver-bench"
     commands:
       - func: "run benchmarks"
-  - name: "test-kerberos"
-    commands:
-      - func: "run Kerberos unit tests"
   - name: "test-csot"
     commands:
       - func: "run CSOT tests"
@@ -1501,17 +1460,6 @@ buildvariants:
     tags: ["pr"]
     tasks:
       - name: "test-fle"
-
-  - matrix_name: "kerberos-unit"
-    matrix_spec:
-      ruby: "ruby-4.0"
-      mongodb-version: "8.0"
-      topology: standalone
-      os: ubuntu2204
-      auth-and-ssl: kerberos
-    display_name: "Kerberos Tests"
-    tasks:
-      - name: "test-kerberos"
 
 #  - matrix_name: "fle-latest"
 #    matrix_spec:

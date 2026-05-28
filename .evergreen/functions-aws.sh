@@ -9,12 +9,7 @@ clear_instance_profile() {
   # the main shell environment, which uses different credentials for
   # regular and assume role configurations.
   (
-    # Source credentials from AWS Secrets Manager (CI) or .env.private (local/Docker).
-    if test -n "${DRIVERS_TOOLS:-}" && test -f "${DRIVERS_TOOLS}/.evergreen/auth_aws/secrets-export.sh"; then
-      . "${DRIVERS_TOOLS}/.evergreen/auth_aws/secrets-export.sh"
-    elif test -f .env.private; then
-      . ./.env.private
-    fi
+    . "${DRIVERS_TOOLS}/.evergreen/auth_aws/secrets-export.sh"
     
     export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID="`get_var IAM_AUTH_EC2_INSTANCE_ACCOUNT`"
     export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY="`get_var IAM_AUTH_EC2_INSTANCE_SECRET_ACCESS_KEY`"
