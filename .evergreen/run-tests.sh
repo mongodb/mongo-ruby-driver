@@ -77,7 +77,7 @@ if test -n "${OCSP_ALGORITHM:-}"; then
 fi
 
 if test -n "${OCSP_ALGORITHM:-}" || test -n "${OCSP_VERIFIER:-}"; then
-  python3 -m pip install asn1crypto oscrypto flask
+  python3 -m pip install asn1crypto oscrypto flask waitress
 fi
 
 launch_ocsp_mock

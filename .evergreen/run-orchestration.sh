@@ -17,7 +17,7 @@ fi
 case "${TOPOLOGY:-server}" in
   replica-set-single-node)
     export TOPOLOGY=replica_set
-    export ORCHESTRATION_FILE="${ORCHESTRATION_FILE:-single-node}"
+    export ORCHESTRATION_FILE="${ORCHESTRATION_FILE:-single-node.json}"
     ;;
   standalone)
     export TOPOLOGY=server
@@ -26,7 +26,7 @@ esac
 
 # Single mongos: use a 1-router sharded cluster config.
 if test "${SINGLE_MONGOS:-}" = 'true' && test "${TOPOLOGY:-}" = sharded_cluster; then
-  export ORCHESTRATION_FILE="${ORCHESTRATION_FILE:-single-mongos}"
+  export ORCHESTRATION_FILE="${ORCHESTRATION_FILE:-single-mongos.json}"
 fi
 
 # Load balancer support.
@@ -50,9 +50,9 @@ fi
 # Without mustStaple the server does not staple, so use the disableStapling variant.
 if test -n "${OCSP_ALGORITHM:-}"; then
   if test "${OCSP_MUST_STAPLE:-}" = 1; then
-    _ocsp_file="${OCSP_ALGORITHM}-basic-tls-ocsp-mustStaple"
+    _ocsp_file="${OCSP_ALGORITHM}-basic-tls-ocsp-mustStaple.json"
   else
-    _ocsp_file="${OCSP_ALGORITHM}-basic-tls-ocsp-disableStapling"
+    _ocsp_file="${OCSP_ALGORITHM}-basic-tls-ocsp-disableStapling.json"
   fi
   export ORCHESTRATION_FILE="${ORCHESTRATION_FILE:-$_ocsp_file}"
 fi
