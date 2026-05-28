@@ -1,6 +1,6 @@
 #!/bin/bash
-# Translates Ruby driver environment variables to drivers-tools orchestration
-# format, then starts MongoDB via drivers-evergreen-tools run-orchestration.sh.
+# Translates Ruby driver environment variables to drivers-tools format,
+# then starts MongoDB via drivers-evergreen-tools run-mongodb.sh.
 
 set -e
 
@@ -70,7 +70,7 @@ cp "$_configs_src"/replica_sets/single-node.json "$_configs_dst/replica_sets/"
 cp "$_configs_src"/replica_sets/single-node-ssl.json "$_configs_dst/replica_sets/"
 cp "$_configs_src"/sharded_clusters/single-mongos.json "$_configs_dst/sharded_clusters/"
 
-"$DRIVERS_TOOLS"/.evergreen/run-orchestration.sh
+"$DRIVERS_TOOLS"/.evergreen/run-mongodb.sh start
 
 # Export MONGODB_URI written by the orchestration tool.
 . ./mo-expansion.sh

@@ -366,7 +366,7 @@ if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
 fi
 
-"$DRIVERS_TOOLS"/.evergreen/stop-orchestration.sh || true
+"$DRIVERS_TOOLS"/.evergreen/run-mongodb.sh stop || true
 
 if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
   # Terminate all kmip servers... and whatever else happens to be running
