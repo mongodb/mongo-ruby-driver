@@ -276,8 +276,6 @@ if test -n "$EXTRA_URI_OPTIONS"; then
   add_uri_option "$EXTRA_URI_OPTIONS"
 fi
 
-add_uri_option "serverSelectionTimeoutMS=30000"
-
 if echo "$AUTH" |grep -q ^aws-assume-role; then
   $BINDIR/mongosh "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' | wc
 fi
