@@ -90,7 +90,6 @@ functions:
             export AUTH=${AUTH}
             export SSL=${SSL}
             export TOPOLOGY=${TOPOLOGY}
-            export MLAUNCH_TOPOLOGY=${MLAUNCH_TOPOLOGY}
             export COMPRESSOR=${COMPRESSOR}
             export RVM_RUBY="${RVM_RUBY}"
             export MONGODB_VERSION=${MONGODB_VERSION}
@@ -166,8 +165,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           export CSOT_SPEC_TESTS=1
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
@@ -180,8 +177,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           export OTEL_SPEC_TESTS=1
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rspec spec/spec_tests/open_telemetry_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
@@ -310,8 +305,6 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
     - command: perf.send
       params:
@@ -346,8 +339,6 @@ functions:
             export MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
             export MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
           fi
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests.sh
 
   "run AWS auth tests":
@@ -358,8 +349,6 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests-aws-auth.sh
 
   "run Kerberos unit tests":
@@ -596,7 +585,7 @@ tasks:
     commands:
       - func: "export Atlas credentials"
       - func: "run Atlas tests"
-  - name: "test-mlaunch"
+  - name: "test"
     commands:
       - func: "run tests"
   - name: "driver-bench"

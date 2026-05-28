@@ -1,17 +1,5 @@
 #!/bin/bash
 
-# Note that mlaunch is executed with (and therefore installed with) Python 2.
-# The reason for this is that in the past, some of the distros we tested on
-# had an ancient version of Python 3 that was unusable (e.g. it couldn't
-# install anything from PyPI due to outdated TLS/SSL implementation).
-# It is likely that all of the current distros we use have a recent enough
-# and working Python 3 implementation, such that we could use Python 3 for
-# everything.
-#
-# Note that some distros (e.g. ubuntu2004) do not contain a `python' binary
-# at all, thus python2 or python3 must be explicitly specified depending on
-# the desired version.
-
 set -e
 set -o pipefail
 
@@ -59,73 +47,53 @@ export JAVACMD=$JAVA_HOME/bin/java
 
 prepare_server
 
-if test "$DOCKER_PRELOAD" != 1; then
-  install_mlaunch_venv
-  pip3 install waitress
-fi
-
 # Make sure cmake is installed (in case we need to install the libmongocrypt
 # helper)
 if [ -n "$FLE" ]; then
   install_cmake
 fi
 
-if test "$TOPOLOGY" = load-balanced; then
+if test "${LOAD_BALANCED:-}" = 'true'; then
   install_haproxy
 fi
 
-# Launching mongod under $MONGO_ORCHESTRATION_HOME
-# makes its log available through log collecting machinery
-
-export dbdir="$MONGO_ORCHESTRATION_HOME"/db
-mkdir -p "$dbdir"
-
-if test -z "$TOPOLOGY"; then
-  export TOPOLOGY=standalone
+# Compute OCSP mock server arguments before starting MongoDB.
+if test -n "${OCSP_ALGORITHM:-}"; then
+  _ocsp_ca="spec/support/ocsp/$OCSP_ALGORITHM/ca.crt"
+  OCSP_ARGS="--ca_file $_ocsp_ca"
+  if test "${OCSP_DELEGATE:-}" = 1; then
+    OCSP_ARGS="$OCSP_ARGS \
+--ocsp_responder_cert spec/support/ocsp/$OCSP_ALGORITHM/ocsp-responder.crt \
+--ocsp_responder_key spec/support/ocsp/$OCSP_ALGORITHM/ocsp-responder.key"
+  else
+    OCSP_ARGS="$OCSP_ARGS \
+--ocsp_responder_cert spec/support/ocsp/$OCSP_ALGORITHM/ca.crt \
+--ocsp_responder_key spec/support/ocsp/$OCSP_ALGORITHM/ca.key"
+  fi
+  if test -n "${OCSP_STATUS:-}"; then
+    OCSP_ARGS="$OCSP_ARGS --fault $OCSP_STATUS"
+  fi
+  export OCSP_ARGS
 fi
 
-calculate_server_args
+if test -n "${OCSP_ALGORITHM:-}" || test -n "${OCSP_VERIFIER:-}"; then
+  python3 -m pip install asn1crypto oscrypto flask
+fi
+
 launch_ocsp_mock
 
-launch_server "$dbdir"
+export TOPOLOGY="${TOPOLOGY:-server}"
 
-uri_options="$URI_OPTIONS"
+.evergreen/run-orchestration.sh
+. ./mo-expansion.sh
 
 bundle_install
 
-if test "$TOPOLOGY" = sharded-cluster; then
-  if test -n "$SINGLE_MONGOS"; then
-    # Some tests may run into https://jira.mongodb.org/browse/SERVER-16836
-    # when executing against a multi-sharded mongos.
-    # At the same time, due to pinning in sharded transactions,
-    # it is beneficial to test a single shard to ensure that server
-    # monitoring and selection are working correctly and recover the driver's
-    # ability to operate in reasonable time after errors and fail points trigger
-    # on a single shard
-    echo Restricting to a single mongos
-    hosts=localhost:27017
-  else
-    hosts=localhost:27017,localhost:27018
-  fi
-elif test "$TOPOLOGY" = replica-set; then
-  # To set FCV we use mongo shell, it needs to be placed in replica set topology
-  # or it can try to send the commands to secondaries.
-  hosts=localhost:27017,localhost:27018
-  uri_options="$uri_options&replicaSet=test-rs"
-elif test "$TOPOLOGY" = replica-set-single-node; then
-  hosts=localhost:27017
-  uri_options="$uri_options&replicaSet=test-rs"
-else
-  hosts=localhost:27017
-fi
-
-if test "$AUTH" = auth; then
-  hosts="bob:pwd123@$hosts"
-elif test "$AUTH" = x509; then
+if test "$AUTH" = x509; then
   create_user_cmd="`cat <<'EOT'
     db.getSiblingDB("$external").runCommand(
       {
-        createUser: "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost",
+        createUser: "CN=client,OU=Drivers,O=MDB,L=New York City,ST=New York,C=US",
         roles: [
              { role: "root", db: "admin" },
         ],
@@ -136,16 +104,17 @@ EOT
   `"
 
   "$BINDIR"/mongosh --tls \
-    --tlsCAFile spec/support/certificates/ca.crt \
-    --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
-    -u bootstrap -p bootstrap \
+    --tlsCAFile .evergreen/x509gen/ca.pem \
+    -u bob -p pwd123 \
+    --authenticationDatabase admin \
     --eval "$create_user_cmd"
 elif test "$AUTH" = aws-regular; then
   clear_instance_profile
 
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 
-  hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
+  _mongo_host=$(echo "$MONGODB_URI" | sed 's|mongodb://[^@]*@||' | sed 's|/.*||')
+  export MONGODB_URI="mongodb://$(uri_escape "$MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID"):$(uri_escape "$MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY")@${_mongo_host}/?authMechanism=MONGODB-AWS&authSource=\$external"
 elif test "$AUTH" = aws-assume-role; then
   clear_instance_profile
 
@@ -165,10 +134,8 @@ elif test "$AUTH" = aws-assume-role; then
 
   aws sts get-caller-identity
 
-  hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
-
-  uri_options="$uri_options&"\
-"authMechanismProperties=AWS_SESSION_TOKEN:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN`"
+  _mongo_host=$(echo "$MONGODB_URI" | sed 's|mongodb://[^@]*@||' | sed 's|/.*||')
+  export MONGODB_URI="mongodb://$(uri_escape "$MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID"):$(uri_escape "$MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY")@${_mongo_host}/?authMechanism=MONGODB-AWS&authSource=\$external&authMechanismProperties=AWS_SESSION_TOKEN:$(uri_escape "$MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN")"
 elif test "$AUTH" = aws-ec2; then
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
 
@@ -218,14 +185,6 @@ if test -n "$FLE"; then
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
   if test "$DOCKER_PRELOAD" != 1; then
-    # We already have a virtualenv activated for mlaunch,
-    # install kms dependencies into it.
-    #. .evergreen/csfle/activate_venv.sh
-
-    # Adjusted package versions:
-    # cryptography 3.4 requires rust, see
-    # https://github.com/pyca/cryptography/issues/5771.
-    #pip install boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
     pip3 install boto3~=1.19 'cryptography<3.4' pykmip~=0.10.0 'sqlalchemy<2.0.0'
   fi
   python3 -u .evergreen/csfle/kms_http_server.py --ca_file .evergreen/x509gen/ca.pem --cert_file .evergreen/x509gen/server.pem --port 7999 &
@@ -308,15 +267,14 @@ if test -n "$FLE"; then
 fi
 
 if test -n "$OCSP_CONNECTIVITY"; then
-  # TODO Maybe OCSP_CONNECTIVITY=* should set SSL=ssl instead.
-  uri_options="$uri_options&tls=true"
+  add_uri_option tls=true
 fi
 
 if test -n "$EXTRA_URI_OPTIONS"; then
-  uri_options="$uri_options&$EXTRA_URI_OPTIONS"
+  add_uri_option "$EXTRA_URI_OPTIONS"
 fi
 
-export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
+add_uri_option "serverSelectionTimeoutMS=30000"
 
 if echo "$AUTH" |grep -q ^aws-assume-role; then
   $BINDIR/mongosh "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' | wc
@@ -324,7 +282,7 @@ fi
 
 set_fcv
 
-if test "$TOPOLOGY" = replica-set || test "$TOPOLOGY" = replica-set-single-node; then
+if test "$TOPOLOGY" = replica_set; then
   ruby -Ilib -I.evergreen/lib -rbundler/setup -rserver_setup -e ServerSetup.new.setup_tags
 fi
 
@@ -338,13 +296,13 @@ if ! test "$OCSP_VERIFIER" = 1 && ! test -n "$OCSP_CONNECTIVITY"; then
   bundle exec rake spec:prepare
 fi
 
-if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
+if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
   # On 3.6 server the sessions collection is not immediately available,
   # wait for it to spring into existence
   bundle exec rake spec:wait_for_sessions
 fi
 
-export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
+add_uri_option "appName=test-suite"
 
 # Compression is handled via an environment variable, convert to URI option
 if test "$COMPRESSOR" = zlib && ! echo $MONGODB_URI |grep -q compressors=; then
@@ -407,7 +365,7 @@ if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
 fi
 
-python3 -m mtools.mlaunch.mlaunch stop --dir "$dbdir" || true
+"$DRIVERS_TOOLS"/.evergreen/stop-orchestration.sh || true
 
 if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
   # Terminate all kmip servers... and whatever else happens to be running

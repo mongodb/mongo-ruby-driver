@@ -330,7 +330,11 @@ class SpecConfig
   end
 
   def client_x509_pem_path
-    "#{ssl_certs_dir}/client-x509.pem"
+    if drivers_tools?
+      evergreen_client_pem_path
+    else
+      "#{ssl_certs_dir}/client-x509.pem"
+    end
   end
 
   def second_level_cert_path

@@ -99,8 +99,13 @@ class ServerSetup
   end
 
   def bootstrap_client
-    @bootstrap_client ||= Mongo::Client.new(ENV['MONGODB_URI'] || %w(localhost),
-      user: 'bootstrap', password: 'bootstrap', auth_mech: :scram, auth_mech_properties: nil,
-    )
+    @bootstrap_client ||= if ENV['MONGODB_URI']
+      # In orchestration mode MONGODB_URI already has admin credentials; use them.
+      Mongo::Client.new(ENV['MONGODB_URI'], auth_mech: :scram, auth_mech_properties: nil)
+    else
+      Mongo::Client.new(%w(localhost),
+        user: 'bootstrap', password: 'bootstrap', auth_mech: :scram, auth_mech_properties: nil,
+      )
+    end
   end
 end
