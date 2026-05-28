@@ -86,6 +86,7 @@ export TOPOLOGY="${TOPOLOGY:-server}"
 
 .evergreen/run-orchestration.sh
 . ./mo-expansion.sh
+export MONGODB_URI
 
 bundle_install
 
