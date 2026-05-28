@@ -146,6 +146,9 @@ elif test "$AUTH" = aws-ec2; then
   # The EC2 credential retrieval tests clears the instance profile as part
   # of one of the tests.
   ruby -Ispec -Ilib -I.evergreen/lib -rec2_setup -e Ec2Setup.new.assign_instance_profile
+
+  _mongo_host=$(echo "$MONGODB_URI" | sed 's|mongodb://[^@]*@||' | sed 's|/.*||')
+  export MONGODB_URI="mongodb://${_mongo_host}/?authMechanism=MONGODB-AWS&authSource=\$external"
 elif test "$AUTH" = aws-ecs; then
   if test -z "$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"; then
     # drivers-evergreen-tools performs this operation in its ECS E2E tester.
@@ -153,10 +156,16 @@ elif test "$AUTH" = aws-ecs; then
   fi
 
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+
+  _mongo_host=$(echo "$MONGODB_URI" | sed 's|mongodb://[^@]*@||' | sed 's|/.*||')
+  export MONGODB_URI="mongodb://${_mongo_host}/?authMechanism=MONGODB-AWS&authSource=\$external"
 elif test "$AUTH" = aws-web-identity; then
   clear_instance_profile
 
   ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+
+  _mongo_host=$(echo "$MONGODB_URI" | sed 's|mongodb://[^@]*@||' | sed 's|/.*||')
+  export MONGODB_URI="mongodb://${_mongo_host}/?authMechanism=MONGODB-AWS&authSource=\$external"
 elif test "$AUTH" = kerberos; then
   export MONGO_RUBY_DRIVER_KERBEROS=1
 fi
