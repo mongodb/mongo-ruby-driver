@@ -269,6 +269,7 @@ fi
 
 if test -n "$OCSP_CONNECTIVITY"; then
   add_uri_option tls=true
+  add_uri_option "tlsCAFile=$DRIVERS_TOOLS/.evergreen/x509gen/ca.pem"
 fi
 
 if test -n "$EXTRA_URI_OPTIONS"; then
