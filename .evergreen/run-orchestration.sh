@@ -47,10 +47,12 @@ if echo "${AUTH:-}" | grep -q ^aws; then
 fi
 
 # OCSP: select orchestration file based on algorithm and mustStaple flag.
+# Without mustStaple the server does not staple, so use the disableStapling variant.
 if test -n "${OCSP_ALGORITHM:-}"; then
-  _ocsp_file="${OCSP_ALGORITHM}-basic-tls-ocsp"
   if test "${OCSP_MUST_STAPLE:-}" = 1; then
-    _ocsp_file="${_ocsp_file}-mustStaple"
+    _ocsp_file="${OCSP_ALGORITHM}-basic-tls-ocsp-mustStaple"
+  else
+    _ocsp_file="${OCSP_ALGORITHM}-basic-tls-ocsp-disableStapling"
   fi
   export ORCHESTRATION_FILE="${ORCHESTRATION_FILE:-$_ocsp_file}"
 fi
@@ -63,6 +65,7 @@ fi
 # Copy Ruby-driver-specific orchestration configs that are not (yet) in drivers-evergreen-tools.
 _configs_src="$(dirname "$0")/orchestration-configs"
 _configs_dst="$MONGO_ORCHESTRATION_HOME/configs"
+mkdir -p "$_configs_dst/replica_sets" "$_configs_dst/sharded_clusters"
 cp "$_configs_src"/replica_sets/single-node.json "$_configs_dst/replica_sets/"
 cp "$_configs_src"/replica_sets/single-node-ssl.json "$_configs_dst/replica_sets/"
 cp "$_configs_src"/sharded_clusters/single-mongos.json "$_configs_dst/sharded_clusters/"
