@@ -182,6 +182,20 @@ describe Mongo::Crypt::Handle do
       end
     end
 
+    context 'with local KMS providers' do
+      include_context 'with local kms_providers'
+
+      it 'calls setopt_enable_multiple_collinfo' do
+        expect(Mongo::Crypt::Binding).to receive(:setopt_enable_multiple_collinfo).and_call_original
+        handle
+      end
+
+      it 'calls setopt_use_need_mongo_collinfo_with_db_state' do
+        expect(Mongo::Crypt::Binding).to receive(:setopt_use_need_mongo_collinfo_with_db_state).and_call_original
+        handle
+      end
+    end
+
     context 'local' do
       context 'with invalid local kms master key' do
         let(:kms_providers) do

@@ -74,6 +74,8 @@ module Mongo
           Binding.method(:mongocrypt_destroy)
         )
         Binding.kms_ctx_setopt_retry_kms(self, true)
+        Binding.setopt_enable_multiple_collinfo(self)
+        Binding.setopt_use_need_mongo_collinfo_with_db_state(self)
         @kms_providers = kms_providers
         @kms_tls_options = kms_tls_options
 
