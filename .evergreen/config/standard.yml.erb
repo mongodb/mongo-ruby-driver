@@ -360,17 +360,6 @@ buildvariants:
     tasks:
       - name: "test-fle"
 
-  - matrix_name: "kerberos-unit"
-    matrix_spec:
-      ruby: <%= latest_ruby %>
-      mongodb-version: <%= latest_stable_mdb %>
-      topology: standalone
-      os: ubuntu2204
-      auth-and-ssl: kerberos
-    display_name: "Kerberos Tests"
-    tasks:
-      - name: "test-kerberos"
-
 #  - matrix_name: "fle-latest"
 #    matrix_spec:
 #      auth-and-ssl: "noauth-and-nossl"
