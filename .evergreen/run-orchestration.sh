@@ -67,7 +67,6 @@ _configs_src="$(dirname "$0")/orchestration-configs"
 _configs_dst="$MONGO_ORCHESTRATION_HOME/configs"
 mkdir -p "$_configs_dst/replica_sets" "$_configs_dst/sharded_clusters"
 cp "$_configs_src"/replica_sets/single-node.json "$_configs_dst/replica_sets/"
-cp "$_configs_src"/replica_sets/single-node-ssl.json "$_configs_dst/replica_sets/"
 cp "$_configs_src"/sharded_clusters/single-mongos.json "$_configs_dst/sharded_clusters/"
 
 "$DRIVERS_TOOLS"/.evergreen/run-mongodb.sh start
