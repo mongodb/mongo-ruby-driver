@@ -84,6 +84,50 @@ describe Mongo::Crypt::EncryptionIO do
     end
   end
 
+  describe '#collection_info' do
+    let(:subject) do
+      described_class.new(
+        key_vault_namespace: 'foo.bar',
+        key_vault_client: authorized_client,
+        metadata_client: authorized_client,
+        mongocryptd_options: {}
+      )
+    end
+
+    let(:db_name) { 'collection_info_test' }
+    let(:test_client) { authorized_client }
+
+    before do
+      test_client.use(db_name)['col_a'].drop
+      test_client.use(db_name)['col_b'].drop
+      test_client.use(db_name).command(create: 'col_a')
+      test_client.use(db_name).command(create: 'col_b')
+    end
+
+    after do
+      test_client.use(db_name)['col_a'].drop
+      test_client.use(db_name)['col_b'].drop
+    end
+
+    it 'returns an array of all matching collection documents' do
+      results = subject.collection_info(db_name, {}, timeout_ms: nil)
+      names = results.map { |doc| doc['name'] }
+      expect(names).to include('col_a', 'col_b')
+    end
+
+    it 'returns an empty array when no collections match' do
+      results = subject.collection_info(db_name, { name: 'nonexistent' }, timeout_ms: nil)
+      expect(results).to eq([])
+    end
+
+    it 'returns an array even when only one collection matches' do
+      results = subject.collection_info(db_name, { name: 'col_a' }, timeout_ms: nil)
+      expect(results).to be_an(Array)
+      expect(results.length).to eq(1)
+      expect(results.first['name']).to eq('col_a')
+    end
+  end
+
   describe '#mark_command' do
     let(:mock_client) do
       double('mongocryptd client').tap do |client|
