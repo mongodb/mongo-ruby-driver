@@ -823,14 +823,15 @@ module Mongo
 
       # An enum labeling different libmognocrypt state machine states
       enum :mongocrypt_ctx_state, [
-        :error,                 0,
-        :need_mongo_collinfo,   1,
-        :need_mongo_markings,   2,
-        :need_mongo_keys,       3,
-        :need_kms,              4,
-        :ready,                 5,
-        :done,                  6,
-        :need_kms_credentials,  7,
+        :error,                        0,
+        :need_mongo_collinfo,          1,
+        :need_mongo_markings,          2,
+        :need_mongo_keys,              3,
+        :need_kms,                     4,
+        :ready,                        5,
+        :done,                         6,
+        :need_kms_credentials,         7,
+        :need_mongo_collinfo_with_db,  8,
       ]
 
       # @!method self.mongocrypt_ctx_state(ctx)
