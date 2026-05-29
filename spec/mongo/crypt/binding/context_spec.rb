@@ -304,6 +304,9 @@ describe 'Mongo::Crypt::Binding' do
   end
 
   describe 'mongocrypt_ctx_state enum' do
+    require_libmongocrypt
+    fails_on_jruby
+
     it 'includes need_mongo_collinfo_with_db as value 8' do
       expect(
         Mongo::Crypt::Binding.enum_type(:mongocrypt_ctx_state)[:need_mongo_collinfo_with_db]
