@@ -1666,7 +1666,9 @@ module Mongo
       # @param [ Mongo::Crypt::Handle ] handle
       # @return [ Boolean ] Whether the option was set successfully.
       def self.setopt_enable_multiple_collinfo(handle)
-        mongocrypt_setopt_enable_multiple_collinfo(handle.ref)
+        check_status(handle) do
+          mongocrypt_setopt_enable_multiple_collinfo(handle.ref)
+        end
       end
 
       # @!method self.mongocrypt_setopt_use_need_mongo_collinfo_with_db_state(crypt)

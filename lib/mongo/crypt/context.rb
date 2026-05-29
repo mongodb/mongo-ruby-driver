@@ -131,18 +131,15 @@ module Mongo
       end
 
       def provide_collection_info(timeout_ms)
-        filter = Binding.ctx_mongo_op(self)
-
-        @encryption_io.collection_info(@db_name, filter, timeout_ms: timeout_ms).each do |result|
-          mongocrypt_feed(result)
-        end
-
-        mongocrypt_done
+        feed_collection_info(@db_name, timeout_ms)
       end
 
       def provide_collection_info_with_db(timeout_ms)
+        feed_collection_info(Binding.ctx_mongo_db(self), timeout_ms)
+      end
+
+      def feed_collection_info(db_name, timeout_ms)
         filter = Binding.ctx_mongo_op(self)
-        db_name = Binding.ctx_mongo_db(self)
 
         @encryption_io.collection_info(db_name, filter, timeout_ms: timeout_ms).each do |result|
           mongocrypt_feed(result)
