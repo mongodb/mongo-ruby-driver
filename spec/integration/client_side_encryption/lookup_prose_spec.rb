@@ -98,10 +98,7 @@ describe 'Prose Test 25: $lookup support with CSFLE and QE' do
         auto_encryption_options: {
           key_vault_namespace: 'db.keyvault',
           kms_providers: { local: { key: local_master_key } },
-          extra_options: {
-            mongocryptd_spawn_args: [ "--port=#{SpecConfig.instance.mongocryptd_port}" ],
-            mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
-          }
+          extra_options: extra_options
         },
         database: 'db'
       )
