@@ -98,7 +98,7 @@ describe 'Prose Test 25: $lookup support with CSFLE and QE' do
         auto_encryption_options: {
           key_vault_namespace: 'db.keyvault',
           kms_providers: { local: { key: local_master_key } },
-          extra_options: extra_options
+          extra_options: Crypt.extra_options
         },
         database: 'db'
       )
