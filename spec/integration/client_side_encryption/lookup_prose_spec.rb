@@ -296,6 +296,7 @@ describe 'Prose Test 25: $lookup support with CSFLE and QE' do
 
   context 'Case 10: QE collection $lookup from collection with non-CSFLE schema' do
     min_server_version '8.2'
+    min_libmongocrypt_version '1.18.0'
 
     it 'decrypts both collections correctly' do
       client = new_encrypted_client
