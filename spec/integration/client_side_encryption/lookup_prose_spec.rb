@@ -98,13 +98,7 @@ describe 'Prose Test 25: $lookup support with CSFLE and QE' do
         auto_encryption_options: {
           key_vault_namespace: 'db.keyvault',
           kms_providers: { local: { key: local_master_key } },
-          extra_options: Crypt.extra_options,
-
-          # MongoDB 8.3.2 complains about "non_csfle_schema" having a JSON schema defined, and
-          # recommends this as a workaround.
-          encrypted_fields_map: {
-            non_csfle_schema: { fields: [] }
-          },
+          extra_options: Crypt.extra_options
         },
         database: 'db'
       )

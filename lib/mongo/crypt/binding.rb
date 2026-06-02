@@ -1706,9 +1706,12 @@ module Mongo
       # Get the database name for the current collinfo operation.
       #
       # @param [ Mongo::Crypt::Context ] context
-      # @return [ String, nil ] The database name.
+      # @return [ String ] The database name.
       def self.ctx_mongo_db(context)
-        mongocrypt_ctx_mongo_db(context.ctx_p)
+        db_name = mongocrypt_ctx_mongo_db(context.ctx_p)
+        return db_name if db_name
+
+        check_ctx_status(context)
       end
 
       # @!method self.mongocrypt_ctx_provide_kms_providers(ctx, kms_providers)
