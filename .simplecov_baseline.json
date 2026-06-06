@@ -1,0 +1,1906 @@
+{
+  "generated_at": "2026-04-28T16:12:59Z",
+  "ruby_version": "4.0.1",
+  "files": {
+    "lib/mongo/active_support.rb": {
+      "covered": 0,
+      "total": 1
+    },
+    "lib/mongo/address.rb": {
+      "covered": 52,
+      "total": 69
+    },
+    "lib/mongo/address/ipv4.rb": {
+      "covered": 20,
+      "total": 21
+    },
+    "lib/mongo/address/ipv6.rb": {
+      "covered": 10,
+      "total": 26
+    },
+    "lib/mongo/address/unix.rb": {
+      "covered": 9,
+      "total": 12
+    },
+    "lib/mongo/address/validator.rb": {
+      "covered": 17,
+      "total": 23
+    },
+    "lib/mongo/auth.rb": {
+      "covered": 36,
+      "total": 55
+    },
+    "lib/mongo/auth/aws.rb": {
+      "covered": 10,
+      "total": 13
+    },
+    "lib/mongo/auth/aws/conversation.rb": {
+      "covered": 13,
+      "total": 32
+    },
+    "lib/mongo/auth/aws/credentials.rb": {
+      "covered": 5,
+      "total": 8
+    },
+    "lib/mongo/auth/aws/credentials_cache.rb": {
+      "covered": 10,
+      "total": 22
+    },
+    "lib/mongo/auth/aws/credentials_retriever.rb": {
+      "covered": 23,
+      "total": 117
+    },
+    "lib/mongo/auth/aws/request.rb": {
+      "covered": 29,
+      "total": 96
+    },
+    "lib/mongo/auth/base.rb": {
+      "covered": 33,
+      "total": 48
+    },
+    "lib/mongo/auth/conversation_base.rb": {
+      "covered": 17,
+      "total": 25
+    },
+    "lib/mongo/auth/cr.rb": {
+      "covered": 6,
+      "total": 7
+    },
+    "lib/mongo/auth/cr/conversation.rb": {
+      "covered": 9,
+      "total": 14
+    },
+    "lib/mongo/auth/credential_cache.rb": {
+      "covered": 21,
+      "total": 23
+    },
+    "lib/mongo/auth/gssapi.rb": {
+      "covered": 6,
+      "total": 7
+    },
+    "lib/mongo/auth/gssapi/conversation.rb": {
+      "covered": 13,
+      "total": 28
+    },
+    "lib/mongo/auth/ldap.rb": {
+      "covered": 6,
+      "total": 7
+    },
+    "lib/mongo/auth/ldap/conversation.rb": {
+      "covered": 8,
+      "total": 12
+    },
+    "lib/mongo/auth/roles.rb": {
+      "covered": 19,
+      "total": 19
+    },
+    "lib/mongo/auth/sasl_conversation_base.rb": {
+      "covered": 22,
+      "total": 28
+    },
+    "lib/mongo/auth/scram.rb": {
+      "covered": 16,
+      "total": 16
+    },
+    "lib/mongo/auth/scram/conversation.rb": {
+      "covered": 8,
+      "total": 12
+    },
+    "lib/mongo/auth/scram256.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/auth/scram256/conversation.rb": {
+      "covered": 12,
+      "total": 12
+    },
+    "lib/mongo/auth/scram_conversation_base.rb": {
+      "covered": 83,
+      "total": 87
+    },
+    "lib/mongo/auth/stringprep.rb": {
+      "covered": 32,
+      "total": 40
+    },
+    "lib/mongo/auth/stringprep/profiles/sasl.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/auth/stringprep/tables.rb": {
+      "covered": 21,
+      "total": 21
+    },
+    "lib/mongo/auth/stringprep/unicode_normalize/normalize.rb": {
+      "covered": 0,
+      "total": 132
+    },
+    "lib/mongo/auth/stringprep/unicode_normalize/tables.rb": {
+      "covered": 0,
+      "total": 1154
+    },
+    "lib/mongo/auth/user.rb": {
+      "covered": 37,
+      "total": 52
+    },
+    "lib/mongo/auth/user/view.rb": {
+      "covered": 23,
+      "total": 33
+    },
+    "lib/mongo/auth/x509.rb": {
+      "covered": 7,
+      "total": 14
+    },
+    "lib/mongo/auth/x509/conversation.rb": {
+      "covered": 9,
+      "total": 15
+    },
+    "lib/mongo/background_thread.rb": {
+      "covered": 34,
+      "total": 45
+    },
+    "lib/mongo/bson.rb": {
+      "covered": 2,
+      "total": 3
+    },
+    "lib/mongo/bulk_write.rb": {
+      "covered": 103,
+      "total": 133
+    },
+    "lib/mongo/bulk_write/combineable.rb": {
+      "covered": 17,
+      "total": 19
+    },
+    "lib/mongo/bulk_write/ordered_combiner.rb": {
+      "covered": 15,
+      "total": 15
+    },
+    "lib/mongo/bulk_write/result.rb": {
+      "covered": 28,
+      "total": 36
+    },
+    "lib/mongo/bulk_write/result_combiner.rb": {
+      "covered": 39,
+      "total": 43
+    },
+    "lib/mongo/bulk_write/transformable.rb": {
+      "covered": 43,
+      "total": 43
+    },
+    "lib/mongo/bulk_write/unordered_combiner.rb": {
+      "covered": 9,
+      "total": 13
+    },
+    "lib/mongo/bulk_write/validatable.rb": {
+      "covered": 15,
+      "total": 18
+    },
+    "lib/mongo/caching_cursor.rb": {
+      "covered": 17,
+      "total": 18
+    },
+    "lib/mongo/client.rb": {
+      "covered": 238,
+      "total": 393
+    },
+    "lib/mongo/client_encryption.rb": {
+      "covered": 18,
+      "total": 45
+    },
+    "lib/mongo/cluster.rb": {
+      "covered": 210,
+      "total": 291
+    },
+    "lib/mongo/cluster/periodic_executor.rb": {
+      "covered": 22,
+      "total": 27
+    },
+    "lib/mongo/cluster/reapers/cursor_reaper.rb": {
+      "covered": 36,
+      "total": 60
+    },
+    "lib/mongo/cluster/reapers/socket_reaper.rb": {
+      "covered": 9,
+      "total": 10
+    },
+    "lib/mongo/cluster/sdam_flow.rb": {
+      "covered": 144,
+      "total": 230
+    },
+    "lib/mongo/cluster/topology.rb": {
+      "covered": 30,
+      "total": 41
+    },
+    "lib/mongo/cluster/topology/base.rb": {
+      "covered": 54,
+      "total": 67
+    },
+    "lib/mongo/cluster/topology/load_balanced.rb": {
+      "covered": 16,
+      "total": 29
+    },
+    "lib/mongo/cluster/topology/no_replica_set_options.rb": {
+      "covered": 9,
+      "total": 9
+    },
+    "lib/mongo/cluster/topology/replica_set_no_primary.rb": {
+      "covered": 31,
+      "total": 35
+    },
+    "lib/mongo/cluster/topology/replica_set_with_primary.rb": {
+      "covered": 4,
+      "total": 4
+    },
+    "lib/mongo/cluster/topology/sharded.rb": {
+      "covered": 15,
+      "total": 25
+    },
+    "lib/mongo/cluster/topology/single.rb": {
+      "covered": 16,
+      "total": 29
+    },
+    "lib/mongo/cluster/topology/unknown.rb": {
+      "covered": 19,
+      "total": 25
+    },
+    "lib/mongo/cluster_time.rb": {
+      "covered": 25,
+      "total": 33
+    },
+    "lib/mongo/collection.rb": {
+      "covered": 127,
+      "total": 155
+    },
+    "lib/mongo/collection/helpers.rb": {
+      "covered": 5,
+      "total": 7
+    },
+    "lib/mongo/collection/queryable_encryption.rb": {
+      "covered": 20,
+      "total": 40
+    },
+    "lib/mongo/collection/view.rb": {
+      "covered": 57,
+      "total": 66
+    },
+    "lib/mongo/collection/view/aggregation.rb": {
+      "covered": 24,
+      "total": 37
+    },
+    "lib/mongo/collection/view/aggregation/behavior.rb": {
+      "covered": 38,
+      "total": 41
+    },
+    "lib/mongo/collection/view/builder.rb": {
+      "covered": 2,
+      "total": 2
+    },
+    "lib/mongo/collection/view/builder/aggregation.rb": {
+      "covered": 38,
+      "total": 43
+    },
+    "lib/mongo/collection/view/builder/map_reduce.rb": {
+      "covered": 18,
+      "total": 38
+    },
+    "lib/mongo/collection/view/change_stream.rb": {
+      "covered": 37,
+      "total": 131
+    },
+    "lib/mongo/collection/view/change_stream/retryable.rb": {
+      "covered": 7,
+      "total": 10
+    },
+    "lib/mongo/collection/view/explainable.rb": {
+      "covered": 12,
+      "total": 16
+    },
+    "lib/mongo/collection/view/immutable.rb": {
+      "covered": 9,
+      "total": 9
+    },
+    "lib/mongo/collection/view/iterable.rb": {
+      "covered": 56,
+      "total": 75
+    },
+    "lib/mongo/collection/view/map_reduce.rb": {
+      "covered": 42,
+      "total": 104
+    },
+    "lib/mongo/collection/view/readable.rb": {
+      "covered": 95,
+      "total": 169
+    },
+    "lib/mongo/collection/view/writable.rb": {
+      "covered": 108,
+      "total": 127
+    },
+    "lib/mongo/condition_variable.rb": {
+      "covered": 17,
+      "total": 21
+    },
+    "lib/mongo/config.rb": {
+      "covered": 13,
+      "total": 16
+    },
+    "lib/mongo/config/options.rb": {
+      "covered": 15,
+      "total": 18
+    },
+    "lib/mongo/config/validators/option.rb": {
+      "covered": 6,
+      "total": 8
+    },
+    "lib/mongo/crypt.rb": {
+      "covered": 23,
+      "total": 26
+    },
+    "lib/mongo/crypt/auto_decryption_context.rb": {
+      "covered": 0,
+      "total": 14
+    },
+    "lib/mongo/crypt/auto_encrypter.rb": {
+      "covered": 0,
+      "total": 154
+    },
+    "lib/mongo/crypt/auto_encryption_context.rb": {
+      "covered": 0,
+      "total": 12
+    },
+    "lib/mongo/crypt/binary.rb": {
+      "covered": 0,
+      "total": 63
+    },
+    "lib/mongo/crypt/binding.rb": {
+      "covered": 0,
+      "total": 647
+    },
+    "lib/mongo/crypt/context.rb": {
+      "covered": 0,
+      "total": 133
+    },
+    "lib/mongo/crypt/data_key_context.rb": {
+      "covered": 0,
+      "total": 27
+    },
+    "lib/mongo/crypt/encryption_io.rb": {
+      "covered": 0,
+      "total": 194
+    },
+    "lib/mongo/crypt/explicit_decryption_context.rb": {
+      "covered": 0,
+      "total": 13
+    },
+    "lib/mongo/crypt/explicit_encrypter.rb": {
+      "covered": 0,
+      "total": 123
+    },
+    "lib/mongo/crypt/explicit_encryption_context.rb": {
+      "covered": 0,
+      "total": 72
+    },
+    "lib/mongo/crypt/explicit_encryption_expression_context.rb": {
+      "covered": 0,
+      "total": 9
+    },
+    "lib/mongo/crypt/handle.rb": {
+      "covered": 0,
+      "total": 231
+    },
+    "lib/mongo/crypt/hooks.rb": {
+      "covered": 0,
+      "total": 43
+    },
+    "lib/mongo/crypt/kms.rb": {
+      "covered": 0,
+      "total": 69
+    },
+    "lib/mongo/crypt/kms/aws.rb": {
+      "covered": 0,
+      "total": 2
+    },
+    "lib/mongo/crypt/kms/aws/credentials.rb": {
+      "covered": 0,
+      "total": 34
+    },
+    "lib/mongo/crypt/kms/aws/master_document.rb": {
+      "covered": 0,
+      "total": 35
+    },
+    "lib/mongo/crypt/kms/azure.rb": {
+      "covered": 0,
+      "total": 4
+    },
+    "lib/mongo/crypt/kms/azure/access_token.rb": {
+      "covered": 0,
+      "total": 20
+    },
+    "lib/mongo/crypt/kms/azure/credentials.rb": {
+      "covered": 0,
+      "total": 52
+    },
+    "lib/mongo/crypt/kms/azure/credentials_retriever.rb": {
+      "covered": 0,
+      "total": 63
+    },
+    "lib/mongo/crypt/kms/azure/master_document.rb": {
+      "covered": 0,
+      "total": 35
+    },
+    "lib/mongo/crypt/kms/credentials.rb": {
+      "covered": 0,
+      "total": 35
+    },
+    "lib/mongo/crypt/kms/gcp.rb": {
+      "covered": 0,
+      "total": 3
+    },
+    "lib/mongo/crypt/kms/gcp/credentials.rb": {
+      "covered": 0,
+      "total": 67
+    },
+    "lib/mongo/crypt/kms/gcp/credentials_retriever.rb": {
+      "covered": 0,
+      "total": 48
+    },
+    "lib/mongo/crypt/kms/gcp/master_document.rb": {
+      "covered": 0,
+      "total": 45
+    },
+    "lib/mongo/crypt/kms/kmip.rb": {
+      "covered": 0,
+      "total": 2
+    },
+    "lib/mongo/crypt/kms/kmip/credentials.rb": {
+      "covered": 0,
+      "total": 27
+    },
+    "lib/mongo/crypt/kms/kmip/master_document.rb": {
+      "covered": 0,
+      "total": 31
+    },
+    "lib/mongo/crypt/kms/local.rb": {
+      "covered": 0,
+      "total": 2
+    },
+    "lib/mongo/crypt/kms/local/credentials.rb": {
+      "covered": 0,
+      "total": 27
+    },
+    "lib/mongo/crypt/kms/local/master_document.rb": {
+      "covered": 0,
+      "total": 14
+    },
+    "lib/mongo/crypt/kms/master_key_document.rb": {
+      "covered": 0,
+      "total": 25
+    },
+    "lib/mongo/crypt/kms_context.rb": {
+      "covered": 0,
+      "total": 22
+    },
+    "lib/mongo/crypt/rewrap_many_data_key_context.rb": {
+      "covered": 0,
+      "total": 11
+    },
+    "lib/mongo/crypt/rewrap_many_data_key_result.rb": {
+      "covered": 0,
+      "total": 10
+    },
+    "lib/mongo/crypt/status.rb": {
+      "covered": 0,
+      "total": 52
+    },
+    "lib/mongo/csot_timeout_holder.rb": {
+      "covered": 30,
+      "total": 49
+    },
+    "lib/mongo/cursor.rb": {
+      "covered": 142,
+      "total": 189
+    },
+    "lib/mongo/cursor/kill_spec.rb": {
+      "covered": 15,
+      "total": 18
+    },
+    "lib/mongo/cursor/nontailable.rb": {
+      "covered": 5,
+      "total": 7
+    },
+    "lib/mongo/cursor_host.rb": {
+      "covered": 12,
+      "total": 23
+    },
+    "lib/mongo/database.rb": {
+      "covered": 61,
+      "total": 92
+    },
+    "lib/mongo/database/view.rb": {
+      "covered": 29,
+      "total": 74
+    },
+    "lib/mongo/dbref.rb": {
+      "covered": 2,
+      "total": 2
+    },
+    "lib/mongo/deprecations.rb": {
+      "covered": 14,
+      "total": 29
+    },
+    "lib/mongo/distinguishing_semaphore.rb": {
+      "covered": 16,
+      "total": 19
+    },
+    "lib/mongo/error.rb": {
+      "covered": 116,
+      "total": 118
+    },
+    "lib/mongo/error/auth_error.rb": {
+      "covered": 4,
+      "total": 4
+    },
+    "lib/mongo/error/bad_load_balancer_target.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/bulk_write_error.rb": {
+      "covered": 9,
+      "total": 36
+    },
+    "lib/mongo/error/change_stream_resumable.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/client_closed.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/closed_stream.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/connection_check_out_timeout.rb": {
+      "covered": 5,
+      "total": 9
+    },
+    "lib/mongo/error/connection_perished.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/error/connection_unavailable.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/credential_check_error.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/crypt_error.rb": {
+      "covered": 4,
+      "total": 7
+    },
+    "lib/mongo/error/extra_file_chunk.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/failed_string_prep_validation.rb": {
+      "covered": 7,
+      "total": 8
+    },
+    "lib/mongo/error/file_not_found.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/handshake_error.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/insufficient_iteration_count.rb": {
+      "covered": 5,
+      "total": 7
+    },
+    "lib/mongo/error/internal_driver_error.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/invalid_address.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/invalid_application_name.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_bulk_operation.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_bulk_operation_type.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_collection_name.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/error/invalid_config_option.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_cursor_operation.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/invalid_database_name.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/error/invalid_document.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/error/invalid_file.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_file_revision.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_max_connecting.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_min_pool_size.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_nonce.rb": {
+      "covered": 6,
+      "total": 9
+    },
+    "lib/mongo/error/invalid_read_concern.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_read_option.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_replacement_document.rb": {
+      "covered": 7,
+      "total": 14
+    },
+    "lib/mongo/error/invalid_server_auth_host.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/invalid_server_auth_response.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/invalid_server_preference.rb": {
+      "covered": 8,
+      "total": 9
+    },
+    "lib/mongo/error/invalid_session.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/invalid_signature.rb": {
+      "covered": 6,
+      "total": 9
+    },
+    "lib/mongo/error/invalid_transaction_operation.rb": {
+      "covered": 10,
+      "total": 13
+    },
+    "lib/mongo/error/invalid_txt_record.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/invalid_update_document.rb": {
+      "covered": 7,
+      "total": 14
+    },
+    "lib/mongo/error/invalid_uri.rb": {
+      "covered": 4,
+      "total": 8
+    },
+    "lib/mongo/error/invalid_write_concern.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/kms_error.rb": {
+      "covered": 5,
+      "total": 8
+    },
+    "lib/mongo/error/labelable.rb": {
+      "covered": 9,
+      "total": 12
+    },
+    "lib/mongo/error/lint_error.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/max_bson_size.rb": {
+      "covered": 5,
+      "total": 11
+    },
+    "lib/mongo/error/max_message_size.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/error/mismatched_domain.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/missing_connection.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/missing_file_chunk.rb": {
+      "covered": 4,
+      "total": 7
+    },
+    "lib/mongo/error/missing_password.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/missing_resume_token.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/error/missing_scram_server_signature.rb": {
+      "covered": 4,
+      "total": 6
+    },
+    "lib/mongo/error/missing_service_id.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/mongocryptd_spawn_error.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/multi_index_drop.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/need_primary_server.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/no_server_available.rb": {
+      "covered": 4,
+      "total": 9
+    },
+    "lib/mongo/error/no_service_connection_available.rb": {
+      "covered": 7,
+      "total": 11
+    },
+    "lib/mongo/error/no_srv_records.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/notable.rb": {
+      "covered": 22,
+      "total": 24
+    },
+    "lib/mongo/error/operation_failure.rb": {
+      "covered": 56,
+      "total": 76
+    },
+    "lib/mongo/error/parser.rb": {
+      "covered": 71,
+      "total": 86
+    },
+    "lib/mongo/error/pool_cleared_error.rb": {
+      "covered": 6,
+      "total": 8
+    },
+    "lib/mongo/error/pool_closed_error.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/pool_error.rb": {
+      "covered": 6,
+      "total": 9
+    },
+    "lib/mongo/error/pool_paused_error.rb": {
+      "covered": 6,
+      "total": 7
+    },
+    "lib/mongo/error/raise_original_error.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/read_write_retryable.rb": {
+      "covered": 9,
+      "total": 16
+    },
+    "lib/mongo/error/sdam_error_detection.rb": {
+      "covered": 16,
+      "total": 26
+    },
+    "lib/mongo/error/server_api_conflict.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/server_certificate_revoked.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/server_not_usable.rb": {
+      "covered": 6,
+      "total": 8
+    },
+    "lib/mongo/error/server_timeout_error.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/error/session_ended.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/session_not_materialized.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/sessions_not_supported.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/snapshot_session_invalid_server_version.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/snapshot_session_transaction_prohibited.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/socket_error.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/error/socket_timeout_error.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/error/timeout_error.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/transactions_not_supported.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/unchangeable_collection_option.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/unexpected_chunk_length.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/unexpected_response.rb": {
+      "covered": 4,
+      "total": 5
+    },
+    "lib/mongo/error/unknown_payload_type.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/error/unmet_dependency.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/unsupported_array_filters.rb": {
+      "covered": 4,
+      "total": 4
+    },
+    "lib/mongo/error/unsupported_collation.rb": {
+      "covered": 4,
+      "total": 4
+    },
+    "lib/mongo/error/unsupported_features.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/unsupported_message_type.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/error/unsupported_option.rb": {
+      "covered": 10,
+      "total": 17
+    },
+    "lib/mongo/error/write_retryable.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/event.rb": {
+      "covered": 10,
+      "total": 10
+    },
+    "lib/mongo/event/base.rb": {
+      "covered": 6,
+      "total": 8
+    },
+    "lib/mongo/event/listeners.rb": {
+      "covered": 7,
+      "total": 9
+    },
+    "lib/mongo/event/publisher.rb": {
+      "covered": 5,
+      "total": 7
+    },
+    "lib/mongo/event/subscriber.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/grid.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/grid/file.rb": {
+      "covered": 15,
+      "total": 25
+    },
+    "lib/mongo/grid/file/chunk.rb": {
+      "covered": 18,
+      "total": 33
+    },
+    "lib/mongo/grid/file/info.rb": {
+      "covered": 25,
+      "total": 45
+    },
+    "lib/mongo/grid/fs_bucket.rb": {
+      "covered": 36,
+      "total": 115
+    },
+    "lib/mongo/grid/stream.rb": {
+      "covered": 11,
+      "total": 12
+    },
+    "lib/mongo/grid/stream/read.rb": {
+      "covered": 25,
+      "total": 84
+    },
+    "lib/mongo/grid/stream/write.rb": {
+      "covered": 23,
+      "total": 63
+    },
+    "lib/mongo/id.rb": {
+      "covered": 10,
+      "total": 10
+    },
+    "lib/mongo/index.rb": {
+      "covered": 12,
+      "total": 12
+    },
+    "lib/mongo/index/view.rb": {
+      "covered": 36,
+      "total": 109
+    },
+    "lib/mongo/lint.rb": {
+      "covered": 20,
+      "total": 48
+    },
+    "lib/mongo/loggable.rb": {
+      "covered": 14,
+      "total": 20
+    },
+    "lib/mongo/logger.rb": {
+      "covered": 10,
+      "total": 15
+    },
+    "lib/mongo/monitoring.rb": {
+      "covered": 73,
+      "total": 87
+    },
+    "lib/mongo/monitoring/cmap_log_subscriber.rb": {
+      "covered": 7,
+      "total": 9
+    },
+    "lib/mongo/monitoring/command_log_subscriber.rb": {
+      "covered": 19,
+      "total": 33
+    },
+    "lib/mongo/monitoring/event.rb": {
+      "covered": 15,
+      "total": 15
+    },
+    "lib/mongo/monitoring/event/cmap.rb": {
+      "covered": 12,
+      "total": 12
+    },
+    "lib/mongo/monitoring/event/cmap/base.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/monitoring/event/cmap/connection_check_out_failed.rb": {
+      "covered": 12,
+      "total": 15
+    },
+    "lib/mongo/monitoring/event/cmap/connection_check_out_started.rb": {
+      "covered": 9,
+      "total": 10
+    },
+    "lib/mongo/monitoring/event/cmap/connection_checked_in.rb": {
+      "covered": 13,
+      "total": 14
+    },
+    "lib/mongo/monitoring/event/cmap/connection_checked_out.rb": {
+      "covered": 13,
+      "total": 14
+    },
+    "lib/mongo/monitoring/event/cmap/connection_closed.rb": {
+      "covered": 19,
+      "total": 20
+    },
+    "lib/mongo/monitoring/event/cmap/connection_created.rb": {
+      "covered": 11,
+      "total": 12
+    },
+    "lib/mongo/monitoring/event/cmap/connection_ready.rb": {
+      "covered": 11,
+      "total": 12
+    },
+    "lib/mongo/monitoring/event/cmap/pool_cleared.rb": {
+      "covered": 14,
+      "total": 15
+    },
+    "lib/mongo/monitoring/event/cmap/pool_closed.rb": {
+      "covered": 11,
+      "total": 12
+    },
+    "lib/mongo/monitoring/event/cmap/pool_created.rb": {
+      "covered": 13,
+      "total": 14
+    },
+    "lib/mongo/monitoring/event/cmap/pool_ready.rb": {
+      "covered": 13,
+      "total": 14
+    },
+    "lib/mongo/monitoring/event/command_failed.rb": {
+      "covered": 31,
+      "total": 32
+    },
+    "lib/mongo/monitoring/event/command_started.rb": {
+      "covered": 35,
+      "total": 45
+    },
+    "lib/mongo/monitoring/event/command_succeeded.rb": {
+      "covered": 35,
+      "total": 40
+    },
+    "lib/mongo/monitoring/event/secure.rb": {
+      "covered": 18,
+      "total": 21
+    },
+    "lib/mongo/monitoring/event/server_closed.rb": {
+      "covered": 10,
+      "total": 11
+    },
+    "lib/mongo/monitoring/event/server_description_changed.rb": {
+      "covered": 18,
+      "total": 23
+    },
+    "lib/mongo/monitoring/event/server_heartbeat_failed.rb": {
+      "covered": 13,
+      "total": 20
+    },
+    "lib/mongo/monitoring/event/server_heartbeat_started.rb": {
+      "covered": 10,
+      "total": 12
+    },
+    "lib/mongo/monitoring/event/server_heartbeat_succeeded.rb": {
+      "covered": 15,
+      "total": 17
+    },
+    "lib/mongo/monitoring/event/server_opening.rb": {
+      "covered": 10,
+      "total": 11
+    },
+    "lib/mongo/monitoring/event/topology_changed.rb": {
+      "covered": 10,
+      "total": 11
+    },
+    "lib/mongo/monitoring/event/topology_closed.rb": {
+      "covered": 8,
+      "total": 9
+    },
+    "lib/mongo/monitoring/event/topology_opening.rb": {
+      "covered": 8,
+      "total": 9
+    },
+    "lib/mongo/monitoring/publishable.rb": {
+      "covered": 31,
+      "total": 33
+    },
+    "lib/mongo/monitoring/sdam_log_subscriber.rb": {
+      "covered": 9,
+      "total": 9
+    },
+    "lib/mongo/monitoring/server_closed_log_subscriber.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/monitoring/server_description_changed_log_subscriber.rb": {
+      "covered": 6,
+      "total": 10
+    },
+    "lib/mongo/monitoring/server_opening_log_subscriber.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/monitoring/topology_changed_log_subscriber.rb": {
+      "covered": 5,
+      "total": 8
+    },
+    "lib/mongo/monitoring/topology_closed_log_subscriber.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/monitoring/topology_opening_log_subscriber.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/monitoring/unified_sdam_log_subscriber.rb": {
+      "covered": 9,
+      "total": 17
+    },
+    "lib/mongo/operation.rb": {
+      "covered": 61,
+      "total": 61
+    },
+    "lib/mongo/operation/aggregate.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/aggregate/op_msg.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/aggregate/result.rb": {
+      "covered": 21,
+      "total": 22
+    },
+    "lib/mongo/operation/collections_info.rb": {
+      "covered": 8,
+      "total": 9
+    },
+    "lib/mongo/operation/collections_info/result.rb": {
+      "covered": 6,
+      "total": 9
+    },
+    "lib/mongo/operation/command.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/command/op_msg.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/context.rb": {
+      "covered": 53,
+      "total": 63
+    },
+    "lib/mongo/operation/count.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/count/op_msg.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/operation/create.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/operation/create/op_msg.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/operation/create_index.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/create_index/op_msg.rb": {
+      "covered": 7,
+      "total": 11
+    },
+    "lib/mongo/operation/create_search_indexes.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/create_search_indexes/op_msg.rb": {
+      "covered": 7,
+      "total": 8
+    },
+    "lib/mongo/operation/create_user.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/create_user/op_msg.rb": {
+      "covered": 7,
+      "total": 8
+    },
+    "lib/mongo/operation/delete.rb": {
+      "covered": 9,
+      "total": 9
+    },
+    "lib/mongo/operation/delete/bulk_result.rb": {
+      "covered": 10,
+      "total": 11
+    },
+    "lib/mongo/operation/delete/op_msg.rb": {
+      "covered": 16,
+      "total": 16
+    },
+    "lib/mongo/operation/delete/result.rb": {
+      "covered": 7,
+      "total": 8
+    },
+    "lib/mongo/operation/distinct.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/distinct/op_msg.rb": {
+      "covered": 8,
+      "total": 9
+    },
+    "lib/mongo/operation/drop.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/drop/op_msg.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/operation/drop_database.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/drop_database/op_msg.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/operation/drop_index.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/drop_index/op_msg.rb": {
+      "covered": 7,
+      "total": 8
+    },
+    "lib/mongo/operation/drop_search_index.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/drop_search_index/op_msg.rb": {
+      "covered": 7,
+      "total": 10
+    },
+    "lib/mongo/operation/explain.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/explain/op_msg.rb": {
+      "covered": 9,
+      "total": 11
+    },
+    "lib/mongo/operation/explain/result.rb": {
+      "covered": 6,
+      "total": 8
+    },
+    "lib/mongo/operation/find.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/operation/find/builder.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/operation/find/builder/command.rb": {
+      "covered": 24,
+      "total": 27
+    },
+    "lib/mongo/operation/find/builder/flags.rb": {
+      "covered": 7,
+      "total": 10
+    },
+    "lib/mongo/operation/find/builder/modifiers.rb": {
+      "covered": 10,
+      "total": 11
+    },
+    "lib/mongo/operation/find/op_msg.rb": {
+      "covered": 23,
+      "total": 27
+    },
+    "lib/mongo/operation/find/result.rb": {
+      "covered": 15,
+      "total": 15
+    },
+    "lib/mongo/operation/get_more.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/operation/get_more/command_builder.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/operation/get_more/op_msg.rb": {
+      "covered": 17,
+      "total": 23
+    },
+    "lib/mongo/operation/get_more/result.rb": {
+      "covered": 15,
+      "total": 15
+    },
+    "lib/mongo/operation/indexes.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/indexes/op_msg.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/indexes/result.rb": {
+      "covered": 11,
+      "total": 17
+    },
+    "lib/mongo/operation/insert.rb": {
+      "covered": 11,
+      "total": 11
+    },
+    "lib/mongo/operation/insert/bulk_result.rb": {
+      "covered": 17,
+      "total": 26
+    },
+    "lib/mongo/operation/insert/op_msg.rb": {
+      "covered": 21,
+      "total": 21
+    },
+    "lib/mongo/operation/insert/result.rb": {
+      "covered": 11,
+      "total": 12
+    },
+    "lib/mongo/operation/kill_cursors.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/kill_cursors/command_builder.rb": {
+      "covered": 6,
+      "total": 8
+    },
+    "lib/mongo/operation/kill_cursors/op_msg.rb": {
+      "covered": 8,
+      "total": 9
+    },
+    "lib/mongo/operation/list_collections.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/list_collections/op_msg.rb": {
+      "covered": 8,
+      "total": 9
+    },
+    "lib/mongo/operation/list_collections/result.rb": {
+      "covered": 11,
+      "total": 19
+    },
+    "lib/mongo/operation/map_reduce.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/map_reduce/op_msg.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/map_reduce/result.rb": {
+      "covered": 16,
+      "total": 24
+    },
+    "lib/mongo/operation/op_msg_base.rb": {
+      "covered": 11,
+      "total": 11
+    },
+    "lib/mongo/operation/parallel_scan.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/parallel_scan/op_msg.rb": {
+      "covered": 9,
+      "total": 14
+    },
+    "lib/mongo/operation/parallel_scan/result.rb": {
+      "covered": 9,
+      "total": 12
+    },
+    "lib/mongo/operation/remove_user.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/remove_user/op_msg.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/operation/result.rb": {
+      "covered": 87,
+      "total": 108
+    },
+    "lib/mongo/operation/shared/bypass_document_validation.rb": {
+      "covered": 10,
+      "total": 12
+    },
+    "lib/mongo/operation/shared/causal_consistency_supported.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/shared/executable.rb": {
+      "covered": 52,
+      "total": 70
+    },
+    "lib/mongo/operation/shared/executable_no_validate.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/operation/shared/executable_transaction_label.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/operation/shared/idable.rb": {
+      "covered": 19,
+      "total": 19
+    },
+    "lib/mongo/operation/shared/limited.rb": {
+      "covered": 5,
+      "total": 6
+    },
+    "lib/mongo/operation/shared/object_id_generator.rb": {
+      "covered": 5,
+      "total": 5
+    },
+    "lib/mongo/operation/shared/op_msg_executable.rb": {
+      "covered": 12,
+      "total": 12
+    },
+    "lib/mongo/operation/shared/polymorphic_lookup.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/operation/shared/polymorphic_result.rb": {
+      "covered": 13,
+      "total": 13
+    },
+    "lib/mongo/operation/shared/read_preference_supported.rb": {
+      "covered": 8,
+      "total": 28
+    },
+    "lib/mongo/operation/shared/response_handling.rb": {
+      "covered": 35,
+      "total": 38
+    },
+    "lib/mongo/operation/shared/result/aggregatable.rb": {
+      "covered": 12,
+      "total": 18
+    },
+    "lib/mongo/operation/shared/sessions_supported.rb": {
+      "covered": 82,
+      "total": 102
+    },
+    "lib/mongo/operation/shared/specifiable.rb": {
+      "covered": 81,
+      "total": 101
+    },
+    "lib/mongo/operation/shared/timed.rb": {
+      "covered": 9,
+      "total": 14
+    },
+    "lib/mongo/operation/shared/write.rb": {
+      "covered": 16,
+      "total": 22
+    },
+    "lib/mongo/operation/shared/write_concern_supported.rb": {
+      "covered": 7,
+      "total": 11
+    },
+    "lib/mongo/operation/update.rb": {
+      "covered": 9,
+      "total": 9
+    },
+    "lib/mongo/operation/update/bulk_result.rb": {
+      "covered": 31,
+      "total": 36
+    },
+    "lib/mongo/operation/update/op_msg.rb": {
+      "covered": 16,
+      "total": 16
+    },
+    "lib/mongo/operation/update/result.rb": {
+      "covered": 14,
+      "total": 24
+    },
+    "lib/mongo/operation/update_search_index.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/update_search_index/op_msg.rb": {
+      "covered": 7,
+      "total": 10
+    },
+    "lib/mongo/operation/update_user.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/update_user/op_msg.rb": {
+      "covered": 7,
+      "total": 8
+    },
+    "lib/mongo/operation/users_info.rb": {
+      "covered": 7,
+      "total": 7
+    },
+    "lib/mongo/operation/users_info/op_msg.rb": {
+      "covered": 8,
+      "total": 9
+    },
+    "lib/mongo/operation/users_info/result.rb": {
+      "covered": 8,
+      "total": 10
+    },
+    "lib/mongo/operation/write_command.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/operation/write_command/op_msg.rb": {
+      "covered": 9,
+      "total": 9
+    },
+    "lib/mongo/options.rb": {
+      "covered": 2,
+      "total": 2
+    },
+    "lib/mongo/options/mapper.rb": {
+      "covered": 16,
+      "total": 24
+    },
+    "lib/mongo/options/redacted.rb": {
+      "covered": 24,
+      "total": 39
+    },
+    "lib/mongo/protocol.rb": {
+      "covered": 11,
+      "total": 11
+    },
+    "lib/mongo/protocol/bit_vector.rb": {
+      "covered": 18,
+      "total": 18
+    },
+    "lib/mongo/protocol/caching_hash.rb": {
+      "covered": 9,
+      "total": 10
+    },
+    "lib/mongo/protocol/compressed.rb": {
+      "covered": 25,
+      "total": 62
+    },
+    "lib/mongo/protocol/get_more.rb": {
+      "covered": 21,
+      "total": 37
+    },
+    "lib/mongo/protocol/kill_cursors.rb": {
+      "covered": 17,
+      "total": 31
+    },
+    "lib/mongo/protocol/message.rb": {
+      "covered": 86,
+      "total": 115
+    },
+    "lib/mongo/protocol/msg.rb": {
+      "covered": 87,
+      "total": 121
+    },
+    "lib/mongo/protocol/query.rb": {
+      "covered": 66,
+      "total": 95
+    },
+    "lib/mongo/protocol/registry.rb": {
+      "covered": 15,
+      "total": 18
+    },
+    "lib/mongo/protocol/reply.rb": {
+      "covered": 32,
+      "total": 49
+    },
+    "lib/mongo/protocol/serializers.rb": {
+      "covered": 79,
+      "total": 108
+    },
+    "lib/mongo/query_cache.rb": {
+      "covered": 62,
+      "total": 71
+    },
+    "lib/mongo/retryable.rb": {
+      "covered": 28,
+      "total": 38
+    },
+    "lib/mongo/retryable/backpressure.rb": {
+      "covered": 7,
+      "total": 8
+    },
+    "lib/mongo/retryable/base_worker.rb": {
+      "covered": 24,
+      "total": 31
+    },
+    "lib/mongo/retryable/read_worker.rb": {
+      "covered": 36,
+      "total": 106
+    },
+    "lib/mongo/retryable/retry_policy.rb": {
+      "covered": 10,
+      "total": 17
+    },
+    "lib/mongo/retryable/write_worker.rb": {
+      "covered": 44,
+      "total": 167
+    },
+    "lib/mongo/search_index/view.rb": {
+      "covered": 28,
+      "total": 79
+    },
+    "lib/mongo/semaphore.rb": {
+      "covered": 14,
+      "total": 14
+    },
+    "lib/mongo/server.rb": {
+      "covered": 145,
+      "total": 182
+    },
+    "lib/mongo/server/app_metadata.rb": {
+      "covered": 67,
+      "total": 72
+    },
+    "lib/mongo/server/app_metadata/environment.rb": {
+      "covered": 55,
+      "total": 80
+    },
+    "lib/mongo/server/app_metadata/platform.rb": {
+      "covered": 30,
+      "total": 35
+    },
+    "lib/mongo/server/app_metadata/truncator.rb": {
+      "covered": 24,
+      "total": 39
+    },
+    "lib/mongo/server/connection.rb": {
+      "covered": 95,
+      "total": 120
+    },
+    "lib/mongo/server/connection_base.rb": {
+      "covered": 65,
+      "total": 74
+    },
+    "lib/mongo/server/connection_common.rb": {
+      "covered": 45,
+      "total": 54
+    },
+    "lib/mongo/server/connection_pool.rb": {
+      "covered": 277,
+      "total": 487
+    },
+    "lib/mongo/server/connection_pool/generation_manager.rb": {
+      "covered": 37,
+      "total": 55
+    },
+    "lib/mongo/server/connection_pool/populator.rb": {
+      "covered": 16,
+      "total": 18
+    },
+    "lib/mongo/server/description.rb": {
+      "covered": 148,
+      "total": 186
+    },
+    "lib/mongo/server/description/features.rb": {
+      "covered": 26,
+      "total": 32
+    },
+    "lib/mongo/server/description/load_balancer.rb": {
+      "covered": 6,
+      "total": 7
+    },
+    "lib/mongo/server/monitor.rb": {
+      "covered": 104,
+      "total": 123
+    },
+    "lib/mongo/server/monitor/app_metadata.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/server/monitor/connection.rb": {
+      "covered": 70,
+      "total": 79
+    },
+    "lib/mongo/server/pending_connection.rb": {
+      "covered": 63,
+      "total": 87
+    },
+    "lib/mongo/server/push_monitor.rb": {
+      "covered": 64,
+      "total": 86
+    },
+    "lib/mongo/server/push_monitor/connection.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/server/round_trip_time_calculator.rb": {
+      "covered": 36,
+      "total": 37
+    },
+    "lib/mongo/server_selector.rb": {
+      "covered": 20,
+      "total": 20
+    },
+    "lib/mongo/server_selector/base.rb": {
+      "covered": 96,
+      "total": 206
+    },
+    "lib/mongo/server_selector/nearest.rb": {
+      "covered": 13,
+      "total": 22
+    },
+    "lib/mongo/server_selector/primary.rb": {
+      "covered": 15,
+      "total": 21
+    },
+    "lib/mongo/server_selector/primary_preferred.rb": {
+      "covered": 17,
+      "total": 23
+    },
+    "lib/mongo/server_selector/secondary.rb": {
+      "covered": 13,
+      "total": 20
+    },
+    "lib/mongo/server_selector/secondary_preferred.rb": {
+      "covered": 13,
+      "total": 21
+    },
+    "lib/mongo/session.rb": {
+      "covered": 293,
+      "total": 452
+    },
+    "lib/mongo/session/server_session.rb": {
+      "covered": 22,
+      "total": 23
+    },
+    "lib/mongo/session/server_session/dirtyable.rb": {
+      "covered": 8,
+      "total": 8
+    },
+    "lib/mongo/session/session_pool.rb": {
+      "covered": 35,
+      "total": 41
+    },
+    "lib/mongo/socket.rb": {
+      "covered": 123,
+      "total": 197
+    },
+    "lib/mongo/socket/ocsp_cache.rb": {
+      "covered": 10,
+      "total": 26
+    },
+    "lib/mongo/socket/ocsp_verifier.rb": {
+      "covered": 25,
+      "total": 151
+    },
+    "lib/mongo/socket/ssl.rb": {
+      "covered": 36,
+      "total": 200
+    },
+    "lib/mongo/socket/tcp.rb": {
+      "covered": 35,
+      "total": 41
+    },
+    "lib/mongo/socket/unix.rb": {
+      "covered": 7,
+      "total": 12
+    },
+    "lib/mongo/srv.rb": {
+      "covered": 3,
+      "total": 3
+    },
+    "lib/mongo/srv/monitor.rb": {
+      "covered": 15,
+      "total": 41
+    },
+    "lib/mongo/srv/resolver.rb": {
+      "covered": 13,
+      "total": 40
+    },
+    "lib/mongo/srv/result.rb": {
+      "covered": 14,
+      "total": 41
+    },
+    "lib/mongo/timeout.rb": {
+      "covered": 7,
+      "total": 9
+    },
+    "lib/mongo/topology_version.rb": {
+      "covered": 15,
+      "total": 21
+    },
+    "lib/mongo/tracing.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/tracing/open_telemetry.rb": {
+      "covered": 6,
+      "total": 6
+    },
+    "lib/mongo/tracing/open_telemetry/command_tracer.rb": {
+      "covered": 31,
+      "total": 81
+    },
+    "lib/mongo/tracing/open_telemetry/operation_tracer.rb": {
+      "covered": 21,
+      "total": 61
+    },
+    "lib/mongo/tracing/open_telemetry/tracer.rb": {
+      "covered": 36,
+      "total": 72
+    },
+    "lib/mongo/uri.rb": {
+      "covered": 108,
+      "total": 183
+    },
+    "lib/mongo/uri/options_mapper.rb": {
+      "covered": 109,
+      "total": 295
+    },
+    "lib/mongo/uri/srv_protocol.rb": {
+      "covered": 23,
+      "total": 64
+    },
+    "lib/mongo/utils.rb": {
+      "covered": 15,
+      "total": 30
+    },
+    "lib/mongo/write_concern.rb": {
+      "covered": 17,
+      "total": 18
+    },
+    "lib/mongo/write_concern/acknowledged.rb": {
+      "covered": 7,
+      "total": 9
+    },
+    "lib/mongo/write_concern/base.rb": {
+      "covered": 13,
+      "total": 17
+    },
+    "lib/mongo/write_concern/unacknowledged.rb": {
+      "covered": 7,
+      "total": 10
+    }
+  }
+}
