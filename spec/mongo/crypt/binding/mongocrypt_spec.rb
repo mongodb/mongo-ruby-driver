@@ -108,5 +108,25 @@ describe 'Mongo::Crypt::Binding' do
         end
       end
     end
+
+    describe '#mongocrypt_setopt_enable_multiple_collinfo' do
+      let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
+
+      it 'returns true when called before init' do
+        expect(
+          Mongo::Crypt::Binding.mongocrypt_setopt_enable_multiple_collinfo(mongocrypt)
+        ).to be true
+      end
+    end
+
+    describe '#mongocrypt_setopt_use_need_mongo_collinfo_with_db_state' do
+      let(:mongocrypt) { Mongo::Crypt::Binding.mongocrypt_new }
+
+      it 'does not raise' do
+        expect do
+          Mongo::Crypt::Binding.mongocrypt_setopt_use_need_mongo_collinfo_with_db_state(mongocrypt)
+        end.not_to raise_error
+      end
+    end
   end
 end
