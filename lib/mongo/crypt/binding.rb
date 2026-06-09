@@ -823,14 +823,15 @@ module Mongo
 
       # An enum labeling different libmognocrypt state machine states
       enum :mongocrypt_ctx_state, [
-        :error,                 0,
-        :need_mongo_collinfo,   1,
-        :need_mongo_markings,   2,
-        :need_mongo_keys,       3,
-        :need_kms,              4,
-        :ready,                 5,
-        :done,                  6,
-        :need_kms_credentials,  7,
+        :error,                        0,
+        :need_mongo_collinfo,          1,
+        :need_mongo_markings,          2,
+        :need_mongo_keys,              3,
+        :need_kms,                     4,
+        :ready,                        5,
+        :done,                         6,
+        :need_kms_credentials,         7,
+        :need_mongo_collinfo_with_db,  8,
       ]
 
       # @!method self.mongocrypt_ctx_state(ctx)
@@ -1644,6 +1645,73 @@ module Mongo
       # @param [ Mongo::Crypt::Handle ] handle
       def self.setopt_use_need_kms_credentials_state(handle)
         mongocrypt_setopt_use_need_kms_credentials_state(handle.ref)
+      end
+
+      # @!method self.mongocrypt_setopt_enable_multiple_collinfo(crypt)
+      #   @api private
+      #
+      # Enable support for multiple collection schemas. Required to support $lookup.
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      # @pre mongocrypt_init has not been called on crypt.
+      # @return [ Boolean ] Whether the option was set successfully.
+      attach_function(
+        :mongocrypt_setopt_enable_multiple_collinfo,
+        [ :pointer ],
+        :bool
+      )
+
+      # Enable support for multiple collection schemas. Required to support $lookup.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @return [ Boolean ] Whether the option was set successfully.
+      def self.setopt_enable_multiple_collinfo(handle)
+        check_status(handle) do
+          mongocrypt_setopt_enable_multiple_collinfo(handle.ref)
+        end
+      end
+
+      # @!method self.mongocrypt_setopt_use_need_mongo_collinfo_with_db_state(crypt)
+      #   @api private
+      #
+      # Opt into handling the MONGOCRYPT_CTX_NEED_MONGO_COLLINFO_WITH_DB state.
+      # A context enters this state when processing a bulkWrite command whose
+      # target database differs from the command database ("admin").
+      #
+      # @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      attach_function(
+        :mongocrypt_setopt_use_need_mongo_collinfo_with_db_state,
+        [ :pointer ],
+        :void
+      )
+
+      # Opt into handling the MONGOCRYPT_CTX_NEED_MONGO_COLLINFO_WITH_DB state.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      def self.setopt_use_need_mongo_collinfo_with_db_state(handle)
+        mongocrypt_setopt_use_need_mongo_collinfo_with_db_state(handle.ref)
+      end
+
+      # @!method self.mongocrypt_ctx_mongo_db(ctx)
+      #   @api private
+      #
+      # Get the database name for the current collinfo operation. Used in the
+      # MONGOCRYPT_CTX_NEED_MONGO_COLLINFO_WITH_DB state to determine which
+      # database to run listCollections against.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @return [ String, nil ] The database name, or nil on error.
+      attach_function :mongocrypt_ctx_mongo_db, [ :pointer ], :string
+
+      # Get the database name for the current collinfo operation.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @return [ String ] The database name.
+      def self.ctx_mongo_db(context)
+        db_name = mongocrypt_ctx_mongo_db(context.ctx_p)
+        return db_name if db_name
+
+        check_ctx_status(context)
       end
 
       # @!method self.mongocrypt_ctx_provide_kms_providers(ctx, kms_providers)

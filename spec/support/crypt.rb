@@ -20,6 +20,25 @@ module Crypt
 
   LOCAL_MASTER_KEY = Base64.decode64(LOCAL_MASTER_KEY_B64)
 
+  def self.extra_options
+    opts = {
+      mongocryptd_spawn_args: [ "--port=#{SpecConfig.instance.mongocryptd_port}" ],
+      mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
+    }
+    if SpecConfig.instance.crypt_shared_lib_path
+      # Always use the explicit path when available so that every Handle in
+      # the process uses the same load mechanism and libmongocrypt does not
+      # raise "An existing crypt_shared library is loaded" errors.
+      opts[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
+    elsif SpecConfig.instance.suppress_crypt_shared_lib_search?
+      # Inside without_crypt_shared_lib_path: skip the "$SYSTEM" search
+      # entirely so we don't conflict with any library already loaded by a
+      # previous Handle via a path override.
+      opts[:disable_crypt_shared_lib_search] = true
+    end
+    opts
+  end
+
   # For all FLE-related tests
   shared_context 'define shared FLE helpers' do
     # 96-byte binary string, base64-encoded local master key
@@ -94,24 +113,7 @@ module Crypt
       )[key_vault_coll]
     end
 
-    let(:extra_options) do
-      opts = {
-        mongocryptd_spawn_args: [ "--port=#{SpecConfig.instance.mongocryptd_port}" ],
-        mongocryptd_uri: "mongodb://localhost:#{SpecConfig.instance.mongocryptd_port}",
-      }
-      if SpecConfig.instance.crypt_shared_lib_path
-        # Always use the explicit path when available so that every Handle in
-        # the process uses the same load mechanism and libmongocrypt does not
-        # raise "An existing crypt_shared library is loaded" errors.
-        opts[:crypt_shared_lib_path] = SpecConfig.instance.crypt_shared_lib_path
-      elsif SpecConfig.instance.suppress_crypt_shared_lib_search?
-        # Inside without_crypt_shared_lib_path: skip the "$SYSTEM" search
-        # entirely so we don't conflict with any library already loaded by a
-        # previous Handle via a path override.
-        opts[:disable_crypt_shared_lib_search] = true
-      end
-      opts
-    end
+    let(:extra_options) { Crypt.extra_options }
 
     let(:kms_tls_options) do
       {}

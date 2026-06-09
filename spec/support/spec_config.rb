@@ -724,6 +724,8 @@ class SpecConfig
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'ci-tests' },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'papi-tests' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'papi-tests' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'collection_info_test' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'collection_info_test' },
       ]
     )
   end

@@ -97,7 +97,7 @@ module Mongo
       #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       #
-      # @return [ Hash ] The collection information
+      # @return [ Array<BSON::Document> ] The collection information documents
       def collection_info(db_name, filter, timeout_ms: nil)
         unless @metadata_client
           raise ArgumentError,
@@ -108,7 +108,7 @@ module Mongo
           .use(db_name)
           .database
           .list_collections(filter: filter, deserialize_as_bson: true, timeout_ms: timeout_ms)
-          .first
+          .to_a
       end
 
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings

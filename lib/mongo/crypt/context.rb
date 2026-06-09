@@ -90,6 +90,8 @@ module Mongo
             provide_keys(timeout_ms)
           when :need_mongo_collinfo
             provide_collection_info(timeout_ms)
+          when :need_mongo_collinfo_with_db
+            provide_collection_info_with_db(timeout_ms)
           when :need_mongo_markings
             provide_markings(timeout_ms)
           when :need_kms
@@ -129,10 +131,19 @@ module Mongo
       end
 
       def provide_collection_info(timeout_ms)
+        feed_collection_info(@db_name, timeout_ms)
+      end
+
+      def provide_collection_info_with_db(timeout_ms)
+        feed_collection_info(Binding.ctx_mongo_db(self), timeout_ms)
+      end
+
+      def feed_collection_info(db_name, timeout_ms)
         filter = Binding.ctx_mongo_op(self)
 
-        result = @encryption_io.collection_info(@db_name, filter, timeout_ms: timeout_ms)
-        mongocrypt_feed(result) if result
+        @encryption_io.collection_info(db_name, filter, timeout_ms: timeout_ms).each do |result|
+          mongocrypt_feed(result)
+        end
 
         mongocrypt_done
       end
