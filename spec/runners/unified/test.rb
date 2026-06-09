@@ -229,6 +229,10 @@ module Unified
 
                    await_min_pool_size_ms = spec.use('awaitMinPoolSizeMS')
 
+                   if auto_encrypt_opts = spec.use('autoEncryptOpts')
+                     opts.merge!(Utils.convert_client_options('autoEncryptOpts' => auto_encrypt_opts))
+                   end
+
                    create_client(**opts).tap do |client|
                      @observe_sensitive[id] = spec.use('observeSensitiveCommands')
                      @subscribers[client] ||= subscriber
