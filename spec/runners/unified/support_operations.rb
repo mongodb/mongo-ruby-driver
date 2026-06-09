@@ -25,6 +25,39 @@ module Unified
       end
     end
 
+    def run_cursor_command(op)
+      build_command_cursor(op).to_a
+    end
+
+    def create_command_cursor(op)
+      cursor = build_command_cursor(op)
+      if name = op.use('saveResultAsEntity')
+        entities.set(:cursor, name, cursor)
+      end
+      cursor
+    end
+
+    def build_command_cursor(op)
+      database = entities.get(:database, op.use!('object'))
+
+      use_arguments(op) do |args|
+        args.use!('commandName')
+        cmd = args.use!('command')
+
+        session = args.use('session')
+        read_preference = args.use('readPreference')
+
+        opts = extract_options(args, 'batchSize', 'maxTimeMS', 'comment',
+                               'timeoutMS', 'cursorType', 'timeoutMode')
+        symbolize_options!(opts, :cursor_type, :timeout_mode)
+
+        opts[:session] = entities.get(:session, session) if session
+        opts[:read] = ::Utils.snakeize_hash(read_preference) if read_preference
+
+        database.cursor_command(cmd, **opts)
+      end
+    end
+
     def fail_point(op)
       consume_test_runner(op)
       use_arguments(op) do |args|
