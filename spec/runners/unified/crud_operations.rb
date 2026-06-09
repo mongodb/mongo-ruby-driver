@@ -121,9 +121,13 @@ module Unified
           let: args.use('let'),
           comment: args.use('comment'),
           hint: args.use('hint'),
+          sort: args.use('sort'),
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }
+        if return_document = args.use('returnDocument')
+          opts[:return_document] = return_document.downcase.to_sym
+        end
         if session = args.use('session')
           opts[:session] = entities.get(:session, session)
         end
@@ -139,6 +143,7 @@ module Unified
           let: args.use('let'),
           comment: args.use('comment'),
           hint: args.use('hint'),
+          sort: args.use('sort'),
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }

@@ -471,7 +471,7 @@ module Unified
         method_name = name
         method_name = "_#{name}" if name.to_s == 'loop'
 
-        skip "Mongo Ruby Driver does not support #{name}" if %w[modify_collection list_index_names].include?(name.to_s)
+        skip "Mongo Ruby Driver does not support #{name}" if %w[modify_collection list_index_names client_bulk_write].include?(name.to_s)
 
         if expected_error = op.use('expectError')
           begin
