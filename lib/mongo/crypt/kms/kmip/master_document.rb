@@ -31,8 +31,12 @@ module Mongo
           # @return [ String | nil ] KMIP KMS endpoint with optional port.
           attr_reader :endpoint
 
+          # @return [ true | false | nil ] Whether the KMIP server performs
+          #   encryption and decryption of the data key.
+          attr_reader :delegated
+
           FORMAT_HINT = 'KMIP KMS key document must be in the format: ' +
-                        "{ key_id: 'KEY-ID', endpoint: 'ENDPOINT' }"
+                        "{ key_id: 'KEY-ID', endpoint: 'ENDPOINT', delegated: true|false }"
 
           # Creates a master key document object form a parameters hash.
           #
@@ -42,6 +46,9 @@ module Mongo
           #   a 96 byte KMIP Secret Data managed object, optional. If key_id
           #   is omitted, the driver creates a random 96 byte identifier.
           # @option opts [ String | nil ] :endpoint KMIP endpoint, optional.
+          # @option opts [ true | false | nil ] :delegated If true, the KMIP
+          #   server performs encryption and decryption of the data key,
+          #   optional. Defaults to false.
           #
           # @raise [ ArgumentError ] If required options are missing or incorrectly
           #   formatted.
@@ -52,6 +59,7 @@ module Mongo
             @endpoint = validate_param(
               :endpoint, opts, FORMAT_HINT, required: false
             )
+            @delegated = validate_delegated(opts)
           end
 
           # Convert master key document object to a BSON document in libmongocrypt format.
@@ -63,7 +71,28 @@ module Mongo
                                }).tap do |bson|
               bson.update({ endpoint: endpoint }) unless endpoint.nil?
               bson.update({ keyId: key_id }) unless key_id.nil?
+              bson.update({ delegated: delegated }) unless delegated.nil?
             end
+          end
+
+          private
+
+          # Validate the optional :delegated KMIP master key option.
+          #
+          # @param [ Hash ] opts Master key options.
+          #
+          # @return [ true | false | nil ] The delegated value, or nil if absent.
+          #
+          # @raise [ ArgumentError ] If delegated is present but not a boolean.
+          def validate_delegated(opts)
+            return nil unless opts.key?(:delegated)
+
+            value = opts[:delegated]
+            return value if value == true || value == false || value.nil?
+
+            raise ArgumentError.new(
+              "The delegated option must be a boolean; currently have #{value}"
+            )
           end
         end
       end
