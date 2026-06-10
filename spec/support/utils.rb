@@ -623,9 +623,14 @@ module Utils
   def _apply_kms_provider_local(opts, auto_encrypt_opts)
     return unless opts['kmsProviders']['local']
 
-    auto_encrypt_opts[:kms_providers][:local] = {
-      key: BSON::ExtJSON.parse_obj(opts['kmsProviders']['local']['key']).data
-    }
+    key_value = opts['kmsProviders']['local']['key']
+    key_bytes = if key_value.is_a?(Hash)
+                  BSON::ExtJSON.parse_obj(key_value).data
+                else
+                  Base64.strict_decode64(key_value)
+                end
+
+    auto_encrypt_opts[:kms_providers][:local] = { key: key_bytes }
   end
 
   def _apply_key_vault_namespace(opts, auto_encrypt_opts)

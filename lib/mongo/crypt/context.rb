@@ -124,7 +124,7 @@ module Mongo
       def provide_markings(timeout_ms)
         cmd = Binding.ctx_mongo_op(self)
 
-        result = @encryption_io.mark_command(cmd, timeout_ms: timeout_ms)
+        result = @encryption_io.mark_command(cmd, db_name: @db_name, timeout_ms: timeout_ms)
         mongocrypt_feed(result)
 
         mongocrypt_done

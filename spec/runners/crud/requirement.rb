@@ -34,7 +34,7 @@ module Mongo
                       end
         @server_parameters = spec['serverParameters']
         @auth = spec['auth']
-        @csfle = !!spec['csfle'] if spec['csfle']
+        @csfle = spec['csfle'] if spec['csfle']
       end
 
       attr_reader :min_server_version, :max_server_version, :topologies
@@ -113,7 +113,13 @@ module Mongo
         elsif @auth == false
           ok &&= !SpecConfig.instance.auth?
         end
-        ok &&= !!(ENV['LIBMONGOCRYPT_PATH'] || ENV['FLE']) if @csfle
+        if @csfle
+          ok &&= !!(ENV['LIBMONGOCRYPT_PATH'] || ENV['FLE'])
+          if ok && @csfle.is_a?(Hash) && (min_version = @csfle['minLibmongocryptVersion'])
+            actual_version = Mongo::Crypt::Binding.mongocrypt_version(nil)
+            ok &&= Mongo::Crypt::Binding.parse_version(actual_version) >= Gem::Version.new(min_version)
+          end
+        end
         ok
       end
 

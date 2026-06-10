@@ -114,12 +114,16 @@ module Mongo
       # Send the command to mongocryptd to be marked with intent-to-encrypt markings
       #
       # @param [ Hash ] cmd
+      # @param [ String | nil ] :db_name The database against which the command
+      #   is being run. When provided, the command is sent to mongocryptd using
+      #   this database so that the namespace in the command matches the namespace
+      #   in encryptionInformation.
       # @param [ Integer ] :timeout_ms The operation timeout in milliseconds.
       #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       #
       # @return [ Hash ] The marked command
-      def mark_command(cmd, timeout_ms: nil)
+      def mark_command(cmd, db_name: nil, timeout_ms: nil)
         unless @mongocryptd_client
           raise ArgumentError,
                 'mark_command requires mongocryptd_client to have been passed to the constructor, but it was not'
@@ -132,13 +136,15 @@ module Mongo
           timeout_ms: timeout_ms
         }
 
+        mongocryptd = db_name ? @mongocryptd_client.use(db_name) : @mongocryptd_client
+
         begin
-          response = @mongocryptd_client.database.command(cmd, options)
+          response = mongocryptd.database.command(cmd, options)
         rescue Error::NoServerAvailable => e
           raise e if @options[:mongocryptd_bypass_spawn]
 
           spawn_mongocryptd
-          response = @mongocryptd_client.database.command(cmd, options)
+          response = mongocryptd.database.command(cmd, options)
         end
 
         response.first
