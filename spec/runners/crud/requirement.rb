@@ -117,7 +117,7 @@ module Mongo
           ok &&= !!(ENV['LIBMONGOCRYPT_PATH'] || ENV['FLE'])
           if ok && @csfle.is_a?(Hash) && (min_version = @csfle['minLibmongocryptVersion'])
             actual_version = Mongo::Crypt::Binding.mongocrypt_version(nil)
-            ok &&= Gem::Version.new(actual_version) >= Gem::Version.new(min_version)
+            ok &&= Mongo::Crypt::Binding.parse_version(actual_version) >= Gem::Version.new(min_version)
           end
         end
         ok
