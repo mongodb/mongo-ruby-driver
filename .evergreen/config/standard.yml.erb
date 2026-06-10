@@ -123,7 +123,7 @@ buildvariants:
     display_name: "${mongodb-version} ${topology} single-lb ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: "mongo-api-version"
     matrix_spec:
@@ -135,7 +135,7 @@ buildvariants:
     display_name: "${mongodb-version} api-version-required ${topology} ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: "single-mongos"
     matrix_spec:
@@ -147,7 +147,7 @@ buildvariants:
     display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: CSOT
     matrix_spec:
@@ -181,7 +181,7 @@ buildvariants:
     display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: "no-retry-writes"
     matrix_spec:
@@ -193,7 +193,7 @@ buildvariants:
     display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: "lint"
     matrix_spec:
@@ -204,7 +204,7 @@ buildvariants:
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: "fork"
     matrix_spec:
@@ -215,7 +215,7 @@ buildvariants:
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} fork ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: "solo"
     matrix_spec:
@@ -226,7 +226,7 @@ buildvariants:
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} solo ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: "stress older"
     matrix_spec:
@@ -237,7 +237,7 @@ buildvariants:
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: "stress"
     matrix_spec:
@@ -248,7 +248,7 @@ buildvariants:
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
 #  - matrix_name: "x509-tests"
 #    matrix_spec:
@@ -259,7 +259,7 @@ buildvariants:
 #      os: ubuntu2204
 #    display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
 #    tasks:
-#      - name: "test-mlaunch"
+#      - name: "test"
 
  <% [
       [latest_ruby, stable_and_rapid, 'ubuntu2204'],
@@ -319,7 +319,7 @@ buildvariants:
     display_name: "AS ${mongodb-version} ${topology} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
 
   - matrix_name: <%= "bson-#{rubies}" %>
     matrix_spec:
@@ -331,7 +331,7 @@ buildvariants:
     display_name: "bson-${bson} ${mongodb-version} ${topology} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: "test-mlaunch"
+      - name: "test"
   <% end %>
 
   - matrix_name: "fle"
@@ -380,7 +380,6 @@ buildvariants:
     run_on: ubuntu2204-small
     expansions:
       TOPOLOGY: sharded_cluster
-      MLAUNCH_TOPOLOGY: sharded-cluster
       RVM_RUBY: <%= latest_ruby %>
       MONGODB_VERSION: 'latest'
     tasks:
@@ -413,7 +412,7 @@ buildvariants:
     display_name: "OCSP verifier: ${mongodb-version} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: test-mlaunch
+      - name: test
 
   - matrix_name: ocsp-must-staple
     matrix_spec:
@@ -427,7 +426,7 @@ buildvariants:
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - must staple: ${mongodb-version} ${ruby}"
     tasks:
-      - name: test-mlaunch
+      - name: test
 
   - matrix_name: ocsp-unknown
     matrix_spec:
@@ -440,7 +439,7 @@ buildvariants:
       auth-and-ssl: noauth-and-ssl
     display_name: "OCSP integration - unknown: ${mongodb-version} ${ruby}"
     tasks:
-      - name: test-mlaunch
+      - name: test
 
   <% [
     %w(valid none pass),
@@ -470,7 +469,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${extra-uri-options} ${mongodb-version} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: test-mlaunch
+      - name: test
   <% end %>
 
   - matrix_name: ocsp-connectivity-jruby
@@ -492,7 +491,7 @@ buildvariants:
     display_name: "OCSP connectivity: ${ocsp-algorithm} ${ocsp-status} ${ocsp-delegate} ${mongodb-version} ${ruby}"
     tags: ["pr"]
     tasks:
-      - name: test-mlaunch
+      - name: test
 
   # https://jira.mongodb.org/browse/RUBY-3540
   #- matrix_name: testgcpkms-variant

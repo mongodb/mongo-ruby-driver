@@ -45,27 +45,23 @@ axes:
         display_name: Standalone
         variables:
           TOPOLOGY: server
-          MLAUNCH_TOPOLOGY: standalone
       - id: "replica-set"
         display_name: Replica Set
         variables:
           TOPOLOGY: replica_set
-          MLAUNCH_TOPOLOGY: replica-set
       - id: "replica-set-single-node"
         display_name: Replica Set (Single Node)
         variables:
-          TOPOLOGY: replica-set-single-node
-          MLAUNCH_TOPOLOGY: replica-set-single-node
+          TOPOLOGY: replica_set
+          ORCHESTRATION_FILE: single-node.json
       - id: "sharded-cluster"
         display_name: Sharded
         variables:
           TOPOLOGY: sharded_cluster
-          MLAUNCH_TOPOLOGY: sharded-cluster
       - id: "load-balanced"
         display_name: Load Balanced
         variables:
           TOPOLOGY: sharded_cluster
-          MLAUNCH_TOPOLOGY: sharded-cluster
           LOAD_BALANCED: 'true'
 
   - id: "single-mongos"
