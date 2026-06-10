@@ -288,9 +288,13 @@ module Mongo
     # @option options [ Integer ] :max_pool_size The maximum size of the
     #   connection pool. Setting this option to zero creates an unlimited connection pool.
     # @option options [ Integer ] :max_read_retries The maximum number of read
-    #   retries when legacy read retries are in use.
+    #   retries when legacy read retries are in use. Deprecated: this option
+    #   only affects the legacy retry implementation, which is deprecated and
+    #   will be removed in a future version.
     # @option options [ Integer ] :max_write_retries The maximum number of write
-    #   retries when legacy write retries are in use.
+    #   retries when legacy write retries are in use. Deprecated: this option
+    #   only affects the legacy retry implementation, which is deprecated and
+    #   will be removed in a future version.
     # @option options [ Integer ] :min_pool_size The minimum size of the
     #   connection pool.
     # @option options [ true, false ] :monitoring If false is given, the
@@ -325,7 +329,9 @@ module Mongo
     #   - *:local_threshold*.
     # @option options [ Hash ] :read_concern The read concern option.
     # @option options [ Float ] :read_retry_interval The interval, in seconds,
-    #   in which reads on a mongos are retried.
+    #   in which reads on a mongos are retried. Deprecated: this option only
+    #   affects the legacy retry implementation, which is deprecated and will
+    #   be removed in a future version.
     # @option options [ Symbol ] :replica_set The name of the replica set to
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true | false ] :retry_reads If true, modern retryable
@@ -1444,7 +1450,28 @@ module Mongo
     # Validates all options after they are set on the client.
     # This method is intended to catch combinations of options which are
     # not allowed.
+    # Issues a deprecation warning for each legacy retry tuning option that is
+    # explicitly set. These options only affect the legacy retry
+    # implementation, which is deprecated and will be removed in a future
+    # version. Modern retryable reads and writes (enabled by default) ignore
+    # them.
+    def deprecate_legacy_retry_options!
+      %i[max_read_retries read_retry_interval max_write_retries].each do |key|
+        next unless options.key?(key)
+
+        Mongo::Deprecations.warn(
+          "legacy_retry_option_#{key}",
+          "The :#{key} option is deprecated. It only affects the legacy retry " \
+          'implementation, which is deprecated and will be removed in a future ' \
+          'version. Modern retryable reads and writes are enabled by default ' \
+          'and do not use this option.'
+        )
+      end
+    end
+
     def validate_options!(addresses = nil, is_srv: nil)
+      deprecate_legacy_retry_options!
+
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
