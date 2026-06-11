@@ -26,6 +26,7 @@ module Unified
 
     def create_collection(op)
       database = entities.get(:database, op.use!('object'))
+      save_entity = op.use('saveResultAsEntity')
       use_arguments(op) do |args|
         opts = {}
         if session = args.use('session')
@@ -59,7 +60,9 @@ module Unified
         if max = args.use('max')
           collection_opts[:max] = max
         end
-        database[args.use!('collection'), collection_opts].create(**opts)
+        collection = database[args.use!('collection'), collection_opts]
+        collection.create(**opts)
+        entities.set(:collection, save_entity, collection) if save_entity
       end
     end
 

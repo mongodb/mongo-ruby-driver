@@ -463,6 +463,12 @@ module Mongo
       if view.respond_to?(:options) && view.options.is_a?(Hash) && !view.options[:comment].nil?
         spec[:comment] = view.options[:comment]
       end
+      # A cursor built from a runCursorCommand response carries a getMore-specific
+      # maxTimeMS that is sent on getMore commands. Regular find/aggregate views
+      # do not expose this, so their getMores are unaffected.
+      if view.respond_to?(:max_time_ms_for_get_more) && view.max_time_ms_for_get_more
+        spec[:max_time_ms] = view.max_time_ms_for_get_more
+      end
       Operation::GetMore.new(spec)
     end
 

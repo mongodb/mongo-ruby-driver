@@ -15,6 +15,7 @@
 # limitations under the License.
 
 require 'mongo/database/view'
+require 'mongo/database/cursor_command_view'
 
 module Mongo
   # Represents a database on the db server and operations that can execute on
@@ -257,6 +258,119 @@ module Mongo
           op.execute(server, context: context, options: execution_opts)
         end
       end
+    end
+
+    # Run a command that returns a cursor and parse the response as a cursor.
+    #
+    # The command is sent to the server unmodified; the driver MUST NOT inspect
+    # or alter it. If the response does not contain a cursor field an error is
+    # raised. The command is never retried.
+    #
+    # Note: if a +maxTimeMS+ field is already set on the command document it is
+    # left as-is. The +max_time_ms+ option below applies only to getMore
+    # commands. Setting both +timeout_ms+ and +max_time_ms+ is not supported
+    # and has undefined behavior.
+    #
+    # @example Run a cursor-returning command.
+    #   database.cursor_command(checkMetadataConsistency: 1)
+    #
+    # @param [ Hash ] command The command to execute.
+    # @param [ Hash ] options The command options.
+    #
+    # @option options [ Hash ] :read The read preference for this command,
+    #   used for server selection and reused for subsequent getMores.
+    # @option options [ Session ] :session The session to use. If none is
+    #   given an implicit session is created and reused for the cursor's
+    #   lifetime.
+    # @option options [ Integer ] :timeout_ms The operation timeout in
+    #   milliseconds.
+    # @option options [ Integer ] :batch_size The batchSize to send on getMore
+    #   commands.
+    # @option options [ Integer ] :max_time_ms The maxTimeMS to send on getMore
+    #   commands.
+    # @option options [ Object ] :comment A comment to attach to getMore
+    #   commands.
+    # @option options [ Symbol ] :cursor_type The cursor type, :tailable or
+    #   :tailable_await. Must match the flags set on the command document.
+    # @option options [ Symbol ] :timeout_mode :cursor_lifetime or :iteration.
+    #
+    # @return [ Mongo::Cursor ] A cursor over the command results.
+    #
+    # @raise [ Error::InvalidCursorOperation ] If the response does not contain
+    #   a cursor.
+    def cursor_command(command, options = {})
+      options = options.dup
+      execution_opts = options.delete(:execution_options) || {}
+      view_options = extract_cursor_command_view_options(options)
+
+      txn_read_pref = (options[:session].txn_read_preference if options[:session] && options[:session].in_transaction?)
+      txn_read_pref ||= options[:read] || ServerSelector::PRIMARY
+      Lint.validate_underscore_read_preference(txn_read_pref)
+      selector = ServerSelector.get(txn_read_pref)
+
+      # The session is intentionally not wrapped in #with_session: an implicit
+      # session must outlive this method and is ended by the cursor when it is
+      # exhausted or closed. Until the cursor takes ownership, the session and
+      # any load-balanced connection are cleaned up here on every exit path.
+      session = client.get_session(options)
+      context = Operation::Context.new(
+        client: client,
+        session: session,
+        operation_timeouts: operation_timeouts(options)
+      )
+      op = Operation::CursorCommand.new(
+        selector: command,
+        db_name: name,
+        read: selector,
+        session: session
+      )
+
+      # Per the client-backpressure spec, retrying a generic command on
+      # overload errors requires both retryable reads and writes to be
+      # enabled, same as Database#command.
+      retry_enabled = client.options[:retry_reads] != false &&
+                      client.options[:retry_writes] != false
+
+      server = nil
+      connection = nil
+      cursor = nil
+      begin
+        result = with_overload_retry(context: context, retry_enabled: retry_enabled) do
+          server = selector.select_server(cluster, nil, session)
+          if server.load_balancer?
+            # The connection is checked in by the cursor when it is drained.
+            connection = check_out_cursor_command_connection(server, context)
+            begin
+              op.execute_with_connection(connection, context: context, options: execution_opts)
+            rescue StandardError
+              # Release the connection before the error propagates so that
+              # a retried attempt checks out a fresh one.
+              connection.connection_pool.check_in(connection) unless connection.pinned?
+              connection = nil
+              raise
+            end
+          else
+            op.execute(server, context: context, options: execution_opts)
+          end
+        end
+
+        unless result.cursor?
+          raise Error::InvalidCursorOperation,
+                'The command response did not include a cursor. ' \
+                'Use Database#command for commands that do not return a cursor.'
+        end
+
+        view = CursorCommandView.new(self, view_options)
+        cursor = Cursor.new(view, result, server, session: session, context: context)
+      ensure
+        # If the cursor was created it owns the session and connection;
+        # otherwise (error or no cursor in the response) release them here.
+        unless cursor
+          connection.connection_pool.check_in(connection) if connection && !connection.pinned?
+          session.end_session if session && session.implicit?
+        end
+      end
+      cursor
     end
 
     # Execute a read command on the database, retrying the read if necessary.
@@ -569,6 +683,36 @@ module Mongo
           result[:operation_timeout_ms] = opts.delete(:timeout_ms)
         end
       end
+    end
+
+    private
+
+    # Removes the getMore and cursor options from the options hash and returns
+    # them as a separate hash for the CursorCommandView. The remaining options
+    # (e.g. :session, :read, :timeout_ms) are left for command execution.
+    #
+    # @param [ Hash ] options The cursor_command options (mutated).
+    #
+    # @return [ Hash ] The view options.
+    def extract_cursor_command_view_options(options)
+      %i[ batch_size max_time_ms comment cursor_type timeout_mode ].each_with_object({}) do |key, view_options|
+        view_options[key] = options.delete(key) if options.key?(key)
+      end
+    end
+
+    # Checks out a load balanced connection for a cursor command. If the
+    # session is pinned to a connection (e.g. in a transaction), that
+    # connection is reused.
+    #
+    # @param [ Server ] server The load balancer server.
+    # @param [ Operation::Context ] context The operation context.
+    #
+    # @return [ Server::Connection ] The checked out connection.
+    def check_out_cursor_command_connection(server, context)
+      connection = if context.connection_global_id
+                     server.pool.check_out_pinned_connection(context.connection_global_id)
+                   end
+      connection || server.pool.check_out(context: context)
     end
   end
 end
