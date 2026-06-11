@@ -393,6 +393,14 @@ class SpecConfig
     ENV['MONGO_RUBY_DRIVER_AWS_SECRET']
   end
 
+  def fle_aws_key2
+    ENV['FLE_AWS_KEY2']
+  end
+
+  def fle_aws_secret2
+    ENV['FLE_AWS_SECRET2']
+  end
+
   # Region of AWS customer master key
   def fle_aws_region
     ENV['MONGO_RUBY_DRIVER_AWS_REGION']
