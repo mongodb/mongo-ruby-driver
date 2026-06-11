@@ -125,13 +125,23 @@ module Mongo
       end
 
       # Return TLS options for KMS provider. If there are no TLS options set,
-      # empty hash is returned.
+      # empty hash is returned. Named providers (e.g. "kmip:name1") fall back
+      # to the base-type options (e.g. :kmip) when no exact match is found.
       #
-      # @param [ String ] provider KSM provider name.
+      # @param [ String ] provider KMS provider name or named identifier.
       #
       # @return [ Hash ] TLS options to connect to KMS provider.
       def kms_tls_options(provider)
-        @kms_tls_options.fetch(provider, {})
+        provider_str = provider.to_s
+        base_type = provider_str.split(':').first
+
+        @kms_tls_options.fetch(provider_str) do
+          @kms_tls_options.fetch(provider_str.to_sym) do
+            @kms_tls_options.fetch(base_type) do
+              @kms_tls_options.fetch(base_type.to_sym, {})
+            end
+          end
+        end
       end
 
       def crypt_shared_lib_version
