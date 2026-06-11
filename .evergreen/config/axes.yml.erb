@@ -54,7 +54,8 @@ axes:
       - id: "replica-set-single-node"
         display_name: Replica Set (Single Node)
         variables:
-          TOPOLOGY: replica-set-single-node
+          TOPOLOGY: replica_set
+          ORCHESTRATION_FILE: single-node-auth.json
           MLAUNCH_TOPOLOGY: replica-set-single-node
       - id: "sharded-cluster"
         display_name: Sharded
