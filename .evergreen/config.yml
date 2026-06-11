@@ -169,8 +169,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           export CSOT_SPEC_TESTS=1
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
@@ -183,8 +181,6 @@ functions:
         script: |
           ${PREPARE_SHELL}
           export OTEL_SPEC_TESTS=1
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rspec spec/spec_tests/open_telemetry_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
 
@@ -313,8 +309,6 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
     - command: perf.send
       params:
@@ -328,7 +322,7 @@ functions:
         working_dir: "src"
         include_expansions_in_env: [DRIVERS_TOOLS, MONGODB_URI, AUTH, SSL, TOPOLOGY, COMPRESSOR, RVM_RUBY]
         args:
-          - ".evergreen/run-tests-new.sh"
+          - ".evergreen/run-main-tests.sh"
   "run tests":
     - command: shell.exec
       type: test
@@ -349,8 +343,6 @@ functions:
             export MONGO_RUBY_DRIVER_GCP_KEY_NAME="${fle_gcp_key_name}"
             export MONGO_RUBY_DRIVER_MONGOCRYPTD_PORT="${fle_mongocryptd_port}"
           fi
-          unset TOPOLOGY
-          export TOPOLOGY=${MLAUNCH_TOPOLOGY}
           .evergreen/run-tests.sh
 
   "run AWS auth tests":
@@ -601,22 +593,27 @@ tasks:
       - func: "run Atlas tests"
   - name: "test-mlaunch"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run tests"
   - name: "driver-bench"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run benchmarks"
   - name: "test-kerberos"
     commands:
       - func: "run Kerberos unit tests"
   - name: "test-csot"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run CSOT tests"
   - name: "test-otel"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run OTel tests"
   - name: "test-fle"
     commands:
       - func: "export FLE credentials"
+      - func: bootstrap-mongo-orchestration
       - func: "run tests"
   - name: "test-aws-auth"
     commands:
@@ -785,7 +782,8 @@ axes:
       - id: "replica-set-single-node"
         display_name: Replica Set (Single Node)
         variables:
-          TOPOLOGY: replica-set-single-node
+          TOPOLOGY: replica_set
+          ORCHESTRATION_FILE: single-node-auth.json
           MLAUNCH_TOPOLOGY: replica-set-single-node
       - id: "sharded-cluster"
         display_name: Sharded
