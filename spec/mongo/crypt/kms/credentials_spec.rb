@@ -379,4 +379,49 @@ describe Mongo::Crypt::KMS::Credentials do
       end
     end
   end
+
+  describe Mongo::Crypt::KMS::MasterKeyDocument do
+    require_libmongocrypt
+
+    describe '#initialize' do
+      context 'with unnamed local provider' do
+        it 'succeeds' do
+          doc = Mongo::Crypt::KMS::MasterKeyDocument.new('local', {})
+          expect(doc.to_document[:provider]).to eq('local')
+        end
+      end
+
+      context 'with named local provider' do
+        it 'succeeds and preserves full identifier in document' do
+          doc = Mongo::Crypt::KMS::MasterKeyDocument.new('local:name1', {})
+          expect(doc.to_document[:provider]).to eq('local:name1')
+        end
+      end
+
+      context 'with unknown provider type' do
+        it 'raises ArgumentError' do
+          expect do
+            Mongo::Crypt::KMS::MasterKeyDocument.new('badtype:name1', {})
+          end.to raise_error(ArgumentError, /KMS provider must be one of/)
+        end
+      end
+
+      context 'with named AWS provider' do
+        let(:master_key) do
+          {
+            master_key: {
+              region: 'us-east-1',
+              key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'
+            }
+          }
+        end
+
+        it 'preserves full identifier in document' do
+          doc = Mongo::Crypt::KMS::MasterKeyDocument.new('aws:name1', master_key).to_document
+          expect(doc[:provider]).to eq('aws:name1')
+          expect(doc[:region]).to eq('us-east-1')
+        end
+      end
+    end
+  end
 end

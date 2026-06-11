@@ -22,23 +22,28 @@ module Mongo
       #
       # @api private
       class MasterKeyDocument
-        # Known KMS provider names.
+        # Known KMS provider types.
         KMS_PROVIDERS = %w[aws azure gcp kmip local].freeze
 
         # Creates a master key document object form a parameters hash.
         #
-        # @param [ String ] kms_provider. KMS provider name.
+        # @param [ String ] kms_provider KMS provider identifier. May be a
+        #   provider type (e.g. "aws") or a named provider (e.g. "aws:name1").
         # @param [ Hash ] options A hash that contains master key options for
         #   the KMS provider.
         #   Required parameters for KMS providers are described in corresponding
         #   classes inside Mongo::Crypt::KMS module.
         #
-        # @raise [ ArgumentError ] If required options are missing or incorrectly.
+        # @raise [ ArgumentError ] If required options are missing or incorrectly
+        #   formatted.
         def initialize(kms_provider, options)
           raise ArgumentError.new('Key document options must not be nil') if options.nil?
 
+          @provider = kms_provider.to_s
+          provider_type = @provider.split(':').first
+
           master_key = options.fetch(:master_key, {})
-          @key_document = case kms_provider.to_s
+          @key_document = case provider_type
                           when 'aws' then KMS::AWS::MasterKeyDocument.new(master_key)
                           when 'azure' then KMS::Azure::MasterKeyDocument.new(master_key)
                           when 'gcp' then KMS::GCP::MasterKeyDocument.new(master_key)
@@ -53,7 +58,7 @@ module Mongo
         #
         # @return [ BSON::Document ] Master key document as BSON document.
         def to_document
-          @key_document.to_document
+          @key_document.to_document.merge(provider: @provider)
         end
       end
     end
