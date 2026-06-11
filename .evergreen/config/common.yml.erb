@@ -165,6 +165,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          export MONGODB_URI=${MONGODB_URI}
           export CSOT_SPEC_TESTS=1
           TEST_CMD="bundle exec rspec spec/spec_tests/client_side_operations_timeout_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
@@ -177,6 +178,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          export MONGODB_URI=${MONGODB_URI}
           export OTEL_SPEC_TESTS=1
           TEST_CMD="bundle exec rspec spec/spec_tests/open_telemetry_spec.rb --format Rfc::Riff --format RspecJunitFormatter --out tmp/rspec.xml" \
             .evergreen/run-tests.sh
@@ -306,6 +308,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          export MONGODB_URI=${MONGODB_URI}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
     - command: perf.send
       params:
@@ -328,6 +331,8 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          export MONGODB_URI=${MONGODB_URI}
+          export CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH}
           if [ -n "${FLE}" ]; then
             export MONGO_RUBY_DRIVER_AWS_REGION="${fle_aws_region}"
             export MONGO_RUBY_DRIVER_AWS_ARN="${fle_aws_arn}"
