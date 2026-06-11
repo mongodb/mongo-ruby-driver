@@ -598,22 +598,27 @@ tasks:
       - func: "run Atlas tests"
   - name: "test-mlaunch"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run tests"
   - name: "driver-bench"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run benchmarks"
   - name: "test-kerberos"
     commands:
       - func: "run Kerberos unit tests"
   - name: "test-csot"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run CSOT tests"
   - name: "test-otel"
     commands:
+      - func: bootstrap-mongo-orchestration
       - func: "run OTel tests"
   - name: "test-fle"
     commands:
       - func: "export FLE credentials"
+      - func: bootstrap-mongo-orchestration
       - func: "run tests"
   - name: "test-aws-auth"
     commands:
