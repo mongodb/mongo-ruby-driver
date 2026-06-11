@@ -325,17 +325,34 @@ module Mongo
         session: session
       )
 
+      # Per the client-backpressure spec, retrying a generic command on
+      # overload errors requires both retryable reads and writes to be
+      # enabled, same as Database#command.
+      retry_enabled = client.options[:retry_reads] != false &&
+                      client.options[:retry_writes] != false
+
+      server = nil
       connection = nil
       cursor = nil
       begin
-        server = selector.select_server(cluster, nil, session)
-        result = if server.load_balancer?
-                   # The connection is checked in by the cursor when it is drained.
-                   connection = server.pool.check_out(context: context)
-                   op.execute_with_connection(connection, context: context, options: execution_opts)
-                 else
-                   op.execute(server, context: context, options: execution_opts)
-                 end
+        result = with_overload_retry(context: context, retry_enabled: retry_enabled) do
+          server = selector.select_server(cluster, nil, session)
+          if server.load_balancer?
+            # The connection is checked in by the cursor when it is drained.
+            connection = check_out_cursor_command_connection(server, context)
+            begin
+              op.execute_with_connection(connection, context: context, options: execution_opts)
+            rescue StandardError
+              # Release the connection before the error propagates so that
+              # a retried attempt checks out a fresh one.
+              connection.connection_pool.check_in(connection) unless connection.pinned?
+              connection = nil
+              raise
+            end
+          else
+            op.execute(server, context: context, options: execution_opts)
+          end
+        end
 
         unless result.cursor?
           raise Error::InvalidCursorOperation,
@@ -681,6 +698,21 @@ module Mongo
       %i[ batch_size max_time_ms comment cursor_type timeout_mode ].each_with_object({}) do |key, view_options|
         view_options[key] = options.delete(key) if options.key?(key)
       end
+    end
+
+    # Checks out a load balanced connection for a cursor command. If the
+    # session is pinned to a connection (e.g. in a transaction), that
+    # connection is reused.
+    #
+    # @param [ Server ] server The load balancer server.
+    # @param [ Operation::Context ] context The operation context.
+    #
+    # @return [ Server::Connection ] The checked out connection.
+    def check_out_cursor_command_connection(server, context)
+      connection = if context.connection_global_id
+                     server.pool.check_out_pinned_connection(context.connection_global_id)
+                   end
+      connection || server.pool.check_out(context: context)
     end
   end
 end
