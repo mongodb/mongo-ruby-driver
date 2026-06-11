@@ -380,6 +380,68 @@ describe Mongo::Crypt::KMS::Credentials do
     end
   end
 
+  context 'named providers' do
+    let(:local_key) { Crypt::LOCAL_MASTER_KEY }
+
+    context 'with a single named local provider' do
+      let(:kms_providers) { { 'local:name1' => { key: local_key } } }
+
+      it 'initializes without error' do
+        expect { Mongo::Crypt::KMS::Credentials.new(kms_providers) }.not_to raise_error
+      end
+
+      it 'to_document uses the full named identifier as key' do
+        creds = Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        doc = creds.to_document
+        expect(doc.keys).to include('local:name1')
+        expect(doc.keys).not_to include('local')
+      end
+
+      it 'unnamed accessor returns nil' do
+        creds = Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        expect(creds.local).to be_nil
+      end
+    end
+
+    context 'with both unnamed and named providers of the same type' do
+      let(:kms_providers) do
+        {
+          local: { key: local_key },
+          'local:name1' => { key: local_key }
+        }
+      end
+
+      it 'includes both in to_document' do
+        creds = Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        doc = creds.to_document
+        expect(doc.keys).to include('local', 'local:name1')
+      end
+
+      it 'unnamed accessor returns the unnamed credential' do
+        creds = Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        expect(creds.local).not_to be_nil
+      end
+    end
+
+    context 'with an unknown provider type' do
+      let(:kms_providers) { { 'badtype:name1' => { key: 'something' } } }
+
+      it 'raises ArgumentError' do
+        expect do
+          Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        end.to raise_error(ArgumentError, /must have one of the following keys/)
+      end
+    end
+
+    context 'with an empty hash' do
+      it 'raises ArgumentError' do
+        expect do
+          Mongo::Crypt::KMS::Credentials.new({})
+        end.to raise_error(ArgumentError, /must have one of the following keys/)
+      end
+    end
+  end
+
   describe Mongo::Crypt::KMS::MasterKeyDocument do
     require_libmongocrypt
 
