@@ -45,6 +45,10 @@ describe 'Database#cursor_command overload retry' do
   end
 
   context 'when retryable reads and writes are enabled' do
+    # Force both on so the test is deterministic on Evergreen variants that
+    # disable retryable reads or writes suite-wide (e.g. no-retry-writes).
+    let(:client_options) { { retry_reads: true, retry_writes: true } }
+
     it 'retries the initial command' do
       cursor = client.database.cursor_command(
         { find: collection.name, batchSize: 2 }
