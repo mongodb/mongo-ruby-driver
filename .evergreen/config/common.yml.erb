@@ -325,7 +325,7 @@ functions:
         working_dir: "src"
         include_expansions_in_env: [DRIVERS_TOOLS, MONGODB_URI, AUTH, SSL, TOPOLOGY, COMPRESSOR, RVM_RUBY]
         args:
-          - ".evergreen/run-tests-new.sh"
+          - ".evergreen/run-main-tests.sh"
   "run tests":
     - command: shell.exec
       type: test
