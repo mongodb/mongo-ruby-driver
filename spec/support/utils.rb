@@ -597,6 +597,26 @@ module Utils
     _apply_kms_provider_azure(opts, auto_encrypt_opts)
     _apply_kms_provider_gcp(opts, auto_encrypt_opts)
     _apply_kms_provider_local(opts, auto_encrypt_opts)
+    _apply_kms_provider_named(opts, auto_encrypt_opts)
+  end
+
+  def _apply_kms_provider_named(opts, auto_encrypt_opts)
+    (opts['kmsProviders'] || {}).each do |provider_name, provider_opts|
+      next unless provider_name.to_s.include?(':')
+
+      base_type = provider_name.to_s.split(':').first
+      next unless base_type == 'local'
+
+      key_value = provider_opts['key']
+      key_bytes = if key_value.is_a?(Hash)
+                    BSON::ExtJSON.parse_obj(key_value).data
+                  elsif key_value.is_a?(String)
+                    Base64.strict_decode64(key_value)
+                  end
+
+      # snakeize_hash corrupts the string value; overwrite with decoded bytes
+      auto_encrypt_opts[:kms_providers][underscore(provider_name)] = { key: key_bytes }
+    end
   end
 
   def _apply_kms_provider_azure(opts, auto_encrypt_opts)
