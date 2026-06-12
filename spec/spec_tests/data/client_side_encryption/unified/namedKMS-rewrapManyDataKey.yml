@@ -42,7 +42,7 @@ initialData:
   - databaseName: *database0Name
     collectionName: *collection0Name
     documents:
-      - _id: &aws:name1_key_id { $binary: { base64: YXdzYXdzYXdzYXdzYXdzYQ==, subType: "04" } }
+      - _id: &aws_name1_key_id { $binary: { base64: YXdzYXdzYXdzYXdzYXdzYQ==, subType: "04" } }
         keyAltNames: ["aws:name1_key"]
         keyMaterial:
           {
@@ -55,11 +55,11 @@ initialData:
         creationDate: { $date: { $numberLong: "1641024000000" } }
         updateDate: { $date: { $numberLong: "1641024000000" } }
         status: 1
-        masterKey: &aws:name1_masterkey
+        masterKey: &aws_name1_masterkey
           provider: aws:name1
           key: "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0"
           region: us-east-1
-      - _id: &azure:name1_key_id { $binary: { base64: YXp1cmVhenVyZWF6dXJlYQ==, subType: "04" } }
+      - _id: &azure_name1_key_id { $binary: { base64: YXp1cmVhenVyZWF6dXJlYQ==, subType: "04" } }
         keyAltNames: ["azure:name1_key"]
         keyMaterial:
           {
@@ -72,11 +72,11 @@ initialData:
         creationDate: { $date: { $numberLong: "1641024000000" } }
         updateDate: { $date: { $numberLong: "1641024000000" } }
         status: 1
-        masterKey: &azure:name1_masterkey
+        masterKey: &azure_name1_masterkey
           provider: "azure:name1"
           keyVaultEndpoint: key-vault-csfle.vault.azure.net
           keyName: key-name-csfle
-      - _id: &gcp:name1_key_id { $binary: { base64: Z2NwZ2NwZ2NwZ2NwZ2NwZw==, subType: "04" } }
+      - _id: &gcp_name1_key_id { $binary: { base64: Z2NwZ2NwZ2NwZ2NwZ2NwZw==, subType: "04" } }
         keyAltNames: ["gcp:name1_key"]
         keyMaterial:
           {
@@ -89,13 +89,13 @@ initialData:
         creationDate: { $date: { $numberLong: "1641024000000" } }
         updateDate: { $date: { $numberLong: "1641024000000" } }
         status: 1
-        masterKey: &gcp:name1_masterkey
+        masterKey: &gcp_name1_masterkey
           provider: "gcp:name1"
           projectId: devprod-drivers
           location: global
           keyRing: key-ring-csfle
           keyName: key-name-csfle
-      - _id: &kmip:name1_key_id { $binary: { base64: a21pcGttaXBrbWlwa21pcA==, subType: "04" } }
+      - _id: &kmip_name1_key_id { $binary: { base64: a21pcGttaXBrbWlwa21pcA==, subType: "04" } }
         keyAltNames: ["kmip:name1_key"]
         keyMaterial:
           {
@@ -108,10 +108,10 @@ initialData:
         creationDate: { $date: { $numberLong: "1641024000000" } }
         updateDate: { $date: { $numberLong: "1641024000000" } }
         status: 1
-        masterKey: &kmip:name1_masterkey
+        masterKey: &kmip_name1_masterkey
           provider: "kmip:name1"
           keyId: "1"
-      - _id: &local:name1_key_id { $binary: { base64: bG9jYWxrZXlsb2NhbGtleQ==, subType: "04" } }
+      - _id: &local_name1_key_id { $binary: { base64: bG9jYWxrZXlsb2NhbGtleQ==, subType: "04" } }
         keyAltNames: ["local:name1_key"]
         keyMaterial:
           {
@@ -124,7 +124,7 @@ initialData:
         creationDate: { $date: { $numberLong: "1641024000000" } }
         updateDate: { $date: { $numberLong: "1641024000000" } }
         status: 1
-        masterKey: &local:name1_masterkey
+        masterKey: &local_name1_masterkey
           provider: "local:name1"
 
 tests:
