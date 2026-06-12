@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Note that mlaunch is executed with (and therefore installed with) Python 2.
+# The reason for this is that in the past, some of the distros we tested on
+# had an ancient version of Python 3 that was unusable (e.g. it couldn't
+# install anything from PyPI due to outdated TLS/SSL implementation).
+# It is likely that all of the current distros we use have a recent enough
+# and working Python 3 implementation, such that we could use Python 3 for
+# everything.
+#
 # Note that some distros (e.g. ubuntu2004) do not contain a `python' binary
 # at all, thus python2 or python3 must be explicitly specified depending on
 # the desired version.
@@ -49,39 +57,204 @@ rbenv global $FULL_RUBY_VERSION
 export JAVA_HOME=/opt/java/jdk21
 export JAVACMD=$JAVA_HOME/bin/java
 
-# The server is provisioned by bootstrap-mongo-orchestration (run-mongodb.sh),
-# which exports MONGODB_URI (and CRYPT_SHARED_LIB_PATH for FLE) via
-# mo-expansion. Point BINDIR at the drivers-evergreen-tools binaries so mongosh
-# and mongod are available for FCV, replica-set tags, and API-version setup.
-export BINDIR="$DRIVERS_TOOLS"/mongodb/bin
-export PATH="$BINDIR:$PATH"
+# Dual-mode provisioning. When a bootstrap step (bootstrap-mongo-orchestration ->
+# run-mongodb.sh) has already started the server it exports MONGODB_URI (and, for
+# FLE, CRYPT_SHARED_LIB_PATH). Otherwise we provision the server with mlaunch as
+# before (used by OCSP, api-version, AWS auth and ECS, which need bespoke
+# provisioning that mongodb-runner does not perform).
+if test -z "$MONGODB_URI"; then
+  # mlaunch uses the legacy topology vocabulary. Translate the runner vocabulary
+  # (server/replica_set/sharded_cluster) that the axes now emit so callers that
+  # do not override TOPOLOGY still provision correctly.
+  case "$TOPOLOGY" in
+    server) export TOPOLOGY=standalone ;;
+    replica_set) export TOPOLOGY=replica-set ;;
+    sharded_cluster) export TOPOLOGY=sharded-cluster ;;
+  esac
+
+  prepare_server
+
+  if test "$DOCKER_PRELOAD" != 1; then
+    install_mlaunch_venv
+    pip3 install waitress
+  fi
+
+  if test "$TOPOLOGY" = load-balanced; then
+    install_haproxy
+  fi
+
+  # Launching mongod under $MONGO_ORCHESTRATION_HOME
+  # makes its log available through log collecting machinery
+
+  export dbdir="$MONGO_ORCHESTRATION_HOME"/db
+  mkdir -p "$dbdir"
+
+  if test -z "$TOPOLOGY"; then
+    export TOPOLOGY=standalone
+  fi
+
+  calculate_server_args
+  launch_ocsp_mock
+
+  launch_server "$dbdir"
+
+  uri_options="$URI_OPTIONS"
+else
+  # Server already provisioned by run-mongodb.sh. Point BINDIR at the
+  # drivers-evergreen-tools binaries so mongosh/mongod are available for FCV,
+  # replica-set tags, and API-version setup.
+  BOOTSTRAP=1
+  export BINDIR="$DRIVERS_TOOLS"/mongodb/bin
+  export PATH="$BINDIR:$PATH"
+  uri_options=""
+fi
 
 # cmake may be needed to install the libmongocrypt helper for FLE.
 if [ -n "$FLE" ]; then
   install_cmake
 fi
 
-if test -z "$TOPOLOGY"; then
-  export TOPOLOGY=server
-fi
-
 bundle_install
 
+if test -z "$BOOTSTRAP"; then
+# Legacy mlaunch path: build MONGODB_URI from the launched hosts and the AUTH
+# configuration. In bootstrap mode MONGODB_URI already carries hosts and auth.
+if test "$TOPOLOGY" = sharded-cluster; then
+  if test -n "$SINGLE_MONGOS"; then
+    # Some tests may run into https://jira.mongodb.org/browse/SERVER-16836
+    # when executing against a multi-sharded mongos.
+    # At the same time, due to pinning in sharded transactions,
+    # it is beneficial to test a single shard to ensure that server
+    # monitoring and selection are working correctly and recover the driver's
+    # ability to operate in reasonable time after errors and fail points trigger
+    # on a single shard
+    echo Restricting to a single mongos
+    hosts=localhost:27017
+  else
+    hosts=localhost:27017,localhost:27018
+  fi
+elif test "$TOPOLOGY" = replica-set; then
+  # To set FCV we use mongo shell, it needs to be placed in replica set topology
+  # or it can try to send the commands to secondaries.
+  hosts=localhost:27017,localhost:27018
+  uri_options="$uri_options&replicaSet=test-rs"
+elif test "$TOPOLOGY" = replica-set-single-node; then
+  hosts=localhost:27017
+  uri_options="$uri_options&replicaSet=test-rs"
+else
+  hosts=localhost:27017
+fi
+
+if test "$AUTH" = auth; then
+  hosts="bob:pwd123@$hosts"
+elif test "$AUTH" = x509; then
+  create_user_cmd="`cat <<'EOT'
+    db.getSiblingDB("$external").runCommand(
+      {
+        createUser: "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost",
+        roles: [
+             { role: "root", db: "admin" },
+        ],
+        writeConcern: { w: "majority" , wtimeout: 5000 },
+      }
+    )
+EOT
+  `"
+
+  "$BINDIR"/mongosh --tls \
+    --tlsCAFile spec/support/certificates/ca.crt \
+    --tlsCertificateKeyFile spec/support/certificates/client-x509.pem \
+    -u bootstrap -p bootstrap \
+    --eval "$create_user_cmd"
+elif test "$AUTH" = aws-regular; then
+  clear_instance_profile
+
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+
+  hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
+elif test "$AUTH" = aws-assume-role; then
+  clear_instance_profile
+
+  ./.evergreen/aws -a "$MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID" \
+    -s "$MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY" \
+    -r us-east-1 \
+    assume-role "$MONGO_RUBY_DRIVER_AWS_AUTH_ASSUME_ROLE_ARN" >.env.private.gen
+  eval `cat .env.private.gen`
+  export MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+  export MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+  export MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN=$AWS_SESSION_TOKEN
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+
+  export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+  export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+  export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+
+  aws sts get-caller-identity
+
+  hosts="`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_ACCESS_KEY_ID`:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SECRET_ACCESS_KEY`@$hosts"
+
+  uri_options="$uri_options&"\
+"authMechanismProperties=AWS_SESSION_TOKEN:`uri_escape $MONGO_RUBY_DRIVER_AWS_AUTH_SESSION_TOKEN`"
+elif test "$AUTH" = aws-ec2; then
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+
+  # We need to assign an instance profile to the current instance, otherwise
+  # since we don't place credentials into the environment the test suite
+  # cannot connect to the MongoDB server while bootstrapping.
+  # The EC2 credential retrieval tests clears the instance profile as part
+  # of one of the tests.
+  ruby -Ispec -Ilib -I.evergreen/lib -rec2_setup -e Ec2Setup.new.assign_instance_profile
+elif test "$AUTH" = aws-ecs; then
+  if test -z "$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"; then
+    # drivers-evergreen-tools performs this operation in its ECS E2E tester.
+    eval export `strings /proc/1/environ |grep ^AWS_CONTAINER_CREDENTIALS_RELATIVE_URI`
+  fi
+
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+elif test "$AUTH" = aws-web-identity; then
+  clear_instance_profile
+
+  ruby -Ilib -I.evergreen/lib -rserver_setup -e ServerSetup.new.setup_aws_auth
+elif test "$AUTH" = kerberos; then
+  export MONGO_RUBY_DRIVER_KERBEROS=1
+fi
+fi
+
 if test -n "$FLE"; then
-  # crypt_shared is downloaded by run-mongodb.sh, which exports
-  # CRYPT_SHARED_LIB_PATH via mo-expansion (skipped for mongocryptd-only).
+  # Downloading crypt shared lib (skipped for mongocryptd-only configuration)
   if test "$FLE" != "mongocryptd"; then
-    if test -n "$CRYPT_SHARED_LIB_PATH" && test -f "$CRYPT_SHARED_LIB_PATH"; then
-      export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH="$CRYPT_SHARED_LIB_PATH"
+    if test -n "$BOOTSTRAP"; then
+      # crypt_shared is downloaded by run-mongodb.sh, which exports
+      # CRYPT_SHARED_LIB_PATH via mo-expansion.
+      if test -n "$CRYPT_SHARED_LIB_PATH" && test -f "$CRYPT_SHARED_LIB_PATH"; then
+        export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH="$CRYPT_SHARED_LIB_PATH"
+      else
+        echo 'Could not find crypt_shared library from mo-expansion'
+      fi
+    elif [ -z "$MONGO_CRYPT_SHARED_DOWNLOAD_URL" ]; then
+      crypt_shared_version=${CRYPT_SHARED_VERSION:-$("${BINDIR}"/mongod --version | grep -oP 'db version v\K.*')}
+      python3 -u .evergreen/mongodl.py --component crypt_shared -V ${crypt_shared_version} --out $(pwd)/csfle_lib  --target $(host_distro) || true
+      if test -f $(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+      then
+        export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/csfle_lib/lib/mongo_crypt_v1.so
+      else
+        echo 'Could not find crypt_shared library'
+      fi
     else
-      echo 'Could not find crypt_shared library from mo-expansion'
+      echo "Downloading crypt_shared package from $MONGO_CRYPT_SHARED_DOWNLOAD_URL"
+      mkdir -p $(pwd)/csfle_lib
+      cd $(pwd)/csfle_lib
+      curl --retry 3 -fL $MONGO_CRYPT_SHARED_DOWNLOAD_URL | tar zxf -
+      export MONGO_RUBY_DRIVER_CRYPT_SHARED_LIB_PATH=$(pwd)/lib/mongo_crypt_v1.so
+      cd -
     fi
   fi
 
   # Start the KMS servers first so that they are launching while we are
   # fetching libmongocrypt.
   if test "$DOCKER_PRELOAD" != 1; then
-    # Install kms dependencies.
+    # We already have a virtualenv activated for mlaunch,
+    # install kms dependencies into it.
     #. .evergreen/csfle/activate_venv.sh
 
     # Adjusted package versions:
@@ -169,36 +342,42 @@ if test -n "$FLE"; then
    echo "Waiting for mock KMS servers to start... done."
 fi
 
-# Use the URI produced by run-mongodb.sh. For a single-mongos sharded run,
-# reduce the host list to the first host (mirrors the old localhost:27017
-# restriction) while preserving the path/query.
-if test "$TOPOLOGY" = sharded_cluster && test -n "$SINGLE_MONGOS"; then
-  echo Restricting to a single mongos
-  MONGODB_URI=$(ruby -e '
-    u = ARGV[0]
-    scheme, rest = u.split("://", 2)
-    hostpart, tail = rest.split("/", 2)
-    first = hostpart.split(",").first
-    print "#{scheme}://#{first}/#{tail}"
-  ' "$MONGODB_URI")
-fi
-export MONGODB_URI
+if test -z "$BOOTSTRAP"; then
+  if test -n "$OCSP_CONNECTIVITY"; then
+    # TODO Maybe OCSP_CONNECTIVITY=* should set SSL=ssl instead.
+    uri_options="$uri_options&tls=true"
+  fi
 
-# Append the application name and any extra options onto the provided URI.
-add_uri_option appName=test-suite
+  if test -n "$EXTRA_URI_OPTIONS"; then
+    uri_options="$uri_options&$EXTRA_URI_OPTIONS"
+  fi
 
-if test -n "$OCSP_CONNECTIVITY"; then
-  # TODO Maybe OCSP_CONNECTIVITY=* should set SSL=ssl instead.
-  add_uri_option tls=true
-fi
+  export MONGODB_URI="mongodb://$hosts/?serverSelectionTimeoutMS=30000$uri_options"
 
-if test -n "$EXTRA_URI_OPTIONS"; then
-  add_uri_option "$EXTRA_URI_OPTIONS"
+  if echo "$AUTH" |grep -q ^aws-assume-role; then
+    $BINDIR/mongosh "$MONGODB_URI" --eval 'db.runCommand({serverStatus: 1})' | wc
+  fi
+else
+  # Bootstrap: layer setup options onto the URI provided by run-mongodb.sh.
+  # For a single-mongos sharded run, reduce the host list to the first host
+  # (mirrors the old localhost:27017 restriction) while preserving path/query.
+  if test "$TOPOLOGY" = sharded_cluster && test -n "$SINGLE_MONGOS"; then
+    echo Restricting to a single mongos
+    MONGODB_URI=$(ruby -e '
+      u = ARGV[0]
+      scheme, rest = u.split("://", 2)
+      hostpart, tail = rest.split("/", 2)
+      first = hostpart.split(",").first
+      print "#{scheme}://#{first}/#{tail}"
+    ' "$MONGODB_URI")
+  fi
+  export MONGODB_URI
+  add_uri_option serverSelectionTimeoutMS=30000
 fi
 
 set_fcv
 
-if test "$TOPOLOGY" = replica_set; then
+if echo "$TOPOLOGY" | grep -q replica; then
   ruby -Ilib -I.evergreen/lib -rbundler/setup -rserver_setup -e ServerSetup.new.setup_tags
 fi
 
@@ -212,10 +391,16 @@ if ! test "$OCSP_VERIFIER" = 1 && ! test -n "$OCSP_CONNECTIVITY"; then
   bundle exec rake spec:prepare
 fi
 
-if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
+if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
   # On 3.6 server the sessions collection is not immediately available,
   # wait for it to spring into existence
   bundle exec rake spec:wait_for_sessions
+fi
+
+if test -z "$BOOTSTRAP"; then
+  export MONGODB_URI="mongodb://$hosts/?appName=test-suite$uri_options"
+else
+  add_uri_option appName=test-suite
 fi
 
 # Compression is handled via an environment variable, convert to URI option
@@ -277,6 +462,10 @@ kill_jruby || true
 
 if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
+fi
+
+if test -z "$BOOTSTRAP"; then
+  python3 -m mtools.mlaunch.mlaunch stop --dir "$dbdir" || true
 fi
 
 if test -n "$FLE" && test "$DOCKER_PRELOAD" != 1; then
