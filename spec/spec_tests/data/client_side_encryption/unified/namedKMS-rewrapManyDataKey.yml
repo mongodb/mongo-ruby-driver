@@ -219,7 +219,7 @@ tests:
       - name: rewrapManyDataKey
         object: *clientEncryption0
         arguments:
-          filter: { keyAltNames: { $ne: azure:name1_key } }
+          filter: { keyAltNames: { $ne: "azure:name1_key" } }
           opts:
             provider: "azure:name1"
             masterKey: &new_azure_masterkey
@@ -241,7 +241,7 @@ tests:
               databaseName: *database0Name
               command:
                 find: *collection0Name
-                filter: { keyAltNames: { $ne: azure:name1_key } }
+                filter: { keyAltNames: { $ne: "azure:name1_key" } }
                 readConcern: { level: majority }
           - commandStartedEvent:
               databaseName: *database0Name
@@ -304,7 +304,7 @@ tests:
       - name: rewrapManyDataKey
         object: *clientEncryption0
         arguments:
-          filter: { keyAltNames: { $ne: gcp:name1_key } }
+          filter: { keyAltNames: { $ne: "gcp:name1_key" } }
           opts:
             provider: "gcp:name1"
             masterKey: &new_gcp_masterkey
