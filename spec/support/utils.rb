@@ -616,6 +616,8 @@ module Utils
                     BSON::ExtJSON.parse_obj(key_value).data
                   elsif key_value.is_a?(String)
                     Base64.strict_decode64(key_value)
+                  else
+                    raise ArgumentError, "key_value must be a hash or a string (got #{key_value.class})"
                   end
 
       # snakeize_hash corrupts the string value; overwrite with decoded bytes

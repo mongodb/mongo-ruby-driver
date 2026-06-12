@@ -393,12 +393,16 @@ class SpecConfig
     ENV['MONGO_RUBY_DRIVER_AWS_SECRET']
   end
 
+  # The aws:name2 tests don't actually need to connect to a second KMS; the
+  # values here are basically just placeholders, but if we ever need them
+  # to be real, using `fle_aws_key` ensures they'll still work.
   def fle_aws_key2
-    ENV['FLE_AWS_KEY2']
+    fle_aws_key
   end
 
+  # See comment for `fle_aws_key2`, above.
   def fle_aws_secret2
-    ENV['FLE_AWS_SECRET2']
+    fle_aws_secret
   end
 
   # Region of AWS customer master key

@@ -25,7 +25,7 @@ module Mongo
         # Known KMS provider types.
         KMS_PROVIDERS = %w[aws azure gcp kmip local].freeze
 
-        # Creates a master key document object form a parameters hash.
+        # Creates a master key document object from a parameters hash.
         #
         # @param [ String ] kms_provider KMS provider identifier. May be a
         #   provider type (e.g. "aws") or a named provider (e.g. "aws:name1").
