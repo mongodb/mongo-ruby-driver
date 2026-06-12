@@ -604,8 +604,12 @@ module Utils
     (opts['kmsProviders'] || {}).each do |provider_name, provider_opts|
       next unless provider_name.to_s.include?(':')
 
-      base_type = provider_name.to_s.split(':').first
-      next unless base_type == 'local'
+      base_type = Mongo::Crypt::KMS.provider_base_type(provider_name)
+      unless base_type == 'local'
+        raise NotImplementedError,
+              "Named KMS provider '#{provider_name}' (type '#{base_type}') is not " \
+              'supported in autoEncryptOpts via this code path'
+      end
 
       key_value = provider_opts['key']
       key_bytes = if key_value.is_a?(Hash)

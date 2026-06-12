@@ -16,12 +16,23 @@
 
 module Mongo
   module Crypt
-    module KMS
+    module KMS # rubocop:disable Style/Documentation
       # This error indicates that we could not obtain credential for
       # a KMS service.
       #
       # @api private
       class CredentialsNotFound < RuntimeError; end
+
+      # Returns the base provider type from a KMS provider identifier.
+      # For example, "aws:name1" returns "aws" and :aws returns "aws".
+      #
+      # @param [ String | Symbol ] identifier The KMS provider identifier.
+      # @return [ String ] The base provider type.
+      #
+      # @api private
+      def self.provider_base_type(identifier)
+        identifier.to_s.split(':').first
+      end
 
       # This module contains helper methods for validating KMS parameters.
       #

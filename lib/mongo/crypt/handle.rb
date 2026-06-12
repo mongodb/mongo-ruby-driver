@@ -103,7 +103,7 @@ module Mongo
 
         Binding.setopt_kms_providers(self, @kms_providers.to_document)
 
-        if @kms_providers.aws&.empty? || @kms_providers.gcp&.empty? || @kms_providers.azure&.empty?
+        if @kms_providers.any_on_demand?
           Binding.setopt_use_need_kms_credentials_state(self)
         end
 
@@ -133,7 +133,7 @@ module Mongo
       # @return [ Hash ] TLS options to connect to KMS provider.
       def kms_tls_options(provider)
         provider_str = provider.to_s
-        base_type = provider_str.split(':').first
+        base_type = KMS.provider_base_type(provider_str)
 
         @kms_tls_options.fetch(provider_str) do
           @kms_tls_options.fetch(provider_str.to_sym) do

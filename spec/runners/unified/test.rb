@@ -317,7 +317,7 @@ module Unified
                      }
                    }
                    opts[:kms_providers] = opts[:kms_providers].map do |provider, options|
-                     base_type = provider.to_s.split(':').first.to_sym
+                     base_type = Mongo::Crypt::KMS.provider_base_type(provider).to_sym
                      converted_options = options.map do |key, value|
                        [ key, resolve_kms_provider_option(base_type, provider, key, value) ]
                      end.to_h
@@ -478,7 +478,7 @@ module Unified
                    end
         resolved || raise("No placeholder value configured for KMS provider #{provider}, key #{key}")
       elsif base_type == :local && key == :key && value.is_a?(String)
-        Base64.decode64(value)
+        Base64.strict_decode64(value)
       else
         value
       end

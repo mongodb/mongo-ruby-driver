@@ -40,7 +40,7 @@ module Mongo
           raise ArgumentError.new('Key document options must not be nil') if options.nil?
 
           @provider = kms_provider.to_s
-          provider_type = @provider.split(':').first
+          provider_type = KMS.provider_base_type(@provider)
 
           master_key = options.fetch(:master_key, {})
           @key_document = case provider_type

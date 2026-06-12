@@ -21,6 +21,11 @@ module Mongo
       #
       # @api private
       class Credentials
+        # KMS provider types that support on-demand credential retrieval.
+        ON_DEMAND_PROVIDERS = %w[aws gcp azure].freeze
+
+        attr_reader :credentials_map
+
         # Creates a KMS credentials object from a parameters hash.
         #
         # @param [ Hash ] kms_providers A hash that contains credentials for
@@ -39,7 +44,7 @@ module Mongo
 
           kms_providers.each do |identifier, opts|
             identifier_str = identifier.to_s
-            provider_type = identifier_str.split(':').first
+            provider_type = KMS.provider_base_type(identifier_str)
 
             creds = case provider_type
                     when 'aws' then AWS::Credentials.new(opts)
@@ -88,6 +93,16 @@ module Mongo
         # @return [ Credentials::Local | nil ] Local KMS credentials (unnamed provider only).
         def local
           @credentials_map['local']
+        end
+
+        # Returns true if any configured provider supports on-demand credential
+        # retrieval and has been configured with empty credentials.
+        #
+        # @return [ Boolean ]
+        def any_on_demand?
+          @credentials_map.any? do |identifier, creds|
+            ON_DEMAND_PROVIDERS.include?(KMS.provider_base_type(identifier)) && creds.empty?
+          end
         end
 
         # Convert credentials object to a BSON document in libmongocrypt format.
