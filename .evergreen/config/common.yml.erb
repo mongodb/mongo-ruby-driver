@@ -595,7 +595,13 @@ tasks:
       - func: "run Atlas tests"
   - name: "test-mlaunch"
     commands:
+      - func: "run tests"
+  - name: "test-server"
+    commands:
       - func: bootstrap-mongo-orchestration
+      - func: "run tests"
+  - name: "test-ocsp"
+    commands:
       - func: "run tests"
   - name: "driver-bench"
     commands:
