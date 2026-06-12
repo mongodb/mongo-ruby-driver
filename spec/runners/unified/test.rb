@@ -63,7 +63,7 @@ module Unified
 
     # Sentinel value used in unified spec KMS provider options to indicate that
     # the actual credential should be substituted from SpecConfig.
-    KMS_PLACEHOLDER = { '$$placeholder': 1 }.freeze
+    KMS_PLACEHOLDER = { '$$placeholder' => 1 }.freeze
 
     # Descriptions of unified spec tests that are known to flake under load on
     # CI and benefit from being retried. See the corresponding JIRA tickets for
