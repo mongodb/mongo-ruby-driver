@@ -379,4 +379,111 @@ describe Mongo::Crypt::KMS::Credentials do
       end
     end
   end
+
+  context 'named providers' do
+    let(:local_key) { Crypt::LOCAL_MASTER_KEY }
+
+    context 'with a single named local provider' do
+      let(:kms_providers) { { 'local:name1' => { key: local_key } } }
+
+      it 'initializes without error' do
+        expect { Mongo::Crypt::KMS::Credentials.new(kms_providers) }.not_to raise_error
+      end
+
+      it 'to_document uses the full named identifier as key' do
+        creds = Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        doc = creds.to_document
+        expect(doc.keys).to include('local:name1')
+        expect(doc.keys).not_to include('local')
+      end
+
+      it 'unnamed accessor returns nil' do
+        creds = Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        expect(creds.local).to be_nil
+      end
+    end
+
+    context 'with both unnamed and named providers of the same type' do
+      let(:kms_providers) do
+        {
+          local: { key: local_key },
+          'local:name1' => { key: local_key }
+        }
+      end
+
+      it 'includes both in to_document' do
+        creds = Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        doc = creds.to_document
+        expect(doc.keys).to include('local', 'local:name1')
+      end
+
+      it 'unnamed accessor returns the unnamed credential' do
+        creds = Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        expect(creds.local).not_to be_nil
+      end
+    end
+
+    context 'with an unknown provider type' do
+      let(:kms_providers) { { 'badtype:name1' => { key: 'something' } } }
+
+      it 'raises ArgumentError' do
+        expect do
+          Mongo::Crypt::KMS::Credentials.new(kms_providers)
+        end.to raise_error(ArgumentError, /must have one of the following keys/)
+      end
+    end
+
+    context 'with an empty hash' do
+      it 'raises ArgumentError' do
+        expect do
+          Mongo::Crypt::KMS::Credentials.new({})
+        end.to raise_error(ArgumentError, /must have one of the following keys/)
+      end
+    end
+  end
+
+  describe Mongo::Crypt::KMS::MasterKeyDocument do
+    require_libmongocrypt
+
+    describe '#initialize' do
+      context 'with unnamed local provider' do
+        it 'succeeds' do
+          doc = Mongo::Crypt::KMS::MasterKeyDocument.new('local', {})
+          expect(doc.to_document[:provider]).to eq('local')
+        end
+      end
+
+      context 'with named local provider' do
+        it 'succeeds and preserves full identifier in document' do
+          doc = Mongo::Crypt::KMS::MasterKeyDocument.new('local:name1', {})
+          expect(doc.to_document[:provider]).to eq('local:name1')
+        end
+      end
+
+      context 'with unknown provider type' do
+        it 'raises ArgumentError' do
+          expect do
+            Mongo::Crypt::KMS::MasterKeyDocument.new('badtype:name1', {})
+          end.to raise_error(ArgumentError, /KMS provider must be one of/)
+        end
+      end
+
+      context 'with named AWS provider' do
+        let(:master_key) do
+          {
+            master_key: {
+              region: 'us-east-1',
+              key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'
+            }
+          }
+        end
+
+        it 'preserves full identifier in document' do
+          doc = Mongo::Crypt::KMS::MasterKeyDocument.new('aws:name1', master_key).to_document
+          expect(doc[:provider]).to eq('aws:name1')
+          expect(doc[:region]).to eq('us-east-1')
+        end
+      end
+    end
+  end
 end
