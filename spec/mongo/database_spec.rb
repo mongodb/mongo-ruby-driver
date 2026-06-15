@@ -1226,4 +1226,50 @@ describe Mongo::Database do
       end
     end
   end
+
+  describe '#check_out_cursor_command_connection' do
+    let(:database) do
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
+    end
+
+    let(:pool) { instance_double(Mongo::Server::ConnectionPool) }
+    let(:server) { instance_double(Mongo::Server, pool: pool) }
+    let(:connection) { instance_double(Mongo::Server::Connection) }
+
+    context 'when the context is pinned to a connection' do
+      let(:context) do
+        instance_double(Mongo::Operation::Context, connection_global_id: 42)
+      end
+
+      it 'checks out the pinned connection' do
+        expect(pool).to receive(:check_out_pinned_connection).with(42).and_return(connection)
+        expect(
+          database.send(:check_out_cursor_command_connection, server, context)
+        ).to be(connection)
+      end
+
+      context 'when the pinned connection is not checked out' do
+        it 'falls back to a regular check out' do
+          expect(pool).to receive(:check_out_pinned_connection).with(42).and_return(nil)
+          expect(pool).to receive(:check_out).with(context: context).and_return(connection)
+          expect(
+            database.send(:check_out_cursor_command_connection, server, context)
+          ).to be(connection)
+        end
+      end
+    end
+
+    context 'when the context is not pinned to a connection' do
+      let(:context) do
+        instance_double(Mongo::Operation::Context, connection_global_id: nil)
+      end
+
+      it 'checks out a new connection' do
+        expect(pool).to receive(:check_out).with(context: context).and_return(connection)
+        expect(
+          database.send(:check_out_cursor_command_connection, server, context)
+        ).to be(connection)
+      end
+    end
+  end
 end
