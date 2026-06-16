@@ -78,5 +78,25 @@ module Unified
         )
       end
     end
+
+    def encrypt(op)
+      client_encryption = entities.get(:clientEncryption, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = Utils.shallow_snakeize_hash(args.use('opts')) || {}
+        client_encryption.encrypt(
+          args.use!('value'),
+          opts
+        )
+      end
+    end
+
+    def decrypt(op)
+      client_encryption = entities.get(:clientEncryption, op.use!('object'))
+      use_arguments(op) do |args|
+        client_encryption.decrypt(
+          args.use!('value')
+        )
+      end
+    end
   end
 end

@@ -61,6 +61,10 @@ module Unified
 
     attr_reader :test_spec, :description, :outcome, :skip_reason, :reqs, :group_reqs, :options, :entities
 
+    # Sentinel value used in unified spec KMS provider options to indicate that
+    # the actual credential should be substituted from SpecConfig.
+    KMS_PLACEHOLDER = { '$$placeholder' => 1 }.freeze
+
     # Descriptions of unified spec tests that are known to flake under load on
     # CI and benefit from being retried. See the corresponding JIRA tickets for
     # the underlying investigations.
@@ -299,7 +303,11 @@ module Unified
                    key_vault_client = entities.get(:client, client_encryption_opts['keyVaultClient'])
                    opts = {
                      key_vault_namespace: client_encryption_opts['keyVaultNamespace'],
-                     kms_providers: Utils.snakeize_hash(client_encryption_opts['kmsProviders']),
+                     kms_providers: client_encryption_opts['kmsProviders']
+                                    .transform_keys { |k| Utils.underscore(k.to_s) }
+                                    .transform_values do |provider_opts|
+                                      provider_opts.transform_keys { |k| Utils.underscore(k.to_s) }
+                                    end,
                      kms_tls_options: {
                        kmip: {
                          ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
@@ -309,38 +317,9 @@ module Unified
                      }
                    }
                    opts[:kms_providers] = opts[:kms_providers].map do |provider, options|
+                     base_type = Mongo::Crypt::KMS.provider_base_type(provider).to_sym
                      converted_options = options.map do |key, value|
-                       converted_value = if value == { '$$placeholder': 1 }
-                                           case provider
-                                           when :aws
-                                             case key
-                                             when :access_key_id then SpecConfig.instance.fle_aws_key
-                                             when :secret_access_key then SpecConfig.instance.fle_aws_secret
-                                             end
-                                           when :azure
-                                             case key
-                                             when :tenant_id then SpecConfig.instance.fle_azure_tenant_id
-                                             when :client_id then SpecConfig.instance.fle_azure_client_id
-                                             when :client_secret then SpecConfig.instance.fle_azure_client_secret
-                                             end
-                                           when :gcp
-                                             case key
-                                             when :email then SpecConfig.instance.fle_gcp_email
-                                             when :private_key then SpecConfig.instance.fle_gcp_private_key
-                                             end
-                                           when :kmip
-                                             case key
-                                             when :endpoint then SpecConfig.instance.fle_kmip_endpoint
-                                             end
-                                           when :local
-                                             case key
-                                             when :key then Crypt::LOCAL_MASTER_KEY
-                                             end
-                                           end
-                                         else
-                                           value
-                                         end
-                       [ key, converted_value ]
+                       [ key, resolve_kms_provider_option(base_type, provider, key, value) ]
                      end.to_h
                      [ provider, converted_options ]
                    end.to_h
@@ -462,6 +441,48 @@ module Unified
     end
 
     private
+
+    # Resolves a single KMS provider option value. If the value is the
+    # placeholder sentinel, substitutes the appropriate credential from
+    # SpecConfig. If the value is a base64-encoded local key string, decodes
+    # it. Otherwise returns the value unchanged.
+    def resolve_kms_provider_option(base_type, provider, key, value)
+      if value == KMS_PLACEHOLDER
+        resolved = case base_type
+                   when :aws
+                     case key
+                     when :access_key_id
+                       provider.to_s.end_with?(':name2') ? SpecConfig.instance.fle_aws_key2 : SpecConfig.instance.fle_aws_key
+                     when :secret_access_key
+                       provider.to_s.end_with?(':name2') ? SpecConfig.instance.fle_aws_secret2 : SpecConfig.instance.fle_aws_secret
+                     end
+                   when :azure
+                     case key
+                     when :tenant_id then SpecConfig.instance.fle_azure_tenant_id
+                     when :client_id then SpecConfig.instance.fle_azure_client_id
+                     when :client_secret then SpecConfig.instance.fle_azure_client_secret
+                     end
+                   when :gcp
+                     case key
+                     when :email then SpecConfig.instance.fle_gcp_email
+                     when :private_key then SpecConfig.instance.fle_gcp_private_key
+                     end
+                   when :kmip
+                     case key
+                     when :endpoint then SpecConfig.instance.fle_kmip_endpoint
+                     end
+                   when :local
+                     case key
+                     when :key then Crypt::LOCAL_MASTER_KEY
+                     end
+                   end
+        resolved || raise("No placeholder value configured for KMS provider #{provider}, key #{key}")
+      elsif base_type == :local && key == :key && value.is_a?(String)
+        Base64.strict_decode64(value)
+      else
+        value
+      end
+    end
 
     def execute_operations(ops, propagate_errors: false)
       ops.each do |op|

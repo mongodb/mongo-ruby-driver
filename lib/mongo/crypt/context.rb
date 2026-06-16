@@ -199,21 +199,24 @@ module Mongo
       #   KMS providers.
       def retrieve_kms_credentials(timeout_holder)
         providers = {}
-        if kms_providers.aws && kms_providers.aws.empty?
-          begin
-            aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials(timeout_holder)
-          rescue Auth::Aws::CredentialsNotFound
-            raise Error::CryptError.new(
-              'Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)'
-            )
+        kms_providers.credentials_map.each do |identifier, creds|
+          next unless creds.empty?
+
+          case KMS.provider_base_type(identifier)
+          when 'aws'
+            begin
+              aws_credentials = Mongo::Auth::Aws::CredentialsRetriever.new.credentials(timeout_holder)
+            rescue Auth::Aws::CredentialsNotFound
+              raise Error::CryptError.new(
+                'Could not locate AWS credentials (checked environment variables, ECS and EC2 metadata)'
+              )
+            end
+            providers[identifier] = aws_credentials.to_h
+          when 'gcp'
+            providers[identifier] = { access_token: gcp_access_token(timeout_holder) }
+          when 'azure'
+            providers[identifier] = { access_token: azure_access_token(timeout_holder) }
           end
-          providers[:aws] = aws_credentials.to_h
-        end
-        if kms_providers.gcp && kms_providers.gcp.empty?
-          providers[:gcp] = { access_token: gcp_access_token(timeout_holder) }
-        end
-        if kms_providers.azure && kms_providers.azure.empty?
-          providers[:azure] = { access_token: azure_access_token(timeout_holder) }
         end
         KMS::Credentials.new(providers)
       end
