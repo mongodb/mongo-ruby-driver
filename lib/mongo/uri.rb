@@ -503,6 +503,12 @@ module Mongo
       # 'tls' and 'ssl'. In order to fulfill this, we parse the values of each instance into an
       # array; assuming all values in the array are the same, we replace the array with that value.
       unless uri_options[:ssl].nil? || uri_options[:ssl].empty?
+        # A nil element means an invalid value (e.g. tls=yes) was supplied.
+        # Refuse it rather than silently connecting over plaintext (RUBY-3832).
+        if uri_options[:ssl].include?(nil)
+          raise_invalid_error_no_fmt!("invalid boolean value for 'tls' or 'ssl'; only 'true' and 'false' are accepted")
+        end
+
         unless uri_options[:ssl].uniq.length == 1
           raise_invalid_error_no_fmt!("all instances of 'tls' and 'ssl' must have the same value")
         end
