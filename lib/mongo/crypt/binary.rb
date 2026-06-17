@@ -139,14 +139,17 @@ module Mongo
       # Wraps a String with a mongocrypt_binary_t, yielding an FFI::Pointer
       # to the wrapped struct.
       def self.wrap_string(str)
-        binary_p = Binding.mongocrypt_binary_new_from_data(
-          FFI::MemoryPointer.from_string(str),
-          str.bytesize
-        )
+        # mongocrypt_binary_new_from_data does not copy the buffer, so the
+        # MemoryPointer must outlive the mongocrypt_binary_t. Hold it in a
+        # local so it stays referenced for the whole method frame; otherwise
+        # GC can free the buffer while libmongocrypt still points into it.
+        data_p = FFI::MemoryPointer.from_string(str)
+        binary_p = Binding.mongocrypt_binary_new_from_data(data_p, str.bytesize)
         begin
           yield binary_p
         ensure
           Binding.mongocrypt_binary_destroy(binary_p)
+          data_p # rubocop:disable Lint/Void -- keep the buffer alive past destroy
         end
       end
     end

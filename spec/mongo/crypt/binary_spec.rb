@@ -80,6 +80,35 @@ describe Mongo::Crypt::Binary do
     end
   end
 
+  describe '#self.wrap_string' do
+    it 'yields a binary that reads back the original data' do
+      described_class.wrap_string(data) do |binary_p|
+        str_p = Mongo::Crypt::Binding.get_binary_data_direct(binary_p)
+        len = Mongo::Crypt::Binding.get_binary_len_direct(binary_p)
+        expect(str_p.read_string(len)).to eq(data)
+      end
+    end
+
+    it 'keeps the wrapped buffer valid under GC pressure' do
+      # mongocrypt_binary_new_from_data does not copy the buffer, so the
+      # MemoryPointer backing the wrapped binary must stay referenced for the
+      # whole block. If it is collected, GC frees the buffer and the bytes
+      # libmongocrypt sees get corrupted. Force GC and allocation churn inside
+      # the block to surface a use-after-free.
+      100.times do |i|
+        str = "wrap-string-payload-#{i}-#{'x' * 64}"
+        described_class.wrap_string(str) do |binary_p|
+          GC.start(full_mark: true, immediate_sweep: true)
+          # Allocate garbage to reuse any freed buffer in this tick.
+          Array.new(1000) { 'y' * 64 }
+          str_p = Mongo::Crypt::Binding.get_binary_data_direct(binary_p)
+          len = Mongo::Crypt::Binding.get_binary_len_direct(binary_p)
+          expect(str_p.read_string(len)).to eq(str)
+        end
+      end
+    end
+  end
+
   describe '#write' do
     # Binary must have enough space pre-allocated
     let(:binary) { described_class.from_data("\00" * data.length) }
