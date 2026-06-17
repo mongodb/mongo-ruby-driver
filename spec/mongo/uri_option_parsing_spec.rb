@@ -102,6 +102,21 @@ describe Mongo::URI do
     end
   end
 
+  # TLS boolean options must fail loudly on an invalid value: an unrecognized
+  # value such as 'yes' or '1' would otherwise be discarded and the connection
+  # would silently fall back to plaintext (RUBY-3832).
+  shared_examples_for 'a strict boolean option' do
+    it_behaves_like 'a boolean option'
+
+    %w[ yes no 1 0 on off invalid ].each do |bad_value|
+      context "is #{bad_value}" do
+        let(:string) { "mongodb://example.com/?#{uri_option}=#{bad_value}" }
+
+        it_behaves_like 'raises parse error'
+      end
+    end
+  end
+
   shared_examples_for 'an inverted boolean option' do
     let(:string) { "mongodb://example.com/?#{uri_option}=true" }
 
@@ -460,14 +475,14 @@ describe Mongo::URI do
     let(:uri_option) { 'ssl' }
     let(:ruby_option) { :ssl }
 
-    it_behaves_like 'a boolean option'
+    it_behaves_like 'a strict boolean option'
   end
 
   context 'tls' do
     let(:uri_option) { 'tls' }
     let(:ruby_option) { :ssl }
 
-    it_behaves_like 'a boolean option'
+    it_behaves_like 'a strict boolean option'
   end
 
   context 'tlsAllowInvalidCertificates' do

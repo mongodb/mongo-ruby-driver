@@ -354,13 +354,25 @@ module Mongo
 
       # Converts the value into a boolean and returns it wrapped in an array.
       #
-      # @param [ String ] name Name of the URI option being processed.
+      # tls and ssl are the only repeated_bool options. An invalid value is
+      # preserved as a nil element rather than warned-and-dropped, so that
+      # URI#validate_uri_options! can detect it and raise instead of silently
+      # falling back to a plaintext connection (RUBY-3832).
+      #
+      # @param [ String ] _name Name of the URI option being processed.
       # @param [ String ] value URI option value.
       #
-      # @return [ Array<true | false> | nil ] The boolean value parsed and wraped
-      #   in an array.
-      def convert_repeated_bool(name, value)
-        [ convert_bool(name, value) ]
+      # @return [ Array<true | false | nil> ] The boolean value parsed and
+      #   wrapped in an array.
+      def convert_repeated_bool(_name, value)
+        case value
+        when true, 'true', 'TRUE'
+          [ true ]
+        when false, 'false', 'FALSE'
+          [ false ]
+        else
+          [ nil ]
+        end
       end
 
       # Reverts a repeated boolean type.
