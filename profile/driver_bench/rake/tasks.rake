@@ -25,6 +25,8 @@ namespace :driver_bench do
     mkdir_p DRIVER_BENCH_DATA
 
     Dir.glob(File.join(SPECS_PATH, 'source/benchmarking/data/*.tgz')) do |archive|
+      next if archive.include?('legacy') # skip the legacy data sets
+
       Dir.chdir(DRIVER_BENCH_DATA) do
         sh 'tar', 'xzf', archive
       end
