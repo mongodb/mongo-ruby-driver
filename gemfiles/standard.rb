@@ -57,6 +57,8 @@ def standard_dependencies
     gem 'dotenv'
     gem 'childprocess'
     gem 'rspec_junit_formatter'
+    gem 'simplecov', require: false
+    gem 'simplecov-json', require: false
   end
 
   group :development do
