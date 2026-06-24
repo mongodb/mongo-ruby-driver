@@ -399,7 +399,9 @@ describe Mongo::Session do
       it 'does not raise on the second call' do
         server = authorized_client.cluster.next_primary
         server.with_connection do |connection|
-          session.pin_to_server(server)
+          # Set @pinned_server directly to avoid the lint check in pin_to_server,
+          # which requires a mongos. We are testing unpin, not pin_to_server.
+          session.instance_variable_set(:@pinned_server, server)
           session.unpin(connection)
 
           expect do
