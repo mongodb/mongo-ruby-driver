@@ -711,11 +711,6 @@ axes:
         variables:
           MONGODB_VERSION: "4.4"
           CRYPT_SHARED_VERSION: "6.0.5"
-      - id: "4.2"
-        display_name: "4.2"
-        variables:
-          MONGODB_VERSION: "4.2"
-          CRYPT_SHARED_VERSION: "6.0.5"
 
   - id: "topology"
     display_name: Topology
@@ -1131,7 +1126,7 @@ buildvariants:
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7"]
-      mongodb-version: ['4.4', '4.2']
+      mongodb-version: ['4.4']
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1258,7 +1253,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: "ruby-2.7"
-      mongodb-version: ['4.4', '4.2']
+      mongodb-version: ['4.4']
       topology: replica-set
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
