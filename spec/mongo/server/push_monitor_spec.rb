@@ -67,6 +67,19 @@ describe Mongo::Server::PushMonitor do
       end.should_not raise_error
     end
 
+    # The streaming connection must identify itself to the server with a
+    # metadata handshake (carrying the appName) before streaming, like the
+    # polling Monitor's connection does. Otherwise appName-scoped server
+    # behaviour (e.g. failCommand fail points used by the SDAM spec tests)
+    # never applies to the streaming hello, and the streaming check cannot
+    # observe monitor errors.
+    it 'performs a metadata handshake before streaming' do
+      expect_any_instance_of(Mongo::Server::PushMonitor::Connection)
+        .to receive(:handshake!).and_call_original
+
+      push_monitor.do_work
+    end
+
     context 'network error during check' do
       it 'does not propagate the exception' do
         push_monitor
@@ -88,6 +101,27 @@ describe Mongo::Server::PushMonitor do
         end.should_not raise_error
 
         push_monitor.running?.should be false
+      end
+
+      # Per the Server Monitoring spec ("Network or command error during server
+      # check"), the streaming monitor must mark the server Unknown and clear
+      # the pool when its check fails. In the Ruby driver the PushMonitor owns
+      # the streaming check, so it must run the SDAM flow with the scan error
+      # rather than relying on the polling Monitor to notice the failure.
+      it 'marks the server unknown via the SDAM flow' do
+        push_monitor
+
+        expect(Socket).to receive(:getaddrinfo).and_raise(SocketError.new('Test exception'))
+
+        expect(cluster).to receive(:run_sdam_flow) do |_previous_desc, updated_desc, options|
+          expect(updated_desc).to be_unknown
+          expect(options[:awaited]).to be true
+          expect(options[:scan_error]).to be_a(Mongo::Error::SocketError)
+        end
+
+        lambda do
+          push_monitor.do_work
+        end.should_not raise_error
       end
     end
   end
