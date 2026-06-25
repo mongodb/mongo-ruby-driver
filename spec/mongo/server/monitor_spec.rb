@@ -158,6 +158,10 @@ describe Mongo::Server::Monitor do
       end
 
       before do
+        # The server must be in a known state for RTT-only suppression to
+        # apply; an Unknown server is always given a full recovery check.
+        server.update_description(Mongo::Server::Description.new(address, hello_reply))
+        expect(server.description).not_to be_unknown
         monitor.instance_variable_set(:@connection, rtt_connection)
         monitor.instance_variable_set(:@push_monitor, running_push_monitor)
       end
@@ -169,6 +173,53 @@ describe Mongo::Server::Monitor do
 
       it 'does not publish heartbeat events' do
         expect(monitor.monitoring).not_to receive(:publish_heartbeat)
+        monitor.scan!
+      end
+    end
+
+    context 'when streaming is active but the server is Unknown' do
+      # Recovery path: even with an established connection and a running
+      # PushMonitor, an Unknown server must get a full check so it is
+      # recovered promptly, rather than waiting for the next streaming
+      # response (which could be up to heartbeatFrequencyMS away and would
+      # let server selection fail in the meantime).
+
+      let(:hello_reply) do
+        {
+          'isWritablePrimary' => true,
+          'ok' => 1.0,
+          'minWireVersion' => 0,
+          'maxWireVersion' => 21,
+        }
+      end
+
+      let(:rtt_connection) do
+        double('monitor connection').tap do |conn|
+          allow(conn).to receive(:pid).and_return(Process.pid)
+          allow(conn).to receive(:check_document).and_return({ 'hello' => 1 })
+          allow(conn).to receive(:dispatch_bytes).and_return(
+            double('message', documents: [ hello_reply ])
+          )
+          allow(conn).to receive(:disconnect!)
+        end
+      end
+
+      let(:running_push_monitor) do
+        double('push monitor').tap do |push_monitor|
+          allow(push_monitor).to receive(:running?).and_return(true)
+          allow(push_monitor).to receive(:stop!)
+        end
+      end
+
+      before do
+        # Server starts Unknown (monitoring_io is disabled).
+        expect(server.description).to be_unknown
+        monitor.instance_variable_set(:@connection, rtt_connection)
+        monitor.instance_variable_set(:@push_monitor, running_push_monitor)
+      end
+
+      it 'runs the SDAM flow to recover the server' do
+        expect(cluster).to receive(:run_sdam_flow)
         monitor.scan!
       end
     end

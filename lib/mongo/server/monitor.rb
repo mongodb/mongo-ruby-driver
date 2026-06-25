@@ -312,6 +312,14 @@ module Mongo
       def rtt_measurement_only?
         return false if @connection.nil?
 
+        # Only suppress the check while the server is in a known state and the
+        # PushMonitor is the authoritative streaming source. If the server is
+        # Unknown (e.g. an operation error or a streaming failure just marked
+        # it so), the polling Monitor must run a full check to recover it
+        # rather than waiting for the next streaming response - otherwise the
+        # server can stay Unknown long enough to fail server selection.
+        return false if server.unknown?
+
         pm = push_monitor
         !pm.nil? && pm.running?
       end
