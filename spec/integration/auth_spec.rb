@@ -43,12 +43,13 @@ describe 'Auth' do
         end
 
         # An existing user will negotiate scram-sha-256.
-        # A non-existing user negotiate scram-sha-1.
-        it 'indicates scram-sha-1 was used' do
+        # A non-existing user will negotiate scram-sha-1 or scram-sha-256
+        # depending on the server version.
+        it 'raises an unauthorized error indicating scram was used' do
           expect do
             connection.connect!
           end.to raise_error(Mongo::Auth::Unauthorized,
-                             /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*used mechanism: SCRAM-SHA-1/)
+                             /User nonexistent_user \(mechanism: scram(256)?\) is not authorized to access admin.*used mechanism: SCRAM-SHA-(1|256)/)
         end
       end
 
