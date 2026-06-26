@@ -279,6 +279,10 @@ fi
 if test -n "$OCSP_CONNECTIVITY"; then
   add_uri_option tls=true
   add_uri_option "tlsCAFile=$DRIVERS_TOOLS/.evergreen/ocsp/$OCSP_ALGORITHM/ca.pem"
+elif test -n "${OCSP_ALGORITHM:-}"; then
+  add_uri_option tls=true
+  add_uri_option "tlsCAFile=$_ocsp_ca"
+  add_uri_option "tlsCertificateKeyFile=spec/support/ocsp/$OCSP_ALGORITHM/server.pem"
 fi
 
 if test -n "$EXTRA_URI_OPTIONS"; then

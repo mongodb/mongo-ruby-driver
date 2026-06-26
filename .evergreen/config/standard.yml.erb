@@ -105,7 +105,7 @@ buildvariants:
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: <%= older_rubies %>
-      mongodb-version: ['4.4', '4.2']
+      mongodb-version: ['4.4']
       topology: <%= topologies %>
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -232,7 +232,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: <%= supported_mri_ruby_2 %>
-      mongodb-version: ['4.4', '4.2']
+      mongodb-version: ['4.4']
       topology: replica-set
       os: ubuntu1804
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
@@ -372,10 +372,10 @@ buildvariants:
 #    tasks:
 #      - name: "test-fle"
 
-  # Runs specs against the latest server. This is not automatically run on PR's
-  # because we don't want to block PR's when the latest DB breaks something.
+  # Runs specs against the latest server. Not run on PRs to avoid blocking
+  # merges when an unreleased MongoDB build breaks something.
   - name: 'latest-server'
-    activate: false
+    patchable: false
     display_name: 'Latest MongoDB Server'
     run_on: ubuntu2204-small
     expansions:
