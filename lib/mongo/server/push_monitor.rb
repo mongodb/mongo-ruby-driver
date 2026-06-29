@@ -118,6 +118,13 @@ module Mongo
                                 log_prefix: options[:log_prefix],
                                 bg_error_backtrace: options[:bg_error_backtrace])
 
+        # The streaming check is the authoritative SDAM source, so its failure
+        # must mark the server Unknown and clear the pool here. While streaming
+        # is active the polling Monitor only measures RTT and ignores errors
+        # (per the Server Monitoring spec), so it can no longer be relied on to
+        # notice the failure.
+        monitor.run_sdam_flow({}, scan_error: e, awaited: true)
+
         # If a request failed on a connection, stop push monitoring.
         # In case the server is dead we don't want to have two connections
         # trying to connect unsuccessfully at the same time.
@@ -142,6 +149,13 @@ module Mongo
             @server_pushing = false
             connection = PushMonitor::Connection.new(server.address, options)
             connection.connect!
+            # Identify the streaming connection to the server with a metadata
+            # handshake (carrying the appName) before streaming, mirroring the
+            # polling Monitor and the Server Monitoring spec, which establishes
+            # the monitoring connection with a handshake before issuing the
+            # awaitable hello. Without this, appName-scoped server behaviour
+            # never applies to the streaming hello.
+            connection.handshake!
             @connection = connection
           end
         end

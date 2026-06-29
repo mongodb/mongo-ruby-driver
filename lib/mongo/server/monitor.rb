@@ -210,28 +210,41 @@ module Mongo
         @mutex.synchronize do
           throttle_scan_frequency!
 
+          # When the streaming protocol is active the PushMonitor is the
+          # authoritative SDAM source and this scan only measures RTT on the
+          # dedicated connection. Per the Server Monitoring spec, an RTT
+          # command MUST NOT publish events or update the topology. Compute
+          # this before do_scan, which may (re)connect and change the state.
+          rtt_only = rtt_measurement_only?
+
           begin
-            result = do_scan
+            result = do_scan(publish_heartbeat: !rtt_only)
           rescue StandardError => e
-            run_sdam_flow({}, scan_error: e)
+            run_sdam_flow({}, scan_error: e, rtt_only: rtt_only)
           else
-            run_sdam_flow(result)
+            run_sdam_flow(result, rtt_only: rtt_only)
           end
         end
       end
 
-      def run_sdam_flow(result, awaited: false, scan_error: nil)
+      def run_sdam_flow(result, awaited: false, scan_error: nil, rtt_only: false)
         @sdam_mutex.synchronize do
           old_description = server.description
 
-          new_description = Description.new(
-            server.address,
-            result,
-            average_round_trip_time: server.round_trip_time_calculator.average_round_trip_time,
-            minimum_round_trip_time: server.round_trip_time_calculator.minimum_round_trip_time
-          )
-
-          server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited, scan_error: scan_error)
+          # An RTT-only measurement (streaming protocol active) must not update
+          # the topology or publish SDAM events. The RTT it gathered is
+          # incorporated into the next streaming-hello description via the
+          # shared RTT calculator. The scheduling below still runs so the
+          # monitor keeps pacing its checks.
+          unless rtt_only
+            new_description = Description.new(
+              server.address,
+              result,
+              average_round_trip_time: server.round_trip_time_calculator.average_round_trip_time,
+              minimum_round_trip_time: server.round_trip_time_calculator.minimum_round_trip_time
+            )
+            server.cluster.run_sdam_flow(server.description, new_description, awaited: awaited, scan_error: scan_error)
+          end
 
           server.description.tap do |new_description|
             unless awaited
@@ -272,8 +285,12 @@ module Mongo
         server.scan_semaphore.signal
       end
 
-      def do_scan
-        monitoring.publish_heartbeat(server) do
+      def do_scan(publish_heartbeat: true)
+        if publish_heartbeat
+          monitoring.publish_heartbeat(server) do
+            check
+          end
+        else
           check
         end
       rescue StandardError => e
@@ -283,6 +300,28 @@ module Mongo
                                 log_prefix: options[:log_prefix],
                                 bg_error_backtrace: options[:bg_error_backtrace])
         raise e
+      end
+
+      # Returns whether this scan is only an RTT measurement, which is the case
+      # when the streaming protocol is active: a dedicated connection is already
+      # established and the PushMonitor is running as the authoritative SDAM
+      # source. In the polling protocol there is no running PushMonitor, so the
+      # connection-reuse check is a real server check and not RTT-only.
+      #
+      # @return [ true | false ]
+      def rtt_measurement_only?
+        return false if @connection.nil?
+
+        # Only suppress the check while the server is in a known state and the
+        # PushMonitor is the authoritative streaming source. If the server is
+        # Unknown (e.g. an operation error or a streaming failure just marked
+        # it so), the polling Monitor must run a full check to recover it
+        # rather than waiting for the next streaming response - otherwise the
+        # server can stay Unknown long enough to fail server selection.
+        return false if server.unknown?
+
+        pm = push_monitor
+        !pm.nil? && pm.running?
       end
 
       def check

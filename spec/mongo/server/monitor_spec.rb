@@ -122,6 +122,151 @@ describe Mongo::Server::Monitor do
         end
       end
     end
+
+    context 'when streaming is active and the scan is an RTT-only measurement' do
+      # Steady-state streaming: the Monitor already has an established
+      # connection (used only for RTT measurement) and a running PushMonitor
+      # that is the authoritative SDAM source. Per the Server Monitoring spec
+      # ("Measuring RTT" / "SDAM Monitoring"), clients MUST NOT publish any
+      # events and MUST NOT update the topology when running an RTT command.
+
+      let(:hello_reply) do
+        {
+          'isWritablePrimary' => true,
+          'ok' => 1.0,
+          'minWireVersion' => 0,
+          'maxWireVersion' => 21,
+        }
+      end
+
+      let(:rtt_connection) do
+        double('monitor connection').tap do |conn|
+          allow(conn).to receive(:pid).and_return(Process.pid)
+          allow(conn).to receive(:check_document).and_return({ 'hello' => 1 })
+          allow(conn).to receive(:dispatch_bytes).and_return(
+            double('message', documents: [ hello_reply ])
+          )
+          allow(conn).to receive(:disconnect!)
+        end
+      end
+
+      let(:running_push_monitor) do
+        double('push monitor').tap do |push_monitor|
+          allow(push_monitor).to receive(:running?).and_return(true)
+          allow(push_monitor).to receive(:stop!)
+        end
+      end
+
+      before do
+        # The server must be in a known state for RTT-only suppression to
+        # apply; an Unknown server is always given a full recovery check.
+        server.update_description(Mongo::Server::Description.new(address, hello_reply))
+        expect(server.description).not_to be_unknown
+        monitor.instance_variable_set(:@connection, rtt_connection)
+        monitor.instance_variable_set(:@push_monitor, running_push_monitor)
+      end
+
+      it 'does not run the SDAM flow' do
+        expect(cluster).not_to receive(:run_sdam_flow)
+        monitor.scan!
+      end
+
+      it 'does not publish heartbeat events' do
+        expect(monitor.monitoring).not_to receive(:publish_heartbeat)
+        monitor.scan!
+      end
+    end
+
+    context 'when streaming is active but the server is Unknown' do
+      # Recovery path: even with an established connection and a running
+      # PushMonitor, an Unknown server must get a full check so it is
+      # recovered promptly, rather than waiting for the next streaming
+      # response (which could be up to heartbeatFrequencyMS away and would
+      # let server selection fail in the meantime).
+
+      let(:hello_reply) do
+        {
+          'isWritablePrimary' => true,
+          'ok' => 1.0,
+          'minWireVersion' => 0,
+          'maxWireVersion' => 21,
+        }
+      end
+
+      let(:rtt_connection) do
+        double('monitor connection').tap do |conn|
+          allow(conn).to receive(:pid).and_return(Process.pid)
+          allow(conn).to receive(:check_document).and_return({ 'hello' => 1 })
+          allow(conn).to receive(:dispatch_bytes).and_return(
+            double('message', documents: [ hello_reply ])
+          )
+          allow(conn).to receive(:disconnect!)
+        end
+      end
+
+      let(:running_push_monitor) do
+        double('push monitor').tap do |push_monitor|
+          allow(push_monitor).to receive(:running?).and_return(true)
+          allow(push_monitor).to receive(:stop!)
+        end
+      end
+
+      before do
+        # Server starts Unknown (monitoring_io is disabled).
+        expect(server.description).to be_unknown
+        monitor.instance_variable_set(:@connection, rtt_connection)
+        monitor.instance_variable_set(:@push_monitor, running_push_monitor)
+      end
+
+      it 'runs the SDAM flow to recover the server' do
+        expect(cluster).to receive(:run_sdam_flow)
+        monitor.scan!
+      end
+    end
+
+    context 'when in the polling protocol with an established connection' do
+      # Polling protocol (serverMonitoringMode=poll, FaaS, or pre-4.4): there
+      # is no PushMonitor, so reusing the connection to run hello is a real
+      # server check, not an RTT-only measurement. It must keep publishing
+      # events and running the SDAM flow exactly as before. This guards
+      # against the RTT-only suppression leaking into polling mode.
+
+      let(:hello_reply) do
+        {
+          'isWritablePrimary' => true,
+          'ok' => 1.0,
+          'minWireVersion' => 0,
+          'maxWireVersion' => 21,
+        }
+      end
+
+      let(:polling_connection) do
+        double('monitor connection').tap do |conn|
+          allow(conn).to receive(:pid).and_return(Process.pid)
+          allow(conn).to receive(:check_document).and_return({ 'hello' => 1 })
+          allow(conn).to receive(:dispatch_bytes).and_return(
+            double('message', documents: [ hello_reply ])
+          )
+          allow(conn).to receive(:disconnect!)
+        end
+      end
+
+      before do
+        monitor.instance_variable_set(:@connection, polling_connection)
+        # No PushMonitor exists in polling mode.
+        expect(monitor.push_monitor).to be_nil
+      end
+
+      it 'runs the SDAM flow' do
+        expect(cluster).to receive(:run_sdam_flow)
+        monitor.scan!
+      end
+
+      it 'publishes heartbeat events' do
+        expect(monitor.monitoring).to receive(:publish_heartbeat).and_call_original
+        monitor.scan!
+      end
+    end
   end
 
   # heartbeat interval is now taken out of cluster, monitor has no useful options
