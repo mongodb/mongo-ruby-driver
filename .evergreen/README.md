@@ -4,6 +4,42 @@ This directory contains configuration and scripts used to run the driver's
 test suite in Evergreen, MongoDB's continuous integration system.
 
 
+## Scheduled ruby-dev build (RUBY-3731)
+
+The `ruby-dev` build variant runs the main test suite against the upcoming,
+in-development Ruby version (`ruby-dev`, provided by `mongo-ruby-toolchain`).
+This catches incompatibilities with the next Ruby release before it ships.
+
+The variant is defined in `config/standard.yml.erb`. Two properties matter:
+
+- It is not tagged `pr`, so it never runs on pull requests. It only runs on
+  the `master` waterfall.
+- Its task carries `batchtime: 20160` (14 days), so Evergreen activates it at
+  most once every two weeks instead of on every commit.
+
+### Failure notification
+
+Failures of the scheduled run should open a Jira issue in the `RUBY` project.
+This is not expressed in `config.yml`; it is an Evergreen project
+notification, configured once by a project admin in the Evergreen UI:
+
+1. Open the `mongo-ruby-driver` project in Evergreen, go to
+   **Settings -> Notifications** (project subscriptions).
+2. Add a subscription:
+   - **Event**: a task finishes -> the task fails.
+   - **Scope**: limit to the build variant, using a regex that matches the
+     `ruby-dev` variant display name (it contains `ruby-dev`).
+   - **Action**: Create a Jira issue.
+   - **Project**: `RUBY`; pick an appropriate issue type (e.g. `Task`/`Bug`).
+3. Evergreen fills the issue with the failing task, the build variant (which
+   names the Ruby version), the version/commit, and links to the failed
+   tasks, so the report includes the Ruby version, commit hash, and the list
+   of failures.
+
+Because this lives in project settings rather than the repository, it must be
+recreated if the project is reconfigured.
+
+
 ## Testing In Docker
 
 It is possible to run the test suite in Docker. This executes all of the
