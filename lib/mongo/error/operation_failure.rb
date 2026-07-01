@@ -233,9 +233,9 @@ module Mongo
         def retrieve_details(document)
           return nil unless document
 
-          if wce = document['writeConcernError']
+          if (wce = document['writeConcernError'])
             wce['errInfo']
-          elsif we = document['writeErrors']&.first
+          elsif (we = document['writeErrors']&.first)
             we['errInfo']
           end
         end

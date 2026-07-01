@@ -1403,7 +1403,7 @@ module Mongo
         log_warn("Read concern has invalid keys: #{invalid_keys.join(',')}.") unless invalid_keys.empty?
       end
 
-      if server_api = opts[:server_api]
+      if (server_api = opts[:server_api])
         raise ArgumentError, ":server_api value must be a hash: #{server_api}" unless server_api.is_a?(Hash)
 
         extra_keys = server_api.keys - %w[version strict deprecation_errors]
@@ -1529,12 +1529,12 @@ module Mongo
       end
 
       %i[connect_timeout socket_timeout].each do |key|
-        next unless value = options[key]
+        next unless (value = options[key])
         raise ArgumentError, "#{key} must be a non-negative number: #{value}" unless value.is_a?(Numeric)
         raise ArgumentError, "#{key} must be a non-negative number: #{value}" if value < 0
       end
 
-      if value = options[:bg_error_backtrace]
+      if (value = options[:bg_error_backtrace])
         case value
         when Integer
           if value <= 0
@@ -1549,7 +1549,7 @@ module Mongo
         end
       end
 
-      if libraries = options[:wrapping_libraries]
+      if (libraries = options[:wrapping_libraries])
         unless libraries.is_a?(Array)
           raise ArgumentError, ":wrapping_libraries must be an array of hashes: #{libraries}"
         end
@@ -1711,7 +1711,7 @@ module Mongo
                                              "the read preference must be specified as a hash: { mode: #{read.inspect} }")
         end
 
-        if mode = read[:mode]
+        if (mode = read[:mode])
           mode = mode.to_sym
           unless Mongo::ServerSelector::PREFERENCES.include?(mode)
             raise Error::InvalidReadOption.new(read, "mode #{mode} is not one of recognized modes")

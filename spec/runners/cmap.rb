@@ -231,7 +231,7 @@ module Mongo
       end
 
       def process_run_on
-        return unless run_on = @test['runOn']
+        return unless (run_on = @test['runOn'])
 
         @min_server_version = run_on.detect do |doc|
           doc.keys.first == 'minServerVersion'
@@ -240,7 +240,7 @@ module Mongo
           doc.keys.first == 'maxServerVersion'
         end&.values&.first
 
-        @topologies = if topologies = run_on.detect { |doc| doc.keys.first == 'topology' }
+        @topologies = if (topologies = run_on.detect { |doc| doc.keys.first == 'topology' })
                         (topologies['topology'] || {}).map do |topology|
                           {
                             'replicaset' => :replica_set,
@@ -254,7 +254,7 @@ module Mongo
                         end
                       end
 
-        @oses = if oses = run_on.detect { |doc| doc.keys.first == 'requireOs' }
+        @oses = if (oses = run_on.detect { |doc| doc.keys.first == 'requireOs' })
                   (oses['requireOs'] || {}).map do |os|
                     {
                       'macos' => :macos,
@@ -404,7 +404,7 @@ module Mongo
       end
 
       def run_wait_for_thread_op(state)
-        raise "Expected thread for '#{thread}' but none exists." unless thread = state[target]
+        raise "Expected thread for '#{thread}' but none exists." unless (thread = state[target])
 
         thread.context.signal_stop
         thread.join
@@ -462,7 +462,7 @@ module Mongo
       end
 
       def run_on_thread(state)
-        raise "Expected thread for '#{thread}' but none exists." unless thd = state[thread]
+        raise "Expected thread for '#{thread}' but none exists." unless (thd = state[thread])
 
         thd.context.operations << self
         # Sleep to allow the other thread to execute the new command.

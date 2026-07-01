@@ -107,7 +107,7 @@ module Mongo
           return [] unless acknowledged?
 
           @replies.reduce([]) do |ids, reply|
-            if upserted_ids = reply.documents.first[UPSERTED]
+            if (upserted_ids = reply.documents.first[UPSERTED])
               ids += upserted_ids
             end
             ids

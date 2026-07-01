@@ -28,7 +28,7 @@ describe 'fork reconnect' do
       socket = monitor.connection.send(:socket).send(:socket)
       (socket.is_a?(Socket) || socket.is_a?(OpenSSL::SSL::SSLSocket)).should be true
 
-      if pid = fork
+      if (pid = fork)
         _, status = Process.wait2(pid)
         expect(status.exitstatus).to eq(0)
       else
@@ -70,7 +70,7 @@ describe 'fork reconnect' do
       socket = connection.send(:socket).send(:socket)
       (socket.is_a?(Socket) || socket.is_a?(OpenSSL::SSL::SSLSocket)).should be true
 
-      if pid = fork
+      if (pid = fork)
         _, status = Process.wait2(pid)
         expect(status.exitstatus).to eq(0)
       else
@@ -96,7 +96,7 @@ describe 'fork reconnect' do
         connection.id
       end
 
-      if pid = fork
+      if (pid = fork)
         _, status = Process.wait2(pid)
         expect(status.exitstatus).to eq(0)
       else
@@ -131,7 +131,7 @@ describe 'fork reconnect' do
       end
       client['foo'].insert_one(test: 1)
 
-      if pid = fork
+      if (pid = fork)
         _, status = Process.wait2(pid)
         expect(status.exitstatus).to eq(0)
       else
@@ -158,7 +158,7 @@ describe 'fork reconnect' do
         parent_lsid = session.session_id
         session.end_session
 
-        if pid = fork
+        if (pid = fork)
           _, status = Process.wait2(pid)
           expect(status.exitstatus).to eq(0)
         else
@@ -187,7 +187,7 @@ describe 'fork reconnect' do
         session = client.get_session.materialize_if_needed
         parent_lsid = session.session_id
 
-        if pid = fork
+        if (pid = fork)
           _, status = Process.wait2(pid)
           expect(status.exitstatus).to eq(0)
         else

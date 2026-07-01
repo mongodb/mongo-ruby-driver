@@ -20,7 +20,7 @@ module Mongo
         @key_vault_data = BSON::ExtJSON.parse_obj(@spec['key_vault_data'])
         @encrypted_fields = BSON::ExtJSON.parse_obj(@spec['encrypted_fields'], mode: :bson)
 
-        @requirements = if run_on = @spec['runOn']
+        @requirements = if (run_on = @spec['runOn'])
                           run_on.map do |spec|
                             Requirement.new(spec)
                           end

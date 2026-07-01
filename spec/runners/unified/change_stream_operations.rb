@@ -11,7 +11,7 @@ module Unified
                                'fullDocumentBeforeChange', 'showExpandedEvents', 'timeoutMS',
                                'maxAwaitTimeMS')
         cs = object.watch(pipeline, **opts)
-        if name = op.use('saveResultAsEntity')
+        if (name = op.use('saveResultAsEntity'))
           entities.set(:change_stream, name, cs)
         end
       end

@@ -47,7 +47,7 @@ describe 'URI options' do
               expect(test.client).to match_auth(test)
             end
 
-            if opts = test.expected_options
+            if (opts = test.expected_options)
               if opts['compressors'] && opts['compressors'].include?('snappy')
                 before do
                   skip 'This test requires snappy compression' unless /snappy/.match?(ENV.fetch('BUNDLE_GEMFILE', ''))

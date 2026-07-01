@@ -56,7 +56,7 @@ module Mongo
         def initialize(address, options = {})
           @address = address
           @options = options.dup.freeze
-          raise ArgumentError, 'App metadata is required' unless @app_metadata = options[:app_metadata]
+          raise ArgumentError, 'App metadata is required' unless (@app_metadata = options[:app_metadata])
 
           @socket = nil
           @pid = Process.pid
@@ -232,7 +232,7 @@ module Mongo
                 end
           # compressors must be set to maintain correct compression status
           # in the server description. See RUBY-2427
-          if compressors = options[:compressors]
+          if (compressors = options[:compressors])
             doc = doc.merge(compression: compressors)
           end
           doc

@@ -19,7 +19,7 @@ module Mongo
         @max_server_version = spec['maxServerVersion']
         # topologies is for unified test format.
         # topology is for legacy tests.
-        @topologies = if topologies = spec['topology'] || spec['topologies']
+        @topologies = if (topologies = spec['topology'] || spec['topologies'])
                         topologies.map do |topology|
                           {
                             'replicaset' => :replica_set,
@@ -59,7 +59,7 @@ module Mongo
         private
 
         def initialize_serverless(spec)
-          @serverless = if serverless = spec['serverless']
+          @serverless = if (serverless = spec['serverless'])
                           case spec['serverless']
                           when 'require' then :require
                           when 'forbid' then :forbid

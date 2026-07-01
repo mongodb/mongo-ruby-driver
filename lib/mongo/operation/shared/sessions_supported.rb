@@ -243,7 +243,7 @@ module Mongo
         end
 
         super.tap do |message|
-          if session = context.session
+          if (session = context.session)
             # Serialize the message to detect client-side problems,
             # such as invalid BSON keys or too large messages.
             # The message will be serialized again

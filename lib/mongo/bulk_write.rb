@@ -360,7 +360,7 @@ module Mongo
       requests_empty = true
       @requests.each do |req|
         requests_empty = false
-        if op = req.keys.first
+        if (op = req.keys.first)
           if %i[update_one update_many].include?(op)
             if (doc = maybe_first(req.dig(op, :update))) && (key = doc.keys&.first) && !key.to_s.start_with?('$')
               raise Error::InvalidUpdateDocument.new(key: key) if Mongo.validate_update_replace

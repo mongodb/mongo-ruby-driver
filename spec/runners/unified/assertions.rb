@@ -11,7 +11,7 @@ module Unified
         else
           use_all(expected, 'expected result', expected) do |expected|
             %w[deleted inserted matched modified upserted].each do |k|
-              next unless count = expected.use("#{k}Count")
+              next unless (count = expected.use("#{k}Count"))
 
               next unless count.is_a?(Hash) || count > 0
 
@@ -86,7 +86,7 @@ module Unified
                   raise Error::ResultMismatch, 'Actual not empty' if actual_v && !actual_v.empty?
                 else
                   %w[deleted inserted matched modified upserted].each do |k|
-                    next unless count = expected_v.use("#{k}Count")
+                    next unless (count = expected_v.use("#{k}Count"))
 
                     if count.is_a?(Hash) || count > 0
                       actual_count = actual_v.send("#{k}_count")
@@ -152,7 +152,7 @@ module Unified
         client = entities.get(:client, client_id)
         subscriber = @subscribers.fetch(client)
         expected_events = spec.use!('events')
-        ignore_extra_events = if ignore = spec.use('ignoreExtraEvents')
+        ignore_extra_events = if (ignore = spec.use('ignoreExtraEvents'))
                                 # Ruby treats 0 as truthy, whereas the spec tests use it as falsy.
                                 (ignore == 0) ? false : ignore
                               else
@@ -195,26 +195,26 @@ module Unified
       assert_eq(actual.class.name.sub(/.*::/, ''), expected_name, 'Event name does not match')
       actual.service_id.should_not be_nil if spec.use('hasServiceId')
       actual.server_connection_id.should_not be_nil if spec.use('hasServerConnectionId')
-      if db_name = spec.use('databaseName')
+      if (db_name = spec.use('databaseName'))
         assert_eq(actual.database_name, db_name, 'Database names differ')
       end
-      if command_name = spec.use('commandName')
+      if (command_name = spec.use('commandName'))
         assert_eq(actual.command_name, command_name, 'Command names differ')
       end
-      if command = spec.use('command')
+      if (command = spec.use('command'))
         assert_matches(actual.command, command, 'Commands differ')
       end
-      if reply = spec.use('reply')
+      if (reply = spec.use('reply'))
         assert_matches(actual.reply, reply, 'Command reply does not match expectation')
       end
-      if interrupt_in_use_connections = spec.use('interruptInUseConnections')
+      if (interrupt_in_use_connections = spec.use('interruptInUseConnections'))
         assert_matches(actual.options[:interrupt_in_use_connections], interrupt_in_use_connections,
                        'Command interrupt_in_use_connections does not match expectation')
       end
       unless (awaited = spec.use('awaited')).nil?
         assert_eq(actual.awaited?, awaited, 'Event awaited does not match expectation')
       end
-      if reason = spec.use('reason')
+      if (reason = spec.use('reason'))
         assert_eq(actual.reason.to_s, reason.to_s, 'Event reason does not match expectation')
       end
       return if spec.empty?
@@ -407,7 +407,7 @@ module Unified
         client = entities.get(:client, client_id)
         tracer = @tracers.fetch(client)
         expected_spans = spec.use!('spans')
-        ignore_extra_spans = if ignore = spec.use('ignoreExtraSpans')
+        ignore_extra_spans = if (ignore = spec.use('ignoreExtraSpans'))
                                # Ruby treats 0 as truthy, whereas the spec tests use it as falsy.
                                (ignore == 0) ? false : ignore
                              else

@@ -303,7 +303,7 @@ module CommonShortcuts
         # background. These tests perform operations which requires the pools
         # to function. See also RUBY-3102.
         client.cluster.servers_list.each do |server|
-          next unless pool = server.pool
+          next unless (pool = server.pool)
 
           pool.instance_variable_set(:@closed, false)
           # Stop the populator so that we don't have leftover threads.
@@ -369,7 +369,7 @@ module CommonShortcuts
     # Used for tests that e.g. mock network operations to avoid interference
     # from server monitoring.
     def reset_pool(server)
-      if pool = server.pool_internal
+      if (pool = server.pool_internal)
         pool.close
       end
       server.remove_instance_variable(:@pool)

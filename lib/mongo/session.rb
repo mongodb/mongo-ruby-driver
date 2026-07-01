@@ -1054,7 +1054,7 @@ module Mongo
           # even if transaction's read concern is not set.
           # Read concern here is the one sent to the server and may
           # include afterClusterTime.
-          if rc = c[:readConcern]
+          if (rc = c[:readConcern])
             rc = rc.dup
             rc.delete(:level)
           end
@@ -1201,7 +1201,7 @@ module Mongo
     def process(result)
       unless implicit?
         set_operation_time(result)
-        if cluster_time_doc = result.cluster_time
+        if (cluster_time_doc = result.cluster_time)
           advance_cluster_time(cluster_time_doc)
         end
       end
@@ -1391,9 +1391,9 @@ module Mongo
             raise Mongo::Error::InvalidTransactionOperation,
                   'timeoutMS cannot be overridden inside a withTransaction callback'
           end
-        elsif timeout_ms = opts[:timeout_ms]
+        elsif (timeout_ms = opts[:timeout_ms])
           result[:operation_timeout_ms] = timeout_ms
-        elsif default_timeout_ms = options[:default_timeout_ms]
+        elsif (default_timeout_ms = options[:default_timeout_ms])
           result[:operation_timeout_ms] = default_timeout_ms
         end
       end
@@ -1407,9 +1407,9 @@ module Mongo
           Utils.monotonic_time + (timeout / 1000.0)
         end
       }
-      if timeout_ms = opts&.dig(:timeout_ms)
+      if (timeout_ms = opts&.dig(:timeout_ms))
         calc.call(timeout_ms)
-      elsif default_timeout_ms = @options[:default_timeout_ms]
+      elsif (default_timeout_ms = @options[:default_timeout_ms])
         calc.call(default_timeout_ms)
       elsif @client.timeout_ms
         calc.call(@client.timeout_ms)

@@ -112,7 +112,7 @@ module Mongo
 
         return unless options[:compressors]
 
-        if intersection = (server_compressors & options[:compressors])
+        if (intersection = (server_compressors & options[:compressors]))
           @compressor = intersection.first
         else
           msg = if server_compressors

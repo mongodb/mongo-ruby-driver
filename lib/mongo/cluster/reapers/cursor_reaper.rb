@@ -101,7 +101,7 @@ module Mongo
       #
       # @api private
       def read_scheduled_kill_specs
-        while kill_spec = @kill_spec_queue.pop(true)
+        while (kill_spec = @kill_spec_queue.pop(true))
           if @active_cursor_ids.include?(kill_spec.cursor_id)
             @to_kill[kill_spec.server_address] ||= Set.new
             @to_kill[kill_spec.server_address] << kill_spec
@@ -188,7 +188,7 @@ module Mongo
             server_api: server.options[:server_api],
             connection_global_id: kill_spec.connection_global_id,
           }
-          if connection = kill_spec.connection
+          if (connection = kill_spec.connection)
             begin
               op.execute_with_connection(connection, context: Operation::Context.new(options: options))
             rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished
@@ -202,7 +202,7 @@ module Mongo
             op.execute(server, context: Operation::Context.new(options: options))
           end
 
-          next unless session = kill_spec.session
+          next unless (session = kill_spec.session)
 
           session.end_session if session.implicit?
         end

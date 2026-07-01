@@ -386,7 +386,7 @@ class Mongo::Cluster
       added_servers = []
       %w[hosts passives arbiters].each do |m|
         updated_desc.send(m).each do |address_str|
-          if server = cluster.add(address_str, monitor: false)
+          if (server = cluster.add(address_str, monitor: false))
             added_servers << server
           end
         end
@@ -541,7 +541,7 @@ class Mongo::Cluster
     end
 
     def disconnect_servers
-      while server = @servers_to_disconnect.shift
+      while (server = @servers_to_disconnect.shift)
         if server.connected?
           # Do not publish server closed event, as this was already done
           server.disconnect!

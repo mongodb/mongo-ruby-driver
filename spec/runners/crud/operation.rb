@@ -94,7 +94,7 @@ module Mongo
       end
 
       def database_options
-        return unless opts = @spec['databaseOptions']
+        return unless (opts = @spec['databaseOptions'])
 
         ::Utils.convert_operation_options(opts)
       end

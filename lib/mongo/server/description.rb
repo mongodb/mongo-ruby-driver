@@ -279,7 +279,7 @@ module Mongo
                   "The server at #{address.seed} did not provide a service id in handshake response"
           end
 
-          fake_service_id = if process_id = topology_version && topology_version['processId']
+          fake_service_id = if (process_id = topology_version && topology_version['processId'])
                               "process:#{process_id}"
                             else
                               "fake:#{rand((2**32) - 1) + 1}"

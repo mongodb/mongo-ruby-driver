@@ -239,7 +239,7 @@ module Mongo
 
           session.unpin unless session.in_transaction?
 
-          if server = session.pinned_server
+          if (server = session.pinned_server)
             # Here we assume that a mongos stays in the topology indefinitely.
             # This will no longer be the case once SRV polling is implemented.
 
