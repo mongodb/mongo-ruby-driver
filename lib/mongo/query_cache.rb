@@ -199,11 +199,9 @@ module Mongo
         # Otherwise, return nil because the stored cursor will not satisfy
         # the query.
 
-        if limit && (caching_cursor_limit.nil? || caching_cursor_limit >= limit)
-          caching_cursor
-        elsif limit.nil? && caching_cursor_limit.nil?
-          caching_cursor
-        end
+        return unless caching_cursor_limit.nil? || (limit && caching_cursor_limit >= limit)
+
+        caching_cursor
       end
 
       def normalized_limit(limit)

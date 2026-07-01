@@ -12,24 +12,6 @@
 Lint/AssignmentInCondition:
   Enabled: false
 
-# Offense count: 16
-# Configuration parameters: IgnoreLiteralBranches, IgnoreConstantBranches, IgnoreDuplicateElseBranch.
-Lint/DuplicateBranch:
-  Exclude:
-    - 'lib/mongo/address.rb'
-    - 'lib/mongo/auth/aws/credentials_retriever.rb'
-    - 'lib/mongo/collection/view/aggregation.rb'
-    - 'lib/mongo/collection/view/builder/aggregation.rb'
-    - 'lib/mongo/error/sdam_error_detection.rb'
-    - 'lib/mongo/monitoring/event/secure.rb'
-    - 'lib/mongo/operation/shared/sessions_supported.rb'
-    - 'lib/mongo/protocol/serializers.rb'
-    - 'lib/mongo/query_cache.rb'
-    - 'lib/mongo/server_selector/base.rb'
-    - 'lib/mongo/socket.rb'
-    - 'spec/runners/sdam.rb'
-    - 'spec/support/client_registry.rb'
-
 # Offense count: 4
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Lint/IncompatibleIoSelectWithFiberScheduler:
