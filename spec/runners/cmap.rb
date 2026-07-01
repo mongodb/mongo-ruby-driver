@@ -404,7 +404,7 @@ module Mongo
       end
 
       def run_wait_for_thread_op(state)
-        raise "Expected thread for '#{thread}' but none exists." unless (thread = state[target])
+        raise "Expected thread for '#{target}' but none exists." unless (thread = state[target])
 
         thread.context.signal_stop
         thread.join
