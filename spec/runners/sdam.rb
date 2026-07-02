@@ -29,8 +29,7 @@ module Mongo
         when 'RSSecondary' then server.secondary?
         when 'RSArbiter' then server.arbiter?
         when 'Mongos' then server.mongos?
-        when 'Unknown' then server.unknown?
-        when 'PossiblePrimary' then server.unknown?
+        when 'Unknown', 'PossiblePrimary' then server.unknown?
         when 'RSGhost' then server.ghost?
         when 'RSOther' then server.other?
         when 'LoadBalancer' then server.load_balancer?

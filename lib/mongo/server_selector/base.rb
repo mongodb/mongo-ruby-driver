@@ -398,9 +398,7 @@ module Mongo
       # @api private
       def candidates(cluster, deprioritized = [])
         servers = cluster.servers.reject { |s| deprioritized.include?(s) }
-        if cluster.single?
-          servers
-        elsif cluster.sharded?
+        if cluster.single? || cluster.sharded?
           servers
         elsif cluster.replica_set?
           select_in_replica_set(servers)

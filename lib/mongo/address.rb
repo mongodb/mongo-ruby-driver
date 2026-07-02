@@ -302,9 +302,7 @@ module Mongo
       raise Error::TimeoutError, "#{e.class}: #{e} (for #{self})" if csot
 
       raise e
-    rescue IOError, SystemCallError, ::SocketError => e
-      raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
-    rescue OpenSSL::SSL::SSLError => e
+    rescue IOError, SystemCallError, ::SocketError, OpenSSL::SSL::SSLError => e
       raise Error::SocketError, "#{e.class}: #{e} (for #{self})"
     end
   end
