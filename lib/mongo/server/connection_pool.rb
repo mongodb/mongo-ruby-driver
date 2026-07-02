@@ -1162,12 +1162,6 @@ module Mongo
         raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
       end
 
-      def raise_check_out_timeout_locked!(connection_global_id)
-        @lock.synchronize do
-          raise_check_out_timeout!(connection_global_id)
-        end
-      end
-
       def raise_if_pool_closed!
         return unless closed?
 

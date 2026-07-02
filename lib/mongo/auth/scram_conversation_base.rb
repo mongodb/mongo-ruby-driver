@@ -281,13 +281,6 @@ module Mongo
       # @since 2.0.0
       attr_reader :iterations
 
-      # Get the data from the returned payload.
-      #
-      # @api private
-      #
-      # @since 2.0.0
-      attr_reader :payload_data
-
       # Get the server nonce from the payload.
       #
       # @api private

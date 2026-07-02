@@ -299,15 +299,6 @@ module Mongo
           end
         end
 
-        def fetch_query_spec
-          Builder::MapReduce.new(map_function, reduce_function, view, options).query_specification
-        end
-
-        def find_command_spec(session)
-          Builder::MapReduce.new(map_function, reduce_function, view,
-                                 options.merge(session: session)).command_specification
-        end
-
         def fetch_query_op(session)
           spec = {
             coll_name: out_collection_name,

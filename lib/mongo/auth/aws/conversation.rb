@@ -74,10 +74,6 @@ module Mongo
           client_first_data.to_bson.to_s
         end
 
-        def wrap_data(data)
-          BSON::Binary.new(data.to_bson.to_s)
-        end
-
         def client_nonce
           @client_nonce ||= SecureRandom.random_bytes(32)
         end

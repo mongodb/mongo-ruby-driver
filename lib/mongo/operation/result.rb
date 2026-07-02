@@ -465,20 +465,6 @@ module Mongo
         end
       end
 
-      def aggregate_returned_count
-        replies.reduce(0) do |n, reply|
-          n += reply.number_returned
-          n
-        end
-      end
-
-      def aggregate_written_count
-        documents.reduce(0) do |n, document|
-          n += document[N] || 0
-          n
-        end
-      end
-
       def parser
         @parser ||= Error::Parser.new(first_document, replies)
       end
