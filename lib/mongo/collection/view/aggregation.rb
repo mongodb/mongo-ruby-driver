@@ -104,10 +104,8 @@ module Mongo
 
           primary_read_preference = { mode: :primary }
           description = connection.description
-          if description.primary?
-            log_warn('Routing the Aggregation operation to the primary server')
-            primary_read_preference
-          elsif description.mongos? && !description.features.merge_out_on_secondary_enabled?
+          if description.primary? ||
+             (description.mongos? && !description.features.merge_out_on_secondary_enabled?)
             log_warn('Routing the Aggregation operation to the primary server')
             primary_read_preference
           else

@@ -47,18 +47,14 @@ module Mongo
         #
         # @return [ true | false ] Whether the command is sensitive.
         def sensitive?(command_name:, document:)
-          if REDACTED_COMMANDS.include?(command_name.to_s)
-            true
-          elsif %w[hello ismaster isMaster].include?(command_name.to_s) &&
-                document['speculativeAuthenticate']
-            # According to Command Monitoring spec, for hello/legacy hello commands
-            # when speculativeAuthenticate is present, their commands AND replies
-            # MUST be redacted from the events.
-            # See https://github.com/mongodb/specifications/blob/master/source/command-logging-and-monitoring/command-logging-and-monitoring.md#security
-            true
-          else
-            false
-          end
+          return true if REDACTED_COMMANDS.include?(command_name.to_s)
+
+          # According to Command Monitoring spec, for hello/legacy hello commands
+          # when speculativeAuthenticate is present, their commands AND replies
+          # MUST be redacted from the events.
+          # See https://github.com/mongodb/specifications/blob/master/source/command-logging-and-monitoring/command-logging-and-monitoring.md#security
+          %w[hello ismaster isMaster].include?(command_name.to_s) &&
+            !!document['speculativeAuthenticate']
         end
 
         # Redact secure information from the document if:
@@ -77,11 +73,10 @@ module Mongo
         #
         # @since 2.1.0
         def redacted(command_name, document)
-          if %w[1 true yes].include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS']&.downcase)
-            document
-          elsif respond_to?(:started_event) && started_event.sensitive
-            BSON::Document.new
-          elsif sensitive?(command_name: command_name, document: document)
+          return document if %w[1 true yes].include?(ENV['MONGO_RUBY_DRIVER_UNREDACT_EVENTS']&.downcase)
+
+          if (respond_to?(:started_event) && started_event.sensitive) ||
+             sensitive?(command_name: command_name, document: document)
             BSON::Document.new
           else
             document

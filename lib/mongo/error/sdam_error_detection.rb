@@ -29,10 +29,9 @@ module Mongo
         # Require the error to be communicated at the top level of the response
         # for it to influence SDAM state. See DRIVERS-1376 / RUBY-2516.
         return false if document && document['ok'] == 1
+        return false if node_recovering?
 
-        if node_recovering?
-          false
-        elsif code
+        if code
           NOT_MASTER_CODES.include?(code)
         elsif message
           message.include?('not master')

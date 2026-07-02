@@ -165,9 +165,7 @@ module Mongo
         read_doc = if connection.description.standalone?
                      # Read preference is never sent to standalones.
                      nil
-                   elsif connection.server.load_balancer?
-                     read&.to_mongos
-                   elsif connection.description.mongos?
+                   elsif connection.server.load_balancer? || connection.description.mongos?
                      # When server is a mongos:
                      # - $readPreference is never sent when mode is 'primary'
                      # - Otherwise $readPreference is sent

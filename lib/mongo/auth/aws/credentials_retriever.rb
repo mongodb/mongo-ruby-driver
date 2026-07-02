@@ -140,14 +140,9 @@ module Mongo
         # @raise Error::TimeoutError if credentials cannot be retrieved within
         #   the timeout defined on the operation context.
         def obtain_credentials_from_endpoints(timeout_holder = nil)
-          if (credentials = web_identity_credentials(timeout_holder)) && credentials_valid?(credentials,
-                                                                                            'Web identity token')
-            credentials
-          elsif (credentials = ecs_metadata_credentials(timeout_holder)) && credentials_valid?(credentials,
-                                                                                               'ECS task metadata')
-            credentials
-          elsif (credentials = ec2_metadata_credentials(timeout_holder)) && credentials_valid?(credentials,
-                                                                                               'EC2 instance metadata')
+          if ((credentials = web_identity_credentials(timeout_holder)) && credentials_valid?(credentials, 'Web identity token')) ||
+             ((credentials = ecs_metadata_credentials(timeout_holder)) && credentials_valid?(credentials, 'ECS task metadata')) ||
+             ((credentials = ec2_metadata_credentials(timeout_holder)) && credentials_valid?(credentials, 'EC2 instance metadata'))
             credentials
           end
         end

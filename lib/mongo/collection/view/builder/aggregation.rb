@@ -117,12 +117,10 @@ module Mongo
 
           def batch_size_doc
             value = options[:batch_size] || view.batch_size
-            if value == 0 && write?
+            if value.nil? || (value == 0 && write?)
               {}
-            elsif value
-              { batchSize: value }
             else
-              {}
+              { batchSize: value }
             end
           end
         end

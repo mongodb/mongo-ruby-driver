@@ -89,14 +89,9 @@ class ClientRegistry
 
   def new_global_client(name)
     case name
-    # Provides a basic scanned client to do a hello check.
-    when 'basic'
-      Mongo::Client.new(
-        SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db)
-      )
-    # Provides an unauthorized mongo client on the default test database.
-    when 'unauthorized'
+    # Provides a basic scanned client to do a hello check, or an unauthorized
+    # mongo client on the default test database.
+    when 'basic', 'unauthorized'
       Mongo::Client.new(
         SpecConfig.instance.addresses,
         SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db)

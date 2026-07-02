@@ -181,9 +181,7 @@ module Mongo
         def self.serialize(buffer, value, max_bson_size = nil, _validating_keys = nil)
           value.each do |section|
             case section[:type]
-            when PayloadZero::TYPE
-              PayloadZero.serialize(buffer, section[:payload], max_bson_size)
-            when nil
+            when PayloadZero::TYPE, nil
               PayloadZero.serialize(buffer, section[:payload], max_bson_size)
             when PayloadOne::TYPE
               PayloadOne.serialize(buffer, section[:payload], max_bson_size)
