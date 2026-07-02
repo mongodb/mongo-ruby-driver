@@ -206,7 +206,7 @@ module Mongo
         # @param _context [ OpenTelemetry::Context ] the context (unused).
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
         def process_cursor_context(result, _cursor_id, _context, span)
-          return unless result.has_cursor_id? && result.cursor_id.positive?
+          return unless result.cursor_id.positive?
 
           span.set_attribute('db.mongodb.cursor_id', result.cursor_id)
         end

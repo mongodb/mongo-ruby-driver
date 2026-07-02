@@ -64,14 +64,6 @@ module Mongo
                     end
                   end
 
-                  if result.has_cursor_id? &&
-                     connection.description.load_balancer?
-                    if result.cursor_id == 0
-                      connection.unpin
-                    else
-                      connection.pin
-                    end
-                  end
                   process_result(result, connection)
                 end
               end
