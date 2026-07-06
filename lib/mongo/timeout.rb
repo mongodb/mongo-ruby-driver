@@ -27,6 +27,10 @@ module Mongo
     #   on timeout, optional. When no error message is provided, the default
     #   error message for the exception class is used.
     def timeout(sec, klass = nil, message = nil, &block)
+      # provide a default error class if the message is present; otherwise,
+      # the message will be interpreted as the error class, if klass is nil
+      klass ||= ::Timeout::Error if message
+
       # Jruby Timeout::timeout method does not support passing nil arguments.
       # Remove the nil arguments before passing them along to the core
       # Timeout::timeout method.
