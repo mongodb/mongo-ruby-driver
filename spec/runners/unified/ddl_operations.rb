@@ -14,10 +14,10 @@ module Unified
       client = entities.get(:client, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
         client.list_databases(args.use('filter') || {}, name_only, **opts)
@@ -29,35 +29,35 @@ module Unified
       save_entity = op.use('saveResultAsEntity')
       use_arguments(op) do |args|
         opts = {}
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection_opts = {}
-        if timeseries = args.use('timeseries')
+        if (timeseries = args.use('timeseries'))
           collection_opts[:time_series] = timeseries
         end
-        if expire_after_seconds = args.use('expireAfterSeconds')
+        if (expire_after_seconds = args.use('expireAfterSeconds'))
           collection_opts[:expire_after] = expire_after_seconds
         end
-        if clustered_index = args.use('clusteredIndex')
+        if (clustered_index = args.use('clusteredIndex'))
           collection_opts[:clustered_index] = clustered_index
         end
-        if change_stream_pre_and_post_images = args.use('changeStreamPreAndPostImages')
+        if (change_stream_pre_and_post_images = args.use('changeStreamPreAndPostImages'))
           collection_opts[:change_stream_pre_and_post_images] = change_stream_pre_and_post_images
         end
-        if view_on = args.use('viewOn')
+        if (view_on = args.use('viewOn'))
           collection_opts[:view_on] = view_on
         end
-        if pipeline = args.use('pipeline')
+        if (pipeline = args.use('pipeline'))
           collection_opts[:pipeline] = pipeline
         end
-        if capped = args.use('capped')
+        if (capped = args.use('capped'))
           collection_opts[:capped] = capped
         end
-        if size = args.use('size')
+        if (size = args.use('size'))
           collection_opts[:size] = size
         end
-        if max = args.use('max')
+        if (max = args.use('max'))
           collection_opts[:max] = max
         end
         collection = database[args.use!('collection'), collection_opts]
@@ -80,13 +80,13 @@ module Unified
         opts = extract_options(args, 'filter', 'timeoutMode', allow_extra: true)
         symbolize_options!(opts, :timeout_mode)
 
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
-        if batch_size = args.use('batchSize')
+        if (batch_size = args.use('batchSize'))
           opts[:batch_size] = batch_size
         end
 
@@ -141,13 +141,13 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = extract_options(args, 'timeoutMode', allow_extra: true)
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
-        if batch_size = args.use('batchSize')
+        if (batch_size = args.use('batchSize'))
           opts[:batch_size] = batch_size
         end
         collection.indexes(**opts).to_a
@@ -166,14 +166,14 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         opts[:unique] = args.use('unique') if args.key?('unique')
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
-        if max_time_ms = args.use('maxTimeMS')
+        if (max_time_ms = args.use('maxTimeMS'))
           opts[:max_time_ms] = max_time_ms
         end
         collection.indexes.create_one(
@@ -188,7 +188,7 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = extract_options(args, 'maxTimeMS', 'timeoutMS', allow_extra: true)
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
 

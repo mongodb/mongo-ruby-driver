@@ -28,16 +28,16 @@ module Unified
         opts[:session] = entities.get(:session, session) if session
 
         req = collection.find(filter, **opts)
-        if batch_size = args.use('batchSize')
+        if (batch_size = args.use('batchSize'))
           req = req.batch_size(batch_size)
         end
-        if sort = args.use('sort')
+        if (sort = args.use('sort'))
           req = req.sort(sort)
         end
-        if limit = args.use('limit')
+        if (limit = args.use('limit'))
           req = req.limit(limit)
         end
-        if projection = args.use('projection')
+        if (projection = args.use('projection'))
           req = req.projection(projection)
         end
         req
@@ -48,7 +48,7 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = extract_options(args, 'comment', 'timeoutMS', 'maxTimeMS', allow_extra: true)
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.count(args.use!('filter'), **opts)
@@ -59,7 +59,7 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = extract_options(args, 'comment', 'timeoutMS', 'maxTimeMS', allow_extra: true)
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.find(args.use!('filter')).count_documents(**opts)
@@ -70,7 +70,7 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = extract_options(args, 'comment', 'timeoutMS', 'maxTimeMS', allow_extra: true)
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.estimated_document_count(**opts)
@@ -81,7 +81,7 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = extract_options(args, 'comment', 'timeoutMS', 'maxTimeMS', allow_extra: true)
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         req = collection.find(args.use!('filter'), **opts).distinct(args.use!('fieldName'), **opts)
@@ -102,10 +102,10 @@ module Unified
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }
-        if return_document = args.use('returnDocument')
+        if (return_document = args.use('returnDocument'))
           opts[:return_document] = return_document.downcase.to_sym
         end
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.find_one_and_update(filter, update, **opts)
@@ -125,10 +125,10 @@ module Unified
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }
-        if return_document = args.use('returnDocument')
+        if (return_document = args.use('returnDocument'))
           opts[:return_document] = return_document.downcase.to_sym
         end
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.find_one_and_replace(filter, update, **opts)
@@ -147,7 +147,7 @@ module Unified
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.find_one_and_delete(filter, **opts)
@@ -162,7 +162,7 @@ module Unified
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.insert_one(args.use!('document'), **opts)
@@ -180,7 +180,7 @@ module Unified
         unless (ordered = args.use('ordered')).nil?
           opts[:ordered] = ordered
         end
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.insert_many(args.use!('documents'), **opts)
@@ -199,7 +199,7 @@ module Unified
           max_time_ms: args.use('maxTimeMS'),
           sort: args.use('sort')
         }
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.update_one(args.use!('filter'), args.use!('update'), **opts)
@@ -247,7 +247,7 @@ module Unified
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
         collection.delete_one(args.use!('filter'), **opts)
@@ -276,16 +276,16 @@ module Unified
         end
         opts = {}
         opts[:ordered] = args.use!('ordered') if args.key?('ordered')
-        if comment = args.use('comment')
+        if (comment = args.use('comment'))
           opts[:comment] = comment
         end
-        if let = args.use('let')
+        if (let = args.use('let'))
           opts[:let] = let
         end
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
-        if max_time_ms = args.use('maxTimeMS')
+        if (max_time_ms = args.use('maxTimeMS'))
           opts[:max_time_ms] = max_time_ms
         end
         collection.bulk_write(requests, **opts)
@@ -301,7 +301,7 @@ module Unified
                              'allowDiskUse', 'timeoutMode', 'timeoutMS', 'maxTimeMS', 'maxAwaitTimeMS', allow_extra: true)
       symbolize_options!(opts, :timeout_mode)
 
-      if session = args.use('session')
+      if (session = args.use('session'))
         opts[:session] = entities.get(:session, session)
       end
 
@@ -315,7 +315,7 @@ module Unified
       args = op.use!('arguments')
 
       filter = args.use('filter')
-      if session = args.use('session')
+      if (session = args.use('session'))
         session = entities.get(:session, session)
       end
       opts = extract_options(args, 'batchSize', 'timeoutMS', 'cursorType', 'maxAwaitTimeMS')

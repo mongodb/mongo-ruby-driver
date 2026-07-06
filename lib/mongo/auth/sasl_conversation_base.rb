@@ -71,7 +71,7 @@ module Mongo
           mechanism: auth_mechanism_name,
           payload: BSON::Binary.new(payload)
         )
-        if options = client_first_message_options
+        if (options = client_first_message_options)
           # Short SCRAM conversation,
           # https://jira.mongodb.org/browse/DRIVERS-707
           doc[:options] = options

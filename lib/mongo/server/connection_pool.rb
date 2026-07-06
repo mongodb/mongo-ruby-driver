@@ -962,7 +962,7 @@ module Mongo
 
       # Removes and disconnects all stale available connections.
       def remove_stale_connection
-        return unless conn = @available_connections.detect { |c| connection_stale_unlocked?(c) }
+        return unless (conn = @available_connections.detect { |c| connection_stale_unlocked?(c) })
 
         conn.disconnect!(reason: :stale)
         @available_connections.delete(conn)
@@ -974,7 +974,7 @@ module Mongo
         return false if @interrupt_connections.empty?
 
         gens = Set.new
-        while conn = @interrupt_connections.pop
+        while (conn = @interrupt_connections.pop)
           if @checked_out_connections.include?(conn)
             # If the connection has been checked out, mark it as interrupted and it will
             # be disconnected on check in.
@@ -1256,7 +1256,7 @@ module Mongo
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
       def get_connection(pid, connection_global_id)
-        if connection = next_available_connection(connection_global_id)
+        if (connection = next_available_connection(connection_global_id))
           return nil unless valid_available_connection?(connection, pid, connection_global_id)
 
           # We've got a connection, so we decrement the number of connection

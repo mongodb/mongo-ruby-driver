@@ -57,7 +57,7 @@ module Mongo
 
         @fail_point_command = test['failPoint']
 
-        @session_options = if opts = test['sessionOptions']
+        @session_options = if (opts = test['sessionOptions'])
                              Hash[opts.map do |session_name, options|
                                [ session_name.to_sym, ::Utils.convert_operation_options(options) ]
                              end]
@@ -130,7 +130,7 @@ module Mongo
             test_client.subscribe(Mongo::Monitoring::CONNECTION_POOL, sdam_subscriber)
           end
 
-          if kms_providers = @client_options.dig(:auto_encryption_options, :kms_providers)
+          if (kms_providers = @client_options.dig(:auto_encryption_options, :kms_providers))
             @client_options[:auto_encryption_options][:kms_providers] = kms_providers.map do |provider, opts|
               case provider
               when :aws_temporary

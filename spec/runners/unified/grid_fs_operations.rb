@@ -19,7 +19,7 @@ module Unified
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
         bucket.delete(args.use!('id'), opts)
@@ -30,7 +30,7 @@ module Unified
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
         stream = bucket.open_download_stream(args.use!('id'), opts)
@@ -42,7 +42,7 @@ module Unified
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
-        if revision = args.use('revision')
+        if (revision = args.use('revision'))
           opts[:revision] = revision
         end
         stream = bucket.open_download_stream_by_name(args.use!('filename'), opts)
@@ -54,19 +54,19 @@ module Unified
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
-        if chunk_size = args.use('chunkSizeBytes')
+        if (chunk_size = args.use('chunkSizeBytes'))
           opts[:chunk_size] = chunk_size
         end
-        if metadata = args.use('metadata')
+        if (metadata = args.use('metadata'))
           opts[:metadata] = metadata
         end
-        if content_type = args.use('contentType')
+        if (content_type = args.use('contentType'))
           opts[:content_type] = content_type
         end
-        if disable_md5 = args.use('disableMD5')
+        if (disable_md5 = args.use('disableMD5'))
           opts[:disable_md5] = disable_md5
         end
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
         contents = transform_contents(args.use!('source'))
@@ -83,7 +83,7 @@ module Unified
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
         opts = {}
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
         bucket.drop(opts)

@@ -200,7 +200,7 @@ module Mongo
       # This method can be called from different conversation steps
       # depending on whether the short SCRAM conversation is used.
       def check_server_signature(payload_data)
-        return unless verifier = payload_data['v']
+        return unless (verifier = payload_data['v'])
         raise Error::InvalidSignature.new(verifier, server_signature) unless compare_digest(verifier, server_signature)
 
         @server_verified = true

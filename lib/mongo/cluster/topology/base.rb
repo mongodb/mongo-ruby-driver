@@ -85,7 +85,7 @@ module Mongo
             # LST is only read from data-bearing servers
             if desc.data_bearing?
               @have_data_bearing_servers = true
-              break unless timeout = desc.logical_session_timeout
+              break unless (timeout = desc.logical_session_timeout)
 
               [ timeout, min || timeout ].min
             else

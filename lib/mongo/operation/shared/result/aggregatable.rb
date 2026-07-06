@@ -36,7 +36,7 @@ module Mongo
           return unless @replies
 
           @replies.reduce(nil) do |errors, reply|
-            next unless write_errors = reply.documents.first['writeErrors']
+            next unless (write_errors = reply.documents.first['writeErrors'])
 
             wes = write_errors.collect do |we|
               we.merge!('index' => count + we['index'])
@@ -59,7 +59,7 @@ module Mongo
           return unless @replies
 
           @replies.each_with_index.reduce(nil) do |errors, (reply, _)|
-            next unless write_concern_errors = reply.documents.first['writeConcernErrors']
+            next unless (write_concern_errors = reply.documents.first['writeConcernErrors'])
 
             (errors || []) << write_concern_errors.reduce(nil) do |errs, wce|
               wce.merge!('index' => count + wce['index'])

@@ -92,7 +92,7 @@ module Mongo
 
       def combine_counts!(result)
         Result::FIELDS.each do |field|
-          if result.respond_to?(field) && value = result.send(field)
+          if result.respond_to?(field) && (value = result.send(field))
             results.merge!(field => (results[field] || 0) + value)
           end
         end
@@ -115,7 +115,7 @@ module Mongo
       end
 
       def combine_write_errors!(result)
-        if write_errors = result.aggregate_write_errors(count)
+        if (write_errors = result.aggregate_write_errors(count))
           results.merge!(
             'writeErrors' => ((results['writeErrors'] || []) << write_errors).flatten
           )
@@ -125,7 +125,7 @@ module Mongo
       end
 
       def combine_write_concern_errors!(result)
-        return unless write_concern_errors = result.aggregate_write_concern_errors(count)
+        return unless (write_concern_errors = result.aggregate_write_concern_errors(count))
 
         results['writeConcernErrors'] = (results['writeConcernErrors'] || []) +
                                         write_concern_errors

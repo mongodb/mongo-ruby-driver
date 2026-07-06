@@ -450,7 +450,7 @@ module Mongo
       end
 
       def snapshot_timestamp
-        return unless doc = reply.documents.first
+        return unless (doc = reply.documents.first)
 
         doc['cursor']&.[]('atClusterTime') || doc['atClusterTime']
       end

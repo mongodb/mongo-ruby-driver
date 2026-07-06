@@ -359,7 +359,7 @@ module Mongo
         if options[:ssl_cert]
           cert_text = File.read(options[:ssl_cert])
           cert_object = nil
-        elsif cert_text = options[:ssl_cert_string]
+        elsif (cert_text = options[:ssl_cert_string])
           cert_object = nil
         else
           cert_object = options[:ssl_cert_object]

@@ -35,7 +35,7 @@ RSpec::Matchers.define :match_chunks_collection do |expected|
       actual.find.to_a.empty?
     else
       actual.find.all? do |doc|
-        if matching_doc = expected.find(files_id: doc['files_id'], n: doc['n']).first
+        if (matching_doc = expected.find(files_id: doc['files_id'], n: doc['n']).first)
           matching_doc.all? do |k, v|
             doc[k] == v || k == '_id'
           end
@@ -56,7 +56,7 @@ RSpec::Matchers.define :match_files_collection do |expected|
     return true if expected.nil?
 
     actual.find.all? do |doc|
-      if matching_doc = expected.find(_id: doc['_id']).first
+      if (matching_doc = expected.find(_id: doc['_id']).first)
         matching_doc.all? do |k, v|
           doc[k] == v
         end
