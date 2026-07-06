@@ -49,7 +49,7 @@ describe Mongo::Cursor do
 
       after do
         authorized_client.cluster.servers.each do |server|
-          if pool = server.pool_internal
+          if (pool = server.pool_internal)
             pool.close
           end
         end

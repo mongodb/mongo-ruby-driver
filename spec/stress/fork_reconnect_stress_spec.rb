@@ -32,7 +32,7 @@ describe 'fork reconnect' do
       pids = []
       deadline = Mongo::Utils.monotonic_time + 5
       1.upto(10) do
-        if pid = fork
+        if (pid = fork)
           pids << pid
         else
           Utils.wrap_forked_child do
@@ -85,7 +85,7 @@ describe 'fork reconnect' do
         pids = []
         deadline = Mongo::Utils.monotonic_time + 5
         10.times do
-          if pid = fork
+          if (pid = fork)
             pids << pid
           else
             Utils.wrap_forked_child do

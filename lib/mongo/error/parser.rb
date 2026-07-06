@@ -180,13 +180,13 @@ module Mongo
       end
 
       def parse_single(message, key, doc = document)
-        return unless error = doc[key]
+        return unless (error = doc[key])
 
         append(message, error)
       end
 
       def parse_multiple(message, key)
-        return unless errors = document[key]
+        return unless (errors = document[key])
 
         errors.each do |error|
           parse_single(message, 'errmsg', error)
@@ -228,7 +228,7 @@ module Mongo
         return unless @code.nil? && @code_name.nil?
         # If we have writeErrors, and all of their codes are the same,
         # use that code. Otherwise don't set the code
-        return unless write_errors = document['writeErrors']
+        return unless (write_errors = document['writeErrors'])
 
         codes = write_errors.map { |e| e['code'] }.compact
         return unless codes.uniq.length == 1

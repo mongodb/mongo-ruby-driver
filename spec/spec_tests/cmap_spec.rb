@@ -71,7 +71,7 @@ describe 'Cmap' do
           end
         )
 
-        if app_name = spec.pool_options[:app_name]
+        if (app_name = spec.pool_options[:app_name])
           allow(cluster).to receive(:app_metadata).and_return(Mongo::Server::AppMetadata.new({ app_name: app_name }))
         end
 
@@ -81,7 +81,7 @@ describe 'Cmap' do
       end
 
       after do
-        if pool = @server&.pool_internal
+        if (pool = @server&.pool_internal)
           pool.disconnect!
         end
 

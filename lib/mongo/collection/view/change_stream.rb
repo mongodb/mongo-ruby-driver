@@ -354,7 +354,7 @@ module Mongo
               begin
                 result = send_initial_query(connection, context)
 
-                start_at_operation_time = if doc = result.replies.first && result.replies.first.documents.first
+                start_at_operation_time = if (doc = result.replies.first && result.replies.first.documents.first)
                                             doc['operationTime']
                                           else
                                             nil
@@ -368,7 +368,7 @@ module Mongo
               server.with_connection do |connection|
                 result = send_initial_query(connection, context)
 
-                start_at_operation_time = if doc = result.replies.first && result.replies.first.documents.first
+                start_at_operation_time = if (doc = result.replies.first && result.replies.first.documents.first)
                                             doc['operationTime']
                                           else
                                             # The above may set @start_at_operation_time to nil

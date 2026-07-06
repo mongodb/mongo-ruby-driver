@@ -42,7 +42,7 @@ module Mongo
       #   Options to pass through to Resolv::DNS constructor for SRV lookups.
       def initialize(cluster, **opts)
         @cluster = cluster
-        raise ArgumentError, 'SRV URI is required' unless @srv_uri = opts.delete(:srv_uri)
+        raise ArgumentError, 'SRV URI is required' unless (@srv_uri = opts.delete(:srv_uri))
 
         @options = opts.freeze
         # Per the polling-srv-records spec, mismatched-domain records and empty

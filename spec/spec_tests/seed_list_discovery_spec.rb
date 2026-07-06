@@ -96,16 +96,16 @@ describe 'DNS Seedlist Discovery' do
           if test.non_uri_options
             it 'creates a client with the correct non-uri options' do
               opts = UsingHash[test.non_uri_options]
-              if user = opts.use('user')
+              if (user = opts.use('user'))
                 expect(test.client.options[:user]).to eq(user)
               end
-              if password = opts.use('password')
+              if (password = opts.use('password'))
                 expect(test.client.options[:password]).to eq(password)
               end
-              if db = opts.use('db')
+              if (db = opts.use('db'))
                 expect(test.client.database.name).to eq(db)
               end
-              if auth_source = opts.use('auth_database')
+              if (auth_source = opts.use('auth_database'))
                 Mongo::Auth::User.new(test.client.options).auth_source == auth_source
               end
               raise "Unhandled keys: #{opts}" unless opts.empty?

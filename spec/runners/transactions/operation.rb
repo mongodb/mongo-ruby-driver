@@ -107,7 +107,7 @@ module Mongo
       end
 
       def with_transaction(session, context, _collection)
-        unless callback = arguments['callback']
+        unless (callback = arguments['callback'])
           raise ArgumentError, 'with_transaction requires a callback to be present'
         end
 

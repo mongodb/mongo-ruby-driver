@@ -351,7 +351,7 @@ module Mongo
             connection.handshake!
           end
           @connection = connection
-          if tv_doc = result['topologyVersion']
+          if (tv_doc = result['topologyVersion'])
             if streaming_enabled?
               create_push_monitor!(TopologyVersion.new(tv_doc))
               push_monitor.run!

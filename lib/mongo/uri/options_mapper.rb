@@ -125,7 +125,7 @@ module Mongo
           end
           next if v.nil?
 
-          if type = spec[:type]
+          if (type = spec[:type])
             v = send("revert_#{type}", v)
           end
           canonical_key = URI_OPTION_CANONICAL_NAMES[uri_key]
@@ -163,7 +163,7 @@ module Mongo
           end
           next if v.nil?
 
-          if type = spec[:type]
+          if (type = spec[:type])
             v = send("stringify_#{type}", v)
           end
           canonical_key = URI_OPTION_CANONICAL_NAMES[uri_key]

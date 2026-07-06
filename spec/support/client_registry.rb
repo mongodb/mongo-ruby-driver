@@ -75,7 +75,7 @@ class ClientRegistry
   end
 
   def global_client(name)
-    if client = @global_clients[name]
+    if (client = @global_clients[name])
       self.class.reconnect_client_if_perished(client)
       return client
     end

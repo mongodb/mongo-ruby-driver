@@ -480,7 +480,7 @@ module Mongo
       #
       # @since 2.1.0
       def write_concern
-        @write_concern ||= if wco = @options[:write_concern] || @options[:write]
+        @write_concern ||= if (wco = @options[:write_concern] || @options[:write])
                              WriteConcern.get(wco)
                            else
                              database.write_concern

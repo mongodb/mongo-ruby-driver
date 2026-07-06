@@ -168,11 +168,11 @@ module Mongo
         options = options.dup
 
         create_options = {}
-        if session = @options[:session]
+        if (session = @options[:session])
           create_options[:session] = session
         end
         %i[commit_quorum session comment timeout_ms max_time_ms].each do |key|
-          if value = options.delete(key)
+          if (value = options.delete(key))
             create_options[key] = value
           end
         end

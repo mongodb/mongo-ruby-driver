@@ -125,7 +125,7 @@ module Mongo
 
         # Close all fds scheduled for closing.
         def close_all_scheduled
-          while pipe = @scheduled_for_close.pop
+          while (pipe = @scheduled_for_close.pop)
             pipe.close
           end
         end

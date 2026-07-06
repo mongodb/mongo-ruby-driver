@@ -105,7 +105,7 @@ module UnicodeNormalize # :nodoc:
     accents = ''
     nfd_string[1..-1].each_char do |accent|
       accent_class = CLASS_TABLE[accent]
-      if last_class < accent_class and composite = COMPOSITION_TABLE[start + accent]
+      if last_class < accent_class and (composite = COMPOSITION_TABLE[start + accent])
         start = composite
       else
         accents << accent

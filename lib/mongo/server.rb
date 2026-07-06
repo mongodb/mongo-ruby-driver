@@ -590,7 +590,7 @@ module Mongo
         # for example if there haven't been any successful connections yet to
         # this server, but the server can still be marked unknown if one
         # of such connections failed midway through its establishment.
-        if service_id = options[:service_id]
+        if (service_id = options[:service_id])
           pool&.disconnect!(service_id: service_id)
         end
         return

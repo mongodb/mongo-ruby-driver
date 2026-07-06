@@ -24,7 +24,7 @@ module Mongo
         case address_str
         when /\A\[[\d:]+\](?::(\d+))?\z/
           # ipv6 with optional port
-          if port_str = ::Regexp.last_match(1)
+          if (port_str = ::Regexp.last_match(1))
             validate_port_str!(port_str)
           end
         when %r{\A/}, /\.sock\z/

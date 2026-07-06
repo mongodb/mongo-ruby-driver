@@ -60,7 +60,7 @@ module Mongo
                 end
               end
 
-              if rc = selector[:readConcern]
+              if (rc = selector[:readConcern])
                 selector[:readConcern] = Options::Mapper.transform_values_to_strings(rc)
               end
 
