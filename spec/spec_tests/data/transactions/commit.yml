@@ -509,7 +509,10 @@ tests:
             documents:
               - _id: 2
             ordered: true
+            # This write follows an ended transaction in the same causally
+            # consistent session, so it carries afterClusterTime.
             readConcern:
+              afterClusterTime: 42
             lsid: session0
             txnNumber:
             startTransaction:
@@ -589,7 +592,10 @@ tests:
             documents:
               - _id: 2
             ordered: true
+            # This write follows an ended transaction in the same causally
+            # consistent session, so it carries afterClusterTime.
             readConcern:
+              afterClusterTime: 42
             lsid: session0
             txnNumber:
             startTransaction:

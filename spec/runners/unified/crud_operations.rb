@@ -216,6 +216,9 @@ module Unified
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
         collection.update_many(args.use!('filter'), args.use!('update'), **opts)
       end
     end
@@ -223,9 +226,7 @@ module Unified
     def replace_one(op)
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
-        collection.replace_one(
-          args.use!('filter'),
-          args.use!('replacement'),
+        opts = {
           comment: args.use('comment'),
           upsert: args.use('upsert'),
           let: args.use('let'),
@@ -233,6 +234,14 @@ module Unified
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS'),
           sort: args.use('sort')
+        }
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        collection.replace_one(
+          args.use!('filter'),
+          args.use!('replacement'),
+          **opts
         )
       end
     end
@@ -264,6 +273,9 @@ module Unified
           timeout_ms: args.use('timeoutMS'),
           max_time_ms: args.use('maxTimeMS')
         }
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
         collection.delete_many(args.use!('filter'), **opts)
       end
     end
@@ -276,6 +288,9 @@ module Unified
         end
         opts = {}
         opts[:ordered] = args.use!('ordered') if args.key?('ordered')
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
         if comment = args.use('comment')
           opts[:comment] = comment
         end

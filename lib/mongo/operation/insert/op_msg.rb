@@ -28,6 +28,7 @@ module Mongo
         include ExecutableNoValidate
         include ExecutableTransactionLabel
         include PolymorphicResult
+        include CausalConsistencySupported
 
         private
 

@@ -97,8 +97,23 @@ module Unified
     def drop_collection(op)
       database = entities.get(:database, op.use!('object'))
       use_arguments(op) do |args|
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
         collection = database[args.use!('collection')]
-        collection.drop
+        collection.drop(**opts)
+      end
+    end
+
+    def drop_database(op)
+      client = entities.get(:client, op.use!('object'))
+      use_arguments(op) do |args|
+        opts = {}
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
+        client.use(args.use!('database')).database.drop(**opts)
       end
     end
 
@@ -158,6 +173,9 @@ module Unified
       collection = entities.get(:collection, op.use!('object'))
       use_arguments(op) do |args|
         opts = extract_options(args, 'maxTimeMS', 'timeoutMS', allow_extra: true)
+        if session = args.use('session')
+          opts[:session] = entities.get(:session, session)
+        end
         collection.indexes.drop_all(**opts)
       end
     end
