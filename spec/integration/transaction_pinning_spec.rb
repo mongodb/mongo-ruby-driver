@@ -33,7 +33,7 @@ describe 'Transaction pinning' do
     end
 
     after do
-      if pool = server.pool_internal
+      if (pool = server.pool_internal)
         pool.close
       end
     end

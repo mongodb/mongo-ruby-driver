@@ -36,7 +36,7 @@ module Mongo
       #
       # @since 2.5.0
       def get(op_code, _message = nil)
-        if type = MAPPINGS[op_code]
+        if (type = MAPPINGS[op_code])
           type
         else
           handle_unsupported_op_code!(op_code)

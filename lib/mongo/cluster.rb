@@ -800,7 +800,7 @@ module Mongo
     #
     # @since 2.5.0
     def update_cluster_time(result)
-      return unless cluster_time_doc = result.cluster_time
+      return unless (cluster_time_doc = result.cluster_time)
 
       @cluster_time_lock.synchronize do
         advance_cluster_time(cluster_time_doc)

@@ -102,7 +102,7 @@ module Mongo
         context = Operation::Context.new(options: {
                                            server_api: connection.options[:server_api],
                                          })
-        if server_api = context.server_api
+        if (server_api = context.server_api)
           msg = msg.maybe_add_server_api(server_api)
         end
         reply = connection.dispatch([ msg ], context)

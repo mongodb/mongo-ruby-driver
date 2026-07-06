@@ -73,7 +73,7 @@ module Mongo
     # @note server_api must have symbol keys or be a BSON::Document.
     module_function def transform_server_api(server_api)
       {}.tap do |doc|
-        if version = server_api[:version]
+        if (version = server_api[:version])
           doc['apiVersion'] = version
         end
         doc['apiStrict'] = server_api[:strict] unless server_api[:strict].nil?

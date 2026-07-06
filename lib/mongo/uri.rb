@@ -460,7 +460,7 @@ module Mongo
     end
 
     def parse_user!(string)
-      if string && user = string.partition(AUTH_USER_PWD_DELIM)[0]
+      if string && (user = string.partition(AUTH_USER_PWD_DELIM)[0])
         raise_invalid_error!(UNESCAPED_USER_PWD) if UNSAFE.match?(user)
         user_decoded = decode(user)
         raise_invalid_error!(UNESCAPED_USER_PWD) if user_decoded =~ PERCENT_CHAR && encode(user_decoded) != user

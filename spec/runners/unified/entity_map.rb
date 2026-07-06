@@ -19,7 +19,7 @@ module Unified
 
     def get(type, id)
       raise Error::EntityMissing, "There are no #{type} entities known" unless @map[type]
-      unless v = @map[type][id]
+      unless (v = @map[type][id])
         raise Error::EntityMissing, "There is no #{type} #{id} known"
       end
 

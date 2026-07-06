@@ -188,7 +188,7 @@ module Mongo
       end
 
       def read_response
-        if timeout = options[:connect_timeout]
+        if (timeout = options[:connect_timeout])
           if timeout < 0
             raise Mongo::SocketTimeoutError, 'Requested to read with a negative timeout: '
           elsif timeout > 0

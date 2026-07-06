@@ -51,7 +51,7 @@ module Mongo
           @connection_description = connection_description
           @connection_global_id = connection_global_id
           if replies && replies.first && (doc = replies.first.documents.first)
-            if errors = doc['writeErrors']
+            if (errors = doc['writeErrors'])
               # some documents were potentially inserted
               bad_indices = {}
               errors.map do |error|

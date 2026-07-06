@@ -38,10 +38,10 @@ module Unified
       @expected_tracing_messages = @test_spec.use('expectTracingMessages')
       @expected_spans = @test_spec.use('expectSpans')
       @skip_reason = @test_spec.use('skipReason')
-      if req = @test_spec.use('runOnRequirements')
+      if (req = @test_spec.use('runOnRequirements'))
         @reqs = req.map { |r| Mongo::CRUD::Requirement.new(r) }
       end
-      if req = @spec['group_runOnRequirements']
+      if (req = @spec['group_runOnRequirements'])
         @group_reqs = req.map { |r| Mongo::CRUD::Requirement.new(r) }
       end
       if @spec['createEntities']
@@ -114,7 +114,7 @@ module Unified
 
         entity = case type
                  when 'client'
-                   opts = if smc_opts = spec.use('uriOptions')
+                   opts = if (smc_opts = spec.use('uriOptions'))
                             Mongo::URI::OptionsMapper.new.smc_to_ruby(smc_opts)
                           else
                             {}
@@ -123,7 +123,7 @@ module Unified
                    # max_pool_size gets automatically set to 3 if not explicitly set by
                    # the test, therefore, if min_pool_size is set, make sure to set the
                    # max_pool_size as well to something greater.
-                   if !opts.key?('max_pool_size') && min_pool_size = opts[:min_pool_size]
+                   if !opts.key?('max_pool_size') && (min_pool_size = opts[:min_pool_size])
                      opts[:max_pool_size] = min_pool_size + 3
                    end
 
@@ -141,7 +141,7 @@ module Unified
                      options[:single_address] = true
                    end
 
-                   if store_events = spec.use('storeEventsAsEntities')
+                   if (store_events = spec.use('storeEventsAsEntities'))
                      store_event_names = {}
                      store_events.each do |spec|
                        entity_name = spec['id']
@@ -154,7 +154,7 @@ module Unified
                        entities.set(:event_list, entity_name, [])
                      end
                      subscriber = StoringEventSubscriber.new do |payload|
-                       if entity_name = store_event_names[payload['name']]
+                       if (entity_name = store_event_names[payload['name']])
                          entities.get(:event_list, entity_name) << payload
                        end
                      end
@@ -164,7 +164,7 @@ module Unified
                      end
                    end
 
-                   if server_api = spec.use('serverApi')
+                   if (server_api = spec.use('serverApi'))
                      server_api = ::Utils.underscore_hash(server_api)
                      opts[:server_api] = server_api
                    end
@@ -174,7 +174,7 @@ module Unified
                    current_proc = opts[:sdam_proc]
                    opts[:sdam_proc] = lambda do |client|
                      current_proc.call(client) if current_proc
-                     if oe = observe_events
+                     if (oe = observe_events)
                        oe.each do |event|
                          case event
                          when 'commandStartedEvent', 'commandSucceededEvent', 'commandFailedEvent'
@@ -183,7 +183,7 @@ module Unified
                            end
                            kind = event.sub('command', '').sub('Event', '').downcase.to_sym
                            subscriber.add_wanted_events(kind)
-                           if ignore_events = spec.use('ignoreCommandMonitoringEvents')
+                           if (ignore_events = spec.use('ignoreCommandMonitoringEvents'))
                              subscriber.ignore_commands(ignore_events)
                            end
                          when /\A(?:pool|connection)/
@@ -233,7 +233,7 @@ module Unified
 
                    await_min_pool_size_ms = spec.use('awaitMinPoolSizeMS')
 
-                   if auto_encrypt_opts = spec.use('autoEncryptOpts')
+                   if (auto_encrypt_opts = spec.use('autoEncryptOpts'))
                      opts.merge!(Utils.convert_client_options('autoEncryptOpts' => auto_encrypt_opts))
                    end
 
@@ -498,7 +498,7 @@ module Unified
 
         skip "Mongo Ruby Driver does not support #{name}" if %w[modify_collection list_index_names client_bulk_write].include?(name.to_s)
 
-        if expected_error = op.use('expectError')
+        if (expected_error = op.use('expectError'))
           begin
             unless respond_to?(method_name)
               raise Error::UnsupportedOperation, "Mongo Ruby Driver does not support #{name}"
@@ -525,22 +525,22 @@ module Unified
               raise Error::ErrorMismatch, "Expected #{text} in the message but had #{e}"
             end
 
-            if labels = expected_error.use('errorLabelsContain')
+            if (labels = expected_error.use('errorLabelsContain'))
               labels.each do |label|
                 unless e.label?(label)
                   raise Error::ErrorMismatch, "Expected error to contain label #{label} but it did not"
                 end
               end
             end
-            if omit_labels = expected_error.use('errorLabelsOmit')
+            if (omit_labels = expected_error.use('errorLabelsOmit'))
               omit_labels.each do |label|
                 raise Error::ErrorMismatch, "Expected error to not contain label #{label} but it did" if e.label?(label)
               end
             end
-            if error_response = expected_error.use('errorResponse')
+            if (error_response = expected_error.use('errorResponse'))
               assert_result_matches(e.document, error_response)
             end
-            if expected_result = expected_error.use('expectResult')
+            if (expected_result = expected_error.use('expectResult'))
               assert_result_matches(e.result, expected_result)
             # Important: this must be the last branch.
             elsif expected_error.use('isError')
@@ -567,7 +567,7 @@ module Unified
           end
 
           result = send(method_name, op)
-          if expected_result = op.use('expectResult')
+          if (expected_result = op.use('expectResult'))
             if result.nil? && expected_result.keys == [ '$$unsetOrMatches' ]
               return
             elsif result.nil? && !expected_result.empty?
@@ -579,7 +579,7 @@ module Unified
             end
             # expected_result.clear
           end
-          if save_entity = op.use('saveResultAsEntity')
+          if (save_entity = op.use('saveResultAsEntity'))
             entities.set(:result, save_entity, result)
           end
         end

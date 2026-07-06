@@ -11,13 +11,13 @@ module Unified
         cmd = args.use!('command')
 
         opts = {}
-        if session = args.use('session')
+        if (session = args.use('session'))
           opts[:session] = entities.get(:session, session)
         end
-        if read_preference = args.use('readPreference')
+        if (read_preference = args.use('readPreference'))
           opts[:read] = ::Utils.snakeize_hash(read_preference)
         end
-        if timeout_ms = args.use('timeoutMS')
+        if (timeout_ms = args.use('timeoutMS'))
           opts[:timeout_ms] = timeout_ms
         end
 
@@ -31,7 +31,7 @@ module Unified
 
     def create_command_cursor(op)
       cursor = build_command_cursor(op)
-      if name = op.use('saveResultAsEntity')
+      if (name = op.use('saveResultAsEntity'))
         entities.set(:cursor, name, cursor)
       end
       cursor
@@ -194,7 +194,7 @@ module Unified
           opts = {}
         else
           opts = ::Utils.underscore_hash(args)
-          if value = opts[:read_concern]&.[](:level)
+          if (value = opts[:read_concern]&.[](:level))
             opts[:read_concern][:level] = value.to_sym
           end
           args.clear
@@ -259,11 +259,11 @@ module Unified
       use_arguments(op) do |args|
         ops = args.use!('operations')
 
-        if store_errors = args.use('storeErrorsAsEntity')
+        if (store_errors = args.use('storeErrorsAsEntity'))
           entities.set(:error_list, store_errors, [])
         end
 
-        if store_failures = args.use('storeFailuresAsEntity')
+        if (store_failures = args.use('storeFailuresAsEntity'))
           entities.set(:failure_list, store_failures, [])
         end
 
@@ -373,7 +373,7 @@ module Unified
           expected_type = SDAM_SERVER_TYPE_MAP[type] || type.downcase.to_sym
           result &&= wevent.new_description.server_type == expected_type
         end
-        if command_name = spec.use('commandName')
+        if (command_name = spec.use('commandName'))
           result &&= wevent.respond_to?(:command_name) && wevent.command_name == command_name
         end
         raise NotImplementedError, "Unhandled keys: #{spec}" unless spec.empty?
