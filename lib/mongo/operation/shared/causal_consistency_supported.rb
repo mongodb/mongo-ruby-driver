@@ -28,8 +28,10 @@ module Mongo
       #
       # This method overrides the causal consistency addition logic of
       # SessionsSupported and is meant to be used with operations classified
-      # as "read operations accepting a read concern", as these are defined
-      # in the causal consistency spec.
+      # as "read and write operations accepting a read concern", as these are
+      # defined in the causal consistency spec. For write operations this
+      # attaches only afterClusterTime (no read concern level) so that causal
+      # ordering is preserved across writes in a causally consistent session.
       #
       # In order for the override to work correctly the
       # CausalConsistencySupported module must be included after

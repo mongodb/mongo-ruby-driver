@@ -159,7 +159,10 @@ tests:
             lsid: session0
             # omitted fields
             autocommit: ~
-            readConcern: ~
+            # This write follows a committed/aborted transaction in the same
+            # causally consistent session, so it carries afterClusterTime.
+            readConcern:
+              afterClusterTime: 42
             startTransaction: ~
             writeConcern: ~
           command_name: insert

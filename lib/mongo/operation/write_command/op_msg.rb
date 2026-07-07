@@ -21,6 +21,8 @@ module Mongo
       #
       # @api private
       class OpMsg < OpMsgBase
+        include CausalConsistencySupported
+
         private
 
         def selector(connection)
