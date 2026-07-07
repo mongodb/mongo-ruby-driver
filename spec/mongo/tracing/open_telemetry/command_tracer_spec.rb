@@ -112,6 +112,17 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       end
     end
 
+    context 'when result cursor_id is a BSON::Int64' do
+      let(:result) do
+        instance_double(Mongo::Operation::Result, cursor_id: BSON::Int64.new(789), successful?: true)
+      end
+
+      it 'records the cursor id as an Integer' do
+        expect(span).to receive(:set_attribute).with('db.mongodb.cursor_id', 789)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+    end
+
     context 'when result has zero cursor_id' do
       let(:result) do
         instance_double(Mongo::Operation::Result, cursor_id: 0, successful?: true)

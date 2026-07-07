@@ -206,9 +206,23 @@ module Mongo
         # @param _context [ OpenTelemetry::Context ] the context (unused).
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
         def process_cursor_context(result, _cursor_id, _context, span)
-          return unless result.cursor_id.positive?
+          cursor_id = normalize_cursor_id(result.cursor_id)
+          return unless cursor_id.positive?
 
-          span.set_attribute('db.mongodb.cursor_id', result.cursor_id)
+          span.set_attribute('db.mongodb.cursor_id', cursor_id)
+        end
+
+        # Normalizes a cursor id to a plain Integer.
+        #
+        # OP_MSG replies deserialized in :bson mode expose the cursor id as a
+        # BSON::Int64, which does not implement Numeric#positive? and is not a
+        # valid OpenTelemetry attribute type.
+        #
+        # @param cursor_id [ Integer | BSON::Int64 ] the raw cursor id.
+        #
+        # @return [ Integer ] the cursor id as an Integer.
+        def normalize_cursor_id(cursor_id)
+          cursor_id.is_a?(BSON::Int64) ? cursor_id.value : cursor_id
         end
 
         # Records error status code if the command failed.
