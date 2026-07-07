@@ -1173,7 +1173,7 @@ module Mongo
     #
     # @api private
     def with_session(options = {})
-      # TODO: Add this back in RUBY-3174.
+      # RUBY-3174 will re-enable this guard; see #assert_not_closed.
       # assert_not_closed
 
       session = get_session(options)
@@ -1729,6 +1729,17 @@ module Mongo
       true
     end
 
+    # Raises Error::ClientClosed if this client has been closed.
+    #
+    # This is the guard for RUBY-3174 (disallow closed clients from
+    # performing operations). The implementation is complete but not yet
+    # wired in: the intended call site in #with_session is currently
+    # commented out, pending that ticket. Do not delete this method or
+    # Error::ClientClosed as "unused" -- both are here deliberately.
+    #
+    # @raise [ Error::ClientClosed ] if the client has been closed.
+    #
+    # @api private
     def assert_not_closed
       return unless closed?
 

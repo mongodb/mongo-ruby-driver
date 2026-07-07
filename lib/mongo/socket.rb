@@ -547,10 +547,6 @@ module Mongo
       !rv.nil?
     end
 
-    def unix_socket?(sock)
-      defined?(UNIXSocket) && sock.is_a?(UNIXSocket)
-    end
-
     DEFAULT_TCP_KEEPINTVL = 10
 
     DEFAULT_TCP_KEEPCNT = 9
