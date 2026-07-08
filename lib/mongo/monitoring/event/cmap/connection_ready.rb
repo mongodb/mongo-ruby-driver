@@ -41,6 +41,7 @@ module Mongo
           # @since 2.9.0
           # @api private
           def initialize(address, id)
+            super()
             @address = address
             @connection_id = id
           end

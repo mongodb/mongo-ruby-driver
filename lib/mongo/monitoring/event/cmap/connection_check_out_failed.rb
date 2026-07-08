@@ -62,6 +62,7 @@ module Mongo
           # @since 2.9.0
           # @api private
           def initialize(address, reason)
+            super()
             @reason = reason
             @address = address
           end

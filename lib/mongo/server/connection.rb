@@ -88,6 +88,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(server, options = {})
+        super()
         if server.load_balancer? && options[:generation]
           raise ArgumentError, 'Generation cannot be set when server is a load balancer'
         end
