@@ -162,15 +162,6 @@ module Mongo
         !!@replies
       end
 
-      # Whether the result contains cursor_id
-      #
-      # @return [ true, false ] If the result contains cursor_id.
-      #
-      # @api private
-      def has_cursor_id?
-        acknowledged? && replies.last.respond_to?(:cursor_id)
-      end
-
       # Get the cursor id if the response is acknowledged.
       #
       # @note Cursor ids of 0 indicate there is no cursor on the server.
@@ -183,7 +174,17 @@ module Mongo
       # @since 2.0.0
       # @api private
       def cursor_id
-        acknowledged? ? replies.last.cursor_id : 0
+        return 0 unless acknowledged?
+
+        if replies.last.respond_to?(:cursor_id)
+          # Legacy OP_REPLY replies expose the cursor id directly.
+          replies.last.cursor_id
+        elsif first_document.key?(CURSOR)
+          # OP_MSG command replies carry the cursor id in the `cursor` subdocument.
+          first_document[CURSOR][CURSOR_ID] || 0
+        else
+          0
+        end
       end
 
       # Get the namespace of the cursor. The method should be defined in

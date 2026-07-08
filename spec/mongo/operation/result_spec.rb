@@ -83,22 +83,24 @@ describe Mongo::Operation::Result do
         expect(result.cursor_id).to eq(0)
       end
     end
-  end
 
-  describe '#has_cursor_id?' do
-    context 'when the reply exists' do
-      let(:cursor_id) { 5 }
+    context 'when the reply is an OP_MSG carrying a cursor subdocument' do
+      let(:reply) do
+        Mongo::Protocol::Msg.new([], {}, { 'cursor' => { 'id' => 42 } })
+      end
 
-      it 'returns true' do
-        expect(result).to have_cursor_id
+      it 'reads the cursor id from the cursor subdocument' do
+        expect(result.cursor_id).to eq(42)
       end
     end
 
-    context 'when the reply does not exist' do
-      let(:reply) { nil }
+    context 'when the reply is an OP_MSG without a cursor subdocument' do
+      let(:reply) do
+        Mongo::Protocol::Msg.new([], {}, { 'ok' => 1 })
+      end
 
-      it 'returns false' do
-        expect(result).not_to have_cursor_id
+      it 'returns zero' do
+        expect(result.cursor_id).to eq(0)
       end
     end
   end
