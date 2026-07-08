@@ -678,7 +678,7 @@ module Mongo
         # @api private
         def read_concern
           if options[:session] && options[:session].in_transaction?
-            options[:session].send(:txn_read_concern) || collection.client.read_concern
+            options[:session].txn_read_concern || collection.client.read_concern
           else
             collection.read_concern
           end

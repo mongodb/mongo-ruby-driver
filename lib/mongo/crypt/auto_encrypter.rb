@@ -287,7 +287,7 @@ module Mongo
         @internal_client ||= client.with(
           auto_encryption_options: nil,
           min_pool_size: 0,
-          monitoring: client.send(:monitoring)
+          monitoring: client.monitoring
         )
       end
     end

@@ -172,7 +172,6 @@ module Mongo
         @monitoring
       end
     end
-    private :monitoring
 
     # Determine if this client is equivalent to another object.
     #
