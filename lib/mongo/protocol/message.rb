@@ -405,7 +405,7 @@ module Mongo
 
       # A method for getting the fields for a message class
       #
-      # @return [Integer] the fields for the message class
+      # @return [Array<Hash>] The fields for the message class
       # @api private
       def fields
         self.class.fields
