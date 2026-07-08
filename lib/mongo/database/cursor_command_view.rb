@@ -84,9 +84,9 @@ module Mongo
         database.operation_timeouts(opts)
       end
 
-      private
-
       # Cursors do not support a limit when built from a command response.
+      #
+      # @api private
       def limit
         nil
       end
