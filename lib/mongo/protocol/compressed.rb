@@ -95,9 +95,9 @@ module Mongo
 
         message.send(:fields).each do |field|
           if field[:multi]
-            Message.deserialize_array(message, buf, field)
+            message.deserialize_array(buf, field)
           else
-            Message.deserialize_field(message, buf, field)
+            message.deserialize_field(buf, field)
           end
         end
         message.fix_after_deserialization if message.is_a?(Msg)

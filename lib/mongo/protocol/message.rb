@@ -270,9 +270,9 @@ module Mongo
         message = Registry.get(_op_code).allocate
         message.send(:fields).each do |field|
           if field[:multi]
-            deserialize_array(message, buf, field, options)
+            message.deserialize_array(buf, field, options)
           else
-            deserialize_field(message, buf, field, options)
+            message.deserialize_field(buf, field, options)
           end
         end
         message.fix_after_deserialization if message.is_a?(Msg)
@@ -369,7 +369,6 @@ module Mongo
       # deserialized field specified in the class by the field dsl under
       # the key +:multi+
       #
-      # @param message [Message] Message to contain the deserialized array.
       # @param io [IO] Stream containing the array to deserialize.
       # @param field [Hash] Hash representing a field.
       # @param options [ Hash ]
@@ -377,18 +376,17 @@ module Mongo
       # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
       #   each of the elements in this array using BSON types wherever possible.
       #
-      # @return [Message] Message with deserialized array.
+      # @return [Array] The deserialized array.
       # @api private
-      def self.deserialize_array(message, io, field, options = {})
+      def deserialize_array(io, field, options = {})
         elements = []
-        count = message.instance_variable_get(field[:multi])
+        count = instance_variable_get(field[:multi])
         count.times { elements << field[:type].deserialize(io, options) }
-        message.instance_variable_set(field[:name], elements)
+        instance_variable_set(field[:name], elements)
       end
 
-      # Deserializes a single field in a message
+      # Deserializes a single field into this message.
       #
-      # @param message [Message] Message to contain the deserialized field.
       # @param io [IO] Stream containing the field to deserialize.
       # @param field [Hash] Hash representing a field.
       # @param options [ Hash ]
@@ -396,10 +394,10 @@ module Mongo
       # @option options [ Boolean ] :deserialize_as_bson Whether to deserialize
       #   this field using BSON types wherever possible.
       #
-      # @return [Message] Message with deserialized field.
+      # @return [Object] The deserialized field value.
       # @api private
-      def self.deserialize_field(message, io, field, options = {})
-        message.instance_variable_set(
+      def deserialize_field(io, field, options = {})
+        instance_variable_set(
           field[:name],
           field[:type].deserialize(io, options)
         )
