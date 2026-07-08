@@ -241,7 +241,7 @@ module Mongo
         OUT_ACTIONS = %i[replace merge reduce].freeze
 
         def server_selector
-          @view.send(:server_selector)
+          @view.server_selector
         end
 
         def inline?
