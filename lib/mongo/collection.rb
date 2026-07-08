@@ -393,7 +393,7 @@ module Mongo
       operation = { create: name }.merge(options)
       operation.delete(:write)
       operation.delete(:write_concern)
-      client.send(:with_session, opts) do |session|
+      client.with_session(opts) do |session|
         write_concern = if opts[:write_concern]
                           WriteConcern.get(opts[:write_concern])
                         else

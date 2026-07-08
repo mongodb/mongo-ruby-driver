@@ -236,6 +236,14 @@ module Mongo
         end
       end
 
+      # Executes the provided block within the context of a session, using
+      # this view's options merged with the given ones.
+      #
+      # @api private
+      def with_session(opts = {}, &block)
+        client.with_session(@options.merge(opts), &block)
+      end
+
       private
 
       def initialize_copy(other)
@@ -251,10 +259,6 @@ module Mongo
 
       def view
         self
-      end
-
-      def with_session(opts = {}, &block)
-        client.with_session(@options.merge(opts), &block)
       end
     end
   end
