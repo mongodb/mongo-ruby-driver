@@ -268,7 +268,7 @@ module Mongo
         buf = BSON::ByteBuffer.new(chunk)
 
         message = Registry.get(_op_code).allocate
-        message.send(:fields).each do |field|
+        message.fields.each do |field|
           if field[:multi]
             message.deserialize_array(buf, field, options)
           else
@@ -403,11 +403,10 @@ module Mongo
         )
       end
 
-      private
-
       # A method for getting the fields for a message class
       #
       # @return [Integer] the fields for the message class
+      # @api private
       def fields
         self.class.fields
       end
@@ -416,6 +415,7 @@ module Mongo
       #
       # @param buffer [String] buffer to receive the field
       # @return [String] buffer with serialized field
+      # @api private
       def serialize_fields(buffer, max_bson_size = nil)
         fields.each do |field|
           value = instance_variable_get(field[:name])
@@ -434,6 +434,8 @@ module Mongo
           end
         end
       end
+
+      private
 
       # Serializes the header of the message consisting of 4 32bit integers
       #

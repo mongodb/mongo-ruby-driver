@@ -93,7 +93,7 @@ module Mongo
         message = Registry.get(@original_op_code).allocate
         buf = decompress(@compressed_message)
 
-        message.send(:fields).each do |field|
+        message.fields.each do |field|
           if field[:multi]
             message.deserialize_array(buf, field)
           else
@@ -114,6 +114,15 @@ module Mongo
       # @since 2.5.0
       def replyable?
         @original_message.replyable?
+      end
+
+      # @api private
+      def serialize_fields(buffer, max_bson_size)
+        buf = BSON::ByteBuffer.new
+        @original_message.serialize_fields(buf, max_bson_size)
+        @uncompressed_size = buf.length
+        @compressed_message = compress(buf)
+        super
       end
 
       private
@@ -139,14 +148,6 @@ module Mongo
       # @!attribute
       # @return [ String ] The actual compressed message bytes.
       field :compressed_message, Bytes
-
-      def serialize_fields(buffer, max_bson_size)
-        buf = BSON::ByteBuffer.new
-        @original_message.send(:serialize_fields, buf, max_bson_size)
-        @uncompressed_size = buf.length
-        @compressed_message = compress(buf)
-        super
-      end
 
       def compress(buffer)
         if @compressor_id == NOOP_BYTE
