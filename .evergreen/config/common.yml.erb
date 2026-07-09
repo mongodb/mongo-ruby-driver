@@ -346,6 +346,28 @@ functions:
           AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" \
             .evergreen/run-tests-atlas.sh
 
+  "export SFP credentials":
+    - command: subprocess.exec
+      type: test
+      params:
+        binary: bash
+        working_dir: "src"
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, DRIVERS_TOOLS]
+        args:
+          - "${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh"
+          - "drivers/sfp"
+
+  "run SFP tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          RVM_RUBY="${RVM_RUBY}" \
+            .evergreen/run-tests-sfp.sh
+
 pre:
   - func: assume-test-secrets-ec2-role
   - func: "fetch source"
@@ -547,6 +569,10 @@ tasks:
     commands:
       - func: "export Atlas credentials"
       - func: "run Atlas tests"
+  - name: "test-sfp"
+    commands:
+      - func: "export SFP credentials"
+      - func: "run SFP tests"
   - name: "test"
     commands:
       - func: "run tests"

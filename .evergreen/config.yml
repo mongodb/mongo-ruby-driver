@@ -349,6 +349,28 @@ functions:
           AUTH=${AUTH} SSL=${SSL} TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" \
             .evergreen/run-tests-atlas.sh
 
+  "export SFP credentials":
+    - command: subprocess.exec
+      type: test
+      params:
+        binary: bash
+        working_dir: "src"
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, DRIVERS_TOOLS]
+        args:
+          - "${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh"
+          - "drivers/sfp"
+
+  "run SFP tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          RVM_RUBY="${RVM_RUBY}" \
+            .evergreen/run-tests-sfp.sh
+
 pre:
   - func: assume-test-secrets-ec2-role
   - func: "fetch source"
@@ -550,6 +572,10 @@ tasks:
     commands:
       - func: "export Atlas credentials"
       - func: "run Atlas tests"
+  - name: "test-sfp"
+    commands:
+      - func: "export SFP credentials"
+      - func: "run SFP tests"
   - name: "test"
     commands:
       - func: "run tests"
@@ -1725,6 +1751,15 @@ buildvariants:
     tags: ["pr"]
     tasks:
        - name: test-atlas
+
+  - matrix_name: "sfp"
+    matrix_spec:
+      ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "ruby-3.2", "ruby-3.1"]
+      os: ubuntu2204
+    display_name: "Atlas SFP tests ${ruby}"
+    tags: ["pr"]
+    tasks:
+       - name: test-sfp
 
 # https://jira.mongodb.org/browse/RUBY-3311
 #  - matrix_name: "aws-lambda"
