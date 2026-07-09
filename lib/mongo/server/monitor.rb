@@ -97,8 +97,12 @@ module Mongo
       # @api private
       attr_reader :server
 
-      # @return [ Mongo::Server::Monitor::Connection ] connection The connection to use.
-      attr_reader :connection
+      # @return [ Mongo::Server::Monitor::Connection | nil ] The connection to
+      #   use, read under @connection_lock so callers never observe a stale
+      #   reference after a concurrent cancel_check! clears it.
+      def connection
+        @connection_lock.synchronize { @connection }
+      end
 
       # @return [ Hash ] options The server options.
       attr_reader :options
@@ -344,7 +348,7 @@ module Mongo
       #
       # @return [ true | false ]
       def rtt_measurement_only?
-        return false if @connection.nil?
+        return false if connection.nil?
 
         # Only suppress the check while the server is in a known state and the
         # PushMonitor is the authoritative streaming source. If the server is
