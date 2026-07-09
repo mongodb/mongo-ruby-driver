@@ -41,6 +41,7 @@ module Mongo
           # @since 2.9.0
           # @api private
           def initialize(address, options, pool)
+            super()
             @address = address
             @options = options.dup.freeze
             @pool = pool

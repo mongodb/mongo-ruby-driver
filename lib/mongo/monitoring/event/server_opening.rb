@@ -37,6 +37,7 @@ module Mongo
         #
         # @since 2.4.0
         def initialize(address, topology)
+          super()
           @address = address
           @topology = topology
         end

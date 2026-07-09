@@ -35,6 +35,7 @@ module Mongo
           # @since 2.9.0
           # @api private
           def initialize(address)
+            super()
             @address = address
           end
 

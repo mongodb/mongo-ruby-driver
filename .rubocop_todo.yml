@@ -13,11 +13,6 @@ Lint/IncompatibleIoSelectWithFiberScheduler:
     - 'lib/mongo/socket/ssl.rb'
     - 'lib/mongo/socket/tcp.rb'
 
-# Offense count: 31
-# Configuration parameters: AllowedParentClasses.
-Lint/MissingSuper:
-  Enabled: false
-
 # Offense count: 1
 Lint/MixedRegexpCaptureTypes:
   Exclude:
