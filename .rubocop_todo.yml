@@ -834,11 +834,6 @@ Style/MapToHash:
     - 'spec/runners/transactions/test.rb'
     - 'spec/runners/unified/test.rb'
 
-# Offense count: 1
-Style/MixinUsage:
-  Exclude:
-    - 'bin/mongo_console'
-
 # Offense count: 12
 Style/MultilineBlockChain:
   Exclude:
