@@ -967,12 +967,6 @@ Style/SelectByKind:
     - 'spec/integration/step_down_spec.rb'
     - 'spec/mongo/server/connection_pool_spec.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/SelectByRegexp:
-  Exclude:
-    - 'spec/spec_tests/transactions_unified_spec.rb'
-
 # Offense count: 13
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/SlicingWithRange:
