@@ -648,12 +648,6 @@ Style/ClassVars:
   Exclude:
     - 'lib/mongo/id.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/CommentedKeyword:
-  Exclude:
-    - 'lib/mongo/auth/stringprep/unicode_normalize/normalize.rb'
-
 # Offense count: 16
 # Configuration parameters: AllowedConstants.
 Style/Documentation:
