@@ -918,10 +918,6 @@ Style/RedundantArgument:
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowedMethods.
 # AllowedMethods: infinite?, nonzero?
-Style/RedundantCondition:
-  Exclude:
-    - 'lib/mongo/session.rb'
-
 # Offense count: 2
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/RedundantEach:
