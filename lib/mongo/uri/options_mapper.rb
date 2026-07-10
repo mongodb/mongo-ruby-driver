@@ -391,7 +391,7 @@ module Mongo
       # @return [ Array<true | false> | nil ] The string.
       def stringify_repeated_bool(value)
         rep = revert_repeated_bool(value)
-        if rep&.is_a?(Array)
+        if rep.is_a?(Array)
           rep.join(',')
         else
           rep

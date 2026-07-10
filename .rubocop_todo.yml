@@ -23,10 +23,6 @@ Lint/NextWithoutAccumulator:
 # Configuration parameters: AllowedMethods, InferNonNilReceiver, AdditionalNilMethods.
 # AllowedMethods: instance_of?, kind_of?, is_a?, eql?, respond_to?, equal?
 # AdditionalNilMethods: present?, blank?, try, try!
-Lint/RedundantSafeNavigation:
-  Exclude:
-    - 'lib/mongo/uri/options_mapper.rb'
-
 # Offense count: 12
 Lint/RescueException:
   Exclude:
