@@ -906,12 +906,6 @@ Style/PreferredHashMethods:
 Style/RaiseArgs:
   Enabled: false
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/ReduceToHash:
-  Exclude:
-    - 'spec/mongo/monitoring/command_log_subscriber_spec.rb'
-
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: Methods.
