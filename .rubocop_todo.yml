@@ -18,11 +18,6 @@ Lint/NextWithoutAccumulator:
   Exclude:
     - 'lib/mongo/operation/shared/result/aggregatable.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: AllowedMethods, InferNonNilReceiver, AdditionalNilMethods.
-# AllowedMethods: instance_of?, kind_of?, is_a?, eql?, respond_to?, equal?
-# AdditionalNilMethods: present?, blank?, try, try!
 # Offense count: 12
 Lint/RescueException:
   Exclude:
@@ -748,7 +743,6 @@ Style/GlobalVars:
     - 'spec/runners/unified/test.rb'
     - 'spec/support/sdam_formatter_integration.rb'
 
-# Offense count: 1
 # Offense count: 10
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: AllowSplatArgument.
@@ -914,10 +908,6 @@ Style/RedundantArgument:
     - 'lib/mongo/auth/scram_conversation_base.rb'
     - 'lib/mongo/auth/stringprep/unicode_normalize/normalize.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowedMethods.
-# AllowedMethods: infinite?, nonzero?
 # Offense count: 2
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/RedundantEach:
