@@ -877,11 +877,6 @@ Style/OneClassPerFile:
     - 'spec/support/background_thread_registry.rb'
     - 'spec/support/client_registry.rb'
 
-# Offense count: 1
-Style/OpenStructUse:
-  Exclude:
-    - 'spec/support/background_thread_registry.rb'
-
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/PredicateWithKind:
