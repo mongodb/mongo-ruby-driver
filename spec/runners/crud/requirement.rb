@@ -126,7 +126,7 @@ module Mongo
       def description
         versions = [ min_server_version, max_server_version ].compact
         versions = (versions.join('-') if versions.any?)
-        topologies = (self.topologies.map(&:to_s).join(',') if self.topologies)
+        topologies = (self.topologies.join(',') if self.topologies)
         [ versions, topologies ].compact.join('/')
       end
     end

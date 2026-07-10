@@ -827,12 +827,6 @@ Style/MapIntoArray:
     - 'spec/integration/query_cache_spec.rb'
     - 'spec/mongo/session/session_pool_spec.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/MapJoin:
-  Exclude:
-    - 'spec/runners/crud/requirement.rb'
-
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/MapToHash:
