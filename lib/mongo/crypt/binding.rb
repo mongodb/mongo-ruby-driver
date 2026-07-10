@@ -106,7 +106,7 @@ module Mongo
       def self.parse_version(version)
         Gem::Version.new(version)
       rescue ArgumentError
-        match = version.match(/\A(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)?(-[A-Za-z+\d]+)?\z/)
+        match = version.match(/\A(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)?(?:-[A-Za-z+\d]+)?\z/)
         raise ArgumentError.new("Malformed version number string #{version}") if match.nil?
 
         Gem::Version.new(

@@ -13,11 +13,6 @@ Lint/IncompatibleIoSelectWithFiberScheduler:
     - 'lib/mongo/socket/ssl.rb'
     - 'lib/mongo/socket/tcp.rb'
 
-# Offense count: 1
-Lint/MixedRegexpCaptureTypes:
-  Exclude:
-    - 'lib/mongo/crypt/binding.rb'
-
 # Offense count: 2
 Lint/NextWithoutAccumulator:
   Exclude:
