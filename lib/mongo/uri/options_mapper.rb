@@ -87,7 +87,7 @@ module Mongo
           strategy = URI_OPTION_MAP[key.downcase]
           if strategy.nil?
             log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
-            return
+            next
           end
 
           group = strategy[:group]

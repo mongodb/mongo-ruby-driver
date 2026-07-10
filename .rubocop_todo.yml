@@ -19,11 +19,6 @@ Lint/NextWithoutAccumulator:
     - 'lib/mongo/operation/shared/result/aggregatable.rb'
 
 # Offense count: 1
-Lint/NonLocalExitFromIterator:
-  Exclude:
-    - 'lib/mongo/uri/options_mapper.rb'
-
-# Offense count: 1
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: AllowedMethods, InferNonNilReceiver, AdditionalNilMethods.
 # AllowedMethods: instance_of?, kind_of?, is_a?, eql?, respond_to?, equal?
