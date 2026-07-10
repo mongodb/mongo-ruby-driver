@@ -67,7 +67,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   describe '#trace_command' do
     let(:span) { instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil) }
     let(:context) { instance_double(Mongo::Operation::Context) }
-    let(:result) { instance_double(Mongo::Operation::Result, has_cursor_id?: false, successful?: true) }
+    let(:result) { instance_double(Mongo::Operation::Result, cursor_id: 0, successful?: true) }
 
     before do
       allow(otel_tracer).to receive(:start_span).and_return(span)
@@ -103,7 +103,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
     context 'when result has cursor_id' do
       let(:result) do
-        instance_double(Mongo::Operation::Result, has_cursor_id?: true, cursor_id: 789, successful?: true)
+        instance_double(Mongo::Operation::Result, cursor_id: 789, successful?: true)
       end
 
       it 'sets the cursor_id attribute' do
@@ -112,9 +112,20 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       end
     end
 
+    context 'when result cursor_id is a BSON::Int64' do
+      let(:result) do
+        instance_double(Mongo::Operation::Result, cursor_id: BSON::Int64.new(789), successful?: true)
+      end
+
+      it 'records the cursor id as an Integer' do
+        expect(span).to receive(:set_attribute).with('db.mongodb.cursor_id', 789)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+    end
+
     context 'when result has zero cursor_id' do
       let(:result) do
-        instance_double(Mongo::Operation::Result, has_cursor_id?: true, cursor_id: 0, successful?: true)
+        instance_double(Mongo::Operation::Result, cursor_id: 0, successful?: true)
       end
 
       it 'does not set the cursor_id attribute' do

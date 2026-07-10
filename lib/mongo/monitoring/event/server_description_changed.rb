@@ -58,6 +58,7 @@ module Mongo
         # @api private
         def initialize(address, topology, previous_description, new_description,
                        awaited: false)
+          super()
           @address = address
           @topology = topology
           @previous_description = previous_description

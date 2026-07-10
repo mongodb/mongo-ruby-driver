@@ -54,6 +54,7 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(address, options = {})
+          super()
           @address = address
           @options = options.dup.freeze
           raise ArgumentError, 'App metadata is required' unless (@app_metadata = options[:app_metadata])

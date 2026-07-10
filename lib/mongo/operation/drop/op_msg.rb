@@ -24,6 +24,7 @@ module Mongo
       # @since 2.5.2
       class OpMsg < OpMsgBase
         include ExecutableTransactionLabel
+        include CausalConsistencySupported
       end
     end
   end

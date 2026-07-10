@@ -96,7 +96,10 @@ tests:
             documents:
               - _id: 2
             ordered: true
+            # This retryable write follows an ended transaction in the same
+            # causally consistent session, so it carries afterClusterTime.
             readConcern:
+              afterClusterTime: 42
             lsid: session0
             txnNumber:
               $numberLong: "2"
@@ -139,7 +142,10 @@ tests:
               - _id: 4
               - _id: 5
             ordered: true
+            # This retryable write follows an ended transaction in the same
+            # causally consistent session, so it carries afterClusterTime.
             readConcern:
+              afterClusterTime: 42
             lsid: session0
             txnNumber:
               $numberLong: "4"

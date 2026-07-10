@@ -79,6 +79,7 @@ module Mongo
           # @since 2.9.0
           # @api private
           def initialize(address, id, reason)
+            super()
             @reason = reason
             @address = address
             @connection_id = id

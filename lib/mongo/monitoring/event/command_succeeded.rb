@@ -76,6 +76,7 @@ module Mongo
         def initialize(command_name, database_name, address, request_id,
                        operation_id, reply, duration, started_event:,
                        server_connection_id: nil, service_id: nil)
+          super()
           @command_name = command_name.to_s
           @database_name = database_name
           @address = address

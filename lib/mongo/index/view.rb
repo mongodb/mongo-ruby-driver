@@ -350,7 +350,9 @@ module Mongo
       private
 
       def drop_by_name(name, opts = {})
-        client.send(:with_session, @options) do |session|
+        session_options = @options.dup
+        session_options[:session] = opts[:session] if opts[:session]
+        client.send(:with_session, session_options) do |session|
           spec = {
             db_name: database.name,
             coll_name: collection.name,
