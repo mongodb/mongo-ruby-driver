@@ -804,12 +804,6 @@ Style/IfWithBooleanLiteralBranches:
     - 'lib/mongo/cluster_time.rb'
     - 'lib/mongo/error/sdam_error_detection.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/InfiniteLoop:
-  Exclude:
-    - 'lib/mongo/crypt/context.rb'
-
 # Offense count: 10
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: InverseMethods, InverseBlocks.
