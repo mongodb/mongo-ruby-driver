@@ -815,11 +815,6 @@ Style/InverseMethods:
     - 'spec/spec_tests/sdam_spec.rb'
     - 'spec/support/spec_config.rb'
 
-# Offense count: 1
-Style/ItAssignment:
-  Exclude:
-    - 'spec/integration/cursor_pinning_spec.rb'
-
 # Offense count: 153
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/LineEndConcatenation:
