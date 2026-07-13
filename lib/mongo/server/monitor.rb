@@ -367,7 +367,7 @@ module Mongo
         # may nil @connection from another thread; working on a local copy keeps
         # this check consistent, and the guarded writeback below never clobbers
         # a connection the monitor thread did not itself establish.
-        connection = @connection_lock.synchronize { @connection }
+        connection = self.connection
 
         if connection && connection.pid != Process.pid
           log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{Process.pid}")
