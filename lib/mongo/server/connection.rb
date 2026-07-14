@@ -423,7 +423,8 @@ module Mongo
           generation: e.generation,
           # or description.service_id?
           service_id: e.service_id,
-          stop_push_monitor: true
+          stop_push_monitor: true,
+          network_error: true
         )
         raise
       rescue Error::SocketTimeoutError => e

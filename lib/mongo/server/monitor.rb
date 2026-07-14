@@ -86,14 +86,23 @@ module Mongo
         @sdam_mutex = Mutex.new
         @next_earliest_scan = @next_wanted_scan = Time.now
         @update_mutex = Mutex.new
+        # Guards reads and writes of @connection so the polling connection can
+        # be cancelled from another thread. Per the Server Monitoring spec's
+        # cancelCheck pseudocode, the lock is only held long enough to copy or
+        # assign the reference - never across the blocking check.
+        @connection_lock = Mutex.new
       end
 
       # @return [ Server ] server The server that this monitor is monitoring.
       # @api private
       attr_reader :server
 
-      # @return [ Mongo::Server::Monitor::Connection ] connection The connection to use.
-      attr_reader :connection
+      # @return [ Mongo::Server::Monitor::Connection | nil ] The connection to
+      #   use, read under @connection_lock so callers never observe a stale
+      #   reference after a concurrent cancel_check! clears it.
+      def connection
+        @connection_lock.synchronize { @connection }
+      end
 
       # @return [ Hash ] options The server options.
       attr_reader :options
@@ -159,7 +168,11 @@ module Mongo
         end
       end
 
-      def create_push_monitor!(topology_version)
+      # @param [ Mongo::Server::Monitor::Connection ] connection The freshly
+      #   established monitoring connection. Passed explicitly (rather than read
+      #   from @connection) so a concurrent cancel_check! cannot nil it out from
+      #   under us between establishing it and building the PushMonitor.
+      def create_push_monitor!(topology_version, connection)
         @update_mutex.synchronize do
           @push_monitor = nil if @push_monitor && !@push_monitor.running?
 
@@ -170,7 +183,7 @@ module Mongo
             **Utils.shallow_symbolize_keys(options.merge(
                                              socket_timeout: heartbeat_interval + connection.socket_timeout,
                                              app_metadata: options[:push_monitor_app_metadata],
-                                             check_document: @connection.check_document
+                                             check_document: connection.check_document
                                            ))
           )
         end
@@ -183,6 +196,31 @@ module Mongo
             @push_monitor = nil
           end
         end
+      end
+
+      # Cancel the in-progress check and close the monitoring connection.
+      #
+      # Called when the server is marked Unknown from a network error, per the
+      # Server Monitoring spec ("hello or legacy hello Cancellation"). Stops the
+      # streaming PushMonitor (interrupting its awaited hello read) and closes
+      # the polling connection, so the next check must establish a fresh one
+      # rather than re-validating the server over a possibly-dead socket.
+      #
+      # @api private
+      def cancel_check!
+        stop_push_monitor!
+
+        # Copy the connection reference under the lock, then interrupt and close
+        # it outside the lock. Closing the socket interrupts any in-progress
+        # read on the monitor thread; nil-ing the reference forces the next
+        # check to reconnect. The monitor thread is the only writer of a new
+        # connection, so it is safe for this thread to clear it.
+        connection = @connection_lock.synchronize do
+          conn = @connection
+          @connection = nil
+          conn
+        end
+        connection&.disconnect!
       end
 
       # Perform a check of the server with throttling, and update
@@ -310,7 +348,7 @@ module Mongo
       #
       # @return [ true | false ]
       def rtt_measurement_only?
-        return false if @connection.nil?
+        return false if connection.nil?
 
         # Only suppress the check while the server is in a known state and the
         # PushMonitor is the authoritative streaming source. If the server is
@@ -325,23 +363,30 @@ module Mongo
       end
 
       def check
-        if @connection && @connection.pid != Process.pid
-          log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{@connection.pid}, new pid #{Process.pid}")
-          @connection.disconnect!
-          @connection = nil
+        # Snapshot the connection under the lock. A concurrent cancel_check!
+        # may nil @connection from another thread; working on a local copy keeps
+        # this check consistent, and the guarded writeback below never clobbers
+        # a connection the monitor thread did not itself establish.
+        connection = self.connection
+
+        if connection && connection.pid != Process.pid
+          log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{connection.pid}, new pid #{Process.pid}")
+          connection.disconnect!
+          clear_connection(connection)
+          connection = nil
         end
 
-        if @connection
+        if connection
           result = server.round_trip_time_calculator.measure do
-            doc = @connection.check_document
+            doc = connection.check_document
             cmd = Protocol::Query.new(
               Database::ADMIN, Database::COMMAND, doc, limit: -1
             )
-            message = @connection.dispatch_bytes(cmd.serialize.to_s)
+            message = connection.dispatch_bytes(cmd.serialize.to_s)
             message.documents.first
           rescue Mongo::Error
-            @connection.disconnect!
-            @connection = nil
+            connection.disconnect!
+            clear_connection(connection)
             raise
           end
         else
@@ -350,10 +395,13 @@ module Mongo
           result = server.round_trip_time_calculator.measure do
             connection.handshake!
           end
-          @connection = connection
+          store_connection(connection)
           if (tv_doc = result['topologyVersion'])
             if streaming_enabled?
-              create_push_monitor!(TopologyVersion.new(tv_doc))
+              # Run the instance we just created rather than re-reading the
+              # push_monitor getter: a concurrent cancel_check! may have nil'd
+              # @push_monitor between the two calls.
+              push_monitor = create_push_monitor!(TopologyVersion.new(tv_doc), connection)
               push_monitor.run!
             else
               stop_push_monitor!
@@ -365,6 +413,22 @@ module Mongo
           result
         end
         result
+      end
+
+      # Store a freshly established monitoring connection.
+      def store_connection(connection)
+        @connection_lock.synchronize do
+          @connection = connection
+        end
+      end
+
+      # Clear the monitoring connection, but only if it is still the one passed
+      # in. A concurrent cancel_check! may have already cleared or replaced it,
+      # in which case we must leave the current connection alone.
+      def clear_connection(connection)
+        @connection_lock.synchronize do
+          @connection = nil if @connection.equal?(connection)
+        end
       end
 
       # @note If the system clock is set to a time in the past, this method

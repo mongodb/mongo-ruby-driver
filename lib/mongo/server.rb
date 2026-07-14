@@ -489,7 +489,8 @@ module Mongo
         unknown!(
           generation: e.generation,
           service_id: e.service_id,
-          stop_push_monitor: true
+          stop_push_monitor: true,
+          network_error: true
         )
       end
       raise
@@ -514,11 +515,13 @@ module Mongo
       raise
     rescue Mongo::Error::SocketError, Auth::Unauthorized => e
       # non-timeout network error or auth error, clear the pool and mark the
-      # topology as unknown
+      # topology as unknown. Only a network error makes the monitor connection
+      # suspect; a pure authentication failure must not close it.
       unknown!(
         generation: e.generation,
         service_id: e.service_id,
-        stop_push_monitor: true
+        stop_push_monitor: true,
+        network_error: e.is_a?(Mongo::Error::SocketError)
       )
       raise
     end
@@ -568,8 +571,15 @@ module Mongo
     #   on 4.2+ servers).
     # @option options [ TopologyVersion ] :topology_version Topology version
     #   of the error response that is causing the server to be marked unknown.
-    # @option options [ true | false ] :stop_push_monitor Whether to stop
-    #   the PushMonitor associated with the server, if any.
+    # @option options [ true | false ] :stop_push_monitor Set when the server
+    #   is marked Unknown from a connection-establishment error (e.g. an
+    #   authentication failure). Stops the streaming PushMonitor associated with
+    #   the server, if any.
+    # @option options [ true | false ] :network_error Set when the server is
+    #   marked Unknown from a network error. In addition to stopping the
+    #   PushMonitor, cancels the monitor's in-progress check and closes its
+    #   connection so the next check must establish a fresh one, per the Server
+    #   Monitoring spec.
     # @option options [ Object ] :service_id Discard state for the specified
     #   service id only.
     #
@@ -605,7 +615,17 @@ module Mongo
         return
       end
 
-      monitor&.stop_push_monitor! if options[:stop_push_monitor]
+      if options[:network_error]
+        # A network error implies every connection to the server is suspect
+        # (Server Monitoring spec, "hello or legacy hello Cancellation"): cancel
+        # the monitor's in-progress check and close its connection so the next
+        # check must establish a fresh one.
+        monitor&.cancel_check!
+      elsif options[:stop_push_monitor]
+        # Non-network errors (e.g. an authentication failure) only tear down the
+        # streaming PushMonitor; the monitor's connection is not suspect.
+        monitor&.stop_push_monitor!
+      end
 
       # SDAM flow will update description on the server without in-place
       # mutations and invoke SDAM transitions as needed.

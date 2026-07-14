@@ -104,6 +104,50 @@ describe Mongo::Server do
     end
   end
 
+  describe '#unknown!' do
+    # Per the Server Monitoring spec, marking a server Unknown from a network
+    # error MUST cancel the monitor's in-progress check and close its
+    # connection. A non-network connection error (e.g. an auth failure) only
+    # tears down the streaming PushMonitor.
+    let(:monitor) do
+      double('monitor').tap do |monitor|
+        allow(monitor).to receive(:cancel_check!)
+        allow(monitor).to receive(:stop_push_monitor!)
+        # Called by server teardown (register_server -> close -> monitor.stop!).
+        allow(monitor).to receive(:stop!)
+      end
+    end
+
+    before do
+      allow(server).to receive(:monitor).and_return(monitor)
+      allow(cluster).to receive(:run_sdam_flow)
+    end
+
+    context 'when the network_error option is true' do
+      it 'cancels the monitor check' do
+        expect(monitor).to receive(:cancel_check!)
+        expect(monitor).not_to receive(:stop_push_monitor!)
+        server.unknown!(stop_push_monitor: true, network_error: true)
+      end
+    end
+
+    context 'when only the stop_push_monitor option is true' do
+      it 'stops the push monitor but does not cancel the check' do
+        expect(monitor).to receive(:stop_push_monitor!)
+        expect(monitor).not_to receive(:cancel_check!)
+        server.unknown!(stop_push_monitor: true)
+      end
+    end
+
+    context 'when neither option is set' do
+      it 'does not touch the monitor' do
+        expect(monitor).not_to receive(:cancel_check!)
+        expect(monitor).not_to receive(:stop_push_monitor!)
+        server.unknown!
+      end
+    end
+  end
+
   describe '#disconnect!' do
     context 'with monitoring io' do
       include_context 'with monitoring io'
