@@ -84,6 +84,7 @@ module Mongo
                        operation_id, command, socket_object_id: nil, connection_id: nil,
                        connection_generation: nil, server_connection_id: nil,
                        service_id: nil)
+          super()
           @command_name = command_name.to_s
           @database_name = database_name
           @address = address

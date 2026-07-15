@@ -22,6 +22,7 @@ module Mongo
   module ChangeStreams
     class ChangeStreamsTest < Mongo::CRUD::CRUDTestBase
       def initialize(crud_spec, test, collection_name, collection2_name, database_name, database2_name)
+        super()
         @spec = crud_spec
         @description = test['description']
 

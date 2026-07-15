@@ -43,6 +43,7 @@ module Mongo
           #
           # @api private
           def initialize(address, service_id: nil, interrupt_in_use_connections: nil)
+            super()
             @address = address
             @service_id = service_id
             @options = {}

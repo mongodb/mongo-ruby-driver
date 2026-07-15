@@ -23,6 +23,7 @@ module Mongo
       extend Forwardable
 
       def initialize(socket, server, monitoring, options = {})
+        super()
         @socket = socket
         @options = options
         @server = server
