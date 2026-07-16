@@ -29,8 +29,12 @@ echo "Running specs"
 export SFP_TESTING=1
 
 if test -f secrets-export.sh; then
+  # Disable xtrace while sourcing so the secret values are not echoed into
+  # the Evergreen task logs, then restore it.
+  set +x
   # shellcheck disable=SC1091
   . ./secrets-export.sh
+  set -x
 fi
 
 bundle exec rspec spec/sfp \
