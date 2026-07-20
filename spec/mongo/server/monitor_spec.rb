@@ -269,6 +269,83 @@ describe Mongo::Server::Monitor do
     end
   end
 
+  describe '#cancel_check!' do
+    # Per the Server Monitoring spec ("hello or legacy hello Cancellation"),
+    # when a server is marked Unknown from an application network error the
+    # monitor MUST cancel its in-progress check and close the current
+    # monitoring connection, so the next check runs over a freshly established
+    # connection.
+
+    context 'when a monitoring connection is established' do
+      let(:existing_connection) do
+        double('monitor connection').tap do |conn|
+          allow(conn).to receive(:disconnect!)
+        end
+      end
+
+      before do
+        monitor.instance_variable_set(:@connection, existing_connection)
+      end
+
+      it 'closes the monitoring connection' do
+        expect(existing_connection).to receive(:disconnect!)
+        monitor.cancel_check!
+      end
+
+      it 'clears the monitoring connection so the next check reconnects' do
+        monitor.cancel_check!
+        expect(monitor.connection).to be_nil
+      end
+    end
+
+    context 'when there is no monitoring connection' do
+      it 'does not raise' do
+        expect(monitor.connection).to be_nil
+        expect { monitor.cancel_check! }.not_to raise_error
+      end
+    end
+
+    context 'when a push monitor is running' do
+      let(:running_push_monitor) do
+        double('push monitor').tap do |push_monitor|
+          allow(push_monitor).to receive(:running?).and_return(true)
+          allow(push_monitor).to receive(:stop!)
+        end
+      end
+
+      before do
+        monitor.instance_variable_set(:@push_monitor, running_push_monitor)
+      end
+
+      it 'stops the push monitor' do
+        expect(running_push_monitor).to receive(:stop!)
+        monitor.cancel_check!
+        expect(monitor.push_monitor).to be_nil
+      end
+    end
+
+    context 'when in the polling protocol with a live server' do
+      let(:monitor_options) do
+        { server_monitoring_mode: :poll }
+      end
+
+      before do
+        monitor.scan!
+        expect(monitor.connection).not_to be_nil
+      end
+
+      it 'establishes a fresh connection on the next check' do
+        old_connection = monitor.connection
+        monitor.cancel_check!
+        expect(monitor.connection).to be_nil
+
+        monitor.scan!
+        expect(monitor.connection).not_to be_nil
+        expect(monitor.connection).not_to equal(old_connection)
+      end
+    end
+  end
+
   # heartbeat interval is now taken out of cluster, monitor has no useful options
   #   describe '#heartbeat_frequency' do
   #

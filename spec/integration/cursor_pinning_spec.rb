@@ -72,7 +72,7 @@ describe 'Cursor pinning' do
         enum = view.to_enum
         expect_any_instance_of(Mongo::Cursor).to receive(:check_in_connection)
         # Drain the cursor
-        enum.each { |it| it.nil? }
+        enum.each { |doc| doc.nil? }
       end
     end
 

@@ -5,8 +5,8 @@ require 'spec_helper'
 describe Mongo::Monitoring::CommandLogSubscriber do
   describe '#started' do
     let(:filter) do
-      (1...100).each_with_object({}) do |i, hash|
-        hash[i] = i
+      (1...100).to_h do |i|
+        [ i, i ]
       end
     end
 

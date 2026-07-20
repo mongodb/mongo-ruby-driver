@@ -74,12 +74,15 @@ module Mongo
       #
       # @since 2.5.0
       def initialize(message, compressor, zlib_compression_level = nil)
+        super()
         @original_message = message
         @original_op_code = message.op_code
         @uncompressed_size = 0
         @compressor_id = COMPRESSOR_ID_MAP[compressor]
         @compressed_message = ''
         @zlib_compression_level = zlib_compression_level if zlib_compression_level && zlib_compression_level != -1
+        # A compressed message must reuse the wrapped message's request id,
+        # overriding the fresh id assigned by the superclass initializer.
         @request_id = message.request_id
       end
 

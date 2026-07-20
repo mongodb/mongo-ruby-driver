@@ -25,6 +25,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(crud_spec, data, test)
+        super()
         @spec = crud_spec
         @data = data
         @description = test['description']

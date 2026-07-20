@@ -88,6 +88,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(server, options = {})
+        super()
         if server.load_balancer? && options[:generation]
           raise ArgumentError, 'Generation cannot be set when server is a load balancer'
         end
@@ -422,7 +423,8 @@ module Mongo
           generation: e.generation,
           # or description.service_id?
           service_id: e.service_id,
-          stop_push_monitor: true
+          stop_push_monitor: true,
+          network_error: true
         )
         raise
       rescue Error::SocketTimeoutError => e

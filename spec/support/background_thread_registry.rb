@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'singleton'
-require 'ostruct'
 
 module Mongo
   module BackgroundThread
@@ -18,6 +17,8 @@ end
 class BackgroundThreadRegistry
   include Singleton
 
+  Record = Struct.new(:thread, :object, :example, keyword_init: true)
+
   def initialize
     @lock = Mutex.new
     @records = []
@@ -25,7 +26,7 @@ class BackgroundThreadRegistry
 
   def register(object, thread)
     @lock.synchronize do
-      @records << OpenStruct.new(
+      @records << Record.new(
         thread: thread,
         object: object,
         # When rake spec:prepare is run, the current_example method is not defined

@@ -33,6 +33,7 @@ module Mongo
         #
         # @since 2.4.0
         def initialize(topology)
+          super()
           @topology = topology
         end
 

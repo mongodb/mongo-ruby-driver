@@ -1058,7 +1058,11 @@ module Mongo
           @server.unknown!(
             generation: e.generation,
             service_id: e.service_id,
-            stop_push_monitor: true
+            stop_push_monitor: true,
+            # Only a network error makes the monitor connection suspect and
+            # requires cancelling its check; an auth failure does not.
+            network_error: e.is_a?(Mongo::Error::SocketError) ||
+              e.is_a?(Mongo::Error::SocketTimeoutError)
           )
         end
         connection.disconnect!(reason: :error)

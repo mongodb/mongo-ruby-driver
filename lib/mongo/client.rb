@@ -267,7 +267,7 @@ module Mongo
     # @option options [ true | false ] :enable_overload_retargeting Whether
     #   the driver deprioritizes a server that returns an overload error,
     #   reducing the likelihood of retrying on the same overloaded server.
-    #   This option works with MongoDB Server Version 9.0 and above.
+    #   This option works with MongoDB Atlas Server Version 9.0 and above.
     #   Default: false.
     # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
     #   for the server monitor to refresh its description via hello.
@@ -283,7 +283,7 @@ module Mongo
     #   version of the driver.
     # @option options [ Integer ] :max_adaptive_retries The maximum number of
     #   retries to attempt when the driver encounters overload errors. This
-    #   option works with MongoDB Server Version 9.0 and above. Default: 2.
+    #   option works with MongoDB Atlas Server Version 9.0 and above. Default: 2.
     # @option options [ Integer ] :max_connecting The maximum number of
     #  connections that can be connecting simultaneously. The default is 2.
     #  This option should be increased if there are many threads that share

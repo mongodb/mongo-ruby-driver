@@ -123,9 +123,11 @@ module Mongo
           raise Error::MismatchedDomain.new(format(MISMATCHED_DOMAINNAME, record_host, srv_host_domain))
         end
 
-        unless (record_host_parts.size > srv_host_domain.size) && (srv_host_domain == record_host_parts[-srv_host_domain.size..-1])
-          raise Error::MismatchedDomain.new(format(MISMATCHED_DOMAINNAME, record_host, srv_host_domain))
-        end
+        record_matches_domain = (record_host_parts.size > srv_host_domain.size) &&
+                                (srv_host_domain == record_host_parts[-srv_host_domain.size..-1])
+        return if record_matches_domain
+
+        raise Error::MismatchedDomain.new(format(MISMATCHED_DOMAINNAME, record_host, srv_host_domain))
       end
     end
   end

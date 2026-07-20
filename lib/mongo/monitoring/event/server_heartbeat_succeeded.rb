@@ -35,6 +35,7 @@ module Mongo
         # @since 2.7.0
         # @api private
         def initialize(address, round_trip_time, started_event:, awaited: false)
+          super()
           @address = address
           @round_trip_time = round_trip_time
           @awaited = !!awaited

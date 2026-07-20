@@ -42,6 +42,7 @@ module Mongo
       #
       # @since 2.6.0
       def initialize(crud_spec, data, test, expectations_bson_types: true)
+        super()
         test = IceNine.deep_freeze(test)
         @spec = crud_spec
         @data = data || []

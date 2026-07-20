@@ -40,6 +40,7 @@ module Mongo
         # @since 2.7.0
         # @api private
         def initialize(address, awaited: false)
+          super()
           @address = address
           @awaited = !!awaited
         end
