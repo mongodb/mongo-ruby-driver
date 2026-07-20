@@ -87,7 +87,7 @@ module Mongo
           strategy = URI_OPTION_MAP[key.downcase]
           if strategy.nil?
             log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
-            return
+            next
           end
 
           group = strategy[:group]
@@ -391,7 +391,7 @@ module Mongo
       # @return [ Array<true | false> | nil ] The string.
       def stringify_repeated_bool(value)
         rep = revert_repeated_bool(value)
-        if rep&.is_a?(Array)
+        if rep.is_a?(Array)
           rep.join(',')
         else
           rep

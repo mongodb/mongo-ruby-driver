@@ -76,7 +76,7 @@ module Mongo
       # This method is not currently unit tested. It is integration tested
       # in spec/integration/explicit_encryption_spec.rb
       def run_state_machine(timeout_holder)
-        while true
+        loop do
           timeout_ms = timeout_holder.remaining_timeout_ms!
           case state
           when :error

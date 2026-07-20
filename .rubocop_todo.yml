@@ -13,29 +13,10 @@ Lint/IncompatibleIoSelectWithFiberScheduler:
     - 'lib/mongo/socket/ssl.rb'
     - 'lib/mongo/socket/tcp.rb'
 
-# Offense count: 1
-Lint/MixedRegexpCaptureTypes:
-  Exclude:
-    - 'lib/mongo/crypt/binding.rb'
-
 # Offense count: 2
 Lint/NextWithoutAccumulator:
   Exclude:
     - 'lib/mongo/operation/shared/result/aggregatable.rb'
-
-# Offense count: 1
-Lint/NonLocalExitFromIterator:
-  Exclude:
-    - 'lib/mongo/uri/options_mapper.rb'
-
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-# Configuration parameters: AllowedMethods, InferNonNilReceiver, AdditionalNilMethods.
-# AllowedMethods: instance_of?, kind_of?, is_a?, eql?, respond_to?, equal?
-# AdditionalNilMethods: present?, blank?, try, try!
-Lint/RedundantSafeNavigation:
-  Exclude:
-    - 'lib/mongo/uri/options_mapper.rb'
 
 # Offense count: 12
 Lint/RescueException:
@@ -662,12 +643,6 @@ Style/ClassVars:
   Exclude:
     - 'lib/mongo/id.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/CommentedKeyword:
-  Exclude:
-    - 'lib/mongo/auth/stringprep/unicode_normalize/normalize.rb'
-
 # Offense count: 16
 # Configuration parameters: AllowedConstants.
 Style/Documentation:
@@ -768,13 +743,6 @@ Style/GlobalVars:
     - 'spec/runners/unified/test.rb'
     - 'spec/support/sdam_formatter_integration.rb'
 
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: MinBodyLength, AllowConsecutiveConditionals.
-Style/GuardClause:
-  Exclude:
-    - 'lib/mongo/srv/result.rb'
-
 # Offense count: 10
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: AllowSplatArgument.
@@ -830,12 +798,6 @@ Style/IfWithBooleanLiteralBranches:
     - 'lib/mongo/cluster_time.rb'
     - 'lib/mongo/error/sdam_error_detection.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/InfiniteLoop:
-  Exclude:
-    - 'lib/mongo/crypt/context.rb'
-
 # Offense count: 10
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: InverseMethods, InverseBlocks.
@@ -846,11 +808,6 @@ Style/InverseMethods:
     - 'spec/runners/unified/test.rb'
     - 'spec/spec_tests/sdam_spec.rb'
     - 'spec/support/spec_config.rb'
-
-# Offense count: 1
-Style/ItAssignment:
-  Exclude:
-    - 'spec/integration/cursor_pinning_spec.rb'
 
 # Offense count: 153
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -864,23 +821,12 @@ Style/MapIntoArray:
     - 'spec/integration/query_cache_spec.rb'
     - 'spec/mongo/session/session_pool_spec.rb'
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/MapJoin:
-  Exclude:
-    - 'spec/runners/crud/requirement.rb'
-
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/MapToHash:
   Exclude:
     - 'spec/runners/transactions/test.rb'
     - 'spec/runners/unified/test.rb'
-
-# Offense count: 1
-Style/MixinUsage:
-  Exclude:
-    - 'bin/mongo_console'
 
 # Offense count: 12
 Style/MultilineBlockChain:
@@ -925,11 +871,6 @@ Style/OneClassPerFile:
     - 'spec/support/background_thread_registry.rb'
     - 'spec/support/client_registry.rb'
 
-# Offense count: 1
-Style/OpenStructUse:
-  Exclude:
-    - 'spec/support/background_thread_registry.rb'
-
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
 Style/PredicateWithKind:
@@ -959,12 +900,6 @@ Style/PreferredHashMethods:
 Style/RaiseArgs:
   Enabled: false
 
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/ReduceToHash:
-  Exclude:
-    - 'spec/mongo/monitoring/command_log_subscriber_spec.rb'
-
 # Offense count: 3
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: Methods.
@@ -972,14 +907,6 @@ Style/RedundantArgument:
   Exclude:
     - 'lib/mongo/auth/scram_conversation_base.rb'
     - 'lib/mongo/auth/stringprep/unicode_normalize/normalize.rb'
-
-# Offense count: 1
-# This cop supports safe autocorrection (--autocorrect).
-# Configuration parameters: AllowedMethods.
-# AllowedMethods: infinite?, nonzero?
-Style/RedundantCondition:
-  Exclude:
-    - 'lib/mongo/session.rb'
 
 # Offense count: 2
 # This cop supports unsafe autocorrection (--autocorrect-all).
@@ -1029,12 +956,6 @@ Style/SelectByKind:
   Exclude:
     - 'spec/integration/step_down_spec.rb'
     - 'spec/mongo/server/connection_pool_spec.rb'
-
-# Offense count: 1
-# This cop supports unsafe autocorrection (--autocorrect-all).
-Style/SelectByRegexp:
-  Exclude:
-    - 'spec/spec_tests/transactions_unified_spec.rb'
 
 # Offense count: 13
 # This cop supports unsafe autocorrection (--autocorrect-all).

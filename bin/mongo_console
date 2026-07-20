@@ -4,8 +4,8 @@
 $LOAD_PATH[0, 0] = File.join(File.dirname(__FILE__), '..', 'lib')
 
 require 'mongo'
-# include the mongo namespace
-include Mongo
+# include the mongo namespace so its constants are available unqualified
+Object.include(Mongo)
 
 begin
   require 'pry'

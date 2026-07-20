@@ -459,13 +459,9 @@ module Mongo
       @inside_with_transaction = true
       @with_transaction_timeout_ms = options&.dig(:timeout_ms) || @options[:default_timeout_ms] || @client.timeout_ms
       @with_transaction_deadline = calculate_with_transaction_deadline(options)
-      deadline = if @with_transaction_deadline
-                   # CSOT enabled, so we have a customer defined deadline.
-                   @with_transaction_deadline
-                 else
-                   # CSOT not enabled, so we use the default deadline, 120 seconds.
-                   Utils.monotonic_time + 120
-                 end
+      # When CSOT is enabled we have a customer defined deadline; otherwise
+      # fall back to the default deadline, 120 seconds.
+      deadline = @with_transaction_deadline || (Utils.monotonic_time + 120)
       transaction_in_progress = false
       transaction_attempt = 0
       last_error = nil
