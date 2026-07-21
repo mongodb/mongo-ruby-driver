@@ -414,15 +414,13 @@ Install and Configure mongocryptd: https://www.mongodb.com/docs/manual/core/quer
 Install libmongocrypt on your machine:
 
 Option 1: Download a pre-built binary
-- Download a tarball of all libmongocrypt variations from this link:
-    https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz
-- Unzip the file you downloaded. You will see a list of folders, each
-    corresponding to an operating system. Find the folder that matches
-    your operating system and open it.
-- Inside that folder, open the folder called "nocrypto." In either the
-    lib or lb64 folder, you will find the libmongocrypt.so or
-    libmongocrypt.dylib or libmongocrypt.dll file, depending on your OS.
-- Move that file to wherever you want to keep it on your machine.
+- Follow the install steps in the MongoDB documentation:
+    https://www.mongodb.com/docs/manual/core/csfle/reference/libmongocrypt
+- Alternatively, download a pre-built binary tarball from the libmongocrypt
+    GitHub releases page: https://github.com/mongodb/libmongocrypt/releases/latest
+- Extract the tarball. Find the libmongocrypt.so, libmongocrypt.dylib, or
+    libmongocrypt.dll file (depending on your OS) and move it to wherever you
+    want to keep it on your machine.
 
 Option 2: Build from source
 - To build libmongocrypt from source, follow the instructions in the README on the libmongocrypt GitHub repo: https://github.com/mongodb/libmongocrypt

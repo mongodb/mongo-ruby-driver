@@ -224,31 +224,19 @@ if test -n "$FLE"; then
   if [[ "$FLE" == "helper" || "$FLE" == "mongocryptd" ]]; then
     echo "Using helper gem"
   elif test "$FLE" = path; then
-    if false; then
-      # We would ideally like to use the actual libmongocrypt binary here,
-      # however there isn't a straightforward way to obtain a binary that
-      # 1) is of a release version and 2) doesn't contain crypto.
-      # These could be theoretically spelunked out of libmongocrypt's
-      # evergreen tasks.
-      curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
-      tar xf libmongocrypt-all.tar.gz
+    # Install the helper gem to obtain the libmongocrypt binary.
+    gem install libmongocrypt-helper --pre
 
-      export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/nocrypto/lib64/libmongocrypt.so
-    else
-      # So, install the helper for the binary.
-      gem install libmongocrypt-helper --pre
-
-      # https://stackoverflow.com/questions/19072070/how-to-find-where-gem-files-are-installed
-      path=$(find `gem env |grep INSTALLATION |awk -F: '{print $2}'` -name libmongocrypt.so |head -1 || true)
-      if test -z "$path"; then
-        echo Failed to find libmongocrypt.so in installed gems 1>&2
-        exit 1
-      fi
-      cp $path .
-      export LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt.so
-
-      gem uni libmongocrypt-helper
+    # https://stackoverflow.com/questions/19072070/how-to-find-where-gem-files-are-installed
+    path=$(find `gem env |grep INSTALLATION |awk -F: '{print $2}'` -name libmongocrypt.so |head -1 || true)
+    if test -z "$path"; then
+      echo Failed to find libmongocrypt.so in installed gems 1>&2
+      exit 1
     fi
+    cp $path .
+    export LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt.so
+
+    gem uni libmongocrypt-helper
     test -f "$LIBMONGOCRYPT_PATH"
     ldd "$LIBMONGOCRYPT_PATH"
   else
