@@ -28,3 +28,18 @@ tests:
         auth: ~
         options:
               tls: true
+    -
+        description: Colon in a key value pair
+        uri: mongodb://example.com/?authMechanismProperties=TOKEN_RESOURCE:mongodb://test-cluster,ENVIRONMENT:azure
+        valid: true
+        warning: false
+        hosts:
+            -
+                type: hostname
+                host: example.com
+                port: ~
+        auth: ~
+        options:
+            authmechanismproperties:
+                token_resource: 'mongodb://test-cluster'
+                environment: azure

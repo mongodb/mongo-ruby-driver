@@ -242,7 +242,11 @@ module Mongo
     #   printed to the mongod logs upon establishing a connection
     # @option options [ Symbol ] :auth_mech The authentication mechanism to
     #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256
-    # @option options [ Hash ] :auth_mech_properties
+    # @option options [ Hash ] :auth_mech_properties When passed in a
+    #   connection string as authMechanismProperties, key-value pairs are
+    #   delimited by commas, so a value containing a comma (",") must not be
+    #   provided as part of the connection string. Such a value must be passed
+    #   through this option instead. Values may contain colons (":").
     # @option options [ String ] :auth_source The source to authenticate from.
     # @option options [ true | false | nil | Integer ] :bg_error_backtrace
     #   Experimental. Set to true to log complete backtraces for errors in
