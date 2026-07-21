@@ -203,7 +203,7 @@ module Mongo
       # Send the logs from libmongocrypt to the Mongo::Logger
       def set_logger_callback
         @log_callback = proc do |level, msg|
-          @logger.send(level, msg)
+          @logger.public_send(level, msg)
         end
 
         Binding.setopt_log_handler(@mongocrypt, @log_callback)

@@ -172,7 +172,6 @@ module Mongo
         @monitoring
       end
     end
-    private :monitoring
 
     # Determine if this client is equivalent to another object.
     #
@@ -796,10 +795,10 @@ module Mongo
     def with(new_options = nil)
       clone.tap do |client|
         opts = client.update_options(new_options || Options::Redacted.new)
-        Database.create(client)
+        client.reset_database!
         # We can't use the same cluster if some options that would affect it
         # have changed.
-        Cluster.create(client, monitoring: opts[:monitoring]) if cluster_modifying?(opts)
+        client.reset_cluster!(monitoring: opts[:monitoring]) if cluster_modifying?(opts)
       end
     end
 
@@ -853,6 +852,31 @@ module Mongo
         validate_options!
         validate_authentication_options!
       end
+    end
+
+    # Replaces this client's database with a fresh instance built from the
+    # client's current options. Used by #with so a reconfigured client does
+    # not share its database with the client it was cloned from.
+    #
+    # @api private
+    def reset_database!
+      @database = Database.new(self, options[:database], options)
+    end
+
+    # Replaces this client's cluster with a fresh instance built from the
+    # client's current options. Used by #with so a reconfigured client does
+    # not share its cluster with the client it was cloned from.
+    #
+    # @param [ Monitoring | nil ] monitoring The monitoring instance to use
+    #   with the new cluster. If nil, a new instance of Monitoring is created.
+    #
+    # @api private
+    def reset_cluster!(monitoring: nil)
+      @cluster = Cluster.new(
+        cluster.addresses.map(&:to_s),
+        monitoring || Monitoring.new,
+        cluster_options
+      )
     end
 
     # Get the read concern for this client.

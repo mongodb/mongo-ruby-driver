@@ -227,7 +227,7 @@ module Mongo
         #
         # @since 2.5.0
         def execute
-          view.send(:with_session, @options) do |session|
+          view.with_session(@options) do |session|
             write_concern = view.write_concern_with_session(session)
             context = Operation::Context.new(client: client, session: session)
             nro_write_with_retry(write_concern, context: context) do |connection, _txn_num, context|
@@ -241,7 +241,7 @@ module Mongo
         OUT_ACTIONS = %i[replace merge reduce].freeze
 
         def server_selector
-          @view.send(:server_selector)
+          @view.server_selector
         end
 
         def inline?

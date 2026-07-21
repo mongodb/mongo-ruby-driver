@@ -212,7 +212,7 @@ module Mongo
           end
 
           def ensure_indexes!
-            fs.send(:ensure_indexes!, @timeout_holder)
+            fs.ensure_indexes!(@timeout_holder)
           end
 
           def ensure_open!
