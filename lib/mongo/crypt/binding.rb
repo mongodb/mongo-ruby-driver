@@ -1106,10 +1106,20 @@ module Mongo
       def self.check_kms_ctx_status(kms_context)
         return if yield
 
+        kms_ctx_status(kms_context).raise_crypt_error(kms: true)
+      end
+
+      # Read the status information for the given KmsContext into a Status
+      # object without raising.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
+      #
+      # @return [ Mongo::Crypt::Status ] The KMS context status.
+      def self.kms_ctx_status(kms_context)
         status = Status.new
 
         mongocrypt_kms_ctx_status(kms_context.kms_ctx_p, status.ref)
-        status.raise_crypt_error(kms: true)
+        status
       end
 
       # @!method self.mongocrypt_kms_ctx_usleep(ctx)

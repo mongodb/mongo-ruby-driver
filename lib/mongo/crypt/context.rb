@@ -170,10 +170,27 @@ module Mongo
             raise unless e.network_error?
             next if Binding.kms_ctx_fail(kms_context)
 
-            raise
+            raise_kms_retry_error(kms_context, e)
           end
         end
         Binding.ctx_kms_done(self)
+      end
+
+      # Raise a KmsError that wraps the KMS status message (which describes the
+      # retry exhaustion) with the error from the last attempt.
+      #
+      # @param [ Mongo::Crypt::KmsContext ] kms_context
+      # @param [ Mongo::Error::KmsError ] last_error The error from the last
+      #   KMS request attempt.
+      #
+      # @raise [ Mongo::Error::KmsError ]
+      def raise_kms_retry_error(kms_context, last_error)
+        status = Binding.kms_ctx_status(kms_context)
+        raise Error::KmsError.new(
+          "#{status.message}, last attempt failed with: #{last_error.message}",
+          code: status.code,
+          network_error: true
+        )
       end
 
       # Indicate that state machine is done feeding I/O responses back to libmongocrypt

@@ -62,7 +62,7 @@ describe 'KMS Retry Prose Spec' do
       simulate_failure('network', 4)
       expect do
         client_encryption.create_data_key(kms_provider, master_key: master_key)
-      end.to raise_error(Mongo::Error::KmsError)
+      end.to raise_error(Mongo::Error::KmsError, /last attempt failed with:/)
     end
   end
 
