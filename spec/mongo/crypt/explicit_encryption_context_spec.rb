@@ -250,6 +250,27 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
           end
         end
 
+        context 'with substring query_type and string_opts' do
+          let(:string_opts) do
+            {
+              case_sensitive: true,
+              diacritic_sensitive: true,
+              substring: { str_max_length: 10, str_min_query_length: 2, str_max_query_length: 10 },
+            }
+          end
+
+          it 'initializes context' do
+            expect do
+              described_class.new(
+                mongocrypt,
+                io,
+                value,
+                options.merge(query_type: 'substring', contention_factor: 0, string_opts: string_opts)
+              )
+            end.not_to raise_error
+          end
+        end
+
         context 'without string_opts' do
           it 'raises an exception' do
             expect do
