@@ -138,7 +138,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
               value,
               options.merge(query_type: 'equality')
             )
-          end.to raise_error(ArgumentError, /query_type is allowed only for "Indexed" or "Range" algorithm/)
+          end.to raise_error(ArgumentError, /query_type is allowed only for "Indexed", "Range", or "String" algorithms/)
         end
       end
 
@@ -153,7 +153,7 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
               value,
               options.merge(contention_factor: 10)
             )
-          end.to raise_error(ArgumentError, /contention_factor is allowed only for "Indexed" or "Range" algorithm/)
+          end.to raise_error(ArgumentError, /contention_factor is allowed only for "Indexed", "Range", or "String" algorithms/)
         end
       end
 
@@ -200,6 +200,66 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
                 options.merge(contention_factor: 10)
               )
             end.not_to raise_error
+          end
+        end
+      end
+
+      context 'with String algorithm' do
+        let(:algorithm) { 'String' }
+        let(:key_alt_name) { nil }
+
+        let(:string_opts) do
+          {
+            case_sensitive: true,
+            diacritic_sensitive: true,
+            prefix: { str_min_query_length: 2, str_max_query_length: 10 },
+          }
+        end
+
+        context 'with prefix query_type and string_opts' do
+          it 'initializes context' do
+            expect do
+              described_class.new(
+                mongocrypt,
+                io,
+                value,
+                options.merge(query_type: 'prefix', contention_factor: 0, string_opts: string_opts)
+              )
+            end.not_to raise_error
+          end
+        end
+
+        context 'with suffix query_type and string_opts' do
+          let(:string_opts) do
+            {
+              case_sensitive: false,
+              diacritic_sensitive: false,
+              suffix: { str_min_query_length: 2, str_max_query_length: 10 },
+            }
+          end
+
+          it 'initializes context' do
+            expect do
+              described_class.new(
+                mongocrypt,
+                io,
+                value,
+                options.merge(query_type: 'suffix', contention_factor: 0, string_opts: string_opts)
+              )
+            end.not_to raise_error
+          end
+        end
+
+        context 'without string_opts' do
+          it 'raises an exception' do
+            expect do
+              described_class.new(
+                mongocrypt,
+                io,
+                value,
+                options.merge(query_type: 'prefix', contention_factor: 0)
+              )
+            end.to raise_error(ArgumentError, /:string_opts is required for the "String" algorithm/)
           end
         end
       end
