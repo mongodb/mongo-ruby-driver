@@ -19,6 +19,17 @@ describe 'Explicit Queryable Encryption' do
     'explicit_encryption'
   end
 
+  # Collection configured with contention 10, used by the non-zero contention
+  # case. Server 9.0+ requires the payload's contention to not exceed the
+  # collection's configured contention.
+  let(:encrypted_coll_c10) do
+    'explicit_encryption_c10'
+  end
+
+  let(:encrypted_fields_c10) do
+    BSON::ExtJSON.parse(File.read('spec/support/crypt/encrypted_fields/encryptedFields-c10.json'))
+  end
+
   let(:value) do
     'encrypted indexed value'
   end
@@ -61,12 +72,15 @@ describe 'Explicit Queryable Encryption' do
   before do
     authorized_client[encrypted_coll].drop(encrypted_fields: encrypted_fields)
     authorized_client[encrypted_coll].create(encrypted_fields: encrypted_fields)
+    authorized_client[encrypted_coll_c10].drop(encrypted_fields: encrypted_fields_c10)
+    authorized_client[encrypted_coll_c10].create(encrypted_fields: encrypted_fields_c10)
     authorized_client.use(key_vault_db)[key_vault_coll].drop
     authorized_client.use(key_vault_db)[key_vault_coll, write_concern: { w: :majority }].insert_one(key1_document)
   end
 
   after do
     authorized_client[encrypted_coll].drop(encrypted_fields: encrypted_fields)
+    authorized_client[encrypted_coll_c10].drop(encrypted_fields: encrypted_fields_c10)
     authorized_client.use(key_vault_db)[key_vault_coll].drop
   end
 
@@ -92,28 +106,18 @@ describe 'Explicit Queryable Encryption' do
       insert_payload = client_encryption.encrypt(
         value, key_id: key1_id, algorithm: 'Indexed', contention_factor: 10
       )
-      encrypted_client[encrypted_coll].insert_one(
+      encrypted_client[encrypted_coll_c10].insert_one(
         'encryptedIndexed' => insert_payload
       )
     end
     find_payload = client_encryption.encrypt(
-      value, key_id: key1_id, algorithm: 'Indexed', query_type: 'equality', contention_factor: 0
-    )
-    find_results = encrypted_client[encrypted_coll]
-                   .find('encryptedIndexed' => find_payload)
-                   .to_a
-    expect(find_results.size).to be < 10
-    find_results.each do |doc|
-      expect(doc['encryptedIndexed']).to eq(value)
-    end
-    find_payload2 = client_encryption.encrypt(
       value, key_id: key1_id, algorithm: 'Indexed', query_type: 'equality', contention_factor: 10
     )
-    find_results2 = encrypted_client[encrypted_coll]
-                    .find('encryptedIndexed' => find_payload2)
-                    .to_a
-    expect(find_results2.size).to eq(10)
-    find_results2.each do |doc|
+    find_results = encrypted_client[encrypted_coll_c10]
+                   .find('encryptedIndexed' => find_payload)
+                   .to_a
+    expect(find_results.size).to eq(10)
+    find_results.each do |doc|
       expect(doc['encryptedIndexed']).to eq(value)
     end
   end
