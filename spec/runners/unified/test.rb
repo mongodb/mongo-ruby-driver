@@ -375,9 +375,17 @@ module Unified
     def set_initial_data
       @spec['initialData']&.each do |entity_spec|
         spec = UsingHash[entity_spec]
-        collection = root_authorized_client.with(write_concern: { w: :majority })
-                                           .use(spec.use!('databaseName'))[spec.use!('collectionName')]
+        database = root_authorized_client.with(write_concern: { w: :majority })
+                                         .use(spec.use!('databaseName'))
+        collection_name = spec.use!('collectionName')
+        collection = database[collection_name]
         collection.drop
+        # Queryable Encryption stores tag counts in the metadata collections
+        # enxcol_.<coll>.esc/.ecoc. They must be dropped alongside the data
+        # collection so that __safeContent__ is reproducible for exact matching.
+        # See the unified test format spec, initialData setup.
+        database["enxcol_.#{collection_name}.esc"].drop
+        database["enxcol_.#{collection_name}.ecoc"].drop
         create_options = spec.use('createOptions') || {}
         docs = spec.use!('documents')
         begin
