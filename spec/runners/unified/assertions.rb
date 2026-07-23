@@ -285,7 +285,12 @@ module Unified
           end
         end
       else
-        actual = actual.value if expected.is_a?(Integer) && actual.is_a?(BSON::Int64)
+        # Numbers match by value regardless of BSON integer width. Normalize
+        # BSON::Int64/Int32 wrappers to their plain numeric value on both sides
+        # so e.g. BSON::Int64(3) and 3 compare equal (the unified format only
+        # distinguishes numeric types via $$type assertions).
+        actual = actual.value if actual.is_a?(BSON::Int64) || actual.is_a?(BSON::Int32)
+        expected = expected.value if expected.is_a?(BSON::Int64) || expected.is_a?(BSON::Int32)
         raise Error::ResultMismatch, "#{msg}: expected #{expected}, actual #{actual}" unless actual == expected
       end
     end
