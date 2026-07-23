@@ -586,8 +586,7 @@ module Mongo
     # @option options [ true | false ] :keep_connection_pool Usually when the
     #   new server description is unknown, the connection pool on the
     #   respective server is cleared. Set this option to true to keep the
-    #   existing connection pool (required when handling not master errors
-    #   on 4.2+ servers).
+    #   existing connection pool (required when handling not master errors).
     # @option options [ true | false ] :awaited Whether the updated description
     #   was a result of processing an awaited hello.
     # @option options [ Object ] :service_id Change state for the specified

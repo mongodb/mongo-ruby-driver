@@ -15,7 +15,7 @@
 #
 # Example:
 #
-# ./.evergreen/test-docker-remote admin@12.34.56.78 -p MONGODB_VERSION=4.2
+# ./.evergreen/test-docker-remote admin@12.34.56.78 -p MONGODB_VERSION=4.4
 #
 # Note: the private environment files (.env.private*) are copied to the target.
 #   This is done in order to be able to test, for example, AWS authentication

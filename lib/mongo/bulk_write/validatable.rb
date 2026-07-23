@@ -43,10 +43,6 @@ module Mongo
         @has_collation = true if document.respond_to?(:keys) && (document[:collation] || document[Operation::COLLATION])
 
         @has_array_filters = true if document.respond_to?(:keys) && document[:array_filters]
-
-        return unless document.respond_to?(:keys) && document[:hint]
-
-        @has_hint = true
       end
 
       private

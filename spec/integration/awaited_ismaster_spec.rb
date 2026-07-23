@@ -3,8 +3,6 @@
 require 'spec_helper'
 
 describe 'awaited hello' do
-  min_server_fcv '4.4'
-
   # If we send the consecutive hello commands to different mongoses,
   # they have different process ids, and so the awaited one would return
   # immediately.

@@ -236,13 +236,13 @@ may be tested in EC2 which generally requires private environment variables.
 
 Run the `test-docker-remote` script as follows:
 
-    ./.evergreen/test-docker-remote ubuntu@12.34.56.78 MONGODB_VERSION=4.2 -p
+    ./.evergreen/test-docker-remote ubuntu@12.34.56.78 MONGODB_VERSION=4.4 -p
 
 The first argument is the target on which to run the tests. All subsequent
 arguments are passed to the `test-on-docker` script. In this case, `test-docker-remote`
 will execute the following script on the target instance:
 
-    ./.evergreen/test-on-docker MONGODB_VERSION=4.2 -p
+    ./.evergreen/test-on-docker MONGODB_VERSION=4.4 -p
 
 All arguments that `test-on-docker` accepts are accepted by `test-docker-remote`.
 For example, to verify that all of the tooling is working correctly but not
@@ -253,7 +253,7 @@ run any tests you could issue;
 The private environment files need to be specified explicitly, just like they
 need to be explicitly specified to `test-on-docker`. For example:
 
-    ./.evergreen/test-on-docker MONGODB_VERSION=4.2 -pa .env.private
+    ./.evergreen/test-on-docker MONGODB_VERSION=4.4 -pa .env.private
 
 ### Run Tests - Local
 

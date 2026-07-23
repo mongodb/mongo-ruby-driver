@@ -132,12 +132,7 @@ module Mongo
       def process_result_for_sdam(result, connection)
         if (result.not_master? || result.node_recovering?) &&
            connection.generation >= connection.server.pool.generation(service_id: connection.service_id)
-          keep_pool = if result.node_shutting_down?
-                        false
-                      else
-                        # Max wire version needs to be examined while the server is known
-                        connection.description.server_version_gte?('4.2')
-                      end
+          keep_pool = !result.node_shutting_down?
 
           connection.server.unknown!(
             keep_connection_pool: keep_pool,

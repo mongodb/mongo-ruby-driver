@@ -81,27 +81,12 @@ describe 'Command monitoring' do
       end
     end
 
-    context 'pre-4.4 servers' do
-      max_server_version '4.2'
-
-      let(:expected_command_names) do
-        # Long SCRAM conversation.
-        %w[saslStart saslContinue saslContinue find]
-      end
-
-      it_behaves_like 'does not nest auth and find'
+    let(:expected_command_names) do
+      # Speculative auth + short SCRAM conversation.
+      %w[saslContinue find]
     end
 
-    context '4.4+ servers' do
-      min_server_fcv '4.4'
-
-      let(:expected_command_names) do
-        # Speculative auth + short SCRAM conversation.
-        %w[saslContinue find]
-      end
-
-      it_behaves_like 'does not nest auth and find'
-    end
+    it_behaves_like 'does not nest auth and find'
   end
 
   context 'when write concern is specified outside of command document' do

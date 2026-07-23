@@ -201,23 +201,12 @@ module Mongo
       # represents one of the command types allow-listed by libmongocrypt and it
       # contains data that is required to be encrypted by a local or remote json schema.
       #
-      # @param [ Mongo::Server::Connection ] connection The connection on which
-      #   the operation is performed.
       # @param [ Mongo::Operation::Context ] context The operation context.
       #
       # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original
       #   message if encryption was not possible or necessary.
-      def maybe_encrypt(connection, context)
+      def maybe_encrypt(_connection, context)
         if context.encrypt?
-          if connection.description.max_wire_version < 8
-            raise Error::CryptError.new(
-              'Cannot perform encryption against a MongoDB server older than ' +
-              '4.2 (wire version less than 8). Currently connected to server ' +
-              "with max wire version #{connection.description.max_wire_version}} " +
-              '(Auto-encryption requires a minimum MongoDB version of 4.2)'
-            )
-          end
-
           db_name = @main_document[DATABASE_IDENTIFIER]
           cmd = merge_sections
           enc_cmd = context.encrypt(db_name, cmd)
