@@ -14,7 +14,6 @@ describe 'Retryable reads errors tests' do
   context 'PoolClearedError retryability test' do
     require_topology :single, :replica_set, :sharded
     require_no_multi_mongos
-    min_server_version '4.2.9'
 
     let(:options) { { max_pool_size: 1, heartbeat_frequency: 1000 } }
 
@@ -271,7 +270,6 @@ describe 'Retryable reads errors tests' do
 
   context 'Retries in a replica set' do
     require_topology :replica_set
-    min_server_version '4.4'
 
     let(:subscriber) { Mrss::EventSubscriber.new }
 

@@ -5,7 +5,6 @@ require 'spec_helper'
 describe 'Find operation options' do
   require_mri
   require_no_auth
-  min_server_fcv '4.4'
 
   let(:subscriber) { Mrss::EventSubscriber.new }
 

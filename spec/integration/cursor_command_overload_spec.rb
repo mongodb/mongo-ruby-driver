@@ -4,7 +4,6 @@ require 'spec_helper'
 
 describe 'Database#cursor_command overload retry' do
   require_topology :replica_set
-  min_server_version '4.4'
 
   let(:subscriber) { Mrss::EventSubscriber.new }
 

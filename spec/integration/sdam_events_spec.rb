@@ -48,43 +48,7 @@ describe 'SDAM events' do
   describe 'heartbeat event' do
     require_topology :single
 
-    context 'pre-4.4 servers' do
-      max_server_version '4.2'
-
-      let(:sdam_proc) do
-        proc do |client|
-          client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
-        end
-      end
-
-      let(:client) do
-        new_local_client(SpecConfig.instance.addresses,
-                         # Heartbeat interval is bound by 500 ms
-                         SpecConfig.instance.test_options.merge(
-                           heartbeat_frequency: 0.5,
-                           sdam_proc: sdam_proc
-                         ))
-      end
-
-      it 'is published every heartbeat interval' do
-        client
-        sleep 4
-        client.close
-
-        started_events = subscriber.select_started_events(Mongo::Monitoring::Event::ServerHeartbeatStarted)
-        # Expect about 8 events, maybe 9 or 7
-        started_events.length.should
-        started_events.length.should
-
-        succeeded_events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerHeartbeatSucceeded)
-        started_events.length.should
-        (succeeded_events.length..(succeeded_events.length + 1)).should include(started_events.length)
-      end
-    end
-
     context '4.4+ servers' do
-      min_server_fcv '4.4'
-
       let(:sdam_proc) do
         proc do |client|
           client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)

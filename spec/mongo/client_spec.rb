@@ -548,8 +548,6 @@ describe Mongo::Client do
     end
 
     context 'with comment' do
-      min_server_version '4.4'
-
       it 'returns a list of database names and send comment' do
         result = monitored_client.database_names({}, comment: 'comment')
         expect(result).to include('admin')
@@ -562,7 +560,6 @@ describe Mongo::Client do
     context 'with timeout_ms' do
       # To make it easier with failCommand
       require_topology :single
-      min_server_version '4.4'
 
       before do
         root_authorized_client.use('admin').command({
@@ -716,8 +713,6 @@ describe Mongo::Client do
     end
 
     context 'with comment' do
-      min_server_version '4.4'
-
       it 'returns a list of database names and send comment' do
         result = monitored_client.list_databases({}, false, comment: 'comment').collect do |i|
           i['name']
@@ -732,7 +727,6 @@ describe Mongo::Client do
     context 'with timeout_ms' do
       # To make it easier with failCommand
       require_topology :single
-      min_server_version '4.4'
 
       before do
         root_authorized_client.use('admin').command({
@@ -838,8 +832,6 @@ describe Mongo::Client do
     end
 
     context 'with comment' do
-      min_server_version '4.4'
-
       it 'returns a list of database names and send comment' do
         result = monitored_client.list_mongo_databases({}, comment: 'comment')
         expect(result).to all(be_a(Mongo::Database))

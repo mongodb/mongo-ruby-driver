@@ -24,7 +24,6 @@ module Mongo
         # List of features and the wire protocol version they appear in.
         #
         # Wire protocol versions map to server releases as follows:
-        # -  8 => 4.2
         # -  9 => 4.4
         # - 13 => 5.0
         # - 14 => 5.1
@@ -61,7 +60,7 @@ module Mongo
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
-        DRIVER_WIRE_VERSIONS = 8..29
+        DRIVER_WIRE_VERSIONS = 9..29
 
         # The wire protocol versions that are deprecated in this version of the
         # driver. Support for these versions will be removed in the future.
@@ -74,7 +73,7 @@ module Mongo
         #
         # If there are no currently-deprecated wire versions, this should be
         # set to an empty range (e.g. the EMPTY_RANGE constant).
-        DEPRECATED_WIRE_VERSIONS = 8..8
+        DEPRECATED_WIRE_VERSIONS = EMPTY_RANGE
 
         # make sure the deprecated versions are valid
         if DEPRECATED_WIRE_VERSIONS.min && (DRIVER_WIRE_VERSIONS.min > DEPRECATED_WIRE_VERSIONS.max)
