@@ -529,9 +529,7 @@ module Unified
             if (code_name = expected_error.use('errorCodeName')) && !(e.code_name == code_name)
               raise Error::ErrorMismatch, "Expected #{code_name} code name but had #{e.code_name}"
             end
-            # The unified test format requires a case-insensitive match for
-            # errorContains.
-            if (text = expected_error.use('errorContains')) && !e.to_s.downcase.include?(text.downcase)
+            if (text = expected_error.use('errorContains')) && !e.to_s.include?(text)
               raise Error::ErrorMismatch, "Expected #{text} in the message but had #{e}"
             end
 

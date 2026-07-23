@@ -8,11 +8,7 @@ module Unified
              else
                path
              end
-      # Parse in :bson mode so extended-JSON types are preserved as their BSON
-      # equivalents (e.g. $numberLong -> BSON::Int64, $date -> Time). QE range
-      # tests require this: the server rejects a range field whose configured
-      # min/max type does not match the field type (e.g. long field with int min).
-      @spec = BSON::ExtJSON.parse_obj(data, mode: :bson)
+      @spec = BSON::ExtJSON.parse_obj(data)
       @options = opts
     end
 
