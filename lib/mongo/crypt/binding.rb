@@ -1878,6 +1878,12 @@ module Mongo
       #
       # Set options for explicit encryption with the "String" algorithm.
       #
+      # @note The libmongocrypt C function is named `..._algorithm_text` (the
+      #   original "text" name), even though the algorithm string passed to
+      #   mongocrypt_ctx_setopt_algorithm is "String" (renamed for GA). There is
+      #   no `..._algorithm_string` symbol; `..._algorithm_text` is the correct
+      #   and only setter for these options.
+      #
       # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
       # @param [ FFI::Pointer ] opts A pointer to a string options document.
       #
