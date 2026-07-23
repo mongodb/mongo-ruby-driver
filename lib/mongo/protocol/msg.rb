@@ -201,8 +201,6 @@ module Mongo
       # represents one of the command types allow-listed by libmongocrypt and it
       # contains data that is required to be encrypted by a local or remote json schema.
       #
-      # @param [ Mongo::Server::Connection ] connection The connection on which
-      #   the operation is performed.
       # @param [ Mongo::Operation::Context ] context The operation context.
       #
       # @return [ Mongo::Protocol::Msg ] The encrypted message, or the original

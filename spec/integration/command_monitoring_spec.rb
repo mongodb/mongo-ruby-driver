@@ -81,14 +81,12 @@ describe 'Command monitoring' do
       end
     end
 
-    context '4.4+ servers' do
-      let(:expected_command_names) do
-        # Speculative auth + short SCRAM conversation.
-        %w[saslContinue find]
-      end
-
-      it_behaves_like 'does not nest auth and find'
+    let(:expected_command_names) do
+      # Speculative auth + short SCRAM conversation.
+      %w[saslContinue find]
     end
+
+    it_behaves_like 'does not nest auth and find'
   end
 
   context 'when write concern is specified outside of command document' do

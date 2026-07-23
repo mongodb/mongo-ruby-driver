@@ -93,69 +93,67 @@ module PerformsModernRetries
       end
     end
 
-    context 'on server versions >= 4.4' do
-      context 'for OperationFailure with RetryableWriteError label' do
-        before do
-          client.use('admin').command(
-            configureFailPoint: 'failCommand',
-            mode: { times: times },
-            data: {
-              failCommands: [ command_name ],
-              errorCode: 5, # normally NOT a retryable error code
-              errorLabels: [ 'RetryableWriteError' ]
-            }
-          )
-        end
+    context 'for OperationFailure with RetryableWriteError label' do
+      before do
+        client.use('admin').command(
+          configureFailPoint: 'failCommand',
+          mode: { times: times },
+          data: {
+            failCommands: [ command_name ],
+            errorCode: 5, # normally NOT a retryable error code
+            errorLabels: [ 'RetryableWriteError' ]
+          }
+        )
+      end
 
-        context 'when error occurs once' do
-          let(:times) { 1 }
+      context 'when error occurs once' do
+        let(:times) { 1 }
 
-          it 'retries and the operation and succeeds' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-            perform_operation
-            expect(actual_result).to eq(expected_successful_result)
-          end
-        end
-
-        context 'when error occurs twice' do
-          let(:times) { 2 }
-
-          it 'retries the operation and fails' do
-            expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
-
-            expect do
-              perform_operation
-            end.to raise_error(Mongo::Error::OperationFailure, /5/)
-
-            expect(actual_result).to eq(expected_failed_result)
-          end
-
-          it_behaves_like 'it adds diagnostics'
+        it 'retries and the operation and succeeds' do
+          expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
+          perform_operation
+          expect(actual_result).to eq(expected_successful_result)
         end
       end
 
-      context 'for OperationFailure without RetryableWriteError label' do
-        before do
-          client.use('admin').command(
-            configureFailPoint: 'failCommand',
-            mode: { times: 1 },
-            data: {
-              failCommands: [ command_name ],
-              errorCode: 91, # normally a retryable error code
-              errorLabels: [],
-            }
-          )
-        end
+      context 'when error occurs twice' do
+        let(:times) { 2 }
 
-        it 'raises the error' do
-          expect(Mongo::Logger.logger).not_to receive(:warn)
+        it 'retries the operation and fails' do
+          expect(Mongo::Logger.logger).to receive(:warn).once.with(/modern.*attempt 1/).and_call_original
 
           expect do
             perform_operation
-          end.to raise_error(Mongo::Error::OperationFailure, /91/)
+          end.to raise_error(Mongo::Error::OperationFailure, /5/)
 
           expect(actual_result).to eq(expected_failed_result)
         end
+
+        it_behaves_like 'it adds diagnostics'
+      end
+    end
+
+    context 'for OperationFailure without RetryableWriteError label' do
+      before do
+        client.use('admin').command(
+          configureFailPoint: 'failCommand',
+          mode: { times: 1 },
+          data: {
+            failCommands: [ command_name ],
+            errorCode: 91, # normally a retryable error code
+            errorLabels: [],
+          }
+        )
+      end
+
+      it 'raises the error' do
+        expect(Mongo::Logger.logger).not_to receive(:warn)
+
+        expect do
+          perform_operation
+        end.to raise_error(Mongo::Error::OperationFailure, /91/)
+
+        expect(actual_result).to eq(expected_failed_result)
       end
     end
   end

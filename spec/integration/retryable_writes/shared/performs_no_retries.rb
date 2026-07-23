@@ -53,9 +53,5 @@ module PerformsNoRetries
         end.to raise_error(Mongo::Error::SocketTimeoutError)
       end
     end
-
-    context 'on server versions >= 4.4' do
-      # These tests will be implemented in a follow-up PR
-    end
   end
 end

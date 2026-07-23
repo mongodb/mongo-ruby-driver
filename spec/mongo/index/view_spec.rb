@@ -253,53 +253,51 @@ describe Mongo::Index::View do
 
         context 'when commit quorum options are specified' do
           require_topology :replica_set, :sharded
-          context 'on server versions >= 4.4' do
-            let(:subscriber) { Mrss::EventSubscriber.new }
+          let(:subscriber) { Mrss::EventSubscriber.new }
 
-            let(:client) do
-              authorized_client.tap do |client|
-                client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-              end
+          let(:client) do
+            authorized_client.tap do |client|
+              client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+            end
+          end
+
+          let(:authorized_collection) { client['view-subscribed'] }
+
+          context 'when commit_quorum value is supported' do
+            let!(:result) do
+              view.create_many(
+                { key: { random: 1 }, unique: true },
+                { key: { testing: -1 }, unique: true },
+                { commit_quorum: 'majority' }
+              )
             end
 
-            let(:authorized_collection) { client['view-subscribed'] }
+            let(:events) do
+              subscriber.command_started_events('createIndexes')
+            end
 
-            context 'when commit_quorum value is supported' do
-              let!(:result) do
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
+
+            it 'passes the commit_quorum option to the server' do
+              expect(events.length).to eq(1)
+              command = events.first.command
+              expect(command['commitQuorum']).to eq('majority')
+            end
+          end
+
+          context 'when commit_quorum value is not supported' do
+            it 'raises an exception' do
+              expect do
                 view.create_many(
                   { key: { random: 1 }, unique: true },
                   { key: { testing: -1 }, unique: true },
-                  { commit_quorum: 'majority' }
+                  { commit_quorum: 'unsupported-value' }
                 )
-              end
-
-              let(:events) do
-                subscriber.command_started_events('createIndexes')
-              end
-
-              it 'returns ok' do
-                expect(result).to be_successful
-              end
-
-              it 'passes the commit_quorum option to the server' do
-                expect(events.length).to eq(1)
-                command = events.first.command
-                expect(command['commitQuorum']).to eq('majority')
-              end
-            end
-
-            context 'when commit_quorum value is not supported' do
-              it 'raises an exception' do
-                expect do
-                  view.create_many(
-                    { key: { random: 1 }, unique: true },
-                    { key: { testing: -1 }, unique: true },
-                    { commit_quorum: 'unsupported-value' }
-                  )
-                  # 4.4.4 changed the text of the error message
-                end.to raise_error(Mongo::Error::OperationFailure,
-                                   /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
-              end
+                # 4.4.4 changed the text of the error message
+              end.to raise_error(Mongo::Error::OperationFailure,
+                                 /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
             end
           end
         end
@@ -307,41 +305,39 @@ describe Mongo::Index::View do
         context 'when hidden is specified' do
           let(:index) { view.get('with_hidden_1') }
 
-          context 'on server versions >= 4.4' do
-            context 'when hidden is true' do
-              let!(:result) do
-                view.create_many({ key: { with_hidden: 1 }, hidden: true })
-              end
-
-              it 'returns ok' do
-                expect(result).to be_successful
-              end
-
-              it 'creates an index' do
-                expect(index).not_to be_nil
-              end
-
-              it 'applies the hidden option to the index' do
-                expect(index['hidden']).to be true
-              end
+          context 'when hidden is true' do
+            let!(:result) do
+              view.create_many({ key: { with_hidden: 1 }, hidden: true })
             end
 
-            context 'when hidden is false' do
-              let!(:result) do
-                view.create_many({ key: { with_hidden: 1 }, hidden: false })
-              end
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
 
-              it 'returns ok' do
-                expect(result).to be_successful
-              end
+            it 'creates an index' do
+              expect(index).not_to be_nil
+            end
 
-              it 'creates an index' do
-                expect(index).not_to be_nil
-              end
+            it 'applies the hidden option to the index' do
+              expect(index['hidden']).to be true
+            end
+          end
 
-              it 'does not apply the hidden option to the index' do
-                expect(index['hidden']).to be_nil
-              end
+          context 'when hidden is false' do
+            let!(:result) do
+              view.create_many({ key: { with_hidden: 1 }, hidden: false })
+            end
+
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
+
+            it 'creates an index' do
+              expect(index).not_to be_nil
+            end
+
+            it 'does not apply the hidden option to the index' do
+              expect(index['hidden']).to be_nil
             end
           end
         end
@@ -762,88 +758,84 @@ describe Mongo::Index::View do
     context 'when providing hidden option' do
       let(:index) { view.get('with_hidden_1') }
 
-      context 'on server versions >= 4.4' do
-        context 'when hidden is true' do
-          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: true }) }
+      context 'when hidden is true' do
+        let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: true }) }
 
-          it 'returns ok' do
-            expect(result).to be_successful
-          end
-
-          it 'creates an index' do
-            expect(index).not_to be_nil
-          end
-
-          it 'applies the hidden option to the index' do
-            expect(index['hidden']).to be true
-          end
+        it 'returns ok' do
+          expect(result).to be_successful
         end
 
-        context 'when hidden is false' do
-          let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: false }) }
+        it 'creates an index' do
+          expect(index).not_to be_nil
+        end
 
-          it 'returns ok' do
-            expect(result).to be_successful
-          end
+        it 'applies the hidden option to the index' do
+          expect(index['hidden']).to be true
+        end
+      end
 
-          it 'creates an index' do
-            expect(index).not_to be_nil
-          end
+      context 'when hidden is false' do
+        let!(:result) { view.create_one({ 'with_hidden' => 1 }, { hidden: false }) }
 
-          it 'does not apply the hidden option to the index' do
-            expect(index['hidden']).to be_nil
-          end
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+
+        it 'creates an index' do
+          expect(index).not_to be_nil
+        end
+
+        it 'does not apply the hidden option to the index' do
+          expect(index['hidden']).to be_nil
         end
       end
     end
 
     context 'when providing commit_quorum option' do
       require_topology :replica_set, :sharded
-      context 'on server versions >= 4.4' do
-        let(:subscriber) { Mrss::EventSubscriber.new }
+      let(:subscriber) { Mrss::EventSubscriber.new }
 
-        let(:client) do
-          authorized_client.tap do |client|
-            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-          end
+      let(:client) do
+        authorized_client.tap do |client|
+          client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:authorized_collection) { client['view-subscribed'] }
+
+      let(:indexes) do
+        authorized_collection.indexes.get('x_1')
+      end
+
+      context 'when commit_quorum value is supported' do
+        let!(:result) { view.create_one({ 'x' => 1 }, commit_quorum: 'majority') }
+
+        let(:events) do
+          subscriber.command_started_events('createIndexes')
         end
 
-        let(:authorized_collection) { client['view-subscribed'] }
-
-        let(:indexes) do
-          authorized_collection.indexes.get('x_1')
+        it 'returns ok' do
+          expect(result).to be_successful
         end
 
-        context 'when commit_quorum value is supported' do
-          let!(:result) { view.create_one({ 'x' => 1 }, commit_quorum: 'majority') }
-
-          let(:events) do
-            subscriber.command_started_events('createIndexes')
-          end
-
-          it 'returns ok' do
-            expect(result).to be_successful
-          end
-
-          it 'creates an index' do
-            expect(indexes).not_to be_nil
-          end
-
-          it 'passes the commit_quorum option to the server' do
-            expect(events.length).to eq(1)
-            command = events.first.command
-            expect(command['commitQuorum']).to eq('majority')
-          end
+        it 'creates an index' do
+          expect(indexes).not_to be_nil
         end
 
-        context 'when commit_quorum value is not supported' do
-          it 'raises an exception' do
-            expect do
-              view.create_one({ 'x' => 1 }, commit_quorum: 'unsupported-value')
-              # 4.4.4 changed the text of the error message
-            end.to raise_error(Mongo::Error::OperationFailure,
-                               /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
-          end
+        it 'passes the commit_quorum option to the server' do
+          expect(events.length).to eq(1)
+          command = events.first.command
+          expect(command['commitQuorum']).to eq('majority')
+        end
+      end
+
+      context 'when commit_quorum value is not supported' do
+        it 'raises an exception' do
+          expect do
+            view.create_one({ 'x' => 1 }, commit_quorum: 'unsupported-value')
+            # 4.4.4 changed the text of the error message
+          end.to raise_error(Mongo::Error::OperationFailure,
+                             /Commit quorum cannot be satisfied with the current replica set configuration|No write concern mode named 'unsupported-value' found in replica set configuration/)
         end
       end
     end
