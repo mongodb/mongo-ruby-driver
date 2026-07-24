@@ -28,6 +28,7 @@ initialData:
 
 tests:
   - description: "maxTimeMS value in the command is less than timeoutMS"
+    skipReason: "RUBY-3922: fails on server 7.0.39+/8.0.28+ due to SERVER-128517 pre-auth streamable hello 10s floor changing RTT measurement"
     operations:
       # Artificially increase the server RTT to ~50ms.
       - name: failPoint
@@ -100,6 +101,7 @@ tests:
                 maxTimeMS: { $$lte: 450 }
 
   - description: "command is not sent if RTT is greater than timeoutMS"
+    skipReason: "RUBY-3922: fails on server 7.0.39+/8.0.28+ due to SERVER-128517 pre-auth streamable hello 10s floor changing RTT measurement"
     operations:
       # Artificially increase the server RTT to ~50ms.
       - name: failPoint
