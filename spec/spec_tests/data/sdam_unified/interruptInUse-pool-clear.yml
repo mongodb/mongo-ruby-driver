@@ -21,6 +21,7 @@ initialData: &initialData
 
 tests:
   - description: Connection pool clear uses interruptInUseConnections=true after monitor timeout
+    skipReason: "RUBY-3922: fails on server 7.0.39+/8.0.28+ due to SERVER-128517 pre-auth streamable hello 10s floor"
     operations:
       - name: createEntities
         object: testRunner
@@ -124,6 +125,7 @@ tests:
           - _id: 1
 
   - description: Error returned from connection pool clear with interruptInUseConnections=true is retryable
+    skipReason: "RUBY-3922: fails on server 7.0.39+/8.0.28+ due to SERVER-128517 pre-auth streamable hello 10s floor"
     operations:
       - name: createEntities
         object: testRunner
@@ -230,6 +232,7 @@ tests:
         documents:
           - _id: 1
   - description: Error returned from connection pool clear with interruptInUseConnections=true is retryable for write
+    skipReason: "RUBY-3922: fails on server 7.0.39+/8.0.28+ due to SERVER-128517 pre-auth streamable hello 10s floor"
     operations:
       - name: createEntities
         object: testRunner
