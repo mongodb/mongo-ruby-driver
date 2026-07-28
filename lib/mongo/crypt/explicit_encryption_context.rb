@@ -39,9 +39,9 @@ module Mongo
       #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed", "Range",
       #   "String".
       # @option options [ Integer | nil ] :contention_factor Contention factor
-      #   to be applied if encryption algorithm is set to "Indexed". If not
-      #   provided, it defaults to a value of 0. Contention factor should be set
-      #   only if encryption algorithm is set to "Indexed".
+      #   to be applied if encryption algorithm is set to "Indexed", "Range", or "String".
+      #   If not provided, it defaults to a value of 0. Contention factor should be set
+      #   only if encryption algorithm is set to "Indexed", "Range", or "String".
       # @option options [ String | nil ] query_type Query type to be applied
       #   if encryption algorithm is set to "Indexed", "Range", or "String".
       #   Allowed values are "equality", "range", "prefix", "suffix", and
