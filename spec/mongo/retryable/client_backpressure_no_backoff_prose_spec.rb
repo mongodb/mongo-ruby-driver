@@ -8,7 +8,6 @@ require 'spec_helper'
 #   specifications/source/client-backpressure/tests/README.md
 describe 'Client Backpressure backoff prose tests' do
   require_topology :replica_set
-  min_server_version '4.4'
 
   let(:client) do
     authorized_client.with(retry_reads: true)

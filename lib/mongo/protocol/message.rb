@@ -148,10 +148,6 @@ module Mongo
       # @return [ Mongo::Protocol::Msg ] The decrypted message, or the original
       #   message if decryption was not possible or necessary.
       def maybe_decrypt(_context)
-        # TODO: determine if we should be decrypting data coming from pre-4.2
-        # servers, potentially using legacy wire protocols. If so we need
-        # to implement decryption for those wire protocols as our current
-        # encryption/decryption code is OP_MSG-specific.
         self
       end
 

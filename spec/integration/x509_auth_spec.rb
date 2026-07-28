@@ -50,20 +50,8 @@ describe 'X.509 auth integration tests' do
         subscriber.started_events.map(&:command_name)
       end
 
-      context 'server 4.2 and lower' do
-        max_server_version '4.2'
-
-        it 'uses the authenticate command to authenticate' do
-          expect(commands).to eq(%w[authenticate connectionStatus])
-        end
-      end
-
-      context 'server 4.4 and higher' do
-        min_server_fcv '4.4'
-
-        it 'uses speculative authentication in hello to authenticate' do
-          expect(commands).to eq(%w[connectionStatus])
-        end
+      it 'uses speculative authentication in hello to authenticate' do
+        expect(commands).to eq(%w[connectionStatus])
       end
     end
 

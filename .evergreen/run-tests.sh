@@ -297,12 +297,6 @@ if ! test "$OCSP_VERIFIER" = 1 && ! test -n "$OCSP_CONNECTIVITY"; then
   bundle exec rake spec:prepare
 fi
 
-if test "$TOPOLOGY" = sharded_cluster && test $MONGODB_VERSION = 3.6; then
-  # On 3.6 server the sessions collection is not immediately available,
-  # wait for it to spring into existence
-  bundle exec rake spec:wait_for_sessions
-fi
-
 add_uri_option "appName=test-suite"
 
 # Compression is handled via an environment variable, convert to URI option
