@@ -232,7 +232,8 @@ describe 'Range Explicit Encryption' do
       {
         min: BSON::Int32.new(0),
         max: BSON::Int32.new(200),
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
@@ -278,7 +279,8 @@ describe 'Range Explicit Encryption' do
       {
         min: BSON::Int64.new(0),
         max: BSON::Int64.new(200),
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
@@ -325,6 +327,7 @@ describe 'Range Explicit Encryption' do
         min: 0.0,
         max: 200.0,
         sparsity: 1,
+        trim_factor: 1,
         precision: 2
       }
     end
@@ -369,7 +372,8 @@ describe 'Range Explicit Encryption' do
 
     let(:range_opts) do
       {
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
@@ -417,7 +421,8 @@ describe 'Range Explicit Encryption' do
       {
         min: Time.at(0, 0),
         max: Time.at(0, 200 * 1000),
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
@@ -466,6 +471,7 @@ describe 'Range Explicit Encryption' do
         min: BSON::Decimal128.new('0.0'),
         max: BSON::Decimal128.new('200.0'),
         sparsity: 1,
+        trim_factor: 1,
         precision: 2
       }
     end
@@ -512,7 +518,8 @@ describe 'Range Explicit Encryption' do
 
     let(:range_opts) do
       {
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
