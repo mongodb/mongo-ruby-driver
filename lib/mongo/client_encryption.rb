@@ -50,7 +50,8 @@ module Mongo
         key_vault_client,
         options[:key_vault_namespace],
         Crypt::KMS::Credentials.new(options[:kms_providers]),
-        Crypt::KMS::Validations.validate_tls_options(options[:kms_tls_options])
+        Crypt::KMS::Validations.validate_tls_options(options[:kms_tls_options]),
+        options[:timeout_ms]
       )
     end
 
