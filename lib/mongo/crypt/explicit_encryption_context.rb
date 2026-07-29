@@ -148,6 +148,8 @@ module Mongo
       end
 
       def convert_range_opts(range_opts)
+        raise ArgumentError.new(':range_opts is required for the "Range" algorithm') if range_opts.nil?
+
         range_opts.dup.tap do |opts|
           opts[:sparsity] = BSON::Int64.new(opts[:sparsity]) if opts[:sparsity] && !opts[:sparsity].is_a?(BSON::Int64)
           opts[:trimFactor] = opts.delete(:trim_factor) if opts[:trim_factor]

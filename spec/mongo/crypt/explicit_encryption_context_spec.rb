@@ -204,6 +204,57 @@ describe Mongo::Crypt::ExplicitEncryptionContext do
         end
       end
 
+      context 'with Range algorithm' do
+        let(:algorithm) { 'Range' }
+        let(:key_alt_name) { nil }
+        let(:value) { { v: 123 } }
+
+        let(:range_opts) do
+          { min: 0, max: 200, sparsity: 1, trim_factor: 1 }
+        end
+
+        it 'initializes context' do
+          expect do
+            described_class.new(
+              mongocrypt,
+              io,
+              value,
+              options.merge(contention_factor: 0, range_opts: range_opts)
+            )
+          end.not_to raise_error
+        end
+
+        context 'with trim_factor of 0' do
+          let(:range_opts) do
+            { min: 0, max: 200, sparsity: 1, trim_factor: 0 }
+          end
+
+          it 'passes the trim factor through' do
+            expect do
+              described_class.new(
+                mongocrypt,
+                io,
+                value,
+                options.merge(contention_factor: 0, range_opts: range_opts)
+              )
+            end.not_to raise_error
+          end
+        end
+
+        context 'without range_opts' do
+          it 'raises an exception' do
+            expect do
+              described_class.new(
+                mongocrypt,
+                io,
+                value,
+                options.merge(contention_factor: 0)
+              )
+            end.to raise_error(ArgumentError, /:range_opts is required for the "Range" algorithm/)
+          end
+        end
+      end
+
       context 'with String algorithm' do
         let(:algorithm) { 'String' }
         let(:key_alt_name) { nil }
