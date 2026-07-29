@@ -24,12 +24,11 @@ describe 'Client-Side Encryption' do
     end
 
     # 96 bytes of custom key material, given by the spec as base64.
+    # Pass it as a String: DataKeyContext wraps it in a BSON::Binary itself.
     let(:key_material) do
-      BSON::Binary.new(
-        Base64.decode64(
-          'xPTAjBRG5JiPm+d3fj6XLi2q5DMXUS/f1f+SMAlhhwkhDRL0kr8r9GDLIGTAGlvC' \
-          '+HVjSIgdL+RKwZCvpXSyxTICWSXTUYsWYPyu3IoHbuBZdmw2faM3WhcRIgbMReU5'
-        )
+      Base64.decode64(
+        'xPTAjBRG5JiPm+d3fj6XLi2q5DMXUS/f1f+SMAlhhwkhDRL0kr8r9GDLIGTAGlvC' \
+        '+HVjSIgdL+RKwZCvpXSyxTICWSXTUYsWYPyu3IoHbuBZdmw2faM3WhcRIgbMReU5'
       )
     end
 
