@@ -39,7 +39,6 @@ module Mongo
         @requests = requests
         @has_collation = false
         @has_array_filters = false
-        @has_hint = false
       end
 
       # @return [ Boolean ] Whether one or more operation specifies the collation
@@ -52,12 +51,6 @@ module Mongo
       #   array_filters option.
       def has_array_filters?
         @has_array_filters
-      end
-
-      # @return [ Boolean ] Whether one or more operation specifies the
-      #   hint option.
-      def has_hint?
-        @has_hint
       end
 
       private

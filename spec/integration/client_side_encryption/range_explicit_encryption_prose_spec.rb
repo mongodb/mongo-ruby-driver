@@ -232,7 +232,8 @@ describe 'Range Explicit Encryption' do
       {
         min: BSON::Int32.new(0),
         max: BSON::Int32.new(200),
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
@@ -278,7 +279,8 @@ describe 'Range Explicit Encryption' do
       {
         min: BSON::Int64.new(0),
         max: BSON::Int64.new(200),
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
@@ -325,6 +327,7 @@ describe 'Range Explicit Encryption' do
         min: 0.0,
         max: 200.0,
         sparsity: 1,
+        trim_factor: 1,
         precision: 2
       }
     end
@@ -369,7 +372,8 @@ describe 'Range Explicit Encryption' do
 
     let(:range_opts) do
       {
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
@@ -397,12 +401,14 @@ describe 'Range Explicit Encryption' do
       'Date'
     end
 
+    # The Date encryptedFields uses indexMin/indexMax of 0ms and 200ms since the
+    # Unix epoch, so map the integer test values to milliseconds after the epoch.
     let(:value_converter) do
       proc do |value|
         if value.is_a?(Array)
-          value.map { |i| Time.new(i) }
+          value.map { |i| Time.at(0, i * 1000) }
         else
-          Time.new(value)
+          Time.at(0, value * 1000)
         end
       end
     end
@@ -413,16 +419,17 @@ describe 'Range Explicit Encryption' do
 
     let(:range_opts) do
       {
-        min: Time.new(0),
-        max: Time.new(200),
-        sparsity: 1
+        min: Time.at(0, 0),
+        max: Time.at(0, 200 * 1000),
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 
     before do
       [ 0, 6, 30, 200 ].each_with_index do |num, idx|
         insert_payload = client_encryption.encrypt(
-          Time.new(num),
+          value_converter.call(num),
           key_id: key1_id,
           algorithm: 'Range',
           contention_factor: 0,
@@ -464,6 +471,7 @@ describe 'Range Explicit Encryption' do
         min: BSON::Decimal128.new('0.0'),
         max: BSON::Decimal128.new('200.0'),
         sparsity: 1,
+        trim_factor: 1,
         precision: 2
       }
     end
@@ -510,7 +518,8 @@ describe 'Range Explicit Encryption' do
 
     let(:range_opts) do
       {
-        sparsity: 1
+        sparsity: 1,
+        trim_factor: 1
       }
     end
 

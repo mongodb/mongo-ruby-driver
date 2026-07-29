@@ -48,90 +48,52 @@ describe 'SDAM events' do
   describe 'heartbeat event' do
     require_topology :single
 
-    context 'pre-4.4 servers' do
-      max_server_version '4.2'
-
-      let(:sdam_proc) do
-        proc do |client|
-          client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
-        end
-      end
-
-      let(:client) do
-        new_local_client(SpecConfig.instance.addresses,
-                         # Heartbeat interval is bound by 500 ms
-                         SpecConfig.instance.test_options.merge(
-                           heartbeat_frequency: 0.5,
-                           sdam_proc: sdam_proc
-                         ))
-      end
-
-      it 'is published every heartbeat interval' do
-        client
-        sleep 4
-        client.close
-
-        started_events = subscriber.select_started_events(Mongo::Monitoring::Event::ServerHeartbeatStarted)
-        # Expect about 8 events, maybe 9 or 7
-        started_events.length.should
-        started_events.length.should
-
-        succeeded_events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerHeartbeatSucceeded)
-        started_events.length.should
-        (succeeded_events.length..(succeeded_events.length + 1)).should include(started_events.length)
+    let(:sdam_proc) do
+      proc do |client|
+        client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
       end
     end
 
-    context '4.4+ servers' do
-      min_server_fcv '4.4'
+    let(:client) do
+      new_local_client(SpecConfig.instance.addresses,
+                       # Heartbeat interval is bound by 500 ms
+                       SpecConfig.instance.test_options.merge(
+                         heartbeat_frequency: 0.5,
+                         sdam_proc: sdam_proc
+                       ))
+    end
 
-      let(:sdam_proc) do
-        proc do |client|
-          client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
-        end
-      end
+    it 'is published up to twice every heartbeat interval' do
+      client
+      sleep 3
+      client.close
 
-      let(:client) do
-        new_local_client(SpecConfig.instance.addresses,
-                         # Heartbeat interval is bound by 500 ms
-                         SpecConfig.instance.test_options.merge(
-                           heartbeat_frequency: 0.5,
-                           sdam_proc: sdam_proc
-                         ))
-      end
+      started_events = subscriber.select_started_events(
+        Mongo::Monitoring::Event::ServerHeartbeatStarted
+      )
+      # We could have up to 16 events and should have no fewer than 8 events.
+      # Whenever an awaited hello succeeds while the regular monitor is
+      # waiting, the regular monitor's next scan is pushed forward.
+      started_events.length.should
+      started_events.length.should
+      (started_awaited = started_events.select(&:awaited?)).should_not be_empty
+      (started_regular = started_events.reject(&:awaited?)).should_not be_empty
 
-      it 'is published up to twice every heartbeat interval' do
-        client
-        sleep 3
-        client.close
+      completed_events = subscriber.select_completed_events(
+        Mongo::Monitoring::Event::ServerHeartbeatSucceeded,
+        Mongo::Monitoring::Event::ServerHeartbeatFailed
+      )
+      completed_events.length.should
+      completed_events.length.should
+      (succeeded_awaited = completed_events.select(&:awaited?)).should_not be_empty
+      (succeeded_regular = completed_events.reject(&:awaited?)).should_not be_empty
 
-        started_events = subscriber.select_started_events(
-          Mongo::Monitoring::Event::ServerHeartbeatStarted
-        )
-        # We could have up to 16 events and should have no fewer than 8 events.
-        # Whenever an awaited hello succeeds while the regular monitor is
-        # waiting, the regular monitor's next scan is pushed forward.
-        started_events.length.should
-        started_events.length.should
-        (started_awaited = started_events.select(&:awaited?)).should_not be_empty
-        (started_regular = started_events.reject(&:awaited?)).should_not be_empty
-
-        completed_events = subscriber.select_completed_events(
-          Mongo::Monitoring::Event::ServerHeartbeatSucceeded,
-          Mongo::Monitoring::Event::ServerHeartbeatFailed
-        )
-        completed_events.length.should
-        completed_events.length.should
-        (succeeded_awaited = completed_events.select(&:awaited?)).should_not be_empty
-        (succeeded_regular = completed_events.reject(&:awaited?)).should_not be_empty
-
-        # There may be in-flight hellos that don't complete, both
-        # regular and awaited.
-        started_awaited.length.should
-        (succeeded_awaited.length..(succeeded_awaited.length + 1)).should include(started_awaited.length)
-        started_regular.length.should
-        (succeeded_regular.length..(succeeded_regular.length + 1)).should include(started_regular.length)
-      end
+      # There may be in-flight hellos that don't complete, both
+      # regular and awaited.
+      started_awaited.length.should
+      (succeeded_awaited.length..(succeeded_awaited.length + 1)).should include(started_awaited.length)
+      started_regular.length.should
+      (succeeded_regular.length..(succeeded_regular.length + 1)).should include(started_regular.length)
     end
   end
 

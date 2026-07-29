@@ -54,37 +54,10 @@ describe 'SDAM error handling' do
     end
   end
 
-  shared_examples_for 'does not mark server unknown' do
-    before do
-      server.monitor.stop!
-    end
-
-    after do
-      client.close
-    end
-
-    it 'does not mark server unknown' do
-      expect(server).not_to be_unknown
-      RSpec::Mocks.with_temporary_scope do
-        operation
-        expect(server).not_to be_unknown
-      end
-    end
-  end
-
   shared_examples_for 'requests server scan' do
     it 'requests server scan' do
       RSpec::Mocks.with_temporary_scope do
         expect(server.scan_semaphore).to receive(:signal)
-        operation
-      end
-    end
-  end
-
-  shared_examples_for 'does not request server scan' do
-    it 'does not request server scan' do
-      RSpec::Mocks.with_temporary_scope do
-        expect(server.scan_semaphore).not_to receive(:signal)
         operation
       end
     end
@@ -175,106 +148,6 @@ describe 'SDAM error handling' do
 
       it_behaves_like 'node shutting down'
     end
-
-    context 'network error' do
-      # With 4.4 servers we set up two monitoring connections, hence global
-      # socket expectations get hit twice.
-      max_server_version '4.2'
-
-      let(:operation) do
-        expect_any_instance_of(Mongo::Socket).to receive(:read).and_raise(exception)
-        expect do
-          client.database.command(ping: 1)
-        end.to raise_error(exception)
-      end
-
-      context 'non-timeout network error' do
-        let(:exception) do
-          Mongo::Error::SocketError
-        end
-
-        it_behaves_like 'marks server unknown'
-        it_behaves_like 'does not request server scan'
-        it_behaves_like 'clears connection pool'
-      end
-
-      context 'network timeout error' do
-        let(:exception) do
-          Mongo::Error::SocketTimeoutError
-        end
-
-        it_behaves_like 'does not mark server unknown'
-        it_behaves_like 'does not request server scan'
-        it_behaves_like 'does not clear connection pool'
-      end
-    end
-  end
-
-  describe 'when there is an error during connection establishment' do
-    require_topology :single
-
-    # The push monitor creates sockets unpredictably and interferes with this
-    # test.
-    max_server_version '4.2'
-
-    # When TLS is used there are two socket classes and we can't simply
-    # mock the base Socket class.
-    require_no_tls
-
-    {
-      SystemCallError => Mongo::Error::SocketError,
-      Errno::ETIMEDOUT => Mongo::Error::SocketTimeoutError,
-    }.each do |raw_error_cls, mapped_error_cls|
-      context raw_error_cls.name do
-        let(:socket) do
-          double('mock socket').tap do |socket|
-            allow(socket).to receive(:set_encoding)
-            allow(socket).to receive(:setsockopt)
-            allow(socket).to receive(:getsockopt)
-            allow(socket).to receive(:connect)
-            allow(socket).to receive(:close)
-            socket.should receive(:write).and_raise(raw_error_cls, 'mocked failure')
-          end
-        end
-
-        it 'marks server unknown' do
-          server = client.cluster.next_primary
-          pool = client.cluster.pool(server)
-          client.cluster.servers.map(&:disconnect!)
-
-          RSpec::Mocks.with_temporary_scope do
-            Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
-            allow(pool).to receive(:paused?).and_return(false)
-            lambda do
-              client.command(ping: 1)
-            end.should raise_error(mapped_error_cls, /mocked failure/)
-
-            server.should be_unknown
-          end
-        end
-
-        it 'recovers' do
-          client.cluster.next_primary
-          # If we do not kill the monitor, the client will recover automatically.
-
-          RSpec::Mocks.with_temporary_scope do
-            Socket.should receive(:new).with(any_args).ordered.once.and_return(socket)
-            Socket.should receive(:new).with(any_args).ordered.once.and_call_original
-
-            lambda do
-              client.command(ping: 1)
-            end.should raise_error(mapped_error_cls, /mocked failure/)
-
-            client.command(ping: 1)
-          end
-        end
-      end
-    end
-
-    after do
-      # Since we stopped monitoring on the client, close it.
-      ClientRegistry.instance.close_all_clients
-    end
   end
 
   describe 'when there is an error on monitoring connection' do
@@ -295,90 +168,6 @@ describe 'SDAM error handling' do
         server.monitor.scan!
       end
       expect_server_state_change
-    end
-
-    shared_examples_for 'marks server unknown - sdam event' do
-      it 'marks server unknown' do
-        expect(server).not_to be_unknown
-
-        # subscriber.clear_events!
-        events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
-        events.should be_empty
-
-        RSpec::Mocks.with_temporary_scope do
-          operation
-
-          events = subscriber.select_succeeded_events(Mongo::Monitoring::Event::ServerDescriptionChanged)
-          events.should_not be_empty
-          event = events.detect do |event|
-            event.new_description.address == server.address &&
-              event.new_description.unknown?
-          end
-          event.should_not be_nil
-        end
-      end
-    end
-
-    shared_examples_for 'clears connection pool - cmap event' do
-      it 'clears connection pool' do
-        # subscriber.clear_events!
-        events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
-        events.should be_empty
-
-        RSpec::Mocks.with_temporary_scope do
-          operation
-
-          events = subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared)
-          events.should_not be_empty
-          event = events.detect do |event|
-            event.address == server.address
-          end
-          event.should_not be_nil
-        end
-      end
-    end
-
-    shared_examples_for 'marks server unknown and clears connection pool' do
-      # These tests are not reliable
-      #       context 'via object inspection' do
-      #         let(:expect_server_state_change) do
-      #           server.summary.should =~ /unknown/i
-      #           expect(server).to be_unknown
-      #         end
-      #
-      #         it_behaves_like 'marks server unknown'
-      #         it_behaves_like 'clears connection pool'
-      #       end
-
-      context 'via events' do
-        # When we use events we do not need to examine object state, therefore
-        # it does not matter whether the server stays unknown or gets
-        # successfully checked.
-        let(:expect_server_state_change) do
-          # nothing
-        end
-
-        it_behaves_like 'marks server unknown - sdam event'
-        it_behaves_like 'clears connection pool - cmap event'
-      end
-    end
-
-    context 'via stubs' do
-      # With 4.4 servers we set up two monitoring connections, hence global
-      # socket expectations get hit twice.
-      max_server_version '4.2'
-
-      context 'network timeout' do
-        let(:exception) { Mongo::Error::SocketTimeoutError }
-
-        it_behaves_like 'marks server unknown and clears connection pool'
-      end
-
-      context 'non-timeout network error' do
-        let(:exception) { Mongo::Error::SocketError }
-
-        it_behaves_like 'marks server unknown and clears connection pool'
-      end
     end
 
     context 'non-timeout network error via fail point' do
