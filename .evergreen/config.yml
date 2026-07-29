@@ -707,6 +707,10 @@ axes:
   - id: "mongodb-version"
     display_name: MongoDB Version
     values:
+      - id: "latest"
+        display_name: "Latest"
+        variables:
+          MONGODB_VERSION: "latest"
       - id: "rapid"
         display_name: "Rapid"
         variables:
@@ -1471,17 +1475,20 @@ buildvariants:
     tasks:
       - name: "test-fle"
 
-#  - matrix_name: "fle-latest"
-#    matrix_spec:
-#      auth-and-ssl: "noauth-and-nossl"
-#      ruby: 
-#      topology: [replica-set, sharded-cluster]
-#      mongodb-version: [ 'latest' ]
-#      os: ubuntu2204
-#      fle: helper
-#    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
-#    tasks:
-#      - name: "test-fle"
+  # Runs FLE specs against the latest (currently 9.0) server so that QE text
+  # query tests (which require server 9.0+) get real coverage on PRs.
+  - matrix_name: "fle-latest"
+    matrix_spec:
+      auth-and-ssl: "noauth-and-nossl"
+      ruby: "ruby-4.0"
+      topology: [replica-set, sharded-cluster]
+      mongodb-version: [ 'latest' ]
+      os: ubuntu2204
+      fle: helper
+    display_name: "FLE: ${mongodb-version} ${topology} ${ruby}"
+    tags: ["pr"]
+    tasks:
+      - name: "test-fle"
 
   # Runs specs against the latest server. Not run on PRs to avoid blocking
   # merges when an unreleased MongoDB build breaks something.

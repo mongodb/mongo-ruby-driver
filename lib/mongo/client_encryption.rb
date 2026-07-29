@@ -100,15 +100,22 @@ module Mongo
     #   encryption key.
     # @option options [ String ] :algorithm The algorithm used to encrypt the value.
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic",
-    #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed".
+    #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed", "String".
     # @option options [ Integer | nil ] :contention_factor Contention factor
-    #   to be applied if encryption algorithm is set to "Indexed". If not
-    #   provided, it defaults to a value of 0. Contention factor should be set
-    #   only if encryption algorithm is set to "Indexed".
+    #   to be applied if encryption algorithm is set to "Indexed" or "String".
+    #   If not provided, it defaults to a value of 0. Contention factor should be
+    #   set only if encryption algorithm is set to "Indexed" or "String".
     # @option options [ String | nil ] query_type Query type to be applied
-    # if encryption algorithm is set to "Indexed". Query type should be set
-    #   only if encryption algorithm is set to "Indexed". The only allowed
-    #   value is "equality".
+    #   if encryption algorithm is set to "Indexed" or "String". Allowed values
+    #   are "equality" (for "Indexed") and "prefix", "suffix", "substring"
+    #   (for "String").
+    # @option options [ Hash | nil ] :string_opts Specifies index options for a
+    #   Queryable Encryption field supporting "prefix", "suffix", or "substring"
+    #   queries. Required when algorithm is "String". Allowed options are
+    #   :case_sensitive, :diacritic_sensitive, :prefix, :suffix, :substring.
+    #
+    # @note The "substring" query type is unstable and subject to backwards
+    #   breaking changes.
     #
     # @note The :key_id and :key_alt_name options are mutually exclusive. Only
     #   one is required to perform explicit encryption.
