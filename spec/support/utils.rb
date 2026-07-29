@@ -139,11 +139,15 @@ module Utils
 
   # Converts camel case clientOptions, as used in spec tests,
   # to Ruby driver underscore options.
-  def convert_client_options(spec_test_options)
+  #
+  # Set parsed to true when the caller has already parsed the fixture into
+  # BSON types (the unified runner does this); extended JSON in the options
+  # is then left alone instead of being parsed a second time.
+  def convert_client_options(spec_test_options, parsed: false)
     mapper = Mongo::URI::OptionsMapper.new
     spec_test_options.each_with_object({}) do |(name, value), opts|
       if name == 'autoEncryptOpts'
-        auto_encryption_options = convert_auto_encryption_client_options(value)
+        auto_encryption_options = convert_auto_encryption_client_options(value, parsed: parsed)
         opts[:auto_encryption_options] = auto_encryption_options
       else
         mapper.add_uri_option(name, value.to_s, opts)
@@ -570,14 +574,14 @@ module Utils
 
   private
 
-  def convert_auto_encryption_client_options(opts)
+  def convert_auto_encryption_client_options(opts, parsed: false)
     auto_encrypt_opts = Utils.snakeize_hash(opts)
 
     _apply_kms_providers(opts, auto_encrypt_opts)
 
     _apply_key_vault_namespace(opts, auto_encrypt_opts)
-    _apply_schema_map(opts, auto_encrypt_opts)
-    _apply_encrypted_fields_map(opts, auto_encrypt_opts)
+    _apply_schema_map(opts, auto_encrypt_opts, parsed: parsed)
+    _apply_encrypted_fields_map(opts, auto_encrypt_opts, parsed: parsed)
 
     auto_encrypt_opts.merge!(extra_options: convert_auto_encryption_extra_options(auto_encrypt_opts))
   end
@@ -664,16 +668,18 @@ module Utils
       opts['keyVaultNamespace'] || 'keyvault.datakeys'
   end
 
-  def _apply_schema_map(opts, auto_encrypt_opts)
+  def _apply_schema_map(opts, auto_encrypt_opts, parsed: false)
     return unless opts['schemaMap']
 
-    auto_encrypt_opts[:schema_map] = BSON::ExtJSON.parse_obj(opts['schemaMap'])
+    auto_encrypt_opts[:schema_map] =
+      parsed ? opts['schemaMap'] : BSON::ExtJSON.parse_obj(opts['schemaMap'])
   end
 
-  def _apply_encrypted_fields_map(opts, auto_encrypt_opts)
+  def _apply_encrypted_fields_map(opts, auto_encrypt_opts, parsed: false)
     return unless opts['encryptedFieldsMap']
 
-    auto_encrypt_opts[:encrypted_fields_map] = BSON::ExtJSON.parse_obj(opts['encryptedFieldsMap'])
+    auto_encrypt_opts[:encrypted_fields_map] =
+      parsed ? opts['encryptedFieldsMap'] : BSON::ExtJSON.parse_obj(opts['encryptedFieldsMap'])
   end
 
   def convert_auto_encryption_extra_options(opts)

@@ -234,7 +234,13 @@ module Unified
                    await_min_pool_size_ms = spec.use('awaitMinPoolSizeMS')
 
                    if (auto_encrypt_opts = spec.use('autoEncryptOpts'))
-                     opts.merge!(Utils.convert_client_options('autoEncryptOpts' => auto_encrypt_opts))
+                     # Unified fixtures are parsed in :bson mode, so the maps in
+                     # autoEncryptOpts already hold BSON types.
+                     opts.merge!(
+                       Utils.convert_client_options(
+                         { 'autoEncryptOpts' => auto_encrypt_opts }, parsed: true
+                       )
+                     )
                    end
 
                    create_client(**opts).tap do |client|
@@ -529,7 +535,9 @@ module Unified
             if (code_name = expected_error.use('errorCodeName')) && !(e.code_name == code_name)
               raise Error::ErrorMismatch, "Expected #{code_name} code name but had #{e.code_name}"
             end
-            if (text = expected_error.use('errorContains')) && !e.to_s.include?(text)
+            # The unified test format requires a case-insensitive match for
+            # errorContains.
+            if (text = expected_error.use('errorContains')) && !e.to_s.downcase.include?(text.downcase)
               raise Error::ErrorMismatch, "Expected #{text} in the message but had #{e}"
             end
 
