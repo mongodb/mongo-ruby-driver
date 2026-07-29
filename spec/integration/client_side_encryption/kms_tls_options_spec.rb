@@ -428,5 +428,195 @@ describe 'Client-Side Encryption' do
 
       it_behaves_like 'it respect KMS TLS options'
     end
+
+    context 'Case 5: tlsDisableOCSPEndpointCheck is permitted' do
+      # The driver spells this option :ssl_verify_ocsp_endpoint; the URI form is
+      # tlsDisableOCSPEndpointCheck.
+      let(:client_encryption_ocsp) do
+        Mongo::ClientEncryption.new(
+          client,
+          {
+            kms_providers: {
+              aws: {
+                access_key_id: 'foo',
+                secret_access_key: 'bar'
+              }
+            },
+            kms_tls_options: {
+              aws: {
+                ssl_verify_ocsp_endpoint: false
+              }
+            },
+            key_vault_namespace: 'keyvault.datakeys',
+          }
+        )
+      end
+
+      it 'does not raise an error' do
+        expect { client_encryption_ocsp }.not_to raise_error
+      end
+    end
+
+    context 'Case 6: named KMS providers apply TLS options' do
+      let(:client_encryption_with_names) do
+        Mongo::ClientEncryption.new(
+          client,
+          {
+            kms_providers: {
+              'aws:no_client_cert' => {
+                access_key_id: SpecConfig.instance.fle_aws_key,
+                secret_access_key: SpecConfig.instance.fle_aws_secret
+              },
+              'azure:no_client_cert' => {
+                tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+                client_id: SpecConfig.instance.fle_azure_client_id,
+                client_secret: SpecConfig.instance.fle_azure_client_secret,
+                identity_platform_endpoint: '127.0.0.1:8002'
+              },
+              'gcp:no_client_cert' => {
+                email: SpecConfig.instance.fle_gcp_email,
+                private_key: SpecConfig.instance.fle_gcp_private_key,
+                endpoint: '127.0.0.1:8002'
+              },
+              'kmip:no_client_cert' => {
+                endpoint: '127.0.0.1:5698'
+              },
+              'aws:with_tls' => {
+                access_key_id: SpecConfig.instance.fle_aws_key,
+                secret_access_key: SpecConfig.instance.fle_aws_secret
+              },
+              'azure:with_tls' => {
+                tenant_id: SpecConfig.instance.fle_azure_tenant_id,
+                client_id: SpecConfig.instance.fle_azure_client_id,
+                client_secret: SpecConfig.instance.fle_azure_client_secret,
+                identity_platform_endpoint: '127.0.0.1:8002'
+              },
+              'gcp:with_tls' => {
+                email: SpecConfig.instance.fle_gcp_email,
+                private_key: SpecConfig.instance.fle_gcp_private_key,
+                endpoint: '127.0.0.1:8002'
+              },
+              'kmip:with_tls' => {
+                endpoint: '127.0.0.1:5698'
+              }
+            },
+            kms_tls_options: {
+              'aws:no_client_cert' => {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
+              },
+              'azure:no_client_cert' => {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
+              },
+              'gcp:no_client_cert' => {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
+              },
+              'kmip:no_client_cert' => {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file
+              },
+              'aws:with_tls' => {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+                ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+                ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+              },
+              'azure:with_tls' => {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+                ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+                ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+              },
+              'gcp:with_tls' => {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+                ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+                ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+              },
+              'kmip:with_tls' => {
+                ssl_ca_cert: SpecConfig.instance.fle_kmip_tls_ca_file,
+                ssl_cert: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+                ssl_key: SpecConfig.instance.fle_kmip_tls_certificate_key_file,
+              }
+            },
+            key_vault_namespace: 'keyvault.datakeys',
+          }
+        )
+      end
+
+      shared_examples 'it applies named KMS TLS options' do
+        it 'TLS handshake failed without a client certificate' do
+          expect do
+            client_encryption_with_names.create_data_key(
+              "#{kms_provider}:no_client_cert",
+              { master_key: master_key }
+            )
+          end.to raise_error(Mongo::Error::KmsError, /(certificate[ _]required|SocketError|ECONNRESET)/i)
+        end
+
+        it 'TLS handshake passes with a client certificate' do
+          if expected_with_tls_error
+            expect do
+              client_encryption_with_names.create_data_key(
+                "#{kms_provider}:with_tls",
+                { master_key: master_key }
+              )
+            end.to raise_error(Mongo::Error::KmsError, expected_with_tls_error)
+          else
+            expect do
+              client_encryption_with_names.create_data_key(
+                "#{kms_provider}:with_tls",
+                { master_key: master_key }
+              )
+            end.not_to raise_error
+          end
+        end
+      end
+
+      context 'named AWS' do
+        let(:kms_provider) { 'aws' }
+
+        let(:master_key) do
+          {
+            region: 'us-east-1',
+            key: 'arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0',
+            endpoint: '127.0.0.1:8002'
+          }
+        end
+
+        let(:expected_with_tls_error) { /parse error/ }
+
+        it_behaves_like 'it applies named KMS TLS options'
+      end
+
+      context 'named Azure' do
+        let(:kms_provider) { 'azure' }
+
+        let(:master_key) do
+          { key_vault_endpoint: 'doesnotexist.invalid', key_name: 'foo' }
+        end
+
+        let(:expected_with_tls_error) { /HTTP status=404/ }
+
+        it_behaves_like 'it applies named KMS TLS options'
+      end
+
+      context 'named GCP' do
+        let(:kms_provider) { 'gcp' }
+
+        let(:master_key) do
+          { project_id: 'foo', location: 'bar', key_ring: 'baz', key_name: 'foo' }
+        end
+
+        let(:expected_with_tls_error) { /HTTP status=404/ }
+
+        it_behaves_like 'it applies named KMS TLS options'
+      end
+
+      context 'named KMIP' do
+        let(:kms_provider) { 'kmip' }
+
+        let(:master_key) { {} }
+
+        let(:expected_with_tls_error) { nil }
+
+        it_behaves_like 'it applies named KMS TLS options'
+      end
+    end
   end
 end
