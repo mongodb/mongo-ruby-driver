@@ -37,12 +37,19 @@ module Mongo
       #   to TLS connection options of Mongo::Client.
       # @param [ Integer | nil ] timeout_ms Timeout for every operation executed
       #   on this object.
-      def initialize(key_vault_client, key_vault_namespace, kms_providers, kms_tls_options, timeout_ms = nil)
+      # @param [ Integer | nil ] key_expiration_ms The lifetime of the data
+      #   encryption key cache, in milliseconds. A value of 0 means the cache
+      #   never expires. When nil, libmongocrypt's default of 60000 is used.
+      def initialize(
+        key_vault_client, key_vault_namespace, kms_providers, kms_tls_options,
+        timeout_ms = nil, key_expiration_ms = nil
+      )
         Crypt.validate_ffi!
         @crypt_handle = Handle.new(
           kms_providers,
           kms_tls_options,
-          explicit_encryption_only: true
+          explicit_encryption_only: true,
+          key_expiration_ms: key_expiration_ms
         )
         @encryption_io = EncryptionIO.new(
           key_vault_client: key_vault_client,

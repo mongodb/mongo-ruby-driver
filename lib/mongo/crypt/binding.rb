@@ -1479,6 +1479,31 @@ module Mongo
         mongocrypt_setopt_bypass_query_analysis(handle.ref)
       end
 
+      # @!method self.mongocrypt_setopt_key_expiration(crypt, cache_expiration_ms)
+      #   @api private
+      #
+      #   Set the expiration time for the data encryption key cache.
+      #
+      #   @param [ FFI::Pointer ] crypt A pointer to a mongocrypt_t object.
+      #   @param [ Integer ] cache_expiration_ms The cache expiration time in
+      #     milliseconds. If zero, the cache never expires.
+      #   @return [ Boolean ] Returns whether the option was set successfully.
+      attach_function(:mongocrypt_setopt_key_expiration, %i[pointer uint64], :bool)
+
+      # Set the expiration time for the data encryption key cache on the
+      # Mongo::Crypt::Handle object.
+      #
+      # @param [ Mongo::Crypt::Handle ] handle
+      # @param [ Integer ] cache_expiration_ms The cache expiration time in
+      #   milliseconds. If zero, the cache never expires.
+      #
+      # @raise [ Mongo::Error::CryptError ] If the option is not set successfully.
+      def self.setopt_key_expiration(handle, cache_expiration_ms)
+        check_status(handle) do
+          mongocrypt_setopt_key_expiration(handle.ref, cache_expiration_ms)
+        end
+      end
+
       # @!method self.mongocrypt_setopt_aes_256_ctr(crypt, aes_256_ctr_encrypt, aes_256_ctr_decrypt, ctx)
       #   @api private
       #

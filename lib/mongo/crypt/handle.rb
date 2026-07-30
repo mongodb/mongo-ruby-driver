@@ -66,6 +66,10 @@ module Mongo
       #   error that libmongocrypt raises on a subsequent "$SYSTEM" search.
       # @option options [ Logger ] :logger A Logger object to which libmongocrypt logs
       #   will be sent
+      # @option options [ Integer | nil ] :key_expiration_ms The lifetime of the
+      #   data encryption key cache, in milliseconds. A value of 0 means the
+      #   cache never expires. When nil, libmongocrypt's default of 60000 is
+      #   used.
       def initialize(kms_providers, kms_tls_options, options = {})
         # FFI::AutoPointer uses a custom release strategy to automatically free
         # the pointer once this object goes out of scope
@@ -86,6 +90,9 @@ module Mongo
 
         @bypass_query_analysis = options[:bypass_query_analysis]
         set_bypass_query_analysis if @bypass_query_analysis
+
+        @key_expiration_ms = options[:key_expiration_ms]
+        set_key_expiration unless @key_expiration_ms.nil?
 
         @crypt_shared_lib_path = options[:crypt_shared_lib_path]
         @explicit_encryption_only = options[:explicit_encryption_only]
@@ -198,6 +205,17 @@ module Mongo
         end
 
         Binding.setopt_bypass_query_analysis(self) if @bypass_query_analysis
+      end
+
+      def set_key_expiration
+        unless @key_expiration_ms.is_a?(Integer) && !@key_expiration_ms.negative?
+          raise ArgumentError.new(
+            "#{@key_expiration_ms} is an invalid key_expiration_ms value; " \
+            'must be a non-negative Integer or nil'
+          )
+        end
+
+        Binding.setopt_key_expiration(self, @key_expiration_ms)
       end
 
       # Send the logs from libmongocrypt to the Mongo::Logger

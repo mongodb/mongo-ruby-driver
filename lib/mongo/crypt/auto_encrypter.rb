@@ -81,6 +81,9 @@ module Mongo
       # @option options [ Boolean | nil ] :crypt_shared_lib_required Whether
       #   crypt shared library is required. If 'true', an error will be raised
       #   if a crypt_shared library cannot be loaded by libmongocrypt.
+      # @option options [ Integer | nil ] :key_expiration_ms The lifetime of the
+      #   data encryption key cache, in milliseconds. A value of 0 means the
+      #   cache never expires. Defaults to 60000.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
@@ -99,7 +102,8 @@ module Mongo
           bypass_query_analysis: @options[:bypass_query_analysis],
           crypt_shared_lib_path: @options[:extra_options][:crypt_shared_lib_path],
           crypt_shared_lib_required: @options[:extra_options][:crypt_shared_lib_required],
-          disable_crypt_shared_lib_search: @options[:extra_options][:disable_crypt_shared_lib_search]
+          disable_crypt_shared_lib_search: @options[:extra_options][:disable_crypt_shared_lib_search],
+          key_expiration_ms: @options[:key_expiration_ms]
         )
 
         @mongocryptd_options = @options[:extra_options].slice(
