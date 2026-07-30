@@ -114,7 +114,11 @@ module Mongo
           ok &&= !SpecConfig.instance.auth?
         end
         if @csfle
-          ok &&= !!(ENV['LIBMONGOCRYPT_PATH'] || ENV['FLE'])
+          # Evergreen exports FLE="" on variants that do not exercise FLE, and
+          # an empty string is truthy in Ruby. Treat an empty value as
+          # "libmongocrypt is not available", the same way
+          # Mrss::LiteConstraints#require_libmongocrypt does.
+          ok &&= !(ENV['LIBMONGOCRYPT_PATH'] || '').empty? || !(ENV['FLE'] || '').empty?
           if ok && @csfle.is_a?(Hash) && (min_version = @csfle['minLibmongocryptVersion'])
             actual_version = Mongo::Crypt::Binding.mongocrypt_version(nil)
             ok &&= Mongo::Crypt::Binding.parse_version(actual_version) >= Gem::Version.new(min_version)

@@ -393,6 +393,32 @@ describe Mongo::Client do
         end
       end
 
+      # Mongo::Crypt::Binding raises a LoadError, which is a ScriptError and
+      # not a StandardError, when libmongocrypt is not available. The cluster
+      # is built before the encrypter, so it must be closed before the error
+      # propagates out of the constructor. This context deliberately sits
+      # outside the require_libmongocrypt guard above: the scenario it covers
+      # only happens when libmongocrypt is missing.
+      context 'when building the encrypter raises a LoadError' do
+        before do
+          allow(Mongo::Crypt::AutoEncrypter).to receive(:new).and_raise(LoadError, 'no libmongocrypt')
+        end
+
+        it 'closes the cluster and propagates the error' do
+          expect_any_instance_of(Mongo::Cluster).to receive(:close).and_call_original
+
+          expect do
+            new_local_client_nmio(
+              SpecConfig.instance.addresses,
+              auto_encryption_options: {
+                key_vault_namespace: 'keyvault.datakeys',
+                kms_providers: { local: { key: 'x' * 96 } },
+              }
+            )
+          end.to raise_error(LoadError, /no libmongocrypt/)
+        end
+      end
+
       context 'timeout options' do
         let(:client) do
           new_local_client(
