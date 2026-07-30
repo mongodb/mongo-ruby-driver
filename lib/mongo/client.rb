@@ -513,6 +513,10 @@ module Mongo
     #     (this part of the API is subject to change).
     #   - :encrypted_fields_map => Hash | nil, maps a collection namespace to
     #     a hash describing encrypted fields for queryable encryption.
+    #     - Note: Supplying an encrypted_fields_map provides more security
+    #       than relying on an encryptedFields obtained from the server. It
+    #       protects against a malicious server advertising a false
+    #       encryptedFields.
     #     - Note: If a collection is present on both the encryptedFieldsMap
     #       and schemaMap, an error will be raised.
     #   - :bypass_query_analysis => Boolean | nil, when true disables automatic

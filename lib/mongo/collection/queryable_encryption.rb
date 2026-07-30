@@ -62,8 +62,8 @@ module Mongo
       def maybe_drop_emm_collections(encrypted_fields, client, session)
         encrypted_fields = if encrypted_fields
                              encrypted_fields
-                           elsif encrypted_fields_map
-                             encrypted_fields_for_drop_from_map
+                           elsif client.options[:auto_encryption_options]
+                             encrypted_fields_for_drop
                            else
                              {}
                            end
@@ -127,12 +127,13 @@ module Mongo
           {}
       end
 
-      # Tries to return the encrypted fields from the {{encrypted_fields_map}}
-      # value, for the current namespace.
+      # Tries to return the encrypted fields for the current namespace from
+      # the {{encrypted_fields_map}} value, falling back to the encrypted
+      # fields advertised by the server for the collection.
       #
       # @return [ Hash | nil ] the encrypted fields, if found
-      def encrypted_fields_for_drop_from_map
-        encrypted_fields_map[namespace] ||
+      def encrypted_fields_for_drop
+        (encrypted_fields_map && encrypted_fields_map[namespace]) ||
           database.list_collections(filter: { name: name })
                   .first
                   &.fetch(:options, {})
