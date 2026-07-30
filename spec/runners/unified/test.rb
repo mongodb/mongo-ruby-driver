@@ -330,6 +330,12 @@ module Unified
                      [ provider, converted_options ]
                    end.to_h
 
+                   # A keyExpirationMS of 0 is meaningful (never expire), so test
+                   # for presence rather than truthiness.
+                   if client_encryption_opts.key?('keyExpirationMS')
+                     opts[:key_expiration_ms] = client_encryption_opts['keyExpirationMS']
+                   end
+
                    Mongo::ClientEncryption.new(
                      key_vault_client,
                      opts

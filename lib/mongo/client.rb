@@ -523,6 +523,10 @@ module Mongo
     #   - :crypt_shared_lib_required => [ Boolean | nil ]  Whether
     #     crypt shared library is required. If 'true', an error will be raised
     #     if a crypt_shared library cannot be loaded by libmongocrypt.
+    #   - :key_expiration_ms => Integer | nil, the lifetime of the data
+    #     encryption key cache, in milliseconds. Must be a non-negative
+    #     integer. A value of 0 means the cache never expires. Defaults to
+    #     60000.
     #
     #   Notes on automatic encryption:
     #   - Automatic encryption is an enterprise only feature that only applies

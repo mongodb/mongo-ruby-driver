@@ -20,7 +20,8 @@ describe Mongo::Crypt::Handle do
         bypass_query_analysis: bypass_query_analysis,
         crypt_shared_lib_path: crypt_shared_lib_path,
         crypt_shared_lib_required: crypt_shared_lib_required,
-        explicit_encryption_only: explicit_encryption_only
+        explicit_encryption_only: explicit_encryption_only,
+        key_expiration_ms: key_expiration_ms
       )
     end
 
@@ -45,6 +46,10 @@ describe Mongo::Crypt::Handle do
     end
 
     let(:explicit_encryption_only) do
+      nil
+    end
+
+    let(:key_expiration_ms) do
       nil
     end
 
@@ -216,6 +221,52 @@ describe Mongo::Crypt::Handle do
       context 'with valid local kms_providers' do
         include_context 'with local kms_providers'
         it_behaves_like 'a functioning Mongo::Crypt::Handle'
+      end
+    end
+
+    # The happy path (a short expiration causes the DEK to be re-fetched) is
+    # covered by the keyCache.yml unified spec test. These specs cover the
+    # validation and pass-through behavior that YAML cannot express.
+    context 'key_expiration_ms' do
+      include_context 'with local kms_providers'
+
+      context 'when not given' do
+        it 'leaves the libmongocrypt default in place' do
+          expect(Mongo::Crypt::Binding).not_to receive(:setopt_key_expiration)
+
+          handle
+        end
+      end
+
+      context 'when zero' do
+        let(:key_expiration_ms) { 0 }
+
+        it 'passes it through to mean "never expire"' do
+          expect(Mongo::Crypt::Binding).to receive(:setopt_key_expiration)
+            .with(anything, 0).and_call_original
+
+          handle
+        end
+      end
+
+      context 'when negative' do
+        let(:key_expiration_ms) { -1 }
+
+        it 'raises an exception' do
+          expect { handle }.to raise_error(
+            ArgumentError, /invalid key_expiration_ms value; must be a non-negative Integer or nil/
+          )
+        end
+      end
+
+      context 'when not an Integer' do
+        let(:key_expiration_ms) { '60000' }
+
+        it 'raises an exception' do
+          expect { handle }.to raise_error(
+            ArgumentError, /invalid key_expiration_ms value; must be a non-negative Integer or nil/
+          )
+        end
       end
     end
 

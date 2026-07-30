@@ -42,6 +42,10 @@ module Mongo
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the feature is disabled.
+    # @option options [ Integer ] :key_expiration_ms The lifetime of the data
+    #    encryption key cache, in milliseconds. Must be a non-negative integer.
+    #    An explicit value of 0 means the cache never expires. The default is
+    #    60000.
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
     #   formatted.
@@ -51,7 +55,8 @@ module Mongo
         options[:key_vault_namespace],
         Crypt::KMS::Credentials.new(options[:kms_providers]),
         Crypt::KMS::Validations.validate_tls_options(options[:kms_tls_options]),
-        options[:timeout_ms]
+        options[:timeout_ms],
+        options[:key_expiration_ms]
       )
     end
 
