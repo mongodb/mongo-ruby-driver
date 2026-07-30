@@ -625,7 +625,11 @@ module Mongo
             build_encrypter
           end
         end
-      rescue StandardError
+      # ScriptError is rescued in addition to StandardError because
+      # Mongo::Crypt::Binding raises a LoadError when libmongocrypt cannot be
+      # found. Without it the cluster built above would be left open, leaking
+      # its monitoring and connection pool threads.
+      rescue StandardError, ScriptError
         begin
           @cluster.close
         rescue StandardError => e
