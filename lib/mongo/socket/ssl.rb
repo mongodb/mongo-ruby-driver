@@ -421,13 +421,13 @@ module Mongo
         # https://github.com/jruby/jruby-openssl/issues/176
         if BSON::Environment.jruby?
           [ OpenSSL::PKey::RSA, OpenSSL::PKey::DSA ].each do |cls|
-            return cls.send(:new, *args)
+            return cls.new(*args)
           rescue OpenSSL::PKey::PKeyError
             # ignore
           end
           # Neither RSA nor DSA worked, fall through to trying PKey
         end
-        OpenSSL::PKey.send(:read, *args)
+        OpenSSL::PKey.read(*args)
       end
 
       def set_cert_verification(context, options)

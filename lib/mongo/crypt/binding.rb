@@ -81,7 +81,7 @@ module Mongo
       # will cause a `LoadError`.
       #
       # @api private
-      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new('1.12.0')
+      MIN_LIBMONGOCRYPT_VERSION = Gem::Version.new('1.20.0')
 
       # @!method self.mongocrypt_version(len)
       #   @api private
@@ -1869,6 +1869,46 @@ module Mongo
         Binary.wrap_string(data) do |data_p|
           check_ctx_status(context) do
             mongocrypt_ctx_setopt_algorithm_range(context.ctx_p, data_p)
+          end
+        end
+      end
+
+      # @!method self.mongocrypt_ctx_setopt_algorithm_text(ctx, opts)
+      #   @api private
+      #
+      # Set options for explicit encryption with the "String" algorithm.
+      #
+      # @note The libmongocrypt C function is named `..._algorithm_text` (the
+      #   original "text" name), even though the algorithm string passed to
+      #   mongocrypt_ctx_setopt_algorithm is "String" (renamed for GA). There is
+      #   no `..._algorithm_string` symbol; `..._algorithm_text` is the correct
+      #   and only setter for these options.
+      #
+      # @param [ FFI::Pointer ] ctx A pointer to a mongocrypt_ctx_t object.
+      # @param [ FFI::Pointer ] opts A pointer to a string options document.
+      #
+      # @return [ Boolean ] Whether setting this option succeeded.
+      attach_function(
+        :mongocrypt_ctx_setopt_algorithm_text,
+        %i[
+          pointer
+          pointer
+        ],
+        :bool
+      )
+
+      # Set options for explicit encryption with the "String" algorithm.
+      #
+      # @param [ Mongo::Crypt::Context ] context
+      # @param [ Hash ] opts options
+      #
+      # @raise [ Mongo::Error::CryptError ] If the operation failed
+      def self.ctx_setopt_algorithm_text(context, opts)
+        validate_document(opts)
+        data = opts.to_bson.to_s
+        Binary.wrap_string(data) do |data_p|
+          check_ctx_status(context) do
+            mongocrypt_ctx_setopt_algorithm_text(context.ctx_p, data_p)
           end
         end
       end

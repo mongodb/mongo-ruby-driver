@@ -152,7 +152,7 @@ module Mongo
         end
 
         def execute_operation(options)
-          client.send(:with_session, options) do |session|
+          client.with_session(options) do |session|
             op = yield session
             op.execute(next_primary(nil, session), context: Operation::Context.new(client: client, session: session))
           end

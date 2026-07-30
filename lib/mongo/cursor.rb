@@ -507,7 +507,7 @@ module Mongo
     end
 
     def limit
-      @view.send(:limit)
+      @view.limit
     end
 
     def register

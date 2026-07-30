@@ -99,6 +99,14 @@ module Mongo
         end
       end
 
+      # Closes the underlying socket, if one is open, to interrupt an
+      # in-progress blocking read on the connection.
+      #
+      # @api private
+      def interrupt_socket
+        socket&.close
+      end
+
       private
 
       HELLO_DOC = BSON::Document.new({ hello: 1 }).freeze

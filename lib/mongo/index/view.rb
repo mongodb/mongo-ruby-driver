@@ -347,12 +347,20 @@ module Mongo
         end
       end
 
+      # The query limit for an index view. Always -1; present so a Cursor
+      # can treat an index view like a collection view.
+      #
+      # @api private
+      def limit
+        -1
+      end
+
       private
 
       def drop_by_name(name, opts = {})
         session_options = @options.dup
         session_options[:session] = opts[:session] if opts[:session]
-        client.send(:with_session, session_options) do |session|
+        client.with_session(session_options) do |session|
           spec = {
             db_name: database.name,
             coll_name: collection.name,
@@ -394,10 +402,6 @@ module Mongo
 
       def initial_query_op(session)
         Operation::Indexes.new(indexes_spec(session))
-      end
-
-      def limit
-        -1
       end
 
       def normalize_keys(spec)

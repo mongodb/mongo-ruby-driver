@@ -85,7 +85,7 @@ module Mongo
           end
 
           def server_selector
-            @view.send(:server_selector)
+            @view.server_selector
           end
 
           def aggregate_spec(session, read_preference = nil)

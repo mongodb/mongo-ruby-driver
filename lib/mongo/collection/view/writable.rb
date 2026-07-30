@@ -88,11 +88,6 @@ module Mongo
               operation_timeouts: operation_timeouts(opts)
             )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-              gte_4_4 = connection.server.description.server_version_gte?('4.4')
-              if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-              end
-
               Operation::WriteCommand.new(
                 selector: cmd,
                 db_name: database.name,
@@ -216,11 +211,6 @@ module Mongo
             )
             value = tracer.trace_operation(operation, context, op_name: 'findOneAndUpdate') do
               write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-                gte_4_4 = connection.server.description.server_version_gte?('4.4')
-                if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                  raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-                end
-
                 operation.txn_num = txn_num
                 operation.execute_with_connection(connection, context: context)
               end
@@ -287,11 +277,6 @@ module Mongo
             )
             tracer.trace_operation(operation, context, op_name: 'deleteMany') do
               nro_write_with_retry(write_concern, context: context) do |connection, _txn_num, context|
-                gte_4_4 = connection.server.description.server_version_gte?('4.4')
-                if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                  raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-                end
-
                 operation.execute_with_connection(connection, context: context)
               end
             end
@@ -346,11 +331,6 @@ module Mongo
               operation_timeouts: operation_timeouts(opts)
             )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-              gte_4_4 = connection.server.description.server_version_gte?('4.4')
-              if !gte_4_4 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-              end
-
               Operation::Delete.new(
                 deletes: [ delete_doc ],
                 db_name: collection.database.name,
@@ -428,11 +408,6 @@ module Mongo
               operation_timeouts: operation_timeouts(opts)
             )
             write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-              gte_4_2 = connection.server.description.server_version_gte?('4.2')
-              if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-              end
-
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,
@@ -507,11 +482,6 @@ module Mongo
               operation_timeouts: operation_timeouts(opts)
             )
             nro_write_with_retry(write_concern, context: context) do |connection, _txn_num, context|
-              gte_4_2 = connection.server.description.server_version_gte?('4.2')
-              if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-              end
-
               Operation::Update.new(
                 updates: [ update_doc ],
                 db_name: collection.database.name,
@@ -601,11 +571,6 @@ module Mongo
             )
             tracer.trace_operation(operation, context) do
               write_with_retry(write_concern, context: context) do |connection, txn_num, context|
-                gte_4_2 = connection.server.description.server_version_gte?('4.2')
-                if !gte_4_2 && opts[:hint] && write_concern && !write_concern.acknowledged?
-                  raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-                end
-
                 operation.txn_num = txn_num
                 operation.execute_with_connection(connection, context: context)
               end

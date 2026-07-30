@@ -143,14 +143,14 @@ module Mongo
 
       def redacted_string(method)
         '{' + reduce([]) do |list, (k, v)|
-          list << "#{k.send(method)}=>#{redact(k, v, method)}"
+          list << "#{k.public_send(method)}=>#{redact(k, v, method)}"
         end.join(', ') + '}'
       end
 
       def redact(k, v, method)
         return STRING_REPLACEMENT if SENSITIVE_OPTIONS.include?(k.to_sym)
 
-        v.send(method)
+        v.public_send(method)
       end
     end
   end

@@ -678,7 +678,7 @@ module Mongo
         # @api private
         def read_concern
           if options[:session] && options[:session].in_transaction?
-            options[:session].send(:txn_read_concern) || collection.client.read_concern
+            options[:session].txn_read_concern || collection.client.read_concern
           else
             collection.read_concern
           end
@@ -749,18 +749,22 @@ module Mongo
           end
         end
 
-        private
-
-        def collation(doc = nil)
-          configure(:collation, doc)
-        end
-
+        # The server selector for this view, derived from its read
+        # preference (or the collection/client default).
+        #
+        # @api private
         def server_selector
           @server_selector ||= if options[:session] && options[:session].in_transaction?
                                  ServerSelector.get(read_preference || client.server_selector)
                                else
                                  ServerSelector.get(read_preference || collection.server_selector)
                                end
+        end
+
+        private
+
+        def collation(doc = nil)
+          configure(:collation, doc)
         end
 
         def validate_doc!(doc)

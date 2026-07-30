@@ -61,7 +61,7 @@ module Mongo
       def apply_causal_consistency_if_possible(selector, connection)
         return if connection.description.standalone?
 
-        cc_doc = session.send(:causal_consistency_doc)
+        cc_doc = session.causal_consistency_doc
         return unless cc_doc
 
         rc_doc = (selector[:readConcern] || read_concern || {}).merge(cc_doc)

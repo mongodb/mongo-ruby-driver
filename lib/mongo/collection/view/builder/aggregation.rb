@@ -105,7 +105,7 @@ module Mongo
               raise ArgumentError, "Unknown view class: #{view}"
             end
             command[:pipeline] = pipeline
-            if (read_concern = view.read_concern)
+            if (read_concern = view.read_concern) && !read_concern.empty?
               command[:readConcern] = Options::Mapper.transform_values_to_strings(
                 read_concern
               )

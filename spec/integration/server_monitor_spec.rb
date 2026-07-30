@@ -36,7 +36,6 @@ describe 'Server::Monitor' do
   end
 
   context 'server-pushed hello' do
-    min_server_fcv '4.4'
     require_topology :replica_set
 
     let(:monitor_options) do

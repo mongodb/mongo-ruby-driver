@@ -72,7 +72,7 @@ module Mongo
             # Interrupt any in-progress exhausted hello reads by
             # disconnecting the connection.
             begin
-              @connection.send(:socket).close
+              @connection.interrupt_socket
             rescue StandardError
               nil
             end

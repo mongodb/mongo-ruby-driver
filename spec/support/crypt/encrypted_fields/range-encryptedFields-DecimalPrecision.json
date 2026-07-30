@@ -11,8 +11,14 @@
       "bsonType": "decimal",
       "queries": {
         "queryType": "range",
-        "sparsity": {
+        "contention": {
+          "$numberLong": "0"
+        },
+        "trimFactor": {
           "$numberInt": "1"
+        },
+        "sparsity": {
+          "$numberLong": "1"
         },
         "min": {
           "$numberDecimal": "0.0"

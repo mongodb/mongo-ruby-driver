@@ -34,25 +34,10 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context 'on 4.4+ servers' do
-        min_server_version '4.4'
-
-        it "doesn't raise an error" do
-          expect do
-            view.find_one_and_delete(hint: '_id_')
-          end.not_to raise_error
-        end
-      end
-
-      context 'on <=4.2 servers' do
-        max_server_version '4.2'
-
-        it 'raises a client-side error' do
-          expect do
-            view.find_one_and_delete(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption,
-                             /The hint option cannot be specified on an unacknowledged write operation/)
-        end
+      it "doesn't raise an error" do
+        expect do
+          view.find_one_and_delete(hint: '_id_')
+        end.not_to raise_error
       end
     end
 
@@ -193,25 +178,10 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context 'on 4.4+ servers' do
-        min_server_version '4.4'
-
-        it "doesn't raise an error" do
-          expect do
-            view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-          end.not_to raise_error
-        end
-      end
-
-      context 'on <=4.2 servers' do
-        max_server_version '4.2'
-
-        it 'raises a client-side error' do
-          expect do
-            view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption,
-                             /The hint option cannot be specified on an unacknowledged write operation/)
-        end
+      it "doesn't raise an error" do
+        expect do
+          view.find_one_and_replace({ field: 'testing' }, { hint: '_id_' })
+        end.not_to raise_error
       end
     end
 
@@ -372,25 +342,10 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context 'on 4.4+ servers' do
-        min_server_version '4.4'
-
-        it "doesn't raise an error" do
-          expect do
-            view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.not_to raise_error
-        end
-      end
-
-      context 'on <=4.2 servers' do
-        max_server_version '4.2'
-
-        it 'raises a client-side error' do
-          expect do
-            view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
-          end.to raise_error(Mongo::Error::UnsupportedOption,
-                             /The hint option cannot be specified on an unacknowledged write operation/)
-        end
+      it "doesn't raise an error" do
+        expect do
+          view.find_one_and_update({ '$set' => { field: 'testing' } }, { hint: '_id_' })
+        end.not_to raise_error
       end
     end
 
@@ -527,25 +482,10 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context 'on 4.4+ servers' do
-        min_server_version '4.4'
-
-        it "doesn't raise an error" do
-          expect do
-            view.delete_many(hint: '_id_')
-          end.not_to raise_error
-        end
-      end
-
-      context 'on <=4.2 servers' do
-        max_server_version '4.2'
-
-        it 'raises a client-side error' do
-          expect do
-            view.delete_many(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption,
-                             /The hint option cannot be specified on an unacknowledged write operation/)
-        end
+      it "doesn't raise an error" do
+        expect do
+          view.delete_many(hint: '_id_')
+        end.not_to raise_error
       end
     end
 
@@ -657,25 +597,10 @@ describe Mongo::Collection::View::Writable do
         client[authorized_collection.name]
       end
 
-      context 'on 4.4+ servers' do
-        min_server_version '4.4'
-
-        it "doesn't raise an error" do
-          expect do
-            view.delete_one(hint: '_id_')
-          end.not_to raise_error
-        end
-      end
-
-      context 'on <=4.2 servers' do
-        max_server_version '4.2'
-
-        it 'raises a client-side error' do
-          expect do
-            view.delete_one(hint: '_id_')
-          end.to raise_error(Mongo::Error::UnsupportedOption,
-                             /The hint option cannot be specified on an unacknowledged write operation/)
-        end
+      it "doesn't raise an error" do
+        expect do
+          view.delete_one(hint: '_id_')
+        end.not_to raise_error
       end
     end
 

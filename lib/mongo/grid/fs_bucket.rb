@@ -494,6 +494,32 @@ module Mongo
         chunks_collection.drop(timeout_ms: context.remaining_timeout_ms)
       end
 
+      # Ensures the files and chunks collections have their required indexes,
+      # creating any that are missing.
+      #
+      # @param [ CsotTimeoutHolder | nil ] timeout_holder The timeout holder.
+      #
+      # @api private
+      def ensure_indexes!(timeout_holder = nil)
+        fc_idx = files_collection.find(
+          {},
+          limit: 1,
+          projection: { _id: 1 },
+          timeout_ms: timeout_holder&.remaining_timeout_ms
+        ).first
+        create_index_if_missing!(files_collection, FSBucket::FILES_INDEX) if fc_idx.nil?
+
+        cc_idx = chunks_collection.find(
+          {},
+          limit: 1,
+          projection: { _id: 1 },
+          timeout_ms: timeout_holder&.remaining_timeout_ms
+        ).first
+        return unless cc_idx.nil?
+
+        create_index_if_missing!(chunks_collection, FSBucket::CHUNKS_INDEX, unique: true)
+      end
+
       private
 
       # @param [ Hash ] opts The options.
@@ -514,26 +540,6 @@ module Mongo
 
       def files_name
         "#{prefix}.#{Grid::File::Info::COLLECTION}"
-      end
-
-      def ensure_indexes!(timeout_holder = nil)
-        fc_idx = files_collection.find(
-          {},
-          limit: 1,
-          projection: { _id: 1 },
-          timeout_ms: timeout_holder&.remaining_timeout_ms
-        ).first
-        create_index_if_missing!(files_collection, FSBucket::FILES_INDEX) if fc_idx.nil?
-
-        cc_idx = chunks_collection.find(
-          {},
-          limit: 1,
-          projection: { _id: 1 },
-          timeout_ms: timeout_holder&.remaining_timeout_ms
-        ).first
-        return unless cc_idx.nil?
-
-        create_index_if_missing!(chunks_collection, FSBucket::CHUNKS_INDEX, unique: true)
       end
 
       def create_index_if_missing!(collection, index_spec, options = {})

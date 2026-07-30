@@ -614,7 +614,7 @@ module Mongo
       #
       # @return [ Hash | nil ] The auth mechanism properties hash.
       def convert_auth_mech_props(_name, value)
-        properties = hash_extractor('authMechanismProperties', value)
+        properties = hash_extractor('authMechanismProperties', value, invalidate_on_error: true)
         if properties
           properties.each do |k, v|
             properties[k] = (v.downcase == 'true') if k.to_s.downcase == 'canonicalize_host_name' && v
@@ -863,16 +863,27 @@ module Mongo
 
       # Extract values from the string and put them into a nested hash.
       #
+      # Multiple key-value pairs are delimited by a comma. Within each pair,
+      # the key is everything up to the first colon and the value is everything
+      # after it, so values may themselves contain colons (for example
+      # TOKEN_RESOURCE:mongodb://host).
+      #
       # @param [ String ] name Name of the URI option being processed.
       # @param [ String ] value The string to build a hash from.
+      # @param [ true | false ] invalidate_on_error When a pair is malformed
+      #   (has no value), discard the whole option and return nil instead of
+      #   skipping just that pair. Used for options such as
+      #   authMechanismProperties whose values must not contain commas.
       #
-      # @return [ Hash ] The hash built from the string.
-      def hash_extractor(name, value)
+      # @return [ Hash | nil ] The hash built from the string, or nil.
+      def hash_extractor(name, value, invalidate_on_error: false)
         h = {}
         value.split(',').each do |tag|
-          k, v = tag.split(':')
+          k, v = tag.split(':', 2)
           if v.nil?
             log_warn("Invalid hash value for #{name}: key `#{k}` does not have a value: #{value}")
+            return nil if invalidate_on_error
+
             next
           end
 

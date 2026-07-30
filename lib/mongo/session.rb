@@ -1308,8 +1308,6 @@ module Mongo
       @inside_with_transaction
     end
 
-    private
-
     # Get the read concern the session will use when starting a transaction.
     #
     # This is a driver style hash with underscore keys.
@@ -1320,10 +1318,23 @@ module Mongo
     # @return [ Hash ] The read concern used for starting transactions.
     #
     # @since 2.9.0
+    # @api private
     def txn_read_concern
       # Read concern is inherited from client but not db or collection.
       txn_options[:read_concern] || @client.read_concern
     end
+
+    # Returns causal consistency document if the last operation time is
+    # known and causal consistency is enabled, otherwise returns nil.
+    #
+    # @api private
+    def causal_consistency_doc
+      return unless operation_time && causal_consistency?
+
+      { afterClusterTime: operation_time }
+    end
+
+    private
 
     def within_states?(*states)
       states.include?(@state)
@@ -1340,14 +1351,6 @@ module Mongo
     def txn_write_concern
       txn_options[:write_concern] ||
         (@client.write_concern && @client.write_concern.options)
-    end
-
-    # Returns causal consistency document if the last operation time is
-    # known and causal consistency is enabled, otherwise returns nil.
-    def causal_consistency_doc
-      return unless operation_time && causal_consistency?
-
-      { afterClusterTime: operation_time }
     end
 
     def causal_consistency?

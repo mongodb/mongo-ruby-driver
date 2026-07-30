@@ -234,7 +234,13 @@ module Unified
                    await_min_pool_size_ms = spec.use('awaitMinPoolSizeMS')
 
                    if (auto_encrypt_opts = spec.use('autoEncryptOpts'))
-                     opts.merge!(Utils.convert_client_options('autoEncryptOpts' => auto_encrypt_opts))
+                     # Unified fixtures are parsed in :bson mode, so the maps in
+                     # autoEncryptOpts already hold BSON types.
+                     opts.merge!(
+                       Utils.convert_client_options(
+                         { 'autoEncryptOpts' => auto_encrypt_opts }, parsed: true
+                       )
+                     )
                    end
 
                    create_client(**opts).tap do |client|
@@ -375,9 +381,17 @@ module Unified
     def set_initial_data
       @spec['initialData']&.each do |entity_spec|
         spec = UsingHash[entity_spec]
-        collection = root_authorized_client.with(write_concern: { w: :majority })
-                                           .use(spec.use!('databaseName'))[spec.use!('collectionName')]
+        database = root_authorized_client.with(write_concern: { w: :majority })
+                                         .use(spec.use!('databaseName'))
+        collection_name = spec.use!('collectionName')
+        collection = database[collection_name]
         collection.drop
+        # Queryable Encryption stores tag counts in the metadata collections
+        # enxcol_.<coll>.esc/.ecoc. They must be dropped alongside the data
+        # collection so that __safeContent__ is reproducible for exact matching.
+        # See the unified test format spec, initialData setup.
+        database["enxcol_.#{collection_name}.esc"].drop
+        database["enxcol_.#{collection_name}.ecoc"].drop
         create_options = spec.use('createOptions') || {}
         docs = spec.use!('documents')
         begin
@@ -521,7 +535,9 @@ module Unified
             if (code_name = expected_error.use('errorCodeName')) && !(e.code_name == code_name)
               raise Error::ErrorMismatch, "Expected #{code_name} code name but had #{e.code_name}"
             end
-            if (text = expected_error.use('errorContains')) && !e.to_s.include?(text)
+            # The unified test format requires a case-insensitive match for
+            # errorContains.
+            if (text = expected_error.use('errorContains')) && !e.to_s.downcase.include?(text.downcase)
               raise Error::ErrorMismatch, "Expected #{text} in the message but had #{e}"
             end
 

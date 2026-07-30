@@ -385,7 +385,7 @@ class Mongo::Cluster
     def add_servers_from_desc(updated_desc)
       added_servers = []
       %w[hosts passives arbiters].each do |m|
-        updated_desc.send(m).each do |address_str|
+        updated_desc.public_send(m).each do |address_str|
           if (server = cluster.add(address_str, monitor: false))
             added_servers << server
           end
@@ -402,7 +402,7 @@ class Mongo::Cluster
     # good primary).
     def remove_servers_not_in_desc(updated_desc)
       updated_desc_address_strs = %w[hosts passives arbiters].map do |m|
-        updated_desc.send(m)
+        updated_desc.public_send(m)
       end.flatten
       servers_list.each do |server|
         next if updated_desc_address_strs.include?(address_str = server.address.to_s)

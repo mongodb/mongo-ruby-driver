@@ -687,8 +687,7 @@ module Mongo
         msg = ''
         dead_monitors = []
         cluster.servers_list.each do |server|
-          thread = server.monitor.instance_variable_get(:@thread)
-          dead_monitors << server if thread.nil? || !thread.alive?
+          dead_monitors << server unless server.monitor&.running?
         end
         if dead_monitors.any?
           msg += ". The following servers have dead monitor threads: #{dead_monitors.map(&:summary).join(', ')}"

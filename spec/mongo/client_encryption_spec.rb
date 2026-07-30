@@ -61,6 +61,20 @@ describe Mongo::ClientEncryption do
       it_behaves_like 'a functioning ClientEncryption'
     end
 
+    context 'with timeout_ms' do
+      include_context 'with local kms_providers'
+
+      it 'passes the timeout to the encrypter' do
+        client_encryption = described_class.new(client, {
+                                                  key_vault_namespace: key_vault_namespace,
+                                                  kms_providers: kms_providers,
+                                                  timeout_ms: 5_000
+                                                })
+        encrypter = client_encryption.instance_variable_get(:@encrypter)
+        expect(encrypter.instance_variable_get(:@timeout_ms)).to eq(5_000)
+      end
+    end
+
     context 'with invalid KMS provider information' do
       let(:kms_providers) { { random_key: {} } }
 

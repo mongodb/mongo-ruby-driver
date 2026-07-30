@@ -263,8 +263,6 @@ describe Mongo::Database do
     end
 
     context 'with comment' do
-      min_server_version '4.4'
-
       it 'returns collection names and send comment' do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
         database.collection_names(comment: 'comment')
@@ -445,8 +443,6 @@ describe Mongo::Database do
     end
 
     context 'with comment' do
-      min_server_version '4.4'
-
       it 'returns collection names and send comment' do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
         database.list_collections(comment: 'comment')
@@ -635,8 +631,6 @@ describe Mongo::Database do
     end
 
     context 'with comment' do
-      min_server_version '4.4'
-
       it 'returns collection names and send comment' do
         database = described_class.new(monitored_client, SpecConfig.instance.test_db)
         database.collections(comment: 'comment')

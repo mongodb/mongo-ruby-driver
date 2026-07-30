@@ -269,30 +269,6 @@ module Mongo
       start_stop_srv_monitor
     end
 
-    # Create a cluster for the provided client, for use when we don't want the
-    # client's original cluster instance to be the same.
-    #
-    # @example Create a cluster for the client.
-    #   Cluster.create(client)
-    #
-    # @param [ Client ] client The client to create on.
-    # @param [ Monitoring | nil ] monitoring. The monitoring instance to use
-    #   with the new cluster. If nil, a new instance of Monitoring will be
-    #   created.
-    #
-    # @return [ Cluster ] The cluster.
-    #
-    # @since 2.0.0
-    # @api private
-    def self.create(client, monitoring: nil)
-      cluster = Cluster.new(
-        client.cluster.addresses.map(&:to_s),
-        monitoring || Monitoring.new,
-        client.cluster_options
-      )
-      client.instance_variable_set(:@cluster, cluster)
-    end
-
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -610,8 +586,7 @@ module Mongo
     # @option options [ true | false ] :keep_connection_pool Usually when the
     #   new server description is unknown, the connection pool on the
     #   respective server is cleared. Set this option to true to keep the
-    #   existing connection pool (required when handling not master errors
-    #   on 4.2+ servers).
+    #   existing connection pool (required when handling not master errors).
     # @option options [ true | false ] :awaited Whether the updated description
     #   was a result of processing an awaited hello.
     # @option options [ Object ] :service_id Change state for the specified

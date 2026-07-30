@@ -92,7 +92,7 @@ module Mongo
 
       def combine_counts!(result)
         Result::FIELDS.each do |field|
-          if result.respond_to?(field) && (value = result.send(field))
+          if result.respond_to?(field) && (value = result.public_send(field))
             results.merge!(field => (results[field] || 0) + value)
           end
         end

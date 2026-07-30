@@ -52,11 +52,6 @@ module Mongo
           # SCRAM-SHA-1. The use of SCRAM-SHA-256 by default is thus
           # sensible, and it is also mandated by the speculative auth spec.
           #
-          # If no mechanism was specified and we are talking to a 4.2
-          # server, we'll send speculative auth document, the server will
-          # ignore it and we'll perform authentication using explicit
-          # command.
-          #
           # If no mechanism was specified and we are talking to a 4.4+
           # server and the user account doesn't allow SCRAM-SHA-256, we will
           # authenticate in a separate command with SCRAM-SHA-1 after

@@ -7,7 +7,6 @@ describe 'SDAM prose tests' do
   # sdam_events_spec.rb.
 
   describe 'RTT tests' do
-    min_server_fcv '4.4'
     require_topology :single
 
     let(:subscriber) { Mrss::EventSubscriber.new }

@@ -817,15 +817,23 @@ describe Mongo::URI::OptionsMapper do
       end
     end
 
+    context 'when a value contains a colon' do
+      let(:value) { 'TOKEN_RESOURCE:mongodb://test-cluster,ENVIRONMENT:azure' }
+
+      it 'keeps the whole value after the first colon' do
+        expect(converted).to eq(TOKEN_RESOURCE: 'mongodb://test-cluster', ENVIRONMENT: 'azure')
+      end
+    end
+
     context 'when including items without a colon' do
       let(:value) { 'k1:v1,k2,v2' }
 
-      it 'drops those items' do
-        expect(converted).to eq(k1: 'v1')
+      it 'discards the whole option' do
+        expect(converted).to be_nil
       end
 
       it 'warns' do
-        expect(options_mapper).to receive(:log_warn).twice
+        expect(options_mapper).to receive(:log_warn).once
         converted
       end
     end

@@ -236,8 +236,6 @@ module Mongo
     end
 
     def execute_operation(name, values, connection, context, operation_id, result_combiner, session, txn_num = nil)
-      validate_hint!(connection)
-
       unpin_maybe(session, connection) do
         if values.size > connection.description.max_write_batch_size
           split_execute(name, values, connection, context, operation_id, result_combiner, session, txn_num)
@@ -308,38 +306,6 @@ module Mongo
 
       spec = base_spec(operation_id, session).merge(updates: documents)
       Operation::Update.new(spec).bulk_execute(connection, context: context)
-    end
-
-    def validate_hint!(connection)
-      return unless op_combiner.has_hint?
-      return unless !can_hint?(connection) && write_concern && !write_concern.acknowledged?
-
-      raise Error::UnsupportedOption.hint_error(unacknowledged_write: true)
-    end
-
-    # Loop through the requests and check if each operation is allowed to send
-    # a hint for each operation on the given server version.
-    #
-    # For the following operations, the client can send a hint for all supported
-    # server versions, and for the rest, the client can only send it for 4.4+:
-    #   - updateOne
-    #   - updateMany
-    #   - replaceOne
-    #
-    # @param [ Connection ] connection The connection object.
-    #
-    # @return [ true | false ] Whether the request is able to send hints for
-    #   the current server version.
-    def can_hint?(connection)
-      gte_4_4 = connection.server.description.server_version_gte?('4.4')
-      op_combiner.requests.all? do |req|
-        op = req.keys.first
-        if req[op].keys.include?(:hint)
-          %i[update_one update_many replace_one].include?(op) || gte_4_4
-        else
-          true
-        end
-      end
     end
 
     # Perform the request document validation required by driver specifications.
