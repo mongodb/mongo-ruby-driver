@@ -100,23 +100,31 @@ module Mongo
       #   encryption key.
       # @option options [ String ] :algorithm The algorithm used to encrypt the value.
       #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic",
-      #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed".
+      #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed",
+      #   "Range", "String".
       # @option options [ Integer | nil ] :contention_factor Contention factor
-      #   to be applied if encryption algorithm is set to "Indexed". If not
-      #   provided, it defaults to a value of 0. Contention factor should be set
-      #   only if encryption algorithm is set to "Indexed".
+      #   to be applied if encryption algorithm is set to "Indexed", "Range", or
+      #   "String". If not provided, it defaults to a value of 0. Contention
+      #   factor should be set only if encryption algorithm is set to "Indexed",
+      #   "Range", or "String".
       # @option options [ String | nil ] query_type Query type to be applied
-      # if encryption algorithm is set to "Indexed". Query type should be set
-      #   only if encryption algorithm is set to "Indexed". The only allowed
-      #   value is "equality".
+      #   if encryption algorithm is set to "Indexed", "Range", or "String".
+      #   Allowed values are "equality" (for "Indexed"), "range" (for "Range"),
+      #   and "prefix", "suffix", "substring" (for "String").
+      # @option options [ Hash | nil ] :range_opts Specifies index options for a
+      #   Queryable Encryption field supporting "range" queries. Required when
+      #   algorithm is "Range".
+      # @option options [ Hash | nil ] :string_opts Specifies index options for a
+      #   Queryable Encryption field supporting "prefix", "suffix", or
+      #   "substring" queries. Required when algorithm is "String".
       #
       # @note The :key_id and :key_alt_name options are mutually exclusive. Only
       #   one is required to perform explicit encryption.
       #
       # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
       #   representing the encrypted value
-      # @raise [ ArgumentError ] if either contention_factor or query_type
-      #   is set, and algorithm is not "Indexed".
+      # @raise [ ArgumentError ] if either contention_factor or query_type is
+      #   set, and algorithm is not "Indexed", "Range", or "String".
       def encrypt(value, options)
         Crypt::ExplicitEncryptionContext.new(
           @crypt_handle,

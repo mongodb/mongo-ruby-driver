@@ -106,19 +106,31 @@ module Mongo
     #   encryption key.
     # @option options [ String ] :algorithm The algorithm used to encrypt the value.
     #   Valid algorithms are "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic",
-    #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed", "String".
+    #   "AEAD_AES_256_CBC_HMAC_SHA_512-Random", "Indexed", "Unindexed", "Range",
+    #   "String".
     # @option options [ Integer | nil ] :contention_factor Contention factor
-    #   to be applied if encryption algorithm is set to "Indexed" or "String".
-    #   If not provided, it defaults to a value of 0. Contention factor should be
-    #   set only if encryption algorithm is set to "Indexed" or "String".
+    #   to be applied if encryption algorithm is set to "Indexed", "Range", or
+    #   "String". If not provided, it defaults to a value of 0. Contention factor
+    #   should be set only if encryption algorithm is set to "Indexed", "Range",
+    #   or "String".
     # @option options [ String | nil ] query_type Query type to be applied
-    #   if encryption algorithm is set to "Indexed" or "String". Allowed values
-    #   are "equality" (for "Indexed") and "prefix", "suffix", "substring"
-    #   (for "String").
+    #   if encryption algorithm is set to "Indexed", "Range", or "String".
+    #   Allowed values are "equality" (for "Indexed"), "range" (for "Range"),
+    #   and "prefix", "suffix", "substring" (for "String").
+    # @option options [ Hash | nil ] :range_opts Specifies index options for a
+    #   Queryable Encryption field supporting "range" queries. Required when
+    #   algorithm is "Range". Allowed options are :min, :max, :trim_factor,
+    #   :sparsity, :precision.
     # @option options [ Hash | nil ] :string_opts Specifies index options for a
     #   Queryable Encryption field supporting "prefix", "suffix", or "substring"
     #   queries. Required when algorithm is "String". Allowed options are
     #   :case_sensitive, :diacritic_sensitive, :prefix, :suffix, :substring.
+    #
+    # @note The result of explicit encryption with the "Indexed", "Range", or
+    #   "String" algorithm must be processed by the server to insert or query.
+    #   To insert or query with such a payload, use a Mongo::Client configured
+    #   with :auto_encryption_options. The :bypass_query_analysis option may be
+    #   true; the :bypass_auto_encryption option must be false.
     #
     # @note The "substring" query type is unstable and subject to backwards
     #   breaking changes.
@@ -129,8 +141,8 @@ module Mongo
     # @return [ BSON::Binary ] A BSON Binary object of subtype 6 (ciphertext)
     #   representing the encrypted value.
     #
-    # @raise [ ArgumentError ] if either contention_factor or query_type
-    #   is set, and algorithm is not "Indexed".
+    # @raise [ ArgumentError ] if either contention_factor or query_type is set,
+    #   and algorithm is not "Indexed", "Range", or "String".
     def encrypt(value, options = {})
       @encrypter.encrypt(value, options)
     end
