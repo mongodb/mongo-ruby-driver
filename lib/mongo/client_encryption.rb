@@ -173,7 +173,7 @@ module Mongo
     #   expression. The only allowed value is "Range"
     # @option options [ Integer | nil ] :contention_factor Contention factor
     #   to be applied If not  provided, it defaults to a value of 0.
-    # @option options [ String | nil ] query_type Query type to be applied.
+    # @option options [ String | nil ] :query_type Query type to be applied.
     #   The only allowed value is "range".
     #
     # @note The :key_id and :key_alt_name options are mutually exclusive. Only

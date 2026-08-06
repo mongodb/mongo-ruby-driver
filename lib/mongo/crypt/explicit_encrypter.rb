@@ -107,7 +107,7 @@ module Mongo
       #   "String". If not provided, it defaults to a value of 0. Contention
       #   factor should be set only if encryption algorithm is set to "Indexed",
       #   "Range", or "String".
-      # @option options [ String | nil ] query_type Query type to be applied
+      # @option options [ String | nil ] :query_type Query type to be applied
       #   if encryption algorithm is set to "Indexed", "Range", or "String".
       #   Allowed values are "equality" (for "Indexed"), "range" (for "Range"),
       #   and "prefix", "suffix", "substring" (for "String").
