@@ -613,9 +613,7 @@ module Mongo
       sdam_proc.call(self) if sdam_proc
 
       @connect_lock = Mutex.new
-      @retry_policy = Retryable::RetryPolicy.new(
-        max_retries: @options[:max_adaptive_retries] || Retryable::Backpressure::DEFAULT_MAX_RETRIES
-      )
+      @retry_policy = build_retry_policy
       @connect_lock.synchronize do
         @cluster = Cluster.new(
           addresses,
@@ -845,6 +843,12 @@ module Mongo
 
         options.update(opts)
         @options = options.freeze
+
+        # The retry policy is built from the options, so a client created by
+        # #with needs its own policy when the option changed.
+        if @options[:max_adaptive_retries] != old_options[:max_adaptive_retries]
+          @retry_policy = build_retry_policy
+        end
 
         auto_encryption_options_changed =
           @options[:auto_encryption_options] != old_options[:auto_encryption_options]
@@ -1275,6 +1279,16 @@ module Mongo
     end
 
     private
+
+    # Builds the retry policy for the backpressure retry loops from the
+    # client's options.
+    #
+    # @return [ Retryable::RetryPolicy ] The retry policy.
+    def build_retry_policy
+      Retryable::RetryPolicy.new(
+        max_retries: @options[:max_adaptive_retries] || Retryable::Backpressure::DEFAULT_MAX_RETRIES
+      )
+    end
 
     # Attempts to parse the given list of addresses, using the provided options.
     #

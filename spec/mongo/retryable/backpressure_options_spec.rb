@@ -37,6 +37,29 @@ describe 'Client backpressure options' do
       client = new_local_client_nmio([ 'localhost:27017' ], max_adaptive_retries: 4)
       expect(client.retry_policy.max_retries).to eq(4)
     end
+
+    context 'when derived via Client#with' do
+      let(:client) { new_local_client_nmio([ 'localhost:27017' ], max_adaptive_retries: 4) }
+
+      it 'rebuilds the retry policy with the new value' do
+        expect(client.with(max_adaptive_retries: 1).retry_policy.max_retries).to eq(1)
+      end
+
+      it 'reverts to the default when the option is removed' do
+        expect(client.with(max_adaptive_retries: nil).retry_policy.max_retries)
+          .to eq(Mongo::Retryable::Backpressure::DEFAULT_MAX_RETRIES)
+      end
+
+      it 'leaves the original client policy alone' do
+        client.with(max_adaptive_retries: 1)
+        expect(client.retry_policy.max_retries).to eq(4)
+      end
+
+      it 'keeps the policy when an unrelated option changes' do
+        derived = client.with(read: { mode: :secondary })
+        expect(derived.retry_policy.max_retries).to eq(4)
+      end
+    end
   end
 
   describe 'enableOverloadRetargeting' do
