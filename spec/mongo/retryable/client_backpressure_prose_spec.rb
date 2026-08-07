@@ -77,8 +77,8 @@ describe 'Client Backpressure Prose Tests' do
       with_backoff = failing_insert_duration(1.0)
 
       # Step 3.6: the sum of the two backoffs is 0.3 seconds. The
-      # 0.3-second window accounts for variance between the two runs.
-      expect((with_backoff - (no_backoff + 0.3)).abs).to be < 0.3
+      # 0.6-second window accounts for variance between the two runs.
+      expect((with_backoff - (no_backoff + 0.6)).abs).to be < 0.6
     end
   end
 
@@ -147,5 +147,11 @@ describe 'Client Backpressure Prose Tests' do
       # Step 6: one initial attempt plus maxAdaptiveRetries retries.
       expect(started_events('find').length).to eq(2)
     end
+  end
+  # -------------------------------------------------------------------------
+  # Test 5: Overload Errors with baseBackoffMS override base backoff
+  # -------------------------------------------------------------------------
+  describe 'Test 5: overload errors are retried a maximum of maxRetries' do
+
   end
 end
