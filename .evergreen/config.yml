@@ -892,9 +892,6 @@ axes:
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
-      - id: ubuntu1804
-        display_name: "Ubuntu 18.04"
-        run_on: ubuntu1804-small
       - id: debian11
         display_name: "Debian 11"
         run_on: debian11-small
@@ -1159,12 +1156,16 @@ buildvariants:
     tasks:
       - name: "run-main-test-suite"
 
+  # 20.04 is the newest host usable here: the 4.4 enterprise archive is not
+  # published for ubuntu2204. It is also the oldest that still works, since
+  # drivers-evergreen-tools now requires uv, which needs Python 3.8+ (18.04
+  # ships 3.6).
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7"]
       mongodb-version: ['4.4']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -1291,7 +1292,7 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: ['4.4']
       topology: replica-set
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test"
