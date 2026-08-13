@@ -6,6 +6,12 @@ axes:
         display_name: "Rapid"
         variables:
           MONGODB_VERSION: "rapid"
+      # 9.0 is not yet GA. drivers-evergreen-tools resolves this to the latest
+      # nightly build of the server's v9.0 branch (DRIVERS-3610).
+      - id: "9.0"
+        display_name: "9.0"
+        variables:
+          MONGODB_VERSION: "9.0"
       - id: "8.2"
         display_name: "8.2"
         variables:
