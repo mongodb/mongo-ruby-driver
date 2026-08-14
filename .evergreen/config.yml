@@ -715,6 +715,12 @@ axes:
         display_name: "Rapid"
         variables:
           MONGODB_VERSION: "rapid"
+      # 9.0 is not yet GA. drivers-evergreen-tools resolves this to the latest
+      # nightly build of the server's v9.0 branch (DRIVERS-3610).
+      - id: "9.0"
+        display_name: "9.0"
+        variables:
+          MONGODB_VERSION: "9.0"
       - id: "8.2"
         display_name: "8.2"
         variables:
@@ -890,9 +896,6 @@ axes:
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
-      - id: ubuntu1804
-        display_name: "Ubuntu 18.04"
-        run_on: ubuntu1804-small
       - id: debian11
         display_name: "Debian 11"
         run_on: debian11-small
@@ -1116,7 +1119,7 @@ buildvariants:
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
       ruby: "ruby-4.0"
-      mongodb-version: ["8.2", "8.0", "7.0"]
+      mongodb-version: ["9.0", "8.2", "8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: ${auth-and-ssl} ${ruby} db-${mongodb-version} ${topology}
@@ -1127,7 +1130,7 @@ buildvariants:
   - matrix_name: "mongo-recent"
     matrix_spec:
       ruby: ["ruby-4.0", "ruby-3.4", "ruby-3.3", "ruby-3.2", "jruby-9.4"]
-      mongodb-version: ["8.2", "8.0", "7.0"]
+      mongodb-version: ["9.0", "8.2", "8.0", "7.0"]
       topology: ["standalone", "replica-set", "sharded-cluster"]
       os: ubuntu2204
     display_name: "${mongodb-version} ${os} ${topology} ${auth-and-ssl} ${ruby}"
@@ -1157,12 +1160,16 @@ buildvariants:
     tasks:
       - name: "run-main-test-suite"
 
+  # 20.04 is the newest host usable here: the 4.4 enterprise archive is not
+  # published for ubuntu2204. It is also the oldest that still works, since
+  # drivers-evergreen-tools now requires uv, which needs Python 3.8+ (18.04
+  # ships 3.6).
   - matrix_name: "mongo-4.x"
     matrix_spec:
       ruby: ["ruby-3.0", "ruby-2.7"]
       mongodb-version: ['4.4']
       topology: ["standalone", "replica-set", "sharded-cluster"]
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
     tags: ["pr"]
     tasks:
@@ -1289,7 +1296,7 @@ buildvariants:
       ruby: "ruby-2.7"
       mongodb-version: ['4.4']
       topology: replica-set
-      os: ubuntu1804
+      os: ubuntu2004
     display_name: "${mongodb-version} ${topology} stress ${ruby}"
     tasks:
       - name: "test"
@@ -1298,7 +1305,7 @@ buildvariants:
     matrix_spec:
       stress: on
       ruby: "ruby-4.0"
-      mongodb-version: ["8.2", "8.0", "7.0"]
+      mongodb-version: ["9.0", "8.2", "8.0", "7.0"]
       topology: replica-set
       os: ubuntu2204
     display_name: "${mongodb-version} ${topology} stress ${ruby}"

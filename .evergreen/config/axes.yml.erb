@@ -10,6 +10,12 @@ axes:
         display_name: "Rapid"
         variables:
           MONGODB_VERSION: "rapid"
+      # 9.0 is not yet GA. drivers-evergreen-tools resolves this to the latest
+      # nightly build of the server's v9.0 branch (DRIVERS-3610).
+      - id: "9.0"
+        display_name: "9.0"
+        variables:
+          MONGODB_VERSION: "9.0"
       - id: "8.2"
         display_name: "8.2"
         variables:
@@ -185,9 +191,6 @@ axes:
       - id: ubuntu2004
         display_name: "Ubuntu 20.04"
         run_on: ubuntu2004-small
-      - id: ubuntu1804
-        display_name: "Ubuntu 18.04"
-        run_on: ubuntu1804-small
       - id: debian11
         display_name: "Debian 11"
         run_on: debian11-small
