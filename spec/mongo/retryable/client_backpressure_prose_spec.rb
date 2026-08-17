@@ -150,7 +150,7 @@ describe 'Client Backpressure Prose Tests' do
   # Test 5: Overload Errors with baseBackoffMS override base backoff
   # -------------------------------------------------------------------------
   describe 'Test 5: overload errors are retried a maximum of maxRetries' do
-    # min_server_version '9.0'
+    min_server_version '9.0'
 
     it 'sends baseBackoffMS in the overload error and uses it for backoff' do
       set_overload_fail_point(%w[insert], 462)
