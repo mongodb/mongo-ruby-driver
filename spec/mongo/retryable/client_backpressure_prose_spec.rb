@@ -6,10 +6,6 @@ require 'spec_helper'
 # specifications/source/client-backpressure/tests/README.md
 #
 # Test 2 was removed from the specification.
-#
-# Test 5 (overload errors with baseBackoffMS override base backoff) is not
-# implemented here: the driver does not yet read the baseBackoffMS field
-# that a 9.0+ server attaches to overload errors.
 describe 'Client Backpressure Prose Tests' do
   require_topology :replica_set
   min_server_version '4.4'
@@ -40,6 +36,20 @@ describe 'Client Backpressure Prose Tests' do
     )
   end
 
+  # Duration of an insert that fails with an overload error on every
+  # attempt, with the random number generator used for jitter pinned to
+  # the given value.
+  def failing_insert_duration(jitter)
+    allow(client.retry_policy).to receive(:rand).and_return(jitter)
+    start = Mongo::Utils.monotonic_time
+    expect do
+      collection.insert_one(a: 1)
+    end.to raise_error(Mongo::Error::OperationFailure) do |err|
+      yield(err) if block_given?
+    end
+    Mongo::Utils.monotonic_time - start
+  end
+
   def started_events(command_name)
     subscriber.started_events.select { |event| event.command_name == command_name }
   end
@@ -54,18 +64,6 @@ describe 'Client Backpressure Prose Tests' do
   # Test 1: Operation Retry Uses Exponential Backoff
   # -------------------------------------------------------------------------
   describe 'Test 1: operation retry uses exponential backoff' do
-    # Duration of an insert that fails with an overload error on every
-    # attempt, with the random number generator used for jitter pinned to
-    # the given value.
-    def failing_insert_duration(jitter)
-      allow(client.retry_policy).to receive(:rand).and_return(jitter)
-      start = Mongo::Utils.monotonic_time
-      expect do
-        collection.insert_one(a: 1)
-      end.to raise_error(Mongo::Error::OperationFailure)
-      Mongo::Utils.monotonic_time - start
-    end
-
     it 'waits between retries when jitter is 1 but not when jitter is 0' do
       # Step 3.2: fail every insert with an overload error.
       set_overload_fail_point(%w[insert], 2)
@@ -152,6 +150,19 @@ describe 'Client Backpressure Prose Tests' do
   # Test 5: Overload Errors with baseBackoffMS override base backoff
   # -------------------------------------------------------------------------
   describe 'Test 5: overload errors are retried a maximum of maxRetries' do
+    # min_server_version '9.0'
 
+    it 'sends baseBackoffMS in the overload error and uses it for backoff' do
+      set_overload_fail_point(%w[insert], 462)
+      exponential_backoff_time = failing_insert_duration(1.0)
+      admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 50)
+      with_base_backoff_ms_time = failing_insert_duration(1.0) do |err|
+        expect(err.result.base_backoff_ms).to eq(50)
+      end
+      admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 0)
+      expect(exponential_backoff_time).to be >= 0.6
+      expect(with_base_backoff_ms_time).to be >= 0.3
+      expect(with_base_backoff_ms_time).to be < 0.6
+    end
   end
 end

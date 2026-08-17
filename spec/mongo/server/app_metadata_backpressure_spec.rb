@@ -6,7 +6,7 @@ describe Mongo::Server::AppMetadata do
   describe '#client_document' do
     it 'includes backpressure: true' do
       metadata = described_class.new
-      expect(metadata.client_document[:backpressure]).to be 2
+      expect(metadata.client_document[:backpressure]).to be '2'
     end
   end
 end

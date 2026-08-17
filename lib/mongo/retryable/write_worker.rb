@@ -123,7 +123,7 @@ module Mongo
               unless e.respond_to?(:label?) && e.label?('NoWritesPerformed')
                 error_to_raise = e
               end
-              delay = retry_policy.backoff_delay(error_count)
+              delay = retry_policy.backoff_delay(error_count, err: e)
               raise error_to_raise unless retry_policy.should_retry_overload?(error_count, delay, context: context)
 
               log_retry(e, message: 'Write retry (overload backoff)')
@@ -386,7 +386,7 @@ module Mongo
         last_was_overload = true
 
         loop do
-          delay = last_was_overload ? retry_policy.backoff_delay(error_count) : 0
+          delay = last_was_overload ? retry_policy.backoff_delay(error_count, err: last_error) : 0
           raise error_to_raise unless retry_policy.should_retry_overload?(error_count, delay, context: context)
 
           log_retry(last_error, message: 'Write retry (overload backoff)')

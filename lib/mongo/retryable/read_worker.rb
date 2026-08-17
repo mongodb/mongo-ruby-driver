@@ -340,7 +340,7 @@ module Mongo
       def overload_read_retry(last_error, session, server_selector, context, failed_server, error_count:)
         last_was_overload = true
         loop do
-          delay = last_was_overload ? retry_policy.backoff_delay(error_count) : 0
+          delay = last_was_overload ? retry_policy.backoff_delay(error_count, err: last_error) : 0
           raise last_error unless retry_policy.should_retry_overload?(error_count, delay, context: context)
 
           log_retry(last_error, message: 'Read retry (overload backoff)')

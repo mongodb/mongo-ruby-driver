@@ -27,8 +27,8 @@ module Mongo
       # @param [ Float ] jitter A random float in [0.0, 1.0).
       #
       # @return [ Float ] The backoff delay in seconds.
-      def backoff_delay(attempt, jitter: rand)
-        Backpressure.backoff_delay(attempt, jitter: jitter)
+      def backoff_delay(attempt, jitter: rand, err: nil)
+        Backpressure.backoff_delay(attempt, jitter: jitter, err: err)
       end
 
       # Determine whether an overload retry should be attempted.
