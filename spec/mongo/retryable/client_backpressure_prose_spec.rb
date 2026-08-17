@@ -42,12 +42,16 @@ describe 'Client Backpressure Prose Tests' do
   def failing_insert_duration(jitter)
     allow(client.retry_policy).to receive(:rand).and_return(jitter)
     start = Mongo::Utils.monotonic_time
-    expect do
+    error = begin
       collection.insert_one(a: 1)
-    end.to raise_error(Mongo::Error::OperationFailure) do |err|
-      yield(err) if block_given?
+      nil
+    rescue Mongo::Error::OperationFailure => e
+      e
     end
-    Mongo::Utils.monotonic_time - start
+    elapsed = Mongo::Utils.monotonic_time - start
+    expect(error).to be_a(Mongo::Error::OperationFailure)
+    yield(error) if block_given?
+    elapsed
   end
 
   def started_events(command_name)
@@ -146,20 +150,39 @@ describe 'Client Backpressure Prose Tests' do
       expect(started_events('find').length).to eq(2)
     end
   end
+
   # -------------------------------------------------------------------------
   # Test 5: Overload Errors with baseBackoffMS override base backoff
   # -------------------------------------------------------------------------
-  describe 'Test 5: overload errors are retried a maximum of maxRetries' do
+  describe 'Test 5: overload errors with baseBackoffMS override base backoff' do
     min_server_version '9.0'
 
+    # Reset the parameter here as well as inline, so a failure part-way
+    # through the example cannot leave it set on the shared cluster.
+    after do
+      admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 0)
+    rescue Mongo::Error
+      # Ignore cleanup failures.
+    end
+
     it 'sends baseBackoffMS in the overload error and uses it for backoff' do
+      # Steps 4 and 5: time an insert that always fails with an overload error.
       set_overload_fail_point(%w[insert], 462)
       exponential_backoff_time = failing_insert_duration(1.0)
+
+      # Steps 6 and 7: have the server attach baseBackoffMS, then repeat.
       admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 50)
       with_base_backoff_ms_time = failing_insert_duration(1.0) do |err|
+        # Step 8: the driver parsed the field the server attached.
         expect(err.result.base_backoff_ms).to eq(50)
       end
+
+      # Step 9: disable baseBackoffMS on overload errors.
       admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 0)
+
+      # Step 10: a run can never be faster than the sum of its backoffs. With
+      # jitter pinned to 1 the default backoffs are 0.2 + 0.4 = 0.6s and the
+      # baseBackoffMS=50 backoffs are 0.1 + 0.2 = 0.3s.
       expect(exponential_backoff_time).to be >= 0.6
       expect(with_base_backoff_ms_time).to be >= 0.3
       expect(with_base_backoff_ms_time).to be < 0.6

@@ -79,7 +79,9 @@ describe 'Mongo::Session#with_transaction overload retries' do
   context 'when callback raises TransientTransactionError with SystemOverloadedError' do
     it 'uses the new overload backoff' do
       call_count = 0
-      expect(session).to receive(:sleep).with(0.1).once
+      # jitter is pinned to 1.0 above, so the first overload backoff is
+      # min(MAX_BACKOFF, BASE_BACKOFF * 2**1) = 0.2s.
+      expect(session).to receive(:sleep).with(0.2).once
 
       session.with_transaction do
         call_count += 1
@@ -92,7 +94,7 @@ describe 'Mongo::Session#with_transaction overload retries' do
     it 'uses the existing backoff' do
       call_count = 0
       expect(session).to receive(:sleep).once
-      expect(session).not_to receive(:sleep).with(0.1)
+      expect(session).not_to receive(:sleep).with(0.2)
 
       session.with_transaction do
         call_count += 1

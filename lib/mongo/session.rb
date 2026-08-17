@@ -471,7 +471,7 @@ module Mongo
       loop do
         if transaction_attempt > 0
           if overload_encountered
-            delay = @client.retry_policy.backoff_delay(overload_error_count)
+            delay = @client.retry_policy.backoff_delay(overload_error_count, err: last_error)
             if backoff_would_exceed_deadline?(deadline, delay)
               make_timeout_error_from(last_error, 'CSOT timeout expired waiting to retry withTransaction')
             end
@@ -562,7 +562,7 @@ module Mongo
               end
 
               if overload_encountered
-                delay = @client.retry_policy.backoff_delay(overload_error_count)
+                delay = @client.retry_policy.backoff_delay(overload_error_count, err: e)
                 if backoff_would_exceed_deadline?(deadline, delay)
                   transaction_in_progress = false
                   make_timeout_error_from(e, 'CSOT timeout expired during withTransaction commit')
@@ -1429,7 +1429,7 @@ module Mongo
     private_constant :BACKOFF_INITIAL, :BACKOFF_MAX
 
     def backoff_seconds_for_retry(transaction_attempt)
-      exponential = BACKOFF_INITIAL * (1.5**(transaction_attempt - 1))
+      exponential = BACKOFF_INITIAL * (1.5**transaction_attempt)
       Random.rand * [ exponential, BACKOFF_MAX ].min
     end
 
