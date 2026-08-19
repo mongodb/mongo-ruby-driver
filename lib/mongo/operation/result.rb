@@ -456,6 +456,15 @@ module Mongo
         doc['cursor']&.[]('atClusterTime') || doc['atClusterTime']
       end
 
+      # Returns the base backoff in milliseconds for a server overload error, if present.
+      #
+      # @return [ Integer | nil ] The base backoff in milliseconds.
+      #
+      # @api private
+      def base_backoff_ms
+        first_document && first_document['baseBackoffMS']
+      end
+
       private
 
       def operation_failure_class

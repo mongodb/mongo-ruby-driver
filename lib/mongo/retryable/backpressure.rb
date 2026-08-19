@@ -23,9 +23,24 @@ module Mongo
       #   a random value. Can be injected for deterministic testing.
       #
       # @return [ Float ] The backoff delay in seconds.
-      def self.backoff_delay(attempt, jitter: rand)
-        jitter * [ MAX_BACKOFF, BASE_BACKOFF * (2**(attempt - 1)) ].min
+      def self.backoff_delay(attempt, jitter: rand, err: nil)
+        jitter * [ MAX_BACKOFF, base_backoff(err) * (2**attempt) ].min
       end
+
+      def self.base_backoff(err)
+        return BASE_BACKOFF if err.nil?
+        return BASE_BACKOFF unless err.respond_to?(:result) && err.result.respond_to?(:base_backoff_ms)
+
+        base_backoff_ms = err.result.base_backoff_ms
+
+        if base_backoff_ms && base_backoff_ms > 0
+          err.result.base_backoff_ms / 1000.0
+        else
+          BASE_BACKOFF
+        end
+      end
+
+      private_class_method :base_backoff
     end
   end
 end

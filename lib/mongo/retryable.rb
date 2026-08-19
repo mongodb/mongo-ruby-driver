@@ -129,7 +129,7 @@ module Mongo
 
         error_count += 1
         policy = client.retry_policy
-        delay = policy.backoff_delay(error_count)
+        delay = policy.backoff_delay(error_count, err: e)
         raise e unless policy.should_retry_overload?(error_count, delay, context: context)
 
         Logger.logger.warn("Overload retry due to: #{e.class.name}: #{e.message}")

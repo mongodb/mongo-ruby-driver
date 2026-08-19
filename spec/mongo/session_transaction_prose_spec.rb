@@ -45,9 +45,9 @@ describe Mongo::Session do
       end
 
       # With jitter=0 all requested sleeps are zero; with jitter=1 they sum to
-      # approximately 1.8 seconds (sum of 13 exponential backoffs, per spec).
+      # approximately 2.3 seconds (sum of 13 exponential backoffs, per spec).
       expect(no_backoff_sleeps.sum).to eq(0)
-      expect(with_backoff_sleeps.sum).to be_within(0.05).of(1.8)
+      expect(with_backoff_sleeps.sum).to be_within(0.05).of(2.3)
     end
 
     private
