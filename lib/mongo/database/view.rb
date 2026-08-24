@@ -274,11 +274,19 @@ module Mongo
         execution_opts[:deserialize_as_bson] = opts.delete(:deserialize_as_bson) if opts.key?(:deserialize_as_bson)
         if server.load_balancer?
           connection = server.pool.check_out(context: context)
-          initial_query_op(session, opts).execute_with_connection(
-            connection,
-            context: context,
-            options: execution_opts
-          )
+          begin
+            initial_query_op(session, opts).execute_with_connection(
+              connection,
+              context: context,
+              options: execution_opts
+            )
+          rescue StandardError
+            # The initial command failed, so no cursor exists to drain and
+            # check the connection back in; release it here before the
+            # error propagates.
+            server.pool.check_in(connection) unless connection.pinned?
+            raise
+          end
         else
           initial_query_op(session, opts).execute(
             server,

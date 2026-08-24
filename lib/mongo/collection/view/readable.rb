@@ -741,7 +741,15 @@ module Mongo
             result = if server.load_balancer?
                        # Connection will be checked in when cursor is drained.
                        connection = server.pool.check_out(context: context)
-                       op.execute_with_connection(connection, context: context)
+                       begin
+                         op.execute_with_connection(connection, context: context)
+                       rescue StandardError
+                         # The command failed, so no cursor exists to drain
+                         # and check the connection back in; release it here
+                         # before the error propagates.
+                         server.pool.check_in(connection) unless connection.pinned?
+                         raise
+                       end
                      else
                        op.execute(server, context: context)
                      end
