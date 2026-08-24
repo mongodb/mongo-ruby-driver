@@ -11,6 +11,7 @@ require 'spec_helper'
 # connections at all.
 describe 'Load-balanced initial command failure' do
   require_topology :load_balanced
+  require_no_multi_mongos
 
   let(:client) do
     authorized_client.tap do |client|
