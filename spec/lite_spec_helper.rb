@@ -1,8 +1,26 @@
 # frozen_string_literal: true
 
+if ENV['COVERAGE']
+  require 'simplecov'
+  require 'simplecov-json'
+
+  # Unique per process so concurrent buckets in rake spec:ci do not overwrite
+  # each other's session in coverage/.resultset.json.
+  SimpleCov.command_name "rspec-#{Process.pid}"
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
+    [
+      SimpleCov::Formatter::HTMLFormatter,
+      SimpleCov::Formatter::JSONFormatter,
+    ]
+  )
+  SimpleCov.start do
+    track_files 'lib/mongo/**/*.rb'
+    add_filter 'lib/mongo/version.rb'
+  end
+end
+
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'shared', 'lib'))
 
-COVERAGE_MIN = 90
 CURRENT_PATH = __dir__
 
 SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/sdam/**/*.yml").sort
