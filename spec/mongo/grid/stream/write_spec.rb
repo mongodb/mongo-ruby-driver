@@ -526,4 +526,35 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
     end
   end
+
+  describe '#abort' do
+    context 'when the file id is a query predicate' do
+      # The chunks are removed by an exact match on files_id, so a predicate
+      # matches nothing and the chunks belonging to other files survive.
+      let!(:other_ids) do
+        Array.new(3) { |i| fs.upload_from_stream("file#{i}.txt", StringIO.new('a' * 100)) }
+      end
+
+      let(:evil_stream) do
+        fs.open_upload_stream(filename, file_id: { '$ne' => nil })
+      end
+
+      before do
+        evil_stream.write(StringIO.new('b' * 100))
+        evil_stream.abort
+      end
+
+      it 'does not remove chunks belonging to other files' do
+        expect(fs.chunks_collection.count_documents({})).to eq(3)
+      end
+
+      it 'leaves the other files downloadable' do
+        other_ids.each do |id|
+          io = StringIO.new
+          fs.download_to_stream(id, io)
+          expect(io.string.length).to eq(100)
+        end
+      end
+    end
+  end
 end

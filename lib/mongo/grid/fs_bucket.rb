@@ -218,10 +218,10 @@ module Mongo
       def delete(id, opts = {})
         timeout_holder = CsotTimeoutHolder.new(operation_timeouts: operation_timeouts(opts))
         result = files_collection
-                 .find({ _id: id }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
+                 .find({ _id: { '$eq' => id } }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
                  .delete_one(timeout_ms: timeout_holder.remaining_timeout_ms)
         chunks_collection
-          .find({ files_id: id }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
+          .find({ files_id: { '$eq' => id } }, @options.merge(timeout_ms: timeout_holder.remaining_timeout_ms))
           .delete_many(timeout_ms: timeout_holder.remaining_timeout_ms)
         raise Error::FileNotFound.new(id, :id) if result.n == 0
 

@@ -502,6 +502,93 @@ describe Mongo::Grid::FSBucket do
         expect(from_db).to be_nil
       end
     end
+
+    context 'when the id is a query predicate' do
+      # The delete is issued as an exact match, so the predicate matches no
+      # file and nothing is removed. Servers that validate the shape of _id in
+      # a delete filter reject the command outright; either way, the bucket
+      # must be left intact.
+      let!(:file_ids) do
+        Array.new(3) { |i| fs.upload_from_stream("file#{i}.txt", StringIO.new('a' * 100)) }
+      end
+
+      let(:predicate) do
+        { '$gt' => BSON::MinKey.new }
+      end
+
+      it 'does not remove any files' do
+        begin
+          fs.delete(predicate)
+        rescue Mongo::Error
+          nil
+        end
+
+        expect(fs.files_collection.count_documents({})).to eq(3)
+      end
+
+      it 'does not remove any chunks' do
+        begin
+          fs.delete(predicate)
+        rescue Mongo::Error
+          nil
+        end
+
+        expect(fs.chunks_collection.count_documents({})).to eq(3)
+      end
+
+      it 'leaves the files downloadable' do
+        begin
+          fs.delete(predicate)
+        rescue Mongo::Error
+          nil
+        end
+
+        file_ids.each do |id|
+          io = StringIO.new
+          fs.download_to_stream(id, io)
+          expect(io.string.length).to eq(100)
+        end
+      end
+    end
+  end
+
+  describe 'reading with a query predicate as the file id' do
+    # The file id must be matched exactly, so a predicate matches no file and
+    # cannot be used to read another principal's file, or to read chunks
+    # belonging to several files at once.
+    let!(:file_ids) do
+      Array.new(3) { |i| fs.upload_from_stream("file#{i}.txt", StringIO.new('a' * 100)) }
+    end
+
+    let(:predicate) do
+      { '$gt' => BSON::MinKey.new }
+    end
+
+    it 'does not download another file' do
+      expect do
+        fs.download_to_stream(predicate, StringIO.new)
+      end.to raise_error(Mongo::Error::FileNotFound)
+    end
+
+    it 'does not read another file through an open stream' do
+      expect do
+        fs.open_download_stream(predicate, &:read)
+      end.to raise_error(Mongo::Error::FileNotFound)
+    end
+
+    it 'leaves the files readable by their real ids' do
+      begin
+        fs.download_to_stream(predicate, StringIO.new)
+      rescue Mongo::Error
+        nil
+      end
+
+      file_ids.each do |id|
+        io = StringIO.new
+        fs.download_to_stream(id, io)
+        expect(io.string).to eq('a' * 100)
+      end
+    end
   end
 
   context 'when a read stream is opened' do
