@@ -160,7 +160,7 @@ describe 'Client Backpressure Prose Tests' do
     # Reset the parameter here as well as inline, so a failure part-way
     # through the example cannot leave it set on the shared cluster.
     after do
-      admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 0)
+      root_authorized_admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 0)
     rescue Mongo::Error
       # Ignore cleanup failures.
     end
@@ -171,14 +171,14 @@ describe 'Client Backpressure Prose Tests' do
       exponential_backoff_time = failing_insert_duration(1.0)
 
       # Steps 6 and 7: have the server attach baseBackoffMS, then repeat.
-      admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 50)
+      root_authorized_admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 50)
       with_base_backoff_ms_time = failing_insert_duration(1.0) do |err|
         # Step 8: the driver parsed the field the server attached.
         expect(err.result.base_backoff_ms).to eq(50)
       end
 
       # Step 9: disable baseBackoffMS on overload errors.
-      admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 0)
+      root_authorized_admin_client.command('setParameter' => 1, 'externalClientBaseBackoffMS' => 0)
 
       # Step 10: a run can never be faster than the sum of its backoffs. With
       # jitter pinned to 1 the default backoffs are 0.2 + 0.4 = 0.6s and the
