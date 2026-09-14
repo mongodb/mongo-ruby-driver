@@ -182,7 +182,7 @@ module Mongo
             @file_info ||= begin
               doc = options[:file_info_doc] ||
                     fs.files_collection.find(
-                      { _id: file_id },
+                      { _id: { '$eq' => file_id } },
                       { timeout_ms: @timeout_holder.remaining_timeout_ms! }
                     ).first
               File::Info.new(Options::Mapper.transform(doc, File::Info::MAPPINGS.invert)) if doc
@@ -216,7 +216,7 @@ module Mongo
                 opts[:timeout_mode] = :cursor_lifetime
               end
 
-              fs.chunks_collection.find({ files_id: file_id }, opts).sort(n: 1)
+              fs.chunks_collection.find({ files_id: { '$eq' => file_id } }, opts).sort(n: 1)
             end
           end
 

@@ -219,6 +219,28 @@ describe Mongo::Grid::FSBucket::Stream::Read do
     end
   end
 
+  describe 'when the file id is a query predicate' do
+    # The chunks are looked up by an exact match on files_id, so a predicate
+    # cannot pull in chunks belonging to another file. file_info_doc stands in
+    # for the files document so that the chunk query is reached at all.
+    let!(:other_file_id) do
+      fs.upload_from_stream('other.txt', StringIO.new('b' * 100))
+    end
+
+    let(:options) do
+      {
+        file_id: { '$gt' => BSON::MinKey.new },
+        file_info_doc: fs.files_collection.find(_id: other_file_id).first
+      }
+    end
+
+    it 'does not read the chunks of another file' do
+      expect do
+        stream.read
+      end.to raise_error(Mongo::Error::MissingFileChunk)
+    end
+  end
+
   describe '#close' do
     let(:view) do
       stream.instance_variable_get(:@view)

@@ -177,7 +177,7 @@ module Mongo
           # @since 2.1.0
           def abort
             fs.chunks_collection.find(
-              { files_id: file_id },
+              { files_id: { '$eq' => file_id } },
               @options.merge(timeout_ms: @timeout_holder.remaining_timeout_ms!)
             ).delete_many
             (@open = false) || true

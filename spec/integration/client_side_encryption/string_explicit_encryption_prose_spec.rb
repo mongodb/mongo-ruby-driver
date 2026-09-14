@@ -51,7 +51,8 @@ describe 'String Explicit Encryption' do
       auto_encryption_options: {
         key_vault_namespace: key_vault_namespace,
         kms_providers: local_kms_providers,
-        bypass_query_analysis: true
+        bypass_query_analysis: true,
+        extra_options: extra_options
       },
       database: SpecConfig.instance.test_db
     )
@@ -64,7 +65,8 @@ describe 'String Explicit Encryption' do
       SpecConfig.instance.addresses,
       auto_encryption_options: {
         key_vault_namespace: key_vault_namespace,
-        kms_providers: local_kms_providers
+        kms_providers: local_kms_providers,
+        extra_options: extra_options
       },
       database: SpecConfig.instance.test_db
     )
