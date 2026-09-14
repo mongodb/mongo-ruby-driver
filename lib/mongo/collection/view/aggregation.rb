@@ -115,9 +115,7 @@ module Mongo
 
         def send_initial_query(server, context, operation: nil)
           if server.load_balancer?
-            # Connection will be checked in when cursor is drained.
-            connection = server.pool.check_out(context: context)
-            begin
+            server.pool.with_cursor_connection(context: context) do |connection|
               initial_query_op(
                 context.session,
                 effective_read_preference(connection)
@@ -125,12 +123,6 @@ module Mongo
                 connection,
                 context: context
               )
-            rescue StandardError
-              # The initial command failed, so no cursor exists to drain and
-              # check the connection back in; release it here before the
-              # error propagates.
-              server.pool.check_in(connection) unless connection.pinned?
-              raise
             end
           else
             server.with_connection do |connection|

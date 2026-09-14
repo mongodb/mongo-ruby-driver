@@ -73,17 +73,10 @@ module Mongo
           context = Operation::Context.new(client: client, session: session,
                                            operation_timeouts: view.operation_timeouts)
           if server.load_balancer?
-            # Connection will be checked in when cursor is drained.
-            connection = server.pool.check_out(context: context)
-            begin
-              result = send_initial_query_with_connection(connection, context.session, context: context)
-              result = send_fetch_query_with_connection(connection, session) unless inline?
-            rescue StandardError
-              # The command failed, so no cursor exists to drain and check
-              # the connection back in; release it here before the error
-              # propagates.
-              server.pool.check_in(connection) unless connection.pinned?
-              raise
+            result = server.pool.with_cursor_connection(context: context) do |connection|
+              res = send_initial_query_with_connection(connection, context.session, context: context)
+              res = send_fetch_query_with_connection(connection, session) unless inline?
+              res
             end
           else
             result = send_initial_query(server, context)

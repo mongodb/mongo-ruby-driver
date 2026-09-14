@@ -172,23 +172,8 @@ module Mongo
         def send_initial_query(server, context, operation: nil)
           operation ||= initial_query_op(context.session)
           if server.load_balancer?
-            # Connection will be checked in when cursor is drained,
-            # unless the connection is pinned to a transaction (in which
-            # case it stays checked out for the transaction duration).
-            if context.connection_global_id
-              connection = server.pool.check_out_pinned_connection(
-                context.connection_global_id
-              )
-            end
-            connection ||= server.pool.check_out(context: context)
-            begin
+            server.pool.with_cursor_connection(context: context) do |connection|
               operation.execute_with_connection(connection, context: context)
-            rescue StandardError
-              # The initial command failed, so no cursor exists to drain and
-              # check the connection back in; release it here before the
-              # error propagates.
-              server.pool.check_in(connection) unless connection.pinned?
-              raise
             end
           else
             operation.execute(server, context: context)
