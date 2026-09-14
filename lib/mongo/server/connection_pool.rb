@@ -432,6 +432,30 @@ module Mongo
         check_invariants
       end
 
+      # Check a connection back into the pool only if this pool still holds
+      # it as checked out and no other owner has claimed it.
+      #
+      # Unlike #check_in, this method is safe to call when the connection may
+      # have been checked in already (e.g. by Session#unpin while handling a
+      # transient transaction error) or may be pinned to a transaction or
+      # cursor that will check it in later; in both cases it does nothing.
+      #
+      # @param [ Mongo::Server::Connection ] connection The connection.
+      #
+      # @api private
+      def check_in_if_checked_out(connection)
+        check_invariants
+
+        @lock.synchronize do
+          return if connection.pinned?
+          return unless @checked_out_connections.include?(connection)
+
+          do_check_in(connection)
+        end
+      ensure
+        check_invariants
+      end
+
       # Executes the check in after having already acquired the lock.
       #
       # @param [ Mongo::Server::Connection ] connection The connection.
@@ -758,16 +782,43 @@ module Mongo
       rescue Error::SocketError, Error::SocketTimeoutError, Error::ConnectionPerished => e
         maybe_raise_pool_cleared!(connection, e)
       ensure
-        if connection && !connection.pinned?
-          # Do not check in if the connection is pinned (the session or cursor
-          # owns it and will check it in later when unpinning). Also skip
-          # check-in if the connection was already checked in during the block
-          # (e.g. by Session#unpin after an error on the first operation).
-          checked_out = @lock.synchronize do
-            @checked_out_connections.include?(connection)
-          end
-          check_in(connection) if checked_out
+        # Do not check in if the connection is pinned (the session or cursor
+        # owns it and will check it in later when unpinning) or was already
+        # checked in during the block (e.g. by Session#unpin after an error
+        # on the first operation).
+        check_in_if_checked_out(connection) if connection
+      end
+
+      # Check out a connection for the initial command of a cursor-returning
+      # operation in load-balanced topology and yield it to the block.
+      #
+      # On success the connection remains checked out: the cursor assumes
+      # ownership and checks it in when drained or closed. If the block
+      # raises, no cursor exists to do that, so the connection is checked
+      # back in here before the error propagates, unless another owner
+      # already claimed it (it is pinned to a transaction, or Session#unpin
+      # checked it in while handling a transient transaction error).
+      #
+      # If the operation context is pinned to a connection (e.g. inside a
+      # transaction), the pinned connection is reused.
+      #
+      # @param [ Mongo::Operation::Context | nil ] :context Context of the
+      #   operation the connection is requested for, if any.
+      #
+      # @return [ Object ] The result of the block.
+      #
+      # @api private
+      def with_cursor_connection(context:)
+        if context&.connection_global_id
+          connection = check_out_pinned_connection(context.connection_global_id)
         end
+        connection ||= check_out(context: context)
+        succeeded = false
+        result = yield(connection)
+        succeeded = true
+        result
+      ensure
+        check_in_if_checked_out(connection) if connection && !succeeded
       end
 
       # Close sockets that have been open for longer than the max idle time,
