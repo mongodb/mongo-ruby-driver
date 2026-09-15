@@ -11,6 +11,17 @@
 
 set -eu
 
+# See the note in perf-submission-setup.sh: these are Evergreen expansions and
+# only reach this script via include_expansions_in_env.
+for var in project_id version_id build_variant parsed_order_id task_name task_id execution is_mainline; do
+  eval "value=\${$var:-}"
+  if [ -z "$value" ]; then
+    echo "Error: expansion '$var' is missing from the environment." >&2
+    echo "Run this script with subprocess.exec and include_expansions_in_env." >&2
+    exit 1
+  fi
+done
+
 results_file="${PERFORMANCE_RESULTS_FILE:-perf.json}"
 
 if [ ! -f "$results_file" ]; then

@@ -11,6 +11,19 @@
 
 set -eu
 
+# These are Evergreen expansions, which only reach this script if it is run
+# with subprocess.exec and include_expansions_in_env. shell.exec does not put
+# them in the environment, so check explicitly rather than failing with a bare
+# "unbound variable".
+for var in requester revision_order_id; do
+  eval "value=\${$var:-}"
+  if [ -z "$value" ]; then
+    echo "Error: expansion '$var' is missing from the environment." >&2
+    echo "Run this script with subprocess.exec and include_expansions_in_env." >&2
+    exit 1
+  fi
+done
+
 out=perf-expansion.yml
 : > "$out"
 
