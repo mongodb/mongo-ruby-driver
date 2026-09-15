@@ -40,6 +40,29 @@ Because this lives in project settings rather than the repository, it must be
 recreated if the project is reconfigured.
 
 
+## Performance benchmarks (RUBY-3290)
+
+The `DriverBench` build variant runs the spec performance benchmarks
+(`rake driver_bench`, see `profile/driver_bench`) on every `master` commit.
+
+### Pinned server version
+
+The variant uses the `8.0-perf` value of the `mongodb-version` axis, which
+sets `MONGODB_VERSION=v8.0-perf`. That is an alias defined by
+drivers-evergreen-tools (`PERF_VERSIONS` in `.evergreen/mongodl.py`) and it
+resolves to exactly **8.0.1**, not to "whatever 8.0.x is current".
+
+This is deliberate, per DRIVERS-2666: benchmark scores are only meaningful if
+the server under test is held constant, otherwise a server-side performance
+change shows up as a driver regression.
+
+**Do not bump this version as part of routine server-version maintenance.**
+Bumping it invalidates the benchmark baseline: every time series restarts and
+the change point detector will flag the bump on every micro-benchmark. If a
+bump is genuinely needed, do it deliberately, on its own commit, and say so on
+the ticket so the resulting change points are triaged as expected.
+
+
 ## Testing In Docker
 
 It is possible to run the test suite in Docker. This executes all of the
