@@ -3,6 +3,7 @@
 require 'benchmark'
 require 'mongo'
 
+require_relative 'configuration'
 require_relative 'percentiles'
 
 module Mongo
@@ -60,6 +61,7 @@ module Mongo
         score = dataset_size / percentiles[50] / 1_000_000.0
 
         { name: self.class.bench_name,
+          configuration: Configuration.current.name,
           score: score,
           percentiles: percentiles }
       end
@@ -106,7 +108,7 @@ module Mongo
 
       # Instantiate a new client.
       def new_client(uri = ENV['MONGODB_URI'])
-        Mongo::Client.new(uri)
+        Mongo::Client.new(uri, Configuration.current.client_options)
       end
 
       # Takes care of garbage collection considerations before
