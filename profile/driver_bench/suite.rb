@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'time'
+
 require_relative 'bson'
 require_relative 'multi_doc'
 require_relative 'parallel'
@@ -41,6 +43,10 @@ module Mongo
     class Suite
       PERCENTILES = [ 10, 25, 50, 75, 90, 95, 98, 99 ].freeze
 
+      # The name of the primary metric reported for every benchmark and
+      # composite. Matches the name used by the other drivers.
+      SCORE_METRIC = 'megabytes_per_second'
+
       def self.run!
         new.run
       end
@@ -49,13 +55,18 @@ module Mongo
         perf_data = []
         benches = Hash.new { |h, k| h[k] = [] }
 
+        started_at = Time.now.utc
+
         ALL.each do |klass|
           result = run_benchmark(klass)
           perf_data << compile_perf_data(result)
           append_to_benchmarks(klass, result, benches)
         end
 
-        perf_data += compile_benchmarks(benches)
+        # The composites are derived from every micro-benchmark, so they are
+        # timestamped with the span of the whole suite rather than of a single
+        # benchmark.
+        perf_data += compile_benchmarks(benches, started_at, Time.now.utc)
 
         save_perf_data(perf_data)
         summarize_perf_data(perf_data)
@@ -74,8 +85,10 @@ module Mongo
 
       def compile_perf_data(result)
         percentile_data = PERCENTILES.map do |percentile|
-          { 'name' => "time-#{percentile}%",
-            'value' => result[:percentiles][percentile] }
+          # Percentiles are wall-clock iteration times, so a smaller number is
+          # an improvement -- the opposite of the throughput score.
+          metric("time-#{percentile}%", result[:percentiles][percentile],
+                 direction: 'down', unit: 'seconds')
         end
 
         {
@@ -83,12 +96,38 @@ module Mongo
             'test_name' => result[:name],
             'args' => {},
           },
+          'created_at' => iso8601(result[:started_at]),
+          'completed_at' => iso8601(result[:completed_at]),
           'metrics' => [
-            { 'name' => 'score',
-              'value' => result[:score] },
+            score_metric(result[:score]),
             *percentile_data
           ]
         }
+      end
+
+      # The primary metric for every benchmark, named to match the other
+      # drivers (see the Node and Go implementations) so that the numbers are
+      # comparable across the performance analytics backend.
+      def score_metric(score)
+        metric(SCORE_METRIC, score, direction: 'up', unit: 'megabytes_per_second')
+      end
+
+      # Builds a single metric entry in the format expected by the Signal
+      # Processing Service. The metadata drives how the change point detector
+      # reports a shift: improvement_direction says which way is better.
+      def metric(name, value, direction:, unit:)
+        {
+          'name' => name,
+          'value' => value,
+          'metadata' => {
+            'improvement_direction' => direction,
+            'measurement_unit' => unit
+          }
+        }
+      end
+
+      def iso8601(time)
+        (time || Time.now.utc).utc.iso8601
       end
 
       def append_to_benchmarks(klass, result, benches)
@@ -97,7 +136,7 @@ module Mongo
         end
       end
 
-      def compile_benchmarks(benches)
+      def compile_benchmarks(benches, started_at, completed_at)
         benches.each_key do |key|
           benches[key] = benches[key].sum / benches[key].length
         end
@@ -110,10 +149,9 @@ module Mongo
               'test_name' => bench,
               'args' => {}
             },
-            'metrics' => [
-              { 'name' => 'score',
-                'value' => score }
-            ]
+            'created_at' => iso8601(started_at),
+            'completed_at' => iso8601(completed_at),
+            'metrics' => [ score_metric(score) ]
           }
         end
       end
@@ -125,7 +163,7 @@ module Mongo
           next unless item['metrics'].length > 1
 
           item['metrics'].each do |metric|
-            next if metric['name'] == 'score'
+            next if metric['name'] == SCORE_METRIC
 
             puts format('  %s : %4.4g', metric['name'], metric['value'])
           end

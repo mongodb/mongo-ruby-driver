@@ -279,9 +279,42 @@ functions:
         script: |
           ${PREPARE_SHELL}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
-    - command: perf.send
+    # Keep a copy of the raw results attached to the task, so that a run can be
+    # inspected without going through the analytics backend.
+    - command: s3.put
       params:
-        file: "${PROJECT_DIRECTORY}/perf.json"
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: src/perf.json
+        optional: true
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/perf.json
+        content_type: application/json
+        permissions: public-read
+        bucket: mciuploads
+        display_name: "Performance Results"
+    # Submit the results to the Signal Processing Service, which owns the time
+    # series and change point detection. This replaces the deprecated perf.send
+    # command; see .evergreen/perf-submission.sh.
+    - command: shell.exec
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          .evergreen/perf-submission-setup.sh
+    - command: expansions.update
+      params:
+        file: src/perf-expansion.yml
+    - command: subprocess.exec
+      type: test
+      params:
+        working_dir: "src"
+        binary: bash
+        add_expansions_to_env: true
+        env:
+          PERFORMANCE_RESULTS_FILE: "perf.json"
+        args:
+          - ".evergreen/perf-submission.sh"
 
   "run tests with orchestration and drivers tools":
     - command: subprocess.exec

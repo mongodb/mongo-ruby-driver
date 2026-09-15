@@ -62,6 +62,30 @@ the change point detector will flag the bump on every micro-benchmark. If a
 bump is genuinely needed, do it deliberately, on its own commit, and say so on
 the ticket so the resulting change points are triaged as expected.
 
+### Result submission
+
+Results are POSTed to the Signal Processing Service (SPS), which stores the
+time series and runs change point detection over it. Two scripts do this:
+
+- `perf-submission-setup.sh` writes `perf-expansion.yml` with `is_mainline`
+  (only master-waterfall runs feed the time series) and `parsed_order_id`.
+- `perf-submission.sh` POSTs `perf.json` to the
+  `raw_perf_results/cedar_report` endpoint and **fails the task on a non-200
+  response**, because a silently dropped submission is indistinguishable from
+  a passing benchmark run.
+
+This replaces Evergreen's `perf.send` command, which is deprecated and no
+longer maintained. The raw `perf.json` is also uploaded to S3 and linked from
+the task page.
+
+Two further pieces live outside this repository and must be set up by a
+project admin (see RUBY-3290):
+
+- **Performance Plugins** must be enabled in the Evergreen project settings,
+  otherwise the task has no Trend Charts tab.
+- A **triage context** must exist for the project in the performance
+  monitoring UI before change points are tagged.
+
 
 ## Testing In Docker
 

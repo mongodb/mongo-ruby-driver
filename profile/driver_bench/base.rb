@@ -52,16 +52,25 @@ module Mongo
 
       # Runs the benchmark and returns the score.
       #
-      # @return [ Hash<name,score,percentiles> ] the score and other
-      #   attributes of the benchmark.
+      # The started_at and completed_at timestamps bracket the entire
+      # micro-benchmark (setup through teardown); they are reported to the
+      # performance analytics backend alongside the metrics.
+      #
+      # @return [ Hash<name,score,percentiles,started_at,completed_at> ] the
+      #   score and other attributes of the benchmark.
       def run
+        started_at = Time.now.utc
         timings = run_benchmark
+        completed_at = Time.now.utc
+
         percentiles = Percentiles.new(timings)
         score = dataset_size / percentiles[50] / 1_000_000.0
 
         { name: self.class.bench_name,
           score: score,
-          percentiles: percentiles }
+          percentiles: percentiles,
+          started_at: started_at,
+          completed_at: completed_at }
       end
 
       private
