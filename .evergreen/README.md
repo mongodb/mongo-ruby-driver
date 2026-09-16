@@ -40,6 +40,53 @@ Because this lives in project settings rather than the repository, it must be
 recreated if the project is reconfigured.
 
 
+## Performance benchmarks (RUBY-3290)
+
+The `DriverBench` build variant runs the spec performance benchmarks
+(`rake driver_bench`, see `profile/driver_bench`) on every `master` commit.
+
+### Pinned server version
+
+The variant uses the `8.0-perf` value of the `mongodb-version` axis, which
+sets `MONGODB_VERSION=v8.0-perf`. That is an alias defined by
+drivers-evergreen-tools (`PERF_VERSIONS` in `.evergreen/mongodl.py`) and it
+resolves to exactly **8.0.1**, not to "whatever 8.0.x is current".
+
+This is deliberate, per DRIVERS-2666: benchmark scores are only meaningful if
+the server under test is held constant, otherwise a server-side performance
+change shows up as a driver regression.
+
+**Do not bump this version as part of routine server-version maintenance.**
+Bumping it invalidates the benchmark baseline: every time series restarts and
+the change point detector will flag the bump on every micro-benchmark. If a
+bump is genuinely needed, do it deliberately, on its own commit, and say so on
+the ticket so the resulting change points are triaged as expected.
+
+### Result submission
+
+Results are POSTed to the Signal Processing Service (SPS), which stores the
+time series and runs change point detection over it. Two scripts do this:
+
+- `perf-submission-setup.sh` writes `perf-expansion.yml` with `is_mainline`
+  (only master-waterfall runs feed the time series) and `parsed_order_id`.
+- `perf-submission.sh` POSTs `perf.json` to the
+  `raw_perf_results/cedar_report` endpoint and **fails the task on a non-200
+  response**, because a silently dropped submission is indistinguishable from
+  a passing benchmark run.
+
+This replaces Evergreen's `perf.send` command, which is deprecated and no
+longer maintained. The raw `perf.json` is also uploaded to S3 and linked from
+the task page.
+
+Two further pieces live outside this repository and must be set up by a
+project admin (see RUBY-3290):
+
+- **Performance Plugins** must be enabled in the Evergreen project settings,
+  otherwise the task has no Trend Charts tab.
+- A **triage context** must exist for the project in the performance
+  monitoring UI before change points are tagged.
+
+
 ## Testing In Docker
 
 It is possible to run the test suite in Docker. This executes all of the

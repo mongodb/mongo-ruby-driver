@@ -282,9 +282,59 @@ functions:
         script: |
           ${PREPARE_SHELL}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
-    - command: perf.send
+    # Keep a copy of the raw results attached to the task, so that a run can be
+    # inspected without going through the analytics backend.
+    - command: s3.put
       params:
-        file: "${PROJECT_DIRECTORY}/perf.json"
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: src/perf.json
+        optional: true
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/perf.json
+        content_type: application/json
+        permissions: public-read
+        bucket: mciuploads
+        display_name: "Performance Results"
+    # Submit the results to the Signal Processing Service, which owns the time
+    # series and change point detection. This replaces the deprecated perf.send
+    # command; see .evergreen/perf-submission.sh.
+    # Both scripts read the expansions from their environment, so they must be
+    # run with subprocess.exec: shell.exec only expands ${...} in the script
+    # text and leaves the child process environment untouched.
+    # The expansions are listed explicitly rather than using
+    # add_expansions_to_env, to keep project secrets out of the environment of
+    # a script that makes an outbound network call.
+    - command: subprocess.exec
+      type: test
+      params:
+        working_dir: "src"
+        binary: bash
+        include_expansions_in_env:
+          - requester
+          - revision_order_id
+        args:
+          - ".evergreen/perf-submission-setup.sh"
+    - command: expansions.update
+      params:
+        file: src/perf-expansion.yml
+    - command: subprocess.exec
+      type: test
+      params:
+        working_dir: "src"
+        binary: bash
+        include_expansions_in_env:
+          - project_id
+          - version_id
+          - build_variant
+          - parsed_order_id
+          - task_name
+          - task_id
+          - execution
+          - is_mainline
+        env:
+          PERFORMANCE_RESULTS_FILE: "perf.json"
+        args:
+          - ".evergreen/perf-submission.sh"
 
   "run tests with orchestration and drivers tools":
     - command: subprocess.exec
@@ -729,6 +779,16 @@ axes:
         display_name: "8.0"
         variables:
           MONGODB_VERSION: "8.0"
+      # RUBY-3290 / DRIVERS-2666: performance benchmarks must run against a
+      # patch-pinned server so that score changes reflect driver changes and not
+      # server changes. "v8.0-perf" is an alias defined by drivers-evergreen-tools
+      # (.evergreen/mongodl.py, PERF_VERSIONS) that resolves to exactly 8.0.1.
+      # DO NOT bump this casually: a server bump invalidates the benchmark
+      # baseline and shows up as a change point.
+      - id: "8.0-perf"
+        display_name: "8.0 (perf-pinned)"
+        variables:
+          MONGODB_VERSION: "v8.0-perf"
       - id: "7.0"
         display_name: "7.0"
         variables:
@@ -1108,7 +1168,7 @@ buildvariants:
   - matrix_name: DriverBench
     matrix_spec:
       ruby: "ruby-4.0"
-      mongodb-version: "8.0"
+      mongodb-version: "8.0-perf"
       topology: standalone
       os: ubuntu2204
     display_name: DriverBench
