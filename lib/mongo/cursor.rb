@@ -103,6 +103,19 @@ module Mongo
           self.class.finalize(kill_spec(@connection_global_id), cluster)
         )
       end
+    rescue Exception # rubocop:disable Lint/RescueException
+      # In load-balanced topology the connection of the initial result is
+      # checked out of the pool until the cursor is drained. If the cursor
+      # cannot be constructed, nothing will ever check the connection back
+      # in, so release it here before the error propagates. Exception (not
+      # StandardError) is rescued so that an interrupt does not permanently
+      # leak the connection. In other topologies the connection is not owned
+      # by the cursor and must not be touched here.
+      if server&.load_balancer? && result.is_a?(Operation::Result) &&
+         (connection = result.connection)
+        connection.connection_pool.check_in_if_checked_out(connection)
+      end
+      raise
     end
 
     # @api private

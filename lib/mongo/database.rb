@@ -339,15 +339,12 @@ module Mongo
           server = selector.select_server(cluster, nil, session)
           if server.load_balancer?
             # The connection is checked in by the cursor when it is drained.
-            connection = check_out_cursor_command_connection(server, context)
-            begin
-              op.execute_with_connection(connection, context: context, options: execution_opts)
-            rescue StandardError
-              # Release the connection before the error propagates so that
-              # a retried attempt checks out a fresh one.
-              connection.connection_pool.check_in(connection) unless connection.pinned?
-              connection = nil
-              raise
+            # If the command fails, the connection is released before the
+            # error propagates so that a retried attempt checks out a
+            # fresh one.
+            server.pool.with_cursor_connection(context: context) do |conn|
+              connection = conn
+              op.execute_with_connection(conn, context: context, options: execution_opts)
             end
           else
             op.execute(server, context: context, options: execution_opts)
@@ -366,7 +363,7 @@ module Mongo
         # If the cursor was created it owns the session and connection;
         # otherwise (error or no cursor in the response) release them here.
         unless cursor
-          connection.connection_pool.check_in(connection) if connection && !connection.pinned?
+          connection.connection_pool.check_in_if_checked_out(connection) if connection
           session.end_session if session && session.implicit?
         end
       end

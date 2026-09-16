@@ -739,9 +739,9 @@ module Mongo
               connection_global_id: result.connection_global_id
             )
             result = if server.load_balancer?
-                       # Connection will be checked in when cursor is drained.
-                       connection = server.pool.check_out(context: context)
-                       op.execute_with_connection(connection, context: context)
+                       server.pool.with_cursor_connection(context: context) do |connection|
+                         op.execute_with_connection(connection, context: context)
+                       end
                      else
                        op.execute(server, context: context)
                      end

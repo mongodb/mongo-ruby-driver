@@ -24,8 +24,12 @@ case "${TOPOLOGY:-server}" in
     ;;
 esac
 
-# Single mongos: use a 1-router sharded cluster config.
-if test "${SINGLE_MONGOS:-}" = 'true' && test "${TOPOLOGY:-}" = sharded_cluster; then
+# Single mongos: use a 1-router sharded cluster config. Not applicable to
+# load-balanced deployments, which need the *-load-balancer.json configs
+# (mongoses with loadBalancerPort); there the single/multi mongos choice is
+# made by connecting through the corresponding haproxy frontend.
+if test "${SINGLE_MONGOS:-}" = 'true' && test "${TOPOLOGY:-}" = sharded_cluster \
+  && test "${LOAD_BALANCED:-}" != 'true'; then
   export ORCHESTRATION_FILE="${ORCHESTRATION_FILE:-single-mongos.json}"
 fi
 
@@ -74,3 +78,9 @@ cp "$_configs_src"/sharded_clusters/single-mongos.json "$_configs_dst/sharded_cl
 # Export MONGODB_URI written by the orchestration tool.
 . ./mo-expansion.sh
 export MONGODB_URI
+
+# Start haproxy in front of the mongoses. This writes lb-expansion.yml with
+# SINGLE_MONGOS_LB_URI and MULTI_MONGOS_LB_URI, which run-tests.sh sources.
+if test "${LOAD_BALANCED:-}" = 'true'; then
+  "$DRIVERS_TOOLS"/.evergreen/run-load-balancer.sh start
+fi

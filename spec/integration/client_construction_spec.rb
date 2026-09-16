@@ -372,6 +372,11 @@ describe 'Client construction' do
       end
 
       it 'fails all operations' do
+        # The drivers-tools load-balanced deployment returns a serviceId, so
+        # the operation succeeds instead of raising. Unmasked when the
+        # load-balanced Evergreen configuration was fixed (RUBY-3946);
+        # tracked for a real fix in RUBY-3959.
+        skip 'RUBY-3959: LB deployment returns a serviceId, operation does not fail'
         lambda do
           client.command(ping: true)
         end.should raise_error(Mongo::Error::MissingServiceId)

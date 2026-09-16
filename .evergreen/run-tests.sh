@@ -88,6 +88,18 @@ export TOPOLOGY="${TOPOLOGY:-server}"
 . ./mo-expansion.sh
 export MONGODB_URI
 
+# Point the test suite at the load balancer. run-orchestration.sh started
+# haproxy and wrote lb-expansion.yml; the spec suite enables load-balanced
+# mode only when the TOPOLOGY environment variable is 'load-balanced'.
+if test "${LOAD_BALANCED:-}" = 'true'; then
+  sed 's/: /=/' lb-expansion.yml > lb-expansion.sh
+  . ./lb-expansion.sh
+  export SINGLE_MONGOS_LB_URI
+  export MULTI_MONGOS_LB_URI
+  export MONGODB_URI="$SINGLE_MONGOS_LB_URI"
+  export TOPOLOGY=load-balanced
+fi
+
 bundle_install
 
 if test "$AUTH" = x509; then
@@ -358,6 +370,10 @@ kill_jruby || true
 
 if test -n "$OCSP_MOCK_PID"; then
   kill "$OCSP_MOCK_PID"
+fi
+
+if test "${LOAD_BALANCED:-}" = 'true'; then
+  "$DRIVERS_TOOLS"/.evergreen/run-load-balancer.sh stop || true
 fi
 
 "$DRIVERS_TOOLS"/.evergreen/run-mongodb.sh stop || true
