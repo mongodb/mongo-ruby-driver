@@ -72,6 +72,7 @@ module Mongo
           # the transaction span. Don't pass with_parent to use automatic parent resolution
           # from the currently active span (the operation span).
           span = create_command_span(message, connection)
+          apply_deferred_attributes(span, message) if span.recording?
           ::OpenTelemetry::Trace.with_span(span) do |s, c|
             yield.tap do |result|
               process_command_result(result, cursor_id(message), c, s)
@@ -142,61 +143,74 @@ module Mongo
           span.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{exception.class}")
         end
 
-        # Builds span attributes for the command.
+        # Builds the attributes passed at span creation: the cheap,
+        # sampler-plausible set. Expensive attributes are deferred to
+        # apply_deferred_attributes — building them here would defeat the
+        # sampler's purpose, and on a non-recording span they would be
+        # discarded anyway. Keys whose value is nil are omitted rather than
+        # compacted afterwards, so the common case allocates nothing extra.
         #
         # @param message [ Mongo::Protocol::Message ] the command message.
         # @param connection [ Mongo::Server::Connection ] the connection.
         #
         # @return [ Hash ] OpenTelemetry span attributes following MongoDB semantic conventions.
         def span_attributes(message, connection)
-          base_attributes(message)
-            .merge(connection_attributes(connection))
-            .merge(session_attributes(message))
-            .compact
-        end
-
-        # Returns base database and command attributes.
-        #
-        # @param message [ Mongo::Protocol::Message ] the command message.
-        #
-        # @return [ Hash ] base span attributes.
-        def base_attributes(message)
-          {
+          attrs = {
             'db.system.name' => 'mongodb',
             'db.namespace' => database(message),
-            'db.collection.name' => collection_name(message),
-            'db.command.name' => command_name(message),
-            'db.query.summary' => query_summary(message),
-            'db.query.text' => query_text(message)
+            'db.command.name' => command_name(message)
           }
+          if (coll_name = collection_name(message))
+            attrs['db.collection.name'] = coll_name
+          end
+          attrs.merge(connection_attributes(connection))
         end
 
-        # Returns connection-related attributes.
+        # Returns connection-related attributes, computed once per connection
+        # and frozen. Setting the ivar from here is a benign race: competing
+        # threads build identical frozen hashes. The value dies with the
+        # connection, so no cleanup is needed.
         #
         # @param connection [ Mongo::Server::Connection ] the connection.
         #
         # @return [ Hash ] connection span attributes.
         def connection_attributes(connection)
-          {
-            'server.port' => connection.address.port,
-            'server.address' => connection.address.host,
-            'network.transport' => connection.transport.to_s,
-            'db.mongodb.server_connection_id' => connection.server.description.server_connection_id,
-            'db.mongodb.driver_connection_id' => connection.id
-          }
+          attrs = connection.instance_variable_get(:@otel_connection_attributes)
+          unless attrs
+            attrs = {
+              'server.port' => connection.address.port,
+              'server.address' => connection.address.host,
+              'network.transport' => connection.transport.to_s,
+              'db.mongodb.server_connection_id' => connection.server.description.server_connection_id,
+              'db.mongodb.driver_connection_id' => connection.id
+            }.freeze
+            connection.instance_variable_set(:@otel_connection_attributes, attrs)
+          end
+          attrs
         end
 
-        # Returns session and transaction attributes.
+        # Sets the expensive attributes after span creation. Only called for
+        # recording spans: on non-recording spans set_attribute discards.
+        # Note for reviewers: these attributes are invisible to the sampler,
+        # which only sees what is passed to start_span. The built-in samplers
+        # do not read attributes, and db.query.text is off by default.
         #
+        # @param span [ OpenTelemetry::Trace::Span ] the current span.
         # @param message [ Mongo::Protocol::Message ] the command message.
-        #
-        # @return [ Hash ] session span attributes.
-        def session_attributes(message)
-          {
-            'db.mongodb.cursor_id' => cursor_id(message),
-            'db.mongodb.lsid' => lsid(message),
-            'db.mongodb.txn_number' => txn_number(message)
-          }
+        def apply_deferred_attributes(span, message)
+          span.set_attribute('db.query.summary', query_summary(message))
+          if (text = query_text(message))
+            span.set_attribute('db.query.text', text)
+          end
+          if (lsid_value = lsid(message))
+            span.set_attribute('db.mongodb.lsid', lsid_value)
+          end
+          if (cursor = cursor_id(message))
+            span.set_attribute('db.mongodb.cursor_id', cursor)
+          end
+          if (txn = txn_number(message))
+            span.set_attribute('db.mongodb.txn_number', txn)
+          end
         end
 
         # Processes cursor context from the command result.

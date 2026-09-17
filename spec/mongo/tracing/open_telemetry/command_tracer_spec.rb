@@ -65,7 +65,9 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#trace_command' do
-    let(:span) { instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil) }
+    let(:span) do
+      instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil, recording?: true)
+    end
     let(:context) { instance_double(Mongo::Operation::Context) }
     let(:result) { instance_double(Mongo::Operation::Result, cursor_id: 0, successful?: true) }
 
@@ -99,6 +101,41 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     it 'finishes the span' do
       expect(span).to receive(:finish)
       command_tracer.trace_command(message, operation_context, connection) { result }
+    end
+
+    it 'passes only cheap attributes to start_span' do
+      expect(otel_tracer).to receive(:start_span).with(
+        'find',
+        attributes: hash_excluding('db.query.summary', 'db.query.text', 'db.mongodb.lsid',
+                                   'db.mongodb.cursor_id', 'db.mongodb.txn_number'),
+        kind: :client
+      )
+      command_tracer.trace_command(message, operation_context, connection) { result }
+    end
+
+    it 'sets deferred attributes when the span is recording' do
+      expect(span).to receive(:set_attribute).with('db.query.summary', 'find test_db.users')
+      expect(span).to receive(:set_attribute).with('db.mongodb.lsid', lsid_value)
+      command_tracer.trace_command(message, operation_context, connection) { result }
+    end
+
+    context 'with a non-recording span' do
+      let(:span) do
+        instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil, recording?: false)
+      end
+
+      it 'does not build deferred attributes' do
+        expect(span).not_to receive(:set_attribute)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+    end
+
+    it 'memoizes connection attributes per connection' do
+      command_tracer.trace_command(message, operation_context, connection) { result }
+      command_tracer.trace_command(message, operation_context, connection) { result }
+
+      attrs = connection.instance_variable_get(:@otel_connection_attributes)
+      expect(attrs).to be_frozen
     end
 
     context 'when result has cursor_id' do
@@ -306,8 +343,11 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       expect(subject['db.command.name']).to eq('find')
     end
 
-    it 'includes db.query.summary' do
-      expect(subject['db.query.summary']).to eq('find test_db.users')
+    it 'excludes deferred attributes' do
+      %w[db.query.summary db.query.text db.mongodb.lsid db.mongodb.cursor_id
+         db.mongodb.txn_number].each do |key|
+        expect(subject).not_to have_key(key)
+      end
     end
 
     it 'includes server.port' do
@@ -330,14 +370,33 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       expect(subject['db.mongodb.driver_connection_id']).to eq(123)
     end
 
-    it 'includes db.mongodb.lsid' do
-      expect(subject['db.mongodb.lsid']).to eq(lsid_value)
+    context 'with an admin command without a collection' do
+      let(:document) { { 'serverStatus' => 1, '$db' => 'admin' } }
+
+      it 'omits db.collection.name instead of setting nil' do
+        expect(subject).not_to have_key('db.collection.name')
+      end
+    end
+  end
+
+  describe '#apply_deferred_attributes' do
+    let(:deferred_span) { instance_double(OpenTelemetry::Trace::Span, set_attribute: nil) }
+
+    it 'sets the query summary' do
+      expect(deferred_span).to receive(:set_attribute).with('db.query.summary', 'find test_db.users')
+      command_tracer.send(:apply_deferred_attributes, deferred_span, message)
     end
 
-    it 'does not include nil values' do
-      expect(subject).not_to have_key('db.mongodb.cursor_id')
-      expect(subject).not_to have_key('db.mongodb.txn_number')
-      expect(subject).not_to have_key('db.query.text')
+    it 'sets the lsid' do
+      expect(deferred_span).to receive(:set_attribute).with('db.mongodb.lsid', lsid_value)
+      command_tracer.send(:apply_deferred_attributes, deferred_span, message)
+    end
+
+    it 'skips attributes that are absent from the command' do
+      expect(deferred_span).not_to receive(:set_attribute).with('db.mongodb.cursor_id', anything)
+      expect(deferred_span).not_to receive(:set_attribute).with('db.mongodb.txn_number', anything)
+      expect(deferred_span).not_to receive(:set_attribute).with('db.query.text', anything)
+      command_tracer.send(:apply_deferred_attributes, deferred_span, message)
     end
 
     context 'with getMore command' do
@@ -349,8 +408,9 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
         }
       end
 
-      it 'includes db.mongodb.cursor_id' do
-        expect(subject['db.mongodb.cursor_id']).to eq(999)
+      it 'sets the cursor id' do
+        expect(deferred_span).to receive(:set_attribute).with('db.mongodb.cursor_id', 999)
+        command_tracer.send(:apply_deferred_attributes, deferred_span, message)
       end
     end
 
@@ -363,17 +423,18 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
         }
       end
 
-      it 'includes db.mongodb.txn_number' do
-        expect(subject['db.mongodb.txn_number']).to eq(42)
+      it 'sets the transaction number' do
+        expect(deferred_span).to receive(:set_attribute).with('db.mongodb.txn_number', 42)
+        command_tracer.send(:apply_deferred_attributes, deferred_span, message)
       end
     end
 
     context 'with query text enabled' do
       let(:query_text_max_length) { 1000 }
 
-      it 'includes db.query.text' do
-        expect(subject['db.query.text']).to be_a(String)
-        expect(subject['db.query.text']).to include('find')
+      it 'sets the query text' do
+        expect(deferred_span).to receive(:set_attribute).with('db.query.text', a_string_including('find'))
+        command_tracer.send(:apply_deferred_attributes, deferred_span, message)
       end
     end
   end
