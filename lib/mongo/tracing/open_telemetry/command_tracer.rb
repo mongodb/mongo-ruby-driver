@@ -72,6 +72,15 @@ module Mongo
           # the transaction span. Don't pass with_parent to use automatic parent resolution
           # from the currently active span (the operation span).
           span = create_command_span(message, connection)
+          # An invalid context has no trace identity: it cannot be propagated,
+          # continued, or correlated with anything downstream, so every
+          # operation on it is waste. This is a state check on the span we
+          # were handed, not detection of whether the SDK is available — a
+          # custom API-only provider returning real spans sees the full path.
+          # Must not key on recording?: an unsampled-but-valid context still
+          # has to be made current for propagation.
+          return yield unless span.context.valid?
+
           apply_deferred_attributes(span, message) if span.recording?
           ::OpenTelemetry::Trace.with_span(span) do |s, c|
             yield.tap do |result|

@@ -29,6 +29,10 @@ module Tracing
       true
     end
 
+    def context
+      @context ||= Context.new(self)
+    end
+
     # rubocop:disable Lint/UnusedMethodArgument
     def record_exception(exception, attributes: nil)
       set_attribute('exception.type', exception.class.to_s)
@@ -59,6 +63,10 @@ module Tracing
 
     def initialize(span)
       @span = span
+    end
+
+    def valid?
+      true
     end
   end
 
