@@ -141,6 +141,28 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       expect(attrs).to be_frozen
     end
 
+    it 'extracts the command document once per command' do
+      count = 0
+      allow(message).to receive(:documents) do
+        count += 1
+        [ document ]
+      end
+      command_tracer.trace_command(message, operation_context, connection) { result }
+      expect(count).to eq(1)
+    end
+
+    it 'formats the lsid UUID once across repeated commands' do
+      count = 0
+      allow(document['lsid']['id']).to receive(:to_uuid) do
+        count += 1
+        lsid_value
+      end
+      3.times do
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+      expect(count).to eq(1)
+    end
+
     context 'with an invalid span (no SDK installed)' do
       let(:invalid_span) { OpenTelemetry::Trace::Span::INVALID }
 
@@ -358,7 +380,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#span_attributes' do
-    subject { command_tracer.send(:span_attributes, message, connection) }
+    subject { command_tracer.send(:span_attributes, document, 'find', connection) }
 
     it 'includes db.system.name' do
       expect(subject['db.system.name']).to eq('mongodb')
@@ -417,19 +439,19 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
     it 'sets the query summary' do
       expect(deferred_span).to receive(:set_attribute).with('db.query.summary', 'find test_db.users')
-      command_tracer.send(:apply_deferred_attributes, deferred_span, message)
+      command_tracer.send(:apply_deferred_attributes, deferred_span, message, 'find', document, nil)
     end
 
     it 'sets the lsid' do
       expect(deferred_span).to receive(:set_attribute).with('db.mongodb.lsid', lsid_value)
-      command_tracer.send(:apply_deferred_attributes, deferred_span, message)
+      command_tracer.send(:apply_deferred_attributes, deferred_span, message, 'find', document, nil)
     end
 
     it 'skips attributes that are absent from the command' do
       expect(deferred_span).not_to receive(:set_attribute).with('db.mongodb.cursor_id', anything)
       expect(deferred_span).not_to receive(:set_attribute).with('db.mongodb.txn_number', anything)
       expect(deferred_span).not_to receive(:set_attribute).with('db.query.text', anything)
-      command_tracer.send(:apply_deferred_attributes, deferred_span, message)
+      command_tracer.send(:apply_deferred_attributes, deferred_span, message, 'find', document, nil)
     end
 
     context 'with getMore command' do
@@ -443,7 +465,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
       it 'sets the cursor id' do
         expect(deferred_span).to receive(:set_attribute).with('db.mongodb.cursor_id', 999)
-        command_tracer.send(:apply_deferred_attributes, deferred_span, message)
+        command_tracer.send(:apply_deferred_attributes, deferred_span, message, 'getMore', document, 999)
       end
     end
 
@@ -458,7 +480,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
       it 'sets the transaction number' do
         expect(deferred_span).to receive(:set_attribute).with('db.mongodb.txn_number', 42)
-        command_tracer.send(:apply_deferred_attributes, deferred_span, message)
+        command_tracer.send(:apply_deferred_attributes, deferred_span, message, 'find', document, nil)
       end
     end
 
@@ -467,15 +489,16 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
       it 'sets the query text' do
         expect(deferred_span).to receive(:set_attribute).with('db.query.text', a_string_including('find'))
-        command_tracer.send(:apply_deferred_attributes, deferred_span, message)
+        command_tracer.send(:apply_deferred_attributes, deferred_span, message, 'find', document, nil)
       end
     end
   end
 
   describe '#collection_name' do
-    subject { command_tracer.send(:collection_name, message) }
+    subject { command_tracer.send(:collection_name, name, document) }
 
     context 'with find command' do
+      let(:name) { 'find' }
       let(:document) { { 'find' => 'users' } }
 
       it 'returns the collection name' do
@@ -484,6 +507,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     context 'with getMore command' do
+      let(:name) { 'getMore' }
       let(:document) { { 'getMore' => 123, 'collection' => 'users' } }
 
       it 'returns the collection name' do
@@ -492,6 +516,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     context 'with listCollections command' do
+      let(:name) { 'listCollections' }
       let(:document) { { 'listCollections' => 1 } }
 
       it 'returns nil' do
@@ -500,6 +525,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     context 'with listDatabases command' do
+      let(:name) { 'listDatabases' }
       let(:document) { { 'listDatabases' => 1 } }
 
       it 'returns nil' do
@@ -508,6 +534,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     context 'with commitTransaction command' do
+      let(:name) { 'commitTransaction' }
       let(:document) { { 'commitTransaction' => 1 } }
 
       it 'returns nil' do
@@ -516,6 +543,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     context 'with abortTransaction command' do
+      let(:name) { 'abortTransaction' }
       let(:document) { { 'abortTransaction' => 1 } }
 
       it 'returns nil' do
@@ -524,6 +552,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     context 'with admin command with numeric value' do
+      let(:name) { 'serverStatus' }
       let(:document) { { 'serverStatus' => 1 } }
 
       it 'returns nil' do
@@ -533,7 +562,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#command_name' do
-    subject { command_tracer.send(:command_name, message) }
+    subject { command_tracer.send(:command_name, document) }
 
     let(:document) { { 'find' => 'users' } }
 
@@ -543,7 +572,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#database' do
-    subject { command_tracer.send(:database, message) }
+    subject { command_tracer.send(:database, document) }
 
     let(:document) { { 'find' => 'users', '$db' => 'test_db' } }
 
@@ -553,9 +582,9 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#query_summary' do
-    subject { command_tracer.send(:query_summary, message) }
-
     context 'with collection name' do
+      subject { command_tracer.send(:query_summary, 'find', document) }
+
       let(:document) { { 'find' => 'users', '$db' => 'test_db' } }
 
       it 'includes collection name' do
@@ -564,6 +593,8 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     context 'without collection name' do
+      subject { command_tracer.send(:query_summary, 'listCollections', document) }
+
       let(:document) { { 'listCollections' => 1, '$db' => 'test_db' } }
 
       it 'does not include collection name' do
@@ -573,9 +604,9 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#cursor_id' do
-    subject { command_tracer.send(:cursor_id, message) }
-
     context 'with getMore command' do
+      subject { command_tracer.send(:cursor_id, 'getMore', document) }
+
       let(:document) { { 'getMore' => BSON::Int64.new(999) } }
 
       it 'returns the cursor ID' do
@@ -584,6 +615,8 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     end
 
     context 'with find command' do
+      subject { command_tracer.send(:cursor_id, 'find', document) }
+
       let(:document) { { 'find' => 'users' } }
 
       it 'returns nil' do
@@ -593,7 +626,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#lsid' do
-    subject { command_tracer.send(:lsid, message) }
+    subject { command_tracer.send(:lsid, document) }
 
     context 'with lsid present' do
       let(:document) { { 'find' => 'users', 'lsid' => { 'id' => BSON::Binary.from_uuid(lsid_value) } } }
@@ -613,7 +646,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#txn_number' do
-    subject { command_tracer.send(:txn_number, message) }
+    subject { command_tracer.send(:txn_number, document) }
 
     context 'with txnNumber present' do
       let(:document) { { 'find' => 'users', 'txnNumber' => BSON::Int64.new(42) } }
