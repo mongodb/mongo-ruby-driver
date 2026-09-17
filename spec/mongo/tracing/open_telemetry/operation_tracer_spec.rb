@@ -355,6 +355,15 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
       expect(op_name_result).to eq('find')
     end
 
+    it 'memoizes the operation name per operation class' do
+      operation_tracer.send(:operation_name, operation, nil)
+      operation_tracer.send(:operation_name, operation, nil)
+
+      cache = operation_tracer.instance_variable_get(:@operation_names)
+      expect(cache.size).to eq(1)
+      expect(cache.values.first).to eq('find')
+    end
+
     context 'with custom op_name' do
       let(:op_name) { 'CustomOperation' }
 

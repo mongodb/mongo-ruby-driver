@@ -305,19 +305,33 @@ module Mongo
           when 'listCollections', 'listDatabases', 'commitTransaction', 'abortTransaction'
             nil
           else
-            value = doc.values.first
+            # Iterate instead of using doc.values.first: the block form is
+            # allocation-free (see #command_name).
+            value = nil
+            # rubocop:disable Lint/UnreachableLoop -- intentional: only the first entry is needed
+            doc.each_value do |v|
+              value = v
+              break
+            end
+            # rubocop:enable Lint/UnreachableLoop
             # Return nil if the value is not a string (e.g., for admin commands that have numeric values)
             value.is_a?(String) ? value : nil
           end
         end
 
-        # Extracts the command name from the command document.
+        # Extracts the command name from the command document. Iterates
+        # instead of using doc.keys.first: the block form is allocation-free,
+        # while keys builds an array of every top-level key per call — and
+        # this runs on every traced command.
         #
         # @param doc [ Hash ] the command document.
         #
         # @return [ String ] the command name.
         def command_name(doc)
-          doc.keys.first.to_s
+          # rubocop:disable Lint/UnreachableLoop -- intentional: only the first entry is needed
+          doc.each_key { |key| return key.to_s }
+          # rubocop:enable Lint/UnreachableLoop
+          ''
         end
 
         # Extracts the database name from the command document.
