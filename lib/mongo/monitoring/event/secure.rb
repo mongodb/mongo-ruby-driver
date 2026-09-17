@@ -37,6 +37,11 @@ module Mongo
           copydb
         ].freeze
 
+        # The hello / legacy hello command names, hoisted to a constant: the
+        # sensitivity check runs on every command event and an array literal
+        # would allocate on each call.
+        HELLO_COMMANDS = %w[hello ismaster isMaster].freeze
+
         # Check whether the command is sensitive in terms of command monitoring
         # spec. A command is detected as sensitive if it is in the
         # list or if it is a hello/legacy hello command, and
@@ -53,7 +58,7 @@ module Mongo
           # when speculativeAuthenticate is present, their commands AND replies
           # MUST be redacted from the events.
           # See https://github.com/mongodb/specifications/blob/master/source/command-logging-and-monitoring/command-logging-and-monitoring.md#security
-          %w[hello ismaster isMaster].include?(command_name.to_s) &&
+          HELLO_COMMANDS.include?(command_name.to_s) &&
             !!document['speculativeAuthenticate']
         end
 
