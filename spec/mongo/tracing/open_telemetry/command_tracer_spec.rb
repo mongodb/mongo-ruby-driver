@@ -65,8 +65,10 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#trace_command' do
+    let(:span_context) { instance_double(OpenTelemetry::Trace::SpanContext, valid?: true) }
     let(:span) do
-      instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil, recording?: true)
+      instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil, recording?: true,
+                                                  context: span_context)
     end
     let(:context) { instance_double(Mongo::Operation::Context) }
     let(:result) { instance_double(Mongo::Operation::Result, cursor_id: 0, successful?: true) }
@@ -121,7 +123,8 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
     context 'with a non-recording span' do
       let(:span) do
-        instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil, recording?: false)
+        instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil, recording?: false,
+                                                    context: span_context)
       end
 
       it 'does not build deferred attributes' do
@@ -136,6 +139,36 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
 
       attrs = connection.instance_variable_get(:@otel_connection_attributes)
       expect(attrs).to be_frozen
+    end
+
+    context 'with an invalid span (no SDK installed)' do
+      let(:invalid_span) { OpenTelemetry::Trace::Span::INVALID }
+
+      before do
+        allow(otel_tracer).to receive(:start_span).and_return(invalid_span)
+      end
+
+      it 'does not attach the span to the context' do
+        expect(OpenTelemetry::Trace).not_to receive(:with_span)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+
+      it 'returns the block result unchanged' do
+        return_value = command_tracer.trace_command(message, operation_context, connection) { :done }
+        expect(return_value).to eq(:done)
+      end
+
+      it 'finishes the span' do
+        expect(invalid_span).to receive(:finish)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+
+      # Guards against an opentelemetry-api upgrade changing no-SDK semantics.
+      # If this fails, re-evaluate the short-circuit: it degrades to a no-op,
+      # correctness is unaffected.
+      it 'pins the API behavior: no-SDK spans have invalid contexts' do
+        expect(invalid_span.context.valid?).to be false
+      end
     end
 
     context 'when result has cursor_id' do
