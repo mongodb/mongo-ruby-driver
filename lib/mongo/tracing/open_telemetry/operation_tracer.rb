@@ -93,7 +93,7 @@ module Mongo
         #
         # @return [ OpenTelemetry::Trace::Span ] the created span.
         def create_operation_span(operation, operation_context, op_name)
-          parent_context = parent_context_for(operation_context, operation.cursor_id)
+          parent_context = parent_context_for(operation_context)
           name = operation_name(operation, op_name)
           coll_name = collection_name(operation)
           span_name = operation_span_name(name, operation.db_name, coll_name)
