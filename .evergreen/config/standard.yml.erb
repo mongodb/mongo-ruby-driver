@@ -181,6 +181,8 @@ buildvariants:
     tasks:
       - name: test-csot
 
+  # OTel spec tests run off-PR (no "pr" tag), like ruby-dev and
+  # DriverBench OTel: they only run on the master waterfall.
   - matrix_name: OTel
     matrix_spec:
       ruby: <%= latest_ruby %>
@@ -188,7 +190,6 @@ buildvariants:
       topology: replica-set-single-node
       os: ubuntu2204
     display_name: "OTel - ${mongodb-version}"
-    tags: ["pr"]
     tasks:
       - name: test-otel
 
