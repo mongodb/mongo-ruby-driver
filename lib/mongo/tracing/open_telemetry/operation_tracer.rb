@@ -38,6 +38,7 @@ module Mongo
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
           @operation_names = {}
+          @operation_names_mutex = Mutex.new
         end
 
         # Trace a MongoDB operation.
@@ -138,8 +139,8 @@ module Mongo
         # The class-derived name is memoized per class: it is invariant and
         # deriving it (split + downcase) allocates on every call. The number
         # of operation classes is small and fixed, so the cache is unbounded
-        # by design; a benign race on first computation writes identical
-        # strings.
+        # by design. Access is synchronized: unsynchronized Hash mutation is
+        # not safe on all Ruby runtimes (e.g. JRuby).
         #
         # @param operation [ Mongo::Operation ] the operation.
         # @param op_name [ String | nil ] optional operation name.
@@ -149,7 +150,9 @@ module Mongo
           return op_name if op_name
 
           klass = operation.class
-          @operation_names[klass] ||= klass.name.split('::').last.downcase
+          @operation_names_mutex.synchronize do
+            @operation_names[klass] ||= klass.name.split('::').last.downcase
+          end
         end
 
         # Builds the attributes passed at span creation: the cheap set. The
