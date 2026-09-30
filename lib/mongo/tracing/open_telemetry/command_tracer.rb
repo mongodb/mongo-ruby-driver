@@ -202,7 +202,7 @@ module Mongo
               'server.port' => connection.address.port,
               'server.address' => connection.address.host,
               'network.transport' => connection.transport.to_s,
-              'db.mongodb.server_connection_id' => connection.server.description.server_connection_id,
+              'db.mongodb.server_connection_id' => connection.description.server_connection_id,
               'db.mongodb.driver_connection_id' => connection.id
             }.freeze
             connection.instance_variable_set(:@otel_connection_attributes, attrs)
