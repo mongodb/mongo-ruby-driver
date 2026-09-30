@@ -18,9 +18,13 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
                     id: 123,
                     address: instance_double(Mongo::Address, host: 'localhost', port: 27_017),
                     transport: :tcp,
+                    # The connection's own description carries the id of this
+                    # connection on the server; the server description comes
+                    # from the monitoring connection and must not be used.
+                    description: instance_double(Mongo::Server::Description, server_connection_id: 456),
                     server: instance_double(Mongo::Server,
                                             description: instance_double(Mongo::Server::Description,
-                                                                         server_connection_id: 456)))
+                                                                         server_connection_id: 999)))
   end
 
   let(:message) do
