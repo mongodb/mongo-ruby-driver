@@ -76,6 +76,7 @@ module Mongo
       end
 
       def run
+        Configuration.check_jit!
         configuration.install!
         announce_configuration
 
@@ -138,6 +139,7 @@ module Mongo
       def announce_configuration
         puts format('===== DriverBench: %s =====', configuration.name)
         puts configuration.description
+        puts RUBY_DESCRIPTION
         puts format('%d of %d micro-benchmarks', tasks.length, ALL.length) unless tasks == ALL
         puts
       end
@@ -170,7 +172,8 @@ module Mongo
           spans = klass.new.count_spans(counter)
           next if spans.nil?
 
-          entry = perf_data.find { |item| item['info']['test_name'] == klass.bench_name }
+          test_name = configuration.perf_test_name(klass.bench_name)
+          entry = perf_data.find { |item| item['info']['test_name'] == test_name }
           entry['metrics'] << { 'name' => 'spans_per_op', 'value' => spans }
         end
       end
@@ -184,8 +187,8 @@ module Mongo
 
         {
           'info' => {
-            'test_name' => result[:name],
-            'args' => { 'configuration' => configuration.name },
+            'test_name' => configuration.perf_test_name(result[:name]),
+            'args' => {},
           },
           'metrics' => [
             { 'name' => 'score',
@@ -212,8 +215,8 @@ module Mongo
         benches.map do |bench, score|
           {
             'info' => {
-              'test_name' => bench,
-              'args' => { 'configuration' => configuration.name }
+              'test_name' => configuration.perf_test_name(bench),
+              'args' => {}
             },
             'metrics' => [
               { 'name' => 'score',

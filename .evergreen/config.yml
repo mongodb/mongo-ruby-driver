@@ -281,17 +281,20 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
+          # With YJIT, as production deployments run; the suite fails if this
+          # ruby was built without it.
+          TEST_CMD="bundle exec rake driver_bench" RUBY_YJIT_ENABLE=1 PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
     - command: perf.send
       params:
         file: "${PROJECT_DIRECTORY}/perf.json"
 
   "run benchmark comparison":
-    # Only the two small-document tasks the OpenTelemetry spec's targets are
-    # defined on. Find many creates too few spans per iteration to show
-    # tracing cost, and large-document inserts are dominated by the server.
+    # Runs the micro-benchmarks in ${driver_bench_tasks}, set by each task.
     # Fewer iterations per run buy more interleaved repetitions in the same
     # time, which is what makes the median across repetitions meaningful.
+    # YJIT is on, as in production; without it the interpreter's per-call
+    # cost makes tracing look several times more expensive. The run fails if
+    # this ruby was built without YJIT.
     - command: shell.exec
       type: test
       params:
@@ -301,26 +304,27 @@ functions:
           ${PREPARE_SHELL}
           TEST_CMD="bundle exec rake driver_bench:compare" \
             CONFIGURATIONS="${driver_bench_configurations|off,api-only,sdk-never,sdk-parent-1pct,sdk-always}" \
-            DRIVER_BENCH_TASKS="${driver_bench_tasks|small doc insertone,find one by id}" \
+            DRIVER_BENCH_TASKS="${driver_bench_tasks}" \
             REPS="${driver_bench_reps|5}" \
-            DRIVER_BENCH_MAX_ITERATIONS="${driver_bench_max_iterations|30}" \
+            DRIVER_BENCH_MAX_ITERATIONS="${driver_bench_max_iterations|10}" \
+            RUBY_YJIT_ENABLE="${driver_bench_yjit|1}" \
             DRIVER_BENCH_MIN_TIME="${driver_bench_min_time|20}" \
             DRIVER_BENCH_ENFORCE_TARGETS="${driver_bench_enforce_targets|false}" \
-            PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/driver-bench-otel.json" \
+            PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/${task_name}.json" \
             .evergreen/run-tests.sh
     # Sent to the performance store so that overhead_pct, cpu_us_added_per_op
     # and allocs_added_per_op are watched for regressions, and kept as an
     # artifact for comparison by hand.
     - command: perf.send
       params:
-        file: "${PROJECT_DIRECTORY}/driver-bench-otel.json"
+        file: "${PROJECT_DIRECTORY}/${task_name}.json"
     - command: s3.put
       params:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: ./src/driver-bench-otel.json
-        display_name: driver-bench-otel.json
-        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/driver-bench-otel.json
+        local_file: ./src/${task_name}.json
+        display_name: ${task_name}.json
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/${task_name}.json
         content_type: application/json
         permissions: public-read
         bucket: mciuploads
@@ -621,15 +625,26 @@ tasks:
   - name: "driver-bench"
     commands:
       - func: "run benchmarks"
-  # Runs the DriverBench micro-benchmarks once per driver configuration and
-  # reports what each configuration costs relative to the untraced baseline.
-  # Longer than "driver-bench" because it runs the tasks several times over
-  # (five configurations, REPS repetitions, plus a span-count pass): the
-  # global exec_timeout_secs of 5400 is not enough.
-  - name: "driver-bench-otel"
-    exec_timeout_secs: 10800
+  # Run each DriverBench micro-benchmark under every driver configuration
+  # and report what each configuration costs relative to the untraced
+  # baseline. One task per micro-benchmark, so they run in parallel on
+  # separate hosts; each still interleaves all configurations on one host,
+  # which is what the comparison needs. Only the two small-document tasks
+  # the OpenTelemetry spec's targets are defined on: find many creates too
+  # few spans per iteration to show tracing cost, and large-document inserts
+  # are dominated by the server.
+  - name: "driver-bench-otel-find-one"
+    exec_timeout_secs: 3600
     commands:
       - func: "run benchmark comparison"
+        vars:
+          driver_bench_tasks: "find one by id"
+  - name: "driver-bench-otel-insert-one"
+    exec_timeout_secs: 3600
+    commands:
+      - func: "run benchmark comparison"
+        vars:
+          driver_bench_tasks: "small doc insertone"
   - name: "test-csot"
     commands:
       - func: "run CSOT tests"
@@ -1173,8 +1188,10 @@ buildvariants:
       os: ubuntu2204
     display_name: DriverBench OTel
     tasks:
-      - name: "driver-bench-otel"
+      - name: "driver-bench-otel-find-one"
         batchtime: 1440 # run at most once a day
+      - name: "driver-bench-otel-insert-one"
+        batchtime: 1440
 
   - matrix_name: "auth/ssl"
     matrix_spec:

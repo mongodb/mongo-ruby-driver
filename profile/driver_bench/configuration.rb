@@ -72,6 +72,27 @@ module Mongo
         @otel == :sdk && @sampler_env['OTEL_TRACES_SAMPLER'] == 'always_on'
       end
 
+      # The test name to report a task's results under. perf.send only
+      # accepts integer args, so the configuration goes into the name. The
+      # baseline keeps the bare task name, so that its series continues the
+      # one recorded before configurations existed.
+      #
+      # @param task [ String ] the micro-benchmark name.
+      #
+      # @return [ String ] the reported test name.
+      def perf_test_name(task)
+        baseline? ? task : "#{task} [#{name}]"
+      end
+
+      # The inverse of #perf_test_name.
+      #
+      # @param test_name [ String ] a reported test name.
+      #
+      # @return [ String ] the micro-benchmark name.
+      def task_name(test_name)
+        test_name.delete_suffix(" [#{name}]")
+      end
+
       # Whether this configuration is the baseline that others are compared
       # against.
       def baseline?
@@ -140,6 +161,22 @@ module Mongo
           raise(ArgumentError,
                 "unknown configuration #{name.inspect}; " \
                 "known configurations are #{ALL.map(&:name).join(', ')}")
+      end
+
+      # Fails when YJIT was asked for (RUBY_YJIT_ENABLE) but this ruby runs
+      # without it. A ruby built without YJIT only warns and carries on, and
+      # the benchmark would then quietly measure the interpreter, where the
+      # cost of tracing is several times higher.
+      def self.check_jit!
+        return unless %w[1 true yes].include?(ENV['RUBY_YJIT_ENABLE'].to_s.downcase)
+        return if jit?
+
+        raise "RUBY_YJIT_ENABLE is set, but #{RUBY_DESCRIPTION} runs without YJIT"
+      end
+
+      # @return [ true | false ] whether YJIT is enabled in this process.
+      def self.jit?
+        !!(defined?(RubyVM::YJIT) && RubyVM::YJIT.enabled?)
       end
 
       # The configuration the current process is measuring, named by the

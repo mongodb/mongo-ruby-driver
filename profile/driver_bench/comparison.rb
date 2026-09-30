@@ -75,6 +75,10 @@ module Mongo
         raise 'the baseline configuration is required to compare against' unless
           @configurations.any?(&:baseline?)
 
+        # Checked here as well as in every child, to fail before the first
+        # of many long runs rather than inside it.
+        Configuration.check_jit!
+
         Dir.mktmpdir('driver-bench') do |dir|
           1.upto(@reps) do |rep|
             @configurations.each { |configuration| measure(configuration, rep, dir) }
@@ -111,7 +115,7 @@ module Mongo
         end
 
         JSON.parse(File.read(results_file)).each do |entry|
-          samples = @samples[[ entry['info']['test_name'], configuration.name ]]
+          samples = @samples[[ configuration.task_name(entry['info']['test_name']), configuration.name ]]
           entry['metrics'].each do |metric|
             samples[metric['name']] << metric['value'] if CARRIED_METRICS.include?(metric['name'])
           end
@@ -210,8 +214,8 @@ module Mongo
 
             {
               'info' => {
-                'test_name' => task,
-                'args' => { 'configuration' => configuration.name }
+                'test_name' => configuration.perf_test_name(task),
+                'args' => {}
               },
               'metrics' => metrics_for(task, configuration)
             }
