@@ -38,13 +38,24 @@ module Mongo
     #                   and can only add noise to the comparison.
     #   PERFORMANCE_RESULTS_FILE
     #                   where the combined results are written
+    #   DRIVER_BENCH_ENFORCE_TARGETS
+    #                   fail when a configuration exceeds its target
+    #   DRIVER_BENCH_MAX_ITERATIONS, DRIVER_BENCH_MIN_TIME
+    #                   passed through to every run, see Base
     #
     # @api private
     class Comparison
       DEFAULT_EXCLUDED_TASKS = 'BSON'
       DEFAULT_RESULTS_FILE = 'perf-comparison.json'
 
-      TABLE_FORMAT = '%-32<task>s  %14<baseline>s  %14<score>s  %9<loss>s'
+      # Metrics carried from every child run into the comparison. Each is
+      # reduced to its median across repetitions.
+      CARRIED_METRICS = %w[
+        score wall_us_per_op cpu_us_per_op allocs_per_op time-90% time-99% spans_per_op
+      ].freeze
+
+      TABLE_FORMAT = '%-22<task>s %-16<config>s %9<loss>s %8<target>s %-4<verdict>s ' \
+                     '%15<spread>s %11<cpu>s %9<cpu_pct>s %9<allocs>s %6<spans>s'
 
       def self.run!
         new.run
@@ -54,7 +65,7 @@ module Mongo
         @env = env
         @reps = Integer(env['REPS'] || 1)
         @configurations = requested_configurations
-        @scores = Hash.new { |hash, key| hash[key] = [] }
+        @samples = Hash.new { |hash, key| hash[key] = Hash.new { |h, k| h[k] = [] } }
       end
 
       # Runs every configuration, @reps times, and reports the comparison.
@@ -71,7 +82,9 @@ module Mongo
         end
 
         save_perf_data(compile_perf_data)
-        summarize
+        summary = summarize
+        enforce_targets!(summary)
+        summary
       end
 
       private
@@ -87,27 +100,31 @@ module Mongo
         @baseline ||= @configurations.find(&:baseline?)
       end
 
-      # Runs one configuration once, in its own process, and records the score
-      # of every micro-benchmark it reported.
+      # Runs one configuration once, in its own process, and records the
+      # metrics of every micro-benchmark it reported.
       def measure(configuration, rep, dir)
         results_file = File.join(dir, "#{configuration.name}-#{rep}.json")
 
         puts format("\n----- rep %d/%d: %s -----", rep, @reps, configuration.name)
-        unless system(child_env(configuration, results_file), 'bundle', 'exec', 'rake', 'driver_bench:run')
+        unless system(child_env(configuration, rep, results_file), 'bundle', 'exec', 'rake', 'driver_bench:run')
           raise "configuration #{configuration.name} failed in rep #{rep}"
         end
 
         JSON.parse(File.read(results_file)).each do |entry|
-          score = entry['metrics'].find { |metric| metric['name'] == 'score' }
-          @scores[[ entry['info']['test_name'], configuration.name ]] << score['value']
+          samples = @samples[[ entry['info']['test_name'], configuration.name ]]
+          entry['metrics'].each do |metric|
+            samples[metric['name']] << metric['value'] if CARRIED_METRICS.include?(metric['name'])
+          end
         end
       end
 
-      def child_env(configuration, results_file)
+      def child_env(configuration, rep, results_file)
         {
           Configuration::ENV_VAR => configuration.name,
           'PERFORMANCE_RESULTS_FILE' => results_file,
-          'DRIVER_BENCH_EXCLUDE_TASKS' => excluded_tasks
+          'DRIVER_BENCH_EXCLUDE_TASKS' => excluded_tasks,
+          # Span counts do not vary between repetitions; count them once.
+          'DRIVER_BENCH_COUNT_SPANS' => (rep == 1).to_s
         }
       end
 
@@ -118,14 +135,20 @@ module Mongo
         DEFAULT_EXCLUDED_TASKS
       end
 
-      # The score for one micro-benchmark under one configuration: the median
-      # across repetitions, for the same reason the spec takes the median
-      # across iterations.
-      def score_for(task, configuration)
-        samples = @scores[[ task, configuration.name ]]
-        return nil if samples.empty?
+      # The median of one metric across repetitions, for the same reason the
+      # spec takes the median across iterations.
+      def median(task, configuration, metric)
+        values = @samples[[ task, configuration.name ]][metric]
+        return nil if values.empty?
 
-        Percentiles.new(samples)[50]
+        Percentiles.new(values)[50]
+      end
+
+      def spread(task, configuration)
+        values = @samples[[ task, configuration.name ]]['score']
+        return nil if values.empty?
+
+        values.minmax
       end
 
       # Scores are throughput, so enabling a feature shows up as a loss.
@@ -133,41 +156,92 @@ module Mongo
       # @return [ Float | nil ] the percentage of throughput given up,
       #   relative to the baseline.
       def loss_for(task, configuration)
-        reference = score_for(task, baseline)
-        score = score_for(task, configuration)
+        reference = median(task, baseline, 'score')
+        score = median(task, configuration, 'score')
         return nil if reference.nil? || score.nil? || reference.zero?
 
         (reference - score) / reference * 100.0
       end
 
+      # CPU time and allocations grow with cost, so the overhead is the
+      # difference over the baseline.
+      def added(task, configuration, metric)
+        reference = median(task, baseline, metric)
+        value = median(task, configuration, metric)
+        return nil if reference.nil? || value.nil?
+
+        value - reference
+      end
+
+      def cpu_overhead_pct(task, configuration)
+        reference = median(task, baseline, 'cpu_us_per_op')
+        delta = added(task, configuration, 'cpu_us_per_op')
+        return nil if delta.nil? || reference.zero?
+
+        delta / reference * 100.0
+      end
+
+      # Spans are only countable under a configuration that records every
+      # span, but the count is a property of the task, so it is reported
+      # for the task as a whole.
+      def spans_per_op(task)
+        @configurations.each do |configuration|
+          value = median(task, configuration, 'spans_per_op')
+          return value unless value.nil?
+        end
+        nil
+      end
+
+      def target_met(task, configuration)
+        loss = loss_for(task, configuration)
+        return nil if loss.nil? || configuration.target_pct.nil?
+
+        loss <= configuration.target_pct
+      end
+
       def tasks
-        @tasks ||= @scores.keys.map(&:first).uniq
+        @tasks ||= @samples.keys.map(&:first).uniq
       end
 
       def compile_perf_data
         tasks.flat_map do |task|
           @configurations.filter_map do |configuration|
-            score = score_for(task, configuration)
-            next if score.nil?
-
-            metrics = [ { 'name' => 'score', 'value' => score } ]
-            loss = loss_for(task, configuration)
-            # The loss is recorded as a metric of its own, rather than left to
-            # be derived by comparing two time series later, so that it can be
-            # watched for regressions directly and so that host-to-host
-            # variation cancels out of it.
-            metrics << { 'name' => 'overhead_pct', 'value' => loss } unless
-              configuration.baseline? || loss.nil?
+            next if median(task, configuration, 'score').nil?
 
             {
               'info' => {
                 'test_name' => task,
                 'args' => { 'configuration' => configuration.name }
               },
-              'metrics' => metrics
+              'metrics' => metrics_for(task, configuration)
             }
           end
         end
+      end
+
+      def metrics_for(task, configuration)
+        metrics = CARRIED_METRICS.filter_map do |name|
+          value = median(task, configuration, name)
+          { 'name' => name, 'value' => value } unless value.nil?
+        end
+        min, max = spread(task, configuration)
+        metrics << { 'name' => 'score_min', 'value' => min } << { 'name' => 'score_max', 'value' => max }
+        return metrics if configuration.baseline?
+
+        # The overheads are recorded as metrics of their own, rather than
+        # left to be derived by comparing two time series later, so that
+        # they can be watched for regressions directly and so that
+        # host-to-host variation cancels out of them.
+        {
+          'overhead_pct' => loss_for(task, configuration),
+          'cpu_overhead_pct' => cpu_overhead_pct(task, configuration),
+          'cpu_us_added_per_op' => added(task, configuration, 'cpu_us_per_op'),
+          'allocs_added_per_op' => added(task, configuration, 'allocs_per_op'),
+          'target_pct' => configuration.target_pct
+        }.each do |name, value|
+          metrics << { 'name' => name, 'value' => value } unless value.nil?
+        end
+        metrics
       end
 
       def save_perf_data(data, file_name: @env['PERFORMANCE_RESULTS_FILE'] || DEFAULT_RESULTS_FILE)
@@ -177,28 +251,56 @@ module Mongo
       def summarize
         lines = [ format("\n===== Configuration comparison (%d rep%s, median) =====",
                          @reps, (@reps == 1) ? '' : 's') ]
-
-        @configurations.reject(&:baseline?).each do |configuration|
-          lines << ''
-          lines << format('--- %s vs %s ---', configuration.name, baseline.name)
-          lines << configuration.description
-          lines << format(TABLE_FORMAT,
-                          task: 'micro-benchmark', baseline: "#{baseline.name} MB/s",
-                          score: 'MB/s', loss: 'loss %')
-          tasks.each { |task| lines << row(task, configuration) }
+        lines << 'loss: throughput given up vs off; spread: min-max MB/s across reps; ' \
+                 'cpu: CPU us added per op; allocs: objects added per op'
+        lines << ''
+        lines << format(TABLE_FORMAT,
+                        task: 'micro-benchmark', config: 'configuration', loss: 'loss %',
+                        target: 'target', verdict: 'ok?', spread: 'spread MB/s',
+                        cpu: 'cpu us/op', cpu_pct: 'cpu %', allocs: 'allocs', spans: 'spans')
+        tasks.each do |task|
+          @configurations.reject(&:baseline?).each { |configuration| lines << row(task, configuration) }
         end
 
         lines.join("\n")
       end
 
       def row(task, configuration)
-        loss = loss_for(task, configuration)
+        min, max = spread(task, configuration)
 
         format(TABLE_FORMAT,
-               task: task,
-               baseline: format('%.4g', score_for(task, baseline)),
-               score: format('%.4g', score_for(task, configuration)),
-               loss: loss.nil? ? 'n/a' : format('%+.2f', loss))
+               task: task, config: configuration.name,
+               loss: signed(loss_for(task, configuration)),
+               target: configuration.target_pct ? format('%g', configuration.target_pct) : '-',
+               verdict: verdict(target_met(task, configuration)),
+               spread: min ? format('%.4g-%.4g', min, max) : 'n/a',
+               cpu: signed(added(task, configuration, 'cpu_us_per_op')),
+               cpu_pct: signed(cpu_overhead_pct(task, configuration)),
+               allocs: signed(added(task, configuration, 'allocs_per_op'), '%+.0f'),
+               spans: (spans = spans_per_op(task)) ? format('%.2g', spans) : 'n/a')
+      end
+
+      def signed(value, pattern = '%+.2f')
+        value.nil? ? 'n/a' : format(pattern, value)
+      end
+
+      def verdict(within)
+        return '-' if within.nil?
+
+        within ? 'yes' : 'NO'
+      end
+
+      # Fails the run when a configuration misses its target, if asked to
+      # (DRIVER_BENCH_ENFORCE_TARGETS). The results are saved and printed
+      # first, so a failing run still shows why.
+      def enforce_targets!(summary)
+        return unless %w[1 true yes].include?(@env['DRIVER_BENCH_ENFORCE_TARGETS'].to_s.downcase)
+
+        misses = tasks.product(@configurations).select { |task, configuration| target_met(task, configuration) == false }
+        return if misses.empty?
+
+        puts summary
+        raise "over target: #{misses.map { |task, configuration| "#{task} / #{configuration.name}" }.join(', ')}"
       end
     end
   end

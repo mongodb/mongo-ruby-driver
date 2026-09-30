@@ -42,9 +42,18 @@ module Mongo
 
       # Instantiate a new micro-benchmark class.
       def initialize
-        @max_iterations = debug_mode? ? 10 : 100
-        @min_time = debug_mode? ? 1 : 60
+        @max_iterations = Integer(ENV['DRIVER_BENCH_MAX_ITERATIONS'] || (debug_mode? ? 10 : 100))
+        @min_time = Float(ENV['DRIVER_BENCH_MIN_TIME'] || (debug_mode? ? 1 : 60))
         @max_time = 300 # 5 minutes
+      end
+
+      # The number of driver operations one iteration performs, or nil when
+      # the task has no meaningful per-operation unit. Per-operation metrics
+      # are only reported for tasks that define it.
+      #
+      # @return [ Integer | nil ] operations per iteration.
+      def ops_per_iteration
+        nil
       end
 
       def debug_mode?
@@ -63,7 +72,30 @@ module Mongo
         { name: self.class.bench_name,
           configuration: Configuration.current.name,
           score: score,
-          percentiles: percentiles }
+          percentiles: percentiles,
+          per_op: per_op_metrics(percentiles) }
+      end
+
+      # Runs one iteration with every started span counted, and returns the
+      # number of spans per operation. Kept apart from #run: counting needs a
+      # span processor, which the timed runs deliberately do without.
+      #
+      # @param counter [ #reset, #count ] the span counter the tracer
+      #   provider reports to.
+      #
+      # @return [ Float | nil ] spans per operation, or nil when the task
+      #   defines no per-operation unit.
+      def count_spans(counter)
+        return nil unless ops_per_iteration
+
+        setup
+        before_task
+        counter.reset
+        do_task
+        spans = counter.count
+        after_task
+        teardown
+        spans.to_f / ops_per_iteration
       end
 
       private
@@ -84,9 +116,12 @@ module Mongo
 
           setup
 
+          @cpu_times = []
+          @allocations = []
+
           loop do
             before_task
-            timing = consider_gc { Benchmark.realtime { debug_mode? ? sleep(0.1) : do_task } }
+            timing = consider_gc { measure_iteration { debug_mode? ? sleep(0.1) : do_task } }
             after_task
 
             iteration_count += 1
@@ -104,6 +139,37 @@ module Mongo
 
           teardown
         end
+      end
+
+      # Times one iteration, and records alongside the wall-clock time the
+      # process CPU time and the number of objects allocated. CPU time leaves
+      # out the time spent waiting on the server, and allocations are nearly
+      # deterministic, so both show driver-side cost with far less noise than
+      # throughput. Process CPU time includes the driver's background threads
+      # (e.g. server monitoring), which cost the same in every configuration.
+      #
+      # @return [ Float ] the wall-clock time in seconds.
+      def measure_iteration(&block)
+        allocated = GC.stat(:total_allocated_objects)
+        cpu = Process.clock_gettime(Process::CLOCK_PROCESS_CPUTIME_ID)
+        timing = Benchmark.realtime(&block)
+        @cpu_times.push(Process.clock_gettime(Process::CLOCK_PROCESS_CPUTIME_ID) - cpu)
+        @allocations.push(GC.stat(:total_allocated_objects) - allocated)
+        timing
+      end
+
+      # Per-operation medians, for tasks that define ops_per_iteration.
+      #
+      # @return [ Hash<String, Float> ] metric name to value.
+      def per_op_metrics(timings)
+        return {} unless ops_per_iteration
+
+        ops = ops_per_iteration.to_f
+        {
+          'wall_us_per_op' => timings[50] / ops * 1_000_000,
+          'cpu_us_per_op' => Percentiles.new(@cpu_times)[50] / ops * 1_000_000,
+          'allocs_per_op' => Percentiles.new(@allocations)[50] / ops
+        }
       end
 
       # Instantiate a new client.

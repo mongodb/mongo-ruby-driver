@@ -37,6 +37,12 @@ module Mongo
       #   benchmarks construct.
       attr_reader :client_options
 
+      # @return [ Numeric | nil ] the most throughput, in percent of the
+      #   baseline, this configuration may give up on a small-document task
+      #   (see "Performance Targets" in the OpenTelemetry spec). nil for the
+      #   baseline.
+      attr_reader :target_pct
+
       # @param name [ String ] the short name of the configuration.
       # @param description [ String ] what the configuration measures.
       # @param otel [ Symbol ] how much of OpenTelemetry to load: +:none+ for
@@ -45,8 +51,10 @@ module Mongo
       # @param client_options [ Hash ] options for every client.
       # @param sampler_env [ Hash ] OpenTelemetry environment variables that
       #   select the sampler, applied before the SDK is configured.
-      def initialize(name:, description:, otel:, client_options: {}, sampler_env: {})
+      # @param target_pct [ Numeric | nil ] the overhead target.
+      def initialize(name:, description:, otel:, client_options: {}, sampler_env: {}, target_pct: nil)
         @name = name
+        @target_pct = target_pct
         @description = description
         @otel = otel
         @client_options = client_options
@@ -56,6 +64,12 @@ module Mongo
       # Whether this configuration asks the driver to trace.
       def tracing?
         @otel != :none
+      end
+
+      # Whether every span is recorded, which is what makes counting spans
+      # per operation possible: a span processor only sees sampled spans.
+      def records_every_span?
+        @otel == :sdk && @sampler_env['OTEL_TRACES_SAMPLER'] == 'always_on'
       end
 
       # Whether this configuration is the baseline that others are compared
@@ -88,26 +102,30 @@ module Mongo
                          'so spans are non-recording; what a user who installs ' \
                          'nothing pays',
             otel: :api,
-            client_options: { tracing: { enabled: true } }),
+            client_options: { tracing: { enabled: true } },
+            target_pct: 5),
 
         new(name: 'sdk-never',
             description: 'SDK installed, sampler drops every trace',
             otel: :sdk,
             client_options: { tracing: { enabled: true } },
-            sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_off' }),
+            sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_off' },
+            target_pct: 10),
 
         new(name: 'sdk-parent-1pct',
             description: 'SDK installed, parent-based sampler recording 1% of traces',
             otel: :sdk,
             client_options: { tracing: { enabled: true } },
             sampler_env: { 'OTEL_TRACES_SAMPLER' => 'parentbased_traceidratio',
-                           'OTEL_TRACES_SAMPLER_ARG' => '0.01' }),
+                           'OTEL_TRACES_SAMPLER_ARG' => '0.01' },
+            target_pct: 10),
 
         new(name: 'sdk-always',
             description: 'SDK installed, every trace recorded',
             otel: :sdk,
             client_options: { tracing: { enabled: true } },
-            sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_on' })
+            sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_on' },
+            target_pct: 15)
       ].freeze
 
       # Looks up a configuration by name.

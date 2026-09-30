@@ -42,6 +42,35 @@ module Mongo
     class Suite
       PERCENTILES = [ 10, 25, 50, 75, 90, 95, 98, 99 ].freeze
 
+      # A span processor that only counts started spans. Installed after the
+      # timed runs, so it costs them nothing.
+      class SpanCounter
+        attr_reader :count
+
+        def initialize
+          @count = 0
+          @mutex = Mutex.new
+        end
+
+        def reset
+          @mutex.synchronize { @count = 0 }
+        end
+
+        def on_start(_span, _parent_context)
+          @mutex.synchronize { @count += 1 }
+        end
+
+        def on_finish(_span); end
+
+        def force_flush(*)
+          ::OpenTelemetry::SDK::Trace::Export::SUCCESS
+        end
+
+        def shutdown(*)
+          ::OpenTelemetry::SDK::Trace::Export::SUCCESS
+        end
+      end
+
       def self.run!
         new.run
       end
@@ -58,6 +87,8 @@ module Mongo
           perf_data << compile_perf_data(result)
           append_to_benchmarks(klass, result, benches)
         end
+
+        count_spans(perf_data) if count_spans?
 
         # The composites average a fixed list of micro-benchmarks, so they are
         # only meaningful when every micro-benchmark ran.
@@ -120,11 +151,36 @@ module Mongo
         end
       end
 
+      # Spans are counted when asked to (DRIVER_BENCH_COUNT_SPANS), and only
+      # under a configuration that records every span.
+      def count_spans?
+        %w[1 true yes].include?(ENV['DRIVER_BENCH_COUNT_SPANS'].to_s.downcase) &&
+          configuration.records_every_span?
+      end
+
+      # Runs one extra iteration of every task with a counting span
+      # processor, and adds spans_per_op to the task's metrics. A task that
+      # creates no spans must not be read as proof of an efficient
+      # implementation, so the count is reported next to the overhead.
+      def count_spans(perf_data)
+        counter = SpanCounter.new
+        ::OpenTelemetry.tracer_provider.add_span_processor(counter)
+
+        tasks.each do |klass|
+          spans = klass.new.count_spans(counter)
+          next if spans.nil?
+
+          entry = perf_data.find { |item| item['info']['test_name'] == klass.bench_name }
+          entry['metrics'] << { 'name' => 'spans_per_op', 'value' => spans }
+        end
+      end
+
       def compile_perf_data(result)
         percentile_data = PERCENTILES.map do |percentile|
           { 'name' => "time-#{percentile}%",
             'value' => result[:percentiles][percentile] }
         end
+        per_op_data = result[:per_op].map { |name, value| { 'name' => name, 'value' => value } }
 
         {
           'info' => {
@@ -134,7 +190,8 @@ module Mongo
           'metrics' => [
             { 'name' => 'score',
               'value' => result[:score] },
-            *percentile_data
+            *percentile_data,
+            *per_op_data
           ]
         }
       end
