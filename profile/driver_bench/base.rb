@@ -117,6 +117,7 @@ module Mongo
           setup
 
           @cpu_times = []
+          @gc_times = []
           @allocations = []
 
           loop do
@@ -149,13 +150,27 @@ module Mongo
       # (e.g. server monitoring), which cost the same in every configuration.
       #
       # @return [ Float ] the wall-clock time in seconds.
+      #
+      # GC time is recorded too, where the runtime reports it (Ruby 3.1+).
+      # When and how long the collector runs varies between processes more
+      # than the cost of tracing does, so CPU time without GC is the steadier
+      # measure of the driver's own work.
       def measure_iteration(&block)
         allocated = GC.stat(:total_allocated_objects)
+        gc = gc_time
         cpu = Process.clock_gettime(Process::CLOCK_PROCESS_CPUTIME_ID)
         timing = Benchmark.realtime(&block)
         @cpu_times.push(Process.clock_gettime(Process::CLOCK_PROCESS_CPUTIME_ID) - cpu)
+        @gc_times.push(gc_time - gc) if gc
         @allocations.push(GC.stat(:total_allocated_objects) - allocated)
         timing
+      end
+
+      # @return [ Float | nil ] the total time spent in GC so far, in
+      #   seconds, or nil when the runtime does not report it.
+      def gc_time
+        ms = GC.stat[:time]
+        ms && (ms / 1000.0)
       end
 
       # Per-operation medians, for tasks that define ops_per_iteration.
@@ -169,6 +184,16 @@ module Mongo
           'wall_us_per_op' => timings[50] / ops * 1_000_000,
           'cpu_us_per_op' => Percentiles.new(@cpu_times)[50] / ops * 1_000_000,
           'allocs_per_op' => Percentiles.new(@allocations)[50] / ops
+        }.merge(gc_metrics(ops))
+      end
+
+      def gc_metrics(ops)
+        return {} if @gc_times.empty?
+
+        cpu_ex_gc = @cpu_times.zip(@gc_times).map { |cpu, gc| cpu - gc }
+        {
+          'gc_us_per_op' => Percentiles.new(@gc_times)[50] / ops * 1_000_000,
+          'cpu_ex_gc_us_per_op' => Percentiles.new(cpu_ex_gc)[50] / ops * 1_000_000
         }
       end
 

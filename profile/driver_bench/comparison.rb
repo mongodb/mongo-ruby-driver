@@ -51,11 +51,12 @@ module Mongo
       # Metrics carried from every child run into the comparison. Each is
       # reduced to its median across repetitions.
       CARRIED_METRICS = %w[
-        score wall_us_per_op cpu_us_per_op allocs_per_op time-90% time-99% spans_per_op
+        score wall_us_per_op cpu_us_per_op cpu_ex_gc_us_per_op gc_us_per_op allocs_per_op
+        time-90% time-99% spans_per_op
       ].freeze
 
       TABLE_FORMAT = '%-22<task>s %-16<config>s %9<loss>s %8<target>s %-4<verdict>s ' \
-                     '%15<spread>s %11<cpu>s %9<cpu_pct>s %9<allocs>s %6<spans>s'
+                     '%15<spread>s %11<cpu>s %9<cpu_pct>s %9<gc>s %9<allocs>s %6<spans>s'
 
       def self.run!
         new.run
@@ -177,9 +178,9 @@ module Mongo
         value - reference
       end
 
-      def cpu_overhead_pct(task, configuration)
-        reference = median(task, baseline, 'cpu_us_per_op')
-        delta = added(task, configuration, 'cpu_us_per_op')
+      def cpu_overhead_pct(task, configuration, metric = 'cpu_us_per_op')
+        reference = median(task, baseline, metric)
+        delta = added(task, configuration, metric)
         return nil if delta.nil? || reference.zero?
 
         delta / reference * 100.0
@@ -240,6 +241,9 @@ module Mongo
           'overhead_pct' => loss_for(task, configuration),
           'cpu_overhead_pct' => cpu_overhead_pct(task, configuration),
           'cpu_us_added_per_op' => added(task, configuration, 'cpu_us_per_op'),
+          'cpu_ex_gc_overhead_pct' => cpu_overhead_pct(task, configuration, 'cpu_ex_gc_us_per_op'),
+          'cpu_ex_gc_us_added_per_op' => added(task, configuration, 'cpu_ex_gc_us_per_op'),
+          'gc_us_added_per_op' => added(task, configuration, 'gc_us_per_op'),
           'allocs_added_per_op' => added(task, configuration, 'allocs_per_op'),
           'target_pct' => configuration.target_pct
         }.each do |name, value|
@@ -256,12 +260,13 @@ module Mongo
         lines = [ format("\n===== Configuration comparison (%d rep%s, median) =====",
                          @reps, (@reps == 1) ? '' : 's') ]
         lines << 'loss: throughput given up vs off; spread: min-max MB/s across reps; ' \
-                 'cpu: CPU us added per op; allocs: objects added per op'
+                 'cpu: CPU us added per op, excluding GC; gc: GC us added per op; ' \
+                 'allocs: objects added per op'
         lines << ''
         lines << format(TABLE_FORMAT,
                         task: 'micro-benchmark', config: 'configuration', loss: 'loss %',
                         target: 'target', verdict: 'ok?', spread: 'spread MB/s',
-                        cpu: 'cpu us/op', cpu_pct: 'cpu %', allocs: 'allocs', spans: 'spans')
+                        cpu: 'cpu us/op', cpu_pct: 'cpu %', gc: 'gc us/op', allocs: 'allocs', spans: 'spans')
         tasks.each do |task|
           @configurations.reject(&:baseline?).each { |configuration| lines << row(task, configuration) }
         end
@@ -278,10 +283,17 @@ module Mongo
                target: configuration.target_pct ? format('%g', configuration.target_pct) : '-',
                verdict: verdict(target_met(task, configuration)),
                spread: min ? format('%.4g-%.4g', min, max) : 'n/a',
-               cpu: signed(added(task, configuration, 'cpu_us_per_op')),
-               cpu_pct: signed(cpu_overhead_pct(task, configuration)),
+               cpu: signed(added(task, configuration, cpu_metric(task))),
+               cpu_pct: signed(cpu_overhead_pct(task, configuration, cpu_metric(task))),
+               gc: signed(added(task, configuration, 'gc_us_per_op')),
                allocs: signed(added(task, configuration, 'allocs_per_op'), '%+.0f'),
                spans: (spans = spans_per_op(task)) ? format('%.2g', spans) : 'n/a')
+      end
+
+      # CPU time excluding GC where the runtime reports GC time, total CPU
+      # time otherwise.
+      def cpu_metric(task)
+        median(task, baseline, 'cpu_ex_gc_us_per_op') ? 'cpu_ex_gc_us_per_op' : 'cpu_us_per_op'
       end
 
       def signed(value, pattern = '%+.2f')
