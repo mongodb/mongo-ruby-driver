@@ -29,8 +29,8 @@ module Mongo
     # configuration always runs in the same slot. With a fixed order, a
     # slot-dependent effect showed up as a bias of its own: sdk-parent-1pct
     # measured cheaper than sdk-never in every run, though it does strictly
-    # more work. With as many repetitions as configurations, each one runs
-    # in every slot exactly once.
+    # more work. When the number of repetitions is a multiple of the number
+    # of configurations, each one runs in every slot equally often.
     #
     # Parameterised by the environment:
     #
@@ -49,6 +49,8 @@ module Mongo
     #                   fail when a configuration exceeds its target
     #   DRIVER_BENCH_MAX_ITERATIONS, DRIVER_BENCH_MIN_TIME
     #                   passed through to every run, see Base
+    #   RUBY_YJIT_ENABLE
+    #                   run with YJIT; fails if this ruby was built without it
     #
     # @api private
     class Comparison
@@ -148,12 +150,16 @@ module Mongo
       end
 
       # The median of one metric across repetitions, for the same reason the
-      # spec takes the median across iterations.
+      # spec takes the median across iterations. Unlike the spec's
+      # nearest-rank percentile, which suits its iteration counts, this
+      # averages the middle two of an even number of repetitions: nearest
+      # rank would always pick the lower one.
       def median(task, configuration, metric)
-        values = @samples[[ task, configuration.name ]][metric]
+        values = @samples[[ task, configuration.name ]][metric].sort
         return nil if values.empty?
 
-        Percentiles.new(values)[50]
+        mid = values.length / 2
+        values.length.odd? ? values[mid] : (values[mid - 1] + values[mid]) / 2.0
       end
 
       def spread(task, configuration)

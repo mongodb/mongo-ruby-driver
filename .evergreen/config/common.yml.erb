@@ -622,31 +622,14 @@ tasks:
   - name: "driver-bench"
     commands:
       - func: "run benchmarks"
-  # Run each DriverBench micro-benchmark under every driver configuration
-  # and report what each configuration costs relative to the untraced
-  # baseline. One task per micro-benchmark, so they run in parallel on
-  # separate hosts; each still interleaves all configurations on one host,
-  # which is what the comparison needs. Only the two small-document tasks
-  # the OpenTelemetry spec's targets are defined on: find many creates too
-  # few spans per iteration to show tracing cost, and large-document inserts
-  # are dominated by the server.
-  - name: "driver-bench-otel-find-one"
-    exec_timeout_secs: 7200
-    commands:
-      - func: "run benchmark comparison"
-        vars:
-          driver_bench_tasks: "find one by id"
-  - name: "driver-bench-otel-insert-one"
-    exec_timeout_secs: 7200
-    commands:
-      - func: "run benchmark comparison"
-        vars:
-          driver_bench_tasks: "small doc insertone"
-  # Both micro-benchmarks on one host, for comparing their overheads with
-  # each other: the split tasks above run on different hosts, which differ
-  # in speed by more than the effect being compared. Takes as long as both
-  # split tasks together. Not scheduled; request it in a patch.
-  - name: "driver-bench-otel-same-host"
+  # Runs the two small-document micro-benchmarks the OpenTelemetry spec's
+  # targets are defined on under every driver configuration, and reports
+  # what each costs relative to the untraced baseline. Both run on one host,
+  # so their overheads can be compared with each other: hosts differ in
+  # speed by more than the overheads do. Find many creates too few spans per
+  # iteration to show tracing cost, and large-document inserts are dominated
+  # by the server. About two hours at the default ten reps.
+  - name: "driver-bench-otel"
     exec_timeout_secs: 10800
     commands:
       - func: "run benchmark comparison"

@@ -149,12 +149,12 @@ module Mongo
       # throughput. Process CPU time includes the driver's background threads
       # (e.g. server monitoring), which cost the same in every configuration.
       #
-      # @return [ Float ] the wall-clock time in seconds.
-      #
       # GC time is recorded too, where the runtime reports it (Ruby 3.1+).
       # When and how long the collector runs varies between processes more
       # than the cost of tracing does, so CPU time without GC is the steadier
       # measure of the driver's own work.
+      #
+      # @return [ Float ] the wall-clock time in seconds.
       def measure_iteration(&block)
         allocated = GC.stat(:total_allocated_objects)
         gc = gc_time

@@ -71,12 +71,8 @@ buildvariants:
       os: ubuntu2204
     display_name: DriverBench OTel
     tasks:
-      - name: "driver-bench-otel-find-one"
+      - name: "driver-bench-otel"
         batchtime: 1440 # run at most once a day
-      - name: "driver-bench-otel-insert-one"
-        batchtime: 1440
-      - name: "driver-bench-otel-same-host"
-        activate: false
 
   - matrix_name: "auth/ssl"
     matrix_spec:
