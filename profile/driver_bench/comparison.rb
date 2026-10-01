@@ -25,6 +25,13 @@ module Mongo
     # all of one configuration's samples in the fast half and all of another's
     # in the slow half, which shows up as overhead that is not there.
     #
+    # The order is also rotated by one position each repetition, so that no
+    # configuration always runs in the same slot. With a fixed order, a
+    # slot-dependent effect showed up as a bias of its own: sdk-parent-1pct
+    # measured cheaper than sdk-never in every run, though it does strictly
+    # more work. With as many repetitions as configurations, each one runs
+    # in every slot exactly once.
+    #
     # Parameterised by the environment:
     #
     #   CONFIGURATIONS  comma-separated configuration names (default: all)
@@ -82,7 +89,7 @@ module Mongo
 
         Dir.mktmpdir('driver-bench') do |dir|
           1.upto(@reps) do |rep|
-            @configurations.each { |configuration| measure(configuration, rep, dir) }
+            @configurations.rotate(rep - 1).each { |configuration| measure(configuration, rep, dir) }
           end
         end
 
