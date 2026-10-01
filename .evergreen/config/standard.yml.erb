@@ -75,6 +75,8 @@ buildvariants:
         batchtime: 1440 # run at most once a day
       - name: "driver-bench-otel-insert-one"
         batchtime: 1440
+      - name: "driver-bench-otel-same-host"
+        activate: false
 
   - matrix_name: "auth/ssl"
     matrix_spec:

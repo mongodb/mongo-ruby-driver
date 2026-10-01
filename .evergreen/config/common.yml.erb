@@ -642,6 +642,16 @@ tasks:
       - func: "run benchmark comparison"
         vars:
           driver_bench_tasks: "small doc insertone"
+  # Both micro-benchmarks on one host, for comparing their overheads with
+  # each other: the split tasks above run on different hosts, which differ
+  # in speed by more than the effect being compared. Takes as long as both
+  # split tasks together. Not scheduled; request it in a patch.
+  - name: "driver-bench-otel-same-host"
+    exec_timeout_secs: 10800
+    commands:
+      - func: "run benchmark comparison"
+        vars:
+          driver_bench_tasks: "small doc insertone,find one by id"
   - name: "test-csot"
     commands:
       - func: "run CSOT tests"
