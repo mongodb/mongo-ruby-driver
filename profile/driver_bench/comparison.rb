@@ -204,11 +204,16 @@ module Mongo
         nil
       end
 
+      # Targets are checked against the CPU overhead (excluding GC where it
+      # is reported), not the throughput loss. Throughput includes waiting on
+      # the server and moved by 2-3 points between runs, enough to flip a
+      # configuration across its target; it also ranked configurations in an
+      # order their work rules out (sdk-never above api-only).
       def target_met(task, configuration)
-        loss = loss_for(task, configuration)
-        return nil if loss.nil? || configuration.target_pct.nil?
+        overhead = cpu_overhead_pct(task, configuration, cpu_metric(task))
+        return nil if overhead.nil? || configuration.target_pct.nil?
 
-        loss <= configuration.target_pct
+        overhead <= configuration.target_pct
       end
 
       def tasks
@@ -266,7 +271,7 @@ module Mongo
       def summarize
         lines = [ format("\n===== Configuration comparison (%d rep%s, median) =====",
                          @reps, (@reps == 1) ? '' : 's') ]
-        lines << 'loss: throughput given up vs off; spread: min-max MB/s across reps; ' \
+        lines << 'loss: throughput given up vs off; target: max cpu %; spread: min-max MB/s across reps; ' \
                  'cpu: CPU us added per op, excluding GC; gc: GC us added per op; ' \
                  'allocs: objects added per op'
         lines << ''

@@ -305,7 +305,7 @@ functions:
           TEST_CMD="bundle exec rake driver_bench:compare" \
             CONFIGURATIONS="${driver_bench_configurations|off,api-only,sdk-never,sdk-parent-1pct,sdk-always}" \
             DRIVER_BENCH_TASKS="${driver_bench_tasks}" \
-            REPS="${driver_bench_reps|5}" \
+            REPS="${driver_bench_reps|10}" \
             DRIVER_BENCH_MAX_ITERATIONS="${driver_bench_max_iterations|20}" \
             RUBY_YJIT_ENABLE="${driver_bench_yjit|1}" \
             DRIVER_BENCH_MIN_TIME="${driver_bench_min_time|20}" \
@@ -634,13 +634,13 @@ tasks:
   # few spans per iteration to show tracing cost, and large-document inserts
   # are dominated by the server.
   - name: "driver-bench-otel-find-one"
-    exec_timeout_secs: 3600
+    exec_timeout_secs: 7200
     commands:
       - func: "run benchmark comparison"
         vars:
           driver_bench_tasks: "find one by id"
   - name: "driver-bench-otel-insert-one"
-    exec_timeout_secs: 3600
+    exec_timeout_secs: 7200
     commands:
       - func: "run benchmark comparison"
         vars:
