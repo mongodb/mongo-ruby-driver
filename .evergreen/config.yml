@@ -145,7 +145,10 @@ functions:
         env:
           MONGODB_VERSION: ${MONGODB_VERSION}
         include_expansions_in_env: [TOPOLOGY, AUTH, SSL, ORCHESTRATION_FILE,
-            REQUIRE_API_VERSION, LOAD_BALANCER]
+            REQUIRE_API_VERSION, LOAD_BALANCER,
+            # Needed to download "latest"/"latest-build" from the private S3
+            # bucket (DRIVERS-3628). Any other version needs no AWS access.
+            AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         args: ["${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh", "start"]
     - command: expansions.update
       params:
@@ -166,6 +169,9 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        # Needed to download "latest"/"latest-build" from the private S3
+        # bucket (DRIVERS-3628). Any other version needs no AWS access.
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         script: |
           ${PREPARE_SHELL}
           export CSOT_SPEC_TESTS=1
@@ -178,6 +184,9 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        # Needed to download "latest"/"latest-build" from the private S3
+        # bucket (DRIVERS-3628). Any other version needs no AWS access.
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         script: |
           ${PREPARE_SHELL}
           export OTEL_SPEC_TESTS=1
@@ -280,6 +289,9 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        # Needed to download "latest"/"latest-build" from the private S3
+        # bucket (DRIVERS-3628). Any other version needs no AWS access.
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         script: |
           ${PREPARE_SHELL}
           TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
@@ -302,6 +314,9 @@ functions:
       params:
         shell: bash
         working_dir: "src"
+        # Needed to download "latest"/"latest-build" from the private S3
+        # bucket (DRIVERS-3628). Any other version needs no AWS access.
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         script: |
           ${PREPARE_SHELL}
           if [ -n "${FLE}" ]; then
