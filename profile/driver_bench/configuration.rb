@@ -43,6 +43,10 @@ module Mongo
       #   baseline.
       attr_reader :target_pct
 
+      # @return [ String | nil ] the command-span attribute profile to apply
+      #   (see AttributeProfiles), or nil to leave the tracer as shipped.
+      attr_reader :attribute_profile
+
       # @param name [ String ] the short name of the configuration.
       # @param description [ String ] what the configuration measures.
       # @param otel [ Symbol ] how much of OpenTelemetry to load: +:none+ for
@@ -52,13 +56,17 @@ module Mongo
       # @param sampler_env [ Hash ] OpenTelemetry environment variables that
       #   select the sampler, applied before the SDK is configured.
       # @param target_pct [ Numeric | nil ] the overhead target.
-      def initialize(name:, description:, otel:, client_options: {}, sampler_env: {}, target_pct: nil)
+      # @param attribute_profile [ String | nil ] the command-span attribute
+      #   profile to apply.
+      def initialize(name:, description:, otel:, client_options: {}, sampler_env: {}, target_pct: nil,
+                     attribute_profile: nil)
         @name = name
         @target_pct = target_pct
         @description = description
         @otel = otel
         @client_options = client_options
         @sampler_env = sampler_env
+        @attribute_profile = attribute_profile
       end
 
       # Whether this configuration asks the driver to trace.
@@ -110,6 +118,7 @@ module Mongo
         when :api then require 'opentelemetry-api'
         when :sdk then install_sdk!
         end
+        apply_attribute_profile!
       end
 
       # All configurations, baseline first.
@@ -146,7 +155,37 @@ module Mongo
             otel: :sdk,
             client_options: { tracing: { enabled: true } },
             sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_on' },
-            target_pct: 15)
+            target_pct: 15),
+
+        # Attribute profiles: every trace recorded, but the command span is
+        # given a different attribute shape. See AttributeProfiles.
+        new(name: 'attr-none',
+            description: 'SDK recording, command spans created with no attributes',
+            otel: :sdk,
+            client_options: { tracing: { enabled: true } },
+            sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_on' },
+            attribute_profile: 'none'),
+
+        new(name: 'attr-creation-only',
+            description: 'SDK recording, only the creation-time attributes',
+            otel: :sdk,
+            client_options: { tracing: { enabled: true } },
+            sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_on' },
+            attribute_profile: 'creation-only'),
+
+        new(name: 'attr-all-at-creation',
+            description: 'SDK recording, every attribute passed to start_span',
+            otel: :sdk,
+            client_options: { tracing: { enabled: true } },
+            sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_on' },
+            attribute_profile: 'all-at-creation'),
+
+        new(name: 'attr-none-then-all',
+            description: 'SDK recording, no attributes at creation and all set afterwards',
+            otel: :sdk,
+            client_options: { tracing: { enabled: true } },
+            sampler_env: { 'OTEL_TRACES_SAMPLER' => 'always_on' },
+            attribute_profile: 'none-then-all')
       ].freeze
 
       # Looks up a configuration by name.
@@ -209,6 +248,17 @@ module Mongo
         ENV['OTEL_TRACES_EXPORTER'] = 'none'
 
         ::OpenTelemetry::SDK.configure
+      end
+
+      # Applies the command-span attribute profile, if this configuration has
+      # one. Must run before any client is built: a client decides whether
+      # tracing is active when it builds its tracer.
+      def apply_attribute_profile!
+        return unless @attribute_profile
+
+        require_relative 'attribute_profiles'
+        ENV['OTEL_ATTRIBUTE_PROFILE'] = @attribute_profile
+        Mongo::DriverBench::CommandAttributeProfiles.apply!
       end
     end
   end

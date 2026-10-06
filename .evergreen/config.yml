@@ -638,6 +638,20 @@ tasks:
       - func: "run benchmark comparison"
         vars:
           driver_bench_tasks: "small doc insertone,find one by id"
+  # Measures the cost of the command-span attribute shapes end to end, against
+  # the same two small-document micro-benchmarks. Every configuration records
+  # every trace; they differ only in how the command span's attributes are
+  # built. attr-none is the floor (a recorded span with no attributes),
+  # sdk-always is the driver as shipped, and the rest bracket it. Not on the
+  # waterfall: request it in a patch. See DRIVERS-3620.
+  - name: "driver-bench-otel-attributes"
+    exec_timeout_secs: 10800
+    commands:
+      - func: "run benchmark comparison"
+        vars:
+          driver_bench_tasks: "small doc insertone,find one by id"
+          driver_bench_configurations: "off,sdk-always,attr-none,attr-creation-only,attr-all-at-creation,attr-none-then-all"
+          driver_bench_reps: "6"
   - name: "test-csot"
     commands:
       - func: "run CSOT tests"
@@ -1183,6 +1197,18 @@ buildvariants:
     tasks:
       - name: "driver-bench-otel"
         batchtime: 1440 # run at most once a day
+
+  # Measures the cost of the command-span attribute shapes end to end. Kept off
+  # the waterfall; request it in a patch. See DRIVERS-3620.
+  - matrix_name: DriverBenchOTelAttributes
+    matrix_spec:
+      ruby: "ruby-4.0"
+      mongodb-version: "8.0"
+      topology: standalone
+      os: ubuntu2204
+    display_name: DriverBench OTel attributes
+    tasks:
+      - name: "driver-bench-otel-attributes"
 
   - matrix_name: "auth/ssl"
     matrix_spec:

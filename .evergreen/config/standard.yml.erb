@@ -74,6 +74,18 @@ buildvariants:
       - name: "driver-bench-otel"
         batchtime: 1440 # run at most once a day
 
+  # Measures the cost of the command-span attribute shapes end to end. Kept off
+  # the waterfall; request it in a patch. See DRIVERS-3620.
+  - matrix_name: DriverBenchOTelAttributes
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      mongodb-version: <%= latest_stable_mdb %>
+      topology: standalone
+      os: ubuntu2204
+    display_name: DriverBench OTel attributes
+    tasks:
+      - name: "driver-bench-otel-attributes"
+
   - matrix_name: "auth/ssl"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
