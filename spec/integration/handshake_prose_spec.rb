@@ -5,6 +5,9 @@ require 'spec_helper'
 # Prose tests from the MongoDB handshake specification:
 # specifications/source/mongodb-handshake/tests/README.md
 describe 'Handshake prose tests' do
+  # The test-only recorder reads handshake documents while monitor connections
+  # write them on background threads. That races on JRuby, so only run it on MRI.
+  require_mri
   clean_slate
 
   # Test 9: Handshake documents include `backpressure: "2"`.
