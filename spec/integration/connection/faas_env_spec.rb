@@ -44,6 +44,17 @@ SCENARIOS = {
     'AWS_REGION' => 'us-east-2',
     'AWS_LAMBDA_FUNCTION_MEMORY_SIZE' => 'big',
   },
+
+  'Invalid - AWS_EXECUTION_ENV does not start with AWS_Lambda_' => {
+    'AWS_EXECUTION_ENV' => 'EC2',
+  },
+
+  'Valid container and FaaS provider' => {
+    'AWS_EXECUTION_ENV' => 'AWS_Lambda_ruby2.7',
+    'AWS_REGION' => 'us-east-2',
+    'AWS_LAMBDA_FUNCTION_MEMORY_SIZE' => '1024',
+    'KUBERNETES_SERVICE_HOST' => '1',
+  },
 }.freeze
 
 describe 'Connect under FaaS Env' do
@@ -57,6 +68,29 @@ describe 'Connect under FaaS Env' do
         resp = authorized_client.database.command(ping: 1)
         expect(resp).to be_a(Mongo::Operation::Result)
       end
+    end
+  end
+
+  # Test 1 case 9 requires verifying that both the container metadata and the
+  # AWS Lambda metadata are present in client.env, not just that the connection
+  # succeeds.
+  context 'when given a container and a FaaS provider' do
+    local_env(
+      'AWS_EXECUTION_ENV' => 'AWS_Lambda_ruby2.7',
+      'AWS_REGION' => 'us-east-2',
+      'AWS_LAMBDA_FUNCTION_MEMORY_SIZE' => '1024',
+      'KUBERNETES_SERVICE_HOST' => '1'
+    )
+
+    it 'includes both container and AWS Lambda metadata in client.env' do
+      documents = record_handshake_documents
+
+      authorized_client.database.command(ping: 1)
+
+      env = documents.filter_map { |document| document[:client][:env] }.first
+      expect(env).not_to be_nil
+      expect(env[:name]).to eq('aws.lambda')
+      expect(env[:container]).to include(orchestrator: 'kubernetes')
     end
   end
 end
