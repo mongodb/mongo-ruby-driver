@@ -147,14 +147,17 @@ module Mongo
       end
 
       def table(label)
-        reference_cpu = median(label, 'none', :cpu_us_per_span)
-        reference_allocs = median(label, 'none', :allocs_per_span)
+        # The driver always passes an attributes hash, so the driver-shape
+        # zero-attribute span (empty-hash) is the baseline each attribute is
+        # measured over, not the bare span.
+        reference_cpu = median(label, 'empty-hash', :cpu_us_per_span)
+        reference_allocs = median(label, 'empty-hash', :allocs_per_span)
         lines = [
           format('===== Span attribute cost at the SDK boundary: %s (median of %d reps, %d spans/sample) =====',
                  label, @reps, @iterations),
-          'cpu: CPU us per span excluding GC; d-cpu: added over the zero-attribute span; ' \
-          'd-cpu%: that delta as a percentage of the zero-attribute span; ' \
-          '%find/%insert: this span\'s CPU as a percentage of the untraced operation'
+          'cpu: CPU us per span excluding GC; d-cpu: added over the driver-shape ' \
+          'zero-attribute span (empty-hash); d-cpu%: that delta as a percentage of it; ' \
+          '%find/%insert: that delta as a percentage of the untraced operation'
         ]
         lines << format(FORMAT, profile: 'profile', cpu: 'cpu us', dcpu: 'd-cpu', dpct: 'd-cpu%',
                                 find: '%find', insert: '%insert', allocs: 'allocs', dallocs: 'd-allocs',
@@ -172,8 +175,8 @@ module Mongo
                profile: profile_name,
                cpu: number(cpu), dcpu: delta(cpu, reference_cpu),
                dpct: percent(delta_value(cpu, reference_cpu), reference_cpu, signed: true),
-               find: percent(cpu, @reference_find),
-               insert: percent(cpu, @reference_insert),
+               find: percent(delta_value(cpu, reference_cpu), @reference_find),
+               insert: percent(delta_value(cpu, reference_cpu), @reference_insert),
                allocs: number(allocs), dallocs: delta(allocs, reference_allocs),
                gc: number(median(label, profile_name, :gc_us_per_span)),
                wall: number(median(label, profile_name, :wall_us_per_span)))
