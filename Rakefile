@@ -222,3 +222,4 @@ namespace :docs do
 end
 
 load 'profile/driver_bench/rake/tasks.rake'
+load 'profile/otel_attributes/rake/tasks.rake'
