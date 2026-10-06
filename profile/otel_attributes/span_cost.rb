@@ -27,9 +27,13 @@ module Mongo
     # recording: set_attribute discards.
     #
     # Parameterised by the environment:
-    #   ITERATIONS    spans per sample (default 50000)
-    #   REPS          repetitions of the whole profile set (default 7)
-    #   RESULTS_FILE  where the JSONL rows are written
+    #   ITERATIONS             spans per sample (default 50000)
+    #   REPS                   repetitions of the whole profile set (default 7)
+    #   RESULTS_FILE           where the JSONL rows are written
+    #   REFERENCE_FIND_CPU_US     CPU us of the untraced find operation, for the
+    #   REFERENCE_INSERT_CPU_US   relative columns. Both optional: without them
+    #                             the percentage columns read n/a. The rake
+    #                             task measures them on the same host.
     #
     # @api private
     class SpanCost
@@ -37,7 +41,8 @@ module Mongo
       DEFAULT_ITERATIONS = 50_000
       DEFAULT_REPS = 7
       DEFAULT_RESULTS_FILE = File.expand_path('../../tmp/otel-attribute-span-cost.jsonl', __dir__)
-      FORMAT = '%-32<profile>s %9<cpu>s %9<dcpu>s %10<allocs>s %9<dallocs>s %9<gc>s %9<wall>s'
+      FORMAT = '%-36<profile>s %8<cpu>s %8<dcpu>s %8<dpct>s %8<find>s %8<insert>s ' \
+               '%8<allocs>s %8<dallocs>s %7<gc>s %8<wall>s'
 
       # One timed sample: the cost of one profile over one repetition, per span.
       Sample = Struct.new(:cpu_us_per_span, :gc_us_per_span, :wall_us_per_span, :allocs_per_span)
@@ -50,6 +55,8 @@ module Mongo
         @iterations = Integer(env['ITERATIONS'] || DEFAULT_ITERATIONS)
         @reps = Integer(env['REPS'] || DEFAULT_REPS)
         @results_file = env['RESULTS_FILE'] || DEFAULT_RESULTS_FILE
+        @reference_find = reference(env['REFERENCE_FIND_CPU_US'])
+        @reference_insert = reference(env['REFERENCE_INSERT_CPU_US'])
         @samples = Hash.new { |hash, key| hash[key] = [] }
       end
 
@@ -145,11 +152,13 @@ module Mongo
         lines = [
           format('===== Span attribute cost at the SDK boundary: %s (median of %d reps, %d spans/sample) =====',
                  label, @reps, @iterations),
-          'cpu: CPU us per span excluding GC; allocs: objects per span; ' \
-          'd-cpu/d-allocs: added over the zero-attribute span'
+          'cpu: CPU us per span excluding GC; d-cpu: added over the zero-attribute span; ' \
+          'd-cpu%: that delta as a percentage of the zero-attribute span; ' \
+          '%find/%insert: this span\'s CPU as a percentage of the untraced operation'
         ]
-        lines << format(FORMAT, profile: 'profile', cpu: 'cpu us', dcpu: 'd-cpu', allocs: 'allocs',
-                                dallocs: 'd-allocs', gc: 'gc us', wall: 'wall us')
+        lines << format(FORMAT, profile: 'profile', cpu: 'cpu us', dcpu: 'd-cpu', dpct: 'd-cpu%',
+                                find: '%find', insert: '%insert', allocs: 'allocs', dallocs: 'd-allocs',
+                                gc: 'gc us', wall: 'wall us')
         OtelAttributes.profiles.each do |profile|
           lines << row(label, profile.name, reference_cpu, reference_allocs)
         end
@@ -162,6 +171,9 @@ module Mongo
         format(FORMAT,
                profile: profile_name,
                cpu: number(cpu), dcpu: delta(cpu, reference_cpu),
+               dpct: percent(delta_value(cpu, reference_cpu), reference_cpu, signed: true),
+               find: percent(cpu, @reference_find),
+               insert: percent(cpu, @reference_insert),
                allocs: number(allocs), dallocs: delta(allocs, reference_allocs),
                gc: number(median(label, profile_name, :gc_us_per_span)),
                wall: number(median(label, profile_name, :wall_us_per_span)))
@@ -175,6 +187,27 @@ module Mongo
         return 'n/a' if value.nil? || reference.nil?
 
         format('%+.3f', value - reference)
+      end
+
+      def delta_value(value, reference)
+        return nil if value.nil? || reference.nil?
+
+        value - reference
+      end
+
+      # @param value [ Float | nil ] the cost to express.
+      # @param reference [ Float | nil ] the baseline it is a percentage of.
+      # @param signed [ Boolean ] whether to show the sign, as for a delta.
+      def percent(value, reference, signed: false)
+        return 'n/a' if value.nil? || reference.nil? || reference.zero?
+
+        format(signed ? '%+.1f%%' : '%.3f%%', value / reference * 100.0)
+      end
+
+      def reference(value)
+        return nil if value.nil? || value.empty?
+
+        Float(value)
       end
     end
   end

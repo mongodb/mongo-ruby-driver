@@ -86,6 +86,19 @@ buildvariants:
     tasks:
       - name: "driver-bench-otel-attributes"
 
+  # Measures the per-attribute cost at the SDK boundary, with the untraced
+  # operation on the same host. Kept off the waterfall; request it in a patch.
+  # See DRIVERS-3620.
+  - matrix_name: OTelAttributeCost
+    matrix_spec:
+      ruby: <%= latest_ruby %>
+      mongodb-version: <%= latest_stable_mdb %>
+      topology: standalone
+      os: ubuntu2204
+    display_name: OTel attribute cost
+    tasks:
+      - name: "otel-attribute-cost"
+
   - matrix_name: "auth/ssl"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
