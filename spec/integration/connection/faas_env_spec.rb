@@ -83,11 +83,11 @@ describe 'Connect under FaaS Env' do
     )
 
     it 'includes both container and AWS Lambda metadata in client.env' do
-      documents = record_handshake_documents
+      recorder = record_handshake_documents
 
       authorized_client.database.command(ping: 1)
 
-      env = documents.filter_map { |document| document[:client][:env] }.first
+      env = recorder.documents.filter_map { |document| document[:client][:env] }.first
       expect(env).not_to be_nil
       expect(env[:name]).to eq('aws.lambda')
       expect(env[:container]).to include(orchestrator: 'kubernetes')
