@@ -294,10 +294,81 @@ functions:
         include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         script: |
           ${PREPARE_SHELL}
-          TEST_CMD="bundle exec rake driver_bench" PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
+          # With YJIT, as production deployments run; the suite fails if this
+          # ruby was built without it.
+          TEST_CMD="bundle exec rake driver_bench" RUBY_YJIT_ENABLE=1 PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf.json" .evergreen/run-tests.sh
     - command: perf.send
       params:
         file: "${PROJECT_DIRECTORY}/perf.json"
+
+  "run benchmark comparison":
+    # Runs the micro-benchmarks in ${driver_bench_tasks}, set by each task.
+    # Fewer iterations per run buy more interleaved repetitions in the same
+    # time, which is what makes the median across repetitions meaningful.
+    # YJIT is on, as in production; without it the interpreter's per-call
+    # cost makes tracing look several times more expensive. The run fails if
+    # this ruby was built without YJIT.
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          TEST_CMD="bundle exec rake driver_bench:compare" \
+            CONFIGURATIONS="${driver_bench_configurations|off,api-only,sdk-never,sdk-parent-1pct,sdk-always}" \
+            DRIVER_BENCH_TASKS="${driver_bench_tasks}" \
+            REPS="${driver_bench_reps|10}" \
+            DRIVER_BENCH_MAX_ITERATIONS="${driver_bench_max_iterations|20}" \
+            RUBY_YJIT_ENABLE="${driver_bench_yjit|1}" \
+            DRIVER_BENCH_MIN_TIME="${driver_bench_min_time|20}" \
+            DRIVER_BENCH_ENFORCE_TARGETS="${driver_bench_enforce_targets|false}" \
+            PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/${task_name}.json" \
+            .evergreen/run-tests.sh
+    # Sent to the performance store so that overhead_pct, cpu_us_added_per_op
+    # and allocs_added_per_op are watched for regressions, and kept as an
+    # artifact for comparison by hand.
+    - command: perf.send
+      params:
+        file: "${PROJECT_DIRECTORY}/${task_name}.json"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: ./src/${task_name}.json
+        display_name: ${task_name}.json
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/${task_name}.json
+        content_type: application/json
+        permissions: public-read
+        bucket: mciuploads
+
+  # Measures the per-attribute cost at the SDK boundary. The untraced
+  # operation is measured on the same host, so the relative figures are
+  # comparable with the absolute ones. No waterfall: request it in a patch.
+  # See DRIVERS-3620.
+  "run attribute cost":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          TEST_CMD="bundle exec rake otel_attributes:evergreen 2>&1 | tee $PROJECT_DIRECTORY/${task_name}.txt" \
+            RUBY_YJIT_ENABLE=1 \
+            ITERATIONS="${otel_attribute_iterations|50000}" \
+            REPS="${otel_attribute_reps|20}" \
+            .evergreen/run-tests.sh
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: ./src/${task_name}.txt
+        display_name: ${task_name}.txt
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/${task_name}.txt
+        content_type: text/plain
+        permissions: public-read
+        bucket: mciuploads
 
   "run tests with orchestration and drivers tools":
     - command: subprocess.exec
@@ -598,6 +669,40 @@ tasks:
   - name: "driver-bench"
     commands:
       - func: "run benchmarks"
+  # Runs the two small-document micro-benchmarks the OpenTelemetry spec's
+  # targets are defined on under every driver configuration, and reports
+  # what each costs relative to the untraced baseline. Both run on one host,
+  # so their overheads can be compared with each other: hosts differ in
+  # speed by more than the overheads do. Find many creates too few spans per
+  # iteration to show tracing cost, and large-document inserts are dominated
+  # by the server. About two hours at the default ten reps.
+  - name: "driver-bench-otel"
+    exec_timeout_secs: 10800
+    commands:
+      - func: "run benchmark comparison"
+        vars:
+          driver_bench_tasks: "small doc insertone,find one by id"
+  # Measures the cost of the command-span attribute shapes end to end, against
+  # the same two small-document micro-benchmarks. Every configuration records
+  # every trace; they differ only in how the command span's attributes are
+  # built. attr-none is the floor (a recorded span with no attributes),
+  # sdk-always is the driver as shipped, and the rest bracket it. Not on the
+  # waterfall: request it in a patch. See DRIVERS-3620.
+  - name: "driver-bench-otel-attributes"
+    exec_timeout_secs: 10800
+    commands:
+      - func: "run benchmark comparison"
+        vars:
+          driver_bench_tasks: "small doc insertone,find one by id"
+          driver_bench_configurations: "off,sdk-always,attr-none,attr-creation-only,attr-all-at-creation,attr-none-then-all"
+          driver_bench_reps: "6"
+  # Measures the per-attribute cost at the SDK boundary, with the untraced
+  # operation measured on the same host. Not on the waterfall: request it in a
+  # patch. See DRIVERS-3620.
+  - name: "otel-attribute-cost"
+    exec_timeout_secs: 3600
+    commands:
+      - func: "run attribute cost"
   - name: "test-csot"
     commands:
       - func: "run CSOT tests"
@@ -1131,6 +1236,44 @@ buildvariants:
     tasks:
       - name: "driver-bench"
 
+  # Compares the DriverBench micro-benchmarks with OpenTelemetry disabled
+  # against several enabled configurations. See DRIVERS-3620.
+  - matrix_name: DriverBenchOTel
+    matrix_spec:
+      ruby: "ruby-4.0"
+      mongodb-version: "8.0"
+      topology: standalone
+      os: ubuntu2204
+    display_name: DriverBench OTel
+    tasks:
+      - name: "driver-bench-otel"
+        batchtime: 1440 # run at most once a day
+
+  # Measures the cost of the command-span attribute shapes end to end. Kept off
+  # the waterfall; request it in a patch. See DRIVERS-3620.
+  - matrix_name: DriverBenchOTelAttributes
+    matrix_spec:
+      ruby: "ruby-4.0"
+      mongodb-version: "8.0"
+      topology: standalone
+      os: ubuntu2204
+    display_name: DriverBench OTel attributes
+    tasks:
+      - name: "driver-bench-otel-attributes"
+
+  # Measures the per-attribute cost at the SDK boundary, with the untraced
+  # operation on the same host. Kept off the waterfall; request it in a patch.
+  # See DRIVERS-3620.
+  - matrix_name: OTelAttributeCost
+    matrix_spec:
+      ruby: "ruby-4.0"
+      mongodb-version: "8.0"
+      topology: standalone
+      os: ubuntu2204
+    display_name: OTel attribute cost
+    tasks:
+      - name: "otel-attribute-cost"
+
   - matrix_name: "auth/ssl"
     matrix_spec:
       auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
@@ -1238,6 +1381,8 @@ buildvariants:
     tasks:
       - name: test-csot
 
+  # OTel spec tests run off-PR (no "pr" tag), like ruby-dev and
+  # DriverBench OTel: they only run on the master waterfall.
   - matrix_name: OTel
     matrix_spec:
       ruby: "ruby-4.0"
@@ -1245,7 +1390,6 @@ buildvariants:
       topology: replica-set-single-node
       os: ubuntu2204
     display_name: "OTel - ${mongodb-version}"
-    tags: ["pr"]
     tasks:
       - name: test-otel
 

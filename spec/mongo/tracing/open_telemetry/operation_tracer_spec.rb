@@ -41,6 +41,8 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
         allow(s).to receive(:set_attribute)
         allow(s).to receive(:record_exception)
         allow(s).to receive(:status=)
+        allow(s).to receive(:context).and_return(double('SpanContext', valid?: true))
+        allow(s).to receive(:recording?).and_return(true)
       end
     end
     let(:context) { double('OpenTelemetry::Context') }
@@ -89,6 +91,68 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
     it 'finishes the span' do
       expect(span).to receive(:finish)
       operation_tracer.trace_operation(operation, operation_context) { result }
+    end
+
+    it 'passes only cheap attributes to start_span' do
+      expect(otel_tracer).to receive(:start_span).with(
+        anything,
+        attributes: hash_excluding('db.mongodb.cursor_id'),
+        with_parent: nil,
+        kind: :client
+      )
+      operation_tracer.trace_operation(operation, operation_context) { result }
+    end
+
+    it 'sets the cursor id after span creation when recording' do
+      operation = instance_double(
+        Mongo::Operation::GetMore,
+        db_name: 'test_db',
+        coll_name: 'test_collection',
+        cursor_id: 12_345,
+        class: class_double(Mongo::Operation::GetMore, name: 'Mongo::Operation::GetMore'),
+        respond_to?: true
+      )
+      expect(span).to receive(:set_attribute).with('db.mongodb.cursor_id', 12_345)
+      operation_tracer.trace_operation(operation, operation_context) { result }
+    end
+
+    context 'with a non-recording span' do
+      before do
+        allow(span).to receive(:recording?).and_return(false)
+      end
+
+      it 'does not set attributes' do
+        expect(span).not_to receive(:set_attribute)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
+    end
+
+    context 'with an invalid span (no SDK installed)' do
+      let(:invalid_span) { OpenTelemetry::Trace::Span::INVALID }
+
+      before do
+        allow(otel_tracer).to receive(:start_span).and_return(invalid_span)
+      end
+
+      it 'does not attach the span to the context' do
+        expect(OpenTelemetry::Trace).not_to receive(:with_span)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
+
+      it 'returns the block result unchanged' do
+        return_value = operation_tracer.trace_operation(operation, operation_context) { :done }
+        expect(return_value).to eq(:done)
+      end
+
+      it 'leaves the cursor context map untouched' do
+        operation_tracer.trace_operation(operation, operation_context) { result }
+        expect(cursor_context_map).to be_empty
+      end
+
+      it 'finishes the span' do
+        expect(invalid_span).to receive(:finish)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
     end
 
     context 'with custom operation name' do
@@ -176,8 +240,11 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
         expect(cursor_context_map).not_to have_key(cursor_id)
       end
 
-      it 'does not set cursor_id attribute' do
-        expect(span).not_to receive(:set_attribute).with('db.mongodb.cursor_id', anything)
+      it 'does not set a new cursor_id attribute' do
+        # The span carries the operation's own cursor id (set after span
+        # creation, deferred behind recording?); the closed result must not
+        # add another.
+        expect(span).to receive(:set_attribute).with('db.mongodb.cursor_id', 999).once
         operation_tracer.trace_operation(operation, operation_context) { cursor }
       end
     end
@@ -218,18 +285,19 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
   end
 
   describe '#span_attributes' do
-    subject(:attributes) { operation_tracer.send(:span_attributes, operation, op_name) }
+    subject(:attributes) do
+      operation_tracer.send(:span_attributes, operation, name, span_name, coll_name)
+    end
 
-    let(:op_name) { nil }
+    let(:name) { 'find' }
+    let(:span_name) { 'find test_db.users' }
+    let(:coll_name) { 'users' }
     let(:operation_class) { class_double(Mongo::Operation::Find, name: 'Mongo::Operation::Find') }
     let(:operation) do
       instance_double(
         Mongo::Operation::Find,
         db_name: 'test_db',
-        coll_name: 'users',
-        cursor_id: nil,
-        class: operation_class,
-        respond_to?: true
+        class: operation_class
       )
     end
 
@@ -253,32 +321,22 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
       expect(attributes['db.operation.summary']).to eq('find test_db.users')
     end
 
-    it 'does not include nil values' do
+    it 'never includes the cursor id' do
       expect(attributes).not_to have_key('db.mongodb.cursor_id')
     end
 
-    context 'with cursor_id' do
-      let(:operation_class) { class_double(Mongo::Operation::GetMore, name: 'Mongo::Operation::GetMore') }
-      let(:operation) do
-        instance_double(
-          Mongo::Operation::GetMore,
-          db_name: 'test_db',
-          coll_name: 'users',
-          cursor_id: 12_345,
-          class: operation_class,
-          respond_to?: true
-        )
-      end
+    context 'without a collection name' do
+      let(:coll_name) { nil }
 
-      it 'includes db.mongodb.cursor_id' do
-        expect(attributes['db.mongodb.cursor_id']).to eq(12_345)
+      it 'omits db.collection.name instead of setting nil' do
+        expect(attributes).not_to have_key('db.collection.name')
       end
     end
 
-    context 'with custom op_name' do
-      let(:op_name) { 'custom_operation' }
+    context 'with custom operation name' do
+      let(:name) { 'custom_operation' }
 
-      it 'uses the custom op_name' do
+      it 'uses the custom operation name' do
         expect(attributes['db.operation.name']).to eq('custom_operation')
       end
     end
@@ -295,6 +353,15 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
 
     it 'returns the operation class name in lowercase' do
       expect(op_name_result).to eq('find')
+    end
+
+    it 'memoizes the operation name per operation class' do
+      operation_tracer.send(:operation_name, operation, nil)
+      operation_tracer.send(:operation_name, operation, nil)
+
+      cache = operation_tracer.instance_variable_get(:@operation_names)
+      expect(cache.size).to eq(1)
+      expect(cache.values.first).to eq('find')
     end
 
     context 'with custom op_name' do
@@ -496,21 +563,8 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
   end
 
   describe '#operation_span_name' do
-    subject(:span_name) { operation_tracer.send(:operation_span_name, operation, op_name) }
-
-    let(:op_name) { nil }
-
     context 'with collection name' do
-      let(:operation_class) { class_double(Mongo::Operation::Find, name: 'Mongo::Operation::Find') }
-      let(:operation) do
-        instance_double(
-          Mongo::Operation::Find,
-          db_name: 'test_db',
-          coll_name: 'users',
-          class: operation_class,
-          respond_to?: true
-        )
-      end
+      subject(:span_name) { operation_tracer.send(:operation_span_name, 'find', 'test_db', 'users') }
 
       it 'includes collection name in format' do
         expect(span_name).to eq('find test_db.users')
@@ -518,22 +572,7 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
     end
 
     context 'without collection name' do
-      let(:operation_class) do
-        class_double(Mongo::Operation::ListCollections, name: 'Mongo::Operation::ListCollections')
-      end
-      let(:operation) do
-        instance_double(
-          Mongo::Operation::ListCollections,
-          db_name: 'test_db',
-          coll_name: nil,
-          class: operation_class,
-          respond_to?: true
-        )
-      end
-
-      before do
-        allow(operation).to receive(:is_a?).and_return(false)
-      end
+      subject(:span_name) { operation_tracer.send(:operation_span_name, 'listcollections', 'test_db', nil) }
 
       it 'excludes collection name from format' do
         expect(span_name).to eq('listcollections test_db')
@@ -541,16 +580,7 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
     end
 
     context 'with empty collection name' do
-      let(:operation_class) { class_double(Mongo::Operation::Command, name: 'Mongo::Operation::Command') }
-      let(:operation) do
-        instance_double(
-          Mongo::Operation::Command,
-          db_name: 'test_db',
-          coll_name: '',
-          class: operation_class,
-          respond_to?: true
-        )
-      end
+      subject(:span_name) { operation_tracer.send(:operation_span_name, 'command', 'test_db', '') }
 
       it 'excludes collection name from format' do
         expect(span_name).to eq('command test_db')
