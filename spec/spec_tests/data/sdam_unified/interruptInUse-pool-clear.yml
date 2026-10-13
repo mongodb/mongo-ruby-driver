@@ -21,7 +21,12 @@ initialData: &initialData
 
 tests:
   - description: Connection pool clear uses interruptInUseConnections=true after monitor timeout
-    skipReason: "RUBY-3922: fails on server 7.0.39+/8.0.28+ due to SERVER-128517 pre-auth streamable hello 10s floor"
+    runOnRequirements:
+      # SERVER-128517 floors pre-auth streamable hello at 10s, which breaks this
+      # test. SERVER-132246 lowered the default to 500ms, but the 7.0 backport is
+      # not released yet, so skip 7.x and run everywhere else. RUBY-3922.
+      - maxServerVersion: "6.99"
+      - minServerVersion: "8.0"
     operations:
       - name: createEntities
         object: testRunner
@@ -125,7 +130,12 @@ tests:
           - _id: 1
 
   - description: Error returned from connection pool clear with interruptInUseConnections=true is retryable
-    skipReason: "RUBY-3922: fails on server 7.0.39+/8.0.28+ due to SERVER-128517 pre-auth streamable hello 10s floor"
+    runOnRequirements:
+      # SERVER-128517 floors pre-auth streamable hello at 10s, which breaks this
+      # test. SERVER-132246 lowered the default to 500ms, but the 7.0 backport is
+      # not released yet, so skip 7.x and run everywhere else. RUBY-3922.
+      - maxServerVersion: "6.99"
+      - minServerVersion: "8.0"
     operations:
       - name: createEntities
         object: testRunner
@@ -232,7 +242,12 @@ tests:
         documents:
           - _id: 1
   - description: Error returned from connection pool clear with interruptInUseConnections=true is retryable for write
-    skipReason: "RUBY-3922: fails on server 7.0.39+/8.0.28+ due to SERVER-128517 pre-auth streamable hello 10s floor"
+    runOnRequirements:
+      # SERVER-128517 floors pre-auth streamable hello at 10s, which breaks this
+      # test. SERVER-132246 lowered the default to 500ms, but the 7.0 backport is
+      # not released yet, so skip 7.x and run everywhere else. RUBY-3922.
+      - maxServerVersion: "6.99"
+      - minServerVersion: "8.0"
     operations:
       - name: createEntities
         object: testRunner
