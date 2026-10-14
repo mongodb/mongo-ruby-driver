@@ -61,14 +61,6 @@ Lint/UnreachableCode:
     - 'lib/mongo/protocol/serializers.rb'
     - 'spec/runners/unified/test.rb'
 
-# Offense count: 2
-# Configuration parameters: AllowedPatterns.
-# AllowedPatterns: (?-mix:(exactly|at_least|at_most)\(\d+\)\.times)
-Lint/UnreachableLoop:
-  Exclude:
-    - 'spec/integration/query_cache_spec.rb'
-    - 'spec/mongo/cursor_spec.rb'
-
 # Offense count: 5
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods, NotImplementedExceptions.
