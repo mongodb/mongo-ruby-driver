@@ -319,16 +319,8 @@ module Mongo
           # @return [ Array<BSON::Document> ] Deserialized section.
           #
           # @since 2.5.0
-          def self.deserialize(buffer)
+          def self.deserialize(buffer, _options = {})
             raise NotImplementedError
-
-            start_size = buffer.length
-            section_size = buffer.get_int32 # get the size
-            end_size = start_size - section_size
-            buffer.get_cstring # get the identifier
-            documents = []
-            documents << BSON::Document.from_bson(buffer) until buffer.length == end_size
-            documents
           end
         end
       end
