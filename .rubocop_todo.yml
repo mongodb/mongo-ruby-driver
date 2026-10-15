@@ -51,12 +51,6 @@ Lint/UnderscorePrefixedVariableName:
     - 'spec/support/local_resource_registry.rb'
 
 # Offense count: 2
-Lint/UnreachableCode:
-  Exclude:
-    - 'lib/mongo/protocol/serializers.rb'
-    - 'spec/runners/unified/test.rb'
-
-# Offense count: 2
 # Configuration parameters: AllowedPatterns.
 # AllowedPatterns: (?-mix:(exactly|at_least|at_most)\(\d+\)\.times)
 Lint/UnreachableLoop:
