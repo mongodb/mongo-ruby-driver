@@ -24,6 +24,16 @@ axes:
         display_name: "8.0"
         variables:
           MONGODB_VERSION: "8.0"
+      # RUBY-3290 / DRIVERS-2666: performance benchmarks must run against a
+      # patch-pinned server so that score changes reflect driver changes and not
+      # server changes. "v8.0-perf" is an alias defined by drivers-evergreen-tools
+      # (.evergreen/mongodl.py, PERF_VERSIONS) that resolves to exactly 8.0.1.
+      # DO NOT bump this casually: a server bump invalidates the benchmark
+      # baseline and shows up as a change point.
+      - id: "8.0-perf"
+        display_name: "8.0 (perf-pinned)"
+        variables:
+          MONGODB_VERSION: "v8.0-perf"
       - id: "7.0"
         display_name: "7.0"
         variables:
