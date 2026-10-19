@@ -41,6 +41,7 @@ export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init - bash)"
 export FULL_RUBY_VERSION=$(ls ~/.rbenv/versions | head -n1)
 rbenv global $FULL_RUBY_VERSION
+enable_yjit
 
 export JAVA_HOME=/opt/java/jdk21
 export JAVACMD=$JAVA_HOME/bin/java

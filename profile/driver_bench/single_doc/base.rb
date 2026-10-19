@@ -43,6 +43,12 @@ module Mongo
           @client.database.drop
         end
 
+        # Every single-doc task performs one driver operation per unit of
+        # scale.
+        def ops_per_iteration
+          scale
+        end
+
         # Returns the name of the file that contains
         # the dataset to use.
         def file_name

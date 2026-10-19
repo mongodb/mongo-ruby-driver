@@ -22,6 +22,17 @@ module Tracing
       @attributes[key] = value
     end
 
+    # Mirrors the OpenTelemetry Span API: these spans always record, so the
+    # driver's deferred-attribute path runs and the assertions see the
+    # attributes.
+    def recording?
+      true
+    end
+
+    def context
+      @context ||= Context.new(self)
+    end
+
     # rubocop:disable Lint/UnusedMethodArgument
     def record_exception(exception, attributes: nil)
       set_attribute('exception.type', exception.class.to_s)
@@ -52,6 +63,10 @@ module Tracing
 
     def initialize(span)
       @span = span
+    end
+
+    def valid?
+      true
     end
   end
 

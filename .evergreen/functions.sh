@@ -59,6 +59,22 @@ set_env_vars() {
   fi
 }
 
+# Runs every Ruby process with YJIT when the installed ruby has it, as
+# production deployments do. A ruby built without YJIT (JRuby, MRI older
+# than 3.2) would only print a warning for RUBY_YJIT_ENABLE, so it is set
+# only when YJIT is actually available. A value set by the caller (e.g.
+# RUBY_YJIT_ENABLE=0 to run under the interpreter) is left alone.
+enable_yjit() {
+  if test -n "$RUBY_YJIT_ENABLE"; then
+    echo "RUBY_YJIT_ENABLE=$RUBY_YJIT_ENABLE set by the caller"
+  elif ruby --yjit -e 'exit(RubyVM::YJIT.enabled? ? 0 : 1)' >/dev/null 2>&1; then
+    export RUBY_YJIT_ENABLE=1
+    echo "YJIT enabled"
+  else
+    echo "YJIT not available in `ruby -v`"
+  fi
+}
+
 bundle_install() {
   args=--quiet
   
