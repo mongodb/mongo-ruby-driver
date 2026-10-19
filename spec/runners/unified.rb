@@ -7,7 +7,10 @@ require 'runners/unified/event_subscriber'
 require 'runners/unified/test'
 require 'runners/unified/test_group'
 
-def define_unified_spec_tests(base_path, paths, expect_failure: false)
+# @param [ Hash<String, String> ] skip_descriptions Map of test description
+#   to skip reason, for tests that must be skipped without editing the synced
+#   YAML fixtures (e.g. known failures tracked in a JIRA ticket).
+def define_unified_spec_tests(base_path, paths, expect_failure: false, skip_descriptions: {})
   config_override :validate_update_replace, true
 
   paths.each do |path|
@@ -17,9 +20,10 @@ def define_unified_spec_tests(base_path, paths, expect_failure: false)
 
       group.tests.each do |test|
         context test.description do
-          if test.skip?
+          skip_reason = test.skip_reason || skip_descriptions[test.description]
+          if skip_reason
             before do
-              skip test.skip_reason
+              skip skip_reason
             end
           end
 

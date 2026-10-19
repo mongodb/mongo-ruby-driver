@@ -32,6 +32,11 @@ describe Mongo::Server::ConnectionCommon do
       end
     end
 
+    it 'includes backpressure: "2" at the top level, not in the client document' do
+      expect(document['backpressure']).to eq('2')
+      expect(document['client']).not_to have_key('backpressure')
+    end
+
     context 'when connecting to load balancer' do
       let(:document) do
         subject.handshake_document(metadata, load_balancer: true)

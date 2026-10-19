@@ -12,6 +12,7 @@ require 'support/authorization'
 require 'support/primary_socket'
 require 'support/cluster_tools'
 require 'support/monitoring_ext'
+require 'support/handshake_documents'
 
 RSpec.configure do |config|
   config.include(Authorization)

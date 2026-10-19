@@ -130,7 +130,6 @@ module Mongo
             doc[:driver] = driver_doc
             doc[:os] = os_doc
             doc[:platform] = platform_string
-            doc[:backpressure] = '2'
             env_doc.tap { |env| doc[:env] = env if env }
           end
       end
@@ -157,7 +156,7 @@ module Mongo
       def document
         @document ||= begin
           client = Truncator.new(client_document).document
-          BSON::Document.new(compression: @compressors, client: client).tap do |doc|
+          BSON::Document.new(compression: @compressors, client: client, backpressure: '2').tap do |doc|
             doc[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
             doc.update(Utils.transform_server_api(@server_api)) if @server_api
           end

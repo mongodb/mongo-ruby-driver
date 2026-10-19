@@ -1297,6 +1297,134 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
+  describe '#check_in_if_checked_out' do
+    let!(:pool) do
+      server.pool
+    end
+
+    context 'when the connection is checked out' do
+      it 'checks the connection in' do
+        connection = pool.check_out
+        pool.check_in_if_checked_out(connection)
+        expect(pool.available_count).to eq(1)
+      end
+    end
+
+    context 'when the connection was already checked in' do
+      it 'does not raise' do
+        connection = pool.check_out
+        pool.check_in(connection)
+        expect do
+          pool.check_in_if_checked_out(connection)
+        end.not_to raise_error
+        expect(pool.available_count).to eq(1)
+      end
+    end
+
+    context 'when the connection is pinned' do
+      it 'does not check the connection in' do
+        connection = pool.check_out
+        connection.pin(:transaction)
+        pool.check_in_if_checked_out(connection)
+        expect(pool.available_count).to eq(0)
+        connection.unpin(:transaction)
+        pool.check_in(connection)
+      end
+    end
+  end
+
+  describe '#with_cursor_connection' do
+    let!(:pool) do
+      server.pool
+    end
+
+    context 'when the block succeeds' do
+      it 'returns the block result and leaves the connection checked out' do
+        connection = nil
+        result = pool.with_cursor_connection(context: nil) do |conn|
+          connection = conn
+          :result
+        end
+        expect(result).to be(:result)
+        expect(pool.available_count).to eq(0)
+        pool.check_in(connection)
+      end
+    end
+
+    context 'when the block raises a StandardError' do
+      it 'checks the connection back in' do
+        expect do
+          pool.with_cursor_connection(context: nil) do |_conn|
+            raise Mongo::Error::OperationFailure, 'simulated failure'
+          end
+        end.to raise_error(Mongo::Error::OperationFailure, /simulated failure/)
+        expect(pool.available_count).to eq(1)
+      end
+    end
+
+    context 'when the block raises an exception that is not a StandardError' do
+      it 'checks the connection back in' do
+        expect do
+          pool.with_cursor_connection(context: nil) do |_conn|
+            raise Interrupt
+          end
+        end.to raise_error(Interrupt)
+        expect(pool.available_count).to eq(1)
+      end
+    end
+
+    context 'when the connection is checked in during the block' do
+      # Session#unpin checks the connection in while handling a transient
+      # transaction error; the cleanup must not check it in a second time.
+      it 'does not check the connection in again' do
+        expect do
+          pool.with_cursor_connection(context: nil) do |conn|
+            pool.check_in(conn)
+            raise Mongo::Error::OperationFailure, 'simulated failure'
+          end
+        end.to raise_error(Mongo::Error::OperationFailure, /simulated failure/)
+        expect(pool.available_count).to eq(1)
+      end
+    end
+
+    context 'when the connection is pinned during the block' do
+      it 'leaves the connection checked out' do
+        connection = nil
+        expect do
+          pool.with_cursor_connection(context: nil) do |conn|
+            connection = conn
+            conn.pin(:transaction)
+            raise Mongo::Error::OperationFailure, 'simulated failure'
+          end
+        end.to raise_error(Mongo::Error::OperationFailure, /simulated failure/)
+        expect(pool.available_count).to eq(0)
+        connection.unpin(:transaction)
+        pool.check_in(connection)
+      end
+    end
+
+    context 'when the context is pinned to a checked out connection' do
+      it 'reuses the pinned connection' do
+        connection = pool.check_out
+        connection.pin(:transaction)
+        context = Mongo::Operation::Context.new(
+          connection_global_id: connection.global_id
+        )
+        reused = nil
+        expect do
+          pool.with_cursor_connection(context: context) do |conn|
+            reused = conn
+            raise Mongo::Error::OperationFailure, 'simulated failure'
+          end
+        end.to raise_error(Mongo::Error::OperationFailure, /simulated failure/)
+        expect(reused).to be(connection)
+        expect(pool.available_count).to eq(0)
+        connection.unpin(:transaction)
+        pool.check_in(connection)
+      end
+    end
+  end
+
   describe '#close_idle_sockets' do
     let!(:pool) do
       server.pool

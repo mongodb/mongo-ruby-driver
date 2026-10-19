@@ -4,6 +4,22 @@ This directory contains configuration and scripts used to run the driver's
 test suite in Evergreen, MongoDB's continuous integration system.
 
 
+## Downloading "latest" server binaries
+
+`MONGODB_VERSION=latest` (and `latest-build`) downloads an unpublished nightly
+build from MongoDB's private `origin-mongodb-server-latest` S3 bucket, so it
+requires an AWS identity. In Evergreen the global `pre` block assumes
+`aws_test_secrets_role` and `bootstrap-mongo-orchestration` forwards the
+resulting credentials into the download subprocess. Locally, including the
+Docker test runner, set `AWS_PROFILE` to a profile that has the Drivers test
+secrets credentials and refresh it with `aws sso login --profile "$AWS_PROFILE"`:
+see the drivers-evergreen-tools
+[Secrets Handling](https://github.com/mongodb-labs/drivers-evergreen-tools/blob/master/.evergreen/secrets_handling/README.md)
+docs. Any other version, such as `latest-stable` or a pinned release like
+`8.0`, is downloaded from the public hosts and needs no AWS access; that is
+also the default used by `run-mongodb.sh`.
+
+
 ## Scheduled ruby-dev build (RUBY-3731)
 
 The `ruby-dev` build variant runs the main test suite against the upcoming,
