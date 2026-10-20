@@ -656,7 +656,7 @@ describe Mongo::Cursor do
 
       context 'after #each was called once' do
         before do
-          cursor.each do |_doc|
+          cursor.each do |_doc| # rubocop:disable Lint/UnreachableLoop -- partially iterate on purpose
             break
           end
         end

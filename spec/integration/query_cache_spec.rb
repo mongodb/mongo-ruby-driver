@@ -1190,7 +1190,7 @@ describe 'QueryCache' do
     context 'using each & break' do
       let(:partial_first_iteration) do
         called = false
-        authorized_collection.find.each do
+        authorized_collection.find.each do # rubocop:disable Lint/UnreachableLoop -- iterate a single document
           called = true
           break
         end
