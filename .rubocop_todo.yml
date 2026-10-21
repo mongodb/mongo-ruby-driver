@@ -50,12 +50,6 @@ Lint/UnderscorePrefixedVariableName:
     - 'spec/mongo/server/monitor_spec.rb'
     - 'spec/support/local_resource_registry.rb'
 
-# Offense count: 2
-Lint/UnreachableCode:
-  Exclude:
-    - 'lib/mongo/protocol/serializers.rb'
-    - 'spec/runners/unified/test.rb'
-
 # Offense count: 5
 # This cop supports safe autocorrection (--autocorrect).
 # Configuration parameters: AllowUnusedKeywordArguments, IgnoreEmptyMethods, IgnoreNotImplementedMethods, NotImplementedExceptions.

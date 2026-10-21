@@ -527,7 +527,6 @@ module Unified
             public_send(method_name, op)
           rescue Mongo::Error, bson_error, Mongo::Auth::Unauthorized, ArgumentError => e
             if expected_error.use('isTimeoutError') && !e.is_a?(Mongo::Error::TimeoutError)
-              raise e
               raise Error::ErrorMismatch, %,Expected TimeoutError ("isTimeoutError") but got #{e},
             end
             # isClientError doesn't actually mean a client error.
