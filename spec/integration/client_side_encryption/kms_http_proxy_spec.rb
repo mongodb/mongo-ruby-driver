@@ -27,6 +27,12 @@ describe 'KMS HTTP proxy' do
 
     skip 'kms_http_proxy.py is not available' unless KmsHttpProxy.available?
 
+    # The proxy ports are fixed, so a proxy leaked by a crashed run would
+    # otherwise make this group fail with a confusing "did not become ready"
+    # error, or silently drive the stale listener. Fail early instead.
+    assert_port_free(9004)
+    assert_port_free(9005)
+
     @http_pid = KmsHttpProxy.start(port: 9004)
     @https_pid = KmsHttpProxy.start(
       port: 9005,
@@ -69,6 +75,16 @@ describe 'KMS HTTP proxy' do
         proxy_host: '127.0.0.1', proxy_port: proxy_port
       )
     )
+  end
+
+  # Any failure to connect means nothing is listening yet, which is what we
+  # want; only a successful connection means the port is taken.
+  def assert_port_free(port)
+    TCPSocket.new('127.0.0.1', port).close
+    raise "port #{port} is already in use; a leaked kms_http_proxy from an " \
+          'earlier run may still be listening. Kill it and re-run.'
+  rescue SystemCallError
+    nil
   end
 
   it 'creates a data key through a plain HTTP proxy' do
@@ -135,5 +151,49 @@ describe 'KMS HTTP proxy' do
     expect do
       ce.create_data_key('aws', master_key: master_key)
     end.to raise_error(Mongo::Error::KmsError)
+  end
+
+  it 'passes a non-zero timeout to the callback when timeoutMS is set' do
+    received = nil
+    callback = lambda do |host, port, timeout_ms|
+      received = timeout_ms
+      KmsHttpProxy.connect_callback(proxy_host: '127.0.0.1', proxy_port: 9004)
+                  .call(host, port, timeout_ms)
+    end
+
+    ce = Mongo::ClientEncryption.new(
+      key_vault_client,
+      timeout_ms: 30_000,
+      kms_tls_options: { aws: default_kms_tls_options_for_provider },
+      key_vault_namespace: key_vault_namespace,
+      kms_providers: aws_kms_providers,
+      kms_connect_callback: callback
+    )
+
+    ce.create_data_key('aws', master_key: master_key)
+    expect(received).to be_a(Integer)
+    expect(received).to be > 0
+  end
+
+  it 'retries the callback after a transient failure' do
+    attempts = 0
+    proxy = KmsHttpProxy.connect_callback(proxy_host: '127.0.0.1', proxy_port: 9004)
+    callback = lambda do |host, port, timeout_ms|
+      attempts += 1
+      raise IOError, 'simulated transient failure' if attempts == 1
+
+      proxy.call(host, port, timeout_ms)
+    end
+
+    ce = Mongo::ClientEncryption.new(
+      key_vault_client,
+      kms_tls_options: { aws: default_kms_tls_options_for_provider },
+      key_vault_namespace: key_vault_namespace,
+      kms_providers: aws_kms_providers,
+      kms_connect_callback: callback
+    )
+
+    expect { ce.create_data_key('aws', master_key: master_key) }.not_to raise_error
+    expect(attempts).to be >= 2
   end
 end
