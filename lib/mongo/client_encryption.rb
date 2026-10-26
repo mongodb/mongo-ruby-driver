@@ -48,9 +48,29 @@ module Mongo
     #    60000.
     # @option options [ Proc | Method | #call ] :kms_connect_callback A callable
     #   invoked as +call(host, port, timeout_ms)+ when the driver needs to reach
-    #   a KMS host. It must return a socket-like object already connected to
-    #   +host:port+ (for example, after performing an HTTP CONNECT handshake with
-    #   a proxy). The driver wraps the returned socket in TLS to the KMS host.
+    #   a KMS host. It must return an fd-backed IO (a real +IO+ or +Socket+)
+    #   already connected to +host:port+ (for example, after performing an HTTP
+    #   CONNECT handshake with a proxy). The driver wraps the returned object in
+    #   TLS to the KMS host, and Ruby's OpenSSL requires an fd-backed object, so
+    #   the callback cannot return another +OpenSSL::SSL::SSLSocket+; a
+    #   TLS-to-proxy connection needs a socketpair bridge (see the example
+    #   below).
+    #
+    # @example Tunnel KMS traffic through an HTTP CONNECT proxy.
+    #   connect_via_proxy = lambda do |host, port, _timeout_ms|
+    #     socket = TCPSocket.new('proxy.example.com', 9004)
+    #     socket.write("CONNECT #{host}:#{port} HTTP/1.1\r\n" \
+    #                  "Host: #{host}:#{port}\r\n\r\n")
+    #     socket.gets # => "HTTP/1.1 200 Connection Established\r\n"
+    #     socket
+    #   end
+    #
+    #   client_encryption = Mongo::ClientEncryption.new(
+    #     key_vault_client,
+    #     key_vault_namespace: 'keyvault.datakeys',
+    #     kms_providers: { aws: { access_key_id: '...', secret_access_key: '...' } },
+    #     kms_connect_callback: connect_via_proxy
+    #   )
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
     #   formatted.
