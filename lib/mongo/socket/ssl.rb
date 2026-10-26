@@ -102,7 +102,14 @@ module Mongo
       def initialize(host, port, host_name, timeout, family, options = {})
         super(timeout, options)
         @host, @port, @host_name = host, port, host_name
-        @context = create_context(options)
+        begin
+          @context = create_context(options)
+        rescue StandardError
+          # The caller-provided socket has not been assigned to @tcp_socket
+          # yet, so close it here to avoid leaking it.
+          options[:connected_socket]&.close
+          raise
+        end
         @family = family
         @tcp_socket = options[:connected_socket] || build_tcp_socket(family)
         begin
@@ -197,10 +204,17 @@ module Mongo
       #
       # @return [ ::Socket ] The configured, unconnected socket.
       def build_tcp_socket(family)
-        ::Socket.new(family, SOCK_STREAM, 0).tap do |socket|
+        socket = ::Socket.new(family, SOCK_STREAM, 0)
+        begin
           socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
           set_socket_options(socket)
+        rescue StandardError
+          # The socket has not been assigned to @tcp_socket yet, so close it
+          # here to avoid leaking the file descriptor.
+          socket.close
+          raise
         end
+        socket
       end
 
       # Connects the socket without a timeout provided.
