@@ -531,6 +531,12 @@ module Mongo
     #     encryption key cache, in milliseconds. Must be a non-negative
     #     integer. A value of 0 means the cache never expires. Defaults to
     #     60000.
+    #   - :kms_connect_callback => Proc | Method | #call | nil, a callable
+    #     invoked as call(host, port, timeout_ms) when the driver needs to
+    #     reach a KMS host. It must return a socket-like object already
+    #     connected to host:port (for example, after performing an HTTP CONNECT
+    #     handshake with a proxy). The driver wraps the returned socket in TLS
+    #     to the KMS host.
     #
     #   Notes on automatic encryption:
     #   - Automatic encryption is an enterprise only feature that only applies

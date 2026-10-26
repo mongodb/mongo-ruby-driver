@@ -46,6 +46,11 @@ module Mongo
     #    encryption key cache, in milliseconds. Must be a non-negative integer.
     #    An explicit value of 0 means the cache never expires. The default is
     #    60000.
+    # @option options [ Proc | Method | #call ] :kms_connect_callback A callable
+    #   invoked as +call(host, port, timeout_ms)+ when the driver needs to reach
+    #   a KMS host. It must return a socket-like object already connected to
+    #   +host:port+ (for example, after performing an HTTP CONNECT handshake with
+    #   a proxy). The driver wraps the returned socket in TLS to the KMS host.
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
     #   formatted.
@@ -56,7 +61,8 @@ module Mongo
         Crypt::KMS::Credentials.new(options[:kms_providers]),
         Crypt::KMS::Validations.validate_tls_options(options[:kms_tls_options]),
         options[:timeout_ms],
-        options[:key_expiration_ms]
+        options[:key_expiration_ms],
+        options[:kms_connect_callback]
       )
     end
 
