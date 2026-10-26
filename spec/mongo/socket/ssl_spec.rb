@@ -42,6 +42,26 @@ describe Mongo::Socket::SSL do
     OpenSSL::PKey.read(key_string)
   end
 
+  describe 'with a pre-connected socket' do
+    let(:connected_socket) do
+      TCPSocket.new('127.0.0.1', default_address.port)
+    end
+
+    let(:socket_over_connected) do
+      described_class.new('127.0.0.1', default_address.port, host_name, 1, :INET,
+                          ssl_options.merge(connected_socket: connected_socket))
+    end
+
+    it 'completes the TLS handshake over the provided socket' do
+      expect(socket_over_connected.socket).to be_a(OpenSSL::SSL::SSLSocket)
+    end
+
+    it 'closes the provided socket when the SSL socket is closed' do
+      socket_over_connected.close
+      expect(connected_socket).to be_closed
+    end
+  end
+
   describe '#human_address' do
     it 'returns the address and tls indicator' do
       addr = socket.instance_variable_get(:@tcp_socket).remote_address

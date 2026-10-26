@@ -104,10 +104,8 @@ module Mongo
         @host, @port, @host_name = host, port, host_name
         @context = create_context(options)
         @family = family
-        @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
+        @tcp_socket = options[:connected_socket] || build_tcp_socket(family)
         begin
-          @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-          set_socket_options(@tcp_socket)
           run_tls_context_hooks
 
           connect!
@@ -141,7 +139,7 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        sockaddr = ::Socket.pack_sockaddr_in(port, host)
+        sockaddr = options[:connected_socket] ? nil : ::Socket.pack_sockaddr_in(port, host)
         connect_timeout = options[:connect_timeout]
         map_exceptions do
           if connect_timeout && connect_timeout != 0
@@ -193,11 +191,23 @@ module Mongo
 
       private
 
+      # Creates and configures a TCP socket for a driver-initiated connection.
+      #
+      # @param [ Integer ] family The socket family.
+      #
+      # @return [ ::Socket ] The configured, unconnected socket.
+      def build_tcp_socket(family)
+        ::Socket.new(family, SOCK_STREAM, 0).tap do |socket|
+          socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+          set_socket_options(socket)
+        end
+      end
+
       # Connects the socket without a timeout provided.
       #
       # @param [ String ] sockaddr Address to connect to.
       def connect_without_timeout(sockaddr)
-        @tcp_socket.connect(sockaddr)
+        @tcp_socket.connect(sockaddr) unless options[:connected_socket]
         @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
         @socket.hostname = @host_name
         @socket.sync_close = true
@@ -219,6 +229,8 @@ module Mongo
       end
 
       def connect_tcp_socket_with_timeout(sockaddr, deadline, connect_timeout)
+        return if options[:connected_socket]
+
         if deadline <= Utils.monotonic_time
           raise Error::SocketTimeoutError, "The socket took over #{connect_timeout} seconds to connect"
         end
