@@ -40,6 +40,22 @@ namespace :driver_bench do
     Mongo::DriverBench::Suite.run!
   end
 
+  desc 'Compares the DriverBench suite across driver configurations'
+  task compare: :data do
+    require_relative '../comparison'
+
+    puts Mongo::DriverBench::Comparison.run!
+  end
+
+  desc 'Lists the driver configurations the suite can run under'
+  task :configurations do
+    require_relative '../configuration'
+
+    Mongo::DriverBench::Configuration::ALL.each do |configuration|
+      puts format('%-16s %s', configuration.name, configuration.description)
+    end
+  end
+
   desc 'Runs the crypto benchmark'
   task :crypto do
     require_relative '../crypto/decrypt'
