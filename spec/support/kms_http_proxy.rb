@@ -49,21 +49,94 @@ module KmsHttpProxy
 
   # Returns a callback suitable for :kms_connect_callback that tunnels through
   # the proxy using an HTTP CONNECT request.
-  def connect_callback(proxy_host:, proxy_port:)
+  #
+  # @param [ String ] proxy_host The host the proxy listens on.
+  # @param [ Integer ] proxy_port The port the proxy listens on.
+  # @param [ Boolean ] tls Whether the proxy speaks TLS on its inbound
+  #   connection (that is, it was started with --ca_file/--cert_file). When
+  #   true the CONNECT handshake runs over a TLS connection to the proxy, and
+  #   the returned socket is one end of a socketpair bridged to the proxy by a
+  #   background thread. The bridge is required because the driver wraps the
+  #   returned object in TLS to the KMS host, and Ruby's OpenSSL::SSL::SSLSocket
+  #   cannot wrap another SSLSocket; the returned object must be fd-backed.
+  #
+  # @return [ Proc ] a callback invoked as +call(host, port, timeout_ms)+.
+  def connect_callback(proxy_host:, proxy_port:, tls: false)
     lambda do |host, port, _timeout_ms|
-      socket = ::TCPSocket.new(proxy_host, proxy_port)
-      socket.write("CONNECT #{host}:#{port} HTTP/1.1\r\nHost: #{host}:#{port}\r\n\r\n")
-      status = socket.gets
-      unless status && status.start_with?('HTTP/1.1 200')
-        socket.close
-        raise "proxy CONNECT failed: #{status.inspect}"
+      proxy_socket = open_proxy_socket(proxy_host, proxy_port, tls: tls)
+      begin
+        perform_connect(proxy_socket, host, port)
+      rescue StandardError
+        proxy_socket.close
+        raise
       end
-      # Consume the remaining response headers up to the blank line.
-      loop do
-        line = socket.gets
-        break if line.nil? || line == "\r\n"
+      tls ? bridge_to_socket_pair(proxy_socket) : proxy_socket
+    end
+  end
+
+  # Opens a connection to the proxy, wrapping it in TLS when the proxy was
+  # started in TLS mode.
+  def open_proxy_socket(proxy_host, proxy_port, tls:)
+    tcp_socket = ::TCPSocket.new(proxy_host, proxy_port)
+    return tcp_socket unless tls
+
+    begin
+      context = OpenSSL::SSL::SSLContext.new
+      context.ca_file = File.expand_path('../../.evergreen/x509gen/ca.pem', __dir__)
+      # The local proxy presents a self-signed certificate, so chain
+      # verification cannot succeed; this harness only needs an encrypted
+      # channel to the proxy.
+      context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      ssl_socket = OpenSSL::SSL::SSLSocket.new(tcp_socket, context)
+      ssl_socket.sync_close = true
+      ssl_socket.connect
+      ssl_socket
+    rescue StandardError
+      tcp_socket.close
+      raise
+    end
+  end
+
+  # Performs the HTTP CONNECT handshake over +socket+ and leaves it positioned
+  # at the start of the tunneled byte stream.
+  def perform_connect(socket, host, port)
+    socket.write("CONNECT #{host}:#{port} HTTP/1.1\r\nHost: #{host}:#{port}\r\n\r\n")
+    status = socket.gets
+    unless status && status.start_with?('HTTP/1.1 200')
+      raise "proxy CONNECT failed: #{status.inspect}"
+    end
+
+    # Consume the remaining response headers up to the blank line.
+    loop do
+      line = socket.gets
+      break if line.nil? || line == "\r\n"
+    end
+  end
+
+  # Returns one end of a socketpair whose other end is bridged to
+  # +proxy_socket+ by a background thread. The driver wraps the returned socket
+  # in TLS to the KMS host; the bridge relays those bytes to the proxy.
+  def bridge_to_socket_pair(proxy_socket)
+    client_socket, bridge_socket = Socket.pair(:UNIX, :STREAM, 0)
+    pump_bytes(bridge_socket, proxy_socket)
+    client_socket
+  end
+
+  # Pumps bytes in both directions between two connected sockets until either
+  # side closes, then closes both.
+  def pump_bytes(socket_a, socket_b)
+    [ [ socket_a, socket_b ], [ socket_b, socket_a ] ].each do |source, destination|
+      Thread.new do
+        loop { destination.write(source.readpartial(16_384)) }
+      rescue StandardError
+        nil
+      ensure
+        [ socket_a, socket_b ].each do |socket|
+          socket.close
+        rescue StandardError
+          nil
+        end
       end
-      socket
     end
   end
 

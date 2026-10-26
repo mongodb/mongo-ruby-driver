@@ -65,14 +65,14 @@ describe 'KMS HTTP proxy' do
 
   let(:data_db) { 'ruby_3813_proxy' }
 
-  def client_encryption(proxy_port:)
+  def client_encryption(proxy_port:, tls: false)
     Mongo::ClientEncryption.new(
       key_vault_client,
       kms_tls_options: { aws: default_kms_tls_options_for_provider },
       key_vault_namespace: key_vault_namespace,
       kms_providers: aws_kms_providers,
       kms_connect_callback: KmsHttpProxy.connect_callback(
-        proxy_host: '127.0.0.1', proxy_port: proxy_port
+        proxy_host: '127.0.0.1', proxy_port: proxy_port, tls: tls
       )
     )
   end
@@ -94,7 +94,7 @@ describe 'KMS HTTP proxy' do
   end
 
   it 'creates a data key through an HTTPS proxy' do
-    ce = client_encryption(proxy_port: 9005)
+    ce = client_encryption(proxy_port: 9005, tls: true)
     expect { ce.create_data_key('aws', master_key: master_key) }.not_to raise_error
     expect(KmsHttpProxy.connect_count(port: 9005, tls: true)).to be >= 1
   end
@@ -126,6 +126,7 @@ describe 'KMS HTTP proxy' do
         kms_providers: aws_kms_providers,
         kms_tls_options: { aws: default_kms_tls_options_for_provider },
         schema_map: schema_map,
+        extra_options: extra_options,
         kms_connect_callback: KmsHttpProxy.connect_callback(proxy_host: '127.0.0.1', proxy_port: 9004)
       }
     )
@@ -163,6 +164,10 @@ describe 'KMS HTTP proxy' do
 
     ce = Mongo::ClientEncryption.new(
       key_vault_client,
+      # Deliberate deviation from the upstream spec (section 28 case 5 uses
+      # timeoutMS: 1000): a longer timeout avoids flakes against real AWS. The
+      # requirement exercised here is only that a non-zero Integer reaches the
+      # callback.
       timeout_ms: 30_000,
       kms_tls_options: { aws: default_kms_tls_options_for_provider },
       key_vault_namespace: key_vault_namespace,
