@@ -171,15 +171,23 @@ module Mongo
       #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       def feed_kms(kms_context, tls_options, timeout_ms: nil)
+        # Timeout.timeout takes seconds, but timeout_ms is in milliseconds.
+        # When CSOT is not in use (timeout_ms is nil) fall back to the
+        # fixed SOCKET_TIMEOUT, which is already expressed in seconds.
+        timeout = timeout_ms ? timeout_ms / 1_000.0 : SOCKET_TIMEOUT
+        # Use the CSOT-appropriate error class when a timeout budget is
+        # in effect, otherwise preserve the historical SocketTimeoutError.
+        timeout_error = timeout_ms ? Error::TimeoutError : Error::SocketTimeoutError
+
         with_ssl_socket(kms_context.endpoint, tls_options, timeout_ms: timeout_ms) do |ssl_socket|
-          Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
+          Timeout.timeout(timeout, timeout_error,
                           'Socket write operation timed out') do
             ssl_socket.syswrite(kms_context.message)
           end
 
           bytes_needed = kms_context.bytes_needed
           while bytes_needed > 0
-            bytes = Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
+            bytes = Timeout.timeout(timeout, timeout_error,
                                     'Socket read operation timed out') do
               ssl_socket.sysread(bytes_needed)
             end
@@ -359,6 +367,13 @@ module Mongo
         mongo_socket =
           if @kms_connect_callback
             connected_socket = @kms_connect_callback.call(host, port, timeout_ms)
+            unless connected_socket.is_a?(IO) || connected_socket.respond_to?(:to_io)
+              raise Error::KmsError.new(
+                'kms_connect_callback must return an IO connected to the KMS provider ' +
+                "at #{host}:#{port}, but it returned #{connected_socket.inspect}"
+              )
+            end
+
             socket_options = { ssl: true, csot: csot, connected_socket: connected_socket }
             socket_options[:connect_timeout] = (timeout_ms / 1_000.0) if csot
             Mongo::Socket::SSL.new(

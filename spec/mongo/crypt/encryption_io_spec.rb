@@ -113,6 +113,23 @@ describe Mongo::Crypt::EncryptionIO do
           subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
         end.to raise_error(Mongo::Error::KmsError) { |e| expect(e.network_error?).to be true }
       end
+
+      it 'raises KmsError when the callback returns nil' do
+        expect(kms_connect_callback).to receive(:call)
+          .with('kms.example.com', 443, nil).and_return(nil)
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError, /must return an IO/)
+      end
+
+      it 'raises KmsError when the callback returns a non-IO value' do
+        allow(kms_connect_callback).to receive(:call).and_return('not a socket')
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError, /must return an IO/)
+      end
     end
 
     context 'when a non-callable kms_connect_callback is provided' do
@@ -127,6 +144,79 @@ describe Mongo::Crypt::EncryptionIO do
           )
         end.to raise_error(ArgumentError, /must respond to :call/)
       end
+    end
+  end
+
+  describe '#feed_kms' do
+    let(:mongocryptd_options) { {} }
+
+    let(:kms_connect_callback) { double('callback') }
+    let(:connected_socket) { double('connected socket', to_io: nil) }
+    let(:mongo_socket) { double('mongo socket') }
+
+    let(:subject) do
+      described_class.new(
+        key_vault_namespace: 'foo.bar',
+        key_vault_client: authorized_client,
+        metadata_client: authorized_client.with(auto_encryption_options: nil),
+        mongocryptd_options: mongocryptd_options,
+        kms_connect_callback: kms_connect_callback
+      )
+    end
+
+    let(:kms_context) do
+      double('kms_context',
+             endpoint: 'kms.example.com:443',
+             message: 'hello',
+             bytes_needed: 0,
+             feed: nil)
+    end
+
+    # A socket whose write blocks for longer than the CSOT budget we pass in,
+    # so that the timeout is the only thing that can end the operation early.
+    let(:blocking_socket) do
+      double('socket').tap do |sock|
+        allow(sock).to receive(:syswrite) do
+          sleep 0.2
+          raise IOError, 'syswrite should have been interrupted by the timeout'
+        end
+      end
+    end
+
+    before do
+      # Exercise the real with_ssl_socket wrapper by stubbing only the socket
+      # it would construct, so the timeout is observed exactly as in production.
+      allow(kms_connect_callback).to receive(:call).and_return(connected_socket)
+      allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
+      allow(mongo_socket).to receive(:socket).and_return(blocking_socket)
+      allow(mongo_socket).to receive(:close)
+    end
+
+    it 'converts the millisecond budget to seconds and applies it' do
+      started = Mongo::Utils.monotonic_time
+
+      expect do
+        subject.feed_kms(kms_context, {}, timeout_ms: 50)
+      end.to raise_error(Mongo::Error::KmsError,
+                         /Mongo::Error::TimeoutError: Socket write operation timed out/)
+
+      # A 50 millisecond budget must fire well under a second. If the value
+      # were passed to Timeout.timeout as seconds, the 0.2 second write would
+      # complete first and raise IOError instead.
+      expect(Mongo::Utils.monotonic_time - started).to be < 1
+    end
+
+    it 'uses the fixed SOCKET_TIMEOUT seconds when no budget is given' do
+      allow(blocking_socket).to receive(:syswrite) do
+        sleep 0.2
+        nil
+      end
+
+      # A 0.2 second write must not time out when the fallback is 10 seconds,
+      # proving the non-CSOT bound was left in seconds and unchanged.
+      expect do
+        subject.feed_kms(kms_context, {})
+      end.not_to raise_error
     end
   end
 
