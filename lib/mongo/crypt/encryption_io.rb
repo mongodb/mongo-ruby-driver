@@ -40,6 +40,10 @@ module Mongo
       # @param [ String ] key_vault_namespace The key vault namespace in the format
       #   db_name.collection_name.
       # @param [ Hash ] mongocryptd_options Options related to mongocryptd.
+      # @param [ Proc | nil ] kms_connect_callback Optional callable that
+      #   establishes the TCP connection to a KMS provider. It is invoked with
+      #   the host, port, and operation timeout in milliseconds (or nil), and
+      #   must return an IO connected to the host.
       #
       # @option mongocryptd_options [ Boolean ] :mongocryptd_bypass_spawn
       # @option mongocryptd_options [ String ] :mongocryptd_spawn_path
@@ -52,10 +56,13 @@ module Mongo
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format.
       def initialize(
-        key_vault_namespace:, key_vault_client:, metadata_client:, client: nil, mongocryptd_client: nil, mongocryptd_options: {}
+        key_vault_namespace:, key_vault_client:, metadata_client:, client: nil, mongocryptd_client: nil, mongocryptd_options: {}, kms_connect_callback: nil
       )
         validate_key_vault_client!(key_vault_client)
         validate_key_vault_namespace!(key_vault_namespace)
+        if kms_connect_callback && !kms_connect_callback.respond_to?(:call)
+          raise ArgumentError, 'kms_connect_callback must respond to :call'
+        end
 
         @client = client
         @mongocryptd_client = mongocryptd_client
@@ -63,6 +70,7 @@ module Mongo
         @key_vault_client = key_vault_client
         @metadata_client = metadata_client
         @options = mongocryptd_options
+        @kms_connect_callback = kms_connect_callback
       end
 
       # Query for keys in the key vault collection using the provided
@@ -163,7 +171,7 @@ module Mongo
       #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       def feed_kms(kms_context, tls_options, timeout_ms: nil)
-        with_ssl_socket(kms_context.endpoint, tls_options) do |ssl_socket|
+        with_ssl_socket(kms_context.endpoint, tls_options, timeout_ms: timeout_ms) do |ssl_socket|
           Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
                           'Socket write operation timed out') do
             ssl_socket.syswrite(kms_context.message)
@@ -345,18 +353,26 @@ module Mongo
       #   executing
       def with_ssl_socket(endpoint, tls_options, timeout_ms: nil)
         csot = !timeout_ms.nil?
-        address = begin
-          host, port = endpoint.split(':')
-          port ||= 443 # All supported KMS APIs use this port by default.
-          Address.new([ host, port ].join(':'))
-        end
-        socket_options = { ssl: true, csot: csot }.tap do |opts|
-          opts[:connect_timeout] = (timeout_ms / 1_000.0) if csot
-        end
-        mongo_socket = address.socket(
-          SOCKET_TIMEOUT,
-          tls_options.merge(socket_options)
-        )
+        host, port = endpoint.split(':')
+        port = (port || 443).to_i
+
+        mongo_socket =
+          if @kms_connect_callback
+            connected_socket = @kms_connect_callback.call(host, port, timeout_ms)
+            socket_options = { ssl: true, csot: csot, connected_socket: connected_socket }
+            socket_options[:connect_timeout] = (timeout_ms / 1_000.0) if csot
+            Mongo::Socket::SSL.new(
+              host, port, host, SOCKET_TIMEOUT, ::Socket::AF_UNSPEC,
+              tls_options.merge(socket_options)
+            )
+          else
+            address = Address.new([ host, port ].join(':'))
+            socket_options = { ssl: true, csot: csot }.tap do |opts|
+              opts[:connect_timeout] = (timeout_ms / 1_000.0) if csot
+            end
+            address.socket(SOCKET_TIMEOUT, tls_options.merge(socket_options))
+          end
+
         yield(mongo_socket.socket)
       rescue Error::KmsError
         raise

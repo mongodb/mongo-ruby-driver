@@ -84,6 +84,52 @@ describe Mongo::Crypt::EncryptionIO do
     end
   end
 
+  describe '#with_ssl_socket' do
+    context 'when a kms_connect_callback is provided' do
+      let(:kms_connect_callback) { double('callback', call: nil) }
+
+      let(:subject) do
+        described_class.new(
+          key_vault_namespace: 'foo.bar',
+          key_vault_client: authorized_client,
+          metadata_client: authorized_client.with(auto_encryption_options: nil),
+          mongocryptd_options: {},
+          kms_connect_callback: kms_connect_callback
+        )
+      end
+
+      it 'invokes the callback with host, port, and timeout_ms' do
+        expect(kms_connect_callback).to receive(:call).with('kms.example.com', 443, 5000).and_raise(IOError, 'boom')
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError, /boom/)
+      end
+
+      it 'treats callback failures as transient' do
+        allow(kms_connect_callback).to receive(:call).and_raise(IOError, 'boom')
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError) { |e| expect(e.network_error?).to be true }
+      end
+    end
+
+    context 'when a non-callable kms_connect_callback is provided' do
+      it 'raises ArgumentError' do
+        expect do
+          described_class.new(
+            key_vault_namespace: 'foo.bar',
+            key_vault_client: authorized_client,
+            metadata_client: authorized_client.with(auto_encryption_options: nil),
+            mongocryptd_options: {},
+            kms_connect_callback: 'not callable'
+          )
+        end.to raise_error(ArgumentError, /must respond to :call/)
+      end
+    end
+  end
+
   describe '#collection_info' do
     let(:subject) do
       described_class.new(

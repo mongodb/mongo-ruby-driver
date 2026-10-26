@@ -95,7 +95,7 @@ module Mongo
           when :need_mongo_markings
             provide_markings(timeout_ms)
           when :need_kms
-            feed_kms
+            feed_kms(timeout_ms)
           when :need_kms_credentials
             Binding.ctx_provide_kms_providers(
               self,
@@ -158,14 +158,14 @@ module Mongo
         mongocrypt_done
       end
 
-      def feed_kms
+      def feed_kms(timeout_ms)
         while (kms_context = Binding.ctx_next_kms_ctx(self))
           begin
             delay = Binding.kms_ctx_usleep(kms_context)
             sleep(delay / 1_000_000.0) unless delay.nil?
             provider = Binding.kms_ctx_get_kms_provider(kms_context)
             tls_options = @mongocrypt_handle.kms_tls_options(provider)
-            @encryption_io.feed_kms(kms_context, tls_options)
+            @encryption_io.feed_kms(kms_context, tls_options, timeout_ms: timeout_ms)
           rescue Error::KmsError => e
             raise unless e.network_error?
             next if Binding.kms_ctx_fail(kms_context)
