@@ -462,7 +462,12 @@ describe Mongo::Crypt::AutoEncrypter do
         client: authorized_client,
         key_vault_namespace: 'foo.bar',
         kms_providers: { local: { key: 'a' * 96 } },
-        kms_connect_callback: callback
+        kms_connect_callback: callback,
+        # Match the load mechanism every other Handle in the process uses so
+        # libmongocrypt does not raise "An existing crypt_shared library is
+        # loaded" when this Handle would otherwise fall back to the $SYSTEM
+        # search.
+        extra_options: auto_encrypter_extra_options
       )
     end
 
