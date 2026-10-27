@@ -727,14 +727,15 @@ module Mongo
         end
       end
 
-      # Stringifies server monitoring mode.
+      # Reverts server monitoring mode.
       #
       # @param [ Symbol ] value The server monitoring mode.
       #
       # @return [ String ] The server monitoring mode as a string.
-      def stringify_server_monitoring_mode(value)
+      def revert_server_monitoring_mode(value)
         value.to_s
       end
+      alias stringify_server_monitoring_mode revert_server_monitoring_mode
 
       # Read preference tags transformation.
       #
