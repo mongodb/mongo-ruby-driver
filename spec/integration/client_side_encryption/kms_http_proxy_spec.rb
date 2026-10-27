@@ -68,7 +68,6 @@ describe 'KMS HTTP proxy' do
   def client_encryption(proxy_port:, tls: false)
     Mongo::ClientEncryption.new(
       key_vault_client,
-      kms_tls_options: { aws: default_kms_tls_options_for_provider },
       key_vault_namespace: key_vault_namespace,
       kms_providers: aws_kms_providers,
       kms_connect_callback: KmsHttpProxy.connect_callback(
@@ -124,7 +123,6 @@ describe 'KMS HTTP proxy' do
       auto_encryption_options: {
         key_vault_namespace: key_vault_namespace,
         kms_providers: aws_kms_providers,
-        kms_tls_options: { aws: default_kms_tls_options_for_provider },
         schema_map: schema_map,
         extra_options: extra_options,
         kms_connect_callback: KmsHttpProxy.connect_callback(proxy_host: '127.0.0.1', proxy_port: 9004)
@@ -143,7 +141,6 @@ describe 'KMS HTTP proxy' do
   it 'fails when the callback raises' do
     ce = Mongo::ClientEncryption.new(
       key_vault_client,
-      kms_tls_options: { aws: default_kms_tls_options_for_provider },
       key_vault_namespace: key_vault_namespace,
       kms_providers: aws_kms_providers,
       kms_connect_callback: proc { |_h, _p, _t| raise IOError, 'no proxy for you' }
@@ -169,7 +166,6 @@ describe 'KMS HTTP proxy' do
       # requirement exercised here is only that a non-zero Integer reaches the
       # callback.
       timeout_ms: 30_000,
-      kms_tls_options: { aws: default_kms_tls_options_for_provider },
       key_vault_namespace: key_vault_namespace,
       kms_providers: aws_kms_providers,
       kms_connect_callback: callback
@@ -192,7 +188,6 @@ describe 'KMS HTTP proxy' do
 
     ce = Mongo::ClientEncryption.new(
       key_vault_client,
-      kms_tls_options: { aws: default_kms_tls_options_for_provider },
       key_vault_namespace: key_vault_namespace,
       kms_providers: aws_kms_providers,
       kms_connect_callback: callback
