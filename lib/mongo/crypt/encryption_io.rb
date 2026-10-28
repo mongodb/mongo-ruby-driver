@@ -171,23 +171,25 @@ module Mongo
       #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       def feed_kms(kms_context, tls_options, timeout_ms: nil)
-        # Timeout.timeout takes seconds, but timeout_ms is in milliseconds.
-        # When CSOT is not in use (timeout_ms is nil) fall back to the
-        # fixed SOCKET_TIMEOUT, which is already expressed in seconds.
-        timeout = timeout_ms ? timeout_ms / 1_000.0 : SOCKET_TIMEOUT
+        # When a budget is in effect the TLS handshake, the request write, and
+        # every read chunk share a single deadline, so a slow, chunked response
+        # cannot run for a multiple of the budget. Without a budget each phase
+        # keeps the fixed SOCKET_TIMEOUT fallback. Timeout.timeout takes
+        # seconds, but timeout_ms is in milliseconds.
+        deadline = Utils.monotonic_time + (timeout_ms / 1_000.0) if timeout_ms
         # Use the CSOT-appropriate error class when a timeout budget is
         # in effect, otherwise preserve the historical SocketTimeoutError.
         timeout_error = timeout_ms ? Error::TimeoutError : Error::SocketTimeoutError
 
         with_ssl_socket(kms_context.endpoint, tls_options, timeout_ms: timeout_ms) do |ssl_socket|
-          Timeout.timeout(timeout, timeout_error,
+          Timeout.timeout(remaining_timeout(deadline), timeout_error,
                           'Socket write operation timed out') do
             ssl_socket.syswrite(kms_context.message)
           end
 
           bytes_needed = kms_context.bytes_needed
           while bytes_needed > 0
-            bytes = Timeout.timeout(timeout, timeout_error,
+            bytes = Timeout.timeout(remaining_timeout(deadline), timeout_error,
                                     'Socket read operation timed out') do
               ssl_socket.sysread(bytes_needed)
             end
@@ -267,6 +269,25 @@ module Mongo
       end
 
       private
+
+      # The time left, in seconds, before the shared KMS exchange deadline.
+      # When no operation budget is in effect there is no deadline, so each
+      # phase falls back to the fixed SOCKET_TIMEOUT.
+      #
+      # @param [ Float, nil ] deadline The monotonic time the exchange must
+      #   finish by, or nil when no budget is set.
+      #
+      # @return [ Float ] The number of seconds left before the deadline.
+      #
+      # @raise [ Error::TimeoutError ] If the deadline has already passed.
+      def remaining_timeout(deadline)
+        return SOCKET_TIMEOUT if deadline.nil?
+
+        remaining = deadline - Utils.monotonic_time
+        raise Error::TimeoutError, 'KMS request timed out' if remaining <= 0
+
+        remaining
+      end
 
       def validate_key_vault_client!(key_vault_client)
         raise ArgumentError.new('The :key_vault_client option cannot be nil') unless key_vault_client

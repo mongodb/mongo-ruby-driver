@@ -246,6 +246,56 @@ describe Mongo::Crypt::EncryptionIO do
         subject.feed_kms(kms_context, {})
       end.not_to raise_error
     end
+
+    it 'bounds a chunked response by a single shared budget' do
+      # Three chunks, each stalling for 120ms, under a 200ms budget.
+      needed = [ 1, 1, 1, 0 ]
+      allow(kms_context).to receive(:bytes_needed) { needed.shift }
+      allow(blocking_socket).to receive(:syswrite).and_return(nil)
+      allow(blocking_socket).to receive(:sysread) do
+        sleep 0.12
+        'x'
+      end
+
+      started = Mongo::Utils.monotonic_time
+
+      # If each phase restarted the full budget the exchange would complete
+      # after ~360ms; sharing one deadline must time it out at ~200ms.
+      expect do
+        subject.feed_kms(kms_context, {}, timeout_ms: 200)
+      end.to raise_error(Mongo::Error::KmsError, /TimeoutError/)
+
+      expect(Mongo::Utils.monotonic_time - started).to be < 1
+    end
+  end
+
+  describe '#remaining_timeout' do
+    let(:subject) do
+      described_class.new(
+        key_vault_namespace: 'foo.bar',
+        key_vault_client: authorized_client,
+        metadata_client: authorized_client.with(auto_encryption_options: nil),
+        mongocryptd_options: {}
+      )
+    end
+
+    it 'falls back to SOCKET_TIMEOUT when there is no deadline' do
+      expect(subject.send(:remaining_timeout, nil)).to eq(described_class::SOCKET_TIMEOUT)
+    end
+
+    it 'returns the seconds left before the deadline' do
+      deadline = Mongo::Utils.monotonic_time + 5
+
+      expect(subject.send(:remaining_timeout, deadline)).to be_within(0.5).of(5)
+    end
+
+    it 'raises TimeoutError once the deadline has passed' do
+      deadline = Mongo::Utils.monotonic_time - 1
+
+      expect do
+        subject.send(:remaining_timeout, deadline)
+      end.to raise_error(Mongo::Error::TimeoutError)
+    end
   end
 
   describe '#collection_info' do
