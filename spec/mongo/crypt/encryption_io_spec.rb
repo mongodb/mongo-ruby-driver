@@ -217,6 +217,17 @@ describe Mongo::Crypt::EncryptionIO do
 
         expect(Mongo::Utils.monotonic_time - started).to be < 1
       end
+
+      it 'does not treat a callback timeout as a retryable network error' do
+        allow(kms_connect_callback).to receive(:call) do
+          sleep 0.5
+          double('connected socket', to_io: nil)
+        end
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 50) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError) { |e| expect(e.network_error?).to be false }
+      end
     end
 
     context 'when a non-callable kms_connect_callback is provided' do
@@ -291,6 +302,12 @@ describe Mongo::Crypt::EncryptionIO do
       # were passed to Timeout.timeout as seconds, the 0.2 second write would
       # complete first and raise IOError instead.
       expect(Mongo::Utils.monotonic_time - started).to be < 1
+    end
+
+    it 'does not mark a timeout as a retryable network error' do
+      expect do
+        subject.feed_kms(kms_context, {}, timeout_ms: 50)
+      end.to raise_error(Mongo::Error::KmsError) { |e| expect(e.network_error?).to be false }
     end
 
     it 'uses the fixed SOCKET_TIMEOUT seconds when no budget is given' do

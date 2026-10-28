@@ -444,8 +444,11 @@ module Mongo
       rescue Error::KmsError
         raise
       rescue StandardError => e
+        # A timeout is not a transient network failure: retrying it only spends
+        # more of the operation budget, and under CSOT the deadline has already
+        # passed, so let it surface instead of letting feed_kms retry.
         raise Error::KmsError.new("Error when connecting to KMS provider: #{e.class}: #{e.message}",
-                                  network_error: true)
+                                  network_error: !e.is_a?(Error::TimeoutError))
       ensure
         mongo_socket&.close
       end
