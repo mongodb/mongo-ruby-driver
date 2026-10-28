@@ -93,8 +93,10 @@ module Mongo
       #   requires an fd-backed object, so the callback cannot return another
       #   +OpenSSL::SSL::SSLSocket+; a TLS-to-proxy connection needs a socketpair
       #   bridge. +timeout_ms+ is the remaining operation timeout in
-      #   milliseconds, or nil when no timeout is set. See
-      #   Mongo::ClientEncryption#initialize for a usage example.
+      #   milliseconds, or nil when no timeout is set. The driver bounds the
+      #   call by the connect budget, so a callback that blocks cannot outlive
+      #   the operation; the callback should still honor +timeout_ms+ for its
+      #   own work. See Mongo::ClientEncryption#initialize for a usage example.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.

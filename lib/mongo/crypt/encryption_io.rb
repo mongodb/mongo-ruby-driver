@@ -289,6 +289,19 @@ module Mongo
         remaining
       end
 
+      # The budget for the connect phase, in seconds: the remaining operation
+      # timeout when a CSOT budget is in effect, otherwise the driver's fixed
+      # connect timeout. The connect callback and the TLS handshake that
+      # follows it share this budget, so neither can run past the deadline.
+      #
+      # @param [ Integer, nil ] timeout_ms The remaining operation timeout in
+      #   milliseconds, or nil when no budget is set.
+      #
+      # @return [ Float ] The connect budget in seconds.
+      def connect_budget(timeout_ms)
+        timeout_ms ? timeout_ms / 1_000.0 : Server::CONNECT_TIMEOUT
+      end
+
       def validate_key_vault_client!(key_vault_client)
         raise ArgumentError.new('The :key_vault_client option cannot be nil') unless key_vault_client
 
@@ -387,7 +400,17 @@ module Mongo
 
         mongo_socket =
           if @kms_connect_callback
-            connected_socket = @kms_connect_callback.call(host, port, timeout_ms)
+            # The callback runs before any socket exists, so it cannot inherit
+            # the connect timeout the socket gets below; bound it explicitly by
+            # the same budget so a callback that blocks cannot outlive the
+            # operation deadline. A well-behaved callback should still honor
+            # timeout_ms itself, so it can fail cleanly and close its socket.
+            connected_socket =
+              Timeout.timeout(connect_budget(timeout_ms),
+                              csot ? Error::TimeoutError : Error::SocketTimeoutError,
+                              'KMS connect callback timed out') do
+                @kms_connect_callback.call(host, port, timeout_ms)
+              end
             unless connected_socket.is_a?(IO) || connected_socket.respond_to?(:to_io)
               raise Error::KmsError.new(
                 'kms_connect_callback must return an IO connected to the KMS provider ' +
@@ -396,12 +419,7 @@ module Mongo
             end
 
             socket_options = { ssl: true, csot: csot, connected_socket: connected_socket }
-            socket_options[:connect_timeout] =
-              if csot
-                timeout_ms / 1_000.0
-              else
-                Server::CONNECT_TIMEOUT
-              end
+            socket_options[:connect_timeout] = connect_budget(timeout_ms)
             Mongo::Socket::SSL.new(
               host, port, host, SOCKET_TIMEOUT, ::Socket::AF_UNSPEC,
               tls_options.merge(socket_options)

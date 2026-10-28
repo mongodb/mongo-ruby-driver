@@ -538,8 +538,11 @@ module Mongo
     #     CONNECT handshake with a proxy). The driver wraps the returned object
     #     in TLS to the KMS host, and Ruby's OpenSSL requires an fd-backed
     #     object, so the callback cannot return another OpenSSL::SSL::SSLSocket;
-    #     a TLS-to-proxy connection needs a socketpair bridge. See
-    #     Mongo::ClientEncryption#initialize for a usage example.
+    #     a TLS-to-proxy connection needs a socketpair bridge. The driver
+    #     bounds the call by the connect budget, so a callback that blocks
+    #     cannot outlive the operation; the callback should still honor
+    #     timeout_ms for its own work. See Mongo::ClientEncryption#initialize
+    #     for a usage example.
     #
     #   Notes on automatic encryption:
     #   - Automatic encryption is an enterprise only feature that only applies

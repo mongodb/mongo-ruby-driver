@@ -54,7 +54,11 @@ module Mongo
     #   TLS to the KMS host, and Ruby's OpenSSL requires an fd-backed object, so
     #   the callback cannot return another +OpenSSL::SSL::SSLSocket+; a
     #   TLS-to-proxy connection needs a socketpair bridge (see the example
-    #   below).
+    #   below). The driver bounds the call by the connect budget (the remaining
+    #   operation timeout, or the driver's connect timeout when no timeout is
+    #   set), so a callback that blocks cannot outlive the operation. The
+    #   callback should still honor +timeout_ms+ for its own work, so it can
+    #   fail cleanly and close any socket it opened.
     #
     # @example Tunnel KMS traffic through an HTTP CONNECT proxy.
     #   connect_via_proxy = lambda do |host, port, _timeout_ms|

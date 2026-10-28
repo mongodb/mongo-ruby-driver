@@ -158,6 +158,45 @@ describe Mongo::Crypt::EncryptionIO do
 
         subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
       end
+
+      it 'bounds the callback by the remaining budget when CSOT is in effect' do
+        connected_socket = double('connected socket', to_io: nil)
+        mongo_socket = double('mongo socket', socket: nil, close: nil)
+        allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
+        allow(kms_connect_callback).to receive(:call) do
+          sleep 0.5
+          connected_socket
+        end
+
+        started = Mongo::Utils.monotonic_time
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 50) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError, /TimeoutError/)
+
+        # A 50 millisecond budget must fire well under a second; without the
+        # bound the callback's 0.5 second sleep would complete first.
+        expect(Mongo::Utils.monotonic_time - started).to be < 1
+      end
+
+      it 'bounds the callback by the driver connect timeout when no budget is given' do
+        stub_const('Mongo::Server::CONNECT_TIMEOUT', 0.05)
+        connected_socket = double('connected socket', to_io: nil)
+        mongo_socket = double('mongo socket', socket: nil, close: nil)
+        allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
+        allow(kms_connect_callback).to receive(:call) do
+          sleep 0.5
+          connected_socket
+        end
+
+        started = Mongo::Utils.monotonic_time
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError, /TimeoutError/)
+
+        expect(Mongo::Utils.monotonic_time - started).to be < 1
+      end
     end
 
     context 'when a non-callable kms_connect_callback is provided' do
