@@ -23,13 +23,6 @@ module Mongo
       class CommandTracer
         include Mongo::Monitoring::Event::Secure
 
-        # Commands for which a span MUST NOT be created. The OpenTelemetry spec
-        # requires drivers to skip command spans for sensitive commands listed in
-        # the Command Logging and Monitoring spec. We additionally skip hello /
-        # legacy hello in all forms — these are handshake/heartbeat traffic and
-        # would only add noise to traces.
-        HELLO_COMMANDS = %w[hello ismaster isMaster].freeze
-
         # Upper bound of the lsid UUID memo cache (see #lsid).
         LSID_CACHE_MAX = 128
 
@@ -127,8 +120,9 @@ module Mongo
         # Determines whether the command must not be traced. Sensitive auth
         # commands carry credentials in their payloads (SCRAM proofs, cleartext
         # passwords, etc.) and the OpenTelemetry spec requires drivers to skip
-        # command spans for them. Hello / legacy hello are also skipped to keep
-        # handshake traffic out of traces.
+        # command spans for them. Hello / legacy hello in all forms
+        # (Secure::HELLO_COMMANDS) are also skipped to keep handshake traffic
+        # out of traces.
         #
         # @param doc [ Hash ] the command document.
         # @param name [ String ] the command name.

@@ -202,7 +202,7 @@ module Mongo
         # @param context [ OpenTelemetry::Context ] the OpenTelemetry context.
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
         # @param recording [ true | false ] whether the span is recording.
-        def process_cursor_context(result, cursor_id, context, span, recording = true)
+        def process_cursor_context(result, cursor_id, context, span, recording)
           return unless result.is_a?(Cursor)
 
           if result.id.zero?

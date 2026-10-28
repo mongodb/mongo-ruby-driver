@@ -624,7 +624,7 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
 
   describe '#process_cursor_context' do
     subject(:process_result) do
-      operation_tracer.send(:process_cursor_context, result, cursor_id, context, span)
+      operation_tracer.send(:process_cursor_context, result, cursor_id, context, span, true)
     end
 
     # rubocop:disable RSpec/VerifiedDoubles
