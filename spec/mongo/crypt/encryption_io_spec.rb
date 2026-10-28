@@ -98,6 +98,16 @@ describe Mongo::Crypt::EncryptionIO do
         )
       end
 
+      # The driver validates that the callback returns an fd-backed IO, and
+      # Ruby's OpenSSL would reject anything else when it wraps the socket in
+      # TLS, so the callback must return a real IO.
+      let(:socket_pair) { Socket.pair(:UNIX, :STREAM, 0) }
+      let(:connected_socket) { socket_pair.first }
+
+      after do
+        socket_pair.each { |socket| socket.close unless socket.closed? }
+      end
+
       it 'invokes the callback with host, port, and timeout_ms' do
         expect(kms_connect_callback).to receive(:call).with('kms.example.com', 443, 5000).and_raise(IOError, 'boom')
 
@@ -131,8 +141,26 @@ describe Mongo::Crypt::EncryptionIO do
         end.to raise_error(Mongo::Error::KmsError, /must return an IO/)
       end
 
+      it 'raises KmsError when the callback returns an SSLSocket' do
+        # Ruby's OpenSSL needs an fd-backed IO, so wrapping an SSLSocket would
+        # fail with an obscure TypeError deep inside; reject it up front.
+        ssl_socket = OpenSSL::SSL::SSLSocket.new(socket_pair.first, OpenSSL::SSL::SSLContext.new)
+        allow(kms_connect_callback).to receive(:call).and_return(ssl_socket)
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError, /must return an IO/)
+      end
+
+      it 'raises KmsError when the callback returns an object that only responds to to_io' do
+        allow(kms_connect_callback).to receive(:call).and_return(double('io wrapper', to_io: socket_pair.first))
+
+        expect do
+          subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
+        end.to raise_error(Mongo::Error::KmsError, /must return an IO/)
+      end
+
       it 'gives the handshake the driver connect budget when no budget is given' do
-        connected_socket = double('connected socket', to_io: nil)
         mongo_socket = double('mongo socket', socket: nil, close: nil)
         allow(kms_connect_callback).to receive(:call).and_return(connected_socket)
         allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
@@ -146,7 +174,6 @@ describe Mongo::Crypt::EncryptionIO do
       end
 
       it 'uses the remaining budget as connect_timeout when CSOT is in effect' do
-        connected_socket = double('connected socket', to_io: nil)
         mongo_socket = double('mongo socket', socket: nil, close: nil)
         allow(kms_connect_callback).to receive(:call).and_return(connected_socket)
         allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
@@ -160,7 +187,6 @@ describe Mongo::Crypt::EncryptionIO do
       end
 
       it 'gives the handshake only the connect budget the callback left' do
-        connected_socket = double('connected socket', to_io: nil)
         mongo_socket = double('mongo socket', socket: nil, close: nil)
         allow(kms_connect_callback).to receive(:call) do
           sleep 0.2
@@ -180,7 +206,6 @@ describe Mongo::Crypt::EncryptionIO do
       end
 
       it 'bounds the callback by the remaining budget when CSOT is in effect' do
-        connected_socket = double('connected socket', to_io: nil)
         mongo_socket = double('mongo socket', socket: nil, close: nil)
         allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
         allow(kms_connect_callback).to receive(:call) do
@@ -201,7 +226,6 @@ describe Mongo::Crypt::EncryptionIO do
 
       it 'bounds the callback by the driver connect timeout when no budget is given' do
         stub_const('Mongo::Server::CONNECT_TIMEOUT', 0.05)
-        connected_socket = double('connected socket', to_io: nil)
         mongo_socket = double('mongo socket', socket: nil, close: nil)
         allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
         allow(kms_connect_callback).to receive(:call) do
@@ -221,7 +245,7 @@ describe Mongo::Crypt::EncryptionIO do
       it 'does not treat a callback timeout as a retryable network error' do
         allow(kms_connect_callback).to receive(:call) do
           sleep 0.5
-          double('connected socket', to_io: nil)
+          connected_socket
         end
 
         expect do
@@ -249,8 +273,13 @@ describe Mongo::Crypt::EncryptionIO do
     let(:mongocryptd_options) { {} }
 
     let(:kms_connect_callback) { double('callback') }
-    let(:connected_socket) { double('connected socket', to_io: nil) }
+    let(:socket_pair) { Socket.pair(:UNIX, :STREAM, 0) }
+    let(:connected_socket) { socket_pair.first }
     let(:mongo_socket) { double('mongo socket') }
+
+    after do
+      socket_pair.each { |socket| socket.close unless socket.closed? }
+    end
 
     let(:subject) do
       described_class.new(

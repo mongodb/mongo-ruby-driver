@@ -413,7 +413,7 @@ module Mongo
                               'KMS connect callback timed out') do
                 @kms_connect_callback.call(host, port, timeout_ms)
               end
-            unless connected_socket.is_a?(IO) || connected_socket.respond_to?(:to_io)
+            unless connected_socket.is_a?(IO)
               raise Error::KmsError.new(
                 'kms_connect_callback must return an IO connected to the KMS provider ' +
                 "at #{host}:#{port}, but it returned #{connected_socket.inspect}"
