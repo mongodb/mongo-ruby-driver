@@ -301,13 +301,17 @@ functions:
     # configuration it requires, interleaved on one host, and reports what
     # each configuration costs relative to the untraced baseline. Fewer
     # iterations per run buy more interleaved repetitions in the same time.
-    # YJIT is on, as in production; the run fails if this ruby was built
-    # without it.
+    # Every configuration runs with YJIT, which production deployments
+    # commonly enable; without it the interpreter's per-call cost inflates
+    # the tracing overhead. The run fails if this ruby was built without
+    # YJIT.
     - command: shell.exec
       type: test
       params:
         shell: bash
         working_dir: "src"
+        # Needed to download "latest"/"latest-build" from the private S3
+        # bucket (DRIVERS-3628). Any other version needs no AWS access.
         include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         script: |
           ${PREPARE_SHELL}

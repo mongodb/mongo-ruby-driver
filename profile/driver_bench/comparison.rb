@@ -120,7 +120,8 @@ module Mongo
         {
           Configuration::ENV_VAR => configuration.name,
           'PERFORMANCE_RESULTS_FILE' => results_file,
-          'DRIVER_BENCH_TASKS' => @env['DRIVER_BENCH_TASKS'] || DEFAULT_TASKS
+          'DRIVER_BENCH_TASKS' => @env['DRIVER_BENCH_TASKS'] || DEFAULT_TASKS,
+          'DRIVER_BENCH_PER_OP_METRICS' => '1'
         }
       end
 

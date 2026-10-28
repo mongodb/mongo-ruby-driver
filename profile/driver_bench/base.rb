@@ -56,6 +56,13 @@ module Mongo
         nil
       end
 
+      # Whether to report per-operation metrics. Comparison asks for them;
+      # a plain suite run leaves them out, so that the results it sends to
+      # the performance store are the same as before they existed.
+      def per_op_metrics?
+        %w[1 true yes].include?(ENV['DRIVER_BENCH_PER_OP_METRICS'].to_s.downcase)
+      end
+
       def debug_mode?
         ENV['PERF_DEBUG']
       end
@@ -150,11 +157,12 @@ module Mongo
         ms && (ms / 1000.0)
       end
 
-      # Per-operation medians, for tasks that define ops_per_iteration.
+      # Per-operation medians, for tasks that define ops_per_iteration, when
+      # asked for (see #per_op_metrics?).
       #
       # @return [ Hash<String, Float> ] metric name to value.
       def per_op_metrics(timings)
-        return {} unless ops_per_iteration
+        return {} unless per_op_metrics? && ops_per_iteration
 
         ops = ops_per_iteration.to_f
         {
