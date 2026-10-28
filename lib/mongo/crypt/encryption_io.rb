@@ -375,7 +375,12 @@ module Mongo
             end
 
             socket_options = { ssl: true, csot: csot, connected_socket: connected_socket }
-            socket_options[:connect_timeout] = (timeout_ms / 1_000.0) if csot
+            socket_options[:connect_timeout] =
+              if csot
+                timeout_ms / 1_000.0
+              else
+                Server::CONNECT_TIMEOUT
+              end
             Mongo::Socket::SSL.new(
               host, port, host, SOCKET_TIMEOUT, ::Socket::AF_UNSPEC,
               tls_options.merge(socket_options)

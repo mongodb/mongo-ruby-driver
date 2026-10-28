@@ -130,6 +130,34 @@ describe Mongo::Crypt::EncryptionIO do
           subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
         end.to raise_error(Mongo::Error::KmsError, /must return an IO/)
       end
+
+      it 'defaults connect_timeout to the driver connect timeout when no budget is given' do
+        connected_socket = double('connected socket', to_io: nil)
+        mongo_socket = double('mongo socket', socket: nil, close: nil)
+        allow(kms_connect_callback).to receive(:call).and_return(connected_socket)
+        allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
+
+        expect(Mongo::Socket::SSL).to receive(:new) do |*args|
+          expect(args.last[:connect_timeout]).to eq(Mongo::Server::CONNECT_TIMEOUT)
+          mongo_socket
+        end
+
+        subject.send(:with_ssl_socket, 'kms.example.com:443', {}) { |s| s }
+      end
+
+      it 'uses the remaining budget as connect_timeout when CSOT is in effect' do
+        connected_socket = double('connected socket', to_io: nil)
+        mongo_socket = double('mongo socket', socket: nil, close: nil)
+        allow(kms_connect_callback).to receive(:call).and_return(connected_socket)
+        allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
+
+        expect(Mongo::Socket::SSL).to receive(:new) do |*args|
+          expect(args.last[:connect_timeout]).to eq(5.0)
+          mongo_socket
+        end
+
+        subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
+      end
     end
 
     context 'when a non-callable kms_connect_callback is provided' do
