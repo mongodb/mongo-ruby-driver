@@ -402,12 +402,14 @@ module Mongo
           if @kms_connect_callback
             # The callback runs before any socket exists, so it cannot inherit
             # the connect timeout the socket gets below; bound it explicitly by
-            # the same budget so a callback that blocks cannot outlive the
+            # the connect budget so a callback that blocks cannot outlive the
             # operation deadline. A well-behaved callback should still honor
             # timeout_ms itself, so it can fail cleanly and close its socket.
+            connect_budget_sec = connect_budget(timeout_ms)
+            connect_deadline = Utils.monotonic_time + connect_budget_sec
+            connect_error = csot ? Error::TimeoutError : Error::SocketTimeoutError
             connected_socket =
-              Timeout.timeout(connect_budget(timeout_ms),
-                              csot ? Error::TimeoutError : Error::SocketTimeoutError,
+              Timeout.timeout(connect_budget_sec, connect_error,
                               'KMS connect callback timed out') do
                 @kms_connect_callback.call(host, port, timeout_ms)
               end
@@ -418,8 +420,14 @@ module Mongo
               )
             end
 
+            # The callback and the handshake share one connect budget: give the
+            # handshake only the time the callback left, so together they cannot
+            # run past the deadline.
+            remaining_connect = connect_deadline - Utils.monotonic_time
+            raise connect_error, 'KMS connect timed out' if remaining_connect <= 0
+
             socket_options = { ssl: true, csot: csot, connected_socket: connected_socket }
-            socket_options[:connect_timeout] = connect_budget(timeout_ms)
+            socket_options[:connect_timeout] = remaining_connect
             Mongo::Socket::SSL.new(
               host, port, host, SOCKET_TIMEOUT, ::Socket::AF_UNSPEC,
               tls_options.merge(socket_options)

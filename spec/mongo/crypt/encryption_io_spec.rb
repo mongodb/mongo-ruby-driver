@@ -131,14 +131,14 @@ describe Mongo::Crypt::EncryptionIO do
         end.to raise_error(Mongo::Error::KmsError, /must return an IO/)
       end
 
-      it 'defaults connect_timeout to the driver connect timeout when no budget is given' do
+      it 'gives the handshake the driver connect budget when no budget is given' do
         connected_socket = double('connected socket', to_io: nil)
         mongo_socket = double('mongo socket', socket: nil, close: nil)
         allow(kms_connect_callback).to receive(:call).and_return(connected_socket)
         allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
 
         expect(Mongo::Socket::SSL).to receive(:new) do |*args|
-          expect(args.last[:connect_timeout]).to eq(Mongo::Server::CONNECT_TIMEOUT)
+          expect(args.last[:connect_timeout]).to be_within(0.5).of(Mongo::Server::CONNECT_TIMEOUT)
           mongo_socket
         end
 
@@ -152,7 +152,27 @@ describe Mongo::Crypt::EncryptionIO do
         allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
 
         expect(Mongo::Socket::SSL).to receive(:new) do |*args|
-          expect(args.last[:connect_timeout]).to eq(5.0)
+          expect(args.last[:connect_timeout]).to be_within(0.5).of(5.0)
+          mongo_socket
+        end
+
+        subject.send(:with_ssl_socket, 'kms.example.com:443', {}, timeout_ms: 5000) { |s| s }
+      end
+
+      it 'gives the handshake only the connect budget the callback left' do
+        connected_socket = double('connected socket', to_io: nil)
+        mongo_socket = double('mongo socket', socket: nil, close: nil)
+        allow(kms_connect_callback).to receive(:call) do
+          sleep 0.2
+          connected_socket
+        end
+        allow(Mongo::Socket::SSL).to receive(:new).and_return(mongo_socket)
+
+        expect(Mongo::Socket::SSL).to receive(:new) do |*args|
+          # The callback already spent ~0.2s of the 5s budget, so the handshake
+          # must get less than the full budget rather than a fresh 5 seconds.
+          expect(args.last[:connect_timeout]).to be < 5.0
+          expect(args.last[:connect_timeout]).to be > 4.0
           mongo_socket
         end
 
