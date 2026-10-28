@@ -61,11 +61,27 @@ module Mongo
     #   fail cleanly and close any socket it opened.
     #
     # @example Tunnel KMS traffic through an HTTP CONNECT proxy.
-    #   connect_via_proxy = lambda do |host, port, _timeout_ms|
-    #     socket = TCPSocket.new('proxy.example.com', 9004)
-    #     socket.write("CONNECT #{host}:#{port} HTTP/1.1\r\n" \
-    #                  "Host: #{host}:#{port}\r\n\r\n")
-    #     socket.gets # => "HTTP/1.1 200 Connection Established\r\n"
+    #   connect_via_proxy = lambda do |host, port, timeout_ms|
+    #     timeout = timeout_ms ? timeout_ms / 1_000.0 : nil
+    #     socket = Socket.tcp('proxy.example.com', 9004, connect_timeout: timeout)
+    #     begin
+    #       socket.write("CONNECT #{host}:#{port} HTTP/1.1\r\n" \
+    #                    "Host: #{host}:#{port}\r\n\r\n")
+    #       status = socket.gets
+    #       unless status&.start_with?('HTTP/1.1 200')
+    #         raise "proxy CONNECT failed: #{status.inspect}"
+    #       end
+    #
+    #       # Consume the rest of the response headers up to the blank line, so
+    #       # the TLS handshake does not read them as tunneled bytes.
+    #       loop do
+    #         line = socket.gets
+    #         break if line.nil? || line == "\r\n"
+    #       end
+    #     rescue StandardError
+    #       socket.close
+    #       raise
+    #     end
     #     socket
     #   end
     #
