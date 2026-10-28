@@ -176,12 +176,12 @@ module Mongo
           span.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{exception.class}")
         end
 
-        # Builds the attributes passed at span creation: the cheap,
-        # sampler-plausible set. Expensive attributes are deferred to
-        # apply_deferred_attributes — building them here would defeat the
-        # sampler's purpose, and on a non-recording span they would be
-        # discarded anyway. Keys whose value is nil are omitted rather than
-        # compacted afterwards, so the common case allocates nothing extra.
+        # Builds the attributes passed at span creation: the cheap set the
+        # OpenTelemetry spec recommends. These are built for every span,
+        # recorded or not, and are the only ones the sampler sees. The rest
+        # are deferred to apply_deferred_attributes. Keys whose value is nil
+        # are omitted rather than compacted afterwards, so the common case
+        # allocates nothing extra.
         #
         # @param doc [ Hash ] the command document.
         # @param name [ String ] the command name.
@@ -223,11 +223,11 @@ module Mongo
           attrs
         end
 
-        # Sets the expensive attributes after span creation. Only called for
+        # Sets the remaining attributes after span creation. Only called for
         # recording spans: on non-recording spans set_attribute discards.
-        # Note for reviewers: these attributes are invisible to the sampler,
-        # which only sees what is passed to start_span. The built-in samplers
-        # do not read attributes, and db.query.text is off by default.
+        # These attributes are invisible to the sampler, which only sees what
+        # is passed to start_span; only custom samplers keying on them are
+        # affected.
         #
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
         # @param message [ Mongo::Protocol::Message ] the command message.

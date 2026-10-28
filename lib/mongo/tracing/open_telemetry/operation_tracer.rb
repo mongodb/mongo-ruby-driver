@@ -169,9 +169,11 @@ module Mongo
         end
 
         # Builds the attributes passed at span creation: the cheap set. The
-        # cursor id is deferred to trace_operation (behind recording?) — on a
+        # cursor id is deferred to trace_with_span (behind recording?) — on a
         # non-recording span set_attribute discards, and the sampler has no
-        # use for it.
+        # use for it. db.operation.summary is outside the spec's recommended
+        # creation set, but here it is the span name, which is built anyway,
+        # and an attribute passed at creation is cheaper than one set later.
         #
         # @param operation [ Mongo::Operation ] the operation.
         # @param name [ String ] the operation name.
