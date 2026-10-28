@@ -135,6 +135,41 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
         expect(span).not_to receive(:set_attribute)
         command_tracer.trace_command(message, operation_context, connection) { result }
       end
+
+      it 'still makes the span current, so that its context is propagated' do
+        expect(OpenTelemetry::Trace).to receive(:with_span).with(span).and_yield(span, context)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+
+      it 'does not record the cursor id from the reply' do
+        reply = instance_double(Mongo::Operation::Result, cursor_id: 789, successful?: true)
+        expect(span).not_to receive(:set_attribute)
+        command_tracer.trace_command(message, operation_context, connection) { reply }
+      end
+
+      it 'does not record a failed reply' do
+        error = Mongo::Error::OperationFailure.new('error', nil, code: 42)
+        reply = instance_double(Mongo::Operation::Result, cursor_id: 0, successful?: false, error: error)
+        allow(reply).to receive(:validate!).and_raise(error)
+        expect(span).not_to receive(:set_attribute)
+        expect(span).not_to receive(:record_exception)
+        command_tracer.trace_command(message, operation_context, connection) { reply }
+      end
+
+      it 'does not record a raised exception' do
+        error = Mongo::Error::OperationFailure.new('error', nil, code: 42)
+        expect(span).not_to receive(:set_attribute)
+        expect(span).not_to receive(:record_exception)
+        expect(span).not_to receive(:status=)
+        expect do
+          command_tracer.trace_command(message, operation_context, connection) { raise error }
+        end.to raise_error(error)
+      end
+
+      it 'finishes the span' do
+        expect(span).to receive(:finish)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
     end
 
     it 'memoizes connection attributes per connection' do
@@ -184,9 +219,17 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
         expect(return_value).to eq(:done)
       end
 
-      it 'finishes the span' do
-        expect(invalid_span).to receive(:finish)
+      it 'does not finish the span' do
+        expect(invalid_span).not_to receive(:finish)
         command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+
+      it 'does not record a raised exception' do
+        error = StandardError.new('generic error')
+        expect(invalid_span).not_to receive(:record_exception)
+        expect do
+          command_tracer.trace_command(message, operation_context, connection) { raise error }
+        end.to raise_error(error)
       end
 
       # Guards against an opentelemetry-api upgrade changing no-SDK semantics.

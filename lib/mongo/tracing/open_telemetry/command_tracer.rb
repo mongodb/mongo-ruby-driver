@@ -69,8 +69,7 @@ module Mongo
         # @yield the block representing the command to be traced.
         #
         # @return [ Object ] the result of the command.
-        # rubocop:disable Lint/RescueException
-        def trace_command(message, _operation_context, connection)
+        def trace_command(message, _operation_context, connection, &block)
           # The command document and name are extracted once and threaded
           # through: the extraction helpers below allocate on every call.
           doc = message.documents.first
@@ -83,29 +82,47 @@ module Mongo
           span = create_command_span(name, doc, connection)
           # An invalid context has no trace identity: it cannot be propagated,
           # continued, or correlated with anything downstream, so every
-          # operation on it is waste. This is a state check on the span we
-          # were handed, not detection of whether the SDK is available — a
-          # custom API-only provider returning real spans sees the full path.
-          # Must not key on recording?: an unsampled-but-valid context still
-          # has to be made current for propagation.
+          # operation on it, including finishing it, is waste. This is a state
+          # check on the span we were handed, not detection of whether the SDK
+          # is available — a custom API-only provider returning real spans
+          # sees the full path. Must not key on recording?: an
+          # unsampled-but-valid context still has to be made current for
+          # propagation.
           return yield unless span.context.valid?
 
-          cursor = cursor_id(name, doc)
-          apply_deferred_attributes(span, message, name, doc, cursor) if span.recording?
-          ::OpenTelemetry::Trace.with_span(span) do |s, c|
+          trace_with_span(span, message, name, doc, &block)
+        end
+
+        private
+
+        # Runs the command with the span made current. A span that is not
+        # recording is still made current, so that its context is propagated,
+        # but gets no further attributes and no outcome: the SDK would
+        # discard them.
+        #
+        # @param span [ OpenTelemetry::Trace::Span ] a span with a valid context.
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        # @param name [ String ] the command name.
+        # @param doc [ Hash ] the command document.
+        #
+        # @return [ Object ] the result of the command.
+        #
+        # rubocop:disable Lint/RescueException
+        def trace_with_span(span, message, name, doc)
+          recording = span.recording?
+          apply_deferred_attributes(span, message, name, doc, cursor_id(name, doc)) if recording
+          ::OpenTelemetry::Trace.with_span(span) do |s, _c|
             yield.tap do |result|
-              process_command_result(result, cursor, c, s)
+              process_command_result(result, s) if recording
             end
           end
         rescue Exception => e
-          handle_command_exception(span, e)
+          handle_command_exception(span, e) if recording
           raise e
         ensure
-          span&.finish
+          span.finish
         end
         # rubocop:enable Lint/RescueException
-
-        private
 
         # Determines whether the command must not be traced. Sensitive auth
         # commands carry credentials in their payloads (SCRAM proofs, cleartext
@@ -141,21 +158,17 @@ module Mongo
         # Processes the command result and updates span attributes.
         #
         # @param result [ Object ] the command result.
-        # @param cursor_id [ Integer | nil ] the cursor ID.
-        # @param context [ OpenTelemetry::Context ] the context.
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
-        def process_command_result(result, cursor_id, context, span)
-          process_cursor_context(result, cursor_id, context, span)
+        def process_command_result(result, span)
+          process_cursor_context(result, span)
           maybe_trace_error(result, span)
         end
 
         # Handles exceptions that occur during command execution.
         #
-        # @param span [ OpenTelemetry::Trace::Span | nil ] the span.
+        # @param span [ OpenTelemetry::Trace::Span ] the span.
         # @param exception [ Exception ] the exception that occurred.
         def handle_command_exception(span, exception)
-          return unless span
-
           if exception.is_a?(Mongo::Error::OperationFailure)
             span.set_attribute('db.response.status_code', exception.code.to_s)
           end
@@ -240,10 +253,8 @@ module Mongo
         # Processes cursor context from the command result.
         #
         # @param result [ Object ] the command result.
-        # @param _cursor_id [ Integer | nil ] the cursor ID (unused).
-        # @param _context [ OpenTelemetry::Context ] the context (unused).
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
-        def process_cursor_context(result, _cursor_id, _context, span)
+        def process_cursor_context(result, span)
           cursor_id = normalize_cursor_id(result.cursor_id)
           return unless cursor_id.positive?
 

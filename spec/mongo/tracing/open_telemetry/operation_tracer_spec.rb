@@ -125,6 +125,32 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
         expect(span).not_to receive(:set_attribute)
         operation_tracer.trace_operation(operation, operation_context) { result }
       end
+
+      it 'still makes the span current, so that commands nest under it' do
+        expect(OpenTelemetry::Trace).to receive(:with_span).with(span).and_yield(span, context)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
+
+      it 'does not record the cursor id of a new cursor' do
+        cursor = instance_double(Mongo::Cursor, id: 12_345)
+        allow(cursor).to receive(:is_a?).with(Mongo::Cursor).and_return(true)
+        expect(span).not_to receive(:set_attribute)
+        operation_tracer.trace_operation(operation, operation_context) { cursor }
+      end
+
+      it 'does not record a raised exception' do
+        error = StandardError.new('test error')
+        expect(span).not_to receive(:record_exception)
+        expect(span).not_to receive(:status=)
+        expect do
+          operation_tracer.trace_operation(operation, operation_context) { raise error }
+        end.to raise_error(error)
+      end
+
+      it 'finishes the span' do
+        expect(span).to receive(:finish)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
     end
 
     context 'with an invalid span (no SDK installed)' do
@@ -149,9 +175,17 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
         expect(cursor_context_map).to be_empty
       end
 
-      it 'finishes the span' do
-        expect(invalid_span).to receive(:finish)
+      it 'does not finish the span' do
+        expect(invalid_span).not_to receive(:finish)
         operation_tracer.trace_operation(operation, operation_context) { result }
+      end
+
+      it 'does not record a raised exception' do
+        error = StandardError.new('test error')
+        expect(invalid_span).not_to receive(:record_exception)
+        expect do
+          operation_tracer.trace_operation(operation, operation_context) { raise error }
+        end.to raise_error(error)
       end
     end
 

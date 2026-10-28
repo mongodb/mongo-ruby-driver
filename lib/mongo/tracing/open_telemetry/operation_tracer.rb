@@ -55,34 +55,48 @@ module Mongo
         # @yield the block representing the operation to be traced.
         #
         # @return [ Object ] the result of the operation.
-        #
-        # rubocop:disable Lint/RescueException
         def trace_operation(operation, operation_context, op_name: nil, &block)
           span = create_operation_span(operation, operation_context, op_name)
           # An invalid context has no trace identity: it cannot be propagated,
           # continued, or correlated with anything downstream, so every
-          # operation on it is waste. This is a state check on the span we
-          # were handed, not detection of whether the SDK is available — a
-          # custom API-only provider returning real spans sees the full path.
-          # Must not key on recording?: an unsampled-but-valid context still
-          # has to be made current for propagation. Skipping here also leaves
-          # the cursor context map untouched, consistent with tracing being
-          # effectively off.
+          # operation on it, including finishing it, is waste. This is a state
+          # check on the span we were handed, not detection of whether the SDK
+          # is available — a custom API-only provider returning real spans
+          # sees the full path. Must not key on recording?: an
+          # unsampled-but-valid context still has to be made current for
+          # propagation. Skipping here also leaves the cursor context map
+          # untouched, consistent with tracing being effectively off.
           return yield unless span.context.valid?
 
-          if span.recording? && !operation.cursor_id.nil?
-            span.set_attribute('db.mongodb.cursor_id', operation.cursor_id)
-          end
-          execute_with_span(span, operation, &block)
-        rescue Exception => e
-          handle_span_exception(span, e)
-          raise e
-        ensure
-          span&.finish
+          trace_with_span(span, operation, &block)
         end
-        # rubocop:enable Lint/RescueException
 
         private
+
+        # Runs the operation with the span made current. A span that is not
+        # recording is still made current, so that the command spans created
+        # within it are nested under it, but gets no further attributes and
+        # no outcome: the SDK would discard them.
+        #
+        # @param span [ OpenTelemetry::Trace::Span ] a span with a valid context.
+        # @param operation [ Mongo::Operation ] the operation.
+        #
+        # @return [ Object ] the result of the operation.
+        #
+        # rubocop:disable Lint/RescueException
+        def trace_with_span(span, operation, &block)
+          recording = span.recording?
+          if recording && !operation.cursor_id.nil?
+            span.set_attribute('db.mongodb.cursor_id', operation.cursor_id)
+          end
+          execute_with_span(span, operation, recording, &block)
+        rescue Exception => e
+          handle_span_exception(span, e) if recording
+          raise e
+        ensure
+          span.finish
+        end
+        # rubocop:enable Lint/RescueException
 
         # Creates an OpenTelemetry span for the operation. The operation name,
         # collection name and span name are each computed once and reused
@@ -110,14 +124,15 @@ module Mongo
         #
         # @param span [ OpenTelemetry::Trace::Span ] the span.
         # @param operation [ Mongo::Operation ] the operation.
+        # @param recording [ true | false ] whether the span is recording.
         #
         # @yield the block to execute.
         #
         # @return [ Object ] the result of the block.
-        def execute_with_span(span, operation)
+        def execute_with_span(span, operation, recording)
           ::OpenTelemetry::Trace.with_span(span) do |s, c|
             yield.tap do |result|
-              process_cursor_context(result, operation.cursor_id, c, s)
+              process_cursor_context(result, operation.cursor_id, c, s, recording)
             end
           end
         end
@@ -127,8 +142,6 @@ module Mongo
         # @param span [ OpenTelemetry::Trace::Span ] the span.
         # @param exception [ Exception ] the exception.
         def handle_span_exception(span, exception)
-          return unless span
-
           span.record_exception(exception)
           span.status = ::OpenTelemetry::Trace::Status.error(
             "Unhandled exception of type: #{exception.class}"
@@ -186,7 +199,8 @@ module Mongo
         # @param cursor_id [ Integer | nil ] the cursor ID before the operation.
         # @param context [ OpenTelemetry::Context ] the OpenTelemetry context.
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
-        def process_cursor_context(result, cursor_id, context, span)
+        # @param recording [ true | false ] whether the span is recording.
+        def process_cursor_context(result, cursor_id, context, span, recording = true)
           return unless result.is_a?(Cursor)
 
           if result.id.zero?
@@ -195,7 +209,7 @@ module Mongo
           elsif result.id && cursor_id.nil?
             # New cursor created, store its context.
             cursor_context_map[result.id] = context
-            span.set_attribute('db.mongodb.cursor_id', result.id)
+            span.set_attribute('db.mongodb.cursor_id', result.id) if recording
           end
         end
 
