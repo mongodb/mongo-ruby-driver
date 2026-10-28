@@ -102,6 +102,10 @@ describe 'KMS HTTP proxy' do
     ce = client_encryption(proxy_port: 9004)
     data_key_id = ce.create_data_key('aws', master_key: master_key)
 
+    # create_data_key already drove the proxy; clear the counter so the
+    # assertion below measures only automatic encryption traffic.
+    KmsHttpProxy.reset(port: 9004)
+
     schema_map = {
       "#{data_db}.encrypted" => {
         'bsonType' => 'object',
