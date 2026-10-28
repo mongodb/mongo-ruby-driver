@@ -54,12 +54,15 @@ module Mongo
 
     # @return [ Integer | nil ] Returns the remaining milliseconds of the timeout
     #   set for the operation; if no timeout is set, or the timeout is 0
-    #   (means unlimited) returns nil.
+    #   (means unlimited) returns nil. A finite budget never rounds down to 0,
+    #   since 0 means unlimited to callers: the last sub-millisecond before the
+    #   deadline is reported as 1 ms instead.
     def remaining_timeout_ms
       seconds = remaining_timeout_sec
       return nil if seconds.nil?
 
-      (seconds * 1_000).to_i
+      ms = (seconds * 1_000).to_i
+      ms.zero? ? 1 : ms
     end
 
     def remaining_timeout_ms!

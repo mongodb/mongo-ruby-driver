@@ -132,6 +132,19 @@ describe Mongo::Crypt::Context do
 
       context.send(:feed_kms, Mongo::CsotTimeoutHolder.new)
     end
+
+    it 'does not forward a zero budget, which downstream code reads as unlimited' do
+      allow(binding).to receive(:ctx_next_kms_ctx).and_return(first_kms_context, nil)
+
+      # A real holder with half a millisecond left, whose remaining budget
+      # truncates to 0 ms. Forwarding that would disable the socket timeouts.
+      allow(Mongo::Utils).to receive(:monotonic_time).and_return(100.0, 100.0005)
+      holder = Mongo::CsotTimeoutHolder.new(operation_timeouts: { operation_timeout_ms: 1 })
+
+      expect(io).to receive(:feed_kms).with(first_kms_context, {}, timeout_ms: 1)
+
+      context.send(:feed_kms, holder)
+    end
   end
 
   describe '#run_state_machine' do
