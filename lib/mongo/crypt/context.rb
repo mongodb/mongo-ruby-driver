@@ -95,7 +95,7 @@ module Mongo
           when :need_mongo_markings
             provide_markings(timeout_ms)
           when :need_kms
-            feed_kms(timeout_ms)
+            feed_kms(timeout_holder)
           when :need_kms_credentials
             Binding.ctx_provide_kms_providers(
               self,
@@ -158,11 +158,24 @@ module Mongo
         mongocrypt_done
       end
 
-      def feed_kms(timeout_ms)
+      # Sends KMS requests to the KMS provider(s) on behalf of libmongocrypt,
+      # retrying transient failures in place.
+      #
+      # The remaining timeout budget is recomputed for every request: the state
+      # machine can need several KMS contexts, and a single context can be
+      # retried, so a budget snapshotted once per state-machine iteration would
+      # let later attempts run past the operation deadline.
+      #
+      # @param [ CsotTimeoutHolder ] timeout_holder CSOT timeouts for the
+      #   operation.
+      #
+      # @raise [ Error::TimeoutError ] If the operation deadline has passed.
+      def feed_kms(timeout_holder)
         while (kms_context = Binding.ctx_next_kms_ctx(self))
           begin
             delay = Binding.kms_ctx_usleep(kms_context)
-            sleep(delay / 1_000_000.0) unless delay.nil?
+            sleep_before_kms_request(delay, timeout_holder) unless delay.nil?
+            timeout_ms = timeout_holder.remaining_timeout_ms!
             provider = Binding.kms_ctx_get_kms_provider(kms_context)
             tls_options = @mongocrypt_handle.kms_tls_options(provider)
             @encryption_io.feed_kms(kms_context, tls_options, timeout_ms: timeout_ms)
@@ -174,6 +187,19 @@ module Mongo
           end
         end
         Binding.ctx_kms_done(self)
+      end
+
+      # Sleep for the backoff libmongocrypt asks for before the next KMS
+      # request, clamped so the wait never runs past the operation deadline.
+      #
+      # @param [ Integer ] delay_us The requested backoff, in microseconds.
+      # @param [ CsotTimeoutHolder ] timeout_holder CSOT timeouts for the
+      #   operation.
+      def sleep_before_kms_request(delay_us, timeout_holder)
+        delay_sec = delay_us / 1_000_000.0
+        remaining_sec = timeout_holder.remaining_timeout_sec
+        delay_sec = remaining_sec if remaining_sec && remaining_sec < delay_sec
+        sleep(delay_sec) if delay_sec.positive?
       end
 
       # Raise a KmsError that wraps the KMS status message (which describes the
