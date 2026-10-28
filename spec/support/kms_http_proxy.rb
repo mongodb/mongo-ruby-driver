@@ -27,7 +27,14 @@ module KmsHttpProxy
     args += [ '--ca_file', ca_file ] if ca_file
     args += [ '--cert_file', cert_file ] if cert_file
     pid = Process.spawn(*args, out: File::NULL, err: File::NULL)
-    wait_until_ready(port, tls: !ca_file.nil?)
+    begin
+      wait_until_ready(port, tls: !ca_file.nil?)
+    rescue StandardError
+      # Reap the child so a failed startup does not leave a process holding the
+      # port, which would break subsequent runs.
+      stop(pid)
+      raise
+    end
     pid
   end
 
