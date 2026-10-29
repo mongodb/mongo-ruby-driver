@@ -19,9 +19,13 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
                     address: instance_double(Mongo::Address, host: 'localhost', port: 27_017),
                     transport: :tcp,
                     tracing_attributes: nil,
+                    # The connection's own description carries the id of this
+                    # connection on the server. The server description holds
+                    # the id of whichever connection handshook last.
+                    description: instance_double(Mongo::Server::Description, server_connection_id: 456),
                     server: instance_double(Mongo::Server,
                                             description: instance_double(Mongo::Server::Description,
-                                                                         server_connection_id: 456))).tap do |conn|
+                                                                         server_connection_id: 999))).tap do |conn|
       # Behaves like the real accessor: what the tracer stores, it reads back.
       allow(conn).to receive(:tracing_attributes=) do |attrs|
         allow(conn).to receive(:tracing_attributes).and_return(attrs)
