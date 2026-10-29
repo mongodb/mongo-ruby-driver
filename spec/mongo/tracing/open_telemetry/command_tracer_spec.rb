@@ -127,6 +127,16 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       expect(count).to eq(1)
     end
 
+    it 'reads the command document once per command' do
+      count = 0
+      allow(message).to receive(:documents) do
+        count += 1
+        [ document ]
+      end
+      command_tracer.trace_command(message, operation_context, connection) { result }
+      expect(count).to eq(1)
+    end
+
     # A span the sampler dropped is still made current, so that its context
     # is propagated and nested spans stay nested, but gets nothing else.
     context 'with a span that is not recording' do
@@ -423,7 +433,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#span_attributes' do
-    subject { command_tracer.send(:span_attributes, message, connection) }
+    subject { command_tracer.send(:span_attributes, document, document.keys.first, connection) }
 
     it 'includes db.system.name' do
       expect(subject['db.system.name']).to eq('mongodb')
@@ -478,7 +488,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#apply_deferred_attributes' do
-    subject(:apply) { command_tracer.send(:apply_deferred_attributes, deferred_span, message) }
+    subject(:apply) { command_tracer.send(:apply_deferred_attributes, deferred_span, message, document.keys.first, document) }
 
     let(:deferred_span) { instance_double(OpenTelemetry::Trace::Span, set_attribute: nil) }
 
@@ -540,7 +550,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#collection_name' do
-    subject { command_tracer.send(:collection_name, message) }
+    subject { command_tracer.send(:collection_name, document.keys.first, document) }
 
     context 'with find command' do
       let(:document) { { 'find' => 'users' } }
@@ -600,7 +610,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#command_name' do
-    subject { command_tracer.send(:command_name, message) }
+    subject { command_tracer.send(:command_name, document) }
 
     let(:document) { { 'find' => 'users' } }
 
@@ -610,7 +620,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#database' do
-    subject { command_tracer.send(:database, message) }
+    subject { command_tracer.send(:database, document) }
 
     let(:document) { { 'find' => 'users', '$db' => 'test_db' } }
 
@@ -620,7 +630,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#query_summary' do
-    subject { command_tracer.send(:query_summary, message) }
+    subject { command_tracer.send(:query_summary, document.keys.first, document) }
 
     context 'with collection name' do
       let(:document) { { 'find' => 'users', '$db' => 'test_db' } }
@@ -640,7 +650,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#cursor_id' do
-    subject { command_tracer.send(:cursor_id, message) }
+    subject { command_tracer.send(:cursor_id, document.keys.first, document) }
 
     context 'with getMore command' do
       let(:document) { { 'getMore' => BSON::Int64.new(999) } }
@@ -660,7 +670,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#lsid' do
-    subject { command_tracer.send(:lsid, message) }
+    subject { command_tracer.send(:lsid, document) }
 
     context 'with lsid present' do
       let(:document) { { 'find' => 'users', 'lsid' => { 'id' => BSON::Binary.from_uuid(lsid_value) } } }
@@ -680,7 +690,7 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#txn_number' do
-    subject { command_tracer.send(:txn_number, message) }
+    subject { command_tracer.send(:txn_number, document) }
 
     context 'with txnNumber present' do
       let(:document) { { 'find' => 'users', 'txnNumber' => BSON::Int64.new(42) } }
