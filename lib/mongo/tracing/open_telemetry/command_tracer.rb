@@ -82,6 +82,9 @@ module Mongo
         private
 
         # Runs the command with the span made current, and finishes the span.
+        # A span that is not recording is still made current, so that its
+        # context is propagated, but gets no further attributes and no
+        # outcome: the SDK would discard them.
         #
         # @param span [ OpenTelemetry::Trace::Span ] a span with a valid context.
         # @param message [ Mongo::Protocol::Message ] the command message.
@@ -90,13 +93,15 @@ module Mongo
         #
         # rubocop:disable Lint/RescueException
         def trace_with_span(span, message)
-          ::OpenTelemetry::Trace.with_span(span) do |s, c|
+          recording = span.recording?
+          apply_deferred_attributes(span, message) if recording
+          ::OpenTelemetry::Trace.with_span(span) do |s, _c|
             yield.tap do |result|
-              process_command_result(result, cursor_id(message), c, s)
+              process_command_result(result, s) if recording
             end
           end
         rescue Exception => e
-          handle_command_exception(span, e)
+          handle_command_exception(span, e) if recording
           raise e
         ensure
           span.finish
@@ -136,21 +141,17 @@ module Mongo
         # Processes the command result and updates span attributes.
         #
         # @param result [ Object ] the command result.
-        # @param cursor_id [ Integer | nil ] the cursor ID.
-        # @param context [ OpenTelemetry::Context ] the context.
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
-        def process_command_result(result, cursor_id, context, span)
-          process_cursor_context(result, cursor_id, context, span)
+        def process_command_result(result, span)
+          process_cursor_context(result, span)
           maybe_trace_error(result, span)
         end
 
         # Handles exceptions that occur during command execution.
         #
-        # @param span [ OpenTelemetry::Trace::Span | nil ] the span.
+        # @param span [ OpenTelemetry::Trace::Span ] the span.
         # @param exception [ Exception ] the exception that occurred.
         def handle_command_exception(span, exception)
-          return unless span
-
           if exception.is_a?(Mongo::Error::OperationFailure)
             span.set_attribute('db.response.status_code', exception.code.to_s)
           end
@@ -158,33 +159,41 @@ module Mongo
           span.status = ::OpenTelemetry::Trace::Status.error("Unhandled exception of type: #{exception.class}")
         end
 
-        # Builds span attributes for the command.
+        # Builds the attributes passed at span creation: the cheap set the
+        # OpenTelemetry spec recommends. They are built for every span,
+        # recorded or not, and are the only ones the sampler sees. The rest
+        # are set by apply_deferred_attributes once the span is known to
+        # record.
         #
         # @param message [ Mongo::Protocol::Message ] the command message.
         # @param connection [ Mongo::Server::Connection ] the connection.
         #
         # @return [ Hash ] OpenTelemetry span attributes following MongoDB semantic conventions.
         def span_attributes(message, connection)
-          base_attributes(message)
-            .merge(connection_attributes(connection))
-            .merge(session_attributes(message))
-            .compact
-        end
-
-        # Returns base database and command attributes.
-        #
-        # @param message [ Mongo::Protocol::Message ] the command message.
-        #
-        # @return [ Hash ] base span attributes.
-        def base_attributes(message)
           {
             'db.system.name' => 'mongodb',
             'db.namespace' => database(message),
             'db.collection.name' => collection_name(message),
-            'db.command.name' => command_name(message),
+            'db.command.name' => command_name(message)
+          }.compact.merge(connection_attributes(connection))
+        end
+
+        # Sets the remaining attributes on a span that is recording. They are
+        # not visible to the sampler; only custom samplers keying on them are
+        # affected.
+        #
+        # @param span [ OpenTelemetry::Trace::Span ] the span.
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        def apply_deferred_attributes(span, message)
+          {
             'db.query.summary' => query_summary(message),
-            'db.query.text' => query_text(message)
-          }
+            'db.query.text' => query_text(message),
+            'db.mongodb.cursor_id' => cursor_id(message),
+            'db.mongodb.lsid' => lsid(message),
+            'db.mongodb.txn_number' => txn_number(message)
+          }.each do |key, value|
+            span.set_attribute(key, value) unless value.nil?
+          end
         end
 
         # Returns connection-related attributes.
@@ -202,26 +211,11 @@ module Mongo
           }
         end
 
-        # Returns session and transaction attributes.
-        #
-        # @param message [ Mongo::Protocol::Message ] the command message.
-        #
-        # @return [ Hash ] session span attributes.
-        def session_attributes(message)
-          {
-            'db.mongodb.cursor_id' => cursor_id(message),
-            'db.mongodb.lsid' => lsid(message),
-            'db.mongodb.txn_number' => txn_number(message)
-          }
-        end
-
         # Processes cursor context from the command result.
         #
         # @param result [ Object ] the command result.
-        # @param _cursor_id [ Integer | nil ] the cursor ID (unused).
-        # @param _context [ OpenTelemetry::Context ] the context (unused).
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
-        def process_cursor_context(result, _cursor_id, _context, span)
+        def process_cursor_context(result, span)
           cursor_id = normalize_cursor_id(result.cursor_id)
           return unless cursor_id.positive?
 

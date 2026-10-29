@@ -42,6 +42,7 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
         allow(s).to receive(:record_exception)
         allow(s).to receive(:status=)
         allow(s).to receive(:context).and_return(double('SpanContext', valid?: true))
+        allow(s).to receive(:recording?).and_return(true)
       end
     end
     let(:context) { double('OpenTelemetry::Context') }
@@ -210,9 +211,71 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
         expect(cursor_context_map).not_to have_key(cursor_id)
       end
 
-      it 'does not set cursor_id attribute' do
-        expect(span).not_to receive(:set_attribute).with('db.mongodb.cursor_id', anything)
+      it 'sets only the cursor id of the operation itself' do
+        expect(span).to receive(:set_attribute).with('db.mongodb.cursor_id', 999).once
         operation_tracer.trace_operation(operation, operation_context) { cursor }
+      end
+    end
+
+    it 'passes no cursor id to start_span' do
+      expect(otel_tracer).to receive(:start_span).with(
+        anything,
+        attributes: hash_excluding('db.mongodb.cursor_id'),
+        with_parent: nil,
+        kind: :client
+      )
+      operation_tracer.trace_operation(operation, operation_context) { result }
+    end
+
+    # A span the sampler dropped is still made current, so that the command
+    # spans created within it nest under it, but gets nothing else.
+    context 'with a span that is not recording' do
+      let(:operation_class) { class_double(Mongo::Operation::GetMore, name: 'Mongo::Operation::GetMore') }
+      let(:operation) do
+        instance_double(
+          Mongo::Operation::GetMore,
+          db_name: 'test_db',
+          coll_name: 'test_collection',
+          cursor_id: 12_345,
+          class: operation_class,
+          respond_to?: true
+        )
+      end
+
+      before do
+        allow(span).to receive(:recording?).and_return(false)
+      end
+
+      it 'does not set the cursor id' do
+        expect(span).not_to receive(:set_attribute)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
+
+      it 'still makes the span current' do
+        expect(OpenTelemetry::Trace).to receive(:with_span).with(span).and_yield(span, context)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
+
+      it 'does not record the cursor id of a new cursor' do
+        allow(operation).to receive(:cursor_id).and_return(nil)
+        cursor = instance_double(Mongo::Cursor, id: 777)
+        allow(cursor).to receive(:is_a?).with(Mongo::Cursor).and_return(true)
+        expect(span).not_to receive(:set_attribute)
+        operation_tracer.trace_operation(operation, operation_context) { cursor }
+      end
+
+      it 'does not record a raised exception' do
+        error = StandardError.new('test error')
+        expect(span).not_to receive(:record_exception)
+        expect(span).not_to receive(:status=)
+        expect do
+          operation_tracer.trace_operation(operation, operation_context) { raise error }
+        end.to raise_error(error)
+      end
+
+      it 'finishes the span' do
+        expect(span).to receive(:finish)
+        operation_tracer.trace_operation(operation, operation_context) { result }
       end
     end
 
@@ -287,10 +350,6 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
       expect(attributes['db.operation.summary']).to eq('find test_db.users')
     end
 
-    it 'does not include nil values' do
-      expect(attributes).not_to have_key('db.mongodb.cursor_id')
-    end
-
     context 'with cursor_id' do
       let(:operation_class) { class_double(Mongo::Operation::GetMore, name: 'Mongo::Operation::GetMore') }
       let(:operation) do
@@ -304,8 +363,8 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
         )
       end
 
-      it 'includes db.mongodb.cursor_id' do
-        expect(attributes['db.mongodb.cursor_id']).to eq(12_345)
+      it 'leaves the cursor id for after the span is known to record' do
+        expect(attributes).not_to have_key('db.mongodb.cursor_id')
       end
     end
 
@@ -594,7 +653,7 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
 
   describe '#process_cursor_context' do
     subject(:process_result) do
-      operation_tracer.send(:process_cursor_context, result, cursor_id, context, span)
+      operation_tracer.send(:process_cursor_context, result, cursor_id, context, span, true)
     end
 
     # rubocop:disable RSpec/VerifiedDoubles
