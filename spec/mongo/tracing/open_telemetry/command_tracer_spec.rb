@@ -94,6 +94,26 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       command_tracer.trace_command(message, operation_context, connection) { result }
     end
 
+    it 'builds the connection attributes once per connection' do
+      address = instance_double(Mongo::Address, host: 'localhost', port: 27_017)
+      expect(connection).to receive(:address).twice.and_return(address)
+      3.times do
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+    end
+
+    it 'formats the lsid once across repeated commands' do
+      count = 0
+      allow(document['lsid']['id']).to receive(:to_uuid) do
+        count += 1
+        lsid_value
+      end
+      3.times do
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+      expect(count).to eq(1)
+    end
+
     # A span the sampler dropped is still made current, so that its context
     # is propagated and nested spans stay nested, but gets nothing else.
     context 'with a span that is not recording' do
