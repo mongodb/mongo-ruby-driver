@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'bson'
+require_relative 'configuration'
 require_relative 'multi_doc'
 require_relative 'parallel'
 require_relative 'single_doc'
@@ -46,22 +47,59 @@ module Mongo
       end
 
       def run
+        Configuration.check_jit!
+        configuration.install!
+        announce_configuration
+
         perf_data = []
         benches = Hash.new { |h, k| h[k] = [] }
 
-        ALL.each do |klass|
+        tasks.each do |klass|
           result = run_benchmark(klass)
           perf_data << compile_perf_data(result)
           append_to_benchmarks(klass, result, benches)
         end
 
-        perf_data += compile_benchmarks(benches)
+        # The composites average a fixed list of micro-benchmarks, so they are
+        # only meaningful when every micro-benchmark ran.
+        perf_data += compile_benchmarks(benches) if tasks == ALL
 
         save_perf_data(perf_data)
         summarize_perf_data(perf_data)
       end
 
+      # The micro-benchmarks to run.
+      #
+      # By default this is every micro-benchmark, but DRIVER_BENCH_TASKS
+      # narrows it to those whose names contain one of a comma-separated list
+      # of substrings (case-insensitive).
+      #
+      # @return [ Array<Class> ] the micro-benchmark classes to run.
+      def tasks
+        @tasks ||= begin
+          patterns = ENV['DRIVER_BENCH_TASKS'].to_s.split(',').map { |p| p.strip.downcase }.reject(&:empty?)
+          selected = ALL.select do |klass|
+            patterns.empty? || patterns.any? { |pattern| klass.bench_name.downcase.include?(pattern) }
+          end
+          raise 'no micro-benchmarks match DRIVER_BENCH_TASKS' if selected.empty?
+
+          (selected == ALL) ? ALL : selected.freeze
+        end
+      end
+
       private
+
+      def configuration
+        @configuration ||= Configuration.current
+      end
+
+      def announce_configuration
+        puts format('===== DriverBench: %s =====', configuration.name)
+        puts configuration.description
+        puts RUBY_DESCRIPTION
+        puts format('%d of %d micro-benchmarks', tasks.length, ALL.length) unless tasks == ALL
+        puts
+      end
 
       def run_benchmark(klass)
         print klass.bench_name, ': '
@@ -77,16 +115,18 @@ module Mongo
           { 'name' => "time-#{percentile}%",
             'value' => result[:percentiles][percentile] }
         end
+        per_op_data = result[:per_op].map { |name, value| { 'name' => name, 'value' => value } }
 
         {
           'info' => {
-            'test_name' => result[:name],
+            'test_name' => configuration.perf_test_name(result[:name]),
             'args' => {},
           },
           'metrics' => [
             { 'name' => 'score',
               'value' => result[:score] },
-            *percentile_data
+            *percentile_data,
+            *per_op_data
           ]
         }
       end
@@ -107,7 +147,7 @@ module Mongo
         benches.map do |bench, score|
           {
             'info' => {
-              'test_name' => bench,
+              'test_name' => configuration.perf_test_name(bench),
               'args' => {}
             },
             'metrics' => [
@@ -119,7 +159,7 @@ module Mongo
       end
 
       def summarize_perf_data(data)
-        puts '===== Performance Results ====='
+        puts format('===== Performance Results (%s) =====', configuration.name)
         data.each do |item|
           puts format('%s : %4.4g', item['info']['test_name'], item['metrics'][0]['value'])
           next unless item['metrics'].length > 1

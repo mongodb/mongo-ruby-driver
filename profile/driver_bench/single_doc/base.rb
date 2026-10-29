@@ -28,6 +28,12 @@ module Mongo
           10_000
         end
 
+        # Every single-doc task performs one driver operation per unit of
+        # scale.
+        def ops_per_iteration
+          scale
+        end
+
         def teardown
           cleanup_client
         end

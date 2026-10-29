@@ -296,6 +296,48 @@ functions:
       params:
         file: "${PROJECT_DIRECTORY}/perf.json"
 
+  "run benchmark comparison":
+    # Runs the micro-benchmarks the OpenTelemetry spec requires under every
+    # configuration it requires, interleaved on one host, and reports what
+    # each configuration costs relative to the untraced baseline. Fewer
+    # iterations per run buy more interleaved repetitions in the same time.
+    # Every configuration runs with YJIT, which production deployments
+    # commonly enable; without it the interpreter's per-call cost inflates
+    # the tracing overhead. The run fails if this ruby was built without
+    # YJIT.
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        # Needed to download "latest"/"latest-build" from the private S3
+        # bucket (DRIVERS-3628). Any other version needs no AWS access.
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
+        script: |
+          ${PREPARE_SHELL}
+          TEST_CMD="bundle exec rake driver_bench:compare" \
+            REPS="${driver_bench_reps|8}" \
+            DRIVER_BENCH_MAX_ITERATIONS="${driver_bench_max_iterations|20}" \
+            DRIVER_BENCH_MIN_TIME="${driver_bench_min_time|20}" \
+            RUBY_YJIT_ENABLE=1 \
+            PERFORMANCE_RESULTS_FILE="$PROJECT_DIRECTORY/perf-comparison.json" \
+            .evergreen/run-tests.sh
+    # Sent to the performance store so that the overhead metrics are watched
+    # for regressions, and kept as an artifact for comparison by hand.
+    - command: perf.send
+      params:
+        file: "${PROJECT_DIRECTORY}/perf-comparison.json"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: ./src/perf-comparison.json
+        display_name: perf-comparison.json
+        remote_file: ${UPLOAD_BUCKET}/${version_id}/${build_id}/artifacts/${build_variant}/perf-comparison.json
+        content_type: application/json
+        permissions: public-read
+        bucket: mciuploads
+
   "run tests with orchestration and drivers tools":
     - command: subprocess.exec
       type: test
@@ -595,6 +637,11 @@ tasks:
   - name: "driver-bench"
     commands:
       - func: "run benchmarks"
+  # About 1.5 hours at the default eight reps.
+  - name: "driver-bench-otel"
+    exec_timeout_secs: 10800
+    commands:
+      - func: "run benchmark comparison"
   - name: "test-csot"
     commands:
       - func: "run CSOT tests"

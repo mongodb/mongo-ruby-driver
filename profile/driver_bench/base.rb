@@ -3,6 +3,7 @@
 require 'benchmark'
 require 'mongo'
 
+require_relative 'configuration'
 require_relative 'percentiles'
 
 module Mongo
@@ -41,9 +42,25 @@ module Mongo
 
       # Instantiate a new micro-benchmark class.
       def initialize
-        @max_iterations = debug_mode? ? 10 : 100
-        @min_time = debug_mode? ? 1 : 60
+        @max_iterations = Integer(ENV['DRIVER_BENCH_MAX_ITERATIONS'] || (debug_mode? ? 10 : 100))
+        @min_time = Float(ENV['DRIVER_BENCH_MIN_TIME'] || (debug_mode? ? 1 : 60))
         @max_time = 300 # 5 minutes
+      end
+
+      # The number of driver operations one iteration performs, or nil when
+      # the task has no meaningful per-operation unit. Per-operation metrics
+      # are only reported for tasks that define it.
+      #
+      # @return [ Integer | nil ] operations per iteration.
+      def ops_per_iteration
+        nil
+      end
+
+      # Whether to report per-operation metrics. Comparison asks for them;
+      # a plain suite run leaves them out, so that the results it sends to
+      # the performance store are the same as before they existed.
+      def per_op_metrics?
+        %w[1 true yes].include?(ENV['DRIVER_BENCH_PER_OP_METRICS'].to_s.downcase)
       end
 
       def debug_mode?
@@ -61,7 +78,8 @@ module Mongo
 
         { name: self.class.bench_name,
           score: score,
-          percentiles: percentiles }
+          percentiles: percentiles,
+          per_op: per_op_metrics(percentiles) }
       end
 
       private
@@ -82,9 +100,13 @@ module Mongo
 
           setup
 
+          @cpu_times = []
+          @gc_times = []
+          @allocations = []
+
           loop do
             before_task
-            timing = consider_gc { Benchmark.realtime { debug_mode? ? sleep(0.1) : do_task } }
+            timing = consider_gc { measure_iteration { debug_mode? ? sleep(0.1) : do_task } }
             after_task
 
             iteration_count += 1
@@ -104,9 +126,66 @@ module Mongo
         end
       end
 
-      # Instantiate a new client.
+      # Times one iteration, and records alongside the wall-clock time the
+      # process CPU time and the number of objects allocated. CPU time leaves
+      # out the time spent waiting on the server, and allocations are nearly
+      # deterministic, so both show driver-side cost with less noise than
+      # throughput. Process CPU time includes the driver's background threads
+      # (e.g. server monitoring), which cost the same in every configuration.
+      #
+      # GC time is recorded too, where the runtime reports it (Ruby 3.1+).
+      # When and how long the collector runs varies between processes more
+      # than the cost of tracing does, so CPU time without GC is the steadier
+      # measure of the driver's own work.
+      #
+      # @return [ Float ] the wall-clock time in seconds.
+      def measure_iteration(&block)
+        allocated = GC.stat(:total_allocated_objects)
+        gc = gc_time
+        cpu = Process.clock_gettime(Process::CLOCK_PROCESS_CPUTIME_ID)
+        timing = Benchmark.realtime(&block)
+        @cpu_times.push(Process.clock_gettime(Process::CLOCK_PROCESS_CPUTIME_ID) - cpu)
+        @gc_times.push(gc_time - gc) if gc
+        @allocations.push(GC.stat(:total_allocated_objects) - allocated)
+        timing
+      end
+
+      # @return [ Float | nil ] the total time spent in GC so far, in
+      #   seconds, or nil when the runtime does not report it.
+      def gc_time
+        ms = GC.stat[:time]
+        ms && (ms / 1000.0)
+      end
+
+      # Per-operation medians, for tasks that define ops_per_iteration, when
+      # asked for (see #per_op_metrics?).
+      #
+      # @return [ Hash<String, Float> ] metric name to value.
+      def per_op_metrics(timings)
+        return {} unless per_op_metrics? && ops_per_iteration
+
+        ops = ops_per_iteration.to_f
+        {
+          'wall_us_per_op' => timings[50] / ops * 1_000_000,
+          'cpu_us_per_op' => Percentiles.new(@cpu_times)[50] / ops * 1_000_000,
+          'allocs_per_op' => Percentiles.new(@allocations)[50] / ops
+        }.merge(gc_metrics(ops))
+      end
+
+      def gc_metrics(ops)
+        return {} if @gc_times.empty?
+
+        cpu_ex_gc = @cpu_times.zip(@gc_times).map { |cpu, gc| cpu - gc }
+        {
+          'gc_us_per_op' => Percentiles.new(@gc_times)[50] / ops * 1_000_000,
+          'cpu_ex_gc_us_per_op' => Percentiles.new(cpu_ex_gc)[50] / ops * 1_000_000
+        }
+      end
+
+      # Instantiate a new client, with the options of the configuration
+      # being measured.
       def new_client(uri = ENV['MONGODB_URI'])
-        Mongo::Client.new(uri)
+        Mongo::Client.new(uri, Configuration.current.client_options)
       end
 
       # Takes care of garbage collection considerations before
