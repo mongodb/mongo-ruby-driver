@@ -531,6 +531,18 @@ module Mongo
     #     encryption key cache, in milliseconds. Must be a non-negative
     #     integer. A value of 0 means the cache never expires. Defaults to
     #     60000.
+    #   - :kms_connect_callback => Proc | Method | #call | nil, a callable
+    #     invoked as call(host, port, timeout_ms) when the driver needs to
+    #     reach a KMS host. It must return an fd-backed IO (a real IO or Socket)
+    #     already connected to host:port (for example, after performing an HTTP
+    #     CONNECT handshake with a proxy). The driver wraps the returned object
+    #     in TLS to the KMS host, and Ruby's OpenSSL requires an fd-backed
+    #     object, so the callback cannot return another OpenSSL::SSL::SSLSocket;
+    #     a TLS-to-proxy connection needs a socketpair bridge. The driver
+    #     bounds the call by the connect budget, so a callback that blocks
+    #     cannot outlive the operation; the callback should still honor
+    #     timeout_ms for its own work. See Mongo::ClientEncryption#initialize
+    #     for a usage example.
     #
     #   Notes on automatic encryption:
     #   - Automatic encryption is an enterprise only feature that only applies

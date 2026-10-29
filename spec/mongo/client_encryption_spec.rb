@@ -426,4 +426,22 @@ describe Mongo::ClientEncryption do
       it_behaves_like 'a decrypter'
     end
   end
+
+  describe 'kms_connect_callback option' do
+    let(:callback) { proc { |_host, _port, _timeout_ms| } }
+
+    it 'passes the callback to the explicit encrypter' do
+      expect(Mongo::Crypt::ExplicitEncrypter).to receive(:new)
+        .with(anything, anything, anything, anything, anything, anything, callback)
+        .and_call_original
+
+      Mongo::ClientEncryption.new(
+        authorized_client,
+        key_vault_namespace: 'foo.bar',
+        kms_providers: { local: { key: 'a' * 96 } },
+        kms_tls_options: {},
+        kms_connect_callback: callback
+      )
+    end
+  end
 end

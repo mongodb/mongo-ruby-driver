@@ -449,4 +449,34 @@ describe Mongo::Crypt::AutoEncrypter do
     it_behaves_like 'with schema map collection validator'
     it_behaves_like 'with no validator or client option'
   end
+
+  describe 'kms_connect_callback option' do
+    include_context 'with local kms_providers'
+
+    let(:callback) { proc { |_host, _port, _timeout_ms| } }
+
+    # Defined here so the shared after hook closes the encrypter built for
+    # this example instead of building a second one without the callback.
+    let(:auto_encrypter) do
+      described_class.new(
+        client: authorized_client,
+        key_vault_namespace: 'foo.bar',
+        kms_providers: { local: { key: 'a' * 96 } },
+        kms_connect_callback: callback,
+        # Match the load mechanism every other Handle in the process uses so
+        # libmongocrypt does not raise "An existing crypt_shared library is
+        # loaded" when this Handle would otherwise fall back to the $SYSTEM
+        # search.
+        extra_options: auto_encrypter_extra_options
+      )
+    end
+
+    it 'passes the callback to EncryptionIO' do
+      expect(Mongo::Crypt::EncryptionIO).to receive(:new)
+        .with(hash_including(kms_connect_callback: callback))
+        .and_call_original
+
+      auto_encrypter
+    end
+  end
 end
