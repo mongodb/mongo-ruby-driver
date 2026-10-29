@@ -53,20 +53,35 @@ module Mongo
         # @yield the block representing the operation to be traced.
         #
         # @return [ Object ] the result of the operation.
-        #
-        # rubocop:disable Lint/RescueException
         def trace_operation(operation, operation_context, op_name: nil, &block)
           span = create_operation_span(operation, operation_context, op_name)
+          # With no SDK and no valid parent, the API returns a span with an
+          # invalid context. It cannot be made current, recorded or
+          # propagated, so it gets no work at all, not even finishing it.
+          return yield unless span.context.valid?
+
+          trace_with_span(span, operation, &block)
+        end
+
+        private
+
+        # Runs the operation with the span made current, and finishes the span.
+        #
+        # @param span [ OpenTelemetry::Trace::Span ] a span with a valid context.
+        # @param operation [ Mongo::Operation ] the operation.
+        #
+        # @return [ Object ] the result of the operation.
+        #
+        # rubocop:disable Lint/RescueException
+        def trace_with_span(span, operation, &block)
           execute_with_span(span, operation, &block)
         rescue Exception => e
           handle_span_exception(span, e)
           raise e
         ensure
-          span&.finish
+          span.finish
         end
         # rubocop:enable Lint/RescueException
-
-        private
 
         # Creates an OpenTelemetry span for the operation.
         #

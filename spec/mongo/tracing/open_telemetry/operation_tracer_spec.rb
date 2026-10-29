@@ -41,6 +41,7 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
         allow(s).to receive(:set_attribute)
         allow(s).to receive(:record_exception)
         allow(s).to receive(:status=)
+        allow(s).to receive(:context).and_return(double('SpanContext', valid?: true))
       end
     end
     let(:context) { double('OpenTelemetry::Context') }
@@ -89,6 +90,39 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
     it 'finishes the span' do
       expect(span).to receive(:finish)
       operation_tracer.trace_operation(operation, operation_context) { result }
+    end
+
+    # With no SDK installed and no valid parent, the API returns a span whose
+    # context is invalid. Nothing can be done with it, so it gets no work.
+    context 'with an invalid span' do
+      let(:invalid_span) { OpenTelemetry::Trace::Span::INVALID }
+
+      before do
+        allow(otel_tracer).to receive(:start_span).and_return(invalid_span)
+      end
+
+      it 'does not make the span current' do
+        expect(OpenTelemetry::Trace).not_to receive(:with_span)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
+
+      it 'returns the block result' do
+        return_value = operation_tracer.trace_operation(operation, operation_context) { :done }
+        expect(return_value).to eq(:done)
+      end
+
+      it 'does not finish the span' do
+        expect(invalid_span).not_to receive(:finish)
+        operation_tracer.trace_operation(operation, operation_context) { result }
+      end
+
+      it 'does not record a raised exception' do
+        error = StandardError.new('test error')
+        expect(invalid_span).not_to receive(:record_exception)
+        expect do
+          operation_tracer.trace_operation(operation, operation_context) { raise error }
+        end.to raise_error(error)
+      end
     end
 
     context 'with custom operation name' do
