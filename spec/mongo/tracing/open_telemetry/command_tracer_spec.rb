@@ -65,7 +65,10 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
   end
 
   describe '#trace_command' do
-    let(:span) { instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil) }
+    let(:span_context) { instance_double(OpenTelemetry::Trace::SpanContext, valid?: true) }
+    let(:span) do
+      instance_double(OpenTelemetry::Trace::Span, finish: nil, set_attribute: nil, context: span_context)
+    end
     let(:context) { instance_double(Mongo::Operation::Context) }
     let(:result) { instance_double(Mongo::Operation::Result, cursor_id: 0, successful?: true) }
 
@@ -99,6 +102,39 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
     it 'finishes the span' do
       expect(span).to receive(:finish)
       command_tracer.trace_command(message, operation_context, connection) { result }
+    end
+
+    # With no SDK installed and no valid parent, the API returns a span whose
+    # context is invalid. Nothing can be done with it, so it gets no work.
+    context 'with an invalid span' do
+      let(:invalid_span) { OpenTelemetry::Trace::Span::INVALID }
+
+      before do
+        allow(otel_tracer).to receive(:start_span).and_return(invalid_span)
+      end
+
+      it 'does not make the span current' do
+        expect(OpenTelemetry::Trace).not_to receive(:with_span)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+
+      it 'returns the block result' do
+        return_value = command_tracer.trace_command(message, operation_context, connection) { :done }
+        expect(return_value).to eq(:done)
+      end
+
+      it 'does not finish the span' do
+        expect(invalid_span).not_to receive(:finish)
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+
+      it 'does not record a raised exception' do
+        error = StandardError.new('generic error')
+        expect(invalid_span).not_to receive(:record_exception)
+        expect do
+          command_tracer.trace_command(message, operation_context, connection) { raise error }
+        end.to raise_error(error)
+      end
     end
 
     context 'when result has cursor_id' do

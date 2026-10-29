@@ -64,14 +64,32 @@ module Mongo
         # @yield the block representing the command to be traced.
         #
         # @return [ Object ] the result of the command.
-        # rubocop:disable Lint/RescueException
-        def trace_command(message, _operation_context, connection)
+        def trace_command(message, _operation_context, connection, &block)
           return yield if skip_tracing?(message)
 
           # Commands should always be nested under their operation span, not directly under
           # the transaction span. Don't pass with_parent to use automatic parent resolution
           # from the currently active span (the operation span).
           span = create_command_span(message, connection)
+          # With no SDK and no valid parent, the API returns a span with an
+          # invalid context. It cannot be made current, recorded or
+          # propagated, so it gets no work at all, not even finishing it.
+          return yield unless span.context.valid?
+
+          trace_with_span(span, message, &block)
+        end
+
+        private
+
+        # Runs the command with the span made current, and finishes the span.
+        #
+        # @param span [ OpenTelemetry::Trace::Span ] a span with a valid context.
+        # @param message [ Mongo::Protocol::Message ] the command message.
+        #
+        # @return [ Object ] the result of the command.
+        #
+        # rubocop:disable Lint/RescueException
+        def trace_with_span(span, message)
           ::OpenTelemetry::Trace.with_span(span) do |s, c|
             yield.tap do |result|
               process_command_result(result, cursor_id(message), c, s)
@@ -81,11 +99,9 @@ module Mongo
           handle_command_exception(span, e)
           raise e
         ensure
-          span&.finish
+          span.finish
         end
         # rubocop:enable Lint/RescueException
-
-        private
 
         # Determines whether the command must not be traced. Sensitive auth
         # commands carry credentials in their payloads (SCRAM proofs, cleartext
