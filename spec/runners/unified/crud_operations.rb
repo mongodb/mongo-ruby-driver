@@ -325,6 +325,16 @@ module Unified
       obj.aggregate(pipeline, **opts).to_a
     end
 
+    def map_reduce(op)
+      obj = entities.get_any(op.use!('object'))
+      args = op.use!('arguments')
+      map = args.use!('map')
+      reduce = args.use!('reduce')
+      out = args.use!('out')
+
+      Mongo::Collection::View.new(obj).map_reduce(map, reduce, out: out).to_a
+    end
+
     def create_find_cursor(op)
       obj = entities.get_any(op.use!('object'))
       args = op.use!('arguments')
