@@ -20,3 +20,21 @@ to schedule and track work.
 
 A JIRA ticket is not required when submitting a pull request, but is
 appreciated especially for non-trivial changes.
+
+## Test coverage
+
+The Evergreen `Coverage` buildvariant runs the spec suite with `COVERAGE=1` and
+fails if any file's line coverage drops below the value recorded in
+`.simplecov_baseline.json`.
+
+To regenerate the baseline locally after an intentional coverage change (for
+example, deleting tested code, or improving coverage and wanting to lock in
+the gain):
+
+```sh
+COVERAGE=1 bundle exec rake spec:ci
+bundle exec rake coverage:update_baseline
+git add .simplecov_baseline.json
+```
+
+The baseline diff in your PR shows the reviewer per-file deltas.
