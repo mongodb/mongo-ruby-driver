@@ -68,6 +68,6 @@ def standard_dependencies
     gem 'ruby-lsp', platforms: :mri
   end
 
-  gem 'libmongocrypt-helper', '~> 1.20.1' if %w[helper mongocryptd].include?(ENV['FLE'])
+  gem 'libmongocrypt-helper', '~> 1.21.0' if %w[helper mongocryptd].include?(ENV['FLE'])
 end
 # rubocop:enable Metrics/MethodLength
