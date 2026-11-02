@@ -80,7 +80,7 @@ module Mongo
         # @since 2.0.0
         # @api public
         def successful?
-          !documents.nil?
+          !documents.nil? && parser.message.empty?
         end
 
         # Get the execution time of the map/reduce.
