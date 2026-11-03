@@ -201,26 +201,21 @@ module Mongo
           end
         end
 
-        # Returns connection-related attributes, built once per connection
-        # and frozen. Two threads may build them at the same time; they build
-        # the same hash, so either result is fine. The value goes away with
-        # the connection.
+        # Returns connection-related attributes, built once per connection,
+        # frozen and kept on the connection. Two threads may build them at
+        # the same time; they build the same hash, so either result is fine.
         #
         # @param connection [ Mongo::Server::Connection ] the connection.
         #
         # @return [ Hash ] connection span attributes.
         def connection_attributes(connection)
-          attrs = connection.instance_variable_get(:@otel_connection_attributes)
-          return attrs if attrs
-
-          attrs = {
+          connection.tracing_attributes ||= {
             'server.port' => connection.address.port,
             'server.address' => connection.address.host,
             'network.transport' => connection.transport.to_s,
             'db.mongodb.server_connection_id' => connection.server.description.server_connection_id,
             'db.mongodb.driver_connection_id' => connection.id
           }.freeze
-          connection.instance_variable_set(:@otel_connection_attributes, attrs)
         end
 
         # Processes cursor context from the command result.

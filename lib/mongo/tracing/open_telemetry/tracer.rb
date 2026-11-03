@@ -211,11 +211,11 @@ module Mongo
           return if session.nil? || session.implicit? || !session.in_transaction?
 
           txn_num = session.txn_num
-          cached = session.instance_variable_get(:@otel_transaction_key)
+          cached = session.tracing_transaction_key
           return cached[1] if cached && cached[0] == txn_num
 
           key = "#{session.session_id['id'].to_uuid}-#{txn_num}"
-          session.instance_variable_set(:@otel_transaction_key, [ txn_num, key ].freeze)
+          session.tracing_transaction_key = [ txn_num, key ].freeze
           key
         end
 

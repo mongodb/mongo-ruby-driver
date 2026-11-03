@@ -16,8 +16,14 @@ describe Mongo::Tracing::OpenTelemetry::Tracer do
       implicit?: false,
       in_transaction?: true,
       txn_num: 42,
-      session_id: { 'id' => session_id_binary }
-    )
+      session_id: { 'id' => session_id_binary },
+      tracing_transaction_key: nil
+    ).tap do |s|
+      # Behaves like the real accessor: what the tracer stores, it reads back.
+      allow(s).to receive(:tracing_transaction_key=) do |value|
+        allow(s).to receive(:tracing_transaction_key).and_return(value)
+      end
+    end
   end
 
   describe '#transaction_map_key' do

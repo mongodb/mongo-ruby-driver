@@ -297,6 +297,13 @@ module Mongo
     # @api private
     attr_accessor :recovery_token
 
+    # @return [ Array<Integer, String> | nil ] The transaction number and the
+    #   OpenTelemetry tracer's key for that transaction. Built once by the
+    #   tracer and reused for every operation in the transaction.
+    #
+    # @api private
+    attr_accessor :tracing_transaction_key
+
     # Error message indicating that the session was retrieved from a client with a different cluster than that of the
     # client through which it is currently being used.
     #

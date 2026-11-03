@@ -124,6 +124,13 @@ module Mongo
       # across all connections.
       attr_reader :global_id
 
+      # @return [ Hash | nil ] OpenTelemetry span attributes describing this
+      #   connection. Built once by the tracer and reused for every command
+      #   on the connection.
+      #
+      # @api private
+      attr_accessor :tracing_attributes
+
       def_delegators :server, :tracer
 
       # The connection pool from which this connection was created.
