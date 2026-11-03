@@ -80,7 +80,7 @@ module Mongo
         # @since 2.0.0
         # @api public
         def successful?
-          !documents.nil?
+          !documents.nil? && parser.message.empty?
         end
 
         # Get the execution time of the map/reduce.
@@ -112,7 +112,11 @@ module Mongo
         # @since 2.0.0
         # @api private
         def validate!
-          documents.nil? ? raise_operation_failure : self
+          if documents.nil? || !parser.message.empty?
+            raise_operation_failure
+          else
+            self
+          end
         end
 
         # Get the cursor id.

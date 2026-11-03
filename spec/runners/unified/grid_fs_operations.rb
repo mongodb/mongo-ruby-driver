@@ -26,6 +26,16 @@ module Unified
       end
     end
 
+    def delete_by_name(op)
+      bucket = entities.get(:bucket, op.use!('object'))
+      use_arguments(op) do |args|
+        filename = args.use!('filename')
+        bucket.find(filename: filename).to_a.each do |file|
+          bucket.delete(file['_id'])
+        end
+      end
+    end
+
     def download(op)
       bucket = entities.get(:bucket, op.use!('object'))
       use_arguments(op) do |args|
