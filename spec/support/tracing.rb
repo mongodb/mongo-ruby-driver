@@ -28,6 +28,12 @@ module Tracing
       @context ||= Context.new(self)
     end
 
+    # Mirrors OpenTelemetry::Trace::Span#recording?. Spans from this tracer
+    # always record, so the assertions see every attribute.
+    def recording?
+      true
+    end
+
     # rubocop:disable Lint/UnusedMethodArgument
     def record_exception(exception, attributes: nil)
       set_attribute('exception.type', exception.class.to_s)
