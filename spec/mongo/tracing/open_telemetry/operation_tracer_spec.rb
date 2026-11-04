@@ -390,6 +390,11 @@ describe Mongo::Tracing::OpenTelemetry::OperationTracer do
       expect(op_name_result).to eq('find')
     end
 
+    it 'derives the name once per operation class' do
+      expect(operation_class).to receive(:name).once.and_return('Mongo::Operation::Find')
+      3.times { operation_tracer.send(:operation_name, operation, nil) }
+    end
+
     context 'with custom op_name' do
       let(:op_name) { 'CustomOperation' }
 

@@ -200,6 +200,9 @@ module Mongo
         # Generates a unique key for transaction tracking.
         #
         # Returns nil for implicit sessions or sessions not in a transaction.
+        # Every operation in a transaction needs the key, so it is cached on
+        # the session together with the transaction number it was built for.
+        # Two threads may build it at the same time; they build the same key.
         #
         # @param session [ Mongo::Session ] the session.
         #
@@ -207,7 +210,13 @@ module Mongo
         def transaction_map_key(session)
           return if session.nil? || session.implicit? || !session.in_transaction?
 
-          "#{session.session_id['id'].to_uuid}-#{session.txn_num}"
+          txn_num = session.txn_num
+          cached = session.tracing_transaction_key
+          return cached[1] if cached && cached[0] == txn_num
+
+          key = "#{session.session_id['id'].to_uuid}-#{txn_num}"
+          session.tracing_transaction_key = [ txn_num, key ].freeze
+          key
         end
 
         private

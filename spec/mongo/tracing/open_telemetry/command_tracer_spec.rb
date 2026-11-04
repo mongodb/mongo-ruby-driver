@@ -18,9 +18,15 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
                     id: 123,
                     address: instance_double(Mongo::Address, host: 'localhost', port: 27_017),
                     transport: :tcp,
+                    tracing_attributes: nil,
                     server: instance_double(Mongo::Server,
                                             description: instance_double(Mongo::Server::Description,
-                                                                         server_connection_id: 456)))
+                                                                         server_connection_id: 456))).tap do |conn|
+      # Behaves like the real accessor: what the tracer stores, it reads back.
+      allow(conn).to receive(:tracing_attributes=) do |attrs|
+        allow(conn).to receive(:tracing_attributes).and_return(attrs)
+      end
+    end
   end
 
   let(:message) do
@@ -92,6 +98,33 @@ describe Mongo::Tracing::OpenTelemetry::CommandTracer do
       expect(span).to receive(:set_attribute).with('db.query.summary', 'find test_db.users')
       expect(span).to receive(:set_attribute).with('db.mongodb.lsid', lsid_value)
       command_tracer.trace_command(message, operation_context, connection) { result }
+    end
+
+    it 'builds the connection attributes once per connection' do
+      address = instance_double(Mongo::Address, host: 'localhost', port: 27_017)
+      expect(connection).to receive(:address).twice.and_return(address)
+      3.times do
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+    end
+
+    it 'stores the connection attributes on the connection, frozen' do
+      command_tracer.trace_command(message, operation_context, connection) { result }
+
+      expect(connection.tracing_attributes).to be_frozen
+      expect(connection.tracing_attributes['db.mongodb.driver_connection_id']).to eq(123)
+    end
+
+    it 'formats the lsid once across repeated commands' do
+      count = 0
+      allow(document['lsid']['id']).to receive(:to_uuid) do
+        count += 1
+        lsid_value
+      end
+      3.times do
+        command_tracer.trace_command(message, operation_context, connection) { result }
+      end
+      expect(count).to eq(1)
     end
 
     # A span the sampler dropped is still made current, so that its context

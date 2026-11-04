@@ -37,6 +37,8 @@ module Mongo
         def initialize(otel_tracer, parent_tracer)
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
+          @operation_names = {}
+          @operation_names_mutex = Mutex.new
         end
 
         # Trace a MongoDB operation.
@@ -136,13 +138,21 @@ module Mongo
         end
 
         # Returns the operation name from the provided name or operation class.
+        # The name derived from the class is cached per class. There are few
+        # operation classes, so the cache needs no bound. It is guarded by a
+        # mutex because not every Ruby runtime makes Hash writes thread-safe.
         #
         # @param operation [ Mongo::Operation ] the operation.
         # @param op_name [ String | nil ] optional operation name.
         #
         # @return [ String ] the operation name in lowercase.
         def operation_name(operation, op_name = nil)
-          op_name || operation.class.name.split('::').last.downcase
+          return op_name if op_name
+
+          klass = operation.class
+          @operation_names_mutex.synchronize do
+            @operation_names[klass] ||= klass.name.split('::').last.downcase
+          end
         end
 
         # Builds the attributes passed at span creation. The cursor id is set

@@ -30,6 +30,9 @@ module Mongo
         # would only add noise to traces.
         HELLO_COMMANDS = %w[hello ismaster isMaster].freeze
 
+        # Upper bound of the lsid string cache (see #lsid).
+        LSID_CACHE_MAX = 128
+
         # Initializes a new CommandTracer.
         #
         # @param otel_tracer [ OpenTelemetry::Trace::Tracer ] the OpenTelemetry tracer.
@@ -41,6 +44,8 @@ module Mongo
           @otel_tracer = otel_tracer
           @parent_tracer = parent_tracer
           @query_text_max_length = query_text_max_length
+          @lsid_cache = {}
+          @lsid_cache_mutex = Mutex.new
         end
 
         # Starts a span for a MongoDB command.
@@ -196,19 +201,21 @@ module Mongo
           end
         end
 
-        # Returns connection-related attributes.
+        # Returns connection-related attributes, built once per connection,
+        # frozen and kept on the connection. Two threads may build them at
+        # the same time; they build the same hash, so either result is fine.
         #
         # @param connection [ Mongo::Server::Connection ] the connection.
         #
         # @return [ Hash ] connection span attributes.
         def connection_attributes(connection)
-          {
+          connection.tracing_attributes ||= {
             'server.port' => connection.address.port,
             'server.address' => connection.address.host,
             'network.transport' => connection.transport.to_s,
             'db.mongodb.server_connection_id' => connection.server.description.server_connection_id,
             'db.mongodb.driver_connection_id' => connection.id
-          }
+          }.freeze
         end
 
         # Processes cursor context from the command result.
@@ -317,16 +324,28 @@ module Mongo
           message.documents.first['getMore'].value
         end
 
-        # Extracts the logical session ID from the command.
+        # Extracts the logical session ID from the command, as a UUID string.
+        # The string is formatted once per session id and kept in a small
+        # cache, cleared when it reaches LSID_CACHE_MAX entries.
         #
         # @param message [ Mongo::Protocol::Message ] the command message.
         #
-        # @return [ BSON::Binary | nil ] the session ID, or nil if not present.
+        # @return [ String | nil ] the session ID, or nil if not present.
         def lsid(message)
           lsid_doc = message.documents.first['lsid']
           return unless lsid_doc
 
-          lsid_doc['id'].to_uuid
+          binary = lsid_doc['id']
+          key = binary.data
+          cached = @lsid_cache_mutex.synchronize { @lsid_cache[key] }
+          return cached if cached
+
+          uuid = binary.to_uuid
+          @lsid_cache_mutex.synchronize do
+            @lsid_cache.clear if @lsid_cache.size >= LSID_CACHE_MAX
+            @lsid_cache[key] = uuid
+          end
+          uuid
         end
 
         # Extracts the transaction number from the command.
