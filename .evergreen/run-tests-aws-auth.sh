@@ -91,7 +91,10 @@ case "$AUTH" in
     ;;
 
   aws-web-identity)
-    cd `dirname "$0"`/auth_aws
+    # -P resolves the auth_aws symlink so the scripts compute their repo
+    # root as drivers-evergreen-tools, not this repository (which has no
+    # .evergreen/ensure-uv.sh).
+    cd -P `dirname "$0"`/auth_aws
 
     echo "Activating virtual environment 'authawsvenv'..."
     . ./activate-authawsvenv.sh
