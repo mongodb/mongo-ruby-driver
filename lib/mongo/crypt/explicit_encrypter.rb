@@ -40,9 +40,12 @@ module Mongo
       # @param [ Integer | nil ] key_expiration_ms The lifetime of the data
       #   encryption key cache, in milliseconds. A value of 0 means the cache
       #   never expires. When nil, libmongocrypt's default of 60000 is used.
+      # @param [ Proc | Method | #call | nil ] kms_connect_callback A callable
+      #   invoked as +call(host, port, timeout_ms)+ when the driver needs to
+      #   reach a KMS host. See Mongo::ClientEncryption for details.
       def initialize(
         key_vault_client, key_vault_namespace, kms_providers, kms_tls_options,
-        timeout_ms = nil, key_expiration_ms = nil
+        timeout_ms = nil, key_expiration_ms = nil, kms_connect_callback = nil
       )
         Crypt.validate_ffi!
         @crypt_handle = Handle.new(
@@ -54,7 +57,8 @@ module Mongo
         @encryption_io = EncryptionIO.new(
           key_vault_client: key_vault_client,
           metadata_client: nil,
-          key_vault_namespace: key_vault_namespace
+          key_vault_namespace: key_vault_namespace,
+          kms_connect_callback: kms_connect_callback
         )
         @timeout_ms = timeout_ms
       end

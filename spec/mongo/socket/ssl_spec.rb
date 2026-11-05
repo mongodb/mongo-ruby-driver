@@ -42,6 +42,61 @@ describe Mongo::Socket::SSL do
     OpenSSL::PKey.read(key_string)
   end
 
+  describe 'resource leak handling' do
+    context 'when configuring a newly created TCP socket fails' do
+      let(:tcp_socket) { double('tcp socket') }
+
+      before do
+        allow(Socket).to receive(:new).and_return(tcp_socket)
+        allow(tcp_socket).to receive(:setsockopt).and_raise(Errno::EPERM)
+      end
+
+      it 'closes the socket before re-raising' do
+        expect(tcp_socket).to receive(:close)
+
+        expect do
+          described_class.new('127.0.0.1', 27_017, 'localhost', 1, :INET,
+                              ssl: true, ssl_verify: false)
+        end.to raise_error(Errno::EPERM)
+      end
+    end
+
+    context 'when create_context raises for a provided connected_socket' do
+      let(:connected_socket) { double('connected socket') }
+
+      it 'closes the provided socket before re-raising' do
+        expect(connected_socket).to receive(:close)
+
+        expect do
+          described_class.new('127.0.0.1', 27_017, 'localhost', 1, :INET,
+                              ssl: true, ssl_verify: false,
+                              connected_socket: connected_socket,
+                              ssl_cert_string: 'not a certificate')
+        end.to raise_error(OpenSSL::OpenSSLError)
+      end
+    end
+  end
+
+  describe 'with a pre-connected socket' do
+    let(:connected_socket) do
+      TCPSocket.new('127.0.0.1', default_address.port)
+    end
+
+    let(:socket_over_connected) do
+      described_class.new('127.0.0.1', default_address.port, host_name, 1, :INET,
+                          ssl_options.merge(connected_socket: connected_socket))
+    end
+
+    it 'completes the TLS handshake over the provided socket' do
+      expect(socket_over_connected.socket).to be_a(OpenSSL::SSL::SSLSocket)
+    end
+
+    it 'closes the provided socket when the SSL socket is closed' do
+      socket_over_connected.close
+      expect(connected_socket).to be_closed
+    end
+  end
+
   describe '#human_address' do
     it 'returns the address and tls indicator' do
       addr = socket.instance_variable_get(:@tcp_socket).remote_address

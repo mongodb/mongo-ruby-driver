@@ -40,6 +40,10 @@ module Mongo
       # @param [ String ] key_vault_namespace The key vault namespace in the format
       #   db_name.collection_name.
       # @param [ Hash ] mongocryptd_options Options related to mongocryptd.
+      # @param [ Proc | nil ] kms_connect_callback Optional callable that
+      #   establishes the TCP connection to a KMS provider. It is invoked with
+      #   the host, port, and operation timeout in milliseconds (or nil), and
+      #   must return an IO connected to the host.
       #
       # @option mongocryptd_options [ Boolean ] :mongocryptd_bypass_spawn
       # @option mongocryptd_options [ String ] :mongocryptd_spawn_path
@@ -52,10 +56,13 @@ module Mongo
       # @note This class expects that the key_vault_client and key_vault_namespace
       #   options are not nil and are in the correct format.
       def initialize(
-        key_vault_namespace:, key_vault_client:, metadata_client:, client: nil, mongocryptd_client: nil, mongocryptd_options: {}
+        key_vault_namespace:, key_vault_client:, metadata_client:, client: nil, mongocryptd_client: nil, mongocryptd_options: {}, kms_connect_callback: nil
       )
         validate_key_vault_client!(key_vault_client)
         validate_key_vault_namespace!(key_vault_namespace)
+        if kms_connect_callback && !kms_connect_callback.respond_to?(:call)
+          raise ArgumentError, 'kms_connect_callback must respond to :call'
+        end
 
         @client = client
         @mongocryptd_client = mongocryptd_client
@@ -63,6 +70,7 @@ module Mongo
         @key_vault_client = key_vault_client
         @metadata_client = metadata_client
         @options = mongocryptd_options
+        @kms_connect_callback = kms_connect_callback
       end
 
       # Query for keys in the key vault collection using the provided
@@ -163,15 +171,25 @@ module Mongo
       #    Must be a non-negative integer. An explicit value of 0 means infinite.
       #    The default value is unset which means the feature is not enabled.
       def feed_kms(kms_context, tls_options, timeout_ms: nil)
-        with_ssl_socket(kms_context.endpoint, tls_options) do |ssl_socket|
-          Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
+        # When a budget is in effect the TLS handshake, the request write, and
+        # every read chunk share a single deadline, so a slow, chunked response
+        # cannot run for a multiple of the budget. Without a budget each phase
+        # keeps the fixed SOCKET_TIMEOUT fallback. Timeout.timeout takes
+        # seconds, but timeout_ms is in milliseconds.
+        deadline = Utils.monotonic_time + (timeout_ms / 1_000.0) if timeout_ms
+        # Use the CSOT-appropriate error class when a timeout budget is
+        # in effect, otherwise preserve the historical SocketTimeoutError.
+        timeout_error = timeout_ms ? Error::TimeoutError : Error::SocketTimeoutError
+
+        with_ssl_socket(kms_context.endpoint, tls_options, timeout_ms: timeout_ms) do |ssl_socket|
+          Timeout.timeout(remaining_timeout(deadline), timeout_error,
                           'Socket write operation timed out') do
             ssl_socket.syswrite(kms_context.message)
           end
 
           bytes_needed = kms_context.bytes_needed
           while bytes_needed > 0
-            bytes = Timeout.timeout(timeout_ms || SOCKET_TIMEOUT, Error::SocketTimeoutError,
+            bytes = Timeout.timeout(remaining_timeout(deadline), timeout_error,
                                     'Socket read operation timed out') do
               ssl_socket.sysread(bytes_needed)
             end
@@ -251,6 +269,38 @@ module Mongo
       end
 
       private
+
+      # The time left, in seconds, before the shared KMS exchange deadline.
+      # When no operation budget is in effect there is no deadline, so each
+      # phase falls back to the fixed SOCKET_TIMEOUT.
+      #
+      # @param [ Float, nil ] deadline The monotonic time the exchange must
+      #   finish by, or nil when no budget is set.
+      #
+      # @return [ Float ] The number of seconds left before the deadline.
+      #
+      # @raise [ Error::TimeoutError ] If the deadline has already passed.
+      def remaining_timeout(deadline)
+        return SOCKET_TIMEOUT if deadline.nil?
+
+        remaining = deadline - Utils.monotonic_time
+        raise Error::TimeoutError, 'KMS request timed out' if remaining <= 0
+
+        remaining
+      end
+
+      # The budget for the connect phase, in seconds: the remaining operation
+      # timeout when a CSOT budget is in effect, otherwise the driver's fixed
+      # connect timeout. The connect callback and the TLS handshake that
+      # follows it share this budget, so neither can run past the deadline.
+      #
+      # @param [ Integer, nil ] timeout_ms The remaining operation timeout in
+      #   milliseconds, or nil when no budget is set.
+      #
+      # @return [ Float ] The connect budget in seconds.
+      def connect_budget(timeout_ms)
+        timeout_ms ? timeout_ms / 1_000.0 : Server::CONNECT_TIMEOUT
+      end
 
       def validate_key_vault_client!(key_vault_client)
         raise ArgumentError.new('The :key_vault_client option cannot be nil') unless key_vault_client
@@ -345,24 +395,60 @@ module Mongo
       #   executing
       def with_ssl_socket(endpoint, tls_options, timeout_ms: nil)
         csot = !timeout_ms.nil?
-        address = begin
-          host, port = endpoint.split(':')
-          port ||= 443 # All supported KMS APIs use this port by default.
-          Address.new([ host, port ].join(':'))
-        end
-        socket_options = { ssl: true, csot: csot }.tap do |opts|
-          opts[:connect_timeout] = (timeout_ms / 1_000.0) if csot
-        end
-        mongo_socket = address.socket(
-          SOCKET_TIMEOUT,
-          tls_options.merge(socket_options)
-        )
+        host, port = endpoint.split(':')
+        port = (port || 443).to_i
+
+        mongo_socket =
+          if @kms_connect_callback
+            # The callback runs before any socket exists, so it cannot inherit
+            # the connect timeout the socket gets below; bound it explicitly by
+            # the connect budget so a callback that blocks cannot outlive the
+            # operation deadline. A well-behaved callback should still honor
+            # timeout_ms itself, so it can fail cleanly and close its socket.
+            connect_budget_sec = connect_budget(timeout_ms)
+            connect_deadline = Utils.monotonic_time + connect_budget_sec
+            connect_error = csot ? Error::TimeoutError : Error::SocketTimeoutError
+            connected_socket =
+              Timeout.timeout(connect_budget_sec, connect_error,
+                              'KMS connect callback timed out') do
+                @kms_connect_callback.call(host, port, timeout_ms)
+              end
+            unless connected_socket.is_a?(IO)
+              raise Error::KmsError.new(
+                'kms_connect_callback must return an IO connected to the KMS provider ' +
+                "at #{host}:#{port}, but it returned #{connected_socket.inspect}"
+              )
+            end
+
+            # The callback and the handshake share one connect budget: give the
+            # handshake only the time the callback left, so together they cannot
+            # run past the deadline.
+            remaining_connect = connect_deadline - Utils.monotonic_time
+            raise connect_error, 'KMS connect timed out' if remaining_connect <= 0
+
+            socket_options = { ssl: true, csot: csot, connected_socket: connected_socket }
+            socket_options[:connect_timeout] = remaining_connect
+            Mongo::Socket::SSL.new(
+              host, port, host, SOCKET_TIMEOUT, ::Socket::AF_UNSPEC,
+              tls_options.merge(socket_options)
+            )
+          else
+            address = Address.new([ host, port ].join(':'))
+            socket_options = { ssl: true, csot: csot }.tap do |opts|
+              opts[:connect_timeout] = (timeout_ms / 1_000.0) if csot
+            end
+            address.socket(SOCKET_TIMEOUT, tls_options.merge(socket_options))
+          end
+
         yield(mongo_socket.socket)
       rescue Error::KmsError
         raise
       rescue StandardError => e
+        # A timeout is not a transient network failure: retrying it only spends
+        # more of the operation budget, and under CSOT the deadline has already
+        # passed, so let it surface instead of letting feed_kms retry.
         raise Error::KmsError.new("Error when connecting to KMS provider: #{e.class}: #{e.message}",
-                                  network_error: true)
+                                  network_error: !e.is_a?(Error::TimeoutError))
       ensure
         mongo_socket&.close
       end

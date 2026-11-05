@@ -13,6 +13,7 @@ require 'support/primary_socket'
 require 'support/cluster_tools'
 require 'support/monitoring_ext'
 require 'support/handshake_documents'
+require 'support/kms_http_proxy'
 
 RSpec.configure do |config|
   config.include(Authorization)

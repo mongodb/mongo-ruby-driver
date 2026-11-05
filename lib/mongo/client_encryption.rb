@@ -46,6 +46,51 @@ module Mongo
     #    encryption key cache, in milliseconds. Must be a non-negative integer.
     #    An explicit value of 0 means the cache never expires. The default is
     #    60000.
+    # @option options [ Proc | Method | #call ] :kms_connect_callback A callable
+    #   invoked as +call(host, port, timeout_ms)+ when the driver needs to reach
+    #   a KMS host. It must return an fd-backed IO (a real +IO+ or +Socket+)
+    #   already connected to +host:port+ (for example, after performing an HTTP
+    #   CONNECT handshake with a proxy). The driver wraps the returned object in
+    #   TLS to the KMS host, and Ruby's OpenSSL requires an fd-backed object, so
+    #   the callback cannot return another +OpenSSL::SSL::SSLSocket+; a
+    #   TLS-to-proxy connection needs a socketpair bridge (see the example
+    #   below). The driver bounds the call by the connect budget (the remaining
+    #   operation timeout, or the driver's connect timeout when no timeout is
+    #   set), so a callback that blocks cannot outlive the operation. The
+    #   callback should still honor +timeout_ms+ for its own work, so it can
+    #   fail cleanly and close any socket it opened.
+    #
+    # @example Tunnel KMS traffic through an HTTP CONNECT proxy.
+    #   connect_via_proxy = lambda do |host, port, timeout_ms|
+    #     timeout = timeout_ms ? timeout_ms / 1_000.0 : nil
+    #     socket = Socket.tcp('proxy.example.com', 9004, connect_timeout: timeout)
+    #     begin
+    #       socket.write("CONNECT #{host}:#{port} HTTP/1.1\r\n" \
+    #                    "Host: #{host}:#{port}\r\n\r\n")
+    #       status = socket.gets
+    #       unless status&.start_with?('HTTP/1.1 200')
+    #         raise "proxy CONNECT failed: #{status.inspect}"
+    #       end
+    #
+    #       # Consume the rest of the response headers up to the blank line, so
+    #       # the TLS handshake does not read them as tunneled bytes.
+    #       loop do
+    #         line = socket.gets
+    #         break if line.nil? || line == "\r\n"
+    #       end
+    #     rescue StandardError
+    #       socket.close
+    #       raise
+    #     end
+    #     socket
+    #   end
+    #
+    #   client_encryption = Mongo::ClientEncryption.new(
+    #     key_vault_client,
+    #     key_vault_namespace: 'keyvault.datakeys',
+    #     kms_providers: { aws: { access_key_id: '...', secret_access_key: '...' } },
+    #     kms_connect_callback: connect_via_proxy
+    #   )
     #
     # @raise [ ArgumentError ] If required options are missing or incorrectly
     #   formatted.
@@ -56,7 +101,8 @@ module Mongo
         Crypt::KMS::Credentials.new(options[:kms_providers]),
         Crypt::KMS::Validations.validate_tls_options(options[:kms_tls_options]),
         options[:timeout_ms],
-        options[:key_expiration_ms]
+        options[:key_expiration_ms],
+        options[:kms_connect_callback]
       )
     end
 

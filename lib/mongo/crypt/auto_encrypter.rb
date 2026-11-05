@@ -84,6 +84,19 @@ module Mongo
       # @option options [ Integer | nil ] :key_expiration_ms The lifetime of the
       #   data encryption key cache, in milliseconds. A value of 0 means the
       #   cache never expires. Defaults to 60000.
+      # @option options [ Proc | Method | #call ] :kms_connect_callback A callable
+      #   invoked as +call(host, port, timeout_ms)+ when the driver needs to
+      #   reach a KMS host. It must return an fd-backed IO (a real +IO+ or
+      #   +Socket+) already connected to +host:port+ (for example, after
+      #   performing an HTTP CONNECT handshake with a proxy). The driver wraps
+      #   the returned object in TLS to the KMS host, and Ruby's OpenSSL
+      #   requires an fd-backed object, so the callback cannot return another
+      #   +OpenSSL::SSL::SSLSocket+; a TLS-to-proxy connection needs a socketpair
+      #   bridge. +timeout_ms+ is the remaining operation timeout in
+      #   milliseconds, or nil when no timeout is set. The driver bounds the
+      #   call by the connect budget, so a callback that blocks cannot outlive
+      #   the operation; the callback should still honor +timeout_ms+ for its
+      #   own work. See Mongo::ClientEncryption#initialize for a usage example.
       #
       # @raise [ ArgumentError ] If required options are missing or incorrectly
       #   formatted.
@@ -134,7 +147,8 @@ module Mongo
             key_vault_namespace: @options[:key_vault_namespace],
             key_vault_client: @key_vault_client,
             metadata_client: @metadata_client,
-            mongocryptd_options: @mongocryptd_options
+            mongocryptd_options: @mongocryptd_options,
+            kms_connect_callback: @options[:kms_connect_callback]
           )
         rescue StandardError
           begin
