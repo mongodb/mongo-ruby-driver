@@ -139,41 +139,18 @@ module Mongo
           end
         end
 
-        # Returns the cursor context map for tracking cursor-related OpenTelemetry contexts.
-        #
-        # @return [ Hash ] map of cursor IDs to OpenTelemetry contexts.
-        def cursor_context_map
-          @cursor_context_map ||= {}
-        end
-
-        # Generates a unique key for cursor tracking in the context map.
-        #
-        # @param session [ Mongo::Session ] the session associated with the cursor.
-        # @param cursor_id [ Integer ] the cursor ID.
-        #
-        # @return [ String | nil ] unique key combining session ID and cursor ID, or nil if either is nil.
-        def cursor_map_key(session, cursor_id)
-          return if cursor_id.nil? || session.nil?
-
-          "#{session.session_id['id'].to_uuid}-#{cursor_id}"
-        end
-
         # Determines the parent OpenTelemetry context for an operation.
         #
-        # Returns the transaction context if the operation is part of a transaction,
-        # otherwise returns nil. Cursor-based context nesting is not currently implemented.
+        # Returns the transaction context if the operation is part of a
+        # transaction, otherwise nil. Cursor-based context nesting is not
+        # implemented.
         #
         # @param operation_context [ Mongo::Operation::Context ] the operation context.
-        # @param cursor_id [ Integer ] the cursor ID, if applicable.
         #
         # @return [ OpenTelemetry::Context | nil ] parent context or nil.
-        def parent_context_for(operation_context, cursor_id)
-          if (key = transaction_map_key(operation_context.session))
-            transaction_context_map[key]
-          elsif (_key = cursor_map_key(operation_context.session, cursor_id))
-            # We return nil here unless we decide how to nest cursor operations.
-            nil
-          end
+        def parent_context_for(operation_context)
+          key = transaction_map_key(operation_context.session)
+          transaction_context_map[key] if key
         end
 
         # Returns the transaction context map for tracking active transaction contexts.
