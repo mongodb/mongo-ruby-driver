@@ -32,12 +32,12 @@ module Mongo
 
     # The capped option.
     #
-    # @since 2.1.0
+    # @api private
     CAPPED = 'capped'
 
     # The ns field constant.
     #
-    # @since 2.1.0
+    # @api private
     NS = 'ns'
 
     # @return [ Mongo::Database ] The database the collection resides in.
@@ -49,10 +49,22 @@ module Mongo
     # @return [ Hash ] The collection options.
     attr_reader :options
 
-    # Get client, cluster, read preference, write concern, and encrypted_fields_map from client.
-    def_delegators :database, :client, :cluster, :encrypted_fields_map
+    # @!method client
+    #   @return [ Mongo::Client ] The client the collection belongs to.
+    def_delegators :database, :client
 
-    # Delegate to the cluster for the next primary.
+    # @!method cluster
+    #   @api private
+    #   @return [ Mongo::Cluster ] The cluster.
+    #
+    # @!method encrypted_fields_map
+    #   @api private
+    #   @return [ Hash | nil ] The encrypted fields map for the client.
+    def_delegators :database, :cluster, :encrypted_fields_map
+
+    # @!method next_primary
+    #   @api private
+    #   @return [ Mongo::Server ] The next primary server.
     def_delegators :cluster, :next_primary
 
     # @!method tracer
@@ -62,7 +74,7 @@ module Mongo
 
     # Options that can be updated on a new Collection instance via the #with method.
     #
-    # @since 2.1.0
+    # @api private
     CHANGEABLE_OPTIONS = %i[read read_concern write write_concern].freeze
 
     # Options map to transform create collection options.
@@ -1022,6 +1034,9 @@ module Mongo
     #    the collection or the database or the client.
     #
     # @return [ Array<Cursor> ] An array of cursors.
+    #
+    # @deprecated The +parallelCollectionScan+ command was removed in MongoDB
+    #   server 4.2, so this method fails on newer servers.
     #
     # @since 2.1
     def parallel_scan(cursor_count, options = {})
