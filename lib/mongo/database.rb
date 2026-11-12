@@ -33,15 +33,21 @@ module Mongo
 
     # The "collection" that database commands operate against.
     #
+    # @api private
+    #
     # @since 2.0.0
     COMMAND = '$cmd'
 
     # The default database options.
     #
+    # @api private
+    #
     # @since 2.0.0
     DEFAULT_OPTIONS = Options::Redacted.new(database: ADMIN).freeze
 
     # Database name field constant.
+    #
+    # @api private
     #
     # @since 2.1.0
     # @deprecated
@@ -49,10 +55,14 @@ module Mongo
 
     # Databases constant.
     #
+    # @api private
+    #
     # @since 2.1.0
     DATABASES = 'databases'
 
     # The name of the collection that holds all the collection names.
+    #
+    # @api private
     #
     # @since 2.0.0
     NAMESPACES = 'system.namespaces'
@@ -66,17 +76,47 @@ module Mongo
     # @return [ Hash ] options The options.
     attr_reader :options
 
-    # Get cluster, read preference, and write concern from client.
+    # Get read preference, read concern, and write concern from client.
+    #
+    # @!method read_preference
+    #   @return [ Hash ] The read preference.
+    #
+    # @!method read_concern
+    #   @return [ Hash ] The read concern.
+    #
+    # @!method write_concern
+    #   @return [ Mongo::WriteConcern ] The write concern.
+    def_delegators :@client,
+                   :read_preference,
+                   :read_concern,
+                   :write_concern
+
+    # Get cluster, server selector, encryption settings, and tracer from client.
+    #
+    # @!method cluster
+    #   @api private
+    #   @return [ Mongo::Cluster ] The cluster.
+    #
+    # @!method server_selector
+    #   @api private
+    #   @return [ Mongo::ServerSelector ] The server selector.
+    #
+    # @!method encrypted_fields_map
+    #   @api private
+    #   @return [ Hash | nil ] The encrypted fields map.
+    #
+    # @!method tracer
+    #   @api private
+    #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
     def_delegators :@client,
                    :cluster,
-                   :read_preference,
                    :server_selector,
-                   :read_concern,
-                   :write_concern,
                    :encrypted_fields_map,
                    :tracer
 
-    # @return [ Mongo::Server ] Get the primary server from the cluster.
+    # @!method next_primary
+    #   @api private
+    #   @return [ Mongo::Server ] The primary server from the cluster.
     def_delegators :cluster,
                    :next_primary
 
