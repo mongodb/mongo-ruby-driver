@@ -43,6 +43,9 @@ module Mongo
 
       def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
       def_delegators :cluster, :next_primary
+      # @!method tracer
+      #   @api private
+      #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
       def_delegators :client, :tracer
 
       # The index key field.

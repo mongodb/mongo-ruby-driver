@@ -275,6 +275,9 @@ module Mongo
     # @return [ Monitoring ] monitoring The monitoring.
     attr_reader :monitoring
 
+    # @return [ Mongo::Tracing::Tracer | nil ] The tracer.
+    #
+    # @api private
     attr_reader :tracer
 
     # @return [ Object ] The cluster topology.

@@ -55,6 +55,9 @@ module Mongo
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
 
+    # @!method tracer
+    #   @api private
+    #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
     def_delegators :client, :tracer
 
     # Options that can be updated on a new Collection instance via the #with method.
@@ -201,6 +204,8 @@ module Mongo
     #   collection.server_selector
     #
     # @return [ Mongo::ServerSelector ] The server selector.
+    #
+    # @api private
     #
     # @since 2.0.0
     def server_selector

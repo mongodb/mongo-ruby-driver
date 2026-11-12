@@ -70,6 +70,9 @@ module Mongo
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
 
+      # @!method tracer
+      #   @api private
+      #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
       def_delegators :client, :tracer
 
       alias selector filter

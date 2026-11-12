@@ -29,6 +29,9 @@ module Mongo
         # @return [ Array<Hash> ] pipeline The aggregation pipeline.
         attr_reader :pipeline
 
+        # @!method tracer
+        #   @api private
+        #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
         def_delegators :view, :tracer
 
         # Initialize the aggregation for the provided collection view, pipeline

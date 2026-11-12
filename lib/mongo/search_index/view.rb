@@ -22,6 +22,9 @@ module Mongo
       #   when querying the available indexes.
       attr_reader :aggregate_options
 
+      # @!method tracer
+      #   @api private
+      #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
       def_delegators :@collection, :tracer
 
       # Create the new search index view.

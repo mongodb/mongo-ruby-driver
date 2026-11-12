@@ -131,6 +131,9 @@ module Mongo
       # @api private
       attr_accessor :tracing_attributes
 
+      # @!method tracer
+      #   @api private
+      #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
       def_delegators :server, :tracer
 
       # The connection pool from which this connection was created.

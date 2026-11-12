@@ -140,6 +140,9 @@ module Mongo
     # @since 2.5.0
     attr_reader :operation_time
 
+    # @!method tracer
+    #   @api private
+    #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
     def_delegators :client, :tracer
 
     # Sets the dirty state to the given value for the underlying server

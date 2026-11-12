@@ -208,6 +208,10 @@ module Mongo
                    :update_cluster_time
 
     # @api private
+    #
+    # @!method tracer
+    #   @api private
+    #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
     def_delegators :cluster,
                    :monitor_app_metadata,
                    :push_monitor_app_metadata,
