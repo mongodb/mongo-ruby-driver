@@ -22,7 +22,7 @@ module Mongo
     #   the fact that these methods are defined on this module and not on
     #   the classes which include this module is not part of the public API.
     #
-    # @api semipublic
+    # @api public
     module Labelable
       # Does the error have the given label?
       #

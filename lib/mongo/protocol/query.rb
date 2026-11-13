@@ -28,7 +28,7 @@ module Mongo
     # There are a variety of flags that can be used to adjust cursor
     # parameters or the desired consistency and integrity the results.
     #
-    # @api semipublic
+    # @api private
     class Query < Message
       include Monitoring::Event::Secure
 

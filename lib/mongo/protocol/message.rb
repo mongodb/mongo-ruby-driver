@@ -39,7 +39,7 @@ module Mongo
     #   end
     #
     # @abstract
-    # @api semiprivate
+    # @api private
     class Message
       include Id
       include Serializers

@@ -23,7 +23,7 @@ module Mongo
     #   the fact that these methods are defined on this module and not on
     #   the classes which include this module is not part of the public API.
     #
-    # @api semipublic
+    # @api public
     module ReadWriteRetryable
       # Error codes and code names that should result in a failing write
       # being retried.
@@ -92,6 +92,7 @@ module Mongo
           (code.nil? && WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) })
       end
 
+      # @api private
       private def write_retryable_code?
         if code
           WRITE_RETRY_ERRORS.any? { |e| e[:code] == code }

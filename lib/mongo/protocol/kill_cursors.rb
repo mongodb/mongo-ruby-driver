@@ -21,7 +21,7 @@ module Mongo
     # This is a client request message that is sent to the server in order
     # to kill a number of cursors.
     #
-    # @api semipublic
+    # @api private
     class KillCursors < Message
       # Creates a new KillCursors message
       #

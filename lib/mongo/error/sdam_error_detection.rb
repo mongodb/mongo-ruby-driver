@@ -2,12 +2,10 @@
 
 module Mongo
   class Error
-    # @note Although not_master? and node_recovering? methods of this module
-    #   are part of the public API, the fact that these methods are defined on
-    #   this module and not on the classes which include this module is not
-    #   part of the public API.
+    # SDAM state-change detection for errors returned by the server. Used
+    # by the driver to decide how a server error affects topology state.
     #
-    # @api semipublic
+    # @api private
     module SdamErrorDetection
       # @api private
       NOT_MASTER_CODES = [ 10_107, 13_435 ].freeze
