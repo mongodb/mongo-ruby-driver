@@ -418,11 +418,7 @@ module Mongo
       # @example Get the cluster time.
       #   result.cluster_time
       #
-      # @return [ ClusterTime | nil ] The cluster time document.
-      #
-      # Changed in version 2.9.0: This attribute became an instance of
-      # ClusterTime, which is a subclass of BSON::Document.
-      # Previously it was an instance of BSON::Document.
+      # @return [ BSON::Document | nil ] The cluster time document.
       #
       # @since 2.5.0
       # @api public

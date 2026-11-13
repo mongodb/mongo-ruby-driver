@@ -17,6 +17,7 @@
 module Mongo
   class Cluster
     module Topology
+      # @api private
       module NoReplicaSetOptions
         private
 

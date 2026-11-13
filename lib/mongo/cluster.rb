@@ -24,6 +24,7 @@ module Mongo
   # single server, a replica set, or a single or multiple mongos.
   #
   # @since 2.0.0
+  # @api private
   class Cluster
     extend Forwardable
     include Monitoring::Publishable
@@ -445,9 +446,6 @@ module Mongo
       "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.summary}>"
     end
 
-    # @note This method is experimental and subject to change.
-    #
-    # @api experimental
     # @since 2.7.0
     def summary
       '#<Cluster ' +

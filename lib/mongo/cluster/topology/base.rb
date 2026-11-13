@@ -19,6 +19,9 @@ module Mongo
     module Topology
       # Defines behavior common to all topologies.
       #
+      # This class is public because topology objects are exposed to
+      # subscribers by SDAM events (for example, TopologyChanged).
+      #
       # @since 2.7.0
       class Base
         extend Forwardable
@@ -99,6 +102,7 @@ module Mongo
         end
 
         # @return [ Hash ] options The options.
+        # @api private
         attr_reader :options
 
         # @return [ Cluster ] The cluster.
@@ -107,11 +111,13 @@ module Mongo
         private :cluster
 
         # @return [ Array<String> ] addresses Server addresses.
+        # @api private
         def addresses
           cluster.addresses.map(&:seed)
         end
 
         # @return [ monitoring ] monitoring the monitoring.
+        # @api private
         attr_reader :monitoring
 
         # Get the replica set name configured for this topology.
@@ -136,6 +142,7 @@ module Mongo
         #   with the driver.
         #
         # @since 2.7.0
+        # @api private
         def compatible?
           @compatible
         end
@@ -145,6 +152,7 @@ module Mongo
         #   If topology is compatible with the driver, nil.
         #
         # @since 2.7.0
+        # @api private
         attr_reader :compatibility_error
 
         # The logical session timeout value in minutes.
@@ -155,6 +163,7 @@ module Mongo
         # @return [ Integer, nil ] The logical session timeout.
         #
         # @since 2.7.0
+        # @api private
         attr_reader :logical_session_timeout
 
         # @return [ true | false ] have_data_bearing_servers Whether the
@@ -172,6 +181,7 @@ module Mongo
         # @return [ BSON::ObjectId ] The election id.
         #
         # @since 2.7.0
+        # @api private
         def max_election_id
           options[:max_election_id]
         end
@@ -182,6 +192,7 @@ module Mongo
         # @return [ Integer ] The set version.
         #
         # @since 2.7.0
+        # @api private
         def max_set_version
           options[:max_set_version]
         end

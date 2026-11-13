@@ -19,6 +19,9 @@ module Mongo
     module Topology
       # Defines behavior for when a cluster is in sharded topology.
       #
+      # This class is public because topology objects are exposed to
+      # subscribers by SDAM events (for example, TopologyChanged).
+      #
       # @since 2.0.0
       class Sharded < Base
         include NoReplicaSetOptions
@@ -26,6 +29,7 @@ module Mongo
         # The display name for the topology.
         #
         # @since 2.0.0
+        # @api private
         NAME = 'Sharded'
 
         # Get the display name.
@@ -42,7 +46,6 @@ module Mongo
 
         # @note This method is experimental and subject to change.
         #
-        # @api experimental
         # @since 2.7.0
         def summary
           details = server_descriptions.keys.join(',')
@@ -62,6 +65,7 @@ module Mongo
         # @return [ true ] A Sharded cluster always has a readable server.
         #
         # @since 2.4.0
+        # @api private
         def has_readable_server?(_cluster, _server_selector = nil)
           true
         end
@@ -77,6 +81,7 @@ module Mongo
         # @return [ true ] A Sharded cluster always has a writable server.
         #
         # @since 2.4.0
+        # @api private
         def has_writable_server?(_cluster)
           true
         end
@@ -103,6 +108,7 @@ module Mongo
         # @return [ Array<Server> ] The mongos servers.
         #
         # @since 2.0.0
+        # @api private
         def servers(servers)
           servers.select { |server| server.mongos? }
         end
