@@ -127,10 +127,15 @@ module Mongo
     # @since 2.5.1
     attr_reader :client
 
+    # @return [ Cluster ] The cluster of the client that created this session.
+    #
+    # @api private
     attr_reader :cluster
 
     # @return [ true | false ] Whether the session is configured for snapshot
     #   reads.
+    #
+    # @api private
     def snapshot?
       !!options[:snapshot]
     end
@@ -150,6 +155,8 @@ module Mongo
     #
     # @param [ true | false ] mark whether to mark the server session as
     #   dirty, or not.
+    #
+    # @api private
     def dirty!(mark = true)
       @server_session&.dirty!(mark)
     end
@@ -165,6 +172,8 @@ module Mongo
     # @return [ Hash ] The options for the transaction currently being executed
     # on this session.
     #
+    # @api private
+    #
     # @since 2.6.0
     def txn_options
       @txn_options or raise ArgumentError, 'There is no active transaction'
@@ -177,6 +186,8 @@ module Mongo
     #
     # @return [ true, false ] Whether this session is implicit.
     #
+    # @api private
+    #
     # @since 2.5.1
     def implicit?
       @implicit ||= !!(@options.key?(:implicit) && @options[:implicit] == true)
@@ -188,6 +199,8 @@ module Mongo
     #   session.explicit?
     #
     # @return [ true, false ] Whether this session is explicit.
+    #
+    # @api private
     #
     # @since 2.5.2
     def explicit?
@@ -224,6 +237,8 @@ module Mongo
     # @note Retryable writes are only available with sharded clusters, replica
     #   sets, or load-balanced topologies.
     #
+    # @api private
+    #
     # @since 2.5.0
     def retry_writes?
       !!client.options[:retry_writes] && (cluster.replica_set? || cluster.sharded? || cluster.load_balanced?)
@@ -238,6 +253,8 @@ module Mongo
     #   session.txn_read_preference
     #
     # @return [ Hash ] The read preference of the transaction.
+    #
+    # @api private
     #
     # @since 2.6.0
     def txn_read_preference
@@ -310,6 +327,8 @@ module Mongo
     # Error message indicating that the session was retrieved from a client with a different cluster than that of the
     # client through which it is currently being used.
     #
+    # @api private
+    #
     # @since 2.5.0
     MISMATCHED_CLUSTER_ERROR_MSG = 'The configuration of the client used to create this session does not match that ' +
                                    'of the client owning this operation. Please only use this session for operations through its parent ' +
@@ -317,10 +336,14 @@ module Mongo
 
     # Error message describing that the session cannot be used because it has already been ended.
     #
+    # @api private
+    #
     # @since 2.5.0
     SESSION_ENDED_ERROR_MSG = 'This session has ended and cannot be used. Please create a new one.'
 
     # Error message describing that sessions are not supported by the server version.
+    #
+    # @api private
     #
     # @since 2.5.0
     # @deprecated
@@ -330,11 +353,15 @@ module Mongo
     # The state of a session in which the last operation was not related to
     # any transaction or no operations have yet occurred.
     #
+    # @api private
+    #
     # @since 2.6.0
     NO_TRANSACTION_STATE = :no_transaction
 
     # The state of a session in which a user has initiated a transaction but
     # no operations within the transactions have occurred yet.
+    #
+    # @api private
     #
     # @since 2.6.0
     STARTING_TRANSACTION_STATE = :starting_transaction
@@ -343,15 +370,21 @@ module Mongo
     # least one operation has occurred, but the transaction has not yet been
     # committed or aborted.
     #
+    # @api private
+    #
     # @since 2.6.0
     TRANSACTION_IN_PROGRESS_STATE = :transaction_in_progress
 
     # The state of a session in which the last operation executed was a transaction commit.
     #
+    # @api private
+    #
     # @since 2.6.0
     TRANSACTION_COMMITTED_STATE = :transaction_committed
 
     # The state of a session in which the last operation executed was a transaction abort.
+    #
+    # @api private
     #
     # @since 2.6.0
     TRANSACTION_ABORTED_STATE = :transaction_aborted
@@ -431,12 +464,19 @@ module Mongo
     # with_transaction. Exceptions derived from Mongo::Error may be
     # handled by with_transaction, resulting in retries of the process.
     #
-    # Currently, with_transaction will retry commits and block invocations
-    # until at least 120 seconds have passed since with_transaction started
-    # executing. This timeout is not configurable and may change in a future
-    # driver version.
+    # Retries are separated by a delay. After a server overload error the
+    # delay is determined by the client's retry policy; otherwise it is a
+    # short randomized backoff that grows with each attempt.
     #
-    # @note with_transaction contains a loop, therefore the if with_transaction
+    # The total time spent is bounded by a timeout. If +:timeout_ms+ is given
+    # in +options+, or else the session's +:default_timeout_ms+ option, or else
+    # the client's +:timeout_ms+ option, that value is used and
+    # Error::TimeoutError is raised when it expires. If none is set, the
+    # driver retries commits and block invocations until at least 120 seconds
+    # have passed since with_transaction started executing. This default is
+    # not configurable and may change in a future driver version.
+    #
+    # @note with_transaction contains a loop, therefore if with_transaction
     #   itself is placed in a loop, its block should not call next or break to
     #   control the outer loop because this will instead affect the loop in
     #   with_transaction. The driver will warn and abort the transaction
@@ -450,19 +490,28 @@ module Mongo
     #   end
     #
     # @example Execute a statement in a transaction, limiting total time consumed
-    #   Timeout.timeout(5) do
-    #     session.with_transaction(write_concern: {w: :majority}) do
-    #       collection.update_one({ id: 3 }, { '$set' => { status: 'Inactive'} },
-    #                             session: session)
+    #   session.with_transaction(write_concern: {w: :majority}, timeout_ms: 5000) do
+    #     collection.update_one({ id: 3 }, { '$set' => { status: 'Inactive'} },
+    #                           session: session)
     #
-    #     end
     #   end
     #
     # @param [ Hash ] options The options for the transaction being started.
-    #   These are the same options that start_transaction accepts.
+    #   These are the same options that start_transaction accepts, including
+    #   +:timeout_ms+, which bounds the total time spent in with_transaction.
+    #
+    # @yield [ Session ] The block to execute inside the transaction. It may
+    #   be invoked more than once.
+    #
+    # @return [ Object ] The return value of the block.
     #
     # @raise [ Error::InvalidTransactionOperation ] If a transaction is already in
     #   progress or if the write concern is unacknowledged.
+    # @raise [ Error::TimeoutError ] If the timeout expires before the
+    #   transaction completes.
+    # @raise [ Exception ] Any exception raised by the block that is not
+    #   retried (for example, one not derived from Mongo::Error), after the
+    #   transaction has been aborted.
     #
     # @since 2.7.0
     def with_transaction(options = nil)
@@ -641,7 +690,8 @@ module Mongo
     # operation is performed after start_transaction is called.
     #
     # @example Start a new transaction
-    #   session.start_transaction(options)
+    #   session.start_transaction(read_concern: { level: :snapshot },
+    #                             write_concern: { w: :majority })
     #
     # @param [ Hash ] options The options for the transaction being started.
     #
@@ -650,10 +700,10 @@ module Mongo
     #   This option is deprecated, use :timeout_ms instead.
     # @option options [ Hash ] :read_concern The read concern options hash,
     #   with the following optional keys:
-    #   - *:level* -- the read preference level as a symbol; valid values
+    #   - *:level* -- the read concern level as a symbol; valid values
     #      are *:local*, *:majority*, and *:snapshot*
     # @option options [ Hash ] :write_concern The write concern options. Can be :w =>
-    #   Integer|String, :fsync => Boolean, :j => Boolean.
+    #   Integer|String, :wtimeout => Integer, :fsync => Boolean, :j => Boolean.
     # @option options [ Hash ] :read The read preference options. The hash may have the following
     #   items:
     #   - *:mode* -- read preference specified as a symbol; the only valid value is
@@ -665,6 +715,10 @@ module Mongo
     #
     # @raise [ Error::InvalidTransactionOperation ] If a transaction is already in
     #   progress or if the write concern is unacknowledged.
+    # @raise [ Error::SnapshotSessionTransactionProhibited ] If this is a
+    #   snapshot session.
+    # @raise [ Error::TransactionsNotSupported ] If the connected servers do
+    #   not support transactions.
     #
     # @since 2.6.0
     def start_transaction(options = nil)
@@ -721,14 +775,19 @@ module Mongo
     # @example Commits the transaction.
     #   session.commit_transaction
     #
-    # @option options :write_concern [ nil | WriteConcern::Base ] The write
+    # @param [ Hash ] options The options for the commit.
+    #
+    # @option options [ nil | WriteConcern::Base | Hash ] :write_concern The write
     #   concern to use for this operation.
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must be a non-negative integer. An explicit value of 0 means infinite.
     #    The default value is unset which means the value is inherited from
     #    the client.
     #
-    # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
+    # @raise [ Error::InvalidTransactionOperation ] If there is no active
+    #   transaction, or if the transaction has been aborted.
+    # @raise [ Error::OperationFailure::Family ] If the server rejects the commit.
+    # @raise [ Error::TimeoutError ] If the operation timeout expires.
     #
     # @since 2.6.0
     def commit_transaction(options = nil)
@@ -806,8 +865,14 @@ module Mongo
 
     # Abort the currently active transaction without making any changes to the database.
     #
+    # Errors derived from Mongo::Error that occur while sending abortTransaction
+    # to the server are ignored; the transaction is considered aborted
+    # regardless.
+    #
     # @example Abort the transaction.
     #   session.abort_transaction
+    #
+    # @param [ Hash ] options The options for the abort.
     #
     # @option options [ Integer ] :timeout_ms The operation timeout in milliseconds.
     #    Must be a non-negative integer. An explicit value of 0 means infinite.
@@ -1283,6 +1348,8 @@ module Mongo
     #
     # @return [ Integer ] The current transaction number.
     #
+    # @api private
+    #
     # @since 2.6.0
     def txn_num
       raise Error::SessionEnded if ended?
@@ -1294,6 +1361,7 @@ module Mongo
     #   nil if the session is not a snapshot session, or if it is a snapshot
     #   session for which no :snapshot_time option was provided and no read
     #   has yet captured atClusterTime from the server.
+    #   Reflects the :snapshot_time option when one was given.
     attr_reader :snapshot_timestamp
 
     # Sets the snapshot time for the session. Once set, subsequent
