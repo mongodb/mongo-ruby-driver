@@ -19,6 +19,7 @@ module Mongo
     # Represents a connection pool for server connections.
     #
     # @since 2.0.0, largely rewritten in 2.9.0
+    # @api private
     class ConnectionPool
       include Loggable
       include Monitoring::Publishable
@@ -321,9 +322,6 @@ module Mongo
         end
       end
 
-      # @note This method is experimental and subject to change.
-      #
-      # @api experimental
       # @since 2.11.0
       def summary
         @lock.synchronize do

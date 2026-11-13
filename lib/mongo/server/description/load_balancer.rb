@@ -18,6 +18,8 @@ module Mongo
   class Server
     class Description
       # Represents an assumed description of servers behind load balancers.
+      #
+      # @api private
       class LoadBalancer
         def initialize(address)
           @address = address

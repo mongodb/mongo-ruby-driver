@@ -178,6 +178,8 @@ module Mongo
       # A helper method for retrieving the primary server from the cluster.
       #
       # @return [ Mongo::Server ] the server to use
+      #
+      # @api private
       def next_primary(ping = nil, session = nil)
         collection.cluster.next_primary(ping, session)
       end

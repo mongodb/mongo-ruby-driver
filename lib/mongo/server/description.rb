@@ -26,158 +26,220 @@ module Mongo
     # should not be nil. When driver behavior is changed
     # (https://jira.mongodb.org/browse/RUBY-1805), this may no longer be necessary.
     #
+    # Descriptions are public even though Server is not, because SDAM events
+    # expose them to subscribers.
+    #
     # @since 2.0.0
+    # @api public
     class Description
       # Constant for reading arbiter info from config.
       #
       # @since 2.0.0
       # @deprecated
+      #
+      # @api private
       ARBITER = 'arbiterOnly'
 
       # Constant for reading arbiters info from config.
       #
       # @since 2.0.0
+      #
+      # @api private
       ARBITERS = 'arbiters'
 
       # Constant for reading hidden info from config.
       #
       # @since 2.0.0
+      #
+      # @api private
       HIDDEN = 'hidden'
 
       # Constant for reading hosts info from config.
       #
       # @since 2.0.0
+      #
+      # @api private
       HOSTS = 'hosts'
 
       # Constant for the key for the message value.
       #
       # @since 2.0.0
       # @deprecated
+      #
+      # @api private
       MESSAGE = 'msg'
 
       # Constant for the message that indicates a sharded cluster.
       #
       # @since 2.0.0
       # @deprecated
+      #
+      # @api private
       MONGOS_MESSAGE = 'isdbgrid'
 
       # Constant for determining ghost servers.
       #
       # @since 2.0.0
       # @deprecated
+      #
+      # @api private
       REPLICA_SET = 'isreplicaset'
 
       # Constant for reading max bson size info from config.
       #
       # @since 2.0.0
+      #
+      # @api private
       MAX_BSON_OBJECT_SIZE = 'maxBsonObjectSize'
 
       # Constant for reading max message size info from config.
       #
       # @since 2.0.0
+      #
+      # @api private
       MAX_MESSAGE_BYTES = 'maxMessageSizeBytes'
 
       # Constant for the max wire version.
       #
       # @since 2.0.0
+      #
+      # @api private
       MAX_WIRE_VERSION = 'maxWireVersion'
 
       # Constant for min wire version.
       #
       # @since 2.0.0
+      #
+      # @api private
       MIN_WIRE_VERSION = 'minWireVersion'
 
       # Constant for reading max write batch size.
       #
       # @since 2.0.0
+      #
+      # @api private
       MAX_WRITE_BATCH_SIZE = 'maxWriteBatchSize'
 
       # Constant for the lastWrite subdocument.
       #
       # @since 2.4.0
+      #
+      # @api private
       LAST_WRITE = 'lastWrite'
 
       # Constant for the lastWriteDate field in the lastWrite subdocument.
       #
       # @since 2.4.0
+      #
+      # @api private
       LAST_WRITE_DATE = 'lastWriteDate'
 
       # Constant for reading the me field.
       #
       # @since 2.1.0
+      #
+      # @api private
       ME = 'me'
 
       # Default max write batch size.
       #
       # @since 2.0.0
+      #
+      # @api private
       DEFAULT_MAX_WRITE_BATCH_SIZE = 1000
 
       # The legacy wire protocol version.
       #
       # @since 2.0.0
       # @deprecated Will be removed in 3.0.
+      #
+      # @api private
       LEGACY_WIRE_VERSION = 0
 
       # Constant for reading passive info from config.
       #
       # @since 2.0.0
+      #
+      # @api private
       PASSIVE = 'passive'
 
       # Constant for reading the passive server list.
       #
       # @since 2.0.0
+      #
+      # @api private
       PASSIVES = 'passives'
 
       # Constant for reading primary info from config.
       #
       # @since 2.0.0
       # @deprecated
+      #
+      # @api private
       PRIMARY = 'ismaster'
 
       # Constant for reading primary host field from config.
       #
       # @since 2.5.0
+      #
+      # @api private
       PRIMARY_HOST = 'primary'
 
       # Constant for reading secondary info from config.
       #
       # @since 2.0.0
       # @deprecated
+      #
+      # @api private
       SECONDARY = 'secondary'
 
       # Constant for reading replica set name info from config.
       #
       # @since 2.0.0
+      #
+      # @api private
       SET_NAME = 'setName'
 
       # Constant for reading tags info from config.
       #
       # @since 2.0.0
+      #
+      # @api private
       TAGS = 'tags'
 
       # Constant for reading electionId info from config.
       #
       # @since 2.1.0
+      #
+      # @api private
       ELECTION_ID = 'electionId'
 
       # Constant for reading setVersion info from config.
       #
       # @since 2.2.2
+      #
+      # @api private
       SET_VERSION = 'setVersion'
 
       # Constant for reading localTime info from config.
       #
       # @since 2.1.0
+      #
+      # @api private
       LOCAL_TIME = 'localTime'
 
       # Constant for reading operationTime info from config.
       #
       # @since 2.5.0
+      #
+      # @api private
       OPERATION_TIME = 'operationTime'
 
       # Constant for reading logicalSessionTimeoutMinutes info from config.
       #
       # @since 2.5.0
+      #
+      # @api private
       LOGICAL_SESSION_TIMEOUT_MINUTES = 'logicalSessionTimeoutMinutes'
 
       # Constant for reading connectionId info from config.
@@ -206,6 +268,8 @@ module Mongo
       # remaining replica-set metadata.
       #
       # @since 2.0.6
+      #
+      # @api private
       EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME,
                                  LAST_WRITE,
                                  OPERATION_TIME,
@@ -302,6 +366,8 @@ module Mongo
       attr_reader :address
 
       # @return [ Hash ] The actual result from the hello command.
+      #
+      # @api private
       attr_reader :config
 
       # Returns whether this server is a load balancer.
@@ -312,6 +378,8 @@ module Mongo
       end
 
       # @return [ Features ] features The features for the server.
+      #
+      # @api private
       attr_reader :features
 
       # @return [ Float ] The moving average time the hello call took to complete.
@@ -393,7 +461,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Server:Description:0x#{object_id} config=#{config} average_round_trip_time=#{average_round_trip_time}>"
+        "#<Mongo::Server::Description:0x#{object_id} config=#{config} average_round_trip_time=#{average_round_trip_time}>"
       end
 
       # Get the max BSON object size for this server version.
@@ -508,6 +576,8 @@ module Mongo
       end
 
       # @return [ TopologyVersion | nil ] The topology version.
+      #
+      # @api private
       def topology_version
         unless defined?(@topology_version)
           @topology_version = config['topologyVersion'] &&
@@ -768,6 +838,7 @@ module Mongo
       #
       # @since 2.0.6
       # @deprecated
+      # @api private
       def is_server?(server)
         address == server.address
       end
@@ -782,6 +853,7 @@ module Mongo
       #
       # @since 2.0.6
       # @deprecated
+      # @api private
       def lists_server?(server)
         servers.include?(server.address.to_s)
       end
@@ -795,6 +867,7 @@ module Mongo
       #   member.
       #
       # @since 2.0.6
+      # @api private
       def replica_set_member?
         ok? && !(standalone? || mongos?)
       end
@@ -818,6 +891,7 @@ module Mongo
       # @return [ true, false ] If there is a mismatch between the me field and the address host.
       #
       # @since 2.0.6
+      # @api private
       def me_mismatch?
         !!(address.to_s.downcase != me.downcase if me)
       end
@@ -826,6 +900,8 @@ module Mongo
       #
       # @return [ true, false ] Whether this description is from a mongocryptd
       #   server.
+      #
+      # @api private
       def mongocryptd?
         ok? && config['iscryptd'] == true
       end
@@ -855,21 +931,23 @@ module Mongo
 
       # Time when this server description was created according to monotonic clock.
       #
-      # @see Description::last_updated_time for more detail
+      # @see Description#last_update_time for more detail
       #
       # @return [ Float ] Server description creation monotonic time.
       #
       # @api private
       attr_reader :last_update_monotime
 
-      # @api experimental
+      # The server-side connection id reported in the hello response.
+      #
+      # @return [ Integer | nil ] The server connection id, if any.
       def server_connection_id
         config['connectionId']
       end
 
-      # @return [ nil | Object ] The service id, if any.
+      # The service id reported by a load balancer, if any.
       #
-      # @api experimental
+      # @return [ nil | Object ] The service id, if any.
       def service_id
         config['serviceId']
       end

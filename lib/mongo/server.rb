@@ -19,6 +19,7 @@ module Mongo
   # a replica set, or a mongos.
   #
   # @since 2.0.0
+  # @api private
   class Server
     extend Forwardable
     include Monitoring::Publishable
@@ -97,7 +98,7 @@ module Mongo
       @pool_lock = Mutex.new
     end
 
-    # @return [ String ] The configured address for the server.
+    # @return [ Mongo::Address ] The configured address for the server.
     attr_reader :address
 
     # @return [ Cluster ] cluster The server cluster.
@@ -207,8 +208,6 @@ module Mongo
                    :cluster_time,
                    :update_cluster_time
 
-    # @api private
-    #
     # @!method tracer
     #   @api private
     #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
@@ -288,6 +287,7 @@ module Mongo
       true
     end
 
+    # Stop the monitor and close the connection pool, if any.
     def close
       monitor.stop! if monitor
 
@@ -380,9 +380,6 @@ module Mongo
       end
     end
 
-    # @note This method is experimental and subject to change.
-    #
-    # @api experimental
     # @since 2.7.0
     def summary
       status = self.status || ''

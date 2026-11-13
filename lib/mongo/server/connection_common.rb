@@ -18,11 +18,7 @@ module Mongo
   class Server
     # Common methods used by both monitoring and non-monitoring connections.
     #
-    # @note Although methods of this module are part of the public API,
-    #   the fact that these methods are defined on this module and not on
-    #   the classes which include this module is not part of the public API.
-    #
-    # @api semipublic
+    # @api private
     class ConnectionCommon
       # The compressor negotiated during the handshake for this connection,
       # if any.

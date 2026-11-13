@@ -19,6 +19,7 @@ module Mongo
     # This class models the socket connections for servers and their behavior.
     #
     # @since 2.0.0
+    # @api private
     class Connection < ConnectionBase
       include Monitoring::Publishable
       include Retryable
