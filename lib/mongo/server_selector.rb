@@ -24,7 +24,12 @@ require 'mongo/server_selector/secondary_preferred'
 module Mongo
   # Functionality for getting an object able to select a server, given a preference.
   #
+  # Users do not interact with server selectors directly. Server selection is
+  # configured with the +:read+, +:server_selection_timeout+ and
+  # +:local_threshold+ client and collection options.
+  #
   # @since 2.0.0
+  # @api private
   module ServerSelector
     extend self
 

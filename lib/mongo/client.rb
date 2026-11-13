@@ -825,6 +825,8 @@ module Mongo
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
+    #   - *:max_staleness* -- the maximum replication lag, in seconds.
+    #   - *:hedge* -- hedged read options (deprecated).
     #   - *:local_threshold*.
     #
     # @since 2.0.0

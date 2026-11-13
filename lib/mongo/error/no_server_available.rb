@@ -25,12 +25,15 @@ module Mongo
       # @example Instantiate the exception.
       #   Mongo::Error::NoServerAvailable.new(server_selector)
       #
-      # @param [ Hash ] server_selector The server preference that could not be
-      #   satisfied.
-      # @param [ Cluster ] cluster The cluster that server selection was
-      #   performed on. (added in 2.7.0)
+      # @param [ Mongo::ServerSelector::Base ] server_selector The server
+      #   preference that could not be satisfied.
+      # @param [ Mongo::Cluster | nil ] cluster The cluster that server
+      #   selection was performed on. (added in 2.7.0)
+      # @param [ String | nil ] msg The error message. A default message is
+      #   built from the selector if omitted.
       #
       # @since 2.0.0
+      # @api private
       def initialize(server_selector, cluster = nil, msg = nil)
         unless msg
           msg = "No #{server_selector.name} server is available"
