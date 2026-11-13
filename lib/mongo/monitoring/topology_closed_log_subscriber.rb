@@ -19,6 +19,7 @@ module Mongo
     # Subscribes to Topology Closed events and logs them.
     #
     # @since 2.7.0
+    # @api private
     class TopologyClosedLogSubscriber < SDAMLogSubscriber
       private
 

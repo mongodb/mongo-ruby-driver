@@ -37,7 +37,7 @@ module Mongo
           # created.
           #
           # @since 2.11.0
-          # @api experimental
+          # @api private
           attr_reader :pool
 
           # Create the event.
@@ -58,10 +58,7 @@ module Mongo
           #
           # @return [ String ] String summary of the event.
           #
-          # @note This method is experimental and subject to change.
-          #
           # @since 2.9.0
-          # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
               "address=#{address} options=#{options} pool=0x#{pool.object_id}>"

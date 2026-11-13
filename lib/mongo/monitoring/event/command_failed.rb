@@ -101,9 +101,6 @@ module Mongo
         #
         # @return [ String ] String summary of the event.
         #
-        # @note This method is experimental and subject to change.
-        #
-        # @api experimental
         def summary
           "#<#{short_class_name} address=#{address} #{database_name}.#{command_name}>"
         end

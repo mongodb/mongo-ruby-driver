@@ -93,9 +93,6 @@ module Mongo
         #
         # @return [ String ] String summary of the event.
         #
-        # @note This method is experimental and subject to change.
-        #
-        # @api experimental
         def summary
           "#<#{short_class_name} address=#{address} #{database_name}.#{command_name}>"
         end
@@ -135,6 +132,7 @@ module Mongo
           )
         end
 
+        # @api private
         def self.generate_reply(command_payload, reply_payload)
           if reply_payload
             reply = reply_payload[:reply]
@@ -147,6 +145,7 @@ module Mongo
           end
         end
 
+        # @api private
         def self.namespace(payload)
           command = payload[:command]
           "#{payload[:database_name]}.#{command[:collection] || command.values.first}"

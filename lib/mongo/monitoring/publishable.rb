@@ -19,6 +19,7 @@ module Mongo
     # Defines behavior for an object that can publish monitoring events.
     #
     # @since 2.1.0
+    # @api private
     module Publishable
       include Loggable
 

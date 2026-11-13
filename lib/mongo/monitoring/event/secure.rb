@@ -21,6 +21,7 @@ module Mongo
       # replies.
       #
       # @since 2.1.0
+      # @api private
       module Secure
         # The list of commands that has the data redacted for security.
         #

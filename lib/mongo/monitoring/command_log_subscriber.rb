@@ -19,6 +19,7 @@ module Mongo
     # Subscribes to command events and logs them.
     #
     # @since 2.1.0
+    # @api private
     class CommandLogSubscriber
       include Loggable
 
