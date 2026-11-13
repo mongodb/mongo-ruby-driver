@@ -17,10 +17,14 @@
 module Mongo
   class Collection
     class View
+      # Builds command specifications from collection views.
+      #
+      # @api private
       module Builder
         # Builds an aggregation command specification from the view and options.
         #
         # @since 2.2.0
+        # @api private
         class Aggregation
           extend Forwardable
 

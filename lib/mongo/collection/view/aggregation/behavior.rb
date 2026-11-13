@@ -16,12 +16,40 @@ module Mongo
           include Retryable
 
           # @return [ View ] view The collection view.
+          #
+          # @api private
           attr_reader :view
 
           # Delegate necessary operations to the view.
+          #
+          # @!method collection
+          #   @api private
+          #   @return [ Collection ] The collection.
+          # @!method read
+          #   @api private
+          #   @return [ Hash ] The read preference options.
+          # @!method cluster
+          #   @api private
+          #   @return [ Mongo::Cluster ] The cluster.
+          # @!method cursor_type
+          #   @api private
+          #   @return [ Symbol | nil ] The cursor type.
+          # @!method limit
+          #   @api private
+          #   @return [ Integer | nil ] The limit.
+          # @!method batch_size
+          #   @api private
+          #   @return [ Integer | nil ] The batch size.
           def_delegators :view, :collection, :read, :cluster, :cursor_type, :limit, :batch_size
 
           # Delegate necessary operations to the collection.
+          #
+          # @!method database
+          #   @api private
+          #   @return [ Mongo::Database ] The database.
+          # @!method client
+          #   @api private
+          #   @return [ Mongo::Client ] The client.
           def_delegators :collection, :database, :client
 
           # Set to true if disk usage is allowed during the aggregation.

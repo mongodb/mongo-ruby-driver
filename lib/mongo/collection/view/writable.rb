@@ -24,6 +24,7 @@ module Mongo
         # The array filters field constant.
         #
         # @since 2.5.0
+        # @api private
         ARRAY_FILTERS = 'array_filters'
 
         # Finds a single document in the database via findAndModify and deletes

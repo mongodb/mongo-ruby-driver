@@ -21,6 +21,7 @@ module Mongo
         # Builds a map/reduce specification from the view and options.
         #
         # @since 2.2.0
+        # @api private
         class MapReduce
           extend Forwardable
 

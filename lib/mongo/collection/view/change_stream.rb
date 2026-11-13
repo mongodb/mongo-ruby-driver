@@ -33,18 +33,21 @@ module Mongo
         # @return [ String ] The fullDocument option default value.
         #
         # @since 2.5.0
+        # @api private
         FULL_DOCUMENT_DEFAULT = 'default'
 
         # @return [ Symbol ] Used to indicate that the change stream should listen for changes on
         #   the entire database rather than just the collection.
         #
         # @since 2.6.0
+        # @api private
         DATABASE = :database
 
         # @return [ Symbol ] Used to indicate that the change stream should listen for changes on
         #   the entire cluster rather than just the collection.
         #
         # @since 2.6.0
+        # @api private
         CLUSTER = :cluster
 
         # @return [ BSON::Document ] The change stream options.
@@ -69,11 +72,13 @@ module Mongo
         # Initialize the change stream for the provided collection view, pipeline
         # and options.
         #
-        # @example Create the new change stream view.
-        #   ChangeStream.new(view, pipeline, options)
+        # Change streams are created with Collection#watch, Database#watch,
+        # and Client#watch; do not instantiate this class directly.
         #
         # @param [ Collection::View ] view The collection view.
         # @param [ Array<Hash> ] pipeline The pipeline of operators to filter the change notifications.
+        # @param [ Symbol | nil ] changes_for DATABASE or CLUSTER to watch the
+        #   whole database or cluster, or nil to watch the collection.
         # @param [ Hash ] options The change stream options.
         #
         # @option options [ String ] :full_document Allowed values: nil, 'default',
@@ -130,6 +135,7 @@ module Mongo
         #   The server will report an error if `startAfter` and `resumeAfter` are both specified.
         #
         # @since 2.5.0
+        # @api private
         def initialize(view, pipeline, changes_for, options = {})
           # change stream cursors can only be :iterable, so we don't allow
           # timeout_mode to be specified.
@@ -224,6 +230,10 @@ module Mongo
           doc
         end
 
+        # Returns an enumerator over the change stream. The enumerator also
+        # responds to +try_next+.
+        #
+        # @return [ Enumerator ] The enumerator.
         def to_enum
           enum = super
           enum.send(:instance_variable_set, '@obj', self)
@@ -304,6 +314,8 @@ module Mongo
         # "change streams are an abstraction around tailable-awaitData cursors..."
         #
         # @return :tailable_await
+        #
+        # @api private
         def cursor_type
           :tailable_await
         end
@@ -311,6 +323,8 @@ module Mongo
         # "change streams...implicitly use ITERATION mode"
         #
         # @return :iteration
+        #
+        # @api private
         def timeout_mode
           :iteration
         end
@@ -319,6 +333,8 @@ module Mongo
         # passed to this change stream.
         #
         # @return [ Integer | nil ] the max_await_time_ms value
+        #
+        # @api private
         def max_await_time_ms
           options[:max_await_time_ms]
         end

@@ -653,7 +653,7 @@ module Mongo
     # @note This helper method is preferable to running a raw aggregation with
     #   a $changeStream stage, for the purpose of supporting resumability.
     #
-    # @return [ ChangeStream ] The change stream object.
+    # @return [ Mongo::Collection::View::ChangeStream ] The change stream object.
     #
     # @since 2.5.0
     def watch(pipeline = [], options = {})

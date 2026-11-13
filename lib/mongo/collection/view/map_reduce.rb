@@ -20,6 +20,9 @@ module Mongo
       # Provides behavior around a map/reduce operation on the collection
       # view.
       #
+      # @deprecated The +mapReduce+ command is deprecated in MongoDB server
+      #   5.0. Use the aggregation pipeline instead.
+      #
       # @since 2.0.0
       class MapReduce
         extend Forwardable
@@ -31,15 +34,19 @@ module Mongo
         # The inline option.
         #
         # @since 2.1.0
+        # @api private
         INLINE = 'inline'
 
         # Reroute message.
         #
         # @since 2.1.0
         # @deprecated
+        # @api private
         REROUTE = 'Rerouting the MapReduce operation to the primary server'
 
         # @return [ View ] view The collection view.
+        #
+        # @api private
         attr_reader :view
 
         # @return [ String ] map The map function.
@@ -49,9 +56,28 @@ module Mongo
         attr_reader :reduce_function
 
         # Delegate necessary operations to the view.
+        #
+        # @!method collection
+        #   @api private
+        #   @return [ Collection ] The collection.
+        # @!method read
+        #   @api private
+        #   @return [ Hash ] The read preference options.
+        # @!method cluster
+        #   @api private
+        #   @return [ Mongo::Cluster ] The cluster.
+        # @!method timeout_ms
+        #   @api private
+        #   @return [ Integer | nil ] The operation timeout.
         def_delegators :view, :collection, :read, :cluster, :timeout_ms
 
         # Delegate necessary operations to the collection.
+        #
+        # @!method database
+        #   @return [ Mongo::Database ] The database.
+        # @!method client
+        #   @api private
+        #   @return [ Mongo::Client ] The client.
         def_delegators :collection, :database, :client
 
         # Iterate through documents returned by the map/reduce.
@@ -167,6 +193,8 @@ module Mongo
 
         # Returns the collection name where the map-reduce result is written to.
         # If the result is returned inline, returns nil.
+        #
+        # @api private
         def out_collection_name
           if options[:out].respond_to?(:keys)
             options[:out][OUT_ACTIONS.find do |action|
@@ -177,6 +205,8 @@ module Mongo
 
         # Returns the database name where the map-reduce result is written to.
         # If the result is returned inline, returns nil.
+        #
+        # @api private
         def out_database_name
           return unless options[:out]
 
@@ -239,6 +269,7 @@ module Mongo
 
         private
 
+        # @api private
         OUT_ACTIONS = %i[replace merge reduce].freeze
 
         def server_selector
