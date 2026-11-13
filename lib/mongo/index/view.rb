@@ -41,7 +41,25 @@ module Mongo
       # @api private
       attr_reader :operation_timeout_ms
 
+      # @!method cluster
+      #   @api private
+      #   @return [ Mongo::Cluster ] The cluster.
+      # @!method database
+      #   @api private
+      #   @return [ Mongo::Database ] The database.
+      # @!method read_preference
+      #   @api private
+      #   @return [ Hash | nil ] The read preference.
+      # @!method write_concern
+      #   @api private
+      #   @return [ Mongo::WriteConcern::Base | nil ] The write concern.
+      # @!method client
+      #   @api private
+      #   @return [ Mongo::Client ] The client.
       def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
+      # @!method next_primary
+      #   @api private
+      #   @return [ Mongo::Server ] The primary server.
       def_delegators :cluster, :next_primary
       # @!method tracer
       #   @api private
@@ -51,16 +69,22 @@ module Mongo
       # The index key field.
       #
       # @since 2.0.0
+      #
+      # @api private
       KEY = 'key'
 
       # The index name field.
       #
       # @since 2.0.0
+      #
+      # @api private
       NAME = 'name'
 
       # The mappings of Ruby index options to server options.
       #
       # @since 2.0.0
+      #
+      # @api private
       OPTIONS = {
         background: :background,
         bits: :bits,

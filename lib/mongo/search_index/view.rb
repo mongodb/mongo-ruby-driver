@@ -13,13 +13,19 @@ module Mongo
       attr_reader :collection
 
       # @return [ nil | String ] the index id to query
+      #
+      # @api private
       attr_reader :requested_index_id
 
       # @return [ nil | String ] the index name to query
+      #
+      # @api private
       attr_reader :requested_index_name
 
       # @return [ Hash ] the options hash to use for the aggregate command
       #   when querying the available indexes.
+      #
+      # @api private
       attr_reader :aggregate_options
 
       # @!method tracer
