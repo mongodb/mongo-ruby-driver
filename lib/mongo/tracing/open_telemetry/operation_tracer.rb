@@ -24,7 +24,6 @@ module Mongo
         extend Forwardable
 
         def_delegators :@parent_tracer,
-                       :cursor_context_map,
                        :parent_context_for,
                        :transaction_context_map,
                        :transaction_map_key
@@ -100,7 +99,7 @@ module Mongo
         #
         # @return [ OpenTelemetry::Trace::Span ] the created span.
         def create_operation_span(operation, operation_context, op_name)
-          parent_context = parent_context_for(operation_context, operation.cursor_id)
+          parent_context = parent_context_for(operation_context)
           @otel_tracer.start_span(
             operation_span_name(operation, op_name),
             attributes: span_attributes(operation, op_name),
@@ -119,9 +118,9 @@ module Mongo
         #
         # @return [ Object ] the result of the block.
         def execute_with_span(span, operation, recording)
-          ::OpenTelemetry::Trace.with_span(span) do |s, c|
+          ::OpenTelemetry::Trace.with_span(span) do |s, _context|
             yield.tap do |result|
-              process_cursor_context(result, operation.cursor_id, c, s, recording)
+              record_cursor_id(result, operation.cursor_id, s, recording)
             end
           end
         end
@@ -175,27 +174,17 @@ module Mongo
           }.compact
         end
 
-        # Processes cursor context after operation execution.
-        #
-        # Updates the cursor context map based on the result. Removes closed cursors
-        # and stores context for newly created cursors.
+        # Records the id of a cursor the operation opened.
         #
         # @param result [ Object ] the operation result.
         # @param cursor_id [ Integer | nil ] the cursor ID before the operation.
-        # @param context [ OpenTelemetry::Context ] the OpenTelemetry context.
         # @param span [ OpenTelemetry::Trace::Span ] the current span.
         # @param recording [ true | false ] whether the span is recording.
-        def process_cursor_context(result, cursor_id, context, span, recording)
+        def record_cursor_id(result, cursor_id, span, recording)
           return unless result.is_a?(Cursor)
+          return if cursor_id || result.id.nil? || result.id.zero? || !recording
 
-          if result.id.zero?
-            # If the cursor is closed, remove it from the context map.
-            cursor_context_map.delete(cursor_id)
-          elsif result.id && cursor_id.nil?
-            # New cursor created, store its context.
-            cursor_context_map[result.id] = context
-            span.set_attribute('db.mongodb.cursor_id', result.id) if recording
-          end
+          span.set_attribute('db.mongodb.cursor_id', result.id)
         end
 
         # Extracts the collection name from the operation.
