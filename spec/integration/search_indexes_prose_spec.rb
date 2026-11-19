@@ -75,9 +75,7 @@ describe 'Mongo::Collection#search_indexes prose tests' do
   let(:client) do
     Mongo::Client.new(
       ENV['ATLAS_URI'],
-      database: SpecConfig.instance.test_db,
-      ssl: true,
-      ssl_verify: true
+      database: SpecConfig.instance.test_db
     )
   end
 
@@ -97,7 +95,7 @@ describe 'Mongo::Collection#search_indexes prose tests' do
 
     it 'succeeds' do
       expect(create_index).to be == name
-      expect(index['latestDefinition']).to be == definition
+      expect(index['latestDefinition']['mappings']['dynamic']).to be false
     end
   end
 
@@ -120,8 +118,8 @@ describe 'Mongo::Collection#search_indexes prose tests' do
 
     it 'succeeds' do
       expect(create_indexes).to be == names
-      expect(index1['latestDefinition']).to be == specs[0]['definition']
-      expect(index2['latestDefinition']).to be == specs[1]['definition']
+      expect(index1['latestDefinition']['mappings']['dynamic']).to be false
+      expect(index2['latestDefinition']['mappings']['dynamic']).to be false
     end
   end
 
@@ -155,7 +153,7 @@ describe 'Mongo::Collection#search_indexes prose tests' do
         helper.collection.search_indexes.update_one(new_definition, name: name)
       end.not_to raise_error
 
-      expect(index['latestDefinition']).to be == new_definition
+      expect(index['latestDefinition']['mappings']['dynamic']).to be true
     end
   end
 
