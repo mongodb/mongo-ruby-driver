@@ -25,10 +25,12 @@ module Mongo
     class Result
       include Address::Validator
 
-      # @return [ String ] MISMATCHED_DOMAINNAME Error message format string indicating that an SRV
-      #   record found does not match the domain of a hostname.
-      MISMATCHED_DOMAINNAME = 'Parent domain name in SRV record result (%s) does not match ' +
-                              'that of the hostname (%s)'
+      # @return [ String ] MISMATCHED_DOMAINNAME Error message indicating that an SRV
+      #   record found does not match the domain of a hostname. The names are not
+      #   included: during initial parsing the hostname may contain text the user
+      #   intended as part of a credential.
+      MISMATCHED_DOMAINNAME = 'Parent domain name in SRV record result does not match ' +
+                              'that of the hostname'
 
       # @return [ String ] query_hostname The hostname pointing to the DNS records.
       attr_reader :query_hostname
@@ -120,14 +122,14 @@ module Mongo
         record_host_parts = record_host.split('.')
 
         if srv_is_less_than_three_parts && record_host_parts.length <= srv_host_domain.length
-          raise Error::MismatchedDomain.new(format(MISMATCHED_DOMAINNAME, record_host, srv_host_domain))
+          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME)
         end
 
         record_matches_domain = (record_host_parts.size > srv_host_domain.size) &&
                                 (srv_host_domain == record_host_parts[-srv_host_domain.size..-1])
         return if record_matches_domain
 
-        raise Error::MismatchedDomain.new(format(MISMATCHED_DOMAINNAME, record_host, srv_host_domain))
+        raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME)
       end
     end
   end

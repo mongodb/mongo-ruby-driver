@@ -84,5 +84,24 @@ describe Mongo::Srv::Resolver do
           .to raise_error(Mongo::Error::NoSRVRecords)
       end
     end
+
+    context 'when the DNS resolver raises a system call error' do
+      let(:resolver) { described_class.new }
+
+      before do
+        allow(dns_resolver).to receive(:getresources)
+          .and_raise(Errno::ECONNREFUSED.new("Connection refused for #{hostname}"))
+      end
+
+      it 'preserves the class and errno with a safe message and no cause' do
+        expect { resolver.get_records(hostname) }
+          .to raise_error(Errno::ECONNREFUSED) { |error|
+            expect(error.errno).to eq(Errno::ECONNREFUSED::Errno)
+            expect(error.message).to include('The DNS query failed (Errno::ECONNREFUSED)')
+            expect(error.message).not_to include(hostname)
+            expect(error.cause).to be_nil
+          }
+      end
+    end
   end
 end

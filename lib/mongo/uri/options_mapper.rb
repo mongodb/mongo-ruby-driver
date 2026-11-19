@@ -56,24 +56,28 @@ module Mongo
       # @param [ String ] key URI option name.
       # @param [ String ] value The value of the option.
       # @param [ Hash ] uri_options The base option target.
-      def add_uri_option(key, value, uri_options)
+      # @param [ Integer | nil ] offset Position of the option within the
+      #   connection options segment, if known. Used to make warnings about
+      #   unknown options actionable without quoting the key.
+      def add_uri_option(key, value, uri_options, offset: nil)
         strategy = URI_OPTION_MAP[key.downcase]
         if strategy.nil?
-          log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
+          log_warn(unsupported_option_message(offset))
           return
         end
 
+        canonical_key = URI_OPTION_CANONICAL_NAMES[key.downcase]
         group = strategy[:group]
         target = if group
                    uri_options[group] || {}
                  else
                    uri_options
                  end
-        value = apply_transform(key, value, strategy[:type])
+        value = apply_transform(canonical_key, value, strategy[:type])
         # Sometimes the value here would be nil, for example if we are processing
         # read preference tags or auth mechanism properties and all of the
         # data within is invalid. Ignore such options.
-        merge_uri_option(target, value, strategy[:name]) unless value.nil?
+        merge_uri_option(target, value, strategy[:name], canonical_key) unless value.nil?
 
         return unless group && !target.empty? && !uri_options.key?(group)
 
@@ -86,10 +90,11 @@ module Mongo
         opts.each do |key, value|
           strategy = URI_OPTION_MAP[key.downcase]
           if strategy.nil?
-            log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
+            log_warn(unsupported_option_message)
             next
           end
 
+          canonical_key = URI_OPTION_CANONICAL_NAMES[key.downcase]
           group = strategy[:group]
           target = if group
                      uri_options[group] || {}
@@ -97,11 +102,11 @@ module Mongo
                      uri_options
                    end
 
-          value = apply_transform(key, value, strategy[:type])
+          value = apply_transform(canonical_key, value, strategy[:type])
           # Sometimes the value here would be nil, for example if we are processing
           # read preference tags or auth mechanism properties and all of the
           # data within is invalid. Ignore such options.
-          merge_uri_option(target, value, strategy[:name]) unless value.nil?
+          merge_uri_option(target, value, strategy[:name], canonical_key) unless value.nil?
 
           uri_options[group] = target if group && !target.empty? && !uri_options.key?(group)
         end
@@ -234,15 +239,32 @@ module Mongo
       # @param [ Hash ] target The destination.
       # @param [ Object ] value The value to be merged.
       # @param [ Symbol ] name The name of the option.
-      def merge_uri_option(target, value, name)
+      # @param [ String ] canonical_key The canonical URI option name.
+      def merge_uri_option(target, value, name, canonical_key)
         if target.key?(name)
           if REPEATABLE_OPTIONS.include?(name)
             target[name] += value
           else
-            log_warn("Repeated option key: #{name}.")
+            log_warn("Repeated option key: #{canonical_key}.")
           end
         else
           target.merge!(name => value)
+        end
+      end
+
+      # Builds a warning about an option the driver does not know. The key
+      # itself is not included: it comes from the connection string and may
+      # contain text the user intended as a credential.
+      #
+      # @param [ Integer | nil ] offset Position of the option within the
+      #   connection options segment, if known.
+      #
+      # @return [ String ] The warning message.
+      def unsupported_option_message(offset = nil)
+        if offset
+          "Unsupported option at offset #{offset} in the query segment. It will be ignored."
+        else
+          'Unsupported option. It will be ignored.'
         end
       end
 
@@ -329,7 +351,7 @@ module Mongo
         when false, 'false', 'FALSE'
           false
         else
-          log_warn("invalid boolean option for #{name}: #{value}")
+          log_warn("Invalid boolean value for #{name}")
           nil
         end
       end
@@ -443,7 +465,7 @@ module Mongo
       # @return [ nil | Integer ] Converted value.
       def convert_integer(name, value)
         if value.is_a?(String) && /\A\d+\z/ !~ value
-          log_warn("#{value} is not a valid integer for #{name}")
+          log_warn("#{name} is not a valid integer")
           return nil
         end
 
@@ -482,7 +504,7 @@ module Mongo
         case value
         when String
           unless /\A-?\d+(\.\d+)?\z/.match?(value)
-            log_warn("Invalid ms value for #{name}: #{value}")
+            log_warn("Invalid value for #{name}")
             return nil
           end
           if value.to_s[0] == '-'
@@ -573,10 +595,10 @@ module Mongo
       # @param [ String ] value The authentication mechanism.
       #
       # @return [ Symbol ] The transformed authentication mechanism.
-      def convert_auth_mech(_name, value)
+      def convert_auth_mech(name, value)
         auth_mech = AUTH_MECH_MAP[value.upcase]
         (auth_mech || value).tap do |_mech|
-          log_warn("#{value} is not a valid auth mechanism") unless auth_mech
+          log_warn("#{name} is not a valid authentication mechanism") unless auth_mech
         end
       end
 
@@ -651,7 +673,7 @@ module Mongo
       #
       # @return [ Integer | nil ] The max staleness integer parsed out if it is valid, otherwise nil
       #   (and a warning will be logged).
-      def convert_max_staleness(_name, value)
+      def convert_max_staleness(name, value)
         int = if value.is_a?(String) && /\A-?\d+\z/ =~ value
                 value.to_i
               elsif value.is_a?(Integer)
@@ -659,14 +681,14 @@ module Mongo
               end
 
         if int.nil?
-          log_warn("Invalid max staleness value: #{value}")
+          log_warn("Invalid value for #{name}")
           return nil
         end
 
         int = nil if int == -1
 
         if int && ((int > 0 && int < 90) || int < 0)
-          log_warn("max staleness should be either 0 or greater than 90: #{value}")
+          log_warn("#{name} should be either 0 or greater than 90")
           int = nil
         end
 
@@ -717,12 +739,12 @@ module Mongo
       # @param [ String ] value The server monitoring mode string value.
       #
       # @return [ Symbol | nil ] The server monitoring mode symbol.
-      def convert_server_monitoring_mode(_name, value)
+      def convert_server_monitoring_mode(name, value)
         mode = value.downcase
         if SERVER_MONITORING_MODES.include?(mode)
           mode.to_sym
         else
-          log_warn("#{value} is not a valid server monitoring mode")
+          log_warn("#{name} is not a valid server monitoring mode")
           nil
         end
       end
@@ -828,7 +850,7 @@ module Mongo
       #
       # @return [ Integer | nil ] The compression level value if it is between -1 and 9 (inclusive),
       #   otherwise nil (and a warning will be logged).
-      def convert_zlib_compression_level(_name, value)
+      def convert_zlib_compression_level(name, value)
         i = if value.is_a?(String) && /\A-?\d+\z/ =~ value
               value.to_i
             elsif value.is_a?(Integer)
@@ -838,7 +860,7 @@ module Mongo
         if i && i >= -1 && i <= 9
           i
         else
-          log_warn("#{value} is not a valid zlibCompressionLevel")
+          log_warn("#{name} is not a valid compression level")
           nil
         end
       end
@@ -881,7 +903,7 @@ module Mongo
         value.split(',').each do |tag|
           k, v = tag.split(':', 2)
           if v.nil?
-            log_warn("Invalid hash value for #{name}: key `#{k}` does not have a value: #{value}")
+            log_warn("Invalid value for #{name}")
             return nil if invalidate_on_error
 
             next

@@ -23,17 +23,25 @@ module Mongo
     class InvalidURI < Error
       # Instantiate the new exception.
       #
-      # The URI is redacted via {Mongo::URI.redact} before being interpolated
-      # so that any cleartext credentials in the original input do not end up
-      # in logs, error reporters, or backtraces.
+      # The message deliberately contains no part of the connection string.
+      # A string that failed to parse cannot be redacted reliably: the parser
+      # and the redactor can disagree about where the userinfo ends, so
+      # masking the input may still disclose a credential. The details
+      # supplied by the parser identify the component at fault by name
+      # instead. See the "Disclosure of Sensitive Values" section of the
+      # connection string specification.
       #
       # @example Instantiate the exception.
       #   Mongo::Error::InvalidURI.new(uri, details, format)
       #
+      # @param [ String | nil ] _uri The URI that failed to parse. Kept in the
+      #   signature for compatibility; it is not included in the message.
+      # @param [ String ] details Description of the parse failure.
+      # @param [ String | nil ] format The expected connection string format.
+      #
       # @since 2.0.0
-      def initialize(uri, details, format = nil)
-        message = "Bad URI: #{Mongo::URI.redact(uri)}\n" +
-                  "#{details}\n"
+      def initialize(_uri, details, format = nil)
+        message = "#{details}\n"
         message += "MongoDB URI must be in the following format: #{format}\n" if format
         message += "Please see the following URL for more information: #{Mongo::URI::HELP}\n"
         super(message)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'stringio'
 
 describe Mongo::URI::OptionsMapper do
   let(:options_mapper) { described_class.new }
@@ -1560,6 +1561,69 @@ describe Mongo::URI::OptionsMapper do
 
       it 'returns nil' do
         expect(reverted).to be_nil
+      end
+    end
+  end
+
+  describe 'warnings' do
+    let(:output) { StringIO.new }
+    let(:logger) { Logger.new(output) }
+    let(:options_mapper) { described_class.new(logger: logger) }
+    let(:uri_options) { {} }
+
+    before do
+      logger.level = Logger::DEBUG
+    end
+
+    context 'when the option is unknown' do
+      it 'does not include the key or the argument' do
+        options_mapper.add_uri_option('proxyPasswordSENTINELpassword1234',
+                                      'SENTINELpassword1234', uri_options,
+                                      offset: 12)
+
+        expect(output.string).to include('Unsupported option at offset 12 in the query segment')
+        expect(output.string).not_to include('SENTINEL')
+      end
+    end
+
+    context 'when the option is known and the value is invalid' do
+      it 'identifies the option by its canonical name without the argument' do
+        options_mapper.add_uri_option('CONNECTTIMEOUTMS', 'SENTINELpassword1234',
+                                      uri_options)
+
+        expect(output.string).to include('connectTimeoutMS')
+        expect(output.string).not_to include('SENTINEL')
+      end
+    end
+
+    context 'when the value is an invalid auth mechanism' do
+      it 'does not include the argument' do
+        options_mapper.add_uri_option('authMechanism', 'SENTINELpassword1234',
+                                      uri_options)
+
+        expect(output.string).to include('authMechanism')
+        expect(output.string).not_to include('SENTINEL')
+      end
+    end
+
+    context 'when auth mechanism properties are malformed' do
+      it 'does not include the properties' do
+        options_mapper.add_uri_option('authMechanismProperties',
+                                      'AWS_SESSION_TOKEN:AWS_SECRET,BROKEN',
+                                      uri_options)
+
+        expect(output.string).to include('authMechanismProperties')
+        expect(output.string).not_to include('AWS_SECRET')
+        expect(output.string).not_to include('BROKEN')
+      end
+    end
+
+    context 'when an option is repeated' do
+      it 'identifies the option by its canonical name' do
+        options_mapper.add_uri_option('replicaset', 'one', uri_options)
+        options_mapper.add_uri_option('REPLICASET', 'two', uri_options)
+
+        expect(output.string).to include('Repeated option key: replicaSet')
       end
     end
   end

@@ -19,8 +19,9 @@ describe Mongo::Error::InvalidURI do
         expect(error.message).not_to include('alice')
       end
 
-      it 'replaces the userinfo with the credentials placeholder' do
-        expect(error.message).to include('mongodb://<credentials>@host:bad-port/admin')
+      it 'does not include any part of the uri in the message' do
+        expect(error.message).not_to include('host:bad-port')
+        expect(error.message).not_to include('bad-port')
       end
 
       it 'still includes the supplied details' do
@@ -37,17 +38,25 @@ describe Mongo::Error::InvalidURI do
         expect(error.message).not_to include('s3cret')
       end
 
-      it 'redacts the userinfo' do
-        expect(error.message).to include('mongodb+srv://<credentials>@cluster.example.com')
+      it 'does not include the host' do
+        expect(error.message).not_to include('cluster.example.com')
       end
     end
 
     context 'when the uri has no credentials' do
       let(:uri) { 'mongodb://host:27017' }
 
-      it 'does not alter the uri' do
+      it 'does not include the uri' do
         error = described_class.new(uri, details)
-        expect(error.message).to include(uri)
+        expect(error.message).not_to include(uri)
+      end
+    end
+
+    context 'when the uri contains a password that was not delimited' do
+      let(:uri) { 'mongodb://alice:s3cret' }
+
+      it 'does not include the password' do
+        expect(described_class.new(uri, details).message).not_to include('s3cret')
       end
     end
 

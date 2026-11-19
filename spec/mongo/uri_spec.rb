@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 require 'lite_spec_helper'
+require 'stringio'
+require 'json'
+require 'yaml'
+require 'pp'
+require 'open3'
+require 'rbconfig'
 
 describe Mongo::URI do
   shared_examples 'roundtrips string' do
@@ -77,6 +83,82 @@ describe Mongo::URI do
 
       it 'raises an exception' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when an invalid URI contains sensitive information' do
+      it 'does not expose a percent-encoded password when the scheme is misspelled' do
+        string = 'mongod://alice:my%2Fsecret@localhost:27017/admin'
+
+        expect { described_class.get(string) }.to raise_error(Mongo::Error::InvalidURI) { |error|
+          expect(error.message).not_to include('my%2Fsecret')
+          expect(error.message).not_to include('my/secret')
+        }
+      end
+
+      it 'does not expose either part of a password containing an unescaped slash' do
+        string = 'mongodb://alice:password-prefix/secret-tail@localhost:27017/admin'
+
+        expect { described_class.get(string) }.to raise_error(Mongo::Error::InvalidURI) { |error|
+          expect(error.message).not_to include('password-prefix')
+          expect(error.message).not_to include('secret-tail')
+        }
+      end
+
+      it 'does not expose a TLS key password in a parsing error' do
+        string = 'mongodb://alice:password@localhost/?tlsCertificateKeyFilePassword=TLS_SECRET&tls=invalid'
+
+        expect { described_class.get(string) }.to raise_error(Mongo::Error::InvalidURI) { |error|
+          expect(error.message).not_to include('TLS_SECRET')
+        }
+      end
+
+      it 'does not expose a password that was not delimited from the host information' do
+        string = 'mongodb://alice:TOP_SECRET'
+
+        expect { described_class.get(string) }.to raise_error(Mongo::Error::InvalidURI) { |error|
+          expect(error.message).not_to include('TOP_SECRET')
+        }
+      end
+
+      it 'does not expose the password in the cause chain' do
+        string = 'mongodb://alice:TOP_SECRET'
+        error = nil
+
+        begin
+          described_class.get(string)
+        rescue Mongo::Error::InvalidURI => e
+          error = e
+        end
+
+        expect(error).not_to be_nil
+        expect(error.cause).to be_a(Mongo::Error::InvalidAddress)
+        expect(error.cause.message).not_to include('TOP_SECRET')
+        expect(error.full_message(highlight: false)).not_to include('TOP_SECRET')
+      end
+
+      it 'does not expose a percent-encoded password in the cause chain' do
+        string = 'mongodb://alice:TOP%5fSECRET'
+
+        expect { described_class.get(string) }.to raise_error(Mongo::Error::InvalidURI) { |error|
+          expect(error.message).not_to include('TOP%5fSECRET')
+          expect(error.message).not_to include('TOP_SECRET')
+          expect(error.cause.message).not_to include('TOP%5fSECRET')
+          expect(error.full_message(highlight: false)).not_to include('TOP%5fSECRET')
+        }
+      end
+    end
+
+    context 'when authentication mechanism properties are malformed' do
+      it 'does not include the AWS session token in the warning' do
+        output = StringIO.new
+        logger = Logger.new(output)
+        string = 'mongodb://localhost/?authMechanismProperties=AWS_SESSION_TOKEN:AWS_SECRET,BROKEN'
+
+        described_class.get(string, logger: logger)
+
+        expect(output.string).to include('authMechanismProperties')
+        expect(output.string).not_to include('AWS_SECRET')
       end
     end
   end
@@ -246,6 +328,20 @@ describe Mongo::URI do
       end
     end
 
+    context 'invalid write concern combination' do
+      let(:string) { 'mongodb://example.com/?w=0&journal=true' }
+
+      it 'raises an error without echoing the option arguments' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI) { |error|
+          expect(error.message).to include('Invalid write concern options')
+          expect(error.message).not_to include('=>')
+          expect(error.message).not_to include('"true"')
+          expect(error.cause).to be_nil
+          expect(error.full_message(highlight: false)).not_to include('=>')
+        }
+      end
+    end
+
     context 'equal sign in option value' do
       let(:string) { 'mongodb://example.com/?authmechanismproperties=foo:a=b&appname=test' }
 
@@ -396,6 +492,21 @@ describe Mongo::URI do
         expect(uri.to_s).not_to include('alice')
       end
     end
+
+    context 'string includes sensitive options' do
+      let(:string) do
+        'mongodb://localhost/?tlsCertificateKeyFilePassword=TLS_SECRET&' \
+          'authMechanismProperties=AWS_SESSION_TOKEN:AWS_SECRET'
+      end
+
+      it 'does not include the TLS key password' do
+        expect(uri.to_s).not_to include('TLS_SECRET')
+      end
+
+      it 'does not include the AWS session token' do
+        expect(uri.to_s).not_to include('AWS_SECRET')
+      end
+    end
   end
 
   describe '#inspect' do
@@ -413,6 +524,113 @@ describe Mongo::URI do
       it 'includes the credentials placeholder' do
         expect(uri.inspect).to include('<credentials>')
       end
+    end
+
+    context 'string includes sensitive options' do
+      let(:string) do
+        'mongodb://localhost/?tlsCertificateKeyFilePassword=TLS_SECRET&' \
+          'authMechanismProperties=AWS_SESSION_TOKEN:AWS_SECRET'
+      end
+
+      it 'does not include the TLS key password' do
+        expect(uri.inspect).not_to include('TLS_SECRET')
+      end
+
+      it 'does not include the AWS session token' do
+        expect(uri.inspect).not_to include('AWS_SECRET')
+      end
+    end
+  end
+
+  describe 'serialized representations' do
+    let(:string) do
+      'mongodb://SENTINELuser5678:SENTINELpassword1234@localhost:27017/db?' \
+        'appName=visibleApp&' \
+        'tlsCertificateKeyFilePassword=TLS_SECRET&' \
+        'authMechanismProperties=AWS_SESSION_TOKEN:AWS_SECRET'
+    end
+
+    let(:sentinels) do
+      %w[SENTINELuser5678 SENTINELpassword1234 TLS_SECRET AWS_SECRET]
+    end
+
+    def expect_no_secrets(text)
+      sentinels.each do |sentinel|
+        expect(text.to_s.include?(sentinel)).to be(false)
+      end
+    end
+
+    it 'redacts YAML and Marshal, direct and nested' do
+      yaml = uri.to_yaml
+      expect_no_secrets(yaml)
+      expect_no_secrets(YAML.dump({ uri: uri }))
+
+      dumped = Marshal.dump({ uri: uri })
+      expect_no_secrets(dumped)
+
+      expect(uri.credentials[:password]).to eq('SENTINELpassword1234')
+    end
+
+    it 'redacts JSON, Extended JSON and pretty printed output' do
+      [ JSON.generate(uri), uri.to_json, JSON.generate({ uri: uri }),
+        uri.to_extended_json, { uri: uri }.to_extended_json,
+        JSON.generate(uri.as_extended_json), JSON.generate(uri.as_json),
+        JSON.generate({ uri: uri.as_json }) ].each do |text|
+        expect_no_secrets(text)
+      end
+
+      [ uri.pretty_inspect, PP.pp(uri, +''), PP.pp({ uri: uri }, +'') ].each do |text|
+        expect_no_secrets(text)
+      end
+    end
+
+    it 'redacts ActiveSupport JSON encoding when ActiveSupport is available' do
+      lib_dir = File.expand_path('../../lib', __dir__)
+      script = <<~RUBY
+        require 'mongo'
+        begin
+          require 'active_support'
+          require 'active_support/json'
+        rescue LoadError
+          puts 'unavailable'
+          exit 0
+        end
+        uri = Mongo::URI.new(ARGV[0])
+        values = [
+          uri.as_json,
+          ActiveSupport::JSON.encode(uri),
+          ActiveSupport::JSON.encode({ uri: uri }),
+          ActiveSupport::JSON.encode([ uri ]),
+        ]
+        puts values.any? { |value| value.include?('SENTINELpassword1234') || value.include?('TLS_SECRET') }
+      RUBY
+
+      stdout, _stderr, status = Open3.capture3(RbConfig.ruby, '-I', lib_dir, '-e', script, '--', string)
+      expect(status).to be_success
+      skip 'ActiveSupport is not available' if stdout.include?('unavailable')
+      expect(stdout.strip).to eq('false')
+    end
+
+    it 'deserializes to a safe URI that refuses connection configuration' do
+      yaml_loaded = Utils.load_trusted_serialization_yaml(uri.to_yaml)
+      expect(yaml_loaded).to be_a(described_class)
+      expect_no_secrets(yaml_loaded.to_s)
+      expect do
+        yaml_loaded.credentials
+      end.to raise_error(Mongo::Error::InvalidURI) { |error|
+        expect_no_secrets(error.message)
+        expect_no_secrets(error.full_message(highlight: false))
+      }
+      expect { yaml_loaded.client_options }.to raise_error(Mongo::Error::InvalidURI)
+      expect { yaml_loaded.servers }.to raise_error(Mongo::Error::InvalidURI)
+      expect { yaml_loaded.database }.to raise_error(Mongo::Error::InvalidURI)
+      expect { yaml_loaded.uri_options }.to raise_error(Mongo::Error::InvalidURI)
+
+      marshal_loaded = Marshal.load(Marshal.dump(uri))
+      expect(marshal_loaded).to be_a(described_class)
+      expect_no_secrets(marshal_loaded.to_s)
+      expect { marshal_loaded.credentials }.to raise_error(Mongo::Error::InvalidURI)
+      expect { marshal_loaded.client_options }.to raise_error(Mongo::Error::InvalidURI)
     end
   end
 
@@ -567,6 +785,21 @@ describe Mongo::URI do
   describe '#uri_options' do
     let(:servers)  { 'localhost' }
     let(:string) { "#{scheme}#{servers}/?#{options}" }
+
+    context 'when sensitive options are provided' do
+      let(:options) do
+        'tlsCertificateKeyFilePassword=TLS_SECRET&' \
+          'authMechanismProperties=AWS_SESSION_TOKEN:AWS_SECRET'
+      end
+
+      it 'does not expose the TLS key password when inspected' do
+        expect(uri.uri_options.inspect).not_to include('TLS_SECRET')
+      end
+
+      it 'does not expose the AWS session token when inspected' do
+        expect(uri.uri_options.inspect).not_to include('AWS_SECRET')
+      end
+    end
 
     context 'when no options were provided' do
       let(:string) { "#{scheme}#{servers}" }
@@ -953,7 +1186,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect do
               client
-            end.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+            end.to raise_error(Mongo::Auth::InvalidConfiguration, /Invalid auth source/)
           end
         end
 
@@ -1055,7 +1288,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect do
               new_local_client_nmio(string)
-            end.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+            end.to raise_error(Mongo::Auth::InvalidConfiguration, /Invalid auth source/)
           end
         end
 
@@ -1150,6 +1383,13 @@ describe Mongo::URI do
     end
 
     context 'auth mechanism properties provided' do
+      shared_examples 'redacts auth mechanism properties' do
+        it 'replaces the properties with the credentials marker in string representations' do
+          expect(uri.to_s).to include('authMechanismProperties=<credentials>')
+          expect(uri.inspect).to include('authMechanismProperties=<credentials>')
+        end
+      end
+
       shared_examples 'sets options in the expected manner' do
         it 'preserves case in auth mechanism properties returned from URI' do
           expect(uri.uri_options[:auth_mech_properties]).to eq(expected_uri_options)
@@ -1181,7 +1421,7 @@ describe Mongo::URI do
         end
 
         include_examples 'sets options in the expected manner'
-        include_examples 'roundtrips string'
+        include_examples 'redacts auth mechanism properties'
       end
 
       context 'canonicalize_host_name' do
@@ -1204,7 +1444,7 @@ describe Mongo::URI do
         end
 
         include_examples 'sets options in the expected manner'
-        include_examples 'roundtrips string'
+        include_examples 'redacts auth mechanism properties'
       end
 
       context 'service_realm' do
@@ -1227,7 +1467,7 @@ describe Mongo::URI do
         end
 
         include_examples 'sets options in the expected manner'
-        include_examples 'roundtrips string'
+        include_examples 'redacts auth mechanism properties'
       end
 
       context 'multiple properties' do
@@ -1258,7 +1498,7 @@ describe Mongo::URI do
         end
 
         include_examples 'sets options in the expected manner'
-        include_examples 'roundtrips string'
+        include_examples 'redacts auth mechanism properties'
       end
     end
 
@@ -1531,7 +1771,7 @@ describe Mongo::URI do
         let(:options) { 'serverMonitoringMode=invalid' }
 
         it 'warns and does not set the option' do
-          expect(Mongo::Logger.logger).to receive(:warn).with(/invalid is not a valid server monitoring mode/)
+          expect(Mongo::Logger.logger).to receive(:warn).with(/serverMonitoringMode is not a valid server monitoring mode/)
           expect(uri.uri_options[:server_monitoring_mode]).to be_nil
         end
       end

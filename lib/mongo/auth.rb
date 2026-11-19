@@ -109,17 +109,22 @@ module Mongo
     class InvalidMechanism < InvalidConfiguration
       # Instantiate the new error.
       #
+      # The mechanism is not included in the message: an unrecognized value
+      # comes from the connection string and may contain text the user
+      # intended as a credential. The known mechanisms are listed so the
+      # message stays actionable.
+      #
       # @example Instantiate the error.
       #   Mongo::Auth::InvalidMechanism.new(:test)
       #
-      # @param [ Symbol ] mechanism The provided mechanism.
+      # @param [ Symbol | String | nil ] _mechanism The provided mechanism.
       #
       # @since 2.0.0
-      def initialize(mechanism)
+      def initialize(_mechanism = nil)
         known_mechanisms = SOURCES.keys.sort.map do |key|
           key.inspect
         end.join(', ')
-        super("#{mechanism.inspect} is invalid, please use one of the following mechanisms: #{known_mechanisms}")
+        super("Invalid authentication mechanism, please use one of the following mechanisms: #{known_mechanisms}")
       end
     end
 

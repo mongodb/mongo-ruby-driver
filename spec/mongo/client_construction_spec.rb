@@ -1288,7 +1288,7 @@ describe Mongo::Client do
             expect { client }
               .to raise_error(
                 ArgumentError,
-                /Conflicting client options: direct_connection=true and connect=replica_set/
+                /Conflicting client options: direct_connection=true and a connect option other than direct/
               )
           end
         end
@@ -1300,7 +1300,7 @@ describe Mongo::Client do
 
           it 'is rejected' do
             expect { client }
-              .to raise_error(ArgumentError, /Conflicting client options: direct_connection=true and connect=sharded/)
+              .to raise_error(ArgumentError, /Conflicting client options: direct_connection=true and a connect option other than direct/)
           end
         end
 
@@ -1402,7 +1402,7 @@ describe Mongo::Client do
 
             it 'is rejected' do
               expect { client }
-                .to raise_error(ArgumentError, /connect=#{v} cannot be used with load_balanced=true/)
+                .to raise_error(ArgumentError, /A connect option other than load_balanced cannot be used with load_balanced=true/)
             end
           end
         end
@@ -1454,7 +1454,7 @@ describe Mongo::Client do
               expect { client }
                 .to raise_error(
                   ArgumentError,
-                  /Conflicting client options: direct_connection=true and connect=load_balanced/
+                  /Conflicting client options: direct_connection=true and a connect option other than direct/
                 )
             end
           end
@@ -1479,7 +1479,7 @@ describe Mongo::Client do
 
             it 'is rejected' do
               expect { client }
-                .to raise_error(ArgumentError, /connect=replica_set cannot be used with load_balanced=true/)
+                .to raise_error(ArgumentError, /A connect option other than load_balanced cannot be used with load_balanced=true/)
             end
           end
 
@@ -1696,8 +1696,7 @@ describe Mongo::Client do
               new_local_client_nmio(SINGLE_CLIENT, read: read)
             end.to raise_error(
               Mongo::Error::InvalidReadOption,
-              "Invalid read preference value: #{read}: " \
-              'mode bogus is not one of recognized modes'
+              'Invalid read preference value: the mode is not one of the recognized modes'
             )
           end
 
@@ -1707,7 +1706,7 @@ describe Mongo::Client do
               new_local_client_nmio(SINGLE_CLIENT, read: read)
             end.to raise_error(
               Mongo::Error::InvalidReadOption,
-              "Invalid read preference value: #{read}: mode bogus is not one of recognized modes"
+              'Invalid read preference value: the mode is not one of the recognized modes'
             )
           end
 
@@ -1716,7 +1715,7 @@ describe Mongo::Client do
               new_local_client_nmio(SINGLE_CLIENT, read: 'primary')
             end.to raise_error(
               Mongo::Error::InvalidReadOption,
-              'Invalid read preference value: "primary": ' \
+              'Invalid read preference value: ' \
               'the read preference must be specified as a hash: { mode: "primary" }'
             )
           end
@@ -1726,7 +1725,7 @@ describe Mongo::Client do
               new_local_client_nmio(SINGLE_CLIENT, read: :primary)
             end.to raise_error(
               Mongo::Error::InvalidReadOption,
-              'Invalid read preference value: :primary: ' \
+              'Invalid read preference value: ' \
               'the read preference must be specified as a hash: { mode: :primary }'
             )
           end
@@ -2074,24 +2073,21 @@ describe Mongo::Client do
           expect do
             described_class.new([ 'mongodb://127.0.0.1:27017/test' ])
           end.to raise_error(ArgumentError,
-                             "Host 'mongodb://127.0.0.1:27017/test' should not contain protocol. " \
-                             'Did you mean to not use an array?')
+                             'Host at index 0 should not contain protocol. Did you mean to not use an array?')
         end
 
         it 'raises an error on mongodb+srv://' do
           expect do
             described_class.new([ 'mongodb+srv://127.0.0.1:27017/test' ])
           end.to raise_error(ArgumentError,
-                             "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. " \
-                             'Did you mean to not use an array?')
+                             'Host at index 0 should not contain protocol. Did you mean to not use an array?')
         end
 
         it 'raises an error on multiple items' do
           expect do
             described_class.new([ '127.0.0.1:27017', 'mongodb+srv://127.0.0.1:27017/test' ])
           end.to raise_error(ArgumentError,
-                             "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. " \
-                             'Did you mean to not use an array?')
+                             'Host at index 1 should not contain protocol. Did you mean to not use an array?')
         end
 
         it 'raises an error only at beginning of string' do
@@ -2099,15 +2095,13 @@ describe Mongo::Client do
             described_class
               .new([ 'somethingmongodb://127.0.0.1:27017/test', 'mongodb+srv://127.0.0.1:27017/test' ])
           end.to raise_error(ArgumentError,
-                             "Host 'mongodb+srv://127.0.0.1:27017/test' should not contain protocol. " \
-                             'Did you mean to not use an array?')
+                             'Host at index 1 should not contain protocol. Did you mean to not use an array?')
         end
 
         it 'raises an error with different case' do
           expect { described_class.new([ 'MongOdB://127.0.0.1:27017/test' ]) }
             .to raise_error(ArgumentError,
-                            "Host 'MongOdB://127.0.0.1:27017/test' should not contain protocol. " \
-                            'Did you mean to not use an array?')
+                            'Host at index 0 should not contain protocol. Did you mean to not use an array?')
         end
       end
     end

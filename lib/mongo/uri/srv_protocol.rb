@@ -38,14 +38,20 @@ module Mongo
       # don't have to merge the txt record options, credentials, and database in at that point -
       # we only have a single point here.
       #
+      # The returned object is a Hash (with the same key types as before) whose
+      # string representations redact the credentials and the arguments of
+      # sensitive URI options. Accessing it returns the real values.
+      #
       # @example Get the client options.
       #   uri.client_options
       #
-      # @return [ Hash ] The options passed to the Mongo::Client
+      # @return [ Mongo::Options::RedactedHash ] The options passed to the Mongo::Client
       #
       # @since 2.5.0
       def client_options
-        opts = @txt_options.merge(ssl: true)
+        ensure_not_redacted_serialization!
+
+        opts = Options::RedactedHash[@txt_options.merge(ssl: true)]
         opts = opts.merge(uri_options).merge(database: database)
         @user ? opts.merge(credentials) : opts
       end
@@ -94,9 +100,10 @@ module Mongo
       INVALID_DOMAIN = 'The domain name must consist of at least two parts: the domain name, ' +
                        'and a TLD.'
 
-      # @return [ String ] NO_SRV_RECORDS Error message format string indicating that no SRV records
-      #   were found.
-      NO_SRV_RECORDS = "The DNS query returned no SRV records for '%s'"
+      # @return [ String ] NO_SRV_RECORDS Error message indicating that no SRV records
+      #   were found. The hostname is not included: during initial parsing it may contain text the
+      #   user intended as part of a credential.
+      NO_SRV_RECORDS = 'The DNS query returned no SRV records.'
 
       # @return [ String ] FORMAT The expected SRV URI format.
       FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'
@@ -143,14 +150,14 @@ module Mongo
         validate_srv_hostname(hostname)
         @query_hostname = hostname
 
-        log_debug "attempting to resolve #{hostname}"
+        log_debug 'attempting to resolve SRV records'
 
         @srv_result = resolver.get_records(
           hostname,
           uri_options[:srv_service_name] || options[:srv_service_name],
           uri_options[:srv_max_hosts] || options[:srv_max_hosts]
         )
-        raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname) if srv_result.empty?
+        raise Error::NoSRVRecords.new(NO_SRV_RECORDS) if srv_result.empty?
 
         @txt_options = get_txt_options(hostname) || {}
         records = srv_result.address_strs
@@ -173,13 +180,13 @@ module Mongo
       def validate_srv_hostname(hostname)
         raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
 
-        raise_invalid_error!("Hostname cannot start with a dot: #{hostname}") if hostname.start_with?('.')
-        raise_invalid_error!("Hostname cannot end with a dot: #{hostname}") if hostname.end_with?('.')
+        raise_invalid_error!('Hostname cannot start with a dot.') if hostname.start_with?('.')
+        raise_invalid_error!('Hostname cannot end with a dot.') if hostname.end_with?('.')
         parts = hostname.split('.')
-        raise_invalid_error!("Hostname cannot have consecutive dots: #{hostname}") if parts.any?(&:empty?)
+        raise_invalid_error!('Hostname cannot have consecutive dots.') if parts.any?(&:empty?)
         return unless parts.length < 1
 
-        raise_invalid_error!("Hostname cannot be empty: #{hostname}")
+        raise_invalid_error!('Hostname cannot be empty.')
       end
 
       # Obtains the TXT options of a host.

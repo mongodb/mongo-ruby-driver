@@ -32,8 +32,12 @@ describe 'SRV lookup' do
       it 'fails to create client' do
         lambda do
           client
-        end.should raise_error(Mongo::Error::NoSRVRecords,
-                               /The DNS query returned no SRV records for 'test-fake.test.build.10gen.cc'/)
+        end.should raise_error(Mongo::Error::NoSRVRecords) { |error|
+          # The hostname is not included in the message because during
+          # initial parsing it may contain part of a credential.
+          error.message.should eq('The DNS query returned no SRV records.')
+          error.message.should_not include('test-fake.test.build.10gen.cc')
+        }
       end
 
       it 'times out in connect_timeout' do

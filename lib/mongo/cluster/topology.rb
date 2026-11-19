@@ -90,7 +90,7 @@ module Mongo
         connect = options[:connect]&.to_sym
         cls = if options[:direct_connection]
                 if connect && connect != :direct
-                  raise ArgumentError, "Conflicting topology options: direct_connection=true and connect=#{connect}"
+                  raise ArgumentError, 'Conflicting topology options: direct_connection=true and a connect option other than direct'
                 end
                 if options[:load_balanced]
                   raise ArgumentError, 'Conflicting topology options: direct_connection=true and load_balanced=true'
@@ -98,11 +98,11 @@ module Mongo
 
                 Single
               elsif options[:direct_connection] == false && connect && connect == :direct
-                raise ArgumentError, "Conflicting topology options: direct_connection=false and connect=#{connect}"
+                raise ArgumentError, 'Conflicting topology options: direct_connection=false and connect=direct'
               elsif connect && connect != :load_balanced
                 if options[:load_balanced]
                   raise ArgumentError,
-                        "Conflicting topology options: connect=#{options[:connect].inspect} and load_balanced=true"
+                        'Conflicting topology options: a connect option other than load_balanced and load_balanced=true'
                 end
 
                 OPTIONS.fetch(options[:connect].to_sym)

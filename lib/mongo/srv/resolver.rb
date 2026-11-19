@@ -27,6 +27,23 @@ module Mongo
       #   before querying SRV records.
       RECORD_PREFIX = '_mongodb._tcp.'
 
+      # @return [ String ] DNS_QUERY_FAILED Error message used when the DNS
+      #   resolver raises an error. Resolver error messages quote the query
+      #   name, which for a malformed connection string may contain part of a
+      #   credential, so they are replaced with this fixed message.
+      DNS_QUERY_FAILED = 'The DNS query failed'
+
+      # @return [ Array<Class> ] DNS_ERRORS Errors raised by the DNS resolver
+      #   whose messages may quote the query name.
+      DNS_ERRORS = [
+        Resolv::ResolvError,
+        Resolv::ResolvTimeout,
+        Timeout::Error,
+        IOError,
+        SystemCallError,
+        SocketError,
+      ].freeze
+
       # Generates the record prefix with a custom SRV service name if it is
       # provided.
       #
@@ -81,7 +98,7 @@ module Mongo
       # @return [ Mongo::Srv::Result ] SRV lookup result.
       def get_records(hostname, srv_service_name = nil, srv_max_hosts = nil)
         query_name = record_prefix(srv_service_name) + hostname
-        resources = @resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV)
+        resources = get_resources(query_name, Resolv::DNS::Resource::IN::SRV)
 
         # Collect all of the records into a Result object, raising an error
         # or logging a warning if a record with a mismatched domain is found.
@@ -99,10 +116,9 @@ module Mongo
         # If no records are found, either raise an error or log a warning
         # based on the Resolver's :raise_on_invalid option.
         if result.empty?
-          raise Error::NoSRVRecords.new(URI::SRVProtocol::NO_SRV_RECORDS % hostname) if raise_on_invalid?
+          raise Error::NoSRVRecords.new(URI::SRVProtocol::NO_SRV_RECORDS) if raise_on_invalid?
 
-          log_warn(URI::SRVProtocol::NO_SRV_RECORDS % hostname)
-
+          log_warn(URI::SRVProtocol::NO_SRV_RECORDS)
         end
 
         # if srv_max_hosts is in [1, #addresses)
@@ -123,11 +139,11 @@ module Mongo
       #
       # @raise [ Mongo::Error::InvalidTXTRecord ] If more than one TXT record is found.
       def get_txt_options_string(hostname)
-        records = @resolver.getresources(hostname, Resolv::DNS::Resource::IN::TXT)
+        records = get_resources(hostname, Resolv::DNS::Resource::IN::TXT)
         return nil if records.empty?
 
         if records.length > 1
-          msg = "Only one TXT record is allowed: querying hostname #{hostname} returned #{records.length} records"
+          msg = "Only one TXT record is allowed (found #{records.length})"
 
           raise Error::InvalidTXTRecord, msg
         end
@@ -136,6 +152,22 @@ module Mongo
       end
 
       private
+
+      # Performs a DNS query, replacing any resolver error with a fixed
+      # message. Resolver error messages quote the query name, and the cause
+      # chain would quote it again, so both are dropped. The exception class
+      # is preserved so callers can still distinguish timeouts from other
+      # failures.
+      #
+      # @param [ String ] query_name The name to query.
+      # @param [ Class ] resource_class The record type.
+      #
+      # @return [ Array<Resolv::DNS::Resource> ] The records.
+      def get_resources(query_name, resource_class)
+        @resolver.getresources(query_name, resource_class)
+      rescue *DNS_ERRORS => e
+        raise e.class.new("#{DNS_QUERY_FAILED} (#{e.class})"), cause: nil
+      end
 
       # Checks whether an error should be raised due to either a record with
       # a mismatched domain being found or no records being found.

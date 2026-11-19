@@ -563,6 +563,26 @@ module Utils
     ].freeze
   end
 
+  # Classes used by the serialization tests. They are explicitly trusted and
+  # loaded with YAML.safe_load, which is available on Ruby 2.7 and newer.
+  # Resolve them when the method is called: Utils is also loaded by
+  # .evergreen scripts before the driver is required.
+  def load_trusted_serialization_yaml(yaml)
+    trusted_classes = [
+      Mongo::URI,
+      Mongo::URI::SRVProtocol,
+      Mongo::Options::Redacted,
+      Mongo::Options::RedactedHash,
+      Symbol,
+    ]
+
+    YAML.safe_load(
+      yaml,
+      permitted_classes: trusted_classes,
+      aliases: true
+    )
+  end
+
   def load_spec_yaml_file(path)
     if RUBY_VERSION < '2.6'
       YAML.safe_load(File.read(path), permitted_yaml_classes, [], true)

@@ -181,7 +181,7 @@ describe 'Client authentication options' do
       it 'raises an exception on client creation' do
         expect do
           client
-        end.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /Invalid auth source/)
       end
     end
 
@@ -198,7 +198,7 @@ describe 'Client authentication options' do
       it 'raises an exception on client creation' do
         expect do
           client
-        end.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /Invalid auth source/)
       end
     end
   end

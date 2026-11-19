@@ -36,16 +36,6 @@ module Mongo
     # @since 2.0.0
     attr_reader :options
 
-    # Mongo::Options::Redacted of the options specified in the uri.
-    #
-    # @since 2.1.0
-    attr_reader :uri_options
-
-    # The servers specified in the uri.
-    #
-    # @since 2.0.0
-    attr_reader :servers
-
     # The mongodb connection string scheme.
     #
     # @deprecated Will be removed in 3.0.
@@ -141,9 +131,21 @@ module Mongo
     # @since 2.5.0
     SCHEME_DELIM = '://'
 
-    # Placeholder used in place of cleartext credentials when a URI is
-    # rendered for display, logging, or error reporting.
+    # Placeholder used in place of cleartext credentials and sensitive URI
+    # option arguments when a URI is rendered for display, logging, or error
+    # reporting. The same marker is used for every sensitive value in a
+    # representation, as required by the connection string specification.
     CREDENTIALS_PLACEHOLDER = '<credentials>'
+
+    # URI options whose values are sensitive and are replaced with
+    # {CREDENTIALS_PLACEHOLDER} in string representations.
+    #
+    # authMechanismProperties is hidden as a whole: any of its properties may
+    # carry a credential (for example the AWS session token), and the driver
+    # cannot know which properties a future mechanism will treat as secret.
+    #
+    # @since 2.26.2
+    SENSITIVE_URI_OPTIONS = %w[tlsCertificateKeyFilePassword authMechanismProperties].freeze
 
     # Pattern matching the userinfo portion of a MongoDB connection string.
     # Anchors at the start and is bounded to the authority component (stops at
@@ -229,11 +231,15 @@ module Mongo
     REPEATABLE_OPTIONS = %i[tag_sets ssl]
 
     # Replace the userinfo portion of a MongoDB connection string with a
-    # placeholder so the result can safely be logged, displayed, or embedded
-    # in an exception message.
+    # placeholder so the result can be logged, displayed, or embedded in an
+    # exception message.
     #
-    # The input is matched as a string, not parsed, so this is safe to call
-    # on malformed URIs (which is exactly when {InvalidURI} is raised).
+    # The input is matched as a string, not parsed. It is a best-effort
+    # helper for strings that are already known to be well-formed; it must not
+    # be used to make a parse failure safe, because a string the parser
+    # rejected may not have delimited its credentials with '@'. Diagnostics
+    # for parse failures must not include any part of the input; see
+    # {InvalidURI}.
     #
     # @param [ String ] string The raw URI string.
     #
@@ -270,8 +276,7 @@ module Mongo
       when MONGODB_SRV_SCHEME
         SRVProtocol.new(string, opts)
       else
-        raise Error::InvalidURI.new(string,
-                                    "Invalid scheme '#{scheme}'. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'")
+        raise Error::InvalidURI.new(string, INVALID_SCHEME)
       end
     end
 
@@ -286,6 +291,8 @@ module Mongo
     #
     # @since 2.0.0
     def client_options
+      ensure_not_redacted_serialization!
+
       opts = uri_options.tap do |opts|
         opts[:database] = @database if @database
       end
@@ -318,7 +325,7 @@ module Mongo
       @options = options
       parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
       unless parsed_scheme == scheme
-        raise_invalid_error!("Invalid scheme '#{parsed_scheme}'. Scheme must be '#{MONGODB_SCHEME}'. Use URI#get to parse SRV URIs.")
+        raise_invalid_error!("Invalid scheme. Scheme must be '#{MONGODB_SCHEME}'. Use URI#get to parse SRV URIs.")
       end
       raise_invalid_error!('No hosts in the URI') if remaining.empty?
       parse!(remaining)
@@ -336,7 +343,27 @@ module Mongo
     #
     # @since 2.0.0
     def credentials
+      ensure_not_redacted_serialization!
+
       { user: @user, password: @password }
+    end
+
+    # Get the servers provided in the URI.
+    #
+    # @return [ Array<String> ] The servers.
+    def servers
+      ensure_not_redacted_serialization!
+
+      @servers
+    end
+
+    # Get the URI options.
+    #
+    # @return [ Mongo::Options::Redacted ] The URI options.
+    def uri_options
+      ensure_not_redacted_serialization!
+
+      @uri_options
     end
 
     # Get the database provided in the URI.
@@ -348,21 +375,30 @@ module Mongo
     #
     # @since 2.0.0
     def database
+      ensure_not_redacted_serialization!
+
       @database || Database::ADMIN
     end
 
-    # Get the uri as a string with any credentials redacted.
+    # Get the uri as a string with credentials and sensitive option arguments
+    # redacted.
     #
-    # Credentials are replaced with {CREDENTIALS_PLACEHOLDER} so the result is
-    # safe to log or display. Use {#credentials} to recover the original user
-    # and password.
+    # Every sensitive value, including the arguments of
+    # {SENSITIVE_URI_OPTIONS}, is replaced with the same
+    # {CREDENTIALS_PLACEHOLDER} marker, so the result is safe to log or
+    # display. The representation is built from the parsed components. Use
+    # {#credentials} and {#uri_options} to obtain the real values.
     #
     # @example Get the uri as a string.
     #   uri.to_s
     #
     # @return [ String ] The redacted uri string.
     def to_s
-      reconstruct_uri
+      if redacted_serialization?
+        @redacted_uri
+      else
+        reconstruct_uri
+      end
     end
 
     # Return a redacted, human-readable representation of the URI. The
@@ -371,24 +407,99 @@ module Mongo
     #
     # @return [ String ] The redacted inspect string.
     def inspect
-      "#<#{self.class.name}: #{reconstruct_uri}>"
+      "#<#{self.class.name}: #{self}>"
+    end
+
+    # Return the redacted URI for ActiveSupport's JSON encoding.
+    #
+    # ActiveSupport calls this method when encoding the URI (directly or as a
+    # value in a Hash or Array). The result is built from the parsed
+    # components and contains the credentials and sensitive option arguments
+    # as redaction markers.
+    #
+    # @param [ Hash | nil ] _options The ActiveSupport options.
+    #
+    # @return [ String ] The redacted URI.
+    def as_json(_options = nil)
+      to_s
+    end
+
+    # Serialize the URI in a redacted form.
+    #
+    # Serialized URIs are redacted representations and are intentionally not
+    # restored as usable connection configurations: methods that would expose
+    # or use credentials and connection options raise {Error::InvalidURI}.
+    # The redacted string is still available through {#to_s} and {#inspect}.
+    #
+    # @param [ Psych::Coder ] coder The YAML coder.
+    def encode_with(coder)
+      coder.tag = "!ruby/object:#{self.class.name}"
+      coder['redacted_uri'] = to_s
+    end
+
+    # Initialize a redacted URI from YAML.
+    #
+    # @param [ Psych::Coder ] coder The YAML coder.
+    def init_with(coder)
+      initialize_redacted_serialization(coder['redacted_uri'])
+    end
+
+    # Dump the URI for Marshal in a redacted form.
+    #
+    # @return [ Hash ] The serialized representation.
+    def marshal_dump
+      { 'redacted_uri' => to_s }
+    end
+
+    # Load a redacted URI from Marshal.
+    #
+    # @param [ Hash ] hash The serialized representation.
+    def marshal_load(hash)
+      initialize_redacted_serialization(hash['redacted_uri'])
     end
 
     private
 
-    # Reconstruct the URI from its parts with credentials redacted. Invalid
-    # options are dropped and options are converted to camelCase.
+    # Sets the state of a URI restored from a serialized representation.
+    #
+    # @param [ String | nil ] redacted_uri The redacted URI string.
+    def initialize_redacted_serialization(redacted_uri)
+      @redacted_serialization = true
+      @redacted_uri = redacted_uri || '<redacted connection string>'
+    end
+
+    # @return [ true | false ] Whether this object was restored from a
+    #   redacted serialized representation.
+    def redacted_serialization?
+      !@redacted_serialization.nil? && @redacted_serialization
+    end
+
+    # Raises when a redacted serialized URI is used as a connection
+    # configuration.
+    def ensure_not_redacted_serialization!
+      return unless redacted_serialization?
+
+      raise Error::InvalidURI.new(
+        nil,
+        'This connection string was redacted when it was serialized and cannot be used to connect.'
+      )
+    end
+
+    # Reconstruct the URI from its parts with credentials and sensitive option
+    # arguments redacted. Invalid options are dropped and options are converted
+    # to camelCase.
     #
     # @return [ String ] the uri.
     def reconstruct_uri
       servers = @servers.join(',')
       options = options_mapper.ruby_to_string(@uri_options).map do |k, vs|
-        unless vs.nil?
-          if vs.is_a?(Array)
-            vs.map { |v| "#{k}=#{v}" }.join('&')
-          else
-            "#{k}=#{vs}"
-          end
+        next if vs.nil?
+
+        vs = CREDENTIALS_PLACEHOLDER if SENSITIVE_URI_OPTIONS.include?(k)
+        if vs.is_a?(Array)
+          vs.map { |v| "#{k}=#{v}" }.join('&')
+        else
+          "#{k}=#{vs}"
         end
       end.compact.join('&')
 
@@ -412,7 +523,7 @@ module Mongo
       end
 
       hosts, db = hosts_and_db.split('/', 2)
-      raise_invalid_error!("Database name contains an unescaped slash (/): #{db}") if db && db.index('/')
+      raise_invalid_error!('Database name contains an unescaped slash (/).') if db && db.index('/')
 
       if hosts.index('@')
         creds, hosts = hosts.split('@', 2)
@@ -447,16 +558,35 @@ module Mongo
       uri_options = {}
       return uri_options unless string
 
+      offset = 0
       string.split('&').each do |option_str|
+        current_offset = offset
+        offset += option_str.length + 1
         next if option_str.empty?
 
         key, value = option_str.split('=', 2)
-        raise_invalid_error!("Option #{key} has no value") if value.nil?
-        key = decode(key)
-        value = decode(value)
-        options_mapper.add_uri_option(key, value, uri_options)
+        decoded_key = decode(key)
+        if value.nil?
+          raise_invalid_error!(option_without_value_message(decoded_key))
+        end
+
+        options_mapper.add_uri_option(
+          decoded_key, decode(value), uri_options, offset: current_offset
+        )
       end
       uri_options
+    end
+
+    # Builds a diagnostic for an option that has no value. Only a canonical
+    # name of a key the driver knows may appear: an unknown key can contain
+    # text the user intended as a credential.
+    def option_without_value_message(key)
+      canonical = OptionsMapper::URI_OPTION_CANONICAL_NAMES[key.downcase]
+      if canonical
+        "Option #{canonical} has no value"
+      else
+        'Option has no value'
+      end
     end
 
     def parse_user!(string)
@@ -543,14 +673,17 @@ module Mongo
       if uri_options[:write_concern] && !uri_options[:write_concern].empty?
         begin
           WriteConcern.get(uri_options[:write_concern])
-        rescue Error::InvalidWriteConcern => e
-          raise_invalid_error_no_fmt!("#{e.class}: #{e}")
+        rescue Error::InvalidWriteConcern
+          # The write concern error quotes the option arguments, which came
+          # from the connection string. Report a fixed message instead and
+          # drop the cause so the arguments cannot surface through it.
+          raise Error::InvalidURI.new(@string, 'Invalid write concern options.'), cause: nil
         end
       end
 
       if uri_options[:direct_connection]
         if uri_options[:connect] && uri_options[:connect].to_s != 'direct'
-          raise_invalid_error_no_fmt!("directConnection=true cannot be used with connect=#{uri_options[:connect]}")
+          raise_invalid_error_no_fmt!('directConnection=true cannot be used with a connect option other than direct')
         end
         raise_invalid_error_no_fmt!('directConnection=true cannot be used with multiple seeds') if servers.length > 1
       elsif uri_options[:direct_connection] == false && uri_options[:connect].to_s == 'direct'

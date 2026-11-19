@@ -23,12 +23,19 @@ module Mongo
     class InvalidReadOption < Error
       # Instantiate the new exception.
       #
+      # The value is not included in the message: it may come from the
+      # connection string and can contain text the user intended as a
+      # credential.
+      #
       # @example Instantiate the exception.
       #   Mongo::Error::InvalidReadOption.new({:mode => 'bogus'})
       #
+      # @param [ Object ] _read_option The provided read option.
+      # @param [ String ] msg Description of the problem.
+      #
       # @since 2.6.0
-      def initialize(read_option, msg)
-        super("Invalid read preference value: #{read_option.inspect}: #{msg}")
+      def initialize(_read_option, msg)
+        super("Invalid read preference value: #{msg}")
       end
     end
   end
