@@ -1697,6 +1697,18 @@ module Mongo
         raise Mongo::Auth::InvalidConfiguration, "Password is required for auth mechanism #{auth_mech}"
       end
 
+      if auth_mech == :plain
+        if user.include?("\0")
+          raise Mongo::Auth::InvalidConfiguration,
+                'PLAIN authentication username cannot contain NUL characters'
+        end
+
+        if password.include?("\0")
+          raise Mongo::Auth::InvalidConfiguration,
+                'PLAIN authentication password cannot contain NUL characters'
+        end
+      end
+
       if password && auth_mech == :mongodb_x509
         raise Mongo::Auth::InvalidConfiguration, 'Password is not supported for :mongodb_x509 auth mechanism'
       end
