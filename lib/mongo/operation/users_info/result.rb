@@ -21,7 +21,7 @@ module Mongo
       # usersInfo command.
       #
       # @since 2.1.0
-      # @api semiprivate
+      # @api private
       class Result < Operation::Result
         # The field name for the users document in a usersInfo result.
         #
@@ -29,7 +29,7 @@ module Mongo
         # @api private
         USERS = 'users'
 
-        # @api public
+        # @api private
         def documents
           reply.documents.first[USERS]
         end

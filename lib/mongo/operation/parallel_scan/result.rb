@@ -20,7 +20,7 @@ module Mongo
       # Defines custom behavior of results in a parallel scan.
       #
       # @since 2.0.0
-      # @api semiprivate
+      # @api private
       class Result < Operation::Result
         # The name of the cursors field in the result.
         #
@@ -49,7 +49,7 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         def documents
           reply.documents[0][CURSORS]
         end

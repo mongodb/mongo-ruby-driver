@@ -26,8 +26,12 @@ module Mongo
     # check whether an operation succeeded) even when the operation did not
     # produce a reply (in which case it is assumed to have succeeded).
     #
+    # This class is public because it is the return type of Database#command,
+    # Collection#drop and similar methods, and is exposed through
+    # Error::OperationFailure#result. Members not tagged public are internal.
+    #
     # @since 2.0.0
-    # @api semiprivate
+    # @api public
     class Result
       extend Forwardable
       include Enumerable
@@ -146,9 +150,18 @@ module Mongo
       # @api private
       attr_reader :context
 
+      # @return [ Server::Connection | nil ] the connection the reply was
+      #   received on, if any.
+      #
+      # @api private
       attr_reader :connection
 
-      # @api private
+      # @!method not_master?
+      #   @api private
+      # @!method node_recovering?
+      #   @api private
+      # @!method node_shutting_down?
+      #   @api private
       def_delegators :parser,
                      :not_master?, :node_recovering?, :node_shutting_down?
 
@@ -265,7 +278,7 @@ module Mongo
       # @return [ Integer ] The number of documents returned.
       #
       # @since 2.0.0
-      # @api public
+      # @api private
       def returned_count
         if acknowledged?
           reply.number_returned
@@ -408,7 +421,7 @@ module Mongo
       # @return [ Object | nil ] The operation time value.
       #
       # @since 2.5.0
-      # @api public
+      # @api private
       def operation_time
         first_document && first_document[OPERATION_TIME]
       end
@@ -421,7 +434,7 @@ module Mongo
       # @return [ BSON::Document | nil ] The cluster time document.
       #
       # @since 2.5.0
-      # @api public
+      # @api private
       def cluster_time
         first_document && ClusterTime[first_document['$clusterTime']]
       end
@@ -446,6 +459,7 @@ module Mongo
         !!(first_document && first_document['writeConcernError'])
       end
 
+      # @api private
       def snapshot_timestamp
         return unless (doc = reply.documents.first)
 

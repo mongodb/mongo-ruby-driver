@@ -21,7 +21,7 @@ module Mongo
       # collection.
       #
       # @since 2.1.0
-      # @api semiprivate
+      # @api private
       class Result < Operation::Result
         # Initialize a new result.
         #

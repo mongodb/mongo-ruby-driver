@@ -20,14 +20,14 @@ module Mongo
       # Defines custom behavior of results for an insert when sent as part of a bulk write.
       #
       # @since 2.0.0
-      # @api semiprivate
+      # @api private
       class BulkResult < Operation::Result
         include Aggregatable
 
         # Get the ids of the inserted documents.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         attr_reader :inserted_ids
 
         # Initialize a new result.
@@ -87,7 +87,7 @@ module Mongo
         # @return [ Integer ] The number of documents inserted.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         def n_inserted
           written_count
         end
@@ -100,7 +100,7 @@ module Mongo
         # @return [ Object ] The id of the document inserted.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         def inserted_id
           inserted_ids.first
         end

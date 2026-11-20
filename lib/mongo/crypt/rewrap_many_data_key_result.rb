@@ -18,15 +18,20 @@ module Mongo
   module Crypt
     # Represent result of the rewrap many data key operation.
     #
-    # @api semiprivate
+    # Public because it is returned by ClientEncryption#rewrap_many_data_key.
+    #
+    # @api public
     class RewrapManyDataKeyResult
-      # @return [ BulkWrite::Result ] the result of the bulk write operation
-      #   used to update the key vault collection with rewrapped data keys.
+      # @return [ BulkWrite::Result | nil ] the result of the bulk write
+      #   operation used to update the key vault collection with rewrapped
+      #   data keys, or nil if there were no keys to rewrap.
       attr_reader :bulk_write_result
 
       # @param [ BulkWrite::Result | nil ] bulk_write_result The result of the
       #   bulk write operation used to update the key vault collection
       #   with rewrapped data keys.
+      #
+      # @api private
       def initialize(bulk_write_result)
         @bulk_write_result = bulk_write_result
       end

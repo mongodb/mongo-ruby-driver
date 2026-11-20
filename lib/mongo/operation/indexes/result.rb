@@ -21,7 +21,7 @@ module Mongo
       # listIndexes command.
       #
       # @since 2.0.0
-      # @api semiprivate
+      # @api private
       class Result < Operation::Result
         # Get the cursor id for the result.
         #
@@ -63,7 +63,7 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         def documents
           cursor_document[FIRST_BATCH]
         end

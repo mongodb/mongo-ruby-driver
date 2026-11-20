@@ -20,7 +20,7 @@ module Mongo
       # Defines custom behavior of results in find command with explain.
       #
       # @since 2.5.0
-      # @api semiprivate
+      # @api private
       class Result < Operation::Result
         # Get the cursor id.
         #
@@ -43,7 +43,7 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.5.0
-        # @api public
+        # @api private
         def documents
           reply.documents
         end

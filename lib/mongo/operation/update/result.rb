@@ -19,8 +19,10 @@ module Mongo
     class Update
       # Defines custom behavior of results for an update.
       #
+      # Public because it is returned by Collection#update_one and similar methods.
+      #
       # @since 2.0.0
-      # @api semiprivate
+      # @api public
       class Result < Operation::Result
         # The number of modified docs field in the result.
         #
@@ -97,7 +99,7 @@ module Mongo
           upsert? ? n : 0
         end
 
-        # @api public
+        # @api private
         def bulk_result
           BulkResult.new(@replies, connection_description)
         end

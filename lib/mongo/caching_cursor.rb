@@ -18,7 +18,7 @@ module Mongo
   # A Cursor that attempts to load documents from memory first before hitting
   # the database if the same query has already been executed.
   #
-  # @api semiprivate
+  # @api private
   class CachingCursor < Cursor
     # @return [ Array <BSON::Document> ] The cursor's cached documents.
     # @api private
