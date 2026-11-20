@@ -17,6 +17,9 @@
 module Mongo
   module Crypt
     module KMS
+      # AWS KMS provider classes.
+      #
+      # @api private
       module AWS
         # AWS KMS Credentials object contains credentials for using AWS KMS provider.
         #

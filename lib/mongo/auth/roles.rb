@@ -18,7 +18,11 @@ module Mongo
   module Auth
     # Provides constants for the built in roles provided by MongoDB.
     #
+    # Public because the constants are used when creating users. The
+    # enclosing namespace is private.
+    #
     # @since 2.0.0
+    # @api public
     module Roles
       # @see https://www.mongodb.com/docs/manual/reference/built-in-roles/#backup
       #

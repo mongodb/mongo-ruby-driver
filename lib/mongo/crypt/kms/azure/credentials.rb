@@ -17,6 +17,9 @@
 module Mongo
   module Crypt
     module KMS
+      # Azure KMS provider classes.
+      #
+      # @api private
       module Azure
         # Azure KMS Credentials object contains credentials for using Azure KMS provider.
         #

@@ -16,7 +16,10 @@
 
 module Mongo
   module Crypt
-    module KMS # rubocop:disable Style/Documentation
+    # KMS provider credentials and master key documents.
+    #
+    # @api private
+    module KMS
       # This error indicates that we could not obtain credential for
       # a KMS service.
       #

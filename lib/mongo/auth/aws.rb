@@ -16,6 +16,9 @@
 
 module Mongo
   module Auth
+    # Authenticates with the MONGODB-AWS mechanism.
+    #
+    # @api private
     class Aws < Base
       MECHANISM = 'MONGODB-AWS'
 
