@@ -27,6 +27,8 @@ module Mongo
       #   Mongo::Error::InvalidReadOption.new({:mode => 'bogus'})
       #
       # @since 2.6.0
+      #
+      # @api private
       def initialize(read_option, msg)
         super("Invalid read preference value: #{read_option.inspect}: #{msg}")
       end

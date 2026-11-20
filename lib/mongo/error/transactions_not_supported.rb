@@ -23,6 +23,7 @@ module Mongo
     #
     # @since 2.7.0
     class TransactionsNotSupported < Error
+      # @api private
       def initialize(reason)
         super("Transactions are not supported for the cluster: #{reason}")
       end

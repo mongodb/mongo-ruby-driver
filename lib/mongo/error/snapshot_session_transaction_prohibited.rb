@@ -19,6 +19,8 @@ module Mongo
     # Exception raised if a transaction is attempted on a snapshot session.
     class SnapshotSessionTransactionProhibited < Error
       # Instantiate the new exception.
+      #
+      # @api private
       def initialize
         super('Transactions are not supported in snapshot sessions')
       end

@@ -29,6 +29,8 @@ module Mongo
       # @param [ String, Symbol ] property The name of the property used to find the file.
       #
       # @since 2.1.0
+      #
+      # @api private
       def initialize(value, property)
         super("File with #{property} '#{value}' not found.")
       end

@@ -30,6 +30,7 @@ module Mongo
       # @return [ true, false ] Whether the error is resumable.
       #
       # @since 2.6.0
+      # @api private
       def change_stream_resumable?
         true
       end

@@ -20,6 +20,8 @@ module Mongo
     #   max_connecting option.
     class InvalidMaxConnecting < Error
       # Instantiate the new exception.
+      #
+      # @api private
       def initialize(max_connecting)
         super("Invalid max_connecting: #{max_connecting}. Please ensure that it is greater than zero. ")
       end

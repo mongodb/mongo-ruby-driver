@@ -4,6 +4,8 @@ module Mongo
   class Error
     # This error is raised when a bad configuration option is attempted to be
     # set.
+    #
+    # @api private
     class InvalidConfigOption < Error
       # Create the new error.
       #

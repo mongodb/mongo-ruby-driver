@@ -22,9 +22,13 @@ module Mongo
     # @since 2.0.0
     class InvalidNonce < Error
       # @return [ String ] nonce The client nonce.
+      #
+      # @api private
       attr_reader :nonce
 
       # @return [ String ] rnonce The server nonce.
+      #
+      # @api private
       attr_reader :rnonce
 
       # Instantiate the new exception.
@@ -36,6 +40,7 @@ module Mongo
       # @param [ String ] rnonce The server nonce.
       #
       # @since 2.0.0
+      # @api private
       def initialize(nonce, rnonce)
         @nonce = nonce
         @rnonce = rnonce

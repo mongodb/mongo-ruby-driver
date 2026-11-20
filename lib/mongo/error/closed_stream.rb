@@ -26,6 +26,8 @@ module Mongo
       #   Mongo::Error::ClosedStream.new
       #
       # @since 2.1.0
+      #
+      # @api private
       def initialize
         super('The stream is closed and cannot be written to or read from.')
       end

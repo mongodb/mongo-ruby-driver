@@ -31,6 +31,8 @@ module Mongo
       # @return [ String ] A message describing that array filters cannot be used when write concern is unacknowledged.
       #
       # @since 2.5.0
+      #
+      # @api private
       UNACKNOWLEDGED_WRITES_MESSAGE = 'The array_filters option cannot be specified when using unacknowledged writes. ' +
                                       'Either remove the array_filters option or use acknowledged writes (w >= 1).'
     end

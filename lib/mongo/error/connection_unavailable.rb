@@ -19,6 +19,9 @@ module Mongo
     # Exception raised when trying to check out a connection with a specific
     # global id, and the connection for that global id no longer exists in the
     # pool.
+    #
+    # @deprecated The driver never raises this error. It will be removed
+    #   in the next major version.
     class ConnectionUnavailable < Error
     end
   end

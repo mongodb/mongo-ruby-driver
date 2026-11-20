@@ -19,6 +19,9 @@ module Mongo
     # Raised when a primary server is needed but not found.
     #
     # @since 2.0.0
+    #
+    # @deprecated The driver never raises this error. It will be removed
+    #   in the next major version.
     class NeedPrimaryServer < Error; end
   end
 end

@@ -30,6 +30,8 @@ module Mongo
       # @param [ Grid::File::Chunk ] chunk The chunk read from GridFS.
       #
       # @since 2.1.0
+      #
+      # @api private
       def initialize(expected_len, chunk)
         super("Unexpected chunk length. Chunk has length #{chunk.data.data.size} but expected length " +
           "#{expected_len} or for it to be the last chunk in the sequence.")

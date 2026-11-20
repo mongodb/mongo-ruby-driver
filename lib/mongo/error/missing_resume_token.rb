@@ -23,6 +23,8 @@ module Mongo
       # The error message.
       #
       # @since 2.5.0
+      #
+      # @api private
       MESSAGE = 'Cannot provide resume functionality when the resume token is missing'
 
       # Create the new exception.
@@ -31,6 +33,8 @@ module Mongo
       #   Mongo::Error::MissingResumeToken.new
       #
       # @since 2.5.0
+      #
+      # @api private
       def initialize
         super(MESSAGE)
       end

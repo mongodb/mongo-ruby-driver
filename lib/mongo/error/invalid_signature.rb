@@ -22,9 +22,13 @@ module Mongo
     # @since 2.0.0
     class InvalidSignature < Error
       # @return [ String ] verifier The server verifier string.
+      #
+      # @api private
       attr_reader :verifier
 
       # @return [ String ] server_signature The expected server signature.
+      #
+      # @api private
       attr_reader :server_signature
 
       # Create the new exception.
@@ -37,6 +41,7 @@ module Mongo
       #   server.
       #
       # @since 2.0.0
+      # @api private
       def initialize(verifier, server_signature)
         @verifier = verifier
         @server_signature = server_signature

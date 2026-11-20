@@ -24,22 +24,30 @@ module Mongo
       # progress.
       #
       # @since 2.6.0
+      #
+      # @api private
       NO_TRANSACTION_STARTED = 'no transaction started'
 
       # The error message for when a user attempts to start a transaction when one is already in
       # progress.
       #
       # @since 2.6.0.
+      #
+      # @api private
       TRANSACTION_ALREADY_IN_PROGRESS = 'transaction already in progress'
 
       # The error message for when a transaction read operation uses a non-primary read preference.
       #
       # @since 2.6.0
+      #
+      # @api private
       INVALID_READ_PREFERENCE = 'read preference in a transaction must be primary'
 
       # The error message for when a transaction is started with an unacknowledged write concern.
       #
       # @since 2.6.0
+      #
+      # @api private
       UNACKNOWLEDGED_WRITE_CONCERN = 'transactions do not support unacknowledged write concern'
 
       # Instantiate the new exception.
@@ -48,6 +56,8 @@ module Mongo
       #   Mongo::Error::InvalidTransactionOperation.new(msg)
       #
       # @since 2.6.0
+      #
+      # @api private
       def initialize(msg)
         super
       end
@@ -60,6 +70,8 @@ module Mongo
       # @param [ Symbol ] op The operation which was run twice.
       #
       # @since 2.6.0
+      #
+      # @api private
       def self.cannot_call_twice_msg(op)
         "cannot call #{op} twice"
       end
@@ -74,6 +86,8 @@ module Mongo
       # @param [ Symbol ] current_op The operation which cannot be run.
       #
       # @since 2.6.0
+      #
+      # @api private
       def self.cannot_call_after_msg(last_op, current_op)
         "Cannot call #{current_op} after calling #{last_op}"
       end

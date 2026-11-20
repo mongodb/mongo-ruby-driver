@@ -28,6 +28,8 @@ module Mongo
       # @param [ String ] type The attempted operation type.
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize(type)
         super("Invalid bulk operation type: #{type}.")
       end

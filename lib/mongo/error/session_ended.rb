@@ -20,6 +20,7 @@ module Mongo
     #
     # @since 2.7.0
     class SessionEnded < Error
+      # @api private
       def initialize
         super('The session was ended and cannot be used')
       end

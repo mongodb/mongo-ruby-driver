@@ -10,17 +10,23 @@ module Mongo
       # The error message describing failed bidi validation.
       #
       # @since 2.6.0
+      #
+      # @api private
       INVALID_BIDIRECTIONAL = 'Data failed bidirectional validation'
 
       # The error message describing the discovery of a prohibited character.
       #
       # @since 2.6.0
+      #
+      # @api private
       PROHIBITED_CHARACTER = 'Data contains a prohibited character.'
 
       # The error message describing that stringprep normalization can't be done on Ruby versions
       # below 2.2.0.
       #
       # @since 2.6.0
+      #
+      # @api private
       UNABLE_TO_NORMALIZE = 'Unable to perform normalization with Ruby versions below 2.2.0'
 
       # Create the new exception.
@@ -32,6 +38,8 @@ module Mongo
       # @param [ String ] msg The error message describing how the validation failed.
       #
       # @since 2.6.0
+      #
+      # @api private
       def initialize(msg)
         super
       end

@@ -18,6 +18,8 @@ module Mongo
   class Error
     # Raised when the driver is in load-balancing mode but a connection
     # is established to something other than a mongos.
+    #
+    # @api private
     class BadLoadBalancerTarget < Error
     end
   end

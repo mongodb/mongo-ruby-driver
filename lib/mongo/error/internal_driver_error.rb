@@ -17,6 +17,8 @@
 module Mongo
   class Error
     # Raised when the driver detects an internal implementation problem.
+    #
+    # @api private
     class InternalDriverError < Error
     end
   end

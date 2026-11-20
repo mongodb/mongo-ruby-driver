@@ -29,6 +29,8 @@ module Mongo
       # @param [ String, Symbol ] option The option that was attempted to be changed.
       #
       # @since 2.1.0
+      #
+      # @api private
       def initialize(option)
         super("The option #{option} cannot be set on a new collection instance." +
           " The options that can be updated are #{Collection::CHANGEABLE_OPTIONS}")

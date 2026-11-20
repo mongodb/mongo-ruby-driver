@@ -62,13 +62,15 @@ module Mongo
       # error occurred.
       #
       # @return [ Integer | nil ] Connection pool generation.
+      #
+      # @api private
       attr_accessor :generation
 
       # Returns service id for the connection on which the error occurred.
       #
       # @return [ Object | nil ] Service id.
       #
-      # @api experimental
+      # @api private
       attr_accessor :service_id
 
       # Returns global id of the connection on which the error occurred.

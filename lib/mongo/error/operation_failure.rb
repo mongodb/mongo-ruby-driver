@@ -22,11 +22,18 @@ module Mongo
       # Implements the behavior for an OperationFailure error. Other errors
       # (e.g. ServerTimeoutError) may also implement this, so that they may
       # be recognized and treated as OperationFailure errors.
+      #
+      # @api public
       module OperationFailure::Family
         extend Forwardable
         include SdamErrorDetection
         include ReadWriteRetryable
 
+        # @!method operation_time
+        #
+        # @return [ Object | nil ] The operation time value.
+        #
+        # @api private
         def_delegators :@result, :operation_time
 
         # @!method connection_description
@@ -49,8 +56,6 @@ module Mongo
 
         # @return [ String ] The server-returned error message
         #   parsed from the response.
-        #
-        # @api experimental
         attr_reader :server_message
 
         # @return [ String | nil ] The address ("host:port") of the server
@@ -97,6 +102,7 @@ module Mongo
         # @return [ true, false ] Whether the error is resumable.
         #
         # @since 2.6.0
+        # @api private
         def change_stream_resumable?
           if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
             # CursorNotFound exceptions are always resumable because the server
@@ -155,8 +161,6 @@ module Mongo
         attr_reader :details
 
         # @return [ BSON::Document | nil ] The server-returned error document.
-        #
-        # @api experimental
         attr_reader :document
 
         # @return [ Operation::Result ] the result object for the operation.
@@ -189,6 +193,8 @@ module Mongo
         # @option options [ Array<String> ] :labels The set of labels associated
         #   with the error.
         # @option options [ true | false ] :wtimeout Whether the error is a wtimeout.
+        #
+        # @api private
         def initialize(message = nil, result = nil, options = {})
           @details = retrieve_details(options[:document])
           @server_address = normalize_server_address(options[:server_address])

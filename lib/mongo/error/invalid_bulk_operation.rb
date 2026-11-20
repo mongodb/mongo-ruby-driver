@@ -29,6 +29,8 @@ module Mongo
       # @param [ Hash ] operation The bulk operation.
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize(type, operation)
         super("Invalid document format for bulk #{type} operation: #{operation}.")
       end

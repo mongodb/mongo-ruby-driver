@@ -23,11 +23,15 @@ module Mongo
       # Error message when tags are specified for a read preference that cannot support them.
       #
       # @since 2.4.0
+      #
+      # @api private
       NO_TAG_SUPPORT = 'This read preference cannot be combined with tags.'
 
       # Error message when a max staleness is specified for a read preference that cannot support it.
       #
       # @since 2.4.0
+      #
+      # @api private
       NO_MAX_STALENESS_SUPPORT = 'max_staleness cannot be set for this read preference.'
 
       # Error message when hedge is specified for a read preference that does not support it.
@@ -42,6 +46,8 @@ module Mongo
       #
       # @since 2.4.0
       # @deprecated
+      #
+      # @api private
       INVALID_MAX_STALENESS = '`max_staleness` value is too small. It must be at least ' +
                               "`ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` and (the cluster's heartbeat_frequency " +
                               'setting + `Cluster::IDLE_WRITE_PERIOD_SECONDS`).'
@@ -54,6 +60,8 @@ module Mongo
       # @param [ String ] message The error message.
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize(message)
         super
       end

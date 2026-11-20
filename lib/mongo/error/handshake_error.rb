@@ -19,6 +19,9 @@ module Mongo
     # Raised when a server handshake fails.
     #
     # @since 2.7.0
+    #
+    # @deprecated The driver never raises this error. It will be removed
+    #   in the next major version.
     class HandshakeError < Error
     end
   end

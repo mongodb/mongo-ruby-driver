@@ -30,6 +30,8 @@ module Mongo
       # @param [ Integer ] max_size The max byte size of the application name.
       #
       # @since 2.4.0
+      #
+      # @api private
       def initialize(app_name, max_size)
         super("The provided application name '#{app_name}' cannot exceed #{max_size} bytes.")
       end

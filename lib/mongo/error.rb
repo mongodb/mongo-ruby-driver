@@ -28,45 +28,53 @@ module Mongo
     # The error code field.
     #
     # @since 2.0.0
+    # @api private
     CODE = 'code'
 
     # The standard error message field
     #
     # @since 2.0.0
     # @deprecated
+    # @api private
     ERRMSG = 'errmsg'
 
     # The constant for the writeErrors array.
     #
     # @since 2.0.0
     # @deprecated
+    # @api private
     WRITE_ERRORS = 'writeErrors'
 
     # The constant for a write concern error.
     #
     # @since 2.0.0
     # @deprecated
+    # @api private
     WRITE_CONCERN_ERROR = 'writeConcernError'
 
     # The constant for write concern errors.
     #
     # @since 2.1.0
     # @deprecated
+    # @api private
     WRITE_CONCERN_ERRORS = 'writeConcernErrors'
 
     # Constant for an unknown error.
     #
     # @since 2.0.0
+    # @api private
     UNKNOWN_ERROR = 8
 
     # Constant for a bad value error.
     #
     # @since 2.0.0
+    # @api private
     BAD_VALUE = 2
 
     # Constant for a Cursor not found error.
     #
     # @since 2.2.3
+    # @api private
     CURSOR_NOT_FOUND = 'Cursor not found.'
 
     # Can the change stream on which this error occurred be resumed,
@@ -78,6 +86,7 @@ module Mongo
     # @return [ true, false ] Whether the error is resumable.
     #
     # @since 2.6.0
+    # @api private
     def change_stream_resumable?
       false
     end
@@ -87,6 +96,7 @@ module Mongo
     #
     # @since 2.6.0
     # @deprecated
+    # @api private
     UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult'
 
     # Error label describing errors that will likely not occur if a transaction is manually retried
@@ -94,6 +104,7 @@ module Mongo
     #
     # @since 2.6.0
     # @deprecated
+    # @api private
     TRANSIENT_TRANSACTION_ERROR_LABEL = 'TransientTransactionError'
 
     def initialize(msg = nil)
@@ -106,6 +117,8 @@ module Mongo
     # @param [ String ] label The label to check for the presence of.
     #
     # @return [ Boolean ] Whether the write concern error has the given label.
+    #
+    # @api private
     def write_concern_error_label?(label)
       @write_concern_error_labels.include?(label)
     end
@@ -113,6 +126,8 @@ module Mongo
     # The set of error labels associated with the write concern error.
     #
     # @return [ Array<String> ] The list of error labels.
+    #
+    # @api private
     def write_concern_error_labels
       @write_concern_error_labels.dup
     end

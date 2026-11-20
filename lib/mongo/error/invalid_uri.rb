@@ -31,6 +31,8 @@ module Mongo
       #   Mongo::Error::InvalidURI.new(uri, details, format)
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize(uri, details, format = nil)
         message = "Bad URI: #{Mongo::URI.redact(uri)}\n" +
                   "#{details}\n"

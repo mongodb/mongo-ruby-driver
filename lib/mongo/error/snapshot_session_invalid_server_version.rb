@@ -20,6 +20,8 @@ module Mongo
     # directed to a pre-5.0 server.
     class SnapshotSessionInvalidServerVersion < Error
       # Instantiate the new exception.
+      #
+      # @api private
       def initialize
         super('Snapshot reads require MongoDB 5.0 or later')
       end

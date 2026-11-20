@@ -20,6 +20,9 @@ module Mongo
     # GridFS writes.
     #
     # @since 2.0.0
+    #
+    # @deprecated The driver never raises this error. It will be removed
+    #   in the next major version.
     class InvalidFile < Error
       # Create the new exception.
       #
