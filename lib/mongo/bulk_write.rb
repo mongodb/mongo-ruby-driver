@@ -23,6 +23,10 @@ require 'mongo/bulk_write/unordered_combiner'
 require 'mongo/bulk_write/result_combiner'
 
 module Mongo
+  # Executes a series of write requests as a single bulk operation. Users run
+  # bulk writes through {Mongo::Collection#bulk_write}.
+  #
+  # @api private
   class BulkWrite
     extend Forwardable
     include Operation::ResponseHandling

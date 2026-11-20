@@ -18,6 +18,12 @@ module Mongo
   class BulkWrite
     # Wraps a series of bulk write operations in a result object.
     #
+    # Returned by {Mongo::Collection#bulk_write} and
+    # {Mongo::Collection#insert_many}, and available from
+    # {Mongo::Error::BulkWriteError#result}.
+    #
+    # @api public
+    #
     # @since 2.0.6
     class Result
       # @return [ Boolean ] Is the result acknowledged?
@@ -31,46 +37,64 @@ module Mongo
 
       # Constant for number removed.
       #
+      # @api private
+      #
       # @since 2.1.0
       REMOVED_COUNT = 'n_removed'
 
       # Constant for number inserted.
+      #
+      # @api private
       #
       # @since 2.1.0
       INSERTED_COUNT = 'n_inserted'
 
       # Constant for inserted ids.
       #
+      # @api private
+      #
       # @since 2.1.0
       INSERTED_IDS = 'inserted_ids'
 
       # Constant for number matched.
+      #
+      # @api private
       #
       # @since 2.1.0
       MATCHED_COUNT = 'n_matched'
 
       # Constant for number modified.
       #
+      # @api private
+      #
       # @since 2.1.0
       MODIFIED_COUNT = 'n_modified'
 
       # Constant for upserted.
+      #
+      # @api private
       #
       # @since 2.1.0
       UPSERTED = 'upserted'
 
       # Constant for number upserted.
       #
+      # @api private
+      #
       # @since 2.1.0
       UPSERTED_COUNT = 'n_upserted'
 
       # Constant for upserted ids.
+      #
+      # @api private
       #
       # @since 2.1.0
       UPSERTED_IDS = 'upserted_ids'
 
       # The fields contained in the result document returned from executing the
       # operations.
+      #
+      # @api private
       #
       # @since 2.1.0.
       FIELDS = [
@@ -190,6 +214,8 @@ module Mongo
       #
       # @example Validate the result.
       #   result.validate!
+      #
+      # @api private
       #
       # @raise [ Error::BulkWriteError ] If the result contains errors.
       #

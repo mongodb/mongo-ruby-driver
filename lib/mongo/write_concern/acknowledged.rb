@@ -26,9 +26,12 @@ module Mongo
       # @example Get the gle command.
       #   acknowledged.get_last_error
       #
+      # @api private
+      #
       # @return [ Hash ] The gle command.
       #
       # @since 2.0.0
+      # @deprecated
       def get_last_error
         @get_last_error ||= { GET_LAST_ERROR => 1 }.merge(
           Options::Mapper.transform_values_to_strings(options)
