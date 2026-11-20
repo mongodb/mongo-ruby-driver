@@ -18,9 +18,11 @@ module Mongo
   module Grid
     class FSBucket
       module Stream
-        # A stream that reads files from the FSBucket.
+        # A stream that reads files from the FSBucket. Returned by
+        # FSBucket#open_download_stream and FSBucket#open_download_stream_by_name.
         #
         # @since 2.1.0
+        # @api public
         class Read
           include Enumerable
 
@@ -51,6 +53,7 @@ module Mongo
           #   driver use only. A BSON document to use as file information.
           #
           # @since 2.1.0
+          # @api private
           def initialize(fs, options)
             @fs = fs
             @options = options.dup

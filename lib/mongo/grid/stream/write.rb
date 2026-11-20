@@ -18,9 +18,11 @@ module Mongo
   module Grid
     class FSBucket
       module Stream
-        # A stream that writes files to the FSBucket.
+        # A stream that writes files to the FSBucket. Returned by
+        # FSBucket#open_upload_stream.
         #
         # @since 2.1.0
+        # @api public
         class Write
           # @return [ FSBucket ] fs The fs bucket to which this stream writes.
           #
@@ -64,6 +66,7 @@ module Mongo
           #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
           #
           # @since 2.1.0
+          # @api private
           def initialize(fs, options)
             @fs = fs
             @length = 0

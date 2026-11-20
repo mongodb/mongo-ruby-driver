@@ -25,16 +25,19 @@ module Mongo
       # The default root prefix.
       #
       # @since 2.0.0
+      # @api private
       DEFAULT_ROOT = 'fs'
 
       # The specification for the chunks collection index.
       #
       # @since 2.0.0
+      # @api private
       CHUNKS_INDEX = { files_id: 1, n: 1 }.freeze
 
       # The specification for the files collection index.
       #
       # @since 2.1.0
+      # @api private
       FILES_INDEX = { filename: 1, uploadDate: 1 }.freeze
 
       # Create the GridFS.
@@ -105,6 +108,9 @@ module Mongo
       def_delegators :database,
                      :client
 
+      # @!method client
+      #   @return [ Client ] The client of the database.
+
       # Find files collection documents matching a given selector.
       #
       # @example Find files collection documents by a filename.
@@ -125,7 +131,7 @@ module Mongo
       # @option options [ Hash ] :sort The key and direction pairs by which the result set
       #   will be sorted.
       #
-      # @return [ CollectionView ] The collection view.
+      # @return [ Collection::View ] The collection view.
       #
       # @since 2.1.0
       def find(selector = nil, options = {})
@@ -488,6 +494,15 @@ module Mongo
       end
 
       # Drop the collections that implement this bucket.
+      #
+      # @param [ Hash ] opts The options.
+      #
+      # @option opts [ Integer ] :timeout_ms The operation timeout in milliseconds.
+      #   Must be a non-negative integer. An explicit value of 0 means infinite.
+      #   The default value is unset which means the value is inherited from
+      #   the database or the client.
+      #
+      # @return [ Operation::Result ] The result of dropping the chunks collection.
       def drop(opts = {})
         context = Operation::Context.new(operation_timeouts: operation_timeouts(opts))
         files_collection.drop(timeout_ms: context.remaining_timeout_ms)

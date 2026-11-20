@@ -17,9 +17,11 @@
 module Mongo
   module Grid
     class File
-      # Encapsulates behavior around GridFS chunks of file data.
+      # Encapsulates behavior around GridFS chunks of file data. Only
+      # reachable through the deprecated Grid::File API.
       #
       # @since 2.0.0
+      # @api private
       class Chunk
         # Name of the chunks collection.
         #
