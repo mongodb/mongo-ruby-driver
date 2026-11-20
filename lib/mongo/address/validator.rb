@@ -20,6 +20,12 @@ module Mongo
     module Validator
       # Takes an address string in ipv4/ipv6/hostname/socket path format and
       # validates its format.
+      #
+      # Error messages describe the component at fault without quoting the
+      # address: a malformed connection string may not have had its
+      # credentials delimited, in which case the text being validated is
+      # itself the credential. See "Disclosure of Sensitive Values" in the
+      # connection string specification.
       def validate_address_str!(address_str)
         case address_str
         when /\A\[[\d:]+\](?::(\d+))?\z/
@@ -41,19 +47,18 @@ module Mongo
           # Not a host:port nor an ipv4 address with optional port.
           # Possibly botched ipv6 address with e.g. port delimiter present and
           # port missing, or extra junk before or after.
-          raise Error::InvalidAddress,
-                "Invalid hostname: #{address_str}"
+          raise Error::InvalidAddress, 'Invalid host identifier.'
         when /:.*:/m
           raise Error::InvalidAddress,
-                "Multiple port delimiters are not allowed: #{address_str}"
+                'Multiple port delimiters are not allowed in the host identifier.'
         else
           # host:port or ipv4 address with optional port number
           host, port = address_str.split(':')
-          raise Error::InvalidAddress, "Host is empty: #{address_str}" if host.empty?
+          raise Error::InvalidAddress, 'Host is empty.' if host.empty?
 
           validate_hostname!(host)
 
-          raise Error::InvalidAddress, "Port is empty: #{address_str}" if port && port.empty?
+          raise Error::InvalidAddress, 'Port is empty.' if port && port.empty?
 
           validate_port_str!(port)
         end
@@ -72,18 +77,18 @@ module Mongo
         # and runs of multiple dots. DNS resolution of SRV records yields
         # hostnames with trailing dots, those trailing dots are removed
         # during normalization process prior to validation.
-        raise Error::InvalidAddress, "Hostname cannot start with a dot: #{host}" if host.start_with?('.')
-        raise Error::InvalidAddress, "Hostname cannot end with a dot: #{host}" if host.end_with?('.')
+        raise Error::InvalidAddress, 'Hostname cannot start with a dot.' if host.start_with?('.')
+        raise Error::InvalidAddress, 'Hostname cannot end with a dot.' if host.end_with?('.')
         return unless host.include?('..')
 
-        raise Error::InvalidAddress, "Runs of multiple dots are not allowed in hostname: #{host}"
+        raise Error::InvalidAddress, 'Runs of multiple dots are not allowed in a hostname.'
       end
 
       def validate_port_str!(port)
         return if port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65_535)
 
         raise Error::InvalidAddress,
-              "Invalid port: #{port}. Port must be an integer greater than 0 and less than 65536"
+              'Invalid port. Port must be an integer greater than 0 and less than 65536'
       end
     end
   end

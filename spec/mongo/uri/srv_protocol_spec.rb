@@ -28,9 +28,10 @@ describe Mongo::URI::SRVProtocol do
     let(:host) { 'test5.test.build.10gen.cc' }
     let(:string) { "#{scheme}#{host}" }
 
-    it 'logs when resolving the address' do
+    it 'logs that SRV records are being resolved without naming the host' do
       expect { uri }.not_to raise_error
-      expect(logger.contents).to include("attempting to resolve #{host}")
+      expect(logger.contents).to include('attempting to resolve SRV records')
+      expect(logger.contents).not_to include(host)
     end
   end
 
@@ -819,6 +820,13 @@ describe Mongo::URI::SRVProtocol do
 
       # This context exactly duplicates the same one in uri_spec.rb
       context 'auth mechanism properties provided' do
+        shared_examples 'redacts auth mechanism properties' do
+          it 'replaces the properties with the credentials marker in string representations' do
+            expect(uri.to_s).to include('authMechanismProperties=<credentials>')
+            expect(uri.inspect).to include('authMechanismProperties=<credentials>')
+          end
+        end
+
         shared_examples 'sets options in the expected manner' do
           it 'preserves case in auth mechanism properties returned from URI' do
             expect(uri.uri_options[:auth_mech_properties]).to eq(expected_uri_options)
@@ -850,7 +858,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           include_examples 'sets options in the expected manner'
-          include_examples 'roundtrips string'
+          include_examples 'redacts auth mechanism properties'
         end
 
         context 'canonicalize_host_name' do
@@ -873,7 +881,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           include_examples 'sets options in the expected manner'
-          include_examples 'roundtrips string'
+          include_examples 'redacts auth mechanism properties'
         end
 
         context 'service_realm' do
@@ -896,7 +904,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           include_examples 'sets options in the expected manner'
-          include_examples 'roundtrips string'
+          include_examples 'redacts auth mechanism properties'
         end
 
         context 'multiple properties' do
@@ -927,7 +935,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           include_examples 'sets options in the expected manner'
-          include_examples 'roundtrips string'
+          include_examples 'redacts auth mechanism properties'
         end
       end
 
@@ -1215,7 +1223,17 @@ describe Mongo::URI::SRVProtocol do
       end
 
       it 'raises an error' do
-        expect { validate }.to raise_error(Mongo::Error::InvalidURI, /Hostname cannot end with a dot: a\.b\.c\./)
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI, /Hostname cannot end with a dot\./)
+      end
+    end
+
+    context 'when the error message is inspected' do
+      let(:hostname) { 'SENTINELpassword1234.' }
+
+      it 'does not include the hostname' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI) { |error|
+          expect(error.message).not_to include('SENTINELpassword1234')
+        }
       end
     end
 

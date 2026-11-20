@@ -1420,9 +1420,10 @@ module Mongo
         processed[:addresses] = addresses
         processed[:options] = options
 
-        addresses.each do |addr|
+        addresses.each_with_index do |addr, index|
           if %r{\Amongodb(\+srv)?://}i.match?(addr)
-            raise ArgumentError, "Host '#{addr}' should not contain protocol. Did you mean to not use an array?"
+            raise ArgumentError, "Host at index #{index} should not contain protocol. " \
+                                 'Did you mean to not use an array?'
           end
         end
 
@@ -1571,6 +1572,9 @@ module Mongo
             _options[key] = compressors unless compressors.empty?
           elsif key == :srv_max_hosts
             if v && (!v.is_a?(Integer) || v < 0)
+              # A value for srv_max_hosts that is not a non-negative integer
+              # can only come from the Ruby options: the URI converter drops
+              # such values. It is therefore safe to report it.
               log_warn("#{v} is not a valid integer for srv_max_hosts")
             else
               _options[key] = v
@@ -1616,12 +1620,12 @@ module Mongo
       connect = options[:connect]&.to_sym
 
       if connect && !%i[direct replica_set sharded load_balanced].include?(connect)
-        raise ArgumentError, "Invalid :connect option value: #{connect}"
+        raise ArgumentError, 'Invalid :connect option value'
       end
 
       if options[:direct_connection]
         if connect && connect != :direct
-          raise ArgumentError, "Conflicting client options: direct_connection=true and connect=#{connect}"
+          raise ArgumentError, 'Conflicting client options: direct_connection=true and a connect option other than direct'
         end
         # When a new client is created, we get the list of seed addresses
         if addresses && addresses.length > 1
@@ -1647,7 +1651,7 @@ module Mongo
         end
 
         if connect && connect != :load_balanced
-          raise ArgumentError, "connect=#{connect} cannot be used with load_balanced=true"
+          raise ArgumentError, 'A connect option other than load_balanced cannot be used with load_balanced=true'
         end
 
         raise ArgumentError, 'load_balanced=true cannot be used with replica_set option' if options[:replica_set]
@@ -1662,7 +1666,7 @@ module Mongo
       end
 
       if options[:direct_connection] == false && connect && connect == :direct
-        raise ArgumentError, "Conflicting client options: direct_connection=false and connect=#{connect}"
+        raise ArgumentError, 'Conflicting client options: direct_connection=false and connect=direct'
       end
 
       %i[connect_timeout socket_timeout].each do |key|
@@ -1756,6 +1760,18 @@ module Mongo
         raise Mongo::Auth::InvalidConfiguration, "Password is required for auth mechanism #{auth_mech}"
       end
 
+      if auth_mech == :plain
+        if user.include?("\0")
+          raise Mongo::Auth::InvalidConfiguration,
+                'PLAIN authentication username cannot contain NUL characters'
+        end
+
+        if password.include?("\0")
+          raise Mongo::Auth::InvalidConfiguration,
+                'PLAIN authentication password cannot contain NUL characters'
+        end
+      end
+
       if password && auth_mech == :mongodb_x509
         raise Mongo::Auth::InvalidConfiguration, 'Password is not supported for :mongodb_x509 auth mechanism'
       end
@@ -1768,7 +1784,7 @@ module Mongo
       if %i[aws gssapi mongodb_x509].include?(auth_mech)
         unless [ '$external', nil ].include?(auth_source)
           raise Mongo::Auth::InvalidConfiguration,
-                "#{auth_source} is an invalid auth source for #{auth_mech}; valid options are $external and nil"
+                "Invalid auth source for #{auth_mech}; valid options are $external and nil"
         end
       elsif auth_source == ''
         # Auth source is the database name, and thus cannot be the empty string.
@@ -1787,7 +1803,7 @@ module Mongo
 
           true
         else
-          log_warn("Unsupported compressor '#{compressor}' in list '#{compressors}'. " +
+          log_warn('Unsupported compressor in the compressors list. ' +
                        'This compressor will not be used.')
           false
         end
@@ -1844,6 +1860,9 @@ module Mongo
         # for custom classes implementing key access ([]).
         # Instead reject common cases of strings and symbols.
         if read.is_a?(String) || read.is_a?(Symbol)
+          # Only a Ruby option can be a bare string or symbol here: URI
+          # parsing always produces a Hash for the read preference. It is
+          # therefore safe to include the value in the message.
           raise Error::InvalidReadOption.new(read,
                                              "the read preference must be specified as a hash: { mode: #{read.inspect} }")
         end
@@ -1851,7 +1870,7 @@ module Mongo
         if (mode = read[:mode])
           mode = mode.to_sym
           unless Mongo::ServerSelector::PREFERENCES.include?(mode)
-            raise Error::InvalidReadOption.new(read, "mode #{mode} is not one of recognized modes")
+            raise Error::InvalidReadOption.new(read, 'the mode is not one of the recognized modes')
           end
         end
       end

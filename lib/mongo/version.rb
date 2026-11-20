@@ -7,5 +7,5 @@ module Mongo
   # Manual changes to this file will be overwritten by that rake task.
   #
   # @api public
-  VERSION = '2.26.1'
+  VERSION = '2.26.2'
 end

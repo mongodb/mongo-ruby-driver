@@ -181,7 +181,7 @@ describe 'Client authentication options' do
       it 'raises an exception on client creation' do
         expect do
           client
-        end.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /Invalid auth source/)
       end
     end
 
@@ -198,7 +198,7 @@ describe 'Client authentication options' do
       it 'raises an exception on client creation' do
         expect do
           client
-        end.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /Invalid auth source/)
       end
     end
   end
@@ -313,6 +313,34 @@ describe 'Client authentication options' do
     it_behaves_like 'auth mechanism that uses database or default auth source', '$external'
     it_behaves_like 'an auth mechanism with ssl'
     it_behaves_like 'an auth mechanism that does not support auth_mech_properties'
+
+    context 'when the username contains a NUL character' do
+      let(:client_opts) do
+        {
+          auth_mech: :plain,
+          user: "user\0name",
+          password: 'password',
+        }
+      end
+
+      it 'raises an error with the required message' do
+        expect { client }.to raise_error(Mongo::Auth::InvalidConfiguration, /cannot contain NUL characters/)
+      end
+    end
+
+    context 'when the password contains a NUL character' do
+      let(:client_opts) do
+        {
+          auth_mech: :plain,
+          user: 'username',
+          password: "pass\0word",
+        }
+      end
+
+      it 'raises an error with the required message' do
+        expect { client }.to raise_error(Mongo::Auth::InvalidConfiguration, /cannot contain NUL characters/)
+      end
+    end
   end
 
   context 'with MONGODB-X509 auth mechanism' do
