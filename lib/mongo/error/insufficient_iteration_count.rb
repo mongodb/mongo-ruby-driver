@@ -26,10 +26,15 @@ module Mongo
       #   Mongo::Error::InvalidDatabaseName.new
       #
       # @since 2.6.0
+      #
+      # @api private
       def initialize(msg)
         super
       end
 
+      # Build the error message for the exception.
+      #
+      # @api private
       def self.message(required_count, given_count)
         "This auth mechanism requires an iteration count of #{required_count}, but the server only requested #{given_count}"
       end

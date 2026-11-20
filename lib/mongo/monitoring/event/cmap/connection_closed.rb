@@ -89,10 +89,7 @@ module Mongo
           #
           # @return [ String ] String summary of the event.
           #
-          # @note This method is experimental and subject to change.
-          #
           # @since 2.9.0
-          # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
               "address=#{address} connection_id=#{connection_id} reason=#{reason}>"

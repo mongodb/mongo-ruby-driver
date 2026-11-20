@@ -23,6 +23,8 @@ module Mongo
       # The error message.
       #
       # @since 2.5.0
+      #
+      # @api private
       MESSAGE = 'Unknown payload type (%s) encountered when creating or reading an OP_MSG wire protocol message.'
 
       # Create the new exception.
@@ -33,6 +35,8 @@ module Mongo
       # @param [ String ] byte The unknown payload type.
       #
       # @since 2.5.0
+      #
+      # @api private
       def initialize(byte)
         super(MESSAGE % byte.inspect)
       end

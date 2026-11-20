@@ -23,7 +23,10 @@ module Mongo
     class Unacknowledged < Base
       # The noop constant for the gle.
       #
+      # @api private
+      #
       # @since 2.0.0
+      # @deprecated
       NOOP = nil
 
       # Get the gle command for an unacknowledged write.
@@ -31,9 +34,12 @@ module Mongo
       # @example Get the gle command.
       #   unacknowledged.get_last_error
       #
+      # @api private
+      #
       # @return [ nil ] The noop.
       #
       # @since 2.0.0
+      # @deprecated
       def get_last_error
         NOOP
       end

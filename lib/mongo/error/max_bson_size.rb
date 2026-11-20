@@ -24,6 +24,8 @@ module Mongo
       # The message is constant.
       #
       # @since 2.0.0
+      #
+      # @api private
       MESSAGE = 'The document exceeds maximum allowed BSON size'
 
       # Instantiate the new exception.
@@ -36,6 +38,8 @@ module Mongo
       #   Numeric argument type is deprecated.
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize(max_size_or_msg = nil)
         msg = if max_size_or_msg.is_a?(Numeric)
                 "#{MESSAGE}. The maximum allowed size is #{max_size_or_msg}"

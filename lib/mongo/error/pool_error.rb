@@ -27,6 +27,7 @@ module Mongo
       # @return [ Mongo::Server::ConnectionPool ] pool The connection pool.
       #
       # @since 2.11.0
+      # @api private
       attr_reader :pool
 
       # Instantiate the new exception.

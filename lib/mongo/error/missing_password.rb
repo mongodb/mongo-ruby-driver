@@ -22,6 +22,7 @@ module Mongo
     #
     # @since 2.8.0
     class MissingPassword < Error
+      # @api private
       def initialize(msg = nil)
         super(msg || 'User was created without a password')
       end

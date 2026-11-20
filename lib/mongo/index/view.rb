@@ -41,23 +41,50 @@ module Mongo
       # @api private
       attr_reader :operation_timeout_ms
 
+      # @!method cluster
+      #   @api private
+      #   @return [ Mongo::Cluster ] The cluster.
+      # @!method database
+      #   @api private
+      #   @return [ Mongo::Database ] The database.
+      # @!method read_preference
+      #   @api private
+      #   @return [ Hash | nil ] The read preference.
+      # @!method write_concern
+      #   @api private
+      #   @return [ Mongo::WriteConcern::Base | nil ] The write concern.
+      # @!method client
+      #   @api private
+      #   @return [ Mongo::Client ] The client.
       def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
+      # @!method next_primary
+      #   @api private
+      #   @return [ Mongo::Server ] The primary server.
       def_delegators :cluster, :next_primary
+      # @!method tracer
+      #   @api private
+      #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
       def_delegators :client, :tracer
 
       # The index key field.
       #
       # @since 2.0.0
+      #
+      # @api private
       KEY = 'key'
 
       # The index name field.
       #
       # @since 2.0.0
+      #
+      # @api private
       NAME = 'name'
 
       # The mappings of Ruby index options to server options.
       #
       # @since 2.0.0
+      #
+      # @api private
       OPTIONS = {
         background: :background,
         bits: :bits,
@@ -94,7 +121,7 @@ module Mongo
       # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
-      # @return [ Result ] The response.
+      # @return [ Operation::Result ] The response.
       #
       # @since 2.0.0
       def drop_one(name, options = {})
@@ -113,7 +140,7 @@ module Mongo
       # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
-      # @return [ Result ] The response.
+      # @return [ Operation::Result ] The response.
       #
       # @since 2.0.0
       def drop_all(options = {})
@@ -161,7 +188,7 @@ module Mongo
       # @note Note that the options listed may be subset of those available.
       # See the MongoDB documentation for a full list of supported options by server version.
       #
-      # @return [ Result ] The response.
+      # @return [ Operation::Result ] The response.
       #
       # @since 2.0.0
       def create_one(keys, options = {})
@@ -207,7 +234,7 @@ module Mongo
       #   - session: The session to use.
       #   - comment: A user-provided comment to attach to this command.
       #
-      # @return [ Result ] The result of the command.
+      # @return [ Operation::Result ] The result of the command.
       #
       # @since 2.0.0
       def create_many(*models)

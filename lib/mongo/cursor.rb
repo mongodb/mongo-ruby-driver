@@ -18,9 +18,10 @@ module Mongo
   # Client-side representation of an iterator over a query result set on
   # the server.
   #
-  # +Cursor+ objects are not directly exposed to application code. Rather,
-  # +Collection::View+ exposes the +Enumerable+ interface to the applications,
-  # and the enumerator is backed by a +Cursor+ instance.
+  # Application code normally iterates results through +Collection::View+,
+  # which exposes the +Enumerable+ interface and is backed by a +Cursor+
+  # instance. The only method that returns a +Cursor+ directly is
+  # +Database#cursor_command+.
   #
   # @example Get an array of 5 users named Emily.
   #   users.find({:name => 'Emily'}).limit(5).to_a
@@ -28,17 +29,28 @@ module Mongo
   # @example Call a block on each user doc.
   #   users.find.each { |doc| puts doc }
   #
-  # @api private
+  # @api public
   class Cursor
     extend Forwardable
     include Enumerable
     include Retryable
 
+    # @!method collection
+    #   @api private
     def_delegators :@view, :collection
+
+    # @!method client
+    #   @api private
+    # @!method database
+    #   @api private
     def_delegators :collection, :client, :database
+
+    # @!method cluster
+    #   @api private
     def_delegators :@server, :cluster
 
     # @return [ Collection::View ] view The collection view.
+    # @api private
     attr_reader :view
 
     # The resume token tracked by the cursor for change stream resuming
@@ -48,6 +60,7 @@ module Mongo
     attr_reader :resume_token
 
     # @return [ Operation::Context ] context the context for this cursor
+    # @api private
     attr_reader :context
 
     # Creates a +Cursor+ object.
@@ -55,7 +68,7 @@ module Mongo
     # @example Instantiate the cursor.
     #   Mongo::Cursor.new(view, response, server)
     #
-    # @param [ CollectionView ] view The +CollectionView+ defining the query.
+    # @param [ Collection::View ] view The +Collection::View+ defining the query.
     # @param [ Operation::Result ] result The result of the first execution.
     # @param [ Server ] server The server this cursor is locked to.
     # @param [ Hash ] options The cursor options.
@@ -69,6 +82,7 @@ module Mongo
     #   the modern mechanism), default is true
     #
     # @since 2.0.0
+    # @api private
     def initialize(view, result, server, options = {})
       unless result.is_a?(Operation::Result)
         raise ArgumentError, "Second argument must be a Mongo::Operation::Result: #{result.inspect}"
@@ -219,14 +233,10 @@ module Mongo
     # from the server, or if we have exhausted the cursor, it will
     # raise a StopIteration exception.
     #
-    # @note This method is experimental and subject to change.
-    #
     # @return [ BSON::Document | nil ] A document.
     #
     # @raise [ StopIteration ] Raised on the calls after the cursor had been
     #   completely iterated.
-    #
-    # @api private
     def try_next
       if @documents.nil?
         # Since published versions of Mongoid have a copy of old driver cursor

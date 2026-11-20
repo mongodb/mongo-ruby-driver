@@ -35,7 +35,12 @@ require 'mongo/error/labelable'
 module Mongo
   # This namespace contains all authentication related behavior.
   #
+  # Users reach it through `Database#users`, the user and role types
+  # (`Auth::User`, `Auth::Roles`) and the errors below, which are
+  # explicitly tagged public. Everything else is internal.
+  #
   # @since 2.0.0
+  # @api private
   module Auth
     extend self
 
@@ -63,6 +68,7 @@ module Mongo
     #   it mutates this map by adding the Kerberos authenticator.
     #
     # @since 2.0.0
+    # @api private
     SOURCES = {
       aws: Aws,
       gssapi: Gssapi,
@@ -100,12 +106,18 @@ module Mongo
 
     # Raised when trying to authorize with an invalid configuration
     #
+    # Public because it is raised to users by `Client.new`.
+    #
     # @since 2.11.0
+    # @api public
     class InvalidConfiguration < Mongo::Error::AuthError; end
 
     # Raised when trying to get an invalid authorization mechanism.
     #
+    # Public because it is raised to users by `Client.new`.
+    #
     # @since 2.0.0
+    # @api public
     class InvalidMechanism < InvalidConfiguration
       # Instantiate the new error.
       #
@@ -120,6 +132,7 @@ module Mongo
       # @param [ Symbol | String | nil ] _mechanism The provided mechanism.
       #
       # @since 2.0.0
+      # @api private
       def initialize(_mechanism = nil)
         known_mechanisms = SOURCES.keys.sort.map do |key|
           key.inspect
@@ -130,7 +143,11 @@ module Mongo
 
     # Raised when a user is not authorized on a database.
     #
+    # Public because it can be raised to users when a connection is
+    # checked out.
+    #
     # @since 2.0.0
+    # @api public
     class Unauthorized < Mongo::Error::AuthError
       include Error::ReadWriteRetryable
       include Error::Labelable
@@ -152,6 +169,7 @@ module Mongo
       # @param [ Integer ] The error code.
       #
       # @since 2.0.0
+      # @api private
       def initialize(user, used_mechanism: nil, message: nil,
                      server: nil, code: nil)
         @code = code

@@ -17,6 +17,9 @@
 module Mongo
   module Crypt
     module KMS
+      # Local KMS provider classes.
+      #
+      # @api private
       module Local
         # Local KMS Credentials object contains credentials for using local KMS provider.
         #

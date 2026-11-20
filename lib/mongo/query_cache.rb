@@ -15,6 +15,9 @@
 # limitations under the License.
 
 module Mongo
+  # Per-thread cache of query results.
+  #
+  # @api public
   module QueryCache
     class << self
       # Set whether the cache is enabled.
@@ -204,6 +207,7 @@ module Mongo
         caching_cursor
       end
 
+      # @api private
       def normalized_limit(limit)
         return nil unless limit
         # For the purposes of caching, a limit of 0 means no limit, as mongo treats it as such.
@@ -244,6 +248,8 @@ module Mongo
     end
 
     # Rack middleware that activates the query cache for each request.
+    #
+    # @api public
     class Middleware
       # Instantiate the middleware.
       #
@@ -272,6 +278,8 @@ module Mongo
       end
 
       # ActiveJob middleware that activates the query cache for each job.
+      #
+      # @api public
       module ActiveJob
         def self.included(base)
           base.class_eval do

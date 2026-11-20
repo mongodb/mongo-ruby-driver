@@ -21,7 +21,7 @@ module Mongo
       #
       # @since 2.4.0
       class TopologyOpening < Mongo::Event::Base
-        # @return [ Topology ] topology The topology.
+        # @return [ Cluster::Topology::Base ] topology The topology.
         attr_reader :topology
 
         # Create the event.
@@ -32,6 +32,7 @@ module Mongo
         # @param [ Integer ] topology The topology.
         #
         # @since 2.4.0
+        # @api private
         def initialize(topology)
           super()
           @topology = topology
@@ -41,10 +42,7 @@ module Mongo
         #
         # @return [ String ] String summary of the event.
         #
-        # @note This method is experimental and subject to change.
-        #
         # @since 2.7.0
-        # @api experimental
         def summary
           "#<#{short_class_name}" +
             " topology=#{topology.summary}>"

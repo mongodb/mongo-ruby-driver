@@ -18,6 +18,9 @@ module Mongo
   class Error
     # Raised when the driver requires a connection to a particular service
     # but no matching connections exist in the connection pool.
+    #
+    # @deprecated The driver never raises this error. It will be removed
+    #   in the next major version.
     class NoServiceConnectionAvailable < Error
       # @api private
       def initialize(message, address:, service_id:)

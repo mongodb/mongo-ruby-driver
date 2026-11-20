@@ -18,8 +18,12 @@ module Mongo
   class Cluster
     module Topology
       # Defines behavior for when a cluster is in load-balanced topology.
+      #
+      # This class is public because topology objects are exposed to
+      # subscribers by SDAM events (for example, TopologyChanged).
       class LoadBalanced < Base
         # The display name for the topology.
+        # @api private
         NAME = 'LoadBalanced'
 
         # Get the display name.
@@ -31,7 +35,6 @@ module Mongo
 
         # @note This method is experimental and subject to change.
         #
-        # @api experimental
         def summary
           details = server_descriptions.keys.join(',')
           "#{display_name}[#{details}]"
@@ -45,6 +48,7 @@ module Mongo
         #   selector.
         #
         # @return [ true ] A standalone always has a readable server.
+        # @api private
         def has_readable_server?(_cluster, _server_selector = nil)
           true
         end
@@ -55,6 +59,7 @@ module Mongo
         # @param [ Cluster ] cluster The cluster.
         #
         # @return [ true ] A standalone always has a writable server.
+        # @api private
         def has_writable_server?(_cluster)
           true
         end
@@ -71,6 +76,7 @@ module Mongo
         # @param [ Array<Server> ] servers The known servers.
         #
         # @return [ Array<Server> ] All of the known servers.
+        # @api private
         def servers(servers, _name = nil)
           servers
         end

@@ -19,8 +19,10 @@ module Mongo
     class Delete
       # Defines custom behavior of results for a delete.
       #
+      # Public because it is returned by Collection#delete_one and similar methods.
+      #
       # @since 2.0.0
-      # @api semiprivate
+      # @api public
       class Result < Operation::Result
         # Get the number of documents deleted.
         #
@@ -35,7 +37,7 @@ module Mongo
           n
         end
 
-        # @api public
+        # @api private
         def bulk_result
           BulkResult.new(@replies, connection_description)
         end

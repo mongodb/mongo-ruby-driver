@@ -15,6 +15,10 @@
 # limitations under the License.
 
 module Mongo
+  # Internal event publishing machinery. Public event payload classes live
+  # under Mongo::Monitoring::Event; Mongo::Event::Base is their superclass.
+  #
+  # @api private
   module Event
     # When a standalone is discovered.
     #

@@ -19,6 +19,7 @@ module Mongo
     # Provides a registry for looking up a message class based on op code.
     #
     # @since 2.5.0
+    # @api private
     module Registry
       extend self
 

@@ -21,6 +21,7 @@ module Mongo
         # Behavior around resuming a change stream.
         #
         # @since 2.5.0
+        # @api private
         module Retryable
           private
 

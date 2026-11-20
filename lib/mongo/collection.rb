@@ -32,12 +32,12 @@ module Mongo
 
     # The capped option.
     #
-    # @since 2.1.0
+    # @api private
     CAPPED = 'capped'
 
     # The ns field constant.
     #
-    # @since 2.1.0
+    # @api private
     NS = 'ns'
 
     # @return [ Mongo::Database ] The database the collection resides in.
@@ -49,17 +49,32 @@ module Mongo
     # @return [ Hash ] The collection options.
     attr_reader :options
 
-    # Get client, cluster, read preference, write concern, and encrypted_fields_map from client.
-    def_delegators :database, :client, :cluster, :encrypted_fields_map
+    # @!method client
+    #   @return [ Mongo::Client ] The client the collection belongs to.
+    def_delegators :database, :client
 
-    # Delegate to the cluster for the next primary.
+    # @!method cluster
+    #   @api private
+    #   @return [ Mongo::Cluster ] The cluster.
+    #
+    # @!method encrypted_fields_map
+    #   @api private
+    #   @return [ Hash | nil ] The encrypted fields map for the client.
+    def_delegators :database, :cluster, :encrypted_fields_map
+
+    # @!method next_primary
+    #   @api private
+    #   @return [ Mongo::Server ] The next primary server.
     def_delegators :cluster, :next_primary
 
+    # @!method tracer
+    #   @api private
+    #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
     def_delegators :client, :tracer
 
     # Options that can be updated on a new Collection instance via the #with method.
     #
-    # @since 2.1.0
+    # @api private
     CHANGEABLE_OPTIONS = %i[read read_concern write write_concern].freeze
 
     # Options map to transform create collection options.
@@ -201,6 +216,8 @@ module Mongo
     #   collection.server_selector
     #
     # @return [ Mongo::ServerSelector ] The server selector.
+    #
+    # @api private
     #
     # @since 2.0.0
     def server_selector
@@ -372,7 +389,7 @@ module Mongo
     # @option opts [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     #
-    # @return [ Result ] The result of the command.
+    # @return [ Operation::Result ] The result of the command.
     #
     # @since 2.0.0
     def create(opts = {})
@@ -445,7 +462,7 @@ module Mongo
     #    The default value is unset which means the value is inherited from
     #    the collection or the database or the client.
     #
-    # @return [ Result ] The result of the command.
+    # @return [ Operation::Result ] The result of the command.
     #
     # @since 2.0.0
     def drop(opts = {})
@@ -525,7 +542,7 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
-    # @return [ CollectionView ] The collection view.
+    # @return [ Collection::View ] The collection view.
     #
     # @since 2.0.0
     def find(filter = nil, options = {})
@@ -636,7 +653,7 @@ module Mongo
     # @note This helper method is preferable to running a raw aggregation with
     #   a $changeStream stage, for the purpose of supporting resumability.
     #
-    # @return [ ChangeStream ] The change stream object.
+    # @return [ Mongo::Collection::View::ChangeStream ] The change stream object.
     #
     # @since 2.5.0
     def watch(pipeline = [], options = {})
@@ -839,7 +856,7 @@ module Mongo
     # @option opts [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
-    # @return [ Result ] The database response wrapper.
+    # @return [ Operation::Insert::Result ] The database response wrapper.
     #
     # @since 2.0.0
     def insert_one(document, opts = {})
@@ -901,7 +918,7 @@ module Mongo
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
-    # @return [ Result ] The database response wrapper.
+    # @return [ BulkWrite::Result ] The database response wrapper.
     #
     # @since 2.0.0
     def insert_many(documents, options = {})
@@ -959,7 +976,7 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Delete::Result ] The response from the database.
     #
     # @since 2.1.0
     def delete_one(filter = nil, options = {})
@@ -985,7 +1002,7 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Delete::Result ] The response from the database.
     #
     # @since 2.1.0
     def delete_many(filter = nil, options = {})
@@ -1017,6 +1034,9 @@ module Mongo
     #    the collection or the database or the client.
     #
     # @return [ Array<Cursor> ] An array of cursors.
+    #
+    # @deprecated The +parallelCollectionScan+ command was removed in MongoDB
+    #   server 4.2, so this method fails on newer servers.
     #
     # @since 2.1
     def parallel_scan(cursor_count, options = {})
@@ -1052,7 +1072,7 @@ module Mongo
     #   This option is only supported by servers >= 8.0. Older servers will
     #   report an error for using this option.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Update::Result ] The response from the database.
     #
     # @since 2.1.0
     def replace_one(filter, replacement, options = {})
@@ -1085,7 +1105,7 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Update::Result ] The response from the database.
     #
     # @since 2.1.0
     def update_many(filter, update, options = {})
@@ -1123,7 +1143,7 @@ module Mongo
     #   This option is only supported by servers >= 8.0. Older servers will
     #   report an error for using this option.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Update::Result ] The response from the database.
     #
     # @since 2.1.0
     def update_one(filter, update, options = {})

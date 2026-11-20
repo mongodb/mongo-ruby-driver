@@ -29,6 +29,8 @@ module Mongo
       # @param [ String ] message The error message.
       #
       # @since 2.5.0
+      #
+      # @api private
       def initialize(message)
         super
       end

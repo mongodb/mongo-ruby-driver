@@ -20,9 +20,12 @@ require 'mongo/grid/stream/write'
 module Mongo
   module Grid
     class FSBucket
-      # A stream that reads and writes files from/to the FSBucket.
+      # A stream that reads and writes files from/to the FSBucket. Users get
+      # streams from the FSBucket open_*_stream methods; this module only
+      # picks the stream class.
       #
       # @since 2.1.0
+      # @api private
       module Stream
         extend self
 

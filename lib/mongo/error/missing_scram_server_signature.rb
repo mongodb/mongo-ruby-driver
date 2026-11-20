@@ -19,6 +19,7 @@ module Mongo
     # This exception is raised when the server returned +{done: true}+ in a
     # SCRAM conversation but did not provide a ServerSignature.
     class MissingScramServerSignature < Error
+      # @api private
       def initialize(msg = nil)
         msg ||= 'Server signaled completion of SCRAM conversation without providing ServerSignature'
         super

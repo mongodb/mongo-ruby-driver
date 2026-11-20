@@ -20,6 +20,7 @@ module Mongo
       # Defines custom behavior of results for an update when sent as part of a bulk write.
       #
       # @since 2.0.0
+      # @api private
       class BulkResult < Operation::Result
         include Aggregatable
 

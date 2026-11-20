@@ -21,6 +21,9 @@ module Mongo
   class Monitoring
     include Id
 
+    # @!method self.next_id
+    #   @api private
+
     # The command topic.
     #
     # @since 2.1.0
@@ -74,6 +77,7 @@ module Mongo
     # @return [ Integer ] The next operation id.
     #
     # @since 2.1.0
+    # @api private
     def self.next_operation_id
       next_id
     end
@@ -253,6 +257,7 @@ module Mongo
     # @param [ Event ] event The event to publish.
     #
     # @since 2.9.0
+    # @api private
     def published(topic, event)
       subscribers_for(topic).each { |subscriber| subscriber.published(event) }
     end
@@ -269,6 +274,7 @@ module Mongo
     # @param [ Event ] event The event to publish.
     #
     # @since 2.1.0
+    # @api private
     def started(topic, event)
       subscribers_for(topic).each { |subscriber| subscriber.started(event) }
     end
@@ -285,6 +291,7 @@ module Mongo
     # @param [ Event ] event The event to publish.
     #
     # @since 2.1.0
+    # @api private
     def succeeded(topic, event)
       subscribers_for(topic).each { |subscriber| subscriber.succeeded(event) }
     end
@@ -301,6 +308,7 @@ module Mongo
     # @param [ Event ] event The event to publish.
     #
     # @since 2.1.0
+    # @api private
     def failed(topic, event)
       subscribers_for(topic).each { |subscriber| subscriber.failed(event) }
     end

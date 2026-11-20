@@ -27,6 +27,8 @@ module Mongo
       #   Mongo::Error::InvalidMinPoolSize.new(10, 5)
       #
       # @since 2.4.2
+      #
+      # @api private
       def initialize(min, max)
         super("Invalid min pool size: #{min}. Please ensure that it is less than the max size: #{max}. ")
       end

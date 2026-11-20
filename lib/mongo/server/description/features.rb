@@ -20,6 +20,7 @@ module Mongo
       # Defines behavior around what features a specific server supports.
       #
       # @since 2.0.0
+      # @api private
       class Features
         # List of features and the wire protocol version they appear in.
         #

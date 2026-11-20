@@ -21,6 +21,8 @@ module Mongo
       # The error message.
       #
       # @deprecated
+      #
+      # @api private
       MESSAGE = 'Invalid replacement document provided'
 
       # Construct the error message.
@@ -49,6 +51,8 @@ module Mongo
       # Instantiate the new exception.
       #
       # @param [ String ] :key The invalid key.
+      #
+      # @api private
       def initialize(key: nil)
         super(self.class.message(key))
       end

@@ -23,6 +23,8 @@ module Mongo
       # The error message.
       #
       # @since 2.0.0
+      #
+      # @api private
       MESSAGE = 'Invalid document provided.'
 
       # Instantiate the new exception.
@@ -31,6 +33,8 @@ module Mongo
       #   Mongo::Error::InvalidDocument.new
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize
         super(MESSAGE)
       end

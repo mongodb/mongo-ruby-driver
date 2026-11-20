@@ -19,6 +19,8 @@ module Mongo
     # Raised when an invalid read concern is provided.
     class InvalidReadConcern < Error
       # Instantiate the new exception.
+      #
+      # @api private
       def initialize(msg = nil)
         super(msg || 'Invalid read concern option provided.' \
                      'The only valid key is :level, for which accepted values are' \

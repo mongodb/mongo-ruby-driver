@@ -20,6 +20,8 @@ module Mongo
     # address.
     #
     # @since 2.0.0
+    #
+    # @api private
     class IPv6
       # @return [ String ] host The host.
       attr_reader :host

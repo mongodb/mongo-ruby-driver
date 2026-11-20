@@ -21,12 +21,16 @@ module Mongo
       # and there is no primary or the primary has not yet been discovered
       # by the driver.
       #
+      # This class is public because topology objects are exposed to
+      # subscribers by SDAM events (for example, TopologyChanged).
+      #
       # @since 2.0.0
       class ReplicaSetNoPrimary < Base
         # The display name for the topology.
         #
         # @since 2.0.0
         # @deprecated
+        # @api private
         NAME = 'Replica Set'
 
         # Get the display name.
@@ -43,7 +47,6 @@ module Mongo
 
         # @note This method is experimental and subject to change.
         #
-        # @api experimental
         # @since 2.7.0
         def summary
           details = server_descriptions.keys.join(',')
@@ -68,6 +71,7 @@ module Mongo
         #
         # @since 2.4.0
         # @deprecated
+        # @api private
         def has_readable_server?(cluster, server_selector = nil)
           !(server_selector || ServerSelector.primary).try_select_server(cluster).nil?
         end
@@ -83,6 +87,7 @@ module Mongo
         # @return [ true, false ] If a writable server is present.
         #
         # @since 2.4.0
+        # @api private
         def has_writable_server?(cluster)
           !ServerSelector.primary.try_select_server(cluster).nil?
         end
@@ -109,6 +114,7 @@ module Mongo
         # @return [ Array<Server> ] The servers in the replica set.
         #
         # @since 2.0.0
+        # @api private
         def servers(servers)
           servers.select do |server|
             ((replica_set_name.nil? || server.replica_set_name == replica_set_name) &&

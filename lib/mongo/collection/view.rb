@@ -38,9 +38,6 @@ module Mongo
     # A +View+ is not created directly by a user. Rather, +View+
     # creates a +View+ when a CRUD operation is called and returns it to
     # the user to interact with.
-    #
-    # @note The +View+ API is semipublic.
-    # @api semipublic
     class View
       extend Forwardable
       include Enumerable
@@ -57,6 +54,33 @@ module Mongo
       attr_reader :filter
 
       # Delegate necessary operations to the collection.
+      #
+      # @!method client
+      #   @api private
+      #   @return [ Mongo::Client ] The client.
+      #
+      # @!method cluster
+      #   @api private
+      #   @return [ Mongo::Cluster ] The cluster.
+      #
+      # @!method database
+      #   @api private
+      #   @return [ Mongo::Database ] The database.
+      #
+      # @!method nro_write_with_retry(*args, &block)
+      #   @api private
+      #
+      # @!method read_with_retry(*args, &block)
+      #   @api private
+      #
+      # @!method read_with_retry_cursor(*args, &block)
+      #   @api private
+      #
+      # @!method write_with_retry(*args, &block)
+      #   @api private
+      #
+      # @!method write_concern_with_session(*args)
+      #   @api private
       def_delegators :collection,
                      :client,
                      :cluster,
@@ -67,11 +91,19 @@ module Mongo
                      :write_with_retry,
                      :write_concern_with_session
 
-      # Delegate to the cluster for the next primary.
+      # @!method next_primary
+      #   @api private
+      #   @return [ Mongo::Server ] The next primary server.
       def_delegators :cluster, :next_primary
 
+      # @!method tracer
+      #   @api private
+      #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
       def_delegators :client, :tracer
 
+      # Alias for {#filter}.
+      #
+      # @return [ Hash ] The query filter.
       alias selector filter
 
       # @return [ Integer | nil | The timeout_ms value that was passed as an
@@ -193,6 +225,8 @@ module Mongo
       # option to the view, or inherited from the collection.
       #
       # @return [ Integer | nil ] the timeout_ms for this operation
+      #
+      # @api private
       def timeout_ms
         operation_timeout_ms || collection.timeout_ms
       end

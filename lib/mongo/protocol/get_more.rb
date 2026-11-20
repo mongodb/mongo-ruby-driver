@@ -25,7 +25,7 @@ module Mongo
     # The operation requires that you specify the database and collection
     # name as well as the cursor id because cursors are scoped to a namespace.
     #
-    # @api semipublic
+    # @api private
     class GetMore < Message
       # Creates a new getMore message
       #

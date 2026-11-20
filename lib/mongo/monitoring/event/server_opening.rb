@@ -24,7 +24,7 @@ module Mongo
         # @return [ Address ] address The server address.
         attr_reader :address
 
-        # @return [ Topology ] topology The topology.
+        # @return [ Cluster::Topology::Base ] topology The topology.
         attr_reader :topology
 
         # Create the event.
@@ -36,6 +36,7 @@ module Mongo
         # @param [ Integer ] topology The topology.
         #
         # @since 2.4.0
+        # @api private
         def initialize(address, topology)
           super()
           @address = address
@@ -46,10 +47,7 @@ module Mongo
         #
         # @return [ String ] String summary of the event.
         #
-        # @note This method is experimental and subject to change.
-        #
         # @since 2.7.0
-        # @api experimental
         def summary
           "#<#{short_class_name}" +
             " address=#{address} topology=#{topology.summary}>"

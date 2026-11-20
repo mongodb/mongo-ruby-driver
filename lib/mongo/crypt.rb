@@ -15,6 +15,10 @@
 # limitations under the License.
 
 module Mongo
+  # Client-side encryption internals. Users work with `Mongo::ClientEncryption`
+  # and the `:auto_encryption_options` client option instead.
+  #
+  # @api private
   module Crypt
     autoload(:Binding, 'mongo/crypt/binding')
     autoload(:Binary, 'mongo/crypt/binary')

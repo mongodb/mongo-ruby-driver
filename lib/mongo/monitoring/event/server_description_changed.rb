@@ -24,7 +24,7 @@ module Mongo
         # @return [ Address ] address The server address.
         attr_reader :address
 
-        # @return [ Topology ] topology The topology.
+        # @return [ Cluster::Topology::Base ] topology The topology.
         attr_reader :topology
 
         # @return [ Server::Description ] previous_description The previous server
@@ -37,7 +37,6 @@ module Mongo
 
         # @return [ true | false ] Whether the heartbeat was awaited.
         #
-        # @api experimental
         def awaited?
           @awaited
         end
@@ -70,10 +69,7 @@ module Mongo
         #
         # @return [ String ] String summary of the event.
         #
-        # @note This method is experimental and subject to change.
-        #
         # @since 2.7.0
-        # @api experimental
         def summary
           "#<#{short_class_name}" +
             " address=#{address}" +

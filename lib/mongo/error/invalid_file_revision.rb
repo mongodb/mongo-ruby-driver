@@ -29,6 +29,8 @@ module Mongo
       # @param [ Integer ] revision The requested revision.
       #
       # @since 2.1.0
+      #
+      # @api private
       def initialize(filename, revision)
         super("No revision #{revision} found for file '#{filename}'.")
       end

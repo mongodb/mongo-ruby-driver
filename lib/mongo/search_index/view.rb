@@ -13,15 +13,24 @@ module Mongo
       attr_reader :collection
 
       # @return [ nil | String ] the index id to query
+      #
+      # @api private
       attr_reader :requested_index_id
 
       # @return [ nil | String ] the index name to query
+      #
+      # @api private
       attr_reader :requested_index_name
 
       # @return [ Hash ] the options hash to use for the aggregate command
       #   when querying the available indexes.
+      #
+      # @api private
       attr_reader :aggregate_options
 
+      # @!method tracer
+      #   @api private
+      #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
       def_delegators :@collection, :tracer
 
       # Create the new search index view.
@@ -175,6 +184,8 @@ module Mongo
       # A helper method for retrieving the primary server from the cluster.
       #
       # @return [ Mongo::Server ] the server to use
+      #
+      # @api private
       def next_primary(ping = nil, session = nil)
         collection.cluster.next_primary(ping, session)
       end

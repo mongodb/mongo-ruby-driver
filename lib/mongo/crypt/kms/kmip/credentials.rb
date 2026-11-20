@@ -17,6 +17,9 @@
 module Mongo
   module Crypt
     module KMS
+      # KMIP KMS provider classes.
+      #
+      # @api private
       module KMIP
         # KMIP KMS Credentials object contains credentials for a
         # remote KMIP KMS provider.

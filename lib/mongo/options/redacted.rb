@@ -236,6 +236,8 @@ module Mongo
       # know which properties a future mechanism will treat as secret.
       #
       # @since 2.1.0
+      #
+      # @api private
       SENSITIVE_OPTIONS = %i[user
                              password
                              pwd
@@ -247,6 +249,8 @@ module Mongo
       # The replacement string used in place of the value for sensitive keys.
       #
       # @since 2.1.0
+      #
+      # @api private
       STRING_REPLACEMENT = '<REDACTED>'
 
       # Whether these options contain a given key.

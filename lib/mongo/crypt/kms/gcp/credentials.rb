@@ -17,6 +17,9 @@
 module Mongo
   module Crypt
     module KMS
+      # GCP KMS provider classes.
+      #
+      # @api private
       module GCP
         # GCP Cloud Key Management Credentials object contains credentials for
         # using GCP KMS provider.

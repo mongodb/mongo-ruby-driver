@@ -26,6 +26,8 @@ module Mongo
     # The options that do not affect the behavior of a cluster and its
     # subcomponents.
     #
+    # @api private
+    #
     # @since 2.1.0
     CRUD_OPTIONS = [
       :auto_encryption_options,
@@ -49,7 +51,8 @@ module Mongo
       # using the same cluster object with different server selection timeouts.
     ].freeze
 
-    # Valid client options.
+    # Valid client options. Applications and libraries built on the driver
+    # may use this to validate option names.
     #
     # @since 2.1.2
     VALID_OPTIONS = %i[
@@ -127,6 +130,8 @@ module Mongo
 
     # The compression algorithms supported by the driver.
     #
+    # @api private
+    #
     # @since 2.5.0
     VALID_COMPRESSORS = [
       Mongo::Protocol::Compressed::ZSTD,
@@ -135,21 +140,33 @@ module Mongo
     ].freeze
 
     # The known server API versions.
+    #
+    # @api private
     VALID_SERVER_API_VERSIONS = %w[
       1
     ].freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
+    #
+    # @api private
     attr_reader :cluster
 
+    # @example Get the database the client is operating on.
+    #   client.database.name
+    #
     # @return [ Mongo::Database ] database The database the client is operating on.
     attr_reader :database
 
+    # @example Get the configuration options.
+    #   client.options[:app_name]
+    #
     # @return [ Hash ] options The configuration options.
     attr_reader :options
 
     # @return [ Mongo::Crypt::AutoEncrypter ] The object that encapsulates
     #   auto-encryption behavior
+    #
+    # @api private
     attr_reader :encrypter
 
     # @return [ Mongo::Retryable::RetryPolicy ] The retry policy for
@@ -158,9 +175,41 @@ module Mongo
     attr_reader :retry_policy
 
     # Delegate command and collections execution to the current database.
+    #
+    # @!method command(operation, opts = {})
+    #   Execute a command on the current database.
+    #
+    #   @see Mongo::Database#command
+    #
+    # @!method collections(options = {})
+    #   Get all the collections in the current database.
+    #
+    #   @see Mongo::Database#collections
     def_delegators :@database, :command, :collections
 
     # Delegate subscription to monitoring.
+    #
+    # @!method subscribe(topic, subscriber)
+    #   Subscribe a subscriber to an event topic on this client.
+    #
+    #   @example Subscribe to command events.
+    #     client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    #
+    #   @param [ String ] topic The event topic.
+    #   @param [ Object ] subscriber The subscriber to handle the event.
+    #
+    #   @see Mongo::Monitoring#subscribe
+    #
+    # @!method unsubscribe(topic, subscriber)
+    #   Unsubscribe a subscriber from an event topic on this client.
+    #
+    #   @example Unsubscribe from command events.
+    #     client.unsubscribe(Mongo::Monitoring::COMMAND, subscriber)
+    #
+    #   @param [ String ] topic The event topic.
+    #   @param [ Object ] subscriber The subscriber to remove.
+    #
+    #   @see Mongo::Monitoring#unsubscribe
     def_delegators :monitoring, :subscribe, :unsubscribe
 
     # @return [ Monitoring ] monitoring The monitoring.
@@ -754,6 +803,8 @@ module Mongo
     # @return [ Mongo::ServerSelector ] The server selector using the
     #  user-defined read preference or a Primary server selector default.
     #
+    # @api private
+    #
     # @since 2.5.0
     def server_selector
       @server_selector ||= if read_preference
@@ -774,6 +825,8 @@ module Mongo
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
+    #   - *:max_staleness* -- the maximum replication lag, in seconds.
+    #   - *:hedge* -- hedged read options (deprecated).
     #   - *:local_threshold*.
     #
     # @since 2.0.0
@@ -936,6 +989,12 @@ module Mongo
       @write_concern ||= WriteConcern.get(options[:write_concern] || options[:write])
     end
 
+    # Whether this client has been closed.
+    #
+    # @example Check if the client is closed.
+    #   client.closed?
+    #
+    # @return [ true | false ] True if the client has been closed.
     def closed?
       !!@closed
     end
@@ -956,6 +1015,8 @@ module Mongo
     # Close encrypter and clean up auto-encryption resources.
     #
     # @return [ true ] Always true.
+    #
+    # @api private
     def close_encrypter
       @encrypter.close if @encrypter
 
@@ -1168,7 +1229,7 @@ module Mongo
     # @note This helper method is preferable to running a raw aggregation with a $changeStream
     #   stage, for the purpose of supporting resumability.
     #
-    # @return [ ChangeStream ] The change stream object.
+    # @return [ Mongo::Collection::View::ChangeStream ] The change stream object.
     #
     # @since 2.6.0
     def watch(pipeline = [], options = {})
@@ -1281,6 +1342,8 @@ module Mongo
     # Get the tracer configured for this client.
     #
     # @return [ Tracing::Tracer | nil ] The tracer configured for this client.
+    #
+    # @api private
     def tracer
       tracing_opts = @options[:tracing] || {}
       @tracer ||= Tracing.create_tracer(

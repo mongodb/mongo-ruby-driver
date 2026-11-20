@@ -15,5 +15,8 @@
 # limitations under the License.
 
 module Mongo
+  # Alias of BSON::DBRef.
+  #
+  # @api public
   DBRef = BSON::DBRef
 end

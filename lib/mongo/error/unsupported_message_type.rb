@@ -19,6 +19,8 @@ module Mongo
     # Raised when trying to get a message type from the registry that doesn't exist.
     #
     # @since 2.5.0
+    #
+    # @api private
     class UnsupportedMessageType < Error; end
   end
 end

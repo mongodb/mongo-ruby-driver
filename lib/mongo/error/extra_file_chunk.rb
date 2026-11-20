@@ -26,6 +26,8 @@ module Mongo
       #   Mongo::Error::ExtraFileChunk.new
       #
       # @since 2.1.0
+      #
+      # @api private
       def initialize
         super('Extra file chunk found.')
       end

@@ -26,6 +26,8 @@ module Mongo
       #   Mongo::Error::InvalidWriteConcern.new
       #
       # @since 2.2.0
+      #
+      # @api private
       def initialize(msg = nil)
         super(msg || ('Invalid write concern options. If w is an Integer, it must be greater than or equal to 0. ' +
           'If w is 0, it cannot be combined with a true value for fsync or j (journal).'))

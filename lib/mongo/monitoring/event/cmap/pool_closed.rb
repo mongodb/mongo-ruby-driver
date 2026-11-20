@@ -31,7 +31,7 @@ module Mongo
           # @return [ Mongo::Server::ConnectionPool ] pool The pool that was closed.
           #
           # @since 2.11.0
-          # @api experimental
+          # @api private
           attr_reader :pool
 
           # Create the event.
@@ -51,10 +51,7 @@ module Mongo
           #
           # @return [ String ] String summary of the event.
           #
-          # @note This method is experimental and subject to change.
-          #
           # @since 2.9.0
-          # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
               "address=#{address} pool=0x#{pool.object_id}>"

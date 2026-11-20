@@ -34,6 +34,8 @@ module Mongo
       # @param [ String ] msg Description of the problem.
       #
       # @since 2.6.0
+      #
+      # @api private
       def initialize(_read_option, msg)
         super("Invalid read preference value: #{msg}")
       end

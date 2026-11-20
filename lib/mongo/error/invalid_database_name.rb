@@ -23,6 +23,8 @@ module Mongo
       # The message is constant.
       #
       # @since 2.0.0
+      #
+      # @api private
       MESSAGE = 'nil is an invalid database name. Please provide a string or symbol.'
 
       # Instantiate the new exception.
@@ -31,6 +33,8 @@ module Mongo
       #   Mongo::Error::InvalidDatabaseName.new
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize
         super(MESSAGE)
       end

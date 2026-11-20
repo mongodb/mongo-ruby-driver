@@ -15,6 +15,9 @@
 # limitations under the License.
 
 module Mongo
+  # Namespace for the MongoDB wire protocol message classes.
+  #
+  # @api private
   module Protocol
     # A base class providing functionality required by all messages in
     # the MongoDB wire protocol. It provides a minimal DSL for defining typed
@@ -39,7 +42,7 @@ module Mongo
     #   end
     #
     # @abstract
-    # @api semiprivate
+    # @api private
     class Message
       include Id
       include Serializers

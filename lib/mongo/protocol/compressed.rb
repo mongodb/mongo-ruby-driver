@@ -21,7 +21,7 @@ module Mongo
     # This is a bi-directional message that compresses another opcode.
     # See https://github.com/mongodb/specifications/blob/master/source/compression/OP_COMPRESSED.md
     #
-    # @api semipublic
+    # @api private
     #
     # @since 2.5.0
     class Compressed < Message

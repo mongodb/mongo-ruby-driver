@@ -23,7 +23,7 @@ module Mongo
       class CommandStarted < Mongo::Event::Base
         include Secure
 
-        # @return [ Server::Address ] address The server address.
+        # @return [ Mongo::Address ] address The server address.
         attr_reader :address
 
         # @return [ BSON::Document ] command The command arguments.
@@ -106,9 +106,6 @@ module Mongo
         #
         # @return [ String ] String summary of the event.
         #
-        # @note This method is experimental and subject to change.
-        #
-        # @api experimental
         def summary
           "#<#{short_class_name} address=#{address} #{database_name}.#{command_name} command=#{command_summary}>"
         end

@@ -17,9 +17,12 @@
 module Mongo
   module Auth
     class Aws
-      # Raised when trying to authorize with an invalid configuration
+      # Raised when AWS credentials cannot be located.
       #
-      # @api private
+      # Public because it is raised to users when a connection is
+      # authenticated with MONGODB-AWS. The enclosing class is private.
+      #
+      # @api public
       class CredentialsNotFound < Mongo::Error::AuthError
         def initialize
           super('Could not locate AWS credentials (checked Client URI and Ruby options, environment variables, ECS and EC2 metadata, and Web Identity)')

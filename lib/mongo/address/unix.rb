@@ -19,6 +19,8 @@ module Mongo
     # Sets up socket addresses.
     #
     # @since 2.0.0
+    #
+    # @api private
     class Unix
       # @return [ String ] host The host.
       attr_reader :host

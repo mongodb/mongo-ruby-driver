@@ -24,6 +24,7 @@ module Mongo
         # The array filters field constant.
         #
         # @since 2.5.0
+        # @api private
         ARRAY_FILTERS = 'array_filters'
 
         # Finds a single document in the database via findAndModify and deletes
@@ -241,7 +242,7 @@ module Mongo
         # @option opts [ Object ] :comment A user-provided
         #   comment to attach to this command.
         #
-        # @return [ Result ] The response from the database.
+        # @return [ Operation::Delete::Result ] The response from the database.
         #
         # @since 2.0.0
         def delete_many(opts = {})
@@ -305,7 +306,7 @@ module Mongo
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
-        # @return [ Result ] The response from the database.
+        # @return [ Operation::Delete::Result ] The response from the database.
         #
         # @since 2.0.0
         def delete_one(opts = {})
@@ -378,7 +379,7 @@ module Mongo
         #   This option is only supported by servers >= 8.0. Older servers will
         #   report an error for using this option.
         #
-        # @return [ Result ] The response from the database.
+        # @return [ Operation::Update::Result ] The response from the database.
         #
         # @since 2.0.0
         def replace_one(replacement, opts = {})
@@ -452,7 +453,7 @@ module Mongo
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
         #
-        # @return [ Result ] The response from the database.
+        # @return [ Operation::Update::Result ] The response from the database.
         #
         # @since 2.0.0
         def update_many(spec, opts = {})
@@ -530,7 +531,7 @@ module Mongo
         #   This option is only supported by servers >= 8.0. Older servers will
         #   report an error for using this option.
         #
-        # @return [ Result ] The response from the database.
+        # @return [ Operation::Update::Result ] The response from the database.
         #
         # @since 2.0.0
         def update_one(spec, opts = {})

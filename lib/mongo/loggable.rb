@@ -17,6 +17,8 @@
 module Mongo
   # Allows objects to easily log operations.
   #
+  # @api private
+  #
   # @since 2.0.0
   module Loggable
     # The standard MongoDB log prefix.

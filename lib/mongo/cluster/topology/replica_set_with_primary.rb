@@ -20,6 +20,9 @@ module Mongo
       # Defines behavior when a cluster is in replica set topology,
       # and is a no primary which has been discovered by the driver.
       #
+      # This class is public because topology objects are exposed to
+      # subscribers by SDAM events (for example, TopologyChanged).
+      #
       # @since 2.7.0
       class ReplicaSetWithPrimary < ReplicaSetNoPrimary
       end

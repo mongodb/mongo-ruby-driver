@@ -36,6 +36,7 @@ module Mongo
         # @param [ Cluster::Topology ] new_topology The new topology.
         #
         # @since 2.4.0
+        # @api private
         def initialize(previous_topology, new_topology)
           super()
           @previous_topology = previous_topology
@@ -46,10 +47,7 @@ module Mongo
         #
         # @return [ String ] String summary of the event.
         #
-        # @note This method is experimental and subject to change.
-        #
         # @since 2.7.0
-        # @api experimental
         def summary
           "#<#{short_class_name}" +
             " prev=#{previous_topology.summary}" +

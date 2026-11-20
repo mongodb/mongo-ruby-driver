@@ -19,6 +19,7 @@ module Mongo
     # This class models the socket connections for servers and their behavior.
     #
     # @since 2.0.0
+    # @api private
     class Connection < ConnectionBase
       include Monitoring::Publishable
       include Retryable
@@ -131,6 +132,9 @@ module Mongo
       # @api private
       attr_accessor :tracing_attributes
 
+      # @!method tracer
+      #   @api private
+      #   @return [ Mongo::Tracing::Tracer | nil ] The tracer.
       def_delegators :server, :tracer
 
       # The connection pool from which this connection was created.

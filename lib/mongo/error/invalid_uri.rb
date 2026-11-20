@@ -40,6 +40,8 @@ module Mongo
       # @param [ String | nil ] format The expected connection string format.
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize(_uri, details, format = nil)
         message = "#{details}\n"
         message += "MongoDB URI must be in the following format: #{format}\n" if format

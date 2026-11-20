@@ -20,7 +20,11 @@ module Mongo
   module Auth
     # Represents a user in MongoDB.
     #
+    # Public because it can be passed to `Auth::User::View#create`.
+    # The enclosing namespace is private.
+    #
     # @since 2.0.0
+    # @api public
     class User
       include Loggable
 
@@ -32,6 +36,8 @@ module Mongo
       attr_reader :database
 
       # @return [ Hash ] The authentication mechanism properties.
+      #
+      # @api private
       attr_reader :auth_mech_properties
 
       # @return [ Symbol ] The authorization mechanism.
@@ -81,6 +87,7 @@ module Mongo
       # @return [ String ] The authentication key.
       #
       # @since 2.0.0
+      # @api private
       def auth_key(nonce)
         Digest::MD5.hexdigest("#{nonce}#{name}#{hashed_password}")
       end
@@ -94,6 +101,7 @@ module Mongo
       # @return [ String ] The encoded user name.
       #
       # @since 2.0.0
+      # @api private
       def encoded_name
         name.encode(BSON::UTF8).gsub('=', '=3D').gsub(',', '=2C')
       end
@@ -118,6 +126,7 @@ module Mongo
       # @return [ String ] The hashed password.
       #
       # @since 2.0.0
+      # @api private
       def hashed_password
         raise Error::MissingPassword unless password
 
@@ -191,6 +200,7 @@ module Mongo
       # @return [ Hash ] The user spec.
       #
       # @since 2.0.0
+      # @api private
       def spec
         { roles: roles }.tap do |spec|
           spec[:pwd] = password if password

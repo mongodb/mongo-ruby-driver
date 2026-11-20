@@ -19,6 +19,8 @@ module Mongo
     # Raised if the response read from the socket does not match the latest query.
     #
     # @since 2.2.6
+    #
+    # @api private
     class UnexpectedResponse < Error
       # Create the new exception.
       #

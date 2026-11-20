@@ -18,6 +18,8 @@ module Mongo
   class Error
     # Raised when the driver is in load-balancing mode via the URI option
     # but a connection does not report a value in the serviceId field.
+    #
+    # @api private
     class MissingServiceId < Error
     end
   end

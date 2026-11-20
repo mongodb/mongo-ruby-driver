@@ -18,6 +18,9 @@ module Mongo
   class Error
     # A KMS-related error during client-side encryption.
     class KmsError < CryptError
+      # Create the error.
+      #
+      # @api private
       def initialize(message, code: nil, network_error: nil)
         @network_error = network_error
         super(message, code: code)
@@ -25,6 +28,8 @@ module Mongo
     end
 
     # @return [ true, false ] whether this error was caused by a network error.
+    #
+    # @api private
     def network_error?
       @network_error == true
     end

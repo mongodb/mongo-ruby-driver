@@ -21,6 +21,12 @@ require 'mongo/write_concern/unacknowledged'
 module Mongo
   # Base module for all write concern specific behavior.
   #
+  # This module is the namespace for the write concern objects returned by
+  # the +write_concern+ methods of {Mongo::Client}, {Mongo::Database} and
+  # {Mongo::Collection}. Members are tagged individually.
+  #
+  # @api public
+  #
   # @since 2.0.0
   module WriteConcern
     extend self
@@ -28,34 +34,46 @@ module Mongo
     # The number of servers write concern.
     #
     # @since 2.0.0
+    # @api private
+    #
     # @deprecated
     W = :w
 
     # The journal write concern.
     #
     # @since 2.0.0
+    # @api private
+    #
     # @deprecated
     J = :j
 
     # The file sync write concern.
     #
     # @since 2.0.0
+    # @api private
+    #
     # @deprecated
     FSYNC = :fsync
 
     # The wtimeout write concern.
     #
     # @since 2.0.0
+    # @api private
+    #
     # @deprecated
     WTIMEOUT = :wtimeout
 
     # The GLE command name.
     #
     # @since 2.0.0
+    # @api private
+    #
     # @deprecated
     GET_LAST_ERROR = :getlasterror
 
     # The default write concern is to acknowledge on a single server.
+    #
+    # @api private
     #
     # @since 2.0.0
     DEFAULT = {}.freeze
@@ -63,6 +81,8 @@ module Mongo
     # Create a write concern object for the provided options.
     #
     # If options are nil, returns nil.
+    #
+    # @api private
     #
     # @example Get a write concern.
     #   Mongo::WriteConcern.get(:w => 1)

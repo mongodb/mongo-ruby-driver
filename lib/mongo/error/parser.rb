@@ -98,7 +98,7 @@ module Mongo
       #   concern error or either one of the two.
       #
       # @since 2.10.0
-      # @api experimental
+      # @api private
       def write_concern_error?
         !!write_concern_error_document
       end
@@ -107,7 +107,7 @@ module Mongo
       # server, if any.
       #
       # @return [ Hash | nil ] Write concern error as reported to the server.
-      # @api experimental
+      # @api private
       def write_concern_error_document
         document['writeConcernError']
       end
@@ -116,7 +116,7 @@ module Mongo
       #   if a write concern error is present and has a code.
       #
       # @since 2.10.0
-      # @api experimental
+      # @api private
       def write_concern_error_code
         write_concern_error_document && write_concern_error_document['code']
       end
@@ -125,13 +125,15 @@ module Mongo
       #   if a write concern error is present and has a code name.
       #
       # @since 2.10.0
-      # @api experimental
+      # @api private
       def write_concern_error_code_name
         write_concern_error_document && write_concern_error_document['codeName']
       end
 
       # @return [ Array<String> | nil ] The error labels associated with this
       # write concern error, if there is a write concern error present.
+      #
+      # @api private
       def write_concern_error_labels
         write_concern_error_document && write_concern_error_document['errorLabels']
       end

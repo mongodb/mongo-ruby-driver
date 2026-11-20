@@ -22,6 +22,8 @@ require 'mongo/retryable/write_worker'
 module Mongo
   # Defines basic behavior around retrying operations.
   #
+  # @api private
+  #
   # @since 2.1.0
   module Retryable
     extend Forwardable

@@ -27,11 +27,13 @@ module Mongo
         # Name of the files collection.
         #
         # @since 2.0.0
+        # @api private
         COLLECTION = 'files'
 
         # Mappings of user supplied fields to db specification.
         #
         # @since 2.0.0
+        # @api private
         MAPPINGS = {
           chunk_size: :chunkSize,
           content_type: :contentType,
@@ -47,9 +49,12 @@ module Mongo
         # Default content type for stored files.
         #
         # @since 2.0.0
+        # @api private
         DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
 
         # @return [ BSON::Document ] document The files collection document.
+        #
+        # @api private
         attr_reader :document
 
         # Is this file information document equal to another?
@@ -76,6 +81,7 @@ module Mongo
         # @return [ Integer ] The BSON type.
         #
         # @since 2.0.0
+        # @api private
         def bson_type
           BSON::Hash::BSON_TYPE
         end
@@ -212,6 +218,7 @@ module Mongo
         # @since 2.6.0
         #
         # @deprecated as of 2.6.0
+        # @api private
         def update_md5(bytes)
           md5.update(bytes) if md5
         end
@@ -231,6 +238,7 @@ module Mongo
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
+        # @api private
         def to_bson(buffer = BSON::ByteBuffer.new, _validating_keys = nil)
           document[:md5] = @client_md5.hexdigest if @client_md5 && !document[:md5]
           document.to_bson(buffer)

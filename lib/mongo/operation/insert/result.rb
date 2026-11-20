@@ -19,11 +19,13 @@ module Mongo
     class Insert
       # Defines custom behavior of results for an insert.
       #
+      # Public because it is returned by Collection#insert_one.
+      #
       # According to the CRUD spec, reporting the inserted ids
       # is optional. It can be added to this class later, if needed.
       #
       # @since 2.0.0
-      # @api semiprivate
+      # @api public
       class Result < Operation::Result
         # Get the ids of the inserted documents.
         #
@@ -67,7 +69,7 @@ module Mongo
           inserted_ids.first
         end
 
-        # @api public
+        # @api private
         def bulk_result
           BulkResult.new(@replies, connection_description, connection_global_id, @inserted_ids)
         end

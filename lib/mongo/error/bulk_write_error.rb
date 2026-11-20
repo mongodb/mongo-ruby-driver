@@ -51,6 +51,7 @@ module Mongo
       #   Entries are normalized to "host:port" strings.
       #
       # @since 2.0.0
+      # @api private
       def initialize(result, server_addresses: nil)
         @result = result
         @server_addresses = normalize_server_addresses(server_addresses)

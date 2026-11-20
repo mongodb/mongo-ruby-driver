@@ -24,7 +24,7 @@ module Mongo
     #   socket.write(query)
     #   reply = Protocol::Reply::deserialize(socket)
     #
-    # @api semipublic
+    # @api private
     class Reply < Message
       # Determine if the reply had a query failure flag.
       #

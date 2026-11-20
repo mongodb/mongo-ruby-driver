@@ -20,7 +20,7 @@ module Mongo
       # Defines custom behavior of results for a map reduce operation.
       #
       # @since 2.0.0
-      # @api semiprivate
+      # @api private
       class Result < Operation::Result
         # The counts field for the map/reduce.
         #
@@ -48,7 +48,7 @@ module Mongo
         # @return [ Hash ] A hash of the result counts.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         def counts
           reply.documents[0][COUNTS]
         end
@@ -61,7 +61,7 @@ module Mongo
         # @return [ Array<BSON::Document> ] The documents.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         def documents
           reply.documents[0][RESULTS] || reply.documents[0][RESULT]
         end
@@ -78,7 +78,7 @@ module Mongo
         # @return [ true, false ] If the command was successful.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         def successful?
           !documents.nil? && parser.message.empty?
         end
@@ -91,7 +91,7 @@ module Mongo
         # @return [ Integer ] The executing time in milliseconds.
         #
         # @since 2.0.0
-        # @api public
+        # @api private
         def time
           reply.documents[0][TIME]
         end
@@ -143,7 +143,7 @@ module Mongo
         #
         # @return [ Integer ] The number of documents returned.
         #
-        # @api public
+        # @api private
         def returned_count
           reply.documents.length
         end

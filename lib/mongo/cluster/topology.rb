@@ -28,7 +28,11 @@ module Mongo
     # require the application to maintain cluster references on its own
     # if it wants to track server changes within a replica set.
     #
+    # The topology classes are public even though Cluster is not, because
+    # SDAM events expose topology objects to subscribers.
+    #
     # @since 2.0.0
+    # @api public
     module Topology
       extend self
     end

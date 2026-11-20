@@ -19,6 +19,8 @@ module Mongo
     # Wraps a libmongocrypt mongocrypt_kms_ctx_t object. Contains information
     # about making an HTTP request to fetch information about a KMS
     # data key.
+    #
+    # @api private
     class KmsContext
       # Create a new KmsContext object.
       #

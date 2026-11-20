@@ -32,6 +32,9 @@ module Mongo
     #
     # @since 2.5.0
     class SRVProtocol < URI
+      # @return [ Array<String> | nil ] The addresses found by the SRV lookup.
+      #
+      # @api private
       attr_reader :srv_records
 
       # Gets the options hash that needs to be passed to a Mongo::Client on instantiation, so we
@@ -79,33 +82,47 @@ module Mongo
       #   hostname.
       #
       # @deprecated
+      #
+      # @api private
       DOT_PARTITION = '.'
 
       # @return [ Array<String> ] VALID_TXT_OPTIONS The valid options for a TXT record to specify.
+      #
+      # @api private
       VALID_TXT_OPTIONS = %w[replicaset authsource loadbalanced].freeze
 
       # @return [ String ] INVALID_HOST Error message format string indicating that the hostname in
       #   in the URI does not fit the expected form.
+      #
+      # @api private
       INVALID_HOST = 'One and only one host is required in a connection string with the ' +
                      "'#{MONGODB_SRV_SCHEME}' protocol."
 
       # @return [ String ] INVALID_PORT Error message format string indicating that a port was
       #   included with an SRV hostname.
+      #
+      # @api private
       INVALID_PORT = 'It is not allowed to specify a port in a connection string with the ' +
                      "'#{MONGODB_SRV_SCHEME}' protocol."
 
       # @return [ String ] INVALID_DOMAIN Error message format string indicating that the domain name
       #   of the hostname does not fit the expected form.
       # @deprecated
+      #
+      # @api private
       INVALID_DOMAIN = 'The domain name must consist of at least two parts: the domain name, ' +
                        'and a TLD.'
 
       # @return [ String ] NO_SRV_RECORDS Error message indicating that no SRV records
       #   were found. The hostname is not included: during initial parsing it may contain text the
       #   user intended as part of a credential.
+      #
+      # @api private
       NO_SRV_RECORDS = 'The DNS query returned no SRV records.'
 
       # @return [ String ] FORMAT The expected SRV URI format.
+      #
+      # @api private
       FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'
 
       # Gets the MongoDB SRV URI scheme.

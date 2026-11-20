@@ -66,17 +66,14 @@ module Mongo
         # @return [ Monitoring::Event::ServerHeartbeatStarted ]
         #   The corresponding started event.
         #
-        # @api experimental
+        # @api private
         attr_reader :started_event
 
         # Returns a concise yet useful summary of the event.
         #
         # @return [ String ] String summary of the event.
         #
-        # @note This method is experimental and subject to change.
-        #
         # @since 2.7.0
-        # @api experimental
         def summary
           "#<#{short_class_name}" +
             " address=#{address}" +

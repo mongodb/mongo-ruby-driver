@@ -30,6 +30,8 @@ module Mongo
     # such failures.
     #
     # @since 2.6.1
+    #
+    # @api private
     class LintError < Error
     end
   end

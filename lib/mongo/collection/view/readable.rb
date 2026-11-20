@@ -424,6 +424,9 @@ module Mongo
         #
         # @return [ MapReduce ] The map reduce wrapper.
         #
+        # @deprecated The +mapReduce+ command is deprecated in MongoDB server
+        #   5.0. Use the aggregation pipeline instead.
+        #
         # @since 2.0.0
         def map_reduce(map, reduce, options = {})
           MapReduce.new(self, map, reduce, @options.merge(options))
@@ -614,6 +617,9 @@ module Mongo
         #
         # @return [ Hash, View ] Either the modifiers document or a new +View+.
         #
+        # @deprecated Legacy (OP_QUERY) modifiers are not sent to current
+        #   servers. Use the corresponding options instead.
+        #
         # @since 2.1.0
         def modifiers(doc = nil)
           if doc.nil?
@@ -704,6 +710,13 @@ module Mongo
           end
         end
 
+        # Executes the removed +parallelCollectionScan+ command. Backs
+        # Collection#parallel_scan.
+        #
+        # @deprecated The +parallelCollectionScan+ command was removed in
+        #   MongoDB server 4.2, so this method fails on newer servers.
+        #
+        # @api private
         def parallel_scan(cursor_count, options = {})
           session = if options[:session]
                       # The session would be overwritten by the one in +options+ later.

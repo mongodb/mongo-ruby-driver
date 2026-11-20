@@ -24,6 +24,8 @@ module Mongo
       # The message is constant.
       #
       # @since 2.0.0
+      #
+      # @api private
       MESSAGE = 'Message exceeds allowed max message size.'
 
       # Instantiate the new exception.
@@ -34,6 +36,8 @@ module Mongo
       # @param [ Integer ] max_size The maximum message size.
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize(max_size = nil)
         super(max_size ? MESSAGE + " The max is #{max_size}." : MESSAGE)
       end

@@ -19,6 +19,7 @@ module Mongo
     # Subscribes to CMAP events and logs them.
     #
     # @since 2.9.0
+    # @api private
     class CmapLogSubscriber
       include Loggable
 

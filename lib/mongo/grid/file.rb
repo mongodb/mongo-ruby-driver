@@ -18,6 +18,8 @@ require 'mongo/grid/file/chunk'
 require 'mongo/grid/file/info'
 
 module Mongo
+  # Namespace for the GridFS classes. Use Database#fs to get a
+  # Grid::FSBucket.
   module Grid
     # A representation of a file in the database.
     #
@@ -31,7 +33,23 @@ module Mongo
       # Delegate to file info for convenience.
       def_delegators :info, :chunk_size, :content_type, :filename, :id, :md5, :upload_date
 
+      # @!method chunk_size
+      #   @return [ Integer ] The chunk size in bytes.
+      # @!method content_type
+      #   @return [ String ] The content type.
+      # @!method filename
+      #   @return [ String ] The filename.
+      # @!method id
+      #   @return [ BSON::ObjectId ] The file id.
+      # @!method md5
+      #   @return [ String ] The md5 hash.
+      #   @deprecated as of 2.6.0
+      # @!method upload_date
+      #   @return [ Time ] The upload date.
+
       # @return [ Array<Chunk> ] chunks The file chunks.
+      #
+      # @api private
       attr_reader :chunks
 
       # @return [ File::Info ] info The file information.

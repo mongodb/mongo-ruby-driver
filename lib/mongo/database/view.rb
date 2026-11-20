@@ -20,6 +20,8 @@ module Mongo
   class Database
     # A class representing a view of a database.
     #
+    # @api private
+    #
     # @since 2.0.0
     class View
       extend Forwardable

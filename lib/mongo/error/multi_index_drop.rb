@@ -26,6 +26,8 @@ module Mongo
       #   Mongo::Error::MultiIndexDrop.new
       #
       # @since 2.0.0
+      #
+      # @api private
       def initialize
         super("Passing '*' to #drop_one would cause all indexes to be dropped. Please use #drop_all")
       end

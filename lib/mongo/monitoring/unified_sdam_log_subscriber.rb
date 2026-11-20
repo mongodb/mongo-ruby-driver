@@ -19,7 +19,7 @@ module Mongo
     # Subscribes to SDAM events and logs them.
     #
     # @since 2.11.0
-    # @api experimental
+    # @api private
     class UnifiedSdamLogSubscriber
       include Loggable
 

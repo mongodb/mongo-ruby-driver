@@ -19,14 +19,29 @@ module Mongo
     class User
       # Defines behavior for user related operation on databases.
       #
+      # Public because it is returned by `Database#users`. The enclosing
+      # namespace is private.
+      #
       # @since 2.0.0
+      # @api public
       class View
         extend Forwardable
 
         # @return [ Database ] database The view's database.
+        #
+        # @api private
         attr_reader :database
 
+        # @!method cluster
+        #   @api private
+        # @!method read_preference
+        #   @api private
+        # @!method client
+        #   @api private
         def_delegators :database, :cluster, :read_preference, :client
+
+        # @!method next_primary
+        #   @api private
         def_delegators :cluster, :next_primary
 
         # Create a new user in the database.
@@ -40,7 +55,7 @@ module Mongo
         # @option options [ Session ] :session The session to use for the operation.
         # @option options [ Hash ] :write_concern The write concern options.
         #
-        # @return [ Result ] The command response.
+        # @return [ Operation::Result ] The command response.
         #
         # @since 2.0.0
         def create(user_or_name, options = {})
@@ -78,7 +93,7 @@ module Mongo
         # @option options [ Session ] :session The session to use for the operation.
         # @option options [ Hash ] :write_concern The write concern options.
         #
-        # @return [ Result ] The command response.
+        # @return [ Operation::Result ] The command response.
         #
         # @since 2.0.0
         def remove(name, options = {})
@@ -103,7 +118,7 @@ module Mongo
         # @option options [ Session ] :session The session to use for the operation.
         # @option options [ Hash ] :write_concern The write concern options.
         #
-        # @return [ Result ] The response.
+        # @return [ Operation::Result ] The response.
         #
         # @since 2.0.0
         def update(user_or_name, options = {})

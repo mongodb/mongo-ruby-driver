@@ -89,10 +89,11 @@ module Mongo
 
     # This module provides common cluster time tracking behavior.
     #
-    # @note Although attributes and methods defined in this module are part of
-    #   the public API for the classes including this module, the fact that
-    #   the methods are defined on this module and not directly on the
-    #   including classes is not part of the public API.
+    # The attributes and methods defined in this module are for use by other
+    # classes within the driver. They are not part of the public API of the
+    # classes that include this module.
+    #
+    # @api private
     module Consumer
       # The cluster time tracked by the object including this module.
       #
