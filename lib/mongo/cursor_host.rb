@@ -8,6 +8,8 @@ module Mongo
   #   * timeout_ms -- this must return either the operation level timeout_ms
   #       (if set) or an inherited timeout_ms from a hierarchically higher
   #       level (if any).
+  #
+  # @api private
   module CursorHost
     # Returns the cursor associated with this view, if any.
     #

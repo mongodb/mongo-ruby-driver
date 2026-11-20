@@ -18,7 +18,12 @@ module Mongo
   module Event
     # Base class for all events.
     #
+    # Public because it is the superclass of the monitoring event classes
+    # handed to subscribers, although the rest of Mongo::Event is private.
+    #
     # @since 2.6.0
+    #
+    # @api public
     class Base
       # Returns a concise yet useful summary of the event.
       # Meant to be overridden in derived classes.

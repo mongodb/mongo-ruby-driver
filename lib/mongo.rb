@@ -102,9 +102,66 @@ module Mongo
     delegate_option Config, :validate_update_replace
     delegate_option Config, :csfle_convert_to_ruby_types
     delegate_option Config, :include_server_address_in_errors
+
+    # @!method options=(options)
+    #   Set the global driver configuration options.
+    #   @param [ Hash ] options The options, keyed by option name.
+    #   @api public
+
+    # @!method broken_view_aggregate
+    #   @return [ true | false ] Whether views keep the legacy aggregate behavior.
+    #   @api public
+    # @!method broken_view_aggregate=(value)
+    #   @param [ true | false ] value The new value.
+    #   @api public
+    # @!method broken_view_aggregate?
+    #   @return [ true | false ] Same as broken_view_aggregate.
+    #   @api public
+
+    # @!method broken_view_options
+    #   @return [ true | false ] Whether views keep the legacy option handling.
+    #   @api public
+    # @!method broken_view_options=(value)
+    #   @param [ true | false ] value The new value.
+    #   @api public
+    # @!method broken_view_options?
+    #   @return [ true | false ] Same as broken_view_options.
+    #   @api public
+
+    # @!method validate_update_replace
+    #   @return [ true | false ] Whether update and replace documents are validated.
+    #   @api public
+    # @!method validate_update_replace=(value)
+    #   @param [ true | false ] value The new value.
+    #   @api public
+    # @!method validate_update_replace?
+    #   @return [ true | false ] Same as validate_update_replace.
+    #   @api public
+
+    # @!method csfle_convert_to_ruby_types
+    #   @return [ true | false ] Whether explicit decryption converts to Ruby types.
+    #   @api public
+    # @!method csfle_convert_to_ruby_types=(value)
+    #   @param [ true | false ] value The new value.
+    #   @api public
+    # @!method csfle_convert_to_ruby_types?
+    #   @return [ true | false ] Same as csfle_convert_to_ruby_types.
+    #   @api public
+
+    # @!method include_server_address_in_errors
+    #   @return [ true | false ] Whether error messages include the server address.
+    #   @api public
+    # @!method include_server_address_in_errors=(value)
+    #   @param [ true | false ] value The new value.
+    #   @api public
+    # @!method include_server_address_in_errors?
+    #   @return [ true | false ] Same as include_server_address_in_errors.
+    #   @api public
   end
 
   # Clears the driver's OCSP response cache.
+  #
+  # @api public
   module_function def clear_ocsp_cache
     Socket::OcspCache.clear
   end
@@ -116,6 +173,8 @@ module Mongo
   #
   # @return [ Array<Proc> ] The list of procs to be invoked when a TLS socket
   #   is connected (may be an empty Array).
+  #
+  # @api public
   module_function def tls_context_hooks
     @tls_context_hooks ||= []
   end
@@ -124,6 +183,8 @@ module Mongo
   #
   # @param [ Array<Proc> ] hooks An Array of Procs, each of which should take
   #   an OpenSSL::SSL::SSLContext object as an argument.
+  #
+  # @api public
   module_function def tls_context_hooks=(hooks)
     unless hooks.is_a?(Array) && hooks.all? { |hook| hook.is_a?(Proc) }
       raise ArgumentError, 'TLS context hooks must be an array of Procs'

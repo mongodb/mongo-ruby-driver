@@ -18,6 +18,8 @@ module Mongo
   # Provides ability to log messages.
   #
   # @since 2.0.0
+  #
+  # @api public
   class Logger
     class << self
       # Get the wrapped logger. If none was set will return a default info

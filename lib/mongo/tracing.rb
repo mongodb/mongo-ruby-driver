@@ -16,6 +16,9 @@
 
 module Mongo
   # Provides OpenTelemetry tracing capabilities for MongoDB operations.
+  # Users enable tracing through the :tracing client option.
+  #
+  # @api private
   module Tracing
     # Creates a new OpenTelemetry tracer for instrumenting MongoDB operations.
     #

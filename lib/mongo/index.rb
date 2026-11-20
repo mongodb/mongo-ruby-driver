@@ -20,6 +20,8 @@ module Mongo
   # Contains constants for indexing purposes.
   #
   # @since 2.0.0
+  #
+  # @api public
   module Index
     # Wildcard constant for all.
     #
@@ -65,6 +67,8 @@ module Mongo
     # Constant for the indexes collection.
     #
     # @since 2.0.0
+    #
+    # @api private
     COLLECTION = 'system.indexes'
   end
 end
