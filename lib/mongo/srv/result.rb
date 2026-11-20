@@ -15,6 +15,9 @@
 # limitations under the License.
 
 module Mongo
+  # Namespace for SRV and TXT record resolution.
+  #
+  # @api private
   module Srv
     # SRV record lookup result.
     #

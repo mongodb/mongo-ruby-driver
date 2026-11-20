@@ -103,6 +103,8 @@ module Mongo
     delegate_option Config, :csfle_convert_to_ruby_types
     delegate_option Config, :include_server_address_in_errors
 
+    # @!scope class
+
     # @!method options=(options)
     #   Set the global driver configuration options.
     #   @param [ Hash ] options The options, keyed by option name.
