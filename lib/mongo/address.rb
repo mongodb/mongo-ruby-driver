@@ -30,6 +30,8 @@ module Mongo
     # Mapping from socket family to resolver class.
     #
     # @since 2.0.0
+    #
+    # @api private
     FAMILY_MAP = {
       ::Socket::PF_UNIX => Unix,
       ::Socket::AF_INET6 => IPv6,
@@ -39,6 +41,8 @@ module Mongo
     # The localhost constant.
     #
     # @since 2.1.0
+    #
+    # @api private
     LOCALHOST = 'localhost'
 
     # Initialize the address.

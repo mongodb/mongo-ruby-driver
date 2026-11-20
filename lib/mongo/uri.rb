@@ -31,7 +31,10 @@ module Mongo
     include Loggable
     include Address::Validator
 
-    # The uri parser object options.
+    # The options passed to the parser, such as :logger. These are not the
+    # options specified in the URI; see {#uri_options}.
+    #
+    # @return [ Hash ] The parser options.
     #
     # @since 2.0.0
     attr_reader :options
@@ -51,98 +54,136 @@ module Mongo
     # @deprecated Will be removed in 3.0.
     #
     # @since 2.0.0
+    #
+    # @api private
     SCHEME = 'mongodb://'
 
     # The mongodb connection string scheme root.
     #
     # @since 2.5.0
+    #
+    # @api private
     MONGODB_SCHEME = 'mongodb'
 
     # The mongodb srv protocol connection string scheme root.
     #
     # @since 2.5.0
+    #
+    # @api private
     MONGODB_SRV_SCHEME = 'mongodb+srv'
 
     # Error details for an invalid scheme.
     #
     # @since 2.1.0
     # @deprecated
+    #
+    # @api private
     INVALID_SCHEME = "Invalid scheme. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'"
 
     # MongoDB URI format specification.
     #
     # @since 2.0.0
+    #
+    # @api private
     FORMAT = 'mongodb://[username:password@]host1[:port1][,host2[:port2]' +
              ',...[,hostN[:portN]]][/[database][?options]]'
 
     # MongoDB URI (connection string) documentation url
     #
     # @since 2.0.0
+    #
+    # @api private
     HELP = 'https://www.mongodb.com/docs/manual/reference/connection-string/'
 
     # Unsafe characters that must be urlencoded.
     #
     # @since 2.1.0
+    #
+    # @api private
     UNSAFE = %r{[:/@]}
 
     # Percent sign that must be encoded in user creds.
     #
     # @since 2.5.1
+    #
+    # @api private
     PERCENT_CHAR = /%/
 
     # Unix socket suffix.
     #
     # @since 2.1.0
+    #
+    # @api private
     UNIX_SOCKET = /.sock/
 
     # The character delimiting hosts.
     #
     # @since 2.1.0
+    #
+    # @api private
     HOST_DELIM = ','
 
     # The character separating a host and port.
     #
     # @since 2.1.0
+    #
+    # @api private
     HOST_PORT_DELIM = ':'
 
     # The character delimiting a database.
     #
     # @since 2.1.0
+    #
+    # @api private
     DATABASE_DELIM = '/'
 
     # The character delimiting options.
     #
     # @since 2.1.0
+    #
+    # @api private
     URI_OPTS_DELIM = '?'
 
     # The character delimiting multiple options.
     #
     # @since 2.1.0
     # @deprecated
+    #
+    # @api private
     INDIV_URI_OPTS_DELIM = '&'
 
     # The character delimiting an option and its value.
     #
     # @since 2.1.0
+    #
+    # @api private
     URI_OPTS_VALUE_DELIM = '='
 
     # The character separating a username from the password.
     #
     # @since 2.1.0
+    #
+    # @api private
     AUTH_USER_PWD_DELIM = ':'
 
     # The character delimiting auth credentials.
     #
     # @since 2.1.0
+    #
+    # @api private
     AUTH_DELIM = '@'
 
     # Scheme delimiter.
     #
     # @since 2.5.0
+    #
+    # @api private
     SCHEME_DELIM = '://'
 
     # Placeholder used in place of cleartext credentials when a URI is
     # rendered for display, logging, or error reporting.
+    #
+    # @api private
     CREDENTIALS_PLACEHOLDER = '<credentials>'
 
     # Pattern matching the userinfo portion of a MongoDB connection string.
@@ -152,47 +193,65 @@ module Mongo
     # redacted. Case-insensitive so an unusual scheme like 'MongoDB://' is
     # redacted too — the parser will reject it, and the redactor must not be
     # the thing that leaks the credentials in the resulting error.
+    #
+    # @api private
     USERINFO_REDACTION_REGEX = %r{\A(mongodb(?:\+srv)?://)[^/?#]*@}i.freeze
 
     # Error details for an invalid options format.
     #
     # @since 2.1.0
+    #
+    # @api private
     INVALID_OPTS_VALUE_DELIM = 'Options and their values must be delimited' +
                                " by '#{URI_OPTS_VALUE_DELIM}'"
 
     # Error details for an non-urlencoded user name or password.
     #
     # @since 2.1.0
+    #
+    # @api private
     UNESCAPED_USER_PWD = 'User name and password must be urlencoded.'
 
     # Error details for a non-urlencoded unix socket path.
     #
     # @since 2.1.0
+    #
+    # @api private
     UNESCAPED_UNIX_SOCKET = 'UNIX domain sockets must be urlencoded.'
 
     # Error details for a non-urlencoded auth database name.
     #
     # @since 2.1.0
+    #
+    # @api private
     UNESCAPED_DATABASE = 'Auth database must be urlencoded.'
 
     # Error details for providing options without a database delimiter.
     #
     # @since 2.1.0
+    #
+    # @api private
     INVALID_OPTS_DELIM = "Database delimiter '#{DATABASE_DELIM}' must be present if options are specified."
 
     # Error details for a missing host.
     #
     # @since 2.1.0
+    #
+    # @api private
     INVALID_HOST = 'Missing host; at least one must be provided.'
 
     # Error details for an invalid port.
     #
     # @since 2.1.0
+    #
+    # @api private
     INVALID_PORT = 'Invalid port. Port must be an integer greater than 0 and less than 65536'
 
     # Map of URI read preference modes to Ruby driver read preference modes
     #
     # @since 2.0.0
+    #
+    # @api private
     READ_MODE_MAP = {
       'primary' => :primary,
       'primarypreferred' => :primary_preferred,
@@ -204,6 +263,8 @@ module Mongo
     # Map of URI authentication mechanisms to Ruby driver mechanisms
     #
     # @since 2.0.0
+    #
+    # @api private
     AUTH_MECH_MAP = {
       'GSSAPI' => :gssapi,
       'MONGODB-AWS' => :aws,
@@ -216,6 +277,8 @@ module Mongo
     }.freeze
 
     # Valid values for the serverMonitoringMode URI option.
+    #
+    # @api private
     SERVER_MONITORING_MODES = %w[stream poll auto].freeze
 
     # Options that are allowed to appear more than once in the uri.
@@ -226,6 +289,8 @@ module Mongo
     # they will be condensed to a single value immediately after parsing the URI.
     #
     # @since 2.1.0
+    #
+    # @api private
     REPEATABLE_OPTIONS = %i[tag_sets ssl]
 
     # Replace the userinfo portion of a MongoDB connection string with a
@@ -293,6 +358,11 @@ module Mongo
       @user ? opts.merge(credentials) : opts
     end
 
+    # The SRV records for this URI. Always nil for a non-SRV URI.
+    #
+    # @return [ nil ]
+    #
+    # @api private
     def srv_records
       nil
     end

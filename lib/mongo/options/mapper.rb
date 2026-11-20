@@ -19,6 +19,8 @@ module Mongo
     # Utility class for various options mapping behavior.
     #
     # @since 2.0.0
+    #
+    # @api private
     module Mapper
       extend self
 

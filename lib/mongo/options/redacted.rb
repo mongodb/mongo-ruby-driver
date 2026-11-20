@@ -24,12 +24,16 @@ module Mongo
       # The options whose values will be redacted.
       #
       # @since 2.1.0
+      #
+      # @api private
       SENSITIVE_OPTIONS = %i[password
                              pwd].freeze
 
       # The replacement string used in place of the value for sensitive keys.
       #
       # @since 2.1.0
+      #
+      # @api private
       STRING_REPLACEMENT = '<REDACTED>'
 
       # Get a string representation of the options.
