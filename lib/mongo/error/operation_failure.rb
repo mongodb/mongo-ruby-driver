@@ -24,7 +24,7 @@ module Mongo
       # be recognized and treated as OperationFailure errors.
       #
       # @api public
-      module OperationFailure::Family
+      module Family
         extend Forwardable
         include SdamErrorDetection
         include ReadWriteRetryable

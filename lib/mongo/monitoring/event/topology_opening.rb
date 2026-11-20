@@ -21,7 +21,7 @@ module Mongo
       #
       # @since 2.4.0
       class TopologyOpening < Mongo::Event::Base
-        # @return [ Topology ] topology The topology.
+        # @return [ Cluster::Topology::Base ] topology The topology.
         attr_reader :topology
 
         # Create the event.

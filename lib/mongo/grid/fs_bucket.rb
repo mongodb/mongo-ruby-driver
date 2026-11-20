@@ -202,7 +202,7 @@ module Mongo
       #
       # @param [ Grid::File ] file The file to remove.
       #
-      # @return [ Result ] The result of the remove.
+      # @return [ Operation::Delete::Result ] The result of the remove.
       #
       # @since 2.0.0
       def delete_one(file, opts = {})
@@ -216,7 +216,7 @@ module Mongo
       #
       # @param [ BSON::ObjectId, Object ] id The id of the file to remove.
       #
-      # @return [ Result ] The result of the remove.
+      # @return [ Operation::Delete::Result ] The result of the remove.
       #
       # @raise [ Error::FileNotFound ] If the file is not found.
       #

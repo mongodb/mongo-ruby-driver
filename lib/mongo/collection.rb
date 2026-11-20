@@ -389,7 +389,7 @@ module Mongo
     # @option opts [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     #
-    # @return [ Result ] The result of the command.
+    # @return [ Operation::Result ] The result of the command.
     #
     # @since 2.0.0
     def create(opts = {})
@@ -462,7 +462,7 @@ module Mongo
     #    The default value is unset which means the value is inherited from
     #    the collection or the database or the client.
     #
-    # @return [ Result ] The result of the command.
+    # @return [ Operation::Result ] The result of the command.
     #
     # @since 2.0.0
     def drop(opts = {})
@@ -542,7 +542,7 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
-    # @return [ CollectionView ] The collection view.
+    # @return [ Collection::View ] The collection view.
     #
     # @since 2.0.0
     def find(filter = nil, options = {})
@@ -856,7 +856,7 @@ module Mongo
     # @option opts [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
-    # @return [ Result ] The database response wrapper.
+    # @return [ Operation::Insert::Result ] The database response wrapper.
     #
     # @since 2.0.0
     def insert_one(document, opts = {})
@@ -918,7 +918,7 @@ module Mongo
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
-    # @return [ Result ] The database response wrapper.
+    # @return [ BulkWrite::Result ] The database response wrapper.
     #
     # @since 2.0.0
     def insert_many(documents, options = {})
@@ -976,7 +976,7 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Delete::Result ] The response from the database.
     #
     # @since 2.1.0
     def delete_one(filter = nil, options = {})
@@ -1002,7 +1002,7 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Delete::Result ] The response from the database.
     #
     # @since 2.1.0
     def delete_many(filter = nil, options = {})
@@ -1072,7 +1072,7 @@ module Mongo
     #   This option is only supported by servers >= 8.0. Older servers will
     #   report an error for using this option.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Update::Result ] The response from the database.
     #
     # @since 2.1.0
     def replace_one(filter, replacement, options = {})
@@ -1105,7 +1105,7 @@ module Mongo
     # @option options [ Hash ] :let Mapping of variables to use in the command.
     #   See the server documentation for details.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Update::Result ] The response from the database.
     #
     # @since 2.1.0
     def update_many(filter, update, options = {})
@@ -1143,7 +1143,7 @@ module Mongo
     #   This option is only supported by servers >= 8.0. Older servers will
     #   report an error for using this option.
     #
-    # @return [ Result ] The response from the database.
+    # @return [ Operation::Update::Result ] The response from the database.
     #
     # @since 2.1.0
     def update_one(filter, update, options = {})

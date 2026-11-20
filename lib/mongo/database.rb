@@ -470,7 +470,7 @@ module Mongo
     #    The default value is unset which means the value is inherited from
     #    the database or the client.
     #
-    # @return [ Result ] The result of the command.
+    # @return [ Operation::Result ] The result of the command.
     #
     # @since 2.0.0
     def drop(options = {})
@@ -565,7 +565,7 @@ module Mongo
     # @example Get the user view.
     #   database.users
     #
-    # @return [ View::User ] The user view.
+    # @return [ Auth::User::View ] The user view.
     #
     # @since 2.0.0
     def users

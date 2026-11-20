@@ -55,7 +55,7 @@ module Mongo
         # @option options [ Session ] :session The session to use for the operation.
         # @option options [ Hash ] :write_concern The write concern options.
         #
-        # @return [ Result ] The command response.
+        # @return [ Operation::Result ] The command response.
         #
         # @since 2.0.0
         def create(user_or_name, options = {})
@@ -93,7 +93,7 @@ module Mongo
         # @option options [ Session ] :session The session to use for the operation.
         # @option options [ Hash ] :write_concern The write concern options.
         #
-        # @return [ Result ] The command response.
+        # @return [ Operation::Result ] The command response.
         #
         # @since 2.0.0
         def remove(name, options = {})
@@ -118,7 +118,7 @@ module Mongo
         # @option options [ Session ] :session The session to use for the operation.
         # @option options [ Hash ] :write_concern The write concern options.
         #
-        # @return [ Result ] The response.
+        # @return [ Operation::Result ] The response.
         #
         # @since 2.0.0
         def update(user_or_name, options = {})

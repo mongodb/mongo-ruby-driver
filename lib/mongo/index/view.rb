@@ -121,7 +121,7 @@ module Mongo
       # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
-      # @return [ Result ] The response.
+      # @return [ Operation::Result ] The response.
       #
       # @since 2.0.0
       def drop_one(name, options = {})
@@ -140,7 +140,7 @@ module Mongo
       # @option options [ Object ] :comment A user-provided
       #   comment to attach to this command.
       #
-      # @return [ Result ] The response.
+      # @return [ Operation::Result ] The response.
       #
       # @since 2.0.0
       def drop_all(options = {})
@@ -188,7 +188,7 @@ module Mongo
       # @note Note that the options listed may be subset of those available.
       # See the MongoDB documentation for a full list of supported options by server version.
       #
-      # @return [ Result ] The response.
+      # @return [ Operation::Result ] The response.
       #
       # @since 2.0.0
       def create_one(keys, options = {})
@@ -234,7 +234,7 @@ module Mongo
       #   - session: The session to use.
       #   - comment: A user-provided comment to attach to this command.
       #
-      # @return [ Result ] The result of the command.
+      # @return [ Operation::Result ] The result of the command.
       #
       # @since 2.0.0
       def create_many(*models)

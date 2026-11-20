@@ -24,7 +24,7 @@ module Mongo
         # @return [ Address ] address The server address.
         attr_reader :address
 
-        # @return [ Topology ] topology The topology.
+        # @return [ Cluster::Topology::Base ] topology The topology.
         attr_reader :topology
 
         # Create the event.
