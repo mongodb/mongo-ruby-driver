@@ -21,17 +21,17 @@ jobs:
         topology: [ replica_set, sharded_cluster ]
     steps:
     - name: repo checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2
       with:
         submodules: recursive
     - id: start-mongodb
       name: start mongodb
-      uses: mongodb-labs/drivers-evergreen-tools@master
+      uses: mongodb-labs/drivers-evergreen-tools@3653a7d2bffb0b5bdb24415b69f1df60bec9a2ef # v1.4.1
       with:
         version: "${{matrix.mongodb}}"
         topology: "${{matrix.topology}}"
     - name: load ruby
-      uses: ruby/setup-ruby@v1
+      uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1
       with:
         ruby-version: "${{matrix.ruby}}"
         bundler: 2
