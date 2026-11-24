@@ -543,6 +543,13 @@ describe 'Range Explicit Encryption' do
   end
 
   describe 'Range Explicit Encryption applies defaults' do
+    # Only needs some valid range collection for the before hook; the shared
+    # default fixture hardcodes metadata names for a collection named
+    # "default", which newer servers reject.
+    let(:encrypted_fields) do
+      range_encrypted_fields_int
+    end
+
     let(:payload_defaults) do
       client_encryption.encrypt(
         123,
