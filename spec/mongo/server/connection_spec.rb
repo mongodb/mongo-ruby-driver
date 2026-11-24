@@ -1003,6 +1003,17 @@ describe Mongo::Server::Connection do
         expect(message).to receive(:serialize_fields).once.and_call_original
         serialized
       end
+
+      context 'when the buffer already holds bytes' do
+        let(:buffer) do
+          BSON::ByteBuffer.new.tap { |buf| buf.put_bytes('abc') }
+        end
+
+        it 'returns the compressed message only' do
+          expected = Mongo::Protocol::Compressed.new(message, compressor).serialize.to_s
+          expect(connection.send(:serialize, message, context, buffer).to_s).to eq(expected)
+        end
+      end
     end
 
     context 'when the maximum message size is not known' do
