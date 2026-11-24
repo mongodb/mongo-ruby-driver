@@ -47,6 +47,11 @@ module Mongo
       # @api private
       REDUCED_MAX_BSON_SIZE = 2_097_152
 
+      # The size of the wire protocol message header, in bytes.
+      #
+      # @api private
+      MESSAGE_HEADER_SIZE = 16
+
       # @return [ Hash ] options The passed in options.
       attr_reader :options
 
@@ -252,16 +257,26 @@ module Mongo
           # TODO: address the fact that this line mutates the buffer.
           temp_buffer.put_bytes(buffer.get_bytes(buffer.length))
 
+          prefix_length = temp_buffer.length
           message.serialize(temp_buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
           raise Error::MaxMessageSize.new(max_message_size) if temp_buffer.length > max_message_size
+
+          serialized = temp_buffer.to_s
+          serialized = serialized.byteslice(prefix_length..) unless prefix_length.zero?
         end
 
-        # RUBY-2335: When the un-compressed message is smaller than the maximum
-        # bson size limit, the message will be serialized twice. The operations
-        # layer should be refactored to allow compression on an already-
-        # serialized message.
         final_message = message.maybe_compress(compressor, options[:zlib_compression_level])
-        final_message.serialize(buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
+
+        # RUBY-2335: the message was serialized above for the size check;
+        # reuse those bytes instead of serializing the message again.
+        if serialized.nil?
+          final_message.serialize(buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
+        elsif final_message.equal?(message)
+          buffer.put_bytes(serialized)
+        else
+          final_message.serialized_original_fields = serialized.byteslice(MESSAGE_HEADER_SIZE..)
+          final_message.serialize(buffer, max_bson_size, MAX_BSON_COMMAND_OVERHEAD)
+        end
 
         buffer
       end

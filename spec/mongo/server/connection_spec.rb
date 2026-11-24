@@ -942,6 +942,88 @@ describe Mongo::Server::Connection do
     end
   end
 
+  describe '#serialize' do
+    let(:connection) do
+      described_class.new(server, server_options)
+    end
+
+    let(:context) { Mongo::Operation::Context.new }
+
+    let(:message) do
+      Mongo::Protocol::Msg.new([], {}, { find: 'serialize-test', filter: { a: 1 }, :$db => SpecConfig.instance.test_db })
+    end
+
+    let(:max_message_size) { 48_000_000 }
+
+    let(:serialized) do
+      connection.send(:serialize, message, context).to_s
+    end
+
+    before do
+      allow(connection).to receive_messages(
+        max_message_size: max_message_size,
+        max_bson_object_size: 16_777_216,
+        compressor: compressor
+      )
+    end
+
+    context 'when no compressor is negotiated' do
+      let(:compressor) { nil }
+
+      it 'returns the serialized message' do
+        expect(serialized).to eq(message.serialize.to_s)
+      end
+
+      it 'serializes the message once' do
+        expect(message).to receive(:serialize_fields).once.and_call_original
+        serialized
+      end
+
+      context 'when the buffer already holds bytes' do
+        let(:buffer) do
+          BSON::ByteBuffer.new.tap { |buf| buf.put_bytes('abc') }
+        end
+
+        it 'returns the serialized message only' do
+          expect(connection.send(:serialize, message, context, buffer).to_s).to eq(message.serialize.to_s)
+        end
+      end
+    end
+
+    context 'when a compressor is negotiated' do
+      let(:compressor) { 'zlib' }
+
+      it 'returns the compressed message' do
+        expected = Mongo::Protocol::Compressed.new(message, compressor).serialize.to_s
+        expect(serialized).to eq(expected)
+        expect(serialized).not_to eq(message.serialize.to_s)
+      end
+
+      it 'serializes the original message once' do
+        expect(message).to receive(:serialize_fields).once.and_call_original
+        serialized
+      end
+    end
+
+    context 'when the maximum message size is not known' do
+      let(:compressor) { nil }
+      let(:max_message_size) { nil }
+
+      it 'returns the serialized message' do
+        expect(serialized).to eq(message.serialize.to_s)
+      end
+    end
+
+    context 'when the message is larger than the maximum message size' do
+      let(:compressor) { 'zlib' }
+      let(:max_message_size) { 20 }
+
+      it 'raises MaxMessageSize' do
+        expect { serialized }.to raise_error(Mongo::Error::MaxMessageSize)
+      end
+    end
+  end
+
   describe '#initialize' do
     context 'when host and port are provided' do
       let(:connection) do
