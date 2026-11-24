@@ -19,6 +19,19 @@ describe 'Explicit Queryable Encryption' do
     'explicit_encryption'
   end
 
+  # The shared fixture hardcodes metadata collection names for a collection
+  # named "default"; remove them so the default enxcol_.<name>.esc/.ecoc
+  # names for the collection under test apply. Newer servers reject
+  # mismatched names.
+  let(:encrypted_fields) do
+    BSON::ExtJSON.parse(
+      File.read('spec/support/crypt/encrypted_fields/encryptedFields.json')
+    ).tap do |fields|
+      fields.delete('escCollection')
+      fields.delete('ecocCollection')
+    end
+  end
+
   # Collection configured with contention 10, used by the non-zero contention
   # case. Server 9.0+ requires the payload's contention to not exceed the
   # collection's configured contention.
