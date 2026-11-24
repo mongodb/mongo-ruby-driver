@@ -114,6 +114,37 @@ describe Mongo::Socket do
         it_behaves_like 'times out'
       end
     end
+
+    context 'when the socket reports that it would block' do
+      clean_slate_for_all
+
+      %i[ wait_readable wait_writable ].each do |direction|
+        context "with :#{direction}" do
+          it 'waits for the socket and reads again' do
+            results = [ direction, 'abc' ]
+            expect(raw_socket).to receive(:read_nonblock).twice do |_len, _buf, exception: true|
+              expect(exception).to be false
+              results.shift
+            end
+            expect(Kernel).to receive(:select).once.and_return([ [ raw_socket ] ])
+
+            expect(socket.read(3)).to eq('abc')
+          end
+        end
+      end
+    end
+
+    context 'when the peer has closed the connection' do
+      clean_slate_for_all
+
+      it 'raises a socket error' do
+        expect(raw_socket).to receive(:read_nonblock).and_return(nil)
+
+        expect do
+          socket.read(3)
+        end.to raise_error(Mongo::Error::SocketError, /EOFError: end of file reached/)
+      end
+    end
   end
 
   describe '#write' do
