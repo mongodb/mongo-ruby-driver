@@ -55,6 +55,22 @@ describe Mongo::Protocol::Compressed do
     end
   end
 
+  describe '#serialized_original_fields=' do
+    before do
+      message.serialized_original_fields = original_message_bytes
+    end
+
+    it 'produces the same bytes as serializing the original message' do
+      expected = described_class.new(original_message, compressor, level).serialize.to_s
+      expect(message.serialize.to_s).to eq(expected)
+    end
+
+    it 'does not serialize the original message again' do
+      expect(original_message).not_to receive(:serialize_fields)
+      message.serialize
+    end
+  end
+
   describe '#replyable?' do
     context 'when the original message is replyable' do
       it 'returns true' do

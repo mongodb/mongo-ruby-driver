@@ -119,12 +119,26 @@ module Mongo
         @original_message.replyable?
       end
 
+      # The fields of the original message, already serialized. When set,
+      # they are compressed as they are and the original message is not
+      # serialized again.
+      #
+      # @param [ String ] value The serialized fields (the message without
+      #   its header).
+      #
+      # @api private
+      attr_writer :serialized_original_fields
+
       # @api private
       def serialize_fields(buffer, max_bson_size)
-        buf = BSON::ByteBuffer.new
-        @original_message.serialize_fields(buf, max_bson_size)
-        @uncompressed_size = buf.length
-        @compressed_message = compress(buf)
+        serialized = @serialized_original_fields
+        if serialized.nil?
+          buf = BSON::ByteBuffer.new
+          @original_message.serialize_fields(buf, max_bson_size)
+          serialized = buf.to_s
+        end
+        @uncompressed_size = serialized.bytesize
+        @compressed_message = compress(serialized)
         super
       end
 
