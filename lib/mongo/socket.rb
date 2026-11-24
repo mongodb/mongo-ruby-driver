@@ -361,7 +361,15 @@ module Mongo
         while retrieved < length
           retrieve = length - retrieved
           retrieve = buf_size if retrieve > buf_size
-          chunk = @socket.read_nonblock(retrieve, buf)
+          # Most reads are attempted before the server has replied. Asking
+          # for a symbol rather than an exception in that case avoids raising
+          # and rescuing an exception on nearly every command.
+          chunk = @socket.read_nonblock(retrieve, buf, exception: false)
+          if chunk.is_a?(Symbol)
+            wait_for_socket(chunk, deadline, _timeout, csot)
+            next
+          end
+          raise EOFError, 'end of file reached' if chunk.nil?
 
           # If we read the entire wanted length in one operation,
           # return the data as is which saves one memory allocation and
@@ -378,57 +386,72 @@ module Mongo
           data[retrieved, chunk.length] = chunk
           retrieved += chunk.length
         end
-      # As explained in https://ruby-doc.com/core-trunk/IO.html#method-c-select,
-      # reading from a TLS socket may require writing which may raise WaitWritable
+      # Kept as a safeguard. With +exception: false+ the sockets of MRI return
+      # a symbol and do not raise here; a socket that raises anyway is handled
+      # as before. As explained in
+      # https://ruby-doc.com/core-trunk/IO.html#method-c-select, reading from
+      # a TLS socket may require writing, hence WaitWritable.
       rescue IO::WaitReadable, IO::WaitWritable => e
-        if deadline
-          select_timeout = deadline - Utils.monotonic_time
-          raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot) if select_timeout <= 0
-        end
-        select_args = if e.is_a?(IO::WaitReadable)
-                        if pipe
-                          [ [ @socket, pipe ], nil, [ @socket, pipe ], select_timeout ]
-                        else
-                          [ [ @socket ], nil, [ @socket ], select_timeout ]
-                        end
-                      else
-                        [ nil, [ @socket ], [ @socket ], select_timeout ]
-                      end
-
-        rv = Kernel.select(*select_args)
-        if Lint.enabled? && pipe && rv&.include?(pipe)
-          # If the return value of select is the read end of the pipe, and
-          # an IOError is not raised, then that means the socket is still
-          # open. Select is interrupted be closing the write end of the
-          # pipe, which either returns the pipe if the socket is open, or
-          # raises an IOError if it isn't. Select is interrupted after all
-          # of the pending and checked out connections have been interrupted
-          # and closed, and this only happens once the pool is cleared with
-          # interrupt_in_use connections flag. This means that in order for
-          # the socket to still be open when the select is interrupted, and
-          # that socket is being read from, that means after clear was
-          # called, a connection from the previous generation was checked
-          # out of the pool, for reading on its socket. This should be impossible.
-          raise Mongo::LintError, 'Select interrupted for live socket. This should be impossible.'
-        end
-
-        if BSON::Environment.jruby?
-          # Ignore the return value of Kernel.select.
-          # On JRuby, select appears to return nil prior to timeout expiration
-          # (apparently due to a EAGAIN) which then causes us to fail the read
-          # even though we could have retried it.
-          # Check the deadline ourselves.
-          if deadline
-            select_timeout = deadline - Utils.monotonic_time
-            raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot) if select_timeout <= 0
-          end
-        elsif rv.nil?
-          raise_timeout_error!("Took more than #{_timeout} seconds to receive data (select call timed out)", csot)
-        end
+        direction = e.is_a?(IO::WaitReadable) ? :wait_readable : :wait_writable
+        wait_for_socket(direction, deadline, _timeout, csot)
         retry
       end
 
       data
+    end
+
+    # Waits until the socket can be read from (or, for +:wait_writable+,
+    # written to) again, or raises when the deadline passes first.
+    #
+    # @param [ Symbol ] direction :wait_readable or :wait_writable.
+    # @param [ Float | nil ] deadline The monotonic time to give up at.
+    # @param [ Numeric | nil ] timeout The timeout to report in the error.
+    # @param [ true | false ] csot Whether the CSOT timeout is set for the operation.
+    def wait_for_socket(direction, deadline, timeout, csot)
+      if deadline
+        select_timeout = deadline - Utils.monotonic_time
+        raise_timeout_error!("Took more than #{timeout} seconds to receive data", csot) if select_timeout <= 0
+      end
+      select_args = if direction == :wait_readable
+                      if pipe
+                        [ [ @socket, pipe ], nil, [ @socket, pipe ], select_timeout ]
+                      else
+                        [ [ @socket ], nil, [ @socket ], select_timeout ]
+                      end
+                    else
+                      [ nil, [ @socket ], [ @socket ], select_timeout ]
+                    end
+
+      rv = Kernel.select(*select_args)
+      if Lint.enabled? && pipe && rv&.include?(pipe)
+        # If the return value of select is the read end of the pipe, and
+        # an IOError is not raised, then that means the socket is still
+        # open. Select is interrupted be closing the write end of the
+        # pipe, which either returns the pipe if the socket is open, or
+        # raises an IOError if it isn't. Select is interrupted after all
+        # of the pending and checked out connections have been interrupted
+        # and closed, and this only happens once the pool is cleared with
+        # interrupt_in_use connections flag. This means that in order for
+        # the socket to still be open when the select is interrupted, and
+        # that socket is being read from, that means after clear was
+        # called, a connection from the previous generation was checked
+        # out of the pool, for reading on its socket. This should be impossible.
+        raise Mongo::LintError, 'Select interrupted for live socket. This should be impossible.'
+      end
+
+      if BSON::Environment.jruby?
+        # Ignore the return value of Kernel.select.
+        # On JRuby, select appears to return nil prior to timeout expiration
+        # (apparently due to a EAGAIN) which then causes us to fail the read
+        # even though we could have retried it.
+        # Check the deadline ourselves.
+        if deadline
+          select_timeout = deadline - Utils.monotonic_time
+          raise_timeout_error!("Took more than #{timeout} seconds to receive data", csot) if select_timeout <= 0
+        end
+      elsif rv.nil?
+        raise_timeout_error!("Took more than #{timeout} seconds to receive data (select call timed out)", csot)
+      end
     end
 
     def allocate_string(capacity)

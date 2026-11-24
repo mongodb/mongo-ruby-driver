@@ -114,6 +114,57 @@ describe Mongo::Socket do
         it_behaves_like 'times out'
       end
     end
+
+    context 'when the socket reports that it would block' do
+      clean_slate_for_all
+
+      {
+        wait_readable: ->(io) { [ [ io ], nil, [ io ], anything ] },
+        wait_writable: ->(io) { [ nil, [ io ], [ io ], anything ] }
+      }.each do |direction, select_args|
+        context "with :#{direction}" do
+          it 'waits for the socket in that direction and reads again' do
+            results = [ direction, 'abc' ]
+            expect(raw_socket).to receive(:read_nonblock).twice do |_len, _buf, exception: true|
+              expect(exception).to be false
+              results.shift
+            end
+            expect(Kernel).to receive(:select).once
+                                              .with(*instance_exec(raw_socket, &select_args))
+                                              .and_return([ [ raw_socket ] ])
+
+            expect(socket.read(3)).to eq('abc')
+          end
+        end
+      end
+
+      context 'when part of the data has been read' do
+        it 'waits and reads the rest' do
+          results = [ 'ab', :wait_readable, 'c' ]
+          lengths = []
+          expect(raw_socket).to receive(:read_nonblock).exactly(3).times do |len, _buf, **_options|
+            lengths << len
+            results.shift
+          end
+          expect(Kernel).to receive(:select).once.and_return([ [ raw_socket ] ])
+
+          expect(socket.read(3)).to eq('abc')
+          expect(lengths).to eq([ 3, 1, 1 ])
+        end
+      end
+    end
+
+    context 'when the peer has closed the connection' do
+      clean_slate_for_all
+
+      it 'raises a socket error' do
+        expect(raw_socket).to receive(:read_nonblock).and_return(nil)
+
+        expect do
+          socket.read(3)
+        end.to raise_error(Mongo::Error::SocketError, /EOFError: end of file reached/)
+      end
+    end
   end
 
   describe '#write' do
