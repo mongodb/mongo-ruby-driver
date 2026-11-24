@@ -118,18 +118,38 @@ describe Mongo::Socket do
     context 'when the socket reports that it would block' do
       clean_slate_for_all
 
-      %i[ wait_readable wait_writable ].each do |direction|
+      {
+        wait_readable: ->(io) { [ [ io ], nil, [ io ], anything ] },
+        wait_writable: ->(io) { [ nil, [ io ], [ io ], anything ] }
+      }.each do |direction, select_args|
         context "with :#{direction}" do
-          it 'waits for the socket and reads again' do
+          it 'waits for the socket in that direction and reads again' do
             results = [ direction, 'abc' ]
             expect(raw_socket).to receive(:read_nonblock).twice do |_len, _buf, exception: true|
               expect(exception).to be false
               results.shift
             end
-            expect(Kernel).to receive(:select).once.and_return([ [ raw_socket ] ])
+            expect(Kernel).to receive(:select).once
+                                              .with(*instance_exec(raw_socket, &select_args))
+                                              .and_return([ [ raw_socket ] ])
 
             expect(socket.read(3)).to eq('abc')
           end
+        end
+      end
+
+      context 'when part of the data has been read' do
+        it 'waits and reads the rest' do
+          results = [ 'ab', :wait_readable, 'c' ]
+          lengths = []
+          expect(raw_socket).to receive(:read_nonblock).exactly(3).times do |len, _buf, **_options|
+            lengths << len
+            results.shift
+          end
+          expect(Kernel).to receive(:select).once.and_return([ [ raw_socket ] ])
+
+          expect(socket.read(3)).to eq('abc')
+          expect(lengths).to eq([ 3, 1, 1 ])
         end
       end
     end

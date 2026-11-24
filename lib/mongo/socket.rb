@@ -386,9 +386,11 @@ module Mongo
           data[retrieved, chunk.length] = chunk
           retrieved += chunk.length
         end
-      # Sockets that do not honor +exception: false+ raise instead. As explained
-      # in https://ruby-doc.com/core-trunk/IO.html#method-c-select, reading from
-      # a TLS socket may require writing which may raise WaitWritable.
+      # Kept as a safeguard. With +exception: false+ the sockets of MRI return
+      # a symbol and do not raise here; a socket that raises anyway is handled
+      # as before. As explained in
+      # https://ruby-doc.com/core-trunk/IO.html#method-c-select, reading from
+      # a TLS socket may require writing, hence WaitWritable.
       rescue IO::WaitReadable, IO::WaitWritable => e
         direction = e.is_a?(IO::WaitReadable) ? :wait_readable : :wait_writable
         wait_for_socket(direction, deadline, _timeout, csot)
@@ -403,12 +405,12 @@ module Mongo
     #
     # @param [ Symbol ] direction :wait_readable or :wait_writable.
     # @param [ Float | nil ] deadline The monotonic time to give up at.
-    # @param [ Numeric | nil ] _timeout The timeout to report in the error.
+    # @param [ Numeric | nil ] timeout The timeout to report in the error.
     # @param [ true | false ] csot Whether the CSOT timeout is set for the operation.
-    def wait_for_socket(direction, deadline, _timeout, csot)
+    def wait_for_socket(direction, deadline, timeout, csot)
       if deadline
         select_timeout = deadline - Utils.monotonic_time
-        raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot) if select_timeout <= 0
+        raise_timeout_error!("Took more than #{timeout} seconds to receive data", csot) if select_timeout <= 0
       end
       select_args = if direction == :wait_readable
                       if pipe
@@ -445,10 +447,10 @@ module Mongo
         # Check the deadline ourselves.
         if deadline
           select_timeout = deadline - Utils.monotonic_time
-          raise_timeout_error!("Took more than #{_timeout} seconds to receive data", csot) if select_timeout <= 0
+          raise_timeout_error!("Took more than #{timeout} seconds to receive data", csot) if select_timeout <= 0
         end
       elsif rv.nil?
-        raise_timeout_error!("Took more than #{_timeout} seconds to receive data (select call timed out)", csot)
+        raise_timeout_error!("Took more than #{timeout} seconds to receive data (select call timed out)", csot)
       end
     end
 
